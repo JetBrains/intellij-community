@@ -54,6 +54,7 @@ public class WelcomeScreen {
   private static final int COLUMNS_IN_MAIN = 2;
   private static final int PLUGIN_DSC_MAX_WIDTH = 180;
   private static final int PLUGIN_NAME_MAX_WIDTH = 180;
+  private static final int MAX_TOOLTIP_WIDTH = 300;
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(78, 78);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
@@ -69,7 +70,7 @@ public class WelcomeScreen {
   private static final String FROM_VCS_ICON = "/general/getProjectfromVCS.png";
   private static final String READ_HELP_ICON = "/general/readHelp.png";
   private static final String KEYMAP_ICON = "/general/defaultKeymap.png";
-  private static final String KEYMAP_URL = PathManager.getHomePath() + File.separator + "help" + File.separator + "4.5_ReferenceCard.pdf";
+  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
   private static final String DEFAULT_ICON_PATH = "/general/configurableDefault.png";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
@@ -86,6 +87,7 @@ public class WelcomeScreen {
   private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
   private static final Color CAPTION_BACKGROUND = new Color(24, 52, 146);
   private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
+  private static final Color ACTION_BUTTON_BORDER_COLOR = new Color(166, 170, 182);
   private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
 
   private int myQuickStartCount = 0;
@@ -98,7 +100,7 @@ public class WelcomeScreen {
   private WelcomeScreen() {
 
     // Create Plugins Panel
-    myPluginsPanel = new JPanel(new GridBagLayout());
+    myPluginsPanel = new PluginsPanel(new GridBagLayout());
     myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
     JLabel pluginsCaption = new JLabel("Plugins");
@@ -240,9 +242,9 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out the entire project from one of " +
-                                                                                              "the supported Version Control Systems, namely " +
-                                                                                              "CVS or Subversion.");
+    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out the entire project from " +
+                                                                                              "Version Control System. Click the icon to " +
+                                                                                              "select CVS or Subversion.");
 
     // Create Documentation panel
     JPanel docsPanel = new JPanel(new GridBagLayout());
@@ -340,43 +342,6 @@ public class WelcomeScreen {
     return new WelcomeScreen().myWelcomePanel;
   }
 
-/* The below commented methods are reserved for future use
-
-  private void selectButton(MyActionButton button) {
-    mySelectedGroup = button.getGroupIdx();
-    mySelectedRow = button.getRowIdx();
-    mySelectedColumn = button.getColumnIdx();
-    return;
-  }
-
-  private MyActionButton getSelectedButton(int group) {
-    switch (group) {
-      case MAIN_GROUP:
-        for (int i = 0; i < ourMainButtons.size(); i++) {
-          MyActionButton button = ourMainButtons.get(i);
-          if (mySelectedColumn == button.getColumnIdx() &&
-              mySelectedRow == button.getRowIdx() &&
-              mySelectedGroup == button.getGroupIdx()) {
-
-            return button;
-          }
-        }
-      case PLUGINS_GROUP:
-        for (int i = 0; i < ourPluginButtons.size(); i++) {
-          MyActionButton button = ourPluginButtons.get(i);
-          if (mySelectedColumn == button.getColumnIdx() &&
-              mySelectedRow == button.getRowIdx() &&
-              mySelectedGroup == button.getGroupIdx()) {
-
-            return button;
-          }
-        }
-      default:
-        return null;
-    }
-  }
-*/
-
   public void addButtonToQuickStart(JPanel panel, final MyActionButton button, String commandLink, String description) {
     final int y = myQuickStartIdx += 2;
     GridBagConstraints gBC =
@@ -470,7 +435,7 @@ public class WelcomeScreen {
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
-    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText(name);
+    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText("<html>" + name + "</html>");
 
     gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                     new Insets(15, 7, 0, 0), 0, 0);
@@ -478,10 +443,17 @@ public class WelcomeScreen {
 
     if (!StringUtil.isEmpty(description)) {
       description = description.trim();
+      if (description.startsWith("<html>")) {
+        description = description.replaceAll("<html>", "");
+        if (description.endsWith("</html>")) {
+          description = description.replaceAll("</html>", "");
+        }
+      }
+      description = description.replaceAll("\\n", "");
       String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH);
       JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
-      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText(description);
+      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText("<html>" + description + "</html>");
 
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                    new Insets(5, 7, 0, 0), 5, 0);
@@ -492,7 +464,8 @@ public class WelcomeScreen {
       gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 7, 0, 0), 0, 0);
       JLabel label = new JLabel("<html><nobr><u>Learn More...</u></nobr></html>");
       label.setFont(TEXT_FONT);
-      label. setForeground(CAPTION_COLOR);
+      label.setForeground(CAPTION_COLOR);
+      label.setToolTipText(url);
       label.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           try {
@@ -538,9 +511,9 @@ public class WelcomeScreen {
    * @param font not <code>null</code> {@link Font Font} object
    * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not
    * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels
-   * @return
+   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags
    */
-  private String adjustStringBreaksByWidth(final String string, final Font font, final boolean isAntiAliased, final int maxWidth) {
+  private String adjustStringBreaksByWidth(String string, final Font font, final boolean isAntiAliased, final int maxWidth) {
 
     String shortenedString = string;
     Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
@@ -679,7 +652,7 @@ public class WelcomeScreen {
 
     protected void paintBorder(Graphics g) {
       Rectangle rectangle = new Rectangle(getSize());
-      Color color = new Color(166, 170, 182);
+      Color color = ACTION_BUTTON_BORDER_COLOR;
       g.setColor(color);
       g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
       g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
