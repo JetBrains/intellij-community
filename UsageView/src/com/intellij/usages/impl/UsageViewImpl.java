@@ -64,6 +64,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private ButtonPanel myButtonPanel = new ButtonPanel();
   private boolean myChangesDetected = false;
   private List<Usage> myUsagesToFlush = new ArrayList<Usage>();
+  private UsageGroupingRuleProvider myUsageGroupingRuleProvider = new CompositeUsageGroupingRuleProvider();
+  private UsageFilteringRuleProvider myUsageFilteringRuleProvider = new CompositeUsageFilteringRuleProvider();
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -77,7 +79,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myRootPanel = new MyPanel(myTree);
 
     UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myBuilder = new UsageNodeTreeBuilder(getGroupingRuleProvider().getActiveRules(project), getFilteringRuleProvider().getActiveRules(project), (GroupNode)model.getRoot());
+    myBuilder = new UsageNodeTreeBuilder(myUsageGroupingRuleProvider.getActiveRules(project), myUsageFilteringRuleProvider.getActiveRules(project), (GroupNode)model.getRoot());
     myTree.setModel(model);
 
     myRootPanel.setLayout(new BorderLayout());
@@ -225,20 +227,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
-  private UsageGroupingRuleProviderImpl getGroupingRuleProvider() {
-    return (UsageGroupingRuleProviderImpl)ApplicationManager.getApplication().getComponent(UsageGroupingRuleProvider.class);
-  }
-
-  private UsageFilteringRuleProviderImpl getFilteringRuleProvider() {
-    return (UsageFilteringRuleProviderImpl)ApplicationManager.getApplication().getComponent(UsageFilteringRuleProvider.class);
-  }
-
   private AnAction[] createGroupingActions() {
-    return getGroupingRuleProvider().createFilteringActions(this);
+    return myUsageGroupingRuleProvider.createGroupingActions(this);
   }
 
   private AnAction[] createFilteringActions() {
-    return getFilteringRuleProvider().createFilteringActions(this);
+    return myUsageFilteringRuleProvider.createFilteringActions(this);
   }
 
   public void rulesChanged() {
@@ -246,8 +240,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     Collection<Usage> allUsages = myUsageNodes.keySet();
     reset();
-    myBuilder.setGroupingRules(getGroupingRuleProvider().getActiveRules(myProject));
-    myBuilder.setFilteringRules(getFilteringRuleProvider().getActiveRules(myProject));
+    myBuilder.setGroupingRules(myUsageGroupingRuleProvider.getActiveRules(myProject));
+    myBuilder.setFilteringRules(myUsageFilteringRuleProvider.getActiveRules(myProject));
     for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
       Usage usage = i.next();
       if (!usage.isValid()) {

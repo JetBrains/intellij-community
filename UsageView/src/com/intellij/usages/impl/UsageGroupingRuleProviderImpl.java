@@ -1,8 +1,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -11,7 +9,6 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +48,7 @@ public class UsageGroupingRuleProviderImpl extends UsageGroupingRuleProvider imp
     return rules.toArray(new UsageGroupingRule[rules.size()]);
   }
 
-  public AnAction[] createFilteringActions(UsageViewImpl view) {
+  public AnAction[] createGroupingActions(UsageViewImpl view) {
     return new AnAction[] {
       new GroupByUsageTypeAction(view),
       new GroupByModuleTypeAction(view),
