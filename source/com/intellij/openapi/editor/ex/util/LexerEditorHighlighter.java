@@ -88,10 +88,10 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     do {
       data = mySegments.getSegmentData(startIndex);
       lexerState = unpackState(data);
-      if (lexerState == myInitialState) break;
+      if (lexerState == myInitialState || startIndex == 0) break;
       startIndex--;
     }
-    while (startIndex > 0);
+    while (true);
 
     int startOffset = mySegments.getSegmentStart(startIndex);
     int newEndOffset = e.getOffset() + e.getNewLength();

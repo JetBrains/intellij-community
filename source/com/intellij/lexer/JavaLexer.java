@@ -16,7 +16,7 @@ public class JavaLexer implements Lexer, Cloneable {
     myTable = isAssertKeywordEnabled ?
               (isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert) :
               (isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert);
-    myJLexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
+    myJLexlexer = new FlexAdapter(new _JavaLexer(isAssertKeywordEnabled, isJDK15));
   }
 
   public JavaLexer(LanguageLevel level) {
@@ -36,7 +36,7 @@ public class JavaLexer implements Lexer, Cloneable {
     static final int NUM_ENTRIES = 9999;
     private static final Logger LOG = Logger.getInstance("com.intellij.Lexer.JavaLexer");
 
-    char[][] myTable = new char[NUM_ENTRIES][];;
+    char[][] myTable = new char[NUM_ENTRIES][];
     IElementType[] myKeywords = new IElementType[NUM_ENTRIES];
 
     void add(String s, IElementType tokenType) {
