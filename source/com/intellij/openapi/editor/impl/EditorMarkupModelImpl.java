@@ -52,11 +52,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private MarkSpots myMarkSpots = new MarkSpots();
   private int myScrollBarHeight;
 
-  private int offsetToLine(final int offset) {
-    int visStartLine = myEditor.logicalToVisualPosition(
-        new LogicalPosition(myEditor.getDocument().getLineNumber(offset), 0)
-      ).line;
-    return visStartLine;
+  private int offsetToLine(int offset) {
+    final Document document = myEditor.getDocument();
+    if (offset > document.getTextLength()) {
+      offset = document.getTextLength();
+    }
+    final int lineNumber = document.getLineNumber(offset);
+    return myEditor.logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line;
   }
   private static class MarkSpot {
     private final int yStart;
