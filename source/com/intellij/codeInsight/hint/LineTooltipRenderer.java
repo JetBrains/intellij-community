@@ -124,7 +124,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
   public void addBelow(String text) {
     String html1 = getHtmlBody(myText);
     String html2 = getHtmlBody(text);
-    myText = "<html><body>" + html1 + "<br>" + html2 + "</body></html>";
+    myText = "<html><body>" + html1 + "<hr size=1 noshade>" + html2 + "</body></html>";
   }
 
   private static String getHtmlBody(String text) {
