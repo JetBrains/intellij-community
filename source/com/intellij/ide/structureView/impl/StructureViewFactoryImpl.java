@@ -17,10 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Belyaev
@@ -100,7 +97,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
 
   public void setActiveAction(final String name, final boolean state) {
 
-    List<String> activeActions = collectActiveActions();
+    Collection<String> activeActions = collectActiveActions();
 
     if (state) {
       activeActions.add(name);
@@ -111,20 +108,23 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
     ACTIVE_ACTIONS = toString(activeActions);
   }
 
-  private String toString(final List<String> activeActions) {
+  private String toString(final Collection<String> activeActions) {
     final StringBuffer result = new StringBuffer();
     for (Iterator<String> iterator = activeActions.iterator(); iterator.hasNext();) {
-      result.append(iterator.next());
-      if (iterator.hasNext()) {
-        result.append(",");
+      final String actionName = iterator.next();
+      if (actionName.trim().length() > 0) {
+        result.append(actionName);
+        if (iterator.hasNext()) {
+          result.append(",");
+        }
       }
     }
     return result.toString();
   }
 
-  private List<String> collectActiveActions() {
+  private Collection<String> collectActiveActions() {
     final String[] strings = ACTIVE_ACTIONS.split(",");
-    return new ArrayList<String>(Arrays.asList(strings));
+    return new HashSet<String>(Arrays.asList(strings));
   }
 
   public boolean isActionActive(final String name) {

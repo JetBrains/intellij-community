@@ -27,4 +27,8 @@ public class InheritedMembersFilter implements Filter {
   public String getName() {
     return ID;
   }
+
+  public boolean isReverted() {
+    return true;
+  }
 }

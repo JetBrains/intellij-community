@@ -20,4 +20,8 @@ public class FieldsFilter implements Filter{
   public String getName() {
     return ID;
   }
+
+  public boolean isReverted() {
+    return true;
+  }
 }

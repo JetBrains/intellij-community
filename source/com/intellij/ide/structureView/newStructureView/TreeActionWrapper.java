@@ -25,10 +25,10 @@ public class TreeActionWrapper extends ToggleAction{
   }
 
   public boolean isSelected(AnActionEvent e) {
-    return myStructureView.isActionActive(myAction.getName());
+    return TreeModelWrapper.isActive(myAction, myStructureView);
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    myStructureView.setActionActive(myAction.getName(), state);
+    myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) ?  !state : state);
   }
 }

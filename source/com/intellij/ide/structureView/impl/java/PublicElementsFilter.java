@@ -25,4 +25,8 @@ public class PublicElementsFilter implements Filter{
   public String getName() {
     return ID;
   }
+
+  public boolean isReverted() {
+    return true;
+  }
 }

@@ -46,4 +46,12 @@ public class TreeModelWrapper implements StructureViewModel {
   public Object getCurrentEditorElement() {
     return myModel.getCurrentEditorElement();
   }
+
+  public static boolean isActive(final TreeAction action, final TreeActionsOwner actionsOwner) {
+    return shouldRevert(action) ?  !actionsOwner.isActionActive(action.getName()) : actionsOwner.isActionActive(action.getName());
+  }
+
+  public static boolean shouldRevert(final TreeAction action) {
+    return action instanceof Filter && ((Filter)action).isReverted();
+  }
 }
