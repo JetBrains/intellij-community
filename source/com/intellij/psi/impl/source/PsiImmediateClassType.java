@@ -88,10 +88,6 @@ public class PsiImmediateClassType extends PsiClassType {
     return myClass.getManager().getElementFactory().createType(myClass);
   }
 
-  public PsiType createUninvalidateableCopy() {
-    return this;
-  }
-
   public String getPresentableText() {
     if (myPresentableText == null) {
       final StringBuffer buffer = new StringBuffer();
