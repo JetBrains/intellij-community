@@ -3,7 +3,8 @@ public class Foo {
     Integer myI;
 
     public void usage() {
-        if (myI != null) System.out.println(getComponent(myI) + getComponent(myI));
+        if (myI != null)
+            System.out.println(getComponent(myI) + getComponent(myI));
     }
 
 }
