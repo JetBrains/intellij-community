@@ -151,7 +151,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private Map<Document, DocumentChangeTransaction> myTransactionsMap = new HashMap<Document, DocumentChangeTransaction>();
 
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
-    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
+    final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null) {
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, s);
     }
@@ -171,7 +171,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void insertString(Document document, int offset, String s) {
-    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
+    final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(offset, 0, s);
     }
@@ -191,7 +191,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void deleteString(Document document, int startOffset, int endOffset){
-    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
+    final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, "");
     }
@@ -224,7 +224,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void commitTransaction(Document document){
-    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.remove(document);
+    final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return;
     if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
 
@@ -240,11 +240,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void doCommitTransaction(final Document document){
-    doCommitTransaction(document, myTransactionsMap.get(document));
+    doCommitTransaction(document, getTransaction(document));
   }
 
-  private static void doCommitTransaction(final Document document,
-                                   final DocumentChangeTransaction documentChangeTransaction) {
+  private static void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
     try {
@@ -277,11 +276,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  public void cancelTransaction(Document doc) {
-    myTransactionsMap.remove(doc);
+  public DocumentChangeTransaction removeTransaction(Document doc) {
+    return myTransactionsMap.remove(doc);
   }
 
-  public class DocumentChangeTransaction{
+  public static class DocumentChangeTransaction{
     private final Set<Pair<MutableTextRange,StringBuffer>> myAffectedFragments = new TreeSet<Pair<MutableTextRange, StringBuffer>>(new Comparator<Pair<MutableTextRange, StringBuffer>>() {
       public int compare(final Pair<MutableTextRange, StringBuffer> o1,
                          final Pair<MutableTextRange, StringBuffer> o2) {
