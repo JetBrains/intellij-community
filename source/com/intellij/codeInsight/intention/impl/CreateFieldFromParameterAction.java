@@ -11,6 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -22,28 +24,77 @@ import java.util.List;
 
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
-  private final PsiParameter myParameter;
-  private PsiType myType;
+  private PsiParameter myParameter;
+  private final boolean forcedParameter;
 
+  public CreateFieldFromParameterAction() {
+    myParameter = null;
+    forcedParameter = false;
+  }
   public CreateFieldFromParameterAction(PsiParameter parameter) {
     myParameter = parameter;
-    myType = myParameter.getType();
-    if (myType instanceof PsiEllipsisType) myType = ((PsiEllipsisType)myType).toArrayType();
+    forcedParameter = true;
+  }
+
+  private  PsiType getType() {
+    if (myParameter == null) return null;
+    PsiType type = myParameter.getType();
+    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+    return type;
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Create Field For Parameter ''{0}''", new Object[]{myParameter.getName(), });
-    return text;
+    return MessageFormat.format("Create Field For Parameter ''{0}''", new Object[]{myParameter.getName(), });
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    myParameter = forcedParameter ? myParameter : findParameterAtCursor(file, editor);
+    final PsiType type = getType();
     return
       myParameter != null
       && myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && myParameter.getManager().isInProject(myParameter)
-      && myType.isValid()
+      && type != null
+      && type.isValid()
+      && !isParameterAssignedToField(myParameter)
       ;
+  }
+
+  private static boolean isParameterAssignedToField(final PsiParameter parameter) {
+    final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
+    final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false);
+    for (int i = 0; i < references.length; i++) {
+      PsiReference reference = references[i];
+      if (!(reference instanceof PsiReferenceExpression)) continue;
+      final PsiReferenceExpression expression = (PsiReferenceExpression)reference;
+      if (!(expression.getParent() instanceof PsiAssignmentExpression)) continue;
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression.getParent();
+      if (assignmentExpression.getRExpression() != expression) continue;
+      final PsiExpression lExpression = assignmentExpression.getLExpression();
+      if (!(lExpression instanceof PsiReferenceExpression)) continue;
+      final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
+      if (!(element instanceof PsiField)) continue;
+      return true;
+    }
+    return false;
+  }
+
+  private static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
+    PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
+    if (parameter != null) {
+      return parameter;
+    }
+    if (!(element instanceof PsiWhiteSpace)) {
+      element = file.findElementAt(offset-1);
+      if (element == null) return null;
+      parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
+    }
+
+    return parameter;
   }
 
   public String getFamilyName() {
@@ -51,18 +102,19 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    invoke(project, !ApplicationManager.getApplication().isUnitTestMode());
+    invoke(project, editor, file, !ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  private void invoke(final Project project, boolean isInteractive) {
+  private void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
+    myParameter = forcedParameter ? myParameter : findParameterAtCursor(file, editor);
     if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
+    final PsiType type = getType();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
-    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, myType);
+    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, type);
     String[] names = suggestedNameInfo.names;
 
     String fieldNameToCalc;
@@ -74,7 +126,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       List<String> namesList = new ArrayList<String>();
       namesList.addAll(Arrays.asList(names));
       String defaultName = styleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
-      if (!namesList.contains(defaultName)) namesList.add(0, defaultName);
+      if (!namesList.contains(defaultName)) {
+        namesList.add(0, defaultName);
+      }
       else {
         Collections.swap(namesList, 0, namesList.indexOf(defaultName));
       }
@@ -83,7 +137,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
         project,
         names,
-        myType.getCanonicalText(), targetClass);
+        type.getCanonicalText(), targetClass);
       dialog.show();
 
       if (!dialog.isOK()) return;
@@ -106,7 +160,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           PsiManager psiManager = PsiManager.getInstance(project);
           PsiElementFactory factory = psiManager.getElementFactory();
 
-          PsiField field = factory.createField(fieldName, myType);
+          PsiField field = factory.createField(fieldName, type);
 
           if (isFinal) {
             PsiModifierList modifierList = field.getModifierList();

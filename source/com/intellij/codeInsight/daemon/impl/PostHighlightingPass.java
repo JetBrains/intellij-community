@@ -1,14 +1,13 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -275,8 +274,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
       count = myRefCountHolder.getReadRefCount(field);
       if (count == 0) {
-        String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING,
-                                              new Object[]{identifier.getText()});
+        String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, new Object[]{identifier.getText()});
         final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, field));
@@ -338,9 +336,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           PsiIdentifier identifier = parameter.getNameIdentifier();
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
           final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-          if (method.isConstructor()) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, new CreateFieldFromParameterAction(parameter));
-          }
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter));
           return highlightInfo;
         }

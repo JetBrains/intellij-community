@@ -41,6 +41,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new EJBImplementationAction(), new String[]{"EJB"});
     registerIntentionAndMetaData(new EJBDeclarationAction(), new String[]{"EJB"});
 
+    addAction(new CreateFieldFromParameterAction());
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String[] category) {
