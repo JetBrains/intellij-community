@@ -70,7 +70,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   protected TextEditorBasedStructureViewModel(final Editor editor) {
-    LOG.assertTrue(editor != null);
     myEditor = editor;
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
@@ -103,6 +102,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   public final Object getCurrentEditorElement() {
+    if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
     PsiElement element = getPsiFile().findElementAt(offset);
     while (!isSutable(element)) {
