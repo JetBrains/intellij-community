@@ -1,6 +1,7 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <name>Plugin DevKit</name>
+  <id>DevKit</id>
   <description>IntelliJ IDEA plugins development kit</description>
   <version>0.0.1</version>
   <vendor>JetBrains</vendor>
