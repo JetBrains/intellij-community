@@ -39,7 +39,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
 
   public PsiElement[] getDescriptionElements() {
     ChameleonTransforming.transformChildren(this);
-    ArrayList array = new ArrayList();
+    ArrayList<ASTNode> array = new ArrayList<ASTNode>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == DOC_TAG) break;
@@ -47,7 +47,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         array.add(child);
       }
     }
-    return (PsiElement[])array.toArray(new PsiElement[array.size()]);
+    return array.toArray(new PsiElement[array.size()]);
   }
 
   public PsiDocTag[] getTags() {
@@ -77,7 +77,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   public PsiDocTag[] findTagsByName(String name) {
-    ArrayList array = new ArrayList();
+    ArrayList<PsiDocTag> array = new ArrayList<PsiDocTag>();
     PsiDocTag[] tags = getTags();
     name = "@" + name;
     for (int i = 0; i < tags.length; i++) {
@@ -86,7 +86,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         array.add(tag);
       }
     }
-    return (PsiDocTag[])array.toArray(new PsiDocTag[array.size()]);
+    return array.toArray(new PsiDocTag[array.size()]);
   }
 
   public IElementType getTokenType() {
