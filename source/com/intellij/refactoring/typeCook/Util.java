@@ -414,7 +414,7 @@ public class Util {
         return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
       }
 
-      return createArrayType(type, level);
+      return type;
     }
   }
 

@@ -33,6 +33,7 @@ public class Result {
 
   private int myCookedNumber = -1;
   private int myCastsRemoved = -1;
+  private final int myCastsNumber;
 
   private Binding myBinding;
 
@@ -41,6 +42,7 @@ public class Result {
     myTypes = system.myTypes;
     mySettings = system.mySettings;
     myCasts = system.myCasts;
+    myCastsNumber = myCasts.size();
   }
 
   public void incorporateSolution(final Binding binding) {
@@ -58,7 +60,7 @@ public class Result {
     if (myBinding != null) {
       final PsiType type = myBinding.substitute(myTypes.get(element));
 
-      if (type == null && originalType.getCanonicalText().equals("java.lang.Object")){
+      if (type == null && originalType.getCanonicalText().equals("java.lang.Object")) {
         return originalType;
       }
 
@@ -97,18 +99,28 @@ public class Result {
     if (mySettings.dropObsoleteCasts()) {
       myCastsRemoved = 0;
 
-      for (final Iterator<PsiTypeCastExpression> c = myCasts.iterator(); c.hasNext();) {
-        final PsiTypeCastExpression cast = c.next();
+      while (myCasts.size() > 0) {
+        final PsiTypeCastExpression cast = myCasts.iterator().next();
 
-        if (cast.getType().equals(cast.getOperand().getType())) {
-          try {
-            cast.replace(cast.getOperand());
-            myCastsRemoved++;
-          }
-          catch (IncorrectOperationException e1) {
-            LOG.error(e1);
-          }
-        }
+        cast.accept(new PsiRecursiveElementVisitor() {
+                      public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+                        super.visitTypeCastExpression(expression);
+
+                        if (myCasts.contains(expression)) {
+                          if (expression.getType().equals(expression.getOperand().getType())) {
+                            try {
+                              expression.replace(expression.getOperand());
+                              myCastsRemoved++;
+                            }
+                            catch (IncorrectOperationException e1) {
+                              LOG.error(e1);
+                            }
+                          }
+
+                          myCasts.remove(expression);
+                        }
+                      }
+                    });
       }
     }
   }
@@ -119,6 +131,6 @@ public class Result {
 
   public String getReport() {
     return "Items cooked : " + getRatio(myCookedNumber, myVictims.size()) + "\n" +
-           "Casts removed: " + getRatio(myCastsRemoved, myCasts.size()) + "\n";
+           "Casts removed: " + getRatio(myCastsRemoved, myCastsNumber) + "\n";
   }
 }

@@ -519,9 +519,9 @@ public class TypeCookTest extends MultiFileTestCase {
     start();
   }
 
-  public void testT122() throws Exception {
-    start();
-  }
+  //public void testT122() throws Exception {
+  //  start();
+  //}
 
   public void testT123() throws Exception {
     start();

@@ -8,6 +8,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
@@ -694,7 +695,25 @@ public class SystemBuilder {
                         super.visitTypeCastExpression(expression);
 
                         system.addCast(expression);
-                        system.addSubtypeConstraint(e.valuateType(expression.getOperand()), e.valuateType(expression));
+                        final PsiType operandType = e.valuateType(expression.getOperand());
+                        final PsiType castType = e.valuateType(expression);
+
+                        if (operandType.getDeepComponentType() instanceof PsiTypeVariable || castType.getDeepComponentType() instanceof PsiTypeVariable) {
+                          system.addSubtypeConstraint(operandType, castType);
+                        }
+                        else {
+                          final PsiClassType.ClassResolveResult operandResult = Util.resolveType(operandType);
+                          final PsiClassType.ClassResolveResult castResult = Util.resolveType(castType);
+
+                          final PsiClass operandClass = operandResult.getElement();
+                          final PsiClass castClass = castResult.getElement();
+
+                          if (operandClass != null && castClass != null) {
+                            if (InheritanceUtil.isCorrectDescendant(operandClass, castClass, true)) {
+                              system.addSubtypeConstraint(operandType, castType);
+                            }
+                          }
+                        }
                       }
 
                       public void visitVariable(final PsiVariable variable) {
@@ -811,7 +830,7 @@ public class SystemBuilder {
         }
       }.brrrr(definedType, elemenType);
 
-      if (mySettings.cookObjects() && elemenType.getCanonicalText().equals("java.lang.Object")){
+      if (mySettings.cookObjects() && elemenType.getCanonicalText().equals("java.lang.Object")) {
         system.addSubtypeConstraint(definedType, elemenType);
       }
     }
