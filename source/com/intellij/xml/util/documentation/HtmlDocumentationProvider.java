@@ -73,7 +73,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       key = ((XmlAttribute)element).getName();
     } else {
       nameElement = element;
-      isTag = element.getParent() instanceof XmlTag;
+      isTag = !(element.getParent() instanceof XmlAttribute);
     }
 
     if (nameElement!=null) {
