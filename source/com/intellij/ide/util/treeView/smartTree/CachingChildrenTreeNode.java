@@ -190,7 +190,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   private int getIndexOfPointerToTheSameValue(final CachingChildrenTreeNode oldInstance) {
     for (int i = 0; i < myChildren.size(); i++) {
-      CachingChildrenTreeNode newInstance = myChildren.get(0);
+      CachingChildrenTreeNode newInstance = myChildren.get(i);
 
       if (newInstance instanceof TreeElementWrapper) {
         final StructureViewTreeElement newElement = ((StructureViewTreeElement)newInstance.getValue());

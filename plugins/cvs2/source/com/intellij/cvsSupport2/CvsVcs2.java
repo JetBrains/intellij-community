@@ -50,7 +50,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   private Cvs2Configurable myConfigurable;
 
-
+  
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private MyFileStatusProvider myFileStatusProvider = new MyFileStatusProvider();
   private final CvsHistoryProvider myCvsHistoryProvider;

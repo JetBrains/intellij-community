@@ -5,22 +5,21 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
 
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
-  private final PsiClass mySuperClass;
+  private final SmartPsiElementPointer mySuperClassPointer;
   private final boolean myOverrides;
   private static final Icon OVERRIDING_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   private static final Icon IMLLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
 
   public SuperTypeGroup(PsiClass superClass, boolean overrides) {
     myOverrides = overrides;
-    mySuperClass = superClass;
+    mySuperClassPointer = SmartPointerManager.getInstance(superClass.getProject()).createSmartPsiElementPointer(superClass);
   }
 
   public boolean contains(TreeElement o) {
@@ -31,7 +30,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
       PsiMethod superMethod = ref.get();
       if (superMethod == null) return false;
       PsiClass superClass = superMethod.getContainingClass();
-      if (!superClass.equals(mySuperClass)) return false;
+      if (!superClass.equals(getSuperClass())) return false;
       boolean overrides = SuperTypesGrouper.methodOverridesSuper(method, superMethod);
       if (overrides != myOverrides) return false;
       method.putUserData(SuperTypesGrouper.SUPER_METHOD_KEY, null);
@@ -41,6 +40,10 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
       return false;
     }
 
+  }
+
+  private PsiClass getSuperClass() {
+    return (PsiClass)mySuperClassPointer.getElement();
   }
 
   public ItemPresentation getPresentation() {
@@ -64,7 +67,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public String toString() {
-    return mySuperClass.getName();
+    return getSuperClass().getName();
   }
 
   public boolean equals(Object o) {
@@ -74,14 +77,14 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     final SuperTypeGroup superTypeGroup = (SuperTypeGroup)o;
 
     if (myOverrides != superTypeGroup.myOverrides) return false;
-    if (mySuperClass != null ? !mySuperClass.equals(superTypeGroup.mySuperClass) : superTypeGroup.mySuperClass != null) return false;
+    if (getSuperClass() != null ? !getSuperClass() .equals(superTypeGroup.getSuperClass() ) : superTypeGroup.getSuperClass()  != null) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = (mySuperClass != null ? mySuperClass.hashCode() : 0);
+    result = (getSuperClass()  != null ? getSuperClass() .hashCode() : 0);
     result = 29 * result + (myOverrides ? 1 : 0);
     return result;
   }
@@ -91,7 +94,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public int getAccessLevel() {
-    return PsiUtil.getAccessLevel(mySuperClass.getModifierList());
+    return PsiUtil.getAccessLevel(getSuperClass() .getModifierList());
   }
 
   public int getSubLevel() {
