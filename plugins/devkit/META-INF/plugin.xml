@@ -1,0 +1,51 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+  <name>Plugin DevKit</name>
+  <description>IntelliJ IDEA plugins development kit</description>
+  <version>0.0.1</version>
+  <vendor>JetBrains</vendor>
+  <idea-version since-build="3000"/>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.DevKitPlugin</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.run.PluginConfigurationType</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.sandbox.SandboxManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.sandbox.SandboxConfigurable</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.module.PluginTemplatesFactory</implementation-class>
+    </component>
+  </application-components>
+
+  <module-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.module.ModuleSandboxManager</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.j2ee.make.ModuleBuildProperties</interface-class>
+      <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildProperties</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.j2ee.make.ModuleBuildDescriptor</interface-class>
+      <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildDescriptor</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleProperties</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
+  </module-components>
+</idea-plugin>

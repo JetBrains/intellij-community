@@ -1,0 +1,7 @@
+import java.util.ArrayList;
+
+public class X {
+  Object createList() {
+    return new ArrayList();
+  }
+}

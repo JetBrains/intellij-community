@@ -1,0 +1,17 @@
+<html>
+<body><table height="170"> <tr  height="150"> <td valign = "top" height="150">
+<font face="verdana" size="-1">This inspection reports any instances of calls to a specified list of
+methods where the result of that call is ignored.  For many method, ignoring the result is perfectly
+legitimate, but for some method it is almost certainly an error.  Examples of methods where ignoring
+the result ofa call is likely to be an error  inclued <b><font color="#000080">java.io.inputStream.read()</font></b>,
+which returns the number of bytes actually read, any method on
+<b><font color="#000080">java.lang.String </font></b> or <b><font color="#000080">java.math.BigInteger</font></b>,
+as all of those methods are side-effect free and thus pointless if ignored</font>
+
+<p>
+Use the panel below to enter the class names and method names of the methods you wish to check for
+ignored returns.  Class names must be specified as a simple string, while method names may be
+specified using a standard Java regular expression.  Specifying a class names implicitly specifies
+that class and all of it's subclasses.
+</td> </tr> <tr height="20"> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

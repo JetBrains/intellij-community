@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<project name="InspectionGadgets" default="compile">
+    <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpathref="project.class.path"/>
+    <property name="src.dir" value="src"/>
+    <property name="idea.dir" value="c:/IntelliJ-IDEA-3075"/>
+    <property name="idea.plugin.dir" value="${idea.dir}/plugins"/>
+    <property name="debug" value="true"/>
+    <property name="optimize" value="off"/>
+    <property name="deprecation" value="off"/>
+    <property name="project.fullname" value="InspectionGadgets"/>
+    <property name="project.version" value="1.0"/>
+    <property name="jar.file" value="InspectionGadgets.jar"/>
+    <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
+
+    <path id="project.class.path">
+        <pathelement location="${idea.dir}/lib/openAPI.jar"/>
+        <pathelement location="${idea.dir}/lib/idea.jar"/>
+        <pathelement location="${idea.dir}/lib/jdom.jar"/>
+    </path>
+
+    <target name="init">
+        <property name="build.classes.dir" value="classes"/>
+        <property name="src.dir" value="src"/>
+        <property name="build.compiler" value="modern"/>
+    </target>
+
+    <target name="prepare" depends="init">
+        <mkdir dir="${build.classes.dir}"/>
+    </target>
+
+    <target name="compile" depends="prepare">
+        <javac2 srcdir="${src.dir}" destdir="${build.classes.dir}" includes="com/siyeh/**" debug="${debug}">
+            <classpath refid="project.class.path"/>
+        </javac2>
+    </target>
+
+    <target name="deploy" depends="clean, compile" description="deploy the plugin">
+        <delete file="${jar.file}"/>
+        <jar
+            jarfile="${jar.file}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir=".">
+                <include name="META-INF/plugin.xml"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="inspectionDescriptions/*.html"/>
+            </fileset>
+        </jar>
+        <mkdir dir="${idea.plugin.dir}"/>
+        <copy file="${jar.file}" todir="${idea.plugin.dir}" overwrite="true" />
+    </target>
+
+    <target name="clean" depends="init" description="Cleans up the distribution">
+        <delete failonerror="false"  dir="${build.classes.dir}"/>
+        <delete failonerror="false"  file="${jar.file}"/>
+    </target>
+
+    <target name="ship" depends="init" description="Makes jars for shipping">
+        <move file="${jar.file}" todir="C:\"  />
+        <delete dir="${build.classes.dir}"/>
+        <zip zipfile="c:\${project.fullname}.zip">
+            <fileset dir=".">
+                <include name="**/*"/>
+            </fileset>
+        </zip>
+    </target>
+
+    <target name="sync" depends="clean" description="Dump it to the watch">
+        <sync todir="E:\InspectionGadgets">
+        <fileset dir=".">
+            <include name="**/*"/>
+        </fileset>
+        </sync>
+    </target>
+</project>

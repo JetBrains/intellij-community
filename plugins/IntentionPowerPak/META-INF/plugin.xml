@@ -1,0 +1,12 @@
+<idea-plugin>
+    <name>Intention Power Pack</name>
+    <description>Over thirty new intention actions for IDEA</description>
+    <version>0.9</version>
+    <vendor>InspectionGadgets Software</vendor>
+    <idea-version min="4.0" max="4.1"/>
+    <project-components>
+        <component>
+            <implementation-class>com.siyeh.ipp.IntentionPowerPack</implementation-class>
+        </component>
+    </project-components>
+</idea-plugin>

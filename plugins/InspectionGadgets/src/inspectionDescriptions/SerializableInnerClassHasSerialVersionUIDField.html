@@ -1,0 +1,17 @@
+<html>
+<body><table height="170"> <tr  height="150"> <td valign = "top" height="150">
+<font face="verdana" size="-1">
+This inspection reports any instances of <b><font color="#000080">Serializable</font></b> non-static
+inner classes which do not provide a <b><font color="#000080">serialVersionUID</font></b> field.
+Without a  <b><font color="#000080">serialVersionUID</font></b> field, any change to a class will make previously serialized versions unreadable.
+It is strongly recommended that <b><font color="#000080">Serializable</font></b> non-static inner classes have
+a <b><font color="#000080">serialVersionUID</font></b> field, otherwise the default serialization algorithm
+may result in serialized versions being incompatible between compilers, due to differences in synthetic
+accessor methods.
+<p>
+Use the checkbox below to specify whether this inspection should report classes which are only serializable
+due to inheriting from serializable classes.  Such classes are often not intended for serialization, and so
+this inspection would report unnecessarily.
+</font>
+</td> </tr> <tr height="20"> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>

@@ -1,0 +1,50 @@
+package com.siyeh.ig.methodmetrics;
+
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.MethodInspection;
+
+public class MethodWithMultipleLoopsInspection extends MethodInspection {
+
+    public String getDisplayName() {
+        return "Method with multiple loops";
+    }
+
+    public String getGroupDisplayName() {
+        return GroupNames.METHODMETRICS_GROUP_NAME;
+    }
+
+    public String buildErrorString(PsiElement location) {
+        final PsiMethod method = (PsiMethod) location.getParent();
+        final LoopCountVisitor visitor = new LoopCountVisitor();
+        method.accept(visitor);
+        final int negationCount = visitor.getCount();
+        return "#ref contains " + negationCount + " loops #loc";
+    }
+
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+        return new MethodWithMultipleLoopsVisitor(this, inspectionManager, onTheFly);
+    }
+
+    private static class MethodWithMultipleLoopsVisitor extends BaseInspectionVisitor {
+        private MethodWithMultipleLoopsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+            super(inspection, inspectionManager, isOnTheFly);
+        }
+
+        public void visitMethod(PsiMethod method) {
+            // note: no call to super
+            final LoopCountVisitor visitor = new LoopCountVisitor();
+            method.accept(visitor);
+            final int negationCount = visitor.getCount();
+            if (negationCount <= 1) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
+
+}

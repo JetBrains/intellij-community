@@ -1,0 +1,26 @@
+<idea-plugin>
+    <name>Inspection Gadgets</name>
+    <category>inspection</category>
+    <description>Over 320 new automated code inspections for IDEA</description>
+    <vendor>InspectionGadgets Software</vendor>
+    <version>1.0</version>
+    <idea-version min="4.0" max="4.1"/>
+
+    <application-components>
+        <component>
+            <implementation-class>com.siyeh.ig.InspectionGadgetsPlugin</implementation-class>
+        </component>
+    </application-components>
+
+    <actions>
+
+        <group>
+            <action id="InspectionGadgets.Toggle"
+                class="com.siyeh.ig.TogglePluginAction"
+                text="_InspectionGadgets error highlighting">
+                <keyboard-shortcut first-keystroke="alt I" keymap="$default"/>
+            </action>
+            <add-to-group group-id="AnalyzeMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>

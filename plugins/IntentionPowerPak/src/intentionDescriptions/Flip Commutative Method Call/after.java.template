@@ -1,0 +1,5 @@
+public class X {
+  void f(Object x) {
+    if (x.equals(this)) return;
+  }
+}
