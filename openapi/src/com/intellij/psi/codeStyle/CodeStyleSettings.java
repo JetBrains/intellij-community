@@ -791,6 +791,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   //-----------------------------------JSPX formatting settings-----------------------------
   public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
+  public boolean JSPX_USE_HTML_FORMATTER = false;
   //----------------------------------------------------------------------------------------
   private CodeStyleSettings myParentSettings;
 

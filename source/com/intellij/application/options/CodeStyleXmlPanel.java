@@ -36,11 +36,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
@@ -56,37 +51,11 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
-    myPreviewPanel.setLayout(new BorderLayout());
-    myPreviewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
 
-    ActionListener actionListener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updatePreview();
-      }
-    };
-
-    myKeepBlankLines.addActionListener(actionListener);
-    myWrapAttributes.addActionListener(actionListener);
-    myKeepWhiteSpaces.addActionListener(actionListener);
-    myAlignAttributes.addActionListener(actionListener);
-    mySpacesAroundEquality.addActionListener(actionListener);
-    mySpacesAroundTagName.addActionListener(actionListener);
-
-    myKeepBlankLines.getDocument().addDocumentListener(new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-
-      public void insertUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-    });
+    addPanelToWatch(myPanel);
   }
 
   protected int getRightMargin() {

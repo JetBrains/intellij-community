@@ -52,12 +52,15 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.UserActivityWatcher;
+import com.intellij.ui.UserActivityListener;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.awt.*;
 
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
@@ -70,10 +73,20 @@ public abstract class CodeStyleAbstractPanel {
                                                        CodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
+  private UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
   public CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
+    myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
+      public void stateChanged() {
+        updatePreview();
+      }
+    });
+  }
+
+  protected void addPanelToWatch(Component component) {
+    myUserActivityWatcher.register(component);
   }
 
   protected final Editor createEditor() {
@@ -217,5 +230,10 @@ public abstract class CodeStyleAbstractPanel {
     catch (IOException e) {
       return "";
     }
+  }
+
+  protected void installPreviewPanel(final JPanel previewPanel) {
+    previewPanel.setLayout(new BorderLayout());
+    previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 }

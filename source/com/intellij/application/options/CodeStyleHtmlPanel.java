@@ -37,9 +37,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -67,50 +64,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
-    myPreviewPanel.setLayout(new BorderLayout());
-    myPreviewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
     fillWrappingCombo(myTextWrapping);
 
-    ActionListener actionListener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updatePreview();
-      }
-    };
-
-    myKeepBlankLines.addActionListener(actionListener);
-    myWrapAttributes.addActionListener(actionListener);
-    myTextWrapping.addActionListener(actionListener);
-    myKeepWhiteSpaces.addActionListener(actionListener);
-    myAlignAttributes.addActionListener(actionListener);
-    mySpacesAroundEquality.addActionListener(actionListener);
-    mySpacesAroundTagName.addActionListener(actionListener);
-    myAlignText.addActionListener(actionListener);
-
-    final DocumentListener documentListener = new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-
-      public void insertUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        updatePreview();
-      }
-    };
-
-    myKeepBlankLines.getDocument().addDocumentListener(documentListener);
-
-    myInsertNewLineTagNames.getDocument().addDocumentListener(documentListener);
-    myRemoveNewLineTagNames.getDocument().addDocumentListener(documentListener);
-    myDoNotAlignChildrenTagNames.getDocument().addDocumentListener(documentListener);
-    myDoNotAlignChildrenMinSize.getDocument().addDocumentListener(documentListener);
-    myTextElementsTagNames.getDocument().addDocumentListener(documentListener);
-    myKeepWhiteSpacesTagNames.getDocument().addDocumentListener(documentListener);
-    myShouldKeepBlankLines.addActionListener(actionListener);
+    addPanelToWatch(myPanel);
 
     myShouldKeepBlankLines.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

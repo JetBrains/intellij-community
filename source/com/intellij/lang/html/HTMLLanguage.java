@@ -8,6 +8,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.impl.source.tree.ElementType;
 
 /**
  * Created by IntelliJ IDEA.
