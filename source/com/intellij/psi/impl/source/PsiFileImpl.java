@@ -54,16 +54,24 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
                         IElementType contentElementType,
                         String name,
                         CharSequence text) {
-    super((PsiManagerImpl)PsiManager.getInstance(project), (RepositoryTreeElement)Factory.createCompositeElement(elementType));
+    this(project, (FileElement)Factory.createCompositeElement(elementType), elementType, contentElementType, name);
+    final FileElement parent = getTreeElement();
+    char[] chars = CharArrayUtil.fromSequence(text);
+    TreeElement contentElement = createContentLeafElement(chars, 0, text.length(), parent.getCharTable());
+    TreeUtil.addChildren(parent, contentElement);
+  }
+
+  protected PsiFileImpl(Project project,
+                      FileElement fileElement,
+                      IElementType elementType,
+                      IElementType contentElementType,
+                      String name) {
+    super((PsiManagerImpl)PsiManager.getInstance(project), fileElement);
     LOG.assertTrue(name != null);
     myName = name;
     myFile = null;
     myElementType = elementType;
     myContentElementType = contentElementType;
-    final FileElement parent = getTreeElement();
-    char[] chars = CharArrayUtil.fromSequence(text);
-    TreeElement contentElement = createContentLeafElement(chars, 0, text.length(), parent.getCharTable());
-    TreeUtil.addChildren(parent, contentElement);
     myModificationStamp = LocalTimeCounter.currentTime();
   }
 

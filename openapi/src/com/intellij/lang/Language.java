@@ -43,7 +43,7 @@ public abstract class Language {
     return null;
   }
 
-  public ParserDefinition getParserDefinition(Project project) {
+  public ParserDefinition getParserDefinition() {
     return null;
   }
 

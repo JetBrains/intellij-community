@@ -23,7 +23,7 @@ public class DTDLanguage extends Language {
     return new XmlFileHighlighter(true);
   }
 
-  public ParserDefinition getParserDefinition(Project project) {
+  public ParserDefinition getParserDefinition() {
     return new DTDParserDefinition();
   }
 }

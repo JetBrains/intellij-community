@@ -33,7 +33,7 @@ public class HTMLLanguage extends XMLLanguage {
     return ENCODE_EACH_SYMBOL_POLICY;
   }
 
-  public ParserDefinition getParserDefinition(Project project) {
+  public ParserDefinition getParserDefinition() {
     return new HTMLParserDefinition();
   }
 }

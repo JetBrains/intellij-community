@@ -1,14 +1,16 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TreeUtil {
@@ -32,6 +34,19 @@ public class TreeUtil {
       if (types.isInSet(element.getElementType())) return element;
     }
     return null;
+  }
+
+  public static ASTNode[] findChildren(ASTNode parent, TokenSet types) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    List<ASTNode> result = new ArrayList<ASTNode>();
+    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
+      if (types.isInSet(element.getElementType())) {
+        result.add(element);
+      }
+    }
+    return result.toArray(new ASTNode[result.size()]);
   }
 
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {

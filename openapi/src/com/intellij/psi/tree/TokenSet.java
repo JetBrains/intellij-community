@@ -36,6 +36,7 @@ import gnu.trove.THashSet;
 import java.util.Arrays;
 
 public class TokenSet {
+  public static final TokenSet EMPTY = new TokenSet();
   private final THashSet<IElementType> mySet = new THashSet<IElementType>(100, (float)0.1);
 
   public IElementType[] getTypes() {

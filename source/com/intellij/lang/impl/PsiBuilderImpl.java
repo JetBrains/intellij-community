@@ -6,6 +6,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 
 import java.util.ArrayList;
@@ -21,39 +22,65 @@ import java.util.List;
 public class PsiBuilderImpl implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
-  private List<Lexem> myLexems = new ArrayList<Lexem>();
-  private List<Object> myProduction = new ArrayList<Object>();
+  private List<Token> myLexems = new ArrayList<Token>();
+  private List<ProductionMarker> myProduction = new ArrayList<ProductionMarker>();
 
   private Lexer myLexer;
   private boolean myFileLevelParsing;
+  private TokenSet myWhitespaces;
+  private TokenSet myComments;
   private int myCurrentLexem;
   private CharTable myCharTable;
-  private boolean myStarted = false;
 
-  public PsiBuilderImpl(final Lexer lexer, final CharTable charTable, boolean fileLevelParsing) {
+  public PsiBuilderImpl(final Lexer lexer, final CharTable charTable, boolean fileLevelParsing, TokenSet whitespaces, TokenSet comments) {
     myCharTable = charTable;
     myLexer = lexer;
     myFileLevelParsing = fileLevelParsing;
+    myWhitespaces = whitespaces;
+    myComments = comments;
   }
 
-  private static class MarkerImpl implements Marker {
+  private class StartMarker extends ProductionMarker implements Marker {
     public IElementType myType;
-    public int myLexemIndex;
     public DoneMarker myDoneMarker = null;
 
-    public MarkerImpl(final IElementType type, int idx) {
+    public StartMarker(int idx) {
+      super(idx);
+    }
+
+    public Marker preceed() {
+      return PsiBuilderImpl.this.preceed(this);
+    }
+
+    public void drop() {
+      PsiBuilderImpl.this.drop(this);
+    }
+
+    public void rollbackTo() {
+      PsiBuilderImpl.this.rollbackTo(this);
+    }
+
+    public void done(IElementType type) {
       myType = type;
-      myLexemIndex = idx;
+      PsiBuilderImpl.this.done(this);
     }
   }
 
-  private class LexemImpl implements Lexem {
+  private Marker preceed(final StartMarker marker) {
+    int idx = myProduction.indexOf(marker);
+    LOG.assertTrue(idx >= 0, "Cannot preceed dropped or rolled-back marker");
+    StartMarker pre = new StartMarker(marker.myLexemIndex);
+    myProduction.add(idx, pre);
+    return pre;
+  }
+
+  public class Token {
     private IElementType myTokenType;
     private int myTokenStart;
     private int myTokenEnd;
     private int myState;
 
-    public LexemImpl() {
+    public Token() {
       myTokenType = myLexer.getTokenType();
       myTokenStart = myLexer.getTokenStart();
       myTokenEnd = myLexer.getTokenEnd();
@@ -69,50 +96,74 @@ public class PsiBuilderImpl implements PsiBuilder {
     }
   }
 
-  private static class DoneMarker {
-    public MarkerImpl myMarker;
+  private static class ProductionMarker {
+    public int myLexemIndex;
 
-    public DoneMarker(final MarkerImpl marker) {
-      myMarker = marker;
+    public ProductionMarker(final int lexemIndex) {
+      myLexemIndex = lexemIndex;
     }
   }
 
-  private static class ErrorItem {
+  private static class DoneMarker extends ProductionMarker {
+    public StartMarker myStart;
+
+    public DoneMarker(final StartMarker marker, int currentLexem) {
+      super(currentLexem);
+      myStart = marker;
+    }
+  }
+
+  private static class ErrorItem extends ProductionMarker {
     String myMessage;
 
-    public ErrorItem(final String message) {
+    public ErrorItem(final String message, int idx) {
+      super(idx);
       myMessage = message;
     }
   }
 
+  public IElementType getTokenType() {
+    final Token lex = getCurrentToken();
+    final IElementType tokenType = lex == null ? null : lex.getTokenType();
+    LOG.assertTrue(!whitespaceOrComment(tokenType));
+    return tokenType;
+  }
+
   public void advanceLexer() {
-    myProduction.add(getCurrentLexem());
     myCurrentLexem++;
-    if (myCurrentLexem > myLexems.size()) {
-      LOG.assertTrue(!eof());
-      final Lexem lxm = advanceOriginalLexer();
-      if (lxm == null) return;
-      myLexems.add(lxm);
+  }
+
+  public Token getCurrentToken() {
+    Token lastToken;
+    while(true) {
+      lastToken = getTokenOrWhitespace();
+      if (lastToken == null) return null;
+      if (whitespaceOrComment(lastToken.getTokenType())) {
+        myCurrentLexem++;
+      }
+      else {
+        break;
+      }
     }
+
+    return lastToken;
   }
 
-  private Lexem advanceOriginalLexer() {
-    myLexer.advance();
-    return myLexer.getTokenType() == null ? null : new LexemImpl();
-  }
-
-
-  public Lexem getCurrentLexem() {
+  private Token getTokenOrWhitespace() {
+    if (myCurrentLexem >= myLexems.size()) {
+      if (myLexer.getTokenType() == null) return null;
+      myLexems.add(new Token());
+      myLexer.advance();
+    }
     return myLexems.get(myCurrentLexem);
   }
 
-  public Marker start(IElementType symbol) {
-    if (!myStarted) {
-      myStarted = true;
-      myLexems.add(new LexemImpl());
-    }
+  private boolean whitespaceOrComment(IElementType token) {
+    return myWhitespaces.isInSet(token) || myComments.isInSet(token);
+  }
 
-    MarkerImpl marker = new MarkerImpl(symbol, myCurrentLexem);
+  public Marker mark() {
+    StartMarker marker = new StartMarker(myCurrentLexem);
     myProduction.add(marker);
     return marker;
   }
@@ -120,14 +171,11 @@ public class PsiBuilderImpl implements PsiBuilder {
   public boolean eof() {
     if (myCurrentLexem + 1 < myLexems.size()) return false;
     if (myLexer.getTokenType() == null) return true;
-    final Lexem lxm = advanceOriginalLexer();
-    if (lxm == null) return true;
-    myLexems.add(lxm);
-    return false;
+    return getCurrentToken() == null;
   }
 
   public void rollbackTo(Marker marker) {
-    myCurrentLexem = ((MarkerImpl)marker).myLexemIndex;
+    myCurrentLexem = ((StartMarker)marker).myLexemIndex;
     int idx = myProduction.lastIndexOf(marker);
 
     LOG.assertTrue(idx >= 0, "The marker must be added before rolled back to.");
@@ -142,31 +190,31 @@ public class PsiBuilderImpl implements PsiBuilder {
   }
 
   public void done(Marker marker) {
-    LOG.assertTrue(((MarkerImpl)marker).myDoneMarker == null, "Marker already done.");
+    LOG.assertTrue(((StartMarker)marker).myDoneMarker == null, "Marker already done.");
     int idx = myProduction.lastIndexOf(marker);
     LOG.assertTrue(idx >= 0, "Marker never been added.");
 
     for (int i = myProduction.size() - 1; i > idx; i--) {
       Object item = myProduction.get(i);
       if (item instanceof Marker) {
-        MarkerImpl otherMarker = (MarkerImpl)item;
+        StartMarker otherMarker = (StartMarker)item;
         if (otherMarker.myDoneMarker == null) {
           LOG.error("Another not done marker of type [" + otherMarker.myType + "] added after this one. Must be done before this.");
         }
       }
     }
 
-    DoneMarker doneMarker = new DoneMarker((MarkerImpl)marker);
-      ((MarkerImpl)marker).myDoneMarker = doneMarker;
+    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, myCurrentLexem);
+    ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
   }
 
-  public void insertErrorElement(String messageText) {
-    myProduction.add(new ErrorItem(messageText));
+  public void error(String messageText) {
+    myProduction.add(new ErrorItem(messageText, myCurrentLexem));
   }
 
   public ASTNode getTreeBuilt() {
-    MarkerImpl rootMarker = (MarkerImpl)myProduction.get(0);
+    StartMarker rootMarker = (StartMarker)myProduction.get(0);
 
     final ASTNode rootNode;
     if (myFileLevelParsing) {
@@ -179,28 +227,22 @@ public class PsiBuilderImpl implements PsiBuilder {
     }
 
     ASTNode curNode = rootNode;
+    int curToken = 0;
     for (int i = 1; i < myProduction.size(); i++) {
       LOG.assertTrue(curNode != null, "Unexpected end of the production");
-      Object item = myProduction.get(i);
-      if (item instanceof LexemImpl) {
-        LexemImpl lexem = (LexemImpl)item;
-        final LeafPsiElement childNode = new LeafPsiElement(lexem.getTokenType(),
-                                                            myLexer.getBuffer(),
-                                                            lexem.myTokenStart,
-                                                            lexem.myTokenEnd,
-                                                            lexem.myState,
-                                                            myCharTable);
-        TreeUtil.addChildren((CompositeElement)curNode, childNode);
-      }
-      else if (item instanceof MarkerImpl) {
-        MarkerImpl marker = (MarkerImpl)item;
+      ProductionMarker item = myProduction.get(i);
+      int lexIndex = item.myLexemIndex;
+      if (item instanceof StartMarker) {
+        StartMarker marker = (StartMarker)item;
+        curToken = insertLeafs(curToken, lexIndex, curNode);
         ASTNode childNode = new CompositeElement(marker.myType);
         TreeUtil.addChildren((CompositeElement)curNode, (TreeElement)childNode);
         curNode = childNode;
       }
       else if (item instanceof DoneMarker) {
         DoneMarker doneMarker = (DoneMarker)item;
-        LOG.assertTrue(doneMarker.myMarker.myType == curNode.getElementType());
+        curToken = insertLeafs(curToken, lexIndex, curNode);
+        LOG.assertTrue(doneMarker.myStart.myType == curNode.getElementType());
         curNode = curNode.getTreeParent();
       }
       else if (item instanceof ErrorItem) {
@@ -210,8 +252,24 @@ public class PsiBuilderImpl implements PsiBuilder {
       }
     }
 
+    LOG.assertTrue(curToken == myLexems.size(), "Not all of the tokens inserted to the tree");
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
     return rootNode;
+  }
+
+  private int insertLeafs(int curToken, final int lastIdx, final ASTNode curNode) {
+    while (curToken < lastIdx) {
+      Token lexem = myLexems.get(curToken++);
+      final IElementType type = lexem.getTokenType();
+      final LeafPsiElement childNode = new LeafPsiElement(type,
+                                                          myLexer.getBuffer(),
+                                                          lexem.myTokenStart,
+                                                          lexem.myTokenEnd,
+                                                          lexem.myState,
+                                                          myCharTable);
+      TreeUtil.addChildren((CompositeElement)curNode, childNode);
+    }
+    return curToken;
   }
 }

@@ -37,7 +37,7 @@ public class JavaLanguage extends Language {
     };
   }
 
-  public ParserDefinition getParserDefinition(Project project) {
+  public ParserDefinition getParserDefinition() {
     return new JavaParserDefinition();
   }
 }

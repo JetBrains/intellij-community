@@ -1,10 +1,10 @@
 package com.intellij.lang;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.Key;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Key;
  * To change this template use File | Settings | File Templates.
  */
 public interface ASTNode extends UserDataHolder {
+  ASTNode[] EMPTY_ARRAY = new ASTNode[0];
+
   IElementType getElementType();
 
   String getText();
@@ -59,4 +61,8 @@ public interface ASTNode extends UserDataHolder {
   <T> T getCopyableUserData(Key<T> key);
 
   <T> void putCopyableUserData(Key<T> key, T value);
+
+  ASTNode findChildByType(IElementType type);
+
+  ASTNode[] findChildrenByFilter(TokenSet filter);
 }

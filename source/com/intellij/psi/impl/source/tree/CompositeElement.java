@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -12,7 +13,6 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -130,6 +130,14 @@ public class CompositeElement extends TreeElement implements Cloneable {
       }
       return null;
     }
+  }
+
+  public ASTNode findChildByType(IElementType type) {
+    return TreeUtil.findChild(this, type);
+  }
+
+  public ASTNode[] findChildrenByFilter(TokenSet filter) {
+    return TreeUtil.findChildren(this, filter);
   }
 
   public String getText() {

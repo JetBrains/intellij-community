@@ -1,12 +1,11 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.lang.ASTNode;
-import sun.plugin.dom.exception.InvalidStateException;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
@@ -123,6 +122,14 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public abstract int getCharTabIndex();
+
+  public ASTNode findChildByType(IElementType type) {
+    return null;
+  }
+
+  public ASTNode[] findChildrenByFilter(TokenSet filter) {
+    return ASTNode.EMPTY_ARRAY;
+  }
 
   public ASTNode getFirstChildNode() {
     return null;

@@ -14,10 +14,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,7 +48,15 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public PsiElement[] getChildren() {
-    return new PsiElement[0];
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    ASTNode child = getNode().getFirstChildNode();
+    while (child != null) {
+      if (child instanceof CompositeElement) {
+        result.add(childNodeToPsi(child));
+      }
+      child = child.getTreeNext();
+    }
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   public PsiElement getParent() {
@@ -209,7 +222,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public PsiElement getContext() {
-    throw new UnsupportedOperationException();
+    return ResolveUtil.getContext(this);
   }
 
   public boolean isPhysical() {
@@ -260,6 +273,10 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public ASTNode getNode() {
     return myNode;
+  }
+
+  public PsiElement childNodeToPsi(ASTNode node) {
+    return SourceTreeToPsiMap.treeElementToPsi(node);
   }
 
   public Language getLanguage() {

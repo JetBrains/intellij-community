@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -57,10 +56,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
-
-  static {
-    Logger.setFactory(TestLoggerFactory.getInstance());
-  }
+  private String oldCodeStyleSettings;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.

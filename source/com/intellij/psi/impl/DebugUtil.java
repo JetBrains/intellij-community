@@ -1,6 +1,8 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -11,7 +13,6 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -44,6 +45,24 @@ public class DebugUtil {
     return buffer.toString();
   }
 
+  //TODO: remove this method. Necessary for debug purposes while we do not have PsiElement's for javascript
+  public static PsiElement treeElementToPsi(ASTNode element) {
+    ProgressManager.getInstance().checkCanceled();
+
+    if (element == null) return null;
+
+    if (element instanceof PsiElement) {
+      return (PsiElement)element;
+    }
+    else if (element instanceof RepositoryTreeElement) {
+      return RepositoryElementsManager.getOrFindPsiElement((RepositoryTreeElement)element);
+    }
+    else {
+      PsiElement psiElement = element.getUserData(TreeElement.PSI_ELEMENT_KEY);
+      return psiElement;
+    }
+  }
+
   private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
@@ -51,7 +70,13 @@ public class DebugUtil {
       buffer.append(' ');
     }
     if (root instanceof CompositeElement) {
-      buffer.append(SourceTreeToPsiMap.treeElementToPsi(root).toString());
+      final PsiElement psiElement = treeElementToPsi(root);
+      if (psiElement != null) {
+        buffer.append(psiElement.toString());
+      }
+      else {
+        buffer.append(root.getElementType().toString());
+      }
     }
     else {
       String text = root.getText();

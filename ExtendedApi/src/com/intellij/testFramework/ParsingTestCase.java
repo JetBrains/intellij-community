@@ -1,11 +1,11 @@
 
-package com.intellij.psi;
+package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.testFramework.LightIdeaTestCase;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,8 +18,12 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
 
   public ParsingTestCase(String dataPath, String fileExt) {
     myDataPath = dataPath;
-    myFullDataPath = PathManagerEx.getTestDataPath() + "/psi/" + myDataPath;
+    myFullDataPath = testDataPath() + "/psi/" + myDataPath;
     myFileExt = fileExt;
+  }
+
+  protected String testDataPath() {
+    return PathManagerEx.getTestDataPath();
   }
 
   protected void doTest(boolean checkResult) throws Exception{
@@ -30,12 +34,12 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
       checkResult(name + ".txt", file);
     }
     else{
-      DebugUtil.treeToString(com.intellij.psi.impl.source.SourceTreeToPsiMap.psiElementToTree(file), false);
+      toParseTreeText(file);
     }
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
-    String treeText = DebugUtil.treeToString(com.intellij.psi.impl.source.SourceTreeToPsiMap.psiElementToTree(file), false).trim();
+    String treeText = toParseTreeText(file).trim();
     try{
       String expectedText = loadFile(targetDataName);
       /*
@@ -61,6 +65,10 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
       writer.close();
       assertTrue("No output file found. Created.", false);
     }
+  }
+
+  private String toParseTreeText(final PsiFile file) {
+    return DebugUtil.treeToString(com.intellij.psi.impl.source.SourceTreeToPsiMap.psiElementToTree(file), false);
   }
 
   protected String loadFile(String name) throws Exception {

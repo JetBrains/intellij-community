@@ -1,7 +1,6 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,28 +10,20 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface PsiBuilder {
+  IElementType getTokenType();
+
   interface Marker {
-  }
-
-  interface Lexem {
-    IElementType getTokenType();
-
-    String getTokenText();
+    Marker preceed();
+    void drop();
+    void rollbackTo();
+    void done(IElementType type);
   }
 
   void advanceLexer();
 
-  Lexem getCurrentLexem();
+  Marker mark();
 
-  Marker start(IElementType symbol);
-
-  void rollbackTo(Marker marker);
-
-  void drop(Marker marker);
-
-  void done(Marker marker);
-
-  void insertErrorElement(String messageText);
+  void error(String messageText);
 
   boolean eof();
 

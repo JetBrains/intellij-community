@@ -1,12 +1,13 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.lang.ASTNode;
 
 public class SourceTreeToPsiMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.SourceTreeToPsiMap");
@@ -23,9 +24,15 @@ public class SourceTreeToPsiMap {
       return RepositoryElementsManager.getOrFindPsiElement((RepositoryTreeElement)element);
     }
     else {
+      //TODO!!!
       PsiElement psiElement = element.getUserData(TreeElement.PSI_ELEMENT_KEY);
       if (psiElement != null) return psiElement;
-
+      final Language lang = element.getElementType().getLanguage();
+      if (lang != null) {
+        psiElement = lang.getParserDefinition().createElement(element);
+        element.putUserData(TreeElement.PSI_ELEMENT_KEY, psiElement);
+        return psiElement;
+      }
       LOG.error("Not PsiElement:" + element);
       return null;
     }
