@@ -295,6 +295,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private MoveDestination selectDestination() {
     final String packageName = myWithBrowseButtonReference.getText();
+    if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
+      Messages.showErrorDialog(myProject, "Please enter a valid target package name", "Move");
+      return null;
+    }
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
       final int ret = Messages.showYesNoDialog(myProject, "Package " + packageName + " does not exist.\n" +
