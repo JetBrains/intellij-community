@@ -16,7 +16,7 @@ import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent {
   private Module myModule;
   private boolean myJarPlugin = false;
-  
+
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
   }
@@ -50,7 +50,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public boolean isExplodedEnabled() {
-    return true;//todo synchronize libs for plugin in jar
+    return !myJarPlugin;
   }
 
   public boolean isBuildOnFrameDeactivation() {

@@ -78,16 +78,22 @@ public class PluginRunConfiguration extends RunConfigurationBase {
                                   RunnerInfo runnerInfo,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    final ProjectJdk jdk = rootManager.getJdk();
+    if (jdk == null) {
+      throw CantRunException.noJdkForModule(myModule);
+    }
+    if (!(jdk.getSdkType() instanceof IdeaJdk)) {
+      throw new ExecutionException("Wrong jdk type for plugin module");
+    }
+    final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+
+    //copy license from running instance of idea
+    IdeaLicenseHelper.copyIDEALicencse(sandboxHome, jdk);
+
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        final ProjectJdk jdk = rootManager.getJdk();
-        if (jdk == null) {
-          throw CantRunException.noJdkForModule(myModule);
-        }
-        if (!(jdk.getSdkType() instanceof IdeaJdk)) {
-          throw new ExecutionException("Wrong jdk type for plugin module");
-        }
+
         final JavaParameters params = new JavaParameters();
 
         ParametersList vm = params.getVMParametersList();
@@ -95,7 +101,6 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         String libPath = jdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
 
-        final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
         vm.defineProperty("idea.config.path", sandboxHome + File.separator + "config");
         vm.defineProperty("idea.system.path", sandboxHome + File.separator + "system");
         vm.defineProperty("idea.plugins.path", sandboxHome + File.separator + "plugins");

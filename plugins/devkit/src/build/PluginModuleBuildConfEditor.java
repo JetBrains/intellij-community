@@ -97,17 +97,20 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     }
     final String toDelete = !myJar.isSelected() ? myBuildProperties.getJarPath() != null ? myBuildProperties.getJarPath().replace('/', File.separatorChar) : null :
                                                   myBuildProperties.getExplodedPath() != null ? myBuildProperties.getExplodedPath().replace('/', File.separatorChar) : null;
-    if (myModified && toDelete != null && new File(toDelete).exists() && Messages.showYesNoDialog(myBuildProperties.getModule().getProject(),
-                                                                !myJar.isSelected() ? "Delete " : "Clear " + toDelete + "?",
-                                                                "Clean up plugin directory", null) == DialogWrapper.OK_EXIT_CODE) {
-      CommandProcessor.getInstance().executeCommand(myBuildProperties.getModule().getProject(),
-                                                    new Runnable() {
-                                                      public void run() {
-                                                        FileUtil.delete(new File(toDelete));
-                                                      }
-                                                    },
-                                                    "Synchronize plugins directory",
-                                                    null);
+    if (myModified && toDelete != null && new File(toDelete).exists()) {
+      if (Messages.showYesNoDialog(myBuildProperties.getModule().getProject(),
+                                                                      (!myJar.isSelected() ? "Delete " : "Clear ") + toDelete + "?",
+                                                                      "Clean up plugin directory", null) == DialogWrapper.OK_EXIT_CODE) {
+
+        CommandProcessor.getInstance().executeCommand(myBuildProperties.getModule().getProject(),
+                                                      new Runnable() {
+                                                        public void run() {
+                                                          FileUtil.delete(new File(toDelete));
+                                                        }
+                                                      },
+                                                      "Synchronize plugins directory",
+                                                      null);
+      }
     }
     myBuildProperties.setJarPlugin(myJar.isSelected());
     myModified = false;
