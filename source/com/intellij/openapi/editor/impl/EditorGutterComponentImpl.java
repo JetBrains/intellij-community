@@ -9,9 +9,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1130,13 +1130,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class MyDragSourceListener implements DragSourceListener{
     public void dragEnter(DragSourceDragEvent dsde) {
-      setCursor (dsde.getDragSourceContext());
+      dsde.getDragSourceContext().setCursor(null);//setCursor (dsde.getDragSourceContext());
     }
 
     public void dragOver(DragSourceDragEvent dsde) {}
 
     public void dropActionChanged(DragSourceDragEvent dsde) {
-      setCursor (dsde.getDragSourceContext());
+      dsde.getDragSourceContext().setCursor(null);//setCursor (dsde.getDragSourceContext());
     }
 
     private void setCursor (DragSourceContext context) {
