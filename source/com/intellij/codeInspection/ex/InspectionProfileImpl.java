@@ -368,12 +368,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
   }
 
-  public InspectionTool getInspectionTool(String displayName) {
-    if (myTools.get(displayName) != null) {
-      return myTools.get(displayName);
+  public InspectionTool getInspectionTool(String shortName) {
+    if (myTools.get(shortName) != null) {
+      return myTools.get(shortName);
     }
-    if (myLocalTools.get(displayName) != null) {
-      return myLocalTools.get(displayName);
+    if (myLocalTools.get(shortName) != null) {
+      return myLocalTools.get(shortName);
     }
     return null;
   }

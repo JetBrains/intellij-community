@@ -17,7 +17,7 @@ public interface InspectionProfile {
 
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey);
 
-  InspectionTool getInspectionTool(String displayName);
+  InspectionTool getInspectionTool(String shortName);
 
   InspectionTool[] getInspectionTools(Project project);
 

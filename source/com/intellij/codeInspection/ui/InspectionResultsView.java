@@ -1,28 +1,33 @@
 package com.intellij.codeInspection.ui;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -30,6 +35,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
@@ -58,6 +65,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -73,11 +81,16 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private Splitter mySplitter;
   private Map<String, InspectionGroupNode> myGroups = null;
   private OccurenceNavigator myOccurenceNavigator;
+  private InspectionProfile myInspectionProfile;
+  private AnalysisScope myScope;
+  public static final String HELP_ID = "codeInspection";
 
-  public InspectionResultsView(final Project project) {
+  public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope) {
     setLayout(new BorderLayout());
 
     myProject = project;
+    myInspectionProfile = inspectionProfile;
+    myScope = scope;
     myTree = new InspectionTree(project);
     myOccurenceNavigator = new OccurenceNavigatorSupport(myTree) {
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
@@ -124,8 +137,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          Float newProportion = (Float)evt.getNewValue();
-          manager.setLeftSplitterProportion(newProportion.floatValue());
+          final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
+          manager.setSplitterProportion(((Float)evt.getNewValue()).floatValue());
         }
       }
     });
@@ -185,12 +198,19 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     });
 
     add(mySplitter, BorderLayout.CENTER);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new CloseAction());
+    group.add(new RerunAction(this));
+    group.add(manager.createToggleAutoscrollAction());
+    group.add(new PreviousOccurenceToolbarAction(getOccurenceNavigator()));
+    group.add(new NextOccurenceToolbarAction(getOccurenceNavigator()));
+    group.add(new ExportHTMLAction());
+    group.add(new EditSettingsAction());
+    group.add(new HelpAction());
+    group.add(new InvokeQuickFixAction());
 
-    DefaultActionGroup commonActionGroup = new DefaultActionGroup();
-    manager.addCommonActions(commonActionGroup, this);
-    commonActionGroup.add(new InvokeQuickFixAction());
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION,
-                                                                                  commonActionGroup, false);
+                                                                                  group, false);
     add(actionToolbar.getComponent(), BorderLayout.WEST);
   }
 
@@ -221,6 +241,106 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
     }
   }
+
+
+  private class CloseAction extends AnAction {
+    private CloseAction() {
+      super("Close", null, IconLoader.getIcon("/actions/cancel.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).close();
+      myInspectionProfile.cleanup();
+    }
+  }
+
+  private class EditSettingsAction extends AnAction {
+    private EditSettingsAction() {
+      super("Edit Settings", "Edit Settings", IconLoader.getIcon("/general/ideOptions.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
+      final String currentProfileName = manager.getCurrentProfile().getName();
+      manager.setExternalProfile(myInspectionProfile);
+      final InspectionCodeSettingsPanel dlg = new InspectionCodeSettingsPanel(manager, myScope);
+      dlg.show();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          manager.setExternalProfile(null);
+          if (dlg.isOK()){
+            myInspectionProfile = manager.getCurrentProfile();
+            manager.setProfile(InspectionProfileManager.getInstance().getProfile(currentProfileName));
+            InspectionResultsView.this.update(myInspectionProfile.getInspectionTools(myProject));
+          }
+        }
+      });
+    }
+  }
+
+  private void exportHTML() {
+    ExportToHTMLDialog exportToHTMLDialog = new ExportToHTMLDialog(myProject);
+    final ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myProject);
+    if (exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
+      exportToHTMLSettings.OUTPUT_DIRECTORY = PathManager.getHomePath() + File.separator + "exportToHTML";
+    }
+    exportToHTMLDialog.reset();
+    exportToHTMLDialog.show();
+    if (!exportToHTMLDialog.isOK()) {
+      return;
+    }
+    exportToHTMLDialog.apply();
+
+    final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final Runnable exportRunnable = new Runnable() {
+      public void run() {
+        HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myProject);
+        maker.start();
+        try {
+          exportHTML(maker);
+        }
+        catch (ProcessCanceledException e) {
+          // Do nothing here.
+        }
+
+        maker.done();
+      }
+    };
+
+        if (!ApplicationManager.getApplication()
+          .runProcessWithProgressSynchronously(exportRunnable, "Generating HTML...", true, myProject)) {
+          return;
+        }
+
+        if (exportToHTMLSettings.OPEN_IN_BROWSER) {
+          BrowserUtil.launchBrowser(exportToHTMLSettings.OUTPUT_DIRECTORY + File.separator + "index.html");
+        }
+      }
+    });
+  }
+
+  private static class HelpAction extends AnAction {
+    private HelpAction() {
+      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+    }
+
+    public void actionPerformed(AnActionEvent event) {
+      HelpManager.getInstance().invokeHelp(HELP_ID);
+    }
+  }
+
+  private class ExportHTMLAction extends AnAction {
+    public ExportHTMLAction() {
+      super("Export HTML", null, IconLoader.getIcon("/actions/export.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      exportHTML();
+    }
+  }
+
 
   private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
     OpenFileDescriptor descriptor = null;
@@ -270,7 +390,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
           showInBrowser(problemNode.getElement(), problemNode.getDescriptor());
-        } else if (node instanceof InspectionNode){
+        }
+        else if (node instanceof InspectionNode) {
           showInBrowser(((InspectionNode)node).getTool());
         }
         else {
@@ -287,7 +408,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     setCursor(currentCursor);
   }
 
-  public void showInBrowser(InspectionTool tool){
+  public void showInBrowser(InspectionTool tool) {
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
     myBrowser.showDescription(tool);
@@ -337,11 +458,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   public boolean update(InspectionTool[] tools) {
     myTree.removeAllNodes();
     boolean resultsFound = false;
-    final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     myGroups = new HashMap<String, InspectionGroupNode>();
     for (int i = 0; i < tools.length; i++) {
       InspectionTool tool = tools[i];
-      if (manager.getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
+      if (myInspectionProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
         addTool(tool);
         resultsFound |= tool.hasReportedProblems();
       }
@@ -383,7 +503,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
     InspectionTool tool = node.getTool();
     HTMLExporter exporter = new HTMLExporter(frameMaker.getRootFolder() + "/" + tool.getFolderName(),
-                                             tool.getComposer(), myProject);
+      tool.getComposer(), myProject);
     frameMaker.startInspection(tool);
     exportHTML(tool, exporter);
     exporter.generateReferencedPages();
@@ -489,7 +609,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       PsiElement psiElement = element.getElement();
       if (psiElement != null && psiElement.isValid()) {
         if (!psiElement.isWritable()) {
-          final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
+          final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject)
+              .ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
           if (operationStatus.hasReadonlyFiles()) {
             return;
           }
@@ -498,11 +619,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             Runnable command = new Runnable() {
-              public void run() {
-                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-                fix.applyFix(myProject, descriptor);
-              }
-            };
+          public void run() {
+            CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+            fix.applyFix(myProject, descriptor);
+          }
+        };
             CommandProcessor.getInstance().executeCommand(myProject, command, fix.getName(), null);
             ((DescriptorProviderInspection)getSelectedTool()).ignoreProblem(element, descriptor);
             ((InspectionManagerEx)InspectionManager.getInstance(myProject)).refreshViews();
@@ -664,6 +785,16 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         actions.add(quickFixes[i]);
       }
     }
+    actions.add(new AnAction("Edit Tool Settings") {
+      public void actionPerformed(AnActionEvent e) {
+        new SwitchOffToolAction(HighlightDisplayKey.find(tool.getShortName())).editToolSettings(myProject, myInspectionProfile);
+        InspectionResultsView.this.update(myInspectionProfile.getInspectionTools(myProject));
+      }
+
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(!myInspectionProfile.getName().equals("Default"));
+      }
+    });
     actions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
 
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.CODE_INSPECTION, actions);
@@ -747,5 +878,45 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   public boolean isSingleToolInSelection() {
     return getSelectedTool() != null;
+  }
+
+  private class RerunAction extends AnAction {
+    public RerunAction(JComponent comp) {
+      super("Rerun Inspection", "Rerun Inspection", IconLoader.getIcon("/actions/refreshUsages.png"));
+      registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myScope.isValid());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      rerun();
+    }
+  }
+
+  private void rerun() {
+    if (myScope.isValid()) {
+      final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
+      inspectionManagerEx.setExternalProfile(myInspectionProfile);
+      inspectionManagerEx.doInspections(myScope, false);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          inspectionManagerEx.setExternalProfile(null);
+        }
+      });
+    }
+  }
+
+
+  private class InspectionCodeSettingsPanel extends InspectCodePanel {
+    public InspectionCodeSettingsPanel(final InspectionManagerEx manager, final AnalysisScope scope) {
+      super(manager, scope);
+      setOKButtonText("OK");
+    }
+
+    protected void setOKActionEnabled(boolean isEnabled) {
+      super.setOKActionEnabled(true);
+    }
   }
 }

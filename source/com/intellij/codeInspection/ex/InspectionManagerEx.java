@@ -7,24 +7,16 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.export.ExportToHTMLDialog;
-import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.actions.NextOccurenceToolbarAction;
-import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -54,7 +46,6 @@ import org.jdom.Document;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
@@ -84,7 +75,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public static final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor("Processing external usages of ");
   public static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor("Analyzing code in ");
 
-  public static final String HELP_ID = "codeInspection";
 
   public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "com.intellij.util.annotations.NoInspection";
@@ -243,6 +233,22 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return false;
   }
 
+  public UIOptions getUIOptions() {
+    return myUIOptions;
+  }
+
+  public void setSplitterProportion(final float proportion) {
+    myUIOptions.SPLITTER_PROPORTION = proportion;
+  }
+
+  public ToggleAction createToggleAutoscrollAction() {
+    return myUIOptions.myAutoScrollToSourceHandler.createToggleAction();
+  }
+
+  public void installAutoscrollHandler(JTree tree) {
+    myUIOptions.myAutoScrollToSourceHandler.install(tree);
+  }
+
   public interface DerivedClassesProcessor {
     boolean process(PsiClass inheritor);
   }
@@ -343,12 +349,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     });
   }
 
-  private void rerun() {
-    if (myCurrentScope.isValid()) {
-      cleanup();
-      doInspections(myCurrentScope, false);
-    }
-  }
+
 
   public RefManager getRefManager() {
     if (myRefManager == null) {
@@ -604,7 +605,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runInspection, "Inspecting Code...", true, myProject)) return;
 
-    InspectionResultsView view = new InspectionResultsView(myProject);
+    InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
     InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
     if (!view.update(tools)) {
       Messages.showMessageDialog(myProject,
@@ -756,146 +757,35 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     }
   }
 
-  public UIOptions getUIOptions() {
-    return myUIOptions;
-  }
-
-  public class UIOptions implements JDOMExternalizable {
-    public boolean AUTOSCROLL_TO_SOURCE = false;
-    public float SPLITTER_PROPORTION = 0.5f;
-    public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-
-    public UIOptions() {
-      myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
-        protected boolean isAutoScrollMode() {
-          return AUTOSCROLL_TO_SOURCE;
-        }
-
-        protected void setAutoScrollMode(boolean state) {
-          AUTOSCROLL_TO_SOURCE = state;
-        }
-      };
-    }
-
-    public void readExternal(org.jdom.Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
-    }
-
-    public void writeExternal(org.jdom.Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-  }
-
-  private class CloseAction extends AnAction {
-    private CloseAction() {
-      super("Close", null, IconLoader.getIcon("/actions/cancel.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      close();
-    }
-  }
-
   public void close() {
     getContentManager().removeAllContents();
     cleanup();
   }
 
-  public void addCommonActions(DefaultActionGroup group, InspectionResultsView view) {
-    group.add(new CloseAction());
-    group.add(createToggleAutoscrollAction());
-    group.add(new RerunAction(view));
-    group.add(new PreviousOccurenceToolbarAction(view.getOccurenceNavigator()));
-    group.add(new NextOccurenceToolbarAction(view.getOccurenceNavigator()));
-    group.add(new ExportHTMLAction());
-    group.add(new HelpAction());
-  }
+  public class UIOptions implements JDOMExternalizable {
+      public boolean AUTOSCROLL_TO_SOURCE = false;
+      public float SPLITTER_PROPORTION = 0.5f;
+      public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
-  public ToggleAction createToggleAutoscrollAction() {
-    return myUIOptions.myAutoScrollToSourceHandler.createToggleAction();
-  }
+      public UIOptions() {
+        myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+          protected boolean isAutoScrollMode() {
+            return AUTOSCROLL_TO_SOURCE;
+          }
 
-  public void installAutoscrollHandler(JTree tree) {
-    myUIOptions.myAutoScrollToSourceHandler.install(tree);
-  }
-
-  private void exportHTML() {
-    ExportToHTMLDialog exportToHTMLDialog = new ExportToHTMLDialog(myProject);
-    final ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myProject);
-    if (exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
-      exportToHTMLSettings.OUTPUT_DIRECTORY = PathManager.getHomePath() + File.separator + "exportToHTML";
-    }
-    exportToHTMLDialog.reset();
-    exportToHTMLDialog.show();
-    if (!exportToHTMLDialog.isOK()) {
-      return;
-    }
-    exportToHTMLDialog.apply();
-
-    final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final Runnable exportRunnable = new Runnable() {
-          public void run() {
-            HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myProject);
-            maker.start();
-            try {
-              myView.exportHTML(maker);
-            }
-            catch (ProcessCanceledException e) {
-              // Do nothing here.
-            }
-
-            maker.done();
+          protected void setAutoScrollMode(boolean state) {
+            AUTOSCROLL_TO_SOURCE = state;
           }
         };
-
-        if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(exportRunnable, "Generating HTML...", true, myProject)) return;
-
-        if (exportToHTMLSettings.OPEN_IN_BROWSER) {
-          BrowserUtil.launchBrowser(exportToHTMLSettings.OUTPUT_DIRECTORY + File.separator + "index.html");
-        }
       }
-    });
-  }
 
-  public void setLeftSplitterProportion(float proportion) {
-    getUIOptions().SPLITTER_PROPORTION = proportion;
-  }
+      public void readExternal(Element element) throws InvalidDataException {
+        DefaultJDOMExternalizer.readExternal(this, element);
+      }
 
-  private static class HelpAction extends AnAction {
-    private HelpAction() {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp(HELP_ID);
-    }
-  }
-
-  private class ExportHTMLAction extends AnAction {
-    public ExportHTMLAction() {
-      super("Export HTML", null, IconLoader.getIcon("/actions/export.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      exportHTML();
-    }
-  }
-
-  private class RerunAction extends AnAction {
-    public RerunAction(JComponent comp) {
-      super("Rerun Inspection", "Rerun Inspection", IconLoader.getIcon("/actions/refreshUsages.png"));
-      registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myCurrentScope.isValid());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      rerun();
-    }
+      public void writeExternal(Element element) throws WriteExternalException {
+        DefaultJDOMExternalizer.writeExternal(this, element);
+      }
   }
 
   public String getComponentName() {
