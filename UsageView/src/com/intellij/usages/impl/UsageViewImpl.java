@@ -694,7 +694,8 @@ public class UsageViewImpl implements UsageView {
     if (node == null) return null;
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
-      return (Navigatable)userObject;
+      final Navigatable navigatable = (Navigatable)userObject;
+      return navigatable.canNavigate() ? navigatable : null;
     }
     return null;
   }
