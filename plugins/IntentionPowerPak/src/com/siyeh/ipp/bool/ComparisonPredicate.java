@@ -1,7 +1,9 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 
 class ComparisonPredicate implements PsiElementPredicate

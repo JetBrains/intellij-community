@@ -5,13 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class RemoveBooleanEqualityIntention extends MutablyNamedIntention
 {
-    public RemoveBooleanEqualityIntention(Project project)
-    {
-        super(project);
-    }
 
     protected String getTextForElement(PsiElement element)
     {

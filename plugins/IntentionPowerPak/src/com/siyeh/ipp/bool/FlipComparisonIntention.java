@@ -4,15 +4,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 
 public class FlipComparisonIntention extends MutablyNamedIntention
 {
-    public FlipComparisonIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getTextForElement(PsiElement element)
     {

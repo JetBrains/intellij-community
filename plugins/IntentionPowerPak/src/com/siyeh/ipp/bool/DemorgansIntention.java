@@ -6,14 +6,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.*;
 
 public class DemorgansIntention extends MutablyNamedIntention
 {
-    public DemorgansIntention(Project project)
-    {
-        super(project);
-    }
 
     protected String getTextForElement(PsiElement element)
     {
