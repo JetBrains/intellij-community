@@ -12,6 +12,7 @@ import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
+import com.incors.plaf.alloy.IdeaAlloyLAF;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -35,6 +36,8 @@ import java.util.Iterator;
  */
 public final class LafManager implements ApplicationComponent,JDOMExternalizable{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
+
+  private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
 
   /**
    * One of the possible values of -Didea.popup.weight property. Heavy weight means
@@ -121,7 +124,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
   }
 
   public void initComponent() {
-    setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // set IDEA's default LAF
+    setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specfied by readExternal.
     updateUI();
   }
 
@@ -168,7 +171,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
 
   /**
    * @return default LookAndFeelInfo for the running OS. For Win32 and
-   * Linux the method returns IDEA LAF, for Mac OS X it returns Aqua
+   * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
    */
   private UIManager.LookAndFeelInfo getDefaultLaf(){
     if(SystemInfo.isMac){
@@ -176,13 +179,14 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
       LOG.assertTrue(laf!=null);
       return laf;
     }
-    else{
-      return findLaf(null);
+    else {
+      UIManager.LookAndFeelInfo alloy = findLaf(IdeaAlloyLAF.class.getName());
+      return alloy != null ? alloy : findLaf(IDEA_LAF_CLASSNAME);
     }
   }
 
   /**
-   * Finds LAF by its class name. <code>null</code> argument means that IDEA's default LAF
+   * Finds LAF by its class name.
    * will be returned.
    */
   private UIManager.LookAndFeelInfo findLaf(String className){
@@ -206,7 +210,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
 
     // Set L&F
 
-    if(lookAndFeelInfo.getClassName()==null){ // that is IDEA default LAF
+    if(IDEA_LAF_CLASSNAME.equals(lookAndFeelInfo.getClassName())){ // that is IDEA default LAF
       IdeaLaf laf=new IdeaLaf();
       IdeaLaf.setCurrentTheme(new com.intellij.ui.IdeaBlueMetalTheme());
       try {
@@ -409,7 +413,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
 
   private static final class IdeaLookAndFeelInfo extends UIManager.LookAndFeelInfo{
     public IdeaLookAndFeelInfo(){
-      super("IDEA (default)",null);
+      super("IDEA (4.5 default)", IDEA_LAF_CLASSNAME);
     }
 
     public boolean equals(Object obj){
