@@ -34,13 +34,14 @@ public class ExpressionParsing extends Parsing {
   }
 
   public static TreeElement parseExpressionText(final Lexer originalLexer,
-                                                      final char[] buffer,
-                                                      final int startOffset,
-                                                      final int endOffset,
-                                                      final CharTable table) {
+                                                final char[] buffer,
+                                                final int startOffset,
+                                                final int endOffset,
+                                                final CharTable table,
+                                                PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
-    final FileElement dummyRoot = new DummyHolder(null, null, table).getTreeElement();
+    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     ParsingContext context = new ParsingContext(table);
     CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
     if (expression != null)

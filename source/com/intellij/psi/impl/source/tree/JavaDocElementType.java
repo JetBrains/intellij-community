@@ -26,7 +26,7 @@ public interface JavaDocElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
-                                                  ((LeafElement)chameleon).getState(), false);
+                                                  ((LeafElement)chameleon).getState(), false, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
@@ -36,7 +36,7 @@ public interface JavaDocElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
-                                                  ((LeafElement)chameleon).getState(), true);
+                                                  ((LeafElement)chameleon).getState(), true, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };

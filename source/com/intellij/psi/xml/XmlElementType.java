@@ -49,7 +49,7 @@ public interface XmlElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars);
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
@@ -58,7 +58,7 @@ public interface XmlElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars);
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
@@ -68,7 +68,7 @@ public interface XmlElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XHTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars);
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
@@ -79,7 +79,7 @@ public interface XmlElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDParser parser = new DTDParser();
       try {
-        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
       }
       catch (ParsingException e) {}       
       return null;
@@ -92,7 +92,7 @@ public interface XmlElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDMarkupParser parser = new DTDMarkupParser();
       try {
-        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
       }
       catch (ParsingException e) {}
       return null;

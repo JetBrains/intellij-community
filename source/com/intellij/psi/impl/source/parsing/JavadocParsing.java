@@ -38,12 +38,17 @@ public class JavadocParsing extends Parsing {
     super(context);
   }
 
-  public static TreeElement parseJavaDocReference(char[] myBuffer, CharTable charTable, Lexer originalLexer, int state, boolean isType) {
+  public static TreeElement parseJavaDocReference(char[] myBuffer,
+                                                  CharTable charTable,
+                                                  Lexer originalLexer,
+                                                  int state,
+                                                  boolean isType,
+                                                  PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(myBuffer, 0, myBuffer.length, state);
     ParsingContext context = new ParsingContext(charTable);
 
-    final FileElement dummyRoot = new DummyHolder(null, null, context.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement element;
 
     if (isType){

@@ -61,7 +61,7 @@ public class XmlParsing implements ElementType {
     ParsingContext context = new ParsingContext(table);
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
-    final FileElement holderElement = new DummyHolder(null, null, table).getTreeElement();
+    final FileElement holderElement = new DummyHolder(SharedImplUtil.getManagerByTree(parent), null, table).getTreeElement();
     final Set<String> names = new HashSet<String>();
     while (parent instanceof XmlTag) {
       names.add(((XmlTag)parent).getName());
