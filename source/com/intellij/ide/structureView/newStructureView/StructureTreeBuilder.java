@@ -106,9 +106,9 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     private void childrenChanged() {
-      if (myOutOfCodeBlockModificationCount == myModificationTracker.getOutOfCodeBlockModificationCount()) {
+      /*if (myOutOfCodeBlockModificationCount == myModificationTracker.getOutOfCodeBlockModificationCount()) {
         return;
-      }
+      }*/
       try {
         ((SmartTreeStructure)getTreeStructure()).rebuildTree();
         myUpdater.addSubtreeToUpdate(myRootNode);

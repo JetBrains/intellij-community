@@ -1,6 +1,7 @@
 package com.intellij.lang;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -8,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.HashMap;
@@ -73,5 +75,9 @@ public abstract class Language {
 
   public String toString() {
     return "Language: " + myID;
+  }
+
+  public StructureViewModel getStructureViewModel(final PsiElement psiElement) {
+    return null;
   }
 }

@@ -1,6 +1,8 @@
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -24,6 +26,11 @@ public abstract class LanguageFileType implements FileType{
 
   public final SyntaxHighlighter getHighlighter(Project project) {
     return myLanguage.getSyntaxHighlighter(project);
+  }
+
+  public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
+    final ParserDefinition parserDefinition = myLanguage.getParserDefinition();
+    return parserDefinition != null ? myLanguage.getStructureViewModel(parserDefinition.createFile(project, file)) : null;
   }
 
   public final boolean isBinary() {
