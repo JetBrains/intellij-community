@@ -98,6 +98,7 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
+      if (iterator.atEnd()) return null;
       final IElementType tokenType = iterator.getTokenType();
       if (tokenType.getLanguage() != myLanguage) return null;
       final BracePair[] pairs = myMatcher.getPairs();
