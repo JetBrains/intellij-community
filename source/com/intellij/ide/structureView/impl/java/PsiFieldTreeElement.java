@@ -3,6 +3,8 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtil;
 
 public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
   public PsiFieldTreeElement(PsiField field, boolean isInherited) {
@@ -18,7 +20,11 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
   }
 
   public String getPresentableText() {
-    return getElement().getName();
+    return PsiFormatUtil.formatVariable(
+      getElement(),
+      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
+      PsiSubstitutor.EMPTY
+    );
   }
 
   public PsiField getField() {

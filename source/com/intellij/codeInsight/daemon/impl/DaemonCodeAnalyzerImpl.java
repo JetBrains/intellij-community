@@ -535,6 +535,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         final boolean wasCanceled = myUpdateProgress.isCanceled();
         final boolean wasRunning = myUpdateProgress.isRunning();
 
+        myUpdateThreadSemaphore.up();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myDisposed) return;
@@ -548,7 +549,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
             }
           }
         }, ModalityState.stateForComponent(editor.getComponent()));
-        myUpdateThreadSemaphore.up();
       }
     };
 
