@@ -723,9 +723,6 @@ public class RenameUtil {
     method.setName(newName);
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
-      if (!usage.getElement().isValid()) {
-        continue;
-      }
       if (usage.getElement() instanceof PsiMethod) {
         ((PsiMethod)usage.getElement()).setName(newName);
       }
