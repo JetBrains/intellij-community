@@ -6,11 +6,12 @@ package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.NavigationItem;
 
 /**
  *
  */
-public interface PsiDirectory extends PsiElement, PsiFileSystemItem {
+public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationItem {
   PsiDirectory[] EMPTY_ARRAY = new PsiDirectory[0];
 
   VirtualFile getVirtualFile();
