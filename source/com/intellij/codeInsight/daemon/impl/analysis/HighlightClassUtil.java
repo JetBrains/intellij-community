@@ -831,7 +831,7 @@ public class HighlightClassUtil {
   public static HighlightInfo reportIllegalEnclosingUsage(final PsiElement place,
                                                           PsiClass aClass, final PsiClass outerClass,
                                                           PsiElement elementToHighlight) {
-    if (!PsiTreeUtil.isAncestor(outerClass, place, false)) {
+    if (outerClass != null && !PsiTreeUtil.isAncestor(outerClass, place, false)) {
       String description = MessageFormat.format("''{0}'' is not an enclosing class",
                                                 new Object[]{outerClass == null ? "" : HighlightUtil.formatClass(outerClass)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
