@@ -390,6 +390,7 @@ public class ExceptionUtil {
       return false;
     }
     else if (parent instanceof PsiClassInitializer) {
+      if (((PsiClassInitializer)parent).hasModifierProperty(PsiModifier.STATIC)) return false;
       // anonymous class initializers can throw any exceptions
       if (!(parent.getParent() instanceof PsiAnonymousClass)) {
         // exception thrown from within class instance initializer must be handled in every class constructor
