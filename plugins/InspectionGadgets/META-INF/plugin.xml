@@ -1,11 +1,14 @@
-
-<idea-plugin>
+<idea-plugin version="2">
     <name>Inspection Gadgets</name>
     <category>inspection</category>
     <description>Over 360 new automated code inspections for IDEA</description>
     <vendor>InspectionGadgets Software</vendor>
     <version>1.0</version>
     <idea-version min="4.0" max="4.1"/>
+
+    <extensions xmlns="com.intellij">
+      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    </extensions>
 
     <application-components>
         <component>
