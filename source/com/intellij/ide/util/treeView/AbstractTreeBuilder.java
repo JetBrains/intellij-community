@@ -198,6 +198,7 @@ public abstract class AbstractTreeBuilder {
   protected final void initRootNode() {
     Object rootElement = myTreeStructure.getRootElement();
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
+    LOG.assertTrue(nodeDescriptor != null, String.valueOf(rootElement));
     myRootNode.setUserObject(nodeDescriptor);
     nodeDescriptor.update();
     if (rootElement != null) {
