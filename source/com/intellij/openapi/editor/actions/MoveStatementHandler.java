@@ -82,13 +82,16 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     int line = nearLine;
     final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
     if (!(file instanceof PsiJavaFile)) {
-      return editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+      return editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
     }
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
       while (element != null) {
-        if ((element instanceof PsiStatement || element instanceof PsiComment) && element.getParent() instanceof PsiCodeBlock) {
+        if ((element instanceof PsiStatement || element instanceof PsiComment)
+            && element.getParent() instanceof PsiCodeBlock
+            && !element.getTextRange().contains(offset)
+        ) {
           return offset;
         }
         if (element instanceof PsiJavaToken
@@ -159,11 +162,12 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     PsiElement elementAt = file.findElementAt(offset);
     if (elementAt == null) return false;
 
-    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
-    // cannot move in/outside method/class/initializer
+    final Class[] classes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class,};
+    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, classes);
+    // cannot move in/outside method/class/initializer/comment
     final int insertOffset = calcInsertOffset(editor, result.startLine, result.endLine);
     elementAt = file.findElementAt(insertOffset);
-    final PsiElement newGuard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
+    final PsiElement newGuard = PsiTreeUtil.getParentOfType(elementAt, classes);
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
 
     // moving in/out nested class is OK
@@ -178,7 +182,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
       ? ((PsiClassInitializer)guard).getBody().getTextRange()
       : guard instanceof PsiClass
       ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(), ((PsiClass)guard).getRBrace().getTextOffset())
-      : null;
+      : guard.getTextRange();
     return inside != null && inside.contains(offset);
   }
 
