@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,7 @@ import java.util.Iterator;
 
 public class ColorAndFontOptions extends BaseConfigurable implements ApplicationComponent {
   private ColorAndFontPanel myPanel;
-  private com.intellij.util.containers.HashMap mySchemes;
+  private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = "Diff";
   private static final String FILE_STATUS_GROUP = "File Status";
@@ -51,8 +52,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   public boolean isModified() {
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
-    for (Iterator iterator = mySchemes.values().iterator(); iterator.hasNext();) {
-      MyColorScheme scheme = (MyColorScheme)iterator.next();
+    for (Iterator<MyColorScheme> iterator = mySchemes.values().iterator(); iterator.hasNext();) {
+      MyColorScheme scheme = iterator.next();
       if (scheme.isModified()) return true;
     }
 
@@ -65,7 +66,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   }
 
   private MyColorScheme getScheme(String name) {
-    return (MyColorScheme)mySchemes.get(name);
+    return mySchemes.get(name);
   }
 
   public EditorColorsScheme getSelectedScheme() {
@@ -81,7 +82,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   }
 
   public String[] getSchemeNames() {
-    ArrayList schemes = new ArrayList(mySchemes.values());
+    ArrayList<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
     Collections.sort(schemes, new Comparator() {
       public int compare(Object o1, Object o2) {
         EditorColorsScheme s1 = (EditorColorsScheme)o1;
@@ -96,7 +97,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
 
     ArrayList<String> names = new ArrayList<String>(schemes.size());
     for (int i = 0; i < schemes.size(); i++) {
-      EditorColorsScheme scheme = (EditorColorsScheme)schemes.get(i);
+      EditorColorsScheme scheme = schemes.get(i);
       names.add(scheme.getName());
     }
 
@@ -132,8 +133,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
       myColorsManager.removeAllSchemes();
-      for (Iterator iterator = mySchemes.values().iterator(); iterator.hasNext();) {
-        MyColorScheme scheme = (MyColorScheme)iterator.next();
+      for (Iterator<MyColorScheme> iterator = mySchemes.values().iterator(); iterator.hasNext();) {
+        MyColorScheme scheme = iterator.next();
         if (!scheme.isDefault()) {
           scheme.apply();
           myColorsManager.addColorsScheme(scheme.getOriginalScheme());
@@ -192,14 +193,14 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme[] allSchemes = colorsManager.getAllSchemes();
 
-    mySchemes = new com.intellij.util.containers.HashMap();
+    mySchemes = new HashMap<String, MyColorScheme>();
     for (int i = 0; i < allSchemes.length; i++) {
       MyColorScheme schemeDelegate = new MyColorScheme(allSchemes[i]);
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
 
-    mySelectedScheme = (MyColorScheme)mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
+    mySelectedScheme = mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
   }
 
   private static void initScheme(MyColorScheme scheme) {
@@ -259,7 +260,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     }
   }
 
-  private static ColorAndFontDescription addEditorSettingDescription(ArrayList array,
+  private static ColorAndFontDescription addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
                                            String name,
                                            String group,
                                            ColorKey backgroundKey,
