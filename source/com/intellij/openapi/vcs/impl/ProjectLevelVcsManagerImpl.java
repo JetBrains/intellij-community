@@ -90,6 +90,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
 
+  public ProjectLevelVcsManagerImpl(Project project) {
+    this(project, new AbstractVcs[0]);
+  }
+
   public ProjectLevelVcsManagerImpl(Project project, AbstractVcs[] vcses) {
     myProject = project;
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
