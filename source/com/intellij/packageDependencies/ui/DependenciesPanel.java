@@ -323,10 +323,7 @@ public class DependenciesPanel extends JPanel {
         setIcon(node.getClosedIcon());
       }
 
-      if (node.hasMarked() && !selected) {
-        setForeground(Color.red);
-      }
-      append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(node.toString(), node.hasMarked() && !selected ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(node.getPresentableFilesCount(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
