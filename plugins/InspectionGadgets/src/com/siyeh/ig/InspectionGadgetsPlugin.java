@@ -339,6 +339,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ResultOfObjectAllocationIgnoredInspection.class);
         inspectionClasses.add(ResultSetIndexZeroInspection.class);
         inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
+        inspectionClasses.add(MalformedRegexInspection.class);
         inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
