@@ -6,6 +6,7 @@
     <component>
       <interface-class>com.intellij.ide.DataManager</interface-class>
       <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
+      <test-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</test-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.actionSystem.ActionManager</interface-class>
