@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 public class RedundantCastUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
   public static List<PsiTypeCastExpression> getRedundantCasts(PsiElement where) {
     final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
     PsiElementProcessor<PsiTypeCastExpression> processor = new PsiBaseElementProcessor<PsiTypeCastExpression>() {
@@ -45,10 +47,6 @@ public class RedundantCastUtil {
           myProcessor.execute(typeCast);
         }
       }
-    }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitElement(expression);
     }
 
     public void visitConditionalExpression(PsiConditionalExpression expression) {
@@ -296,14 +294,15 @@ public class RedundantCastUtil {
       if (fromType == null || toType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (toType instanceof PsiClassType && fromType instanceof PsiPrimitiveType) return; //explicit boxing
-
         //Check accessibility
         if (fromType instanceof PsiClassType) {
-          PsiElement element = ((PsiReferenceExpression)parent).resolve();
+          final PsiReferenceExpression refExpression = ((PsiReferenceExpression)parent);
+          PsiElement element = refExpression.resolve();
           if (!(element instanceof PsiMember)) return;
           PsiClass accessClass = ((PsiClassType)fromType).resolve();
           if (accessClass == null) return;
           if (!parent.getManager().getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
+          if (!isCastRedundantInRefExpression(refExpression, typeCast.getOperand())) return;
         }
       }
 
@@ -311,6 +310,21 @@ public class RedundantCastUtil {
         addToResults(typeCast);
       }
     }
+  }
+
+  private static boolean isCastRedundantInRefExpression (PsiReferenceExpression refExpression, PsiExpression castOperand) {
+    PsiElement resolved = refExpression.resolve();
+    final PsiReferenceExpression copy = (PsiReferenceExpression)refExpression.copy();
+    try {
+      copy.getQualifierExpression().replace(castOperand);
+      if (copy.resolve() != resolved) return false;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return false;
+    }
+
+    return true;
   }
 
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
