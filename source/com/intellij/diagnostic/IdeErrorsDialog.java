@@ -11,6 +11,7 @@ package com.intellij.diagnostic;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -38,8 +39,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private JLabel myCountLabel;
   private JLabel myBlameLabel;
   private JLabel myInfoLabel;
+  private JCheckBox myImmediatePopupCheckbox;
 
   private int myIndex = 0;
+  public static final String IMMEDIATE_POPUP_OPTION = "IMMEDIATE_FATAL_ERROR_POPUP";
 
   public IdeErrorsDialog(MessagePool messagePool) {
     super(JOptionPane.getRootFrame(), false);
@@ -199,6 +202,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel top = new JPanel(new BorderLayout());
     JPanel toolbar = new JPanel(new FlowLayout());
 
+    myImmediatePopupCheckbox = new JCheckBox("Popup this window immediately next time internal error occurs");
+    myImmediatePopupCheckbox.setSelected("true".equals(PropertiesComponent.getInstance().getValue(IMMEDIATE_POPUP_OPTION)));
+
     myCountLabel = new JLabel();
     myBlameLabel = new JLabel();
     myInfoLabel = new JLabel();
@@ -223,6 +229,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     infoPanel.add(gapPanel, BorderLayout.NORTH);
     infoPanel.add(new JScrollPane(myDetailsPane), BorderLayout.CENTER);
     root.add(infoPanel, BorderLayout.CENTER);
+    root.add(myImmediatePopupCheckbox, BorderLayout.SOUTH);
 
     root.setPreferredSize(new Dimension(600, 550));
 
@@ -475,6 +482,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   protected void doOKAction() {
+    PropertiesComponent.getInstance().setValue(IMMEDIATE_POPUP_OPTION, String.valueOf(myImmediatePopupCheckbox.isSelected()));
     markAllAsRead();
     super.doOKAction();
   }
@@ -487,6 +495,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   public void doCancelAction() {
+    PropertiesComponent.getInstance().setValue(IMMEDIATE_POPUP_OPTION, String.valueOf(myImmediatePopupCheckbox.isSelected()));
     markAllAsRead();
     super.doCancelAction();
   }

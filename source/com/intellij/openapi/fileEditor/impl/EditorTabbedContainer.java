@@ -356,7 +356,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
     private final class MyNewHorizontalTabGroupAction extends MyNewTabGroupAction {
       public MyNewHorizontalTabGroupAction(VirtualFile file) {
         super(SwingConstants.HORIZONTAL, file);
-        final AnAction action = ActionManager.getInstance().getAction("SplitHorizontal");
+        final AnAction action = ActionManager.getInstance().getAction("SplitHorizontally");
         copyFrom(action);
       }
     }
@@ -364,7 +364,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
     private final class MyNewVerticalTabGroupAction extends MyNewTabGroupAction {
       public MyNewVerticalTabGroupAction(VirtualFile file) {
         super(SwingConstants.VERTICAL, file);
-        final AnAction action = ActionManager.getInstance().getAction("SplitVertical");
+        final AnAction action = ActionManager.getInstance().getAction("SplitVertically");
         copyFrom(action);
       }
     }

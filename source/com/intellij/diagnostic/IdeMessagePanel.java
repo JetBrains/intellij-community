@@ -4,6 +4,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
@@ -115,19 +116,14 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
       showErrorCallout();
     }
 
-    /*
-    if (isOtherModalWindowActive()) {
-      showErrorCallout();
-      openFatals();
-    } else if ((lastExceptionTimestamp - myPreviousExceptionTimeStamp > 1000)){
-      openFatals();
-    }
-    */
     myPreviousExceptionTimeStamp = lastExceptionTimestamp;
   }
 
   private void showErrorCallout() {
-    if (isShowing()) {
+    if ("true".equals(PropertiesComponent.getInstance().getValue(IdeErrorsDialog.IMMEDIATE_POPUP_OPTION))) {
+      openFatals();
+    }
+    else if (isShowing()) {
       Callout.showText(RelativePoint.getCenterOf(myIdeFatal), Callout.NORTH_WEST, INTERNAL_ERROR_NOTICE);
     }
   }
