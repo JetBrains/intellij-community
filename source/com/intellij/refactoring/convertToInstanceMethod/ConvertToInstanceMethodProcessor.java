@@ -121,14 +121,14 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final Set<PsiMember> methods = Collections.singleton(((PsiMember)myMethod));
     if (!myTargetClass.isInterface()) {
       final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
-      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet(), original)));
+      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), original)));
     }
     else {
       for (int i = 0; i < usageList.length; i++) {
         final UsageInfo usage = usageList[i];
         if (usage instanceof ImplementingClassUsageInfo) {
           conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
-            methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), new LinkedHashSet(), PsiModifier.PUBLIC)));
+            methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), new LinkedHashSet<String>(), PsiModifier.PUBLIC)));
         }
       }
     }

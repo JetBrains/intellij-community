@@ -90,9 +90,9 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
                                               HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;
     }
-    final ConvertToInstanceMethodDialog dialog = new ConvertToInstanceMethodDialog(
+
+    new ConvertToInstanceMethodDialog(
       method,
-      (PsiParameter[])suitableParameters.toArray(new PsiParameter[suitableParameters.size()]));
-    dialog.show();
+      suitableParameters.toArray(new PsiParameter[suitableParameters.size()]), REFACTORING_NAME).show();
   }
 }
