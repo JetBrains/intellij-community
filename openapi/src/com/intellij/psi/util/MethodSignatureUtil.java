@@ -253,13 +253,6 @@ public class MethodSignatureUtil {
                                                      method2.getSignature(PsiSubstitutor.EMPTY));
   }
 
-  public static PsiClass getErasure(PsiClass aClass) {
-    if (!(aClass instanceof PsiTypeParameter)) return aClass;
-    final PsiClass[] bounds = aClass.getSupers();
-    if (bounds.length == 0) return aClass.getManager().findClass("java.lang.Object", aClass.getResolveScope());
-    return bounds[0];
-  }
-
   /**
    * @param methodSignature
    * @param superMethodSignature
@@ -334,15 +327,9 @@ public class MethodSignatureUtil {
       final PsiType[] parameterTypes2 = method2.getParameterTypes();
       if (parameterTypes1.length != parameterTypes2.length) return false;
       for (int i = 0; i < parameterTypes1.length; i++) {
-        final PsiType type1 = parameterTypes1[i];
-        final PsiType type2 = parameterTypes2[i];
-        if (Comparing.equal(type1, type2)) continue;
-        if (!(type1 instanceof PsiClassType)) return false;
-        if (!(type2 instanceof PsiClassType)) return false;
-        final PsiClass aClass1 = getErasure(((PsiClassType)type1).resolve());
-        final PsiClass aClass2 = getErasure(((PsiClassType)type2).resolve());
-        if (aClass1 != null && !aClass1.getManager().areElementsEquivalent(aClass1, aClass2)) return false;
-        if (aClass1 == null != (aClass2 == null)) return false;
+        final PsiType type1 = TypeConversionUtil.erasure(parameterTypes1[i]);
+        final PsiType type2 = TypeConversionUtil.erasure(parameterTypes2[i]);
+        if (!Comparing.equal(type1, type2)) return false;
       }
       return true;
     }
