@@ -12,7 +12,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -35,6 +34,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.CollectionUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -387,7 +387,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myAttributes != null) return myAttributes;
     myAttributeValueMap = new HashMap<String, String>();
 
-    final List<XmlAttribute> result = new ArrayList<XmlAttribute>();
+    final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processElements(
       new PsiBaseElementProcessor() {
         public boolean execute(PsiElement element) {
@@ -403,8 +403,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         }
       }, this
     );
-    if(result.isEmpty()) myAttributeValueMap = Collections.EMPTY_MAP;
-    myAttributes = result.toArray(new XmlAttributeImpl[result.size()]);
+    if(result.isEmpty()){
+      myAttributeValueMap = Collections.EMPTY_MAP;
+      myAttributes = XmlAttribute.EMPTY_ARRAY;
+    }
+    else myAttributes = CollectionUtil.toArray(result, new XmlAttribute[result.size()]);
 
     return myAttributes;
   }

@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -14,13 +14,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Arrays;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
@@ -42,13 +40,15 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return null;
   }
 
-  private int[] myGaps = null;
+  private int[] myGapDisplayStarts = null;
+  private int[] myGapPhysicalStarts = null;
 
   public String getValue() {
     if (myDisplayText != null) return myDisplayText;
     StringBuffer buffer = new StringBuffer();
     ASTNode child = getFirstChildNode();
-    final List<Integer> gaps = new ArrayList<Integer>();
+    final List<Integer> gapsStarts = new ArrayList<Integer>();
+    final List<Integer> gapsShifts = new ArrayList<Integer>();
     while (child != null) {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
@@ -67,8 +67,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
       int end = buffer.length();
       int originalLength = child.getTextLength();
       if (end - start != originalLength) {
-        gaps.add(new Integer(start));
-        gaps.add(new Integer(originalLength - (end - start)));
+        gapsStarts.add(new Integer(start));
+        gapsShifts.add(new Integer(originalLength - (end - start)));
       }
       final ASTNode next = child.getTreeNext();
       if (next == null && child.getTreeParent().getElementType() == XmlElementType.XML_CDATA) {
@@ -78,12 +78,18 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         child = next;
       }
     }
-    myGaps = new int[gaps.size()];
+    myGapDisplayStarts = new int[gapsShifts.size()];
+    myGapPhysicalStarts = new int[gapsShifts.size()];
     int index = 0;
-    final Iterator<Integer> iterator = gaps.iterator();
-    while (iterator.hasNext()) {
-      final Integer integer = iterator.next();
-      myGaps[index++] = integer.intValue();
+    final Iterator<Integer> startsIterator = gapsStarts.iterator();
+    final Iterator<Integer> shiftsIterator = gapsShifts.iterator();
+    int currentGapsSum = 0;
+    while (startsIterator.hasNext()) {
+      final Integer integer = shiftsIterator.next();
+      currentGapsSum += integer.intValue();
+      myGapDisplayStarts[index] = startsIterator.next().intValue();
+      myGapPhysicalStarts[index] = myGapDisplayStarts[index] + currentGapsSum;
+      index++;
     }
 
     return myDisplayText = buffer.toString();
@@ -107,48 +113,36 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return (char)code;
   }
 
-  public int physicalToDisplay(int offset) {
+  public int physicalToDisplay(int physicalIndex) {
     getValue();
-    if (myGaps.length == 0) return offset;
-    int gapIndex = 0;
-    int displayIndex = 0;
-    int physicalOffset = 0;
+    if (myGapPhysicalStarts.length == 0) return physicalIndex;
 
-    while (physicalOffset < offset) {
-      if (displayIndex == getGapStartOffset(gapIndex)) {
-        final int gap = getGap(gapIndex);
-        physicalOffset += gap;
-        gapIndex++;
-      }
-      else {
-        physicalOffset++;
-        displayIndex++;
-      }
-    }
-    return displayIndex;
+    final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
+
+    final int gapIndex;
+    if(bsResult > 0) gapIndex = bsResult;
+    else if(bsResult < -1) gapIndex = -bsResult - 2;
+    else gapIndex = -1;
+
+    if(gapIndex < 0) return physicalIndex;
+    final int shift = (myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex]);
+    return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
   }
 
   public int displayToPhysical(int displayIndex) {
     getValue();
-    if (myGaps.length == 0) return displayIndex;
-    int gapIndex = 0;
-    int displayOffset = 0;
-    int physicalOffset = 0;
-    while (displayOffset <= displayIndex) {
-      if (displayOffset > getGapStartOffset(gapIndex)) {
-        final int gap = getGap(gapIndex);
-        physicalOffset += gap;
-        gapIndex++;
-      }
-      else if (displayOffset < displayIndex) {
-        physicalOffset++;
-        displayOffset++;
-      }
-      else {
-        displayOffset++;
-      }
-    }
-    return physicalOffset;
+    if (myGapDisplayStarts.length == 0) return displayIndex;
+
+    final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
+    final int gapIndex;
+
+    if(bsResult > 0) gapIndex = bsResult - 1;
+    else if(bsResult < -1) gapIndex = -bsResult - 2;
+    else gapIndex = -1;
+
+    if(gapIndex < 0) return displayIndex;
+    final int shift = (myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex]);
+    return displayIndex + shift;
   }
 
   public void setValue(String s) throws IncorrectOperationException {
@@ -207,15 +201,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return (XmlElement)super.getParent();
   }
 
-  private int getGapStartOffset(int gapIndex) {
-    int index = gapIndex * 2;
-    return index < myGaps.length ? myGaps[index] : Integer.MAX_VALUE;
-  }
-
-  private int getGap(int gapIndex) {
-    return myGaps[gapIndex * 2 + 1];
-  }
-
   public XmlTag getParentTag() {
     final XmlElement parent = getParent();
     if (parent instanceof XmlTag) return (XmlTag)parent;
@@ -245,6 +230,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   public void clearCaches() {
     super.clearCaches();
     myDisplayText = null;
-    myGaps = null;
+    myGapDisplayStarts = null;
+    myGapPhysicalStarts = null;
   }
 }
