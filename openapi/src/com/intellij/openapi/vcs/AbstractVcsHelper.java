@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Arrays;
 
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
@@ -50,4 +51,7 @@ public abstract class AbstractVcsHelper {
                                                                              boolean requestComments,
                                                                              Collection<String> roots);
 
+  public void showError(final VcsException e, final String s) {
+    showErrors(Arrays.asList(new VcsException[]{e}), s);
+  }
 }
