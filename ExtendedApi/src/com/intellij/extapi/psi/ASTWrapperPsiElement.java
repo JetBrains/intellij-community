@@ -250,9 +250,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public void navigate(boolean requestFocus) {
-    if (canNavigate()) {
-      EditSourceUtil.getDescriptor(getNavigationElement()).navigate(requestFocus);
-    }
+    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
@@ -260,7 +258,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public boolean canNavigateToSource() {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(getNavigationElement());
+    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
     return descriptor != null && descriptor.canNavigateToSource();
   }
 

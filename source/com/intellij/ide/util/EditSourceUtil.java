@@ -8,28 +8,30 @@ import com.intellij.psi.PsiFile;
 
 public class EditSourceUtil {
   public static Navigatable getDescriptor(final PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    if (!element.isValid()) {
-      return null;
+    if (!canNavigate(element)) return null;
+    final PsiElement navigationElement = element.getNavigationElement();
+    final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
+    return new OpenFileDescriptor(navigationElement.getProject(), navigationElement.getContainingFile().getVirtualFile(),
+                                  offset);
+  }
+
+  public static boolean canNavigate (PsiElement element) {
+    if (element == null || !element.isValid()) {
+      return false;
     }
 
     PsiElement navigationElement = element.getNavigationElement();
 
-    PsiFile psiFile = navigationElement instanceof PsiFile ? (PsiFile)navigationElement : navigationElement.getContainingFile();
+    PsiFile psiFile = navigationElement.getContainingFile();
     if (psiFile == null) {
-      return null;
+      return false;
     }
 
-    int offset = -1;
-    if (!(navigationElement instanceof PsiFile)) {
-      offset = navigationElement.getTextOffset();
-    }
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
-      return null;
+      return false;
     }
-    return new OpenFileDescriptor(element.getProject(), virtualFile, offset);
+
+    return true;
   }
 }

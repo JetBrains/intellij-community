@@ -221,11 +221,11 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(getNavigationElement()).navigate(requestFocus);
+    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.getDescriptor(getNavigationElement()) != null;
+    return EditSourceUtil.canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

@@ -63,7 +63,10 @@ public final class IntroStringProperty extends IntrospectedProperty{
   /**
    * Utility method which merge together text and mnemonic at some position
    */
-  private static String mergeTextAndMnemonic(final String text, final int mnemonic, final int mnemonicIndex){
+  private static String mergeTextAndMnemonic(String text, final int mnemonic, final int mnemonicIndex){
+    if (text == null) {
+      text = "";
+    }
     final int index;
     if(
       mnemonicIndex >= 0 &&
