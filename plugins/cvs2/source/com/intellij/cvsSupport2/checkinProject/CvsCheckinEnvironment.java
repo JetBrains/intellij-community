@@ -47,10 +47,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  public DifferencesProvider createDifferencesProviderOn(FilePath virtualFile) {
-    return new CvsDifferencesProvider(myProject, virtualFile);
-  }
-
   public RollbackProvider createRollbackProviderOn(Revisions[] selectedRevisions) {
     return new CvsRollbackProvider(myProject, selectedRevisions);
   }
