@@ -14,10 +14,13 @@ import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.CharArrayCharSequence;
 
 import javax.swing.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class EditorFactoryImpl extends EditorFactory {
@@ -28,6 +31,7 @@ public class EditorFactoryImpl extends EditorFactory {
   private EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
 
   private ArrayList<Editor> myEditors = new ArrayList<Editor>();
+  private static final Key<Exception> EDITOR_CREATOR = new Key<Exception>("Editor creator");
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     LaterInvocatorEx.addModalityStateListener(
@@ -62,7 +66,14 @@ public class EditorFactoryImpl extends EditorFactory {
     for (int i = 0; i < myEditors.size(); i++) {
       Editor editor = myEditors.get(i);
       if (editor.getProject() == project) {
-        LOG.error("Editor for the document with the following text hasn't been released:\n" + editor.getDocument().getText());
+        final Exception creator = editor.getUserData(EDITOR_CREATOR);
+        if (creator == null) {
+          LOG.error("Editor for the document with the following text hasn't been released:\n" + editor.getDocument().getText());
+        } else {
+          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          creator.printStackTrace(new PrintWriter(buffer));
+          LOG.error("Editor hasn't been released:\n" + new String(buffer.toByteArray()));
+        }
       }
     }
   }
@@ -115,10 +126,19 @@ public class EditorFactoryImpl extends EditorFactory {
       //Thread.dumpStack();
     }
 
+    try {
+      throw new RuntimeException("Editor created");
+    }
+    catch (RuntimeException e) {
+      editor.putUserData(EDITOR_CREATOR, e);
+    }
+
+
     return editor;
   }
 
   public void releaseEditor(Editor editor) {
+    editor.putUserData(EDITOR_CREATOR, null);
     ((EditorImpl)editor).release();
     myEditors.remove(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
