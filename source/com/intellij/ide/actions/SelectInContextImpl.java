@@ -69,7 +69,11 @@ abstract class SelectInContextImpl implements SelectInContext {
       selectInContext = OpenFileDescriptorContext.create(project, ((OpenFileDescriptor)descriptor).getFile());
     }
 
-    return new SelectInContextProvider(selectInContext, popupLocation);
+    if (selectInContext == null) {
+      return null;
+    } else {
+      return new SelectInContextProvider(selectInContext, popupLocation);
+    }
   }
 
   private static SelectInContextProvider createEditorContext(DataContext dataContext) {

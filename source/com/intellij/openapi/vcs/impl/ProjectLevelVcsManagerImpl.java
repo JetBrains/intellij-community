@@ -371,10 +371,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
     if (upToDateRevisionProvider == null) return;
 
-    String lastUpToDateContent = upToDateRevisionProvider.getLastUpToDateContentFor(virtualFile);
-    if (lastUpToDateContent == null) return;
+    try {
+      String lastUpToDateContent = upToDateRevisionProvider.getLastUpToDateContentFor(virtualFile);
+      if (lastUpToDateContent == null) return;
 
-    setUpToDateContent(document, lastUpToDateContent);
+      setUpToDateContent(document, lastUpToDateContent);
+    }
+    catch (VcsException e) {
+      //ignore
+    }
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {
