@@ -98,13 +98,9 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
             if (currentContainer == null) {
                 return;
             }
-            final PsiElement containerParent = currentContainer.getParent();
-            if (continuedStatement.equals(containerParent)) {
-                return;
+            if (continuedStatement.equals(currentContainer)) {
+              registerStatementError(statement);
             }
-            registerStatementError(statement);
         }
-
     }
-
 }

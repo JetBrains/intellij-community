@@ -105,13 +105,9 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
             if (currentContainer == null) {
                 return;
             }
-            final PsiElement containerParent = currentContainer.getParent();
-            if (exitedStatement.equals(containerParent)) {
-                return;
+            if (exitedStatement.equals(currentContainer)) {
+              registerStatementError(statement);
             }
-            registerStatementError(statement);
         }
-
     }
-
 }
