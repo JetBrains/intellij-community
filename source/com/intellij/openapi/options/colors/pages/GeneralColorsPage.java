@@ -86,7 +86,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
   }
 
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return new AttributesDescriptor[0];
+    return ATT_DESCRIPTORS;
   }
 
   public ColorDescriptor[] getColorDescriptors() {
