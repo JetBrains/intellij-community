@@ -239,12 +239,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
-    if (tooltipObject != null) {
-      final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
-      tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
-                                               myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
-                                               ERROR_STRIPE_TOOLTIP_GROUP);
-    }
+    final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
+    tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
+                                             myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
+                                             ERROR_STRIPE_TOOLTIP_GROUP);
   }
 
   private int visibleLineToYPosition(int lineNumber, int scrollBarHeight) {
@@ -438,27 +436,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public boolean doClick(final MouseEvent e, final double width) {
-      if (inside(e, width)) {
-        RangeHighlighter marker = markers.get(0);
-        final int offset = marker.getStartOffset();
-        final Document doc = myEditor.getDocument();
-        if (doc.getLineCount() > 0) {
-          // Necessary to expand folded block even if naviagting just before one
-          // Very useful when navigating to first unused import statement.
-          int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
-          myEditor.getCaretModel().moveToOffset(lineEnd);
-        }
-
-        myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getSelectionModel().removeSelection();
-        ScrollingModel scrollingModel = myEditor.getScrollingModel();
-        scrollingModel.disableAnimation();
-        scrollingModel.scrollToCaret(ScrollType.CENTER);
-        scrollingModel.enableAnimation();
-        fireErrorMarkerClicked(marker, e);
-        return true;
+      if (!inside(e, width)) {
+        return false;
       }
-      return false;
+      final int y = e.getY();
+      RangeHighlighter marker = markers.get(0);
+      int offset = marker.getStartOffset();
+      for (int i = 0; i< paintingEndOffsets.size(); i++) {
+        final int endY = paintingEndOffsets.get(i);
+        if (y < endY) {
+          marker = markers.get(i);
+          offset = marker.getStartOffset();
+          break;
+        }
+      }
+
+      final Document doc = myEditor.getDocument();
+      if (doc.getLineCount() > 0) {
+        // Necessary to expand folded block even if naviagting just before one
+        // Very useful when navigating to first unused import statement.
+        int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
+        myEditor.getCaretModel().moveToOffset(lineEnd);
+      }
+
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getSelectionModel().removeSelection();
+      ScrollingModel scrollingModel = myEditor.getScrollingModel();
+      scrollingModel.disableAnimation();
+      scrollingModel.scrollToCaret(ScrollType.CENTER);
+      scrollingModel.enableAnimation();
+      fireErrorMarkerClicked(marker, e);
+      return true;
     }
 
     private boolean inside(MouseEvent e, double width) {
@@ -491,9 +499,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       if (infos.size() != 0) {
+        // show errors first
         Collections.sort(infos, new Comparator<HighlightInfo>() {
           public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-            return o1.getSeverity().compareTo(o2.getSeverity());
+            return o2.getSeverity().compareTo(o1.getSeverity());
           }
         });
         final HighlightInfoComposite composite = new HighlightInfoComposite(infos);

@@ -14,13 +14,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.EventListener;
 import java.util.EventObject;
+import java.util.Map;
 
 public class LightweightHint implements Hint, UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
 
   private final JComponent myComponent;
   private JComponent myFocusBackComponent;
-  private final THashMap myUserMap = new THashMap(1);
+  private final Map<Key,Object> myUserMap = new THashMap<Key, Object>(1);
   private final EventListenerList myListenerList = new EventListenerList();
   private MyEscListener myEscListener;
 

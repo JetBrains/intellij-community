@@ -30,7 +30,7 @@ public class SmartList<E> extends AbstractList<E> {
   }
 
   public E get(int index) {
-    if (index < 2) {
+    if (mySize <= 2) {
       return myArray2[index];
     }
     else {

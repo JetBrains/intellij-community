@@ -11,7 +11,7 @@
     <children>
       <component id="ee5a7" class="javax.swing.JLabel">
         <constraints>
-          <xy x="10" y="36" width="117" height="14"/>
+          <xy x="10" y="32" width="117" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -20,27 +20,16 @@
       </component>
       <component id="df84a" class="javax.swing.JCheckBox" binding="myCbShowImportPopup">
         <constraints>
-          <xy x="10" y="75" width="117" height="22"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <xy x="10" y="101" width="117" height="22"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <text value="Show import popup"/>
         </properties>
       </component>
-      <component id="71c39" class="javax.swing.JTextField" binding="myMarkMinHeight">
-        <constraints>
-          <xy x="194" y="111" width="150" height="20"/>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
-            <preferred-size width="150" height="-1"/>
-          </grid>
-        </constraints>
-        <properties>
-          <columns value="20"/>
-        </properties>
-      </component>
       <component id="8d69a" class="javax.swing.JTextField" binding="myAutoreparseDelayField">
         <constraints>
-          <xy x="194" y="33" width="150" height="20"/>
+          <xy x="194" y="29" width="150" height="20"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
             <preferred-size width="150" height="-1"/>
           </grid>
@@ -49,21 +38,32 @@
           <columns value="20"/>
         </properties>
       </component>
+      <hspacer id="aeb82">
+        <constraints>
+          <xy x="344" y="106" width="73" height="11"/>
+          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+        </constraints>
+      </hspacer>
       <component id="d4e7e" class="javax.swing.JLabel">
         <constraints>
-          <xy x="10" y="122" width="174" height="14"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="10" y="68" width="174" height="14"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <text value="Error stripe mark min height (pixels):"/>
         </properties>
       </component>
-      <hspacer id="aeb82">
+      <component id="71c39" class="javax.swing.JTextField" binding="myMarkMinHeight">
         <constraints>
-          <xy x="344" y="81" width="73" height="11"/>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="194" y="65" width="150" height="20"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
+            <preferred-size width="150" height="-1"/>
+          </grid>
         </constraints>
-      </hspacer>
+        <properties>
+          <columns value="20"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

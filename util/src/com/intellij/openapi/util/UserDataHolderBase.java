@@ -8,21 +8,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
+import java.util.Map;
+
 public class UserDataHolderBase implements UserDataHolder, Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.UserDataHolderBase");
 
-  private THashMap myUserMap = null;
+  private Map<Key,Object> myUserMap = null;
 
   private static final Object USER_MAP_LOCK = new Object();
-  protected static final Key<HashMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  protected static final Key<HashMap<Key,Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   protected Object clone(){
     try{
       UserDataHolderBase clone = (UserDataHolderBase)super.clone();
-      HashMap copyableMap = (HashMap)clone.getUserData(COPYABLE_USER_MAP_KEY);
+      HashMap<Key,Object> copyableMap = clone.getUserData(COPYABLE_USER_MAP_KEY);
       clone.myUserMap = null;
       if (copyableMap != null){
-        clone.putUserData(COPYABLE_USER_MAP_KEY, (HashMap)copyableMap.clone());
+        final HashMap<Key,Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
+        clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
       }
       return clone;
     }
@@ -60,7 +63,7 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
     synchronized(USER_MAP_LOCK){
       if (myUserMap == null){
         if (value == null) return;
-        myUserMap = new THashMap(4);
+        myUserMap = new THashMap<Key, Object>(4);
       }
       if (value != null){
         myUserMap.put(key, value);
@@ -80,7 +83,7 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
 
   protected <T> T getCopyableUserDataImpl(Key<T> key) {
     synchronized(USER_MAP_LOCK){
-      HashMap map = (HashMap)getUserData(COPYABLE_USER_MAP_KEY);
+      HashMap map = getUserData(COPYABLE_USER_MAP_KEY);
       if (map == null) return null;
       return (T)map.get(key);
     }
@@ -92,10 +95,10 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
 
   protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
     synchronized(USER_MAP_LOCK){
-      HashMap map = (HashMap)getUserData(COPYABLE_USER_MAP_KEY);
+      HashMap<Key,Object> map = getUserData(COPYABLE_USER_MAP_KEY);
       if (map == null){
         if (value == null) return;
-        map = new HashMap(4);
+        map = new HashMap<Key, Object>(4);
         putUserData(COPYABLE_USER_MAP_KEY, map);
       }
       if (value != null){
