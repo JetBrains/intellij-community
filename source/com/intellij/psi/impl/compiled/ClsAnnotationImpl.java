@@ -52,12 +52,12 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
     myMirror = element;
 
     PsiAnnotation mirror = (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(element);
-    ((ClsElementImpl)getParameterList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
-    ((ClsElementImpl)getNameReferenceElement()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
+      ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
+      ((ClsElementImpl)getNameReferenceElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
   }
 
   public PsiElement[] getChildren() {
-    return new PsiElement[] {myReferenceElement, myParameterList};
+    return new PsiElement[]{myReferenceElement, myParameterList};
   }
 
   public PsiElement getParent() {

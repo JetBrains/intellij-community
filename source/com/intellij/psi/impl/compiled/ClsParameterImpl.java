@@ -62,13 +62,13 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public PsiModifierList getModifierList() {
-    synchronized (PsiLock.LOCK) {
-      if (myModifierList == null) {
-        myModifierList = new ClsModifierListImpl(this, 0);
-      }
-      ;
+  synchronized (PsiLock.LOCK) {
+    if (myModifierList == null) {
+      myModifierList = new ClsModifierListImpl(this, 0);
     }
-    return myModifierList;
+  ;
+  }
+               return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {
@@ -104,36 +104,36 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   private String getMirrorName() {
-    synchronized (PsiLock.LOCK) {
-      if (myMirrorName == null) {
-        String name = getName();
-        if (name != null) return name;
+  synchronized (PsiLock.LOCK) {
+    if (myMirrorName == null) {
+      String name = getName();
+      if (name != null) return name;
 
-        String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
-                                                                                          null, getType())
-          .names;
-        name = "p";
-        if (nameSuggestions.length > 0) {
-          name = nameSuggestions[0];
-        }
+      String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+                                                                                        null, getType())
+      .names;
+      name = "p";
+      if (nameSuggestions.length > 0) {
+        name = nameSuggestions[0];
+      }
 
-        PsiParameter[] parms = ((PsiParameterList)getParent()).getParameters();
-        AttemptsLoop:
-        while (true) {
-          for (int i = 0; i < parms.length; i++) {
-            if (parms[i] == this) break AttemptsLoop;
-            String name1 = ((ClsParameterImpl)parms[i]).getMirrorName();
-            if (name.equals(name1)) {
-              name = nextName(name);
-              continue AttemptsLoop;
-            }
+      PsiParameter[] parms = ((PsiParameterList)getParent()).getParameters();
+      AttemptsLoop:
+      while (true) {
+        for (int i = 0; i < parms.length; i++) {
+          if (parms[i] == this) break AttemptsLoop;
+          String name1 = ((ClsParameterImpl)parms[i]).getMirrorName();
+          if (name.equals(name1)) {
+                   name = nextName(name);
+          continue AttemptsLoop;
           }
         }
-        myMirrorName = name;
       }
-      ;
+      myMirrorName = name;
     }
-    return myMirrorName;
+  ;
+  }
+               return myMirrorName;
   }
 
   private static String nextName(String name) {
@@ -165,8 +165,8 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     myMirror = element;
 
     PsiParameter mirror = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(element);
-    ((ClsElementImpl)getModifierList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-    ((ClsElementImpl)getTypeElement()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getTypeElement()));
+      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
+      ((ClsElementImpl)getTypeElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeElement()));
   }
 
   public void accept(PsiElementVisitor visitor) {

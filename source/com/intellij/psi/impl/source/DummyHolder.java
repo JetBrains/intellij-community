@@ -59,50 +59,50 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return true;
   }
 
-  public boolean importClass(PsiClass aClass){
+  public boolean importClass(PsiClass aClass) {
     LOG.assertTrue(myContext == null);
     String className = aClass.getName();
-    if (!myPseudoImports.containsKey(className)){
+    if (!myPseudoImports.containsKey(className)) {
       myPseudoImports.put(className, aClass);
       myManager.nonPhysicalChange(); // to clear resolve caches!
       return true;
     }
-    else{
+    else {
       return false;
     }
   }
 
-  public boolean hasImports(){
+  public boolean hasImports() {
     return !myPseudoImports.isEmpty();
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    if (myContext == null){ // process classes in lang&default package + "pseudo-imports"
-      ElementClassHint classHint = (ElementClassHint)processor.getHint(ElementClassHint.class);
-      if (classHint == null || classHint.shouldProcess(PsiClass.class)){
-        final NameHint nameHint = (NameHint)processor.getHint(NameHint.class);
+    if (myContext == null) { // process classes in lang&default package + "pseudo-imports"
+      ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+      if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
+        final NameHint nameHint = processor.getHint(NameHint.class);
         final String name = nameHint != null ? nameHint.getName() : null;
-        if (name != null){
+        if (name != null) {
           PsiClass imported = myPseudoImports.get(name);
-          if (imported != null){
+          if (imported != null) {
             if (!processor.execute(imported, substitutor)) return false;
           }
         }
-        else{
+        else {
           Iterator<PsiClass> iter = myPseudoImports.values().iterator();
-          while(iter.hasNext()){
+          while (iter.hasNext()) {
             PsiClass aClass = iter.next();
             if (!processor.execute(aClass, substitutor)) return false;
           }
         }
 
         PsiPackage langPackage = getManager().findPackage("java.lang");
-        if (langPackage != null){
+        if (langPackage != null) {
           if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;
         }
 
         PsiPackage defaultPackage = getManager().findPackage("");
-        if (defaultPackage != null){
+        if (defaultPackage != null) {
           if (!defaultPackage.processDeclarations(processor, substitutor, null, place)) return false;
         }
       }
@@ -120,21 +120,21 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   public boolean isSamePackage(PsiElement other) {
     if (other instanceof DummyHolder) {
-      final PsiElement otherContext = ((DummyHolder) other).myContext;
+      final PsiElement otherContext = ((DummyHolder)other).myContext;
       return (myContext == null && otherContext == null) || myContext.getManager().arePackagesTheSame(myContext, otherContext);
     }
     if (other instanceof PsiJavaFile) {
       if (myContext != null) return myContext.getManager().arePackagesTheSame(myContext, other);
-      final String packageName = ((PsiJavaFile) other).getPackageName();
+      final String packageName = ((PsiJavaFile)other).getPackageName();
       return "".equals(packageName);
     }
     return false;
   }
 
   public FileType getFileType() {
-    if (myContext!=null) {
+    if (myContext != null) {
       PsiFile containingFile = myContext.getContainingFile();
-      if (containingFile!=null) return containingFile.getFileType();
+      if (containingFile != null) return containingFile.getFileType();
     }
     return StdFileTypes.JAVA;
   }
@@ -151,7 +151,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   public FileElement getTreeElement() {
     final FileElement holderElement = super.getTreeElement();
-    if(myTable != null) holderElement.setCharTable(myTable);
+    if (myTable != null) holderElement.setCharTable(myTable);
     return holderElement;
   }
 }

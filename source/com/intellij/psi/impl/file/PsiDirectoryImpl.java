@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -315,7 +316,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       text = template.getText(properties);
     }
     catch (Exception e) {
-      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
+      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName),
+                                                                                                                                           e);
     }
 
     PsiElementFactory factory = myManager.getElementFactory();
@@ -334,7 +336,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   private String getIncorrectTemplateMessage(String templateName) {
-    String incorrectTemplateMessage = "Cannot create " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName) + " - incorrect " + templateName + " template.";
+    String incorrectTemplateMessage =
+      "Cannot create " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName) + " - incorrect " + templateName +
+      " template.";
     return incorrectTemplateMessage;
   }
 
@@ -375,7 +379,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(
-        "Cannot create package - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+          "Cannot create package - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
     }
     CheckUtil.checkWritable(this);
   }
@@ -396,14 +400,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   public void checkCreateFile(String name) throws IncorrectOperationException {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
-/* [dsl] now it is possible to create a Java file outside source path.
-    if (type == FileType.JAVA) {
-      if (getPackage() == null){
-        throw new IncorrectOperationException("Cannot create java-files outside sourcepath");
-      }
-    }
-    else
-*/
+    /* [dsl] now it is possible to create a Java file outside source path.
+        if (type == FileType.JAVA) {
+          if (getPackage() == null){
+            throw new IncorrectOperationException("Cannot create java-files outside sourcepath");
+          }
+        }
+        else
+    */
     if (type == StdFileTypes.CLASS) {
       throw new IncorrectOperationException("Cannot create class-file");
     }
@@ -411,7 +415,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(
-        "Cannot create file - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+          "Cannot create file - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
     }
     CheckUtil.checkWritable(this);
   }
@@ -460,9 +464,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile instanceof com.intellij.psi.impl.source.PsiFileImpl) {
-          ChangeUtil.encodeInformation(SourceTreeToPsiMap.psiElementToTree(newFile));
+          ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));
           PsiUtil.updatePackageStatement(newFile);
-          ChangeUtil.decodeInformation(SourceTreeToPsiMap.psiElementToTree(newFile));
+          ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));
         }
 
         return newFile;
@@ -503,7 +507,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         PsiDirectory dir = subpackages[i];
         if (dir.getName().equals(name)) {
           throw new IncorrectOperationException(
-            "File " + dir.getVirtualFile().getPresentableUrl() + " already exists.");
+              "File " + dir.getVirtualFile().getPresentableUrl() + " already exists.");
         }
       }
     }
@@ -514,7 +518,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         PsiFile file = files[i];
         if (file.getName().equals(name)) {
           throw new IncorrectOperationException(
-            "File " + file.getVirtualFile().getPresentableUrl() + " already exists.");
+              "File " + file.getVirtualFile().getPresentableUrl() + " already exists.");
         }
       }
     }

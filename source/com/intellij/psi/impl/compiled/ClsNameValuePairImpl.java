@@ -36,12 +36,12 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     myMirror = element;
 
     PsiNameValuePair mirror = (PsiNameValuePair)SourceTreeToPsiMap.treeElementToPsi(element);
-    ((ClsElementImpl)getNameIdentifier()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
-    ((ClsElementImpl)getValue()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
+      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+      ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
   }
 
   public PsiElement[] getChildren() {
-    return new PsiElement[] {myNameIdentifier, myMemberValue};
+    return new PsiElement[]{myNameIdentifier, myMemberValue};
   }
 
   public PsiElement getParent() {

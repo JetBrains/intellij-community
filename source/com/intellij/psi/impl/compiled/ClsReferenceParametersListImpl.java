@@ -26,7 +26,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     buf.append('<');
     for (int i = 0; i < myTypeElements.length; i++) {
       if (i > 0) buf.append(',');
-      ClsTypeElementImpl typeElement = (ClsTypeElementImpl) myTypeElements[i];
+      ClsTypeElementImpl typeElement = (ClsTypeElementImpl)myTypeElements[i];
       buf.append(typeElement.getMirrorText());
     }
     buf.append('>');
@@ -40,9 +40,9 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     PsiTypeElement[] typeElements = getTypeParameterElements();
     PsiTypeElement[] typeMirrors = ((PsiReferenceParameterList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getTypeParameterElements();
     LOG.assertTrue(typeElements.length == typeMirrors.length);
-    if (typeElements.length == typeMirrors.length){
-      for(int i = 0; i < typeElements.length; i++) {
-        ((ClsElementImpl)typeElements[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(typeMirrors[i]));
+    if (typeElements.length == typeMirrors.length) {
+      for (int i = 0; i < typeElements.length; i++) {
+          ((ClsElementImpl)typeElements[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeMirrors[i]));
       }
     }
   }

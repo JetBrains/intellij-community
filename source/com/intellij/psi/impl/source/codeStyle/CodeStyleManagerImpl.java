@@ -48,11 +48,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public void initComponent() { }
 
-  public void disposeComponent() {}
+  public void disposeComponent() { }
 
-  public void projectOpened() {}
+  public void projectOpened() { }
 
-  public void projectClosed() {}
+  public void projectClosed() { }
 
   public Project getProject() {
     return myProject;
@@ -73,7 +73,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     Helper helper = new Helper(fileType, myProject);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(
-      new CodeFormatterFacade(getSettings(), helper).process(treeElement,-1));
+      new CodeFormatterFacade(getSettings(), helper).process(treeElement, -1));
     return new BraceEnforcer(getSettings()).process(formatted);
   }
 
@@ -107,7 +107,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
     boolean uncompleteCode = (flags & UNCOMPLETE_CODE) != 0;
     return SourceTreeToPsiMap.treeElementToPsi(
-      new ReferenceAdjuster(getSettings()).process(SourceTreeToPsiMap.psiElementToTree(element), addImports,
+      new ReferenceAdjuster(getSettings()).process((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), addImports,
                                                    uncompleteCode));
   }
 
@@ -115,13 +115,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return;
-    new ReferenceAdjuster(getSettings()).processRange(SourceTreeToPsiMap.psiElementToTree(element), startOffset,
+    new ReferenceAdjuster(getSettings()).processRange((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), startOffset,
                                                       endOffset);
   }
 
   public PsiElement qualifyClassReferences(PsiElement element) {
     return SourceTreeToPsiMap.treeElementToPsi(
-      new ReferenceAdjuster(getSettings(), true, true).process(SourceTreeToPsiMap.psiElementToTree(element), false,
+      new ReferenceAdjuster(getSettings(), true, true).process((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), false,
                                                                false));
   }
 
@@ -130,7 +130,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (file instanceof PsiJavaFile) {
       PsiImportList newList = prepareOptimizeImportsResult(file);
       if (newList != null) {
-        ((PsiJavaFile)file).getImportList().replace(newList);
+          ((PsiJavaFile)file).getImportList().replace(newList);
       }
     }
   }
@@ -144,7 +144,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
-  public int findEntryIndex(PsiImportStatementBase statement){
+  public int findEntryIndex(PsiImportStatementBase statement) {
     return new ImportHelper(getSettings()).findEntryIndex(statement);
   }
 
@@ -157,11 +157,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (!SourceTreeToPsiMap.hasTreeElement(file)) return offset;
 
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
-    TreeElement element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
     if (element == null) return offset;
     if (element.getElementType() == ElementType.WHITE_SPACE) {
       int spaceStart = element.getTextRange().getStartOffset();
-      offset = spaceStart + CharArrayUtil.shiftForward(element.textToCharArray(), offset - spaceStart, " \t");
+      offset = spaceStart + CharArrayUtil.shiftForward(((TreeElement)element).textToCharArray(), offset - spaceStart, " \t");
       element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
     }
 
@@ -169,48 +169,48 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     Helper helper = new Helper(fileType, myProject);
 
     CheckUncompleteCode:
-      if (element != null && canTryXXX) {
-        ASTNode space;
-        if (element.getElementType() == ElementType.WHITE_SPACE) {
-          space = element;
-        }
-        else {
-          space = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset - 1));
-        }
+    if (element != null && canTryXXX) {
+      ASTNode space;
+      if (element.getElementType() == ElementType.WHITE_SPACE) {
+        space = element;
+      }
+      else {
+        space = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset - 1));
+      }
 
-        int spaceStart;
-        if (space != null && space.getElementType() == ElementType.WHITE_SPACE) {
-          spaceStart = space.getStartOffset();
-        }
-        else {
-          spaceStart = element.getTextRange().getStartOffset();
-        }
+      int spaceStart;
+      if (space != null && space.getElementType() == ElementType.WHITE_SPACE) {
+        spaceStart = space.getStartOffset();
+      }
+      else {
+        spaceStart = element.getTextRange().getStartOffset();
+      }
 
-        if (spaceStart > 0) {
-          ASTNode leafBeforeSpace = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(spaceStart - 1));
-          if (leafBeforeSpace.getTreeNext() != null && leafBeforeSpace.getTreeNext().getElementType() == ElementType.ERROR_ELEMENT) {
-            PsiErrorElement errorElement = (PsiErrorElement)SourceTreeToPsiMap.treeElementToPsi(leafBeforeSpace.getTreeNext());
-            Project project = file.getProject();
-            BlockSupport blockSupport = project.getComponent(BlockSupport.class);
-            String dummyString = "xxx";
-            if ("';' expected".equals(errorElement.getErrorDescription())) { //TODO: change!!!
-              break CheckUncompleteCode;
-            }
-
-            blockSupport.reparseRange(file, offset, offset, dummyString);
-            int newOffset = adjustLineIndent(file, offset, false);
-            blockSupport.reparseRange(file, newOffset, newOffset + dummyString.length(), "");
-            return newOffset;
+      if (spaceStart > 0) {
+        ASTNode leafBeforeSpace = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(spaceStart - 1));
+        if (leafBeforeSpace.getTreeNext() != null && leafBeforeSpace.getTreeNext().getElementType() == ElementType.ERROR_ELEMENT) {
+          PsiErrorElement errorElement = (PsiErrorElement)SourceTreeToPsiMap.treeElementToPsi(leafBeforeSpace.getTreeNext());
+          Project project = file.getProject();
+          BlockSupport blockSupport = project.getComponent(BlockSupport.class);
+          String dummyString = "xxx";
+          if ("';' expected".equals(errorElement.getErrorDescription())) { //TODO: change!!!
+            break CheckUncompleteCode;
           }
+
+          blockSupport.reparseRange(file, offset, offset, dummyString);
+          int newOffset = adjustLineIndent(file, offset, false);
+          blockSupport.reparseRange(file, newOffset, newOffset + dummyString.length(), "");
+          return newOffset;
         }
       }
+    }
 
     int start = -1; // start of the line
     int end = -1; // end of whitespace at the beginning of the line
     if (element != null && element.getElementType() == ElementType.WHITE_SPACE) { // optimization to not fetch file.textToCharArray()
       TextRange range = element.getTextRange();
       int localOffset = offset - range.getStartOffset();
-      char[] chars = element.textToCharArray();
+      char[] chars = ((TreeElement)element).textToCharArray();
       start = CharArrayUtil.shiftBackward(chars, localOffset - 1, " \t");
       if (start > 0 && chars[start] != '\n' && chars[start] != '\r') return offset;
       start++;
@@ -243,13 +243,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       ASTNode parent;
       ASTNode newSpace;
       try {
-        ((PsiFileImpl)file).setIsPhysicalExplicitly(false);
+          ((PsiFileImpl)file).setIsPhysicalExplicitly(false);
 
         int spaceStart = element.getTextRange().getStartOffset();
         parent = element.getTreeParent();
         ASTNode prev = element.getTreePrev();
         ASTNode next = element.getTreeNext();
-        ASTNode space1 = Helper.splitSpaceElement(element, end - spaceStart, charTable);
+        ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, end - spaceStart, charTable);
         ASTNode tempElement = Factory.createSingleLeafElement(
           ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
           "###".length(), charTable, null);
@@ -264,7 +264,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         parent.replaceChild(newSpace, element);
       }
       finally {
-        ((PsiFileImpl)file).setIsPhysicalExplicitly(physical);
+          ((PsiFileImpl)file).setIsPhysicalExplicitly(physical);
       }
 
       parent.replaceChild(element, newSpace);
@@ -283,7 +283,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           if (element.getTreeParent() == null) break;
           element = element.getTreeParent();
         }
-        element = (TreeElement)new IndentAdjusterFacade(getSettings(), helper).adjustFirstLineIndent(element);
+        element = new IndentAdjusterFacade(getSettings(), helper).adjustFirstLineIndent(element);
         return element.getTextRange().getStartOffset();
       }
       else {
@@ -305,7 +305,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         String newElementText = elementText.substring(0, start - elementStart) + indentSpace +
                                 elementText.substring(end - elementStart);
         LeafElement newElement = Factory.createSingleLeafElement(element.getElementType(), newElementText.toCharArray(), 0,
-                                                           newElementText.length(), null, element.getManager());
+                                                                 newElementText.length(), null, ((TreeElement)element).getManager());
         element.getTreeParent().replaceChild(element, newElement);
         return start + indentSpace.length();
       }
@@ -338,7 +338,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
     PsiElement elementAt = file.findElementAt(offset);
     if (elementAt == null) return null;
-    TreeElement element = SourceTreeToPsiMap.psiElementToTree(elementAt);
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
     ASTNode parent = element.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
     if (element.getElementType() != ElementType.WHITE_SPACE) {
@@ -351,7 +351,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return null;
     }
 
-    ASTNode space1 = Helper.splitSpaceElement(element, offset - elementStart, charTable);
+    ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
     ASTNode marker = Factory.createSingleLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
@@ -553,7 +553,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final PsiSubstitutor substitutor;
       if (!manager.areElementsEquivalent(resolved.getElement(), collectionClass)) {
         substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, resolved.getElement(),
-                                                                  PsiSubstitutor.EMPTY);
+                                                             PsiSubstitutor.EMPTY);
       }
       else {
         substitutor = PsiSubstitutor.EMPTY;
@@ -569,7 +569,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         PsiClass componentClass = ((PsiClassType)componentTypeParameter).resolve();
         if (componentClass instanceof PsiTypeParameter) {
           if (collectionClass.getManager().areElementsEquivalent(((PsiTypeParameter)componentClass).getOwner(),
-                                                                 resolved.getElement())) {
+                                                                                                   resolved.getElement())) {
             PsiType componentType = resolved.getSubstitutor().substitute((PsiTypeParameter)componentClass);
             if (componentType == null) return;
             String typeName = normalizeTypeName(getTypeName(componentType));
@@ -836,7 +836,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           if (Character.isLowerCase(c)) return variableNameToPropertyNameInner(name, variableKind);
 
           buffer.append(Character.toLowerCase(c));
-          continue;
+        continue;
         }
         i++;
         if (i < name.length()) {
@@ -986,26 +986,27 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       if (PsiUtil.isVariableNameUnique(name, place)) {
         if (scope instanceof PsiCodeBlock) {
           final String name1 = name;
-          class Cancel extends RuntimeException {}
+          class Cancel extends RuntimeException {
+          }
           try {
             scope.accept(new PsiRecursiveElementVisitor() {
-              public void visitReferenceExpression(PsiReferenceExpression expression) {
-                visitReferenceElement(expression);
-              }
+                           public void visitReferenceExpression(PsiReferenceExpression expression) {
+                             visitReferenceElement(expression);
+                           }
 
-              public void visitClass(PsiClass aClass) {
+                           public void visitClass(PsiClass aClass) {
 
-              }
+                           }
 
-              public void visitVariable(PsiVariable variable) {
-                if (name1.equals(variable.getName())) {
-                  throw new Cancel();
-                }
-              }
-            });
+                           public void visitVariable(PsiVariable variable) {
+                             if (name1.equals(variable.getName())) {
+                               throw new Cancel();
+                             }
+                           }
+                         });
           }
           catch (Cancel e) {
-            continue;
+          continue;
           }
         }
         return name;

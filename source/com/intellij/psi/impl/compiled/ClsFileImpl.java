@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.lang.ASTNode;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
@@ -188,14 +189,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
     PsiPackageStatement packageStatement = ((PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getPackageStatement();
     if (packageStatement != null) {
-      ((ClsElementImpl)getPackageStatement()).setMirror(SourceTreeToPsiMap.psiElementToTree(packageStatement));
+        ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
     }
     PsiClass[] classes = getClasses();
     PsiClass[] mirrorClasses = ((PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getClasses();
     LOG.assertTrue(classes.length == mirrorClasses.length);
     if (classes.length == mirrorClasses.length) {
       for (int i = 0; i < classes.length; i++) {
-        ((ClsElementImpl)classes[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
       }
     }
   }
@@ -221,16 +222,15 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
         String fileName = aClass.getName() + "." + ext;
         PsiManager manager = getManager();
         PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
-        TreeElement mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+        ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
         synchronized (PsiLock.LOCK) {
-          if (myMirror == null) {
-            setMirror(mirrorTreeElement);
-            myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
-          }
-          ;
+        if (myMirror == null) {
+          setMirror((TreeElement)mirrorTreeElement);
+          myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
         }
+      }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

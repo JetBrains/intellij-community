@@ -44,16 +44,16 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
     return buf.toString();
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 
     PsiTypeParameter[] parms = getTypeParameters();
     PsiTypeParameter[] parmMirrors = ((PsiTypeParameterList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getTypeParameters();
     LOG.assertTrue(parms.length == parmMirrors.length);
-    if (parms.length == parmMirrors.length){
-      for(int i = 0; i < parms.length; i++) {
-        ((ClsElementImpl)parms[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(parmMirrors[i]));
+    if (parms.length == parmMirrors.length) {
+      for (int i = 0; i < parms.length; i++) {
+          ((ClsElementImpl)parms[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(parmMirrors[i]));
       }
     }
   }

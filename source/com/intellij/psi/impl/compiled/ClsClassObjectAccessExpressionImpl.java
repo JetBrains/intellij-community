@@ -14,7 +14,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   private ClsTypeElementImpl myTypeElement;
   private ClsElementImpl myParent;
 
-  public ClsClassObjectAccessExpressionImpl (String canonicalClassText, ClsElementImpl parent) {
+  public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {
     myParent = parent;
     myTypeElement = new ClsTypeElementImpl(this, canonicalClassText, ClsTypeElementImpl.VARIANCE_NONE);
   }
@@ -29,11 +29,11 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     myMirror = element;
 
     PsiClassObjectAccessExpression mirror = (PsiClassObjectAccessExpression)SourceTreeToPsiMap.treeElementToPsi(element);
-    ((ClsElementImpl)getOperand()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));
+      ((ClsElementImpl)getOperand()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));
   }
 
   public PsiElement[] getChildren() {
-    return new PsiElement[] {myTypeElement};
+    return new PsiElement[]{myTypeElement};
   }
 
   public PsiElement getParent() {

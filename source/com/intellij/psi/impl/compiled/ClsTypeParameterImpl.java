@@ -34,7 +34,10 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   private LightEmptyImplementsList myLightEmptyImplementsList;
   private final String mySignature;
 
-  public ClsTypeParameterImpl(PsiElement parent, CharacterIterator signature, int index, String parentSignatureAttribute) throws ClsFormatException {
+  public ClsTypeParameterImpl(PsiElement parent,
+                              CharacterIterator signature,
+                              int index,
+                              String parentSignatureAttribute) throws ClsFormatException {
     myParent = parent;
     myIndex = index;
     StringBuffer name = new StringBuffer();
@@ -58,7 +61,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     }
 
     myBoundsList = new ClsReferenceListImpl(this, bounds.toArray(
-        new PsiJavaCodeReferenceElement[bounds.size()]), PsiKeyword.EXTENDS);
+                                              new PsiJavaCodeReferenceElement[bounds.size()]), PsiKeyword.EXTENDS);
     final int endIndex = signature.getIndex();
     mySignature = parentSignatureAttribute.substring(signatureBeginIndex, endIndex);
   }
@@ -141,7 +144,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return null;
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
+  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place);
   }
 
@@ -272,8 +275,8 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 
-    PsiTypeParameter mirror = (PsiTypeParameter) SourceTreeToPsiMap.treeElementToPsi(element);
-    ((ClsReferenceListImpl) getExtendsList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));
+    PsiTypeParameter mirror = (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(element);
+      ((ClsReferenceListImpl)getExtendsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));
   }
 
   public PsiElement[] getChildren() {
@@ -287,7 +290,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   public PsiTypeParameterListOwner getOwner() {
     if (myParent instanceof ClsTypeParametersListImpl) {
       final PsiElement parent = myParent.getParent();
-      if (parent instanceof PsiTypeParameterListOwner) return (PsiTypeParameterListOwner) parent;
+      if (parent instanceof PsiTypeParameterListOwner) return (PsiTypeParameterListOwner)parent;
     }
     return null;
   }

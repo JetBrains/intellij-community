@@ -1,19 +1,18 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEnumeratedType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -52,7 +51,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   }
 
   public XmlElement getNameElement() {
-    return (XmlElement)findElementByTokenType(XML_NAME);
+    return findElementByTokenType(XML_NAME);
   }
 
   public boolean isAttributeRequired() {
@@ -77,10 +76,10 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
   public XmlElement[] getEnumeratedValues() {
     XmlEnumeratedType enumeratedType = (XmlEnumeratedType)findElementByTokenType(XML_ENUMERATED_TYPE);
-    if (enumeratedType != null){
+    if (enumeratedType != null) {
       return enumeratedType.getEnumeratedValues();
     }
-    else{
+    else {
       return XmlElement.EMPTY_ARRAY;
     }
   }
@@ -88,13 +87,13 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   public boolean isIdAttribute() {
     final PsiElement elementType = findElementType();
 
-    return elementType!=null && elementType.getText().equals("ID");
+    return elementType != null && elementType.getText().equals("ID");
   }
 
   private PsiElement findElementType() {
     final PsiElement elementName = findElementByTokenType(XML_NAME);
-    final PsiElement nextSibling = (elementName!=null)?elementName.getNextSibling():null;
-    final PsiElement elementType = (nextSibling instanceof PsiWhiteSpace)?nextSibling.getNextSibling():nextSibling;
+    final PsiElement nextSibling = (elementName != null) ? elementName.getNextSibling() : null;
+    final PsiElement elementType = (nextSibling instanceof PsiWhiteSpace) ? nextSibling.getNextSibling() : nextSibling;
 
     return elementType;
   }
@@ -102,7 +101,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   public boolean isIdRefAttribute() {
     final PsiElement elementType = findElementType();
 
-    return elementType!=null && elementType.getText().equals("IDREF");
+    return elementType != null && elementType.getText().equals("IDREF");
   }
 
   public PsiMetaData getMetaData() {
@@ -119,6 +118,6 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
   public String getName() {
     XmlElement name = getNameElement();
-    return (name != null )? name.getText():null;
+    return (name != null) ? name.getText() : null;
   }
 }

@@ -82,7 +82,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
         if (myManager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
           ARRAY_CLASS = createClassFromText(
             "public class __Array__{\n public final int length; \n public Object clone(){}\n}", null);
-        } else {
+        }
+        else {
           ARRAY_CLASS = createClassFromText(
             "public class __Array__<T>{\n public final int length; \n public T[] clone(){}\n}", null);
         }
@@ -159,7 +160,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     PsiClass aClass = aFile.getClasses()[0];
     PsiField field = aClass.getFields()[0];
     SourceTreeToPsiMap.psiElementToTree(field).replaceChild(SourceTreeToPsiMap.psiElementToTree(field.getTypeElement()), typeCopy);
-    ChangeUtil.decodeInformation(SourceTreeToPsiMap.psiElementToTree(field));
+    ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(field));
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
 
@@ -204,7 +205,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     final FileElement treeHolder = new DummyHolder(myManager, null).getTreeElement();
-    final CompositeElement treeElement = DeclarationParsing.parseParameterText(myManager, ("int " + name).toCharArray(), treeHolder.getCharTable());
+    final CompositeElement treeElement =
+    DeclarationParsing.parseParameterText(myManager, ("int " + name).toCharArray(), treeHolder.getCharTable());
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
@@ -213,7 +215,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiParameter parameter = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
-    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
+    parameter.getModifierList()
+      .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
@@ -246,7 +249,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
     public PsiType visitWildcardType(PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
-      if (bound == null) return wildcardType;
+      if (bound == null) {
+        return wildcardType;
+      }
       else {
         return PsiWildcardType.changeBound(wildcardType, bound.accept(this));
       }
@@ -344,12 +349,13 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException {
     return createTagFromText(
-      "<implicit-properties-ant-declaration-tag-for-intellij-idea xmlns=\"" + XmlUtil.ANT_URI + "\"/>");
+        "<implicit-properties-ant-declaration-tag-for-intellij-idea xmlns=\"" + XmlUtil.ANT_URI + "\"/>");
   }
 
   public PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    CompositeElement annotationElement = DeclarationParsing.parseAnnotationFromText(myManager, annotationText, holderElement.getCharTable());
+    CompositeElement annotationElement =
+    DeclarationParsing.parseAnnotationFromText(myManager, annotationText, holderElement.getCharTable());
     if (annotationElement == null || annotationElement.getElementType() != ElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
@@ -380,7 +386,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       sep = ",";
     }
     text += "){}";
-    PsiMethod method = createMethodFromText(text,null);
+    PsiMethod method = createMethodFromText(text, null);
     return method.getParameterList();
   }
 
@@ -398,7 +404,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return method.getThrowsList();
   }
 
-  public PsiCatchSection createCatchSection(PsiClassType exceptionType, String exceptionName, PsiElement context) throws IncorrectOperationException {
+  public PsiCatchSection createCatchSection(PsiClassType exceptionType,
+                                            String exceptionName,
+                                            PsiElement context) throws IncorrectOperationException {
     StringBuffer buffer = new StringBuffer();
     buffer.append("catch (");
     buffer.append(exceptionType.getCanonicalText());
@@ -406,7 +414,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     String catchSectionText = buffer.toString();
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement catchSection = StatementParsing.parseCatchSectionText(myManager, catchSectionText.toCharArray(),
-                                                               holderElement.getCharTable());
+                                                                      holderElement.getCharTable());
     LOG.assertTrue(catchSection != null && catchSection.getElementType() == ElementType.CATCH_SECTION);
     TreeUtil.addChildren(holderElement, catchSection);
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
@@ -436,14 +444,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     psiCatchSection.getCatchBlock().replace(codeBlockFromText);
   }
 
-  public XmlText createDisplayText(String s) throws IncorrectOperationException{
+  public XmlText createDisplayText(String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagTextUtil.getCDATAQuote(s) + "</a>");
     final XmlText[] textElements = tagFromText.getValue().getTextElements();
-    if(textElements.length == 0) return (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+    if (textElements.length == 0) return (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT);
     return textElements[0];
   }
 
-  public XmlTag createXHTMLTagFromText(String text) throws IncorrectOperationException{
+  public XmlTag createXHTMLTagFromText(String text) throws IncorrectOperationException {
     return ((XmlFile)createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
@@ -533,12 +541,13 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(buffer.toString(), null);
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     variable.getTypeElement().replace(createTypeElement(type));
-    variable.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
+    variable.getModifierList()
+      .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
     if (initializer != null) {
       variable.getInitializer().replace(initializer);
     }
 
-    statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);    
+    statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
     return statement;
   }
 
@@ -633,7 +642,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createMethodFromTextInner(text, context, myManager.getEffectiveLanguageLevel());
   }
 
-  private PsiMethod createMethodFromTextInner (String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
+  private PsiMethod createMethodFromTextInner(String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = DeclarationParsing.parseDeclarationText(myManager, level, text.toCharArray(),
                                                                DeclarationParsing.CLASS_CONTEXT, holderElement.getCharTable());
@@ -707,7 +716,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
           throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
         }
         PsiComment comment = (PsiComment)children[i];
-        new DummyHolder(myManager, SourceTreeToPsiMap.psiElementToTree(comment), context);
+        new DummyHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
         return comment;
       }
     }
@@ -766,23 +775,24 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
 
   public PsiTypeCodeFragment createTypeCodeFragment(String text,
-                                                PsiElement context,
-                                                boolean isVoidValid,
-                                                boolean isPhysical) {
+                                                    PsiElement context,
+                                                    boolean isVoidValid,
+                                                    boolean isPhysical) {
     return createTypeCodeFragment(text, context, true, isPhysical, false);
   }
 
   public PsiTypeCodeFragment createTypeCodeFragment(String text,
-                                                PsiElement context,
-                                                boolean isVoidValid,
-                                                boolean isPhysical, boolean allowEllipsis) {
+                                                    PsiElement context,
+                                                    boolean isVoidValid,
+                                                    boolean isPhysical,
+                                                    boolean allowEllipsis) {
     final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager,
-                                                               isPhysical,
-                                                               allowEllipsis,
-                                                               "fragment.java",
-                                                               text.toCharArray(),
-                                                               0,
-                                                               text.length());
+                                                                       isPhysical,
+                                                                       allowEllipsis,
+                                                                       "fragment.java",
+                                                                       text.toCharArray(),
+                                                                       0,
+                                                                       text.length());
     result.setContext(context);
     if (isVoidValid) {
       result.putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);

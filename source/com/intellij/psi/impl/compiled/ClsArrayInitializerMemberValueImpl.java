@@ -47,7 +47,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     LOG.assertTrue(myInitializers.length == initializers.length);
     for (int i = 0; i < myInitializers.length; i++) {
       ClsElementImpl value = (ClsElementImpl)myInitializers[i];
-      value.setMirror(SourceTreeToPsiMap.psiElementToTree(initializers[i]));
+      value.setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(initializers[i]));
     }
   }
 

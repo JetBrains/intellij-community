@@ -97,7 +97,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void prepareToRepositoryIdInvalidation() {
-    if (isRepositoryIdInitialized()){
+    if (isRepositoryIdInitialized()) {
       super.prepareToRepositoryIdInvalidation();
     }
   }
@@ -132,33 +132,34 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement loadTreeElement() {
-    // load document outside lock for better performance
-    if (!isPhysical()) {
-      return getTreeElement();
+               // load document outside lock for better performance
+               if (!isPhysical()) {
+                 return getTreeElement();
+               }
+               final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+
+  synchronized (PsiLock.LOCK) {
+    FileElement treeElement = getTreeElement();
+    if (treeElement != null) return treeElement;
+    if (myFile != null && myManager.isAssertOnFileLoading(myFile)) {
+      LOG.error("File text loaded " + myFile.getPresentableUrl());
     }
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+    treeElement = (FileElement)Factory.createCompositeElement(myElementType);
+    treeElement.setDocument(document);
+    final CharSequence docText = document.getCharsSequence();
+    char[] chars = CharArrayUtil.fromSequence(docText);
 
-    synchronized (PsiLock.LOCK) {
-      FileElement treeElement = getTreeElement();
-      if (treeElement != null) return treeElement;
-      if (myFile != null && myManager.isAssertOnFileLoading(myFile)) {
-        LOG.error("File text loaded " + myFile.getPresentableUrl());
-      }
-      treeElement = (FileElement)Factory.createCompositeElement(myElementType);
-      treeElement.setDocument(document);
-      final CharSequence docText = ((DocumentEx)document).getCharsSequence();
-      char[] chars = CharArrayUtil.fromSequence(docText);
-
-      TreeElement contentElement = Factory.createLeafElement(myContentElementType, chars, 0, docText.length(), -1, treeElement.getCharTable());
-      TreeUtil.addChildren(treeElement, contentElement);
-      setTreeElement(treeElement);
-      treeElement.setPsiElement(this);
+    TreeElement contentElement =
+    Factory.createLeafElement(myContentElementType, chars, 0, docText.length(), -1, treeElement.getCharTable());
+    TreeUtil.addChildren(treeElement, contentElement);
+    setTreeElement(treeElement);
+    treeElement.setPsiElement(this);
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Loaded text for file " + myFile.getPresentableUrl());
-      }
-      return treeElement;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Loaded text for file " + myFile.getPresentableUrl());
     }
+    return treeElement;
+  }
   }
 
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {

@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
  */
 public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsEnumConstantImpl");
+
   public ClsEnumConstantImpl(ClsClassImpl parent, int startOffset) {
     super(parent, startOffset);
   }
@@ -38,11 +39,11 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     myMirror = element;
 
     PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);
-    if (getDocComment() != null){
-      ((ClsElementImpl)getDocComment()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
+    if (getDocComment() != null) {
+        ((ClsElementImpl)getDocComment()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
     }
-    ((ClsElementImpl)getModifierList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-    ((ClsElementImpl)getNameIdentifier()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
+      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
   }
 
   public PsiExpressionList getArgumentList() {

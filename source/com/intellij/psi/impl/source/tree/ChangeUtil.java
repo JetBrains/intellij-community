@@ -25,23 +25,23 @@ import com.intellij.util.IncorrectOperationException;
 public class ChangeUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
 
-  private ChangeUtil() {}
+  private ChangeUtil() { }
 
   public static void addChild(final CompositeElement parent, final TreeElement child, TreeElement anchorBefore) {
     LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
 
     int childLength = child.getTextLength();
     int offset = anchorBefore != null
-                 ? anchorBefore.getStartOffset()
-                 : parent.getStartOffset() + parent.getTextLength();
+      ? anchorBefore.getStartOffset()
+      : parent.getStartOffset() + parent.getTextLength();
 
     PsiTreeChangeEventImpl event = null;
     PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
     PsiFile file = parentPsiElement.getContainingFile();
     boolean physical = parentPsiElement.isPhysical();
-    if (physical){
+    if (physical) {
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null){
+      if (file != null) {
         manager.invalidateFile(file);
       }
       event = new PsiTreeChangeEventImpl(manager);
@@ -52,7 +52,7 @@ public class ChangeUtil implements Constants {
       manager.beforeChildAddition(event);
 
       RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null){
+      if (repositoryManager != null) {
         repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
       }
     }
@@ -60,12 +60,13 @@ public class ChangeUtil implements Constants {
     child.setTreeNext(null);
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
     final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(child);
-    if(newCharTab != oldCharTab)
-    registerLeafsInCharTab(newCharTab, child, oldCharTab);
-    if (anchorBefore != null){
+    if (newCharTab != oldCharTab) {
+      registerLeafsInCharTab(newCharTab, child, oldCharTab);
+    }
+    if (anchorBefore != null) {
       TreeUtil.insertBefore(anchorBefore, child);
     }
-    else{
+    else {
       TreeUtil.addChildren(parent, child);
     }
 
@@ -73,11 +74,11 @@ public class ChangeUtil implements Constants {
     parent.subtreeChanged();
 
     PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical){
+    if (physical) {
       event.setChild(SourceTreeToPsiMap.treeElementToPsi(child));
       manager.childAdded(event);
     }
-    else if (manager != null){
+    else if (manager != null) {
       manager.nonPhysicalChange();
     }
 
@@ -94,11 +95,11 @@ public class ChangeUtil implements Constants {
   }
 
   private static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
-    if(newCharTab == oldCharTab) return;
-    while(child != null){
+    if (newCharTab == oldCharTab) return;
+    while (child != null) {
       CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
       if (child instanceof LeafElement) {
-        ((LeafElement)child).registerInCharTable(newCharTab, oldCharTab);
+          ((LeafElement)child).registerInCharTable(newCharTab, oldCharTab);
       }
       else {
         registerLeafsInCharTab(newCharTab, child.getFirstChildNode(), charTable != null ? charTable : oldCharTab);
@@ -120,9 +121,9 @@ public class ChangeUtil implements Constants {
     PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
     PsiFile file = parentPsiElement.getContainingFile();
     boolean physical = parentPsiElement.isPhysical();
-    if (physical){
+    if (physical) {
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null){
+      if (file != null) {
         manager.invalidateFile(file);
       }
       event = new PsiTreeChangeEventImpl(manager);
@@ -134,7 +135,7 @@ public class ChangeUtil implements Constants {
       manager.beforeChildRemoval(event);
 
       RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null){
+      if (repositoryManager != null) {
         repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
       }
     }
@@ -146,17 +147,17 @@ public class ChangeUtil implements Constants {
     //updateCachedLengths(parent, -childLength);
 
     PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical){
+    if (physical) {
       manager.childRemoved(event);
     }
-    else if (manager != null){
+    else if (manager != null) {
       manager.nonPhysicalChange();
     }
     checkConsistency(file);
   }
 
   public static void replaceChild(final CompositeElement parent, final TreeElement oldChild, final TreeElement newChild) {
-    if (oldChild.getTreeParent() != parent){
+    if (oldChild.getTreeParent() != parent) {
       LOG.assertTrue(oldChild.getTreeParent() == parent);
     }
 
@@ -170,9 +171,9 @@ public class ChangeUtil implements Constants {
     PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
     PsiFile file = parentPsiElement.getContainingFile();
     boolean physical = parentPsiElement.isPhysical();
-    if (physical){
+    if (physical) {
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null){
+      if (file != null) {
         manager.invalidateFile(file);
       }
       event = new PsiTreeChangeEventImpl(manager);
@@ -184,28 +185,28 @@ public class ChangeUtil implements Constants {
       manager.beforeChildReplacement(event);
 
       RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null){
+      if (repositoryManager != null) {
         repositoryManager.beforeChildAddedOrRemoved(file, parent, oldChild);
         repositoryManager.beforeChildAddedOrRemoved(file, parent, newChild);
       }
     }
 
     newChild.setTreeNext(null);
-    if(oldCharTable != newCharTable){
+    if (oldCharTable != newCharTable) {
       registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
     }
     oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTable);
-    if(oldChild != newChild) TreeUtil.replace(oldChild, newChild);
+    if (oldChild != newChild) TreeUtil.replace(oldChild, newChild);
 
     parent.subtreeChanged();
     //updateCachedLengths(parent, newLength - oldLength);
 
     PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical){
+    if (physical) {
       event.setNewChild(SourceTreeToPsiMap.treeElementToPsi(newChild));
       manager.childReplaced(event);
     }
-    else if (manager != null){
+    else if (manager != null) {
       manager.nonPhysicalChange();
     }
     checkConsistency(file);
@@ -222,7 +223,7 @@ public class ChangeUtil implements Constants {
     PsiFile file = parentPsiElement.getContainingFile();
     ChameleonTransforming.transformChildren(newChildrenParent);
     final ASTNode firstChild = newChildrenParent.getFirstChildNode();
-    if (physical){
+    if (physical) {
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
       manager.invalidateFile(file);
       event = new PsiTreeChangeEventImpl(manager);
@@ -233,15 +234,15 @@ public class ChangeUtil implements Constants {
       manager.beforeChildrenChange(event);
 
       VirtualFile vFile = file.getVirtualFile();
-      if (vFile != null){
+      if (vFile != null) {
         RepositoryManager repositoryManager = manager.getRepositoryManager();
-        if (repositoryManager != null){
+        if (repositoryManager != null) {
           ChameleonTransforming.transformChildren(parent);
-          for(ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()){
+          for (ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
             repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
           }
 
-          for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
+          for (ASTNode child = firstChild; child != null; child = child.getTreeNext()) {
             repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
           }
         }
@@ -249,13 +250,13 @@ public class ChangeUtil implements Constants {
     }
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
     ASTNode oldChild = parent.getFirstChildNode();
-    while(oldChild != null){
+    while (oldChild != null) {
       oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTab);
       oldChild = oldChild.getTreeNext();
     }
     TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
 
-    if (firstChild != null){
+    if (firstChild != null) {
       final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
       registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
       TreeUtil.addChildren(parent, (TreeElement)firstChild);
@@ -267,10 +268,10 @@ public class ChangeUtil implements Constants {
     //}
 
     PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical){
+    if (physical) {
       manager.childrenChanged(event);
     }
-    else if (manager != null){
+    else if (manager != null) {
       manager.nonPhysicalChange();
     }
     checkConsistency(file);
@@ -282,9 +283,9 @@ public class ChangeUtil implements Constants {
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
     boolean encodeRefTargets = true;
-    if (original.getTreeParent() instanceof DummyHolderElement){
+    if (original.getTreeParent() instanceof DummyHolderElement) {
       DummyHolder dummyHolder = (DummyHolder)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent());
-      if (dummyHolder.getContext() == null && !dummyHolder.hasImports()){ // optimization
+      if (dummyHolder.getContext() == null && !dummyHolder.hasImports()) { // optimization
         encodeRefTargets = false;
       }
     }
@@ -292,16 +293,17 @@ public class ChangeUtil implements Constants {
   }
 
   private static void _encodeInformation(TreeElement element, ASTNode original, boolean encodeRefTargets) {
-    if (original instanceof CompositeElement){
-      if (original.getElementType() == ElementType.JAVA_CODE_REFERENCE || original.getElementType() == ElementType.REFERENCE_EXPRESSION){
-        if (encodeRefTargets){
+    if (original instanceof CompositeElement) {
+      if (original.getElementType() == ElementType.JAVA_CODE_REFERENCE || original.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+        if (encodeRefTargets) {
           encodeInformationInRef(element, original);
         }
       }
-      else if (original.getElementType() == ElementType.MODIFIER_LIST){
-        if ((original.getTreeParent().getElementType() == ElementType.FIELD || original.getTreeParent().getElementType() == ElementType.METHOD)
+      else if (original.getElementType() == ElementType.MODIFIER_LIST) {
+        if ((original.getTreeParent().getElementType() == ElementType.FIELD ||
+              original.getTreeParent().getElementType() == ElementType.METHOD)
           && original.getTreeParent().getTreeParent().getElementType() == ElementType.CLASS &&
-          ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()){
+          ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()) {
           element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, Boolean.TRUE);
         }
       }
@@ -310,7 +312,7 @@ public class ChangeUtil implements Constants {
       ChameleonTransforming.transformChildren(original);
       TreeElement child = (TreeElement)element.getFirstChildNode();
       ASTNode child1 = original.getFirstChildNode();
-      while(child != null){
+      while (child != null) {
         _encodeInformation(child, child1, encodeRefTargets);
         child = child.getTreeNext();
         child1 = child1.getTreeNext();
@@ -319,94 +321,95 @@ public class ChangeUtil implements Constants {
   }
 
   private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
-    if (original.getElementType() == REFERENCE_EXPRESSION){
+    if (original.getElementType() == REFERENCE_EXPRESSION) {
       if (original.getTreeParent().getElementType() != REFERENCE_EXPRESSION) return; // cannot refer to class (optimization)
       PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
-      if (target instanceof PsiClass){
+      if (target instanceof PsiClass) {
         ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
       }
     }
-    else if (original.getElementType() == JAVA_CODE_REFERENCE){
-      switch(((PsiJavaCodeReferenceElementImpl)original).getKind()){
-        case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
-        case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
-        case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
-          {
-            final PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
-            if (target instanceof PsiClass){
-              ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
-            }
-          }
-          break;
+    else if (original.getElementType() == JAVA_CODE_REFERENCE) {
+      switch (((PsiJavaCodeReferenceElementImpl)original).getKind()) {
+      case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
+      case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
+      case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
+             {
+               final PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
+               if (target instanceof PsiClass) {
+                 ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
+               }
+             }
+             break;
 
-        case PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND:
-        case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
-        case PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND:
-          break;
+      case PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND:
+      case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
+      case PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND:
+             break;
 
-        default:
-          LOG.assertTrue(false);
+      default:
+             LOG.assertTrue(false);
       }
     }
-    else{
+    else {
       LOG.assertTrue(false, "Wrong element type: " + original.getElementType());
       return;
     }
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    if (element instanceof CompositeElement){
+    if (element instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(element);
       TreeElement child = (TreeElement)element.getFirstChildNode();
-      while(child != null){
+      while (child != null) {
         child = decodeInformation(child);
         child = child.getTreeNext();
       }
 
-      if (element.getElementType() == ElementType.JAVA_CODE_REFERENCE || element.getElementType() == ElementType.REFERENCE_EXPRESSION){
+      if (element.getElementType() == ElementType.JAVA_CODE_REFERENCE || element.getElementType() == ElementType.REFERENCE_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiClass refClass = element.getCopyableUserData(REFERENCED_CLASS_KEY);
-        if (refClass != null){
+        if (refClass != null) {
           element.putCopyableUserData(REFERENCED_CLASS_KEY, null);
 
-          if (refClass.isPhysical() || !ref.isPhysical()){ //?
+          if (refClass.isPhysical() || !ref.isPhysical()) { //?
             PsiManager manager = refClass.getManager();
             CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
             PsiElement refElement1 = ref.resolve();
-            try{
-              if (refClass != refElement1 && !manager.areElementsEquivalent(refClass, refElement1)){
-                if (((CompositeElement)element).findChildByRole(ChildRole.QUALIFIER) == null){ // can restore only if short (otherwise qualifier should be already restored)
+            try {
+              if (refClass != refElement1 && !manager.areElementsEquivalent(refClass, refElement1)) {
+                if (((CompositeElement)element).findChildByRole(ChildRole.QUALIFIER) ==
+                                               null) { // can restore only if short (otherwise qualifier should be already restored)
                   ref = (PsiJavaCodeReferenceElement)ref.bindToElement(refClass);
                 }
               }
-              else{
+              else {
                 // shorten references to the same package and to inner classes that can be accessed by short name
                 ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, CodeStyleManagerEx.DO_NOT_ADD_IMPORTS);
               }
-              element = SourceTreeToPsiMap.psiElementToTree(ref);
+              element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
             }
-            catch(IncorrectOperationException e){
+            catch (IncorrectOperationException e) {
               codeStyleManager.addImport(ref.getContainingFile(), refClass); // it may fail for local class, let's try for DummyHolder
             }
           }
         }
       }
-      else if (element.getElementType() == ElementType.MODIFIER_LIST){
-        if (element.getUserData(INTERFACE_MODIFIERS_FLAG_KEY) != null){
+      else if (element.getElementType() == ElementType.MODIFIER_LIST) {
+        if (element.getUserData(INTERFACE_MODIFIERS_FLAG_KEY) != null) {
           element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, null);
-          try{
+          try {
             PsiModifierList modifierList = (PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(element);
-            if (element.getTreeParent().getElementType() == ElementType.FIELD){
+            if (element.getTreeParent().getElementType() == ElementType.FIELD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.STATIC, true);
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
-            else if (element.getTreeParent().getElementType() == ElementType.METHOD){
+            else if (element.getTreeParent().getElementType() == ElementType.METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
             }
           }
-          catch(IncorrectOperationException e){
+          catch (IncorrectOperationException e) {
             LOG.error(e);
           }
         }
@@ -422,7 +425,7 @@ public class ChangeUtil implements Constants {
     registerLeafsInCharTab(table, element, charTableByTree);
     new DummyHolder(manager, element, null, table).getTreeElement();
     encodeInformation(element, original);
-//  CodeEditUtil.normalizeCloneIndent(element, original, table);
+    //  CodeEditUtil.normalizeCloneIndent(element, original, table);
     CodeEditUtil.unindentSubtree(element, original, table);
     return element;
   }
@@ -431,59 +434,59 @@ public class ChangeUtil implements Constants {
     final DummyHolder holder = new DummyHolder(original.getManager(), null);
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = _copyToElement(original, holderElement.getCharTable());
-//  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
+    //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
     TreeUtil.addChildren(holderElement, treeElement);
-//  treeElement.setTreePrev(treePrev);
+    //  treeElement.setTreePrev(treePrev);
     return treeElement;
   }
 
   private static TreeElement _copyToElement(PsiElement original, CharTable table) {
     LOG.assertTrue(original.isValid());
-    if (SourceTreeToPsiMap.hasTreeElement(original)){
-      return copyElement(SourceTreeToPsiMap.psiElementToTree(original), table);
+    if (SourceTreeToPsiMap.hasTreeElement(original)) {
+      return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
-    else if (original instanceof PsiIdentifier){
+    else if (original instanceof PsiIdentifier) {
       final String text = original.getText();
       return Factory.createLeafElement(IDENTIFIER, text.toCharArray(), 0, text.length(), -1, table);
     }
-    else if (original instanceof PsiKeyword){
+    else if (original instanceof PsiKeyword) {
       final String text = original.getText();
       return Factory.createLeafElement(((PsiKeyword)original).getTokenType(), text.toCharArray(), 0, text.length(), -1, table);
     }
-    else if (original instanceof PsiReferenceExpression){
+    else if (original instanceof PsiReferenceExpression) {
       TreeElement element = createReferenceExpression(original.getManager(), original.getText(), table);
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
-      if (refElement instanceof PsiClass){
+      if (refElement instanceof PsiClass) {
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
       }
       return element;
     }
-    else if (original instanceof PsiJavaCodeReferenceElement){
+    else if (original instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
-      if (refElement instanceof PsiClass){
-        if (refElement instanceof PsiAnonymousClass){
+      if (refElement instanceof PsiClass) {
+        if (refElement instanceof PsiAnonymousClass) {
           PsiJavaCodeReferenceElement ref = ((PsiAnonymousClass)refElement).getBaseClassReference();
           original = ref;
           refElement = ref.resolve();
         }
 
         boolean isFQ = false;
-        if (original instanceof PsiJavaCodeReferenceElementImpl){
+        if (original instanceof PsiJavaCodeReferenceElementImpl) {
           int kind = ((PsiJavaCodeReferenceElementImpl)original).getKind();
-          switch(kind){
-            case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
-              isFQ = false;
-              break;
+          switch (kind) {
+          case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
+          case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
+          case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
+                 isFQ = false;
+                 break;
 
-            case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND:
-              isFQ = true;
-              break;
+          case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
+          case PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND:
+                 isFQ = true;
+                 break;
 
-            default:
-              LOG.assertTrue(false);
+          default:
+                 LOG.assertTrue(false);
           }
         }
 
@@ -492,22 +495,22 @@ public class ChangeUtil implements Constants {
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
         return element;
       }
-      else if (refElement instanceof PsiPackage){
+      else if (refElement instanceof PsiPackage) {
         return createReference(original.getManager(), original.getText(), table);
       }
-      else{
+      else {
         return createReference(original.getManager(), original.getText(), table);
       }
     }
-    else if (original instanceof PsiCompiledElement){
+    else if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
-      if (sourceVersion != original){
+      if (sourceVersion != original) {
         return _copyToElement(sourceVersion, table);
       }
       ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
       return _copyToElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table);
     }
-    else if (original instanceof PsiTypeElement){
+    else if (original instanceof PsiTypeElement) {
       PsiTypeElement typeElement = (PsiTypeElement)original;
       PsiType type = typeElement.getType();
       if (type instanceof PsiEllipsisType) {
@@ -521,7 +524,7 @@ public class ChangeUtil implements Constants {
         TreeUtil.addChildren(element, Factory.createLeafElement(ELLIPSIS, new char[]{'.', '.', '.'}, 0, 3, -1, table));
         return element;
       }
-      else if (type instanceof PsiArrayType){
+      else if (type instanceof PsiArrayType) {
         TreeElement componentTypeCopy = _copyToElement(
           new LightTypeElement(original.getManager(), ((PsiArrayType)type).getComponentType()),
           table
@@ -533,7 +536,7 @@ public class ChangeUtil implements Constants {
         TreeUtil.addChildren(element, Factory.createLeafElement(RBRACKET, new char[]{']'}, 0, 1, -1, table));
         return element;
       }
-      else if (type instanceof PsiPrimitiveType){
+      else if (type instanceof PsiPrimitiveType) {
         String text = typeElement.getText();
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
@@ -542,23 +545,26 @@ public class ChangeUtil implements Constants {
         CompositeElement element = Factory.createCompositeElement(TYPE);
         TreeUtil.addChildren(element, keyword);
         return element;
-      } else if (type instanceof PsiWildcardType) {
+      }
+      else if (type instanceof PsiWildcardType) {
         char[] buffer = original.getText().toCharArray();
         return DeclarationParsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
-      } else {
+      }
+      else {
         final PsiJavaCodeReferenceElement ref;
-        if (type instanceof PsiClassReferenceType){
+        if (type instanceof PsiClassReferenceType) {
           PsiClassReferenceType refType = (PsiClassReferenceType)type;
           ref = refType.getReference();
-        } else if (type instanceof PsiImmediateClassType) {
-          final PsiImmediateClassType classType = (PsiImmediateClassType) type;
+        }
+        else if (type instanceof PsiImmediateClassType) {
+          final PsiImmediateClassType classType = (PsiImmediateClassType)type;
           final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table);
           final CompositeElement immediateTypeElement = Factory.createCompositeElement(TYPE);
           TreeUtil.addChildren(immediateTypeElement, reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
-        else{
+        else {
           String text = original.getText();
           ref = new LightClassReference(original.getManager(), text, type.getCanonicalText(), original);
         }
@@ -567,13 +573,13 @@ public class ChangeUtil implements Constants {
         return element;
       }
     }
-    else{
+    else {
       LOG.error("ChangeUtil.copyToElement() unknown element " + original);
       return null;
     }
   }
 
-  private static CompositeElement createReference(PsiManager manager, String text, CharTable table){
+  private static CompositeElement createReference(PsiManager manager, String text, CharTable table) {
     return Parsing.parseJavaCodeReferenceText(manager, text.toCharArray(), table);
   }
 
@@ -588,7 +594,7 @@ public class ChangeUtil implements Constants {
     if (type instanceof PsiArrayType) {
       final ASTNode firstChild = typeElement.getFirstChildNode();
       LOG.assertTrue(firstChild.getElementType() == TYPE);
-      encodeInfoInTypeElement(firstChild, ((PsiArrayType) type).getComponentType());
+      encodeInfoInTypeElement(firstChild, ((PsiArrayType)type).getComponentType());
       return;
     }
     else if (type instanceof PsiWildcardType) {
@@ -611,14 +617,14 @@ public class ChangeUtil implements Constants {
     }
     else {
       LOG.assertTrue(type instanceof PsiClassType);
-      final PsiClassType classType = (PsiClassType) type;
+      final PsiClassType classType = (PsiClassType)type;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass referencedClass = resolveResult.getElement();
       if (referencedClass == null) return;
       final ASTNode reference = typeElement.getFirstChildNode();
       LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
 
-      encodeClassTypeInfoInReference((CompositeElement) reference, resolveResult.getElement(), resolveResult.getSubstitutor());
+      encodeClassTypeInfoInReference((CompositeElement)reference, resolveResult.getElement(), resolveResult.getSubstitutor());
     }
   }
 
@@ -648,7 +654,7 @@ public class ChangeUtil implements Constants {
       if (referencedClass.hasModifierProperty(PsiModifier.STATIC)) return;
       final PsiClass outerClass = referencedClass.getContainingClass();
       if (outerClass != null) {
-        encodeClassTypeInfoInReference((CompositeElement) qualifier, outerClass, substitutor);
+        encodeClassTypeInfoInReference((CompositeElement)qualifier, outerClass, substitutor);
       }
     }
   }
@@ -660,7 +666,7 @@ public class ChangeUtil implements Constants {
                                  ASTNode firstChild,
                                  final ASTNode lastChild,
                                  final ASTNode anchorBefore) {
-    while(firstChild != lastChild){
+    while (firstChild != lastChild) {
       final ASTNode next = firstChild.getTreeNext();
       parent.addChild(firstChild, anchorBefore);
       firstChild = next;
@@ -668,9 +674,9 @@ public class ChangeUtil implements Constants {
   }
 
   public static void replaceAll(LeafElement[] leafElements, LeafElement merged) {
-    if(leafElements.length == 0) return;
+    if (leafElements.length == 0) return;
     final CompositeElement parent = leafElements[0].getTreeParent();
-    if(LOG.isDebugEnabled()){
+    if (LOG.isDebugEnabled()) {
       for (int i = 0; i < leafElements.length; i++) {
         final ASTNode leafElement = leafElements[i];
         LOG.assertTrue(leafElement.getTreeParent() == parent);
@@ -681,18 +687,18 @@ public class ChangeUtil implements Constants {
     final PsiFile containingFile = psiParent.getContainingFile();
     final PsiManagerImpl manager = (PsiManagerImpl)containingFile.getManager();
     final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    if(containingFile.isPhysical()){
+    if (containingFile.isPhysical()) {
       event.setParent(psiParent);
       event.setFile(containingFile);
       event.setOffset(parent.getStartOffset());
       event.setOldLength(parent.getTextLength());
       manager.beforeChildrenChange(event);
     }
-      TreeUtil.insertAfter(leafElements[0], merged);
-      for (int i = 0; i < leafElements.length; i++) TreeUtil.remove(leafElements[i]);
+    TreeUtil.insertAfter(leafElements[0], merged);
+    for (int i = 0; i < leafElements.length; i++) TreeUtil.remove(leafElements[i]);
 
     parent.subtreeChanged();
-    if(containingFile.isPhysical()) manager.childrenChanged(event);
+    if (containingFile.isPhysical()) manager.childrenChanged(event);
     checkConsistency(containingFile);
   }
 }

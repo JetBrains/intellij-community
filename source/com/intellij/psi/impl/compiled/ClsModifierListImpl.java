@@ -13,8 +13,9 @@ import com.intellij.util.containers.HashMap;
 public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
 
-  private static final HashMap<String,Integer> ourModifierNameToFlagMap = new HashMap<String, Integer>();
-  static{
+  private static final HashMap<String, Integer> ourModifierNameToFlagMap = new HashMap<String, Integer>();
+
+  static {
     ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, new Integer(ClsUtil.ACC_PUBLIC));
     ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, new Integer(ClsUtil.ACC_PROTECTED));
     ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, new Integer(ClsUtil.ACC_PRIVATE));
@@ -31,23 +32,23 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
   private ClsAnnotationImpl[] myAnnotations = null;
   private final int myFlags;
 
-  public ClsModifierListImpl(ClsModifierListOwner parent, int flags){
+  public ClsModifierListImpl(ClsModifierListOwner parent, int flags) {
     myParent = parent;
     myFlags = flags;
   }
 
-  public PsiElement[] getChildren(){
+  public PsiElement[] getChildren() {
     return getAnnotations();
   }
 
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return myParent;
   }
 
-  public boolean hasModifierProperty(String name){
+  public boolean hasModifierProperty(String name) {
     Integer flag = ourModifierNameToFlagMap.get(name);
-    if (flag == null){
-      if (PsiModifier.PACKAGE_LOCAL.equals(name)){
+    if (flag == null) {
+      if (PsiModifier.PACKAGE_LOCAL.equals(name)) {
         return (myFlags & (ClsUtil.ACC_PUBLIC | ClsUtil.ACC_PROTECTED | ClsUtil.ACC_PRIVATE)) == 0;
       }
       return false;
@@ -55,11 +56,11 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return (myFlags & flag.intValue()) != 0;
   }
 
-  public void setModifierProperty(String name, boolean value) throws IncorrectOperationException{
+  public void setModifierProperty(String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
-  
-  public void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException{
+
+  public void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -74,7 +75,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
-  public String getMirrorText(){
+  public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
     PsiAnnotation[] annotations = getAnnotations();
     for (int i = 0; i < annotations.length; i++) {
@@ -87,59 +88,60 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     boolean isInterface = myParent instanceof PsiClass && ((PsiClass)myParent).isInterface();
     boolean isInterfaceMethod = myParent instanceof PsiMethod && ((PsiClass)myParent.getParent()).isInterface();
     boolean isInterfaceField = myParent instanceof PsiField && ((PsiClass)myParent.getParent()).isInterface();
-    boolean isInterfaceClass = myParent instanceof PsiClass && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
-    if (hasModifierProperty(PsiModifier.PUBLIC)){
-      if (!isInterfaceMethod && !isInterfaceField && !isInterfaceClass){
+    boolean isInterfaceClass =
+      myParent instanceof PsiClass && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
+    if (hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (!isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
         buffer.append(PsiModifier.PUBLIC);
         buffer.append(' ');
       }
     }
-    if (hasModifierProperty(PsiModifier.PROTECTED)){
+    if (hasModifierProperty(PsiModifier.PROTECTED)) {
       buffer.append(PsiModifier.PROTECTED);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.PRIVATE)){
+    if (hasModifierProperty(PsiModifier.PRIVATE)) {
       buffer.append(PsiModifier.PRIVATE);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.STATIC)){
-      if (!isInterfaceField){
+    if (hasModifierProperty(PsiModifier.STATIC)) {
+      if (!isInterfaceField) {
         buffer.append(PsiModifier.STATIC);
         buffer.append(' ');
       }
     }
-    if (hasModifierProperty(PsiModifier.ABSTRACT)){
-      if (!isInterface && !isInterfaceMethod){
+    if (hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (!isInterface && !isInterfaceMethod) {
         buffer.append(PsiModifier.ABSTRACT);
         buffer.append(' ');
       }
     }
-    if (hasModifierProperty(PsiModifier.FINAL)){
-      if (!isInterfaceField){
+    if (hasModifierProperty(PsiModifier.FINAL)) {
+      if (!isInterfaceField) {
         buffer.append(PsiModifier.FINAL);
         buffer.append(' ');
       }
     }
-    if (hasModifierProperty(PsiModifier.NATIVE)){
+    if (hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(PsiModifier.NATIVE);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.SYNCHRONIZED)){
+    if (hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
       buffer.append(PsiModifier.SYNCHRONIZED);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.TRANSIENT)){
+    if (hasModifierProperty(PsiModifier.TRANSIENT)) {
       buffer.append(PsiModifier.TRANSIENT);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.VOLATILE)){
+    if (hasModifierProperty(PsiModifier.VOLATILE)) {
       buffer.append(PsiModifier.VOLATILE);
       buffer.append(' ');
     }
     return buffer.toString();
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.MODIFIER_LIST);
     myMirror = element;
@@ -147,11 +149,11 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     PsiAnnotation[] annotations = getAnnotations();
     LOG.assertTrue(annotations.length == mirrorAnnotations.length);
     for (int i = 0; i < annotations.length; i++) {
-      ((ClsElementImpl)annotations[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(mirrorAnnotations[i]));
+        ((ClsElementImpl)annotations[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorAnnotations[i]));
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(PsiElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 

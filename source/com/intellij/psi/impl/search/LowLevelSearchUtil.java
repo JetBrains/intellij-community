@@ -28,7 +28,7 @@ public class LowLevelSearchUtil {
 
 
   private static boolean processElementsContainingWordInElement(PsiElementProcessorEx processor,
-                                                                TreeElement scope,
+                                                                ASTNode scope,
                                                                 StringSearcher searcher,
                                                                 TokenSet elementTypes,
                                                                 ProgressIndicator progress) {
@@ -55,7 +55,7 @@ public class LowLevelSearchUtil {
         endOffset = startOffset + leaf.getTextLength();
       }
       else {
-        char[] buffer = scope.textToCharArray();
+        char[] buffer = ((CompositeElement)scope).textToCharArray();
 
         // This is hack. Need to be fixed and optimized. current code's extremely slow
         // LeafElement leaf = SourceUtil.findLeafToFetchCharArrayRange(scope);
@@ -97,38 +97,42 @@ public class LowLevelSearchUtil {
   private static boolean processChildren(ASTNode scope,
                                          StringSearcher searcher,
                                          PsiElementProcessorEx processor,
-                                         TokenSet elementTypes, ProgressIndicator progress) {
-    synchronized (PsiLock.LOCK) {
-      ASTNode child = scope.getFirstChildNode();
-      while (child != null) {
-        if (child instanceof ChameleonElement) {
-          LeafElement leaf = (LeafElement)child;
-          if (leaf.searchWord(0, searcher) >= 0) {
-            ASTNode next = child.getTreeNext();
-            child = ChameleonTransforming.transform((ChameleonElement)child);
-            if (child == null) {
-              child = next;
-            }
-            continue;
+                                         TokenSet elementTypes,
+                                         ProgressIndicator progress) {
+  synchronized (PsiLock.LOCK) {
+    ASTNode child = scope.getFirstChildNode();
+    while (child != null) {
+      if (child instanceof ChameleonElement) {
+        LeafElement leaf = (LeafElement)child;
+        if (leaf.searchWord(0, searcher) >= 0) {
+          ASTNode next = child.getTreeNext();
+          child = ChameleonTransforming.transform((ChameleonElement)child);
+          if (child == null) {
+            child = next;
           }
+        continue;
         }
-        child = child.getTreeNext();
       }
+      child = child.getTreeNext();
     }
+  }
 
-    ASTNode child = null;
-    while (true) {
-      synchronized (PsiLock.LOCK) {
-        child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
-        while (child instanceof ChameleonElement) {
-          child = child.getTreeNext();
-        }
-        if (child == null) break;
-      }
+               ASTNode child = null;
+               while (true) {
+               synchronized (PsiLock.LOCK) {
+                 child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
+                 while (child instanceof ChameleonElement) {
+                   child = child.getTreeNext();
+                 }
+                 if (child == null) break;
+               }
 
-      if (!processElementsContainingWordInElement(processor, (TreeElement)child, searcher, elementTypes, progress)) return false;
-    }
-    return true;
+             if (!processElementsContainingWordInElement(processor, (TreeElement)child, searcher, elementTypes,
+                                                         progress)) {
+               return false;
+             }
+               }
+               return true;
   }
 
   public static int searchWord(char[] text, int startOffset, int endOffset, StringSearcher searcher) {
@@ -139,7 +143,7 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = text[index - 1];
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          continue;
+        continue;
         }
       }
 
@@ -147,7 +151,7 @@ public class LowLevelSearchUtil {
       if (index + pattern.length() < endOffset) {
         char c = text[index + pattern.length()];
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          continue;
+        continue;
         }
       }
       return index;

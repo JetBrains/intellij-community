@@ -47,13 +47,13 @@ public class DebugUtil {
   private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
-    for(int i = 0; i < indent; i++){
+    for (int i = 0; i < indent; i++) {
       buffer.append(' ');
     }
-    if (root instanceof CompositeElement){
+    if (root instanceof CompositeElement) {
       buffer.append(SourceTreeToPsiMap.treeElementToPsi(root).toString());
     }
-    else{
+    else {
       String text = root.getText();
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
@@ -61,33 +61,35 @@ public class DebugUtil {
       buffer.append(root.toString() + "('" + text + "')");
     }
     buffer.append("\n");
-    if (root instanceof CompositeElement){
+    if (root instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(root);
       ASTNode child = root.getFirstChildNode();
 
-      if (child == null){
-        for(int i = 0; i < indent + 2; i++){
+      if (child == null) {
+        for (int i = 0; i < indent + 2; i++) {
           buffer.append(' ');
         }
         buffer.append("<empty list>\n");
       }
-      else while(child != null){
-        treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces);
-        child = child.getTreeNext();
+      else {
+        while (child != null) {
+          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces);
+          child = child.getTreeNext();
+        }
       }
     }
-  }                                              
+  }
 
   private static void treeToBufferWithUserData(StringBuffer buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
-    for(int i = 0; i < indent; i++){
+    for (int i = 0; i < indent; i++) {
       buffer.append(' ');
     }
-    if (root instanceof CompositeElement){
+    if (root instanceof CompositeElement) {
       buffer.append(SourceTreeToPsiMap.treeElementToPsi(root).toString());
     }
-    else{
+    else {
       String text = root.getText();
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
@@ -96,16 +98,16 @@ public class DebugUtil {
     }
     buffer.append(root.getUserDataString());
     buffer.append("\n");
-    if (root instanceof CompositeElement || root instanceof ChameleonElement){
+    if (root instanceof CompositeElement || root instanceof ChameleonElement) {
       PsiElement[] children = SourceTreeToPsiMap.treeElementToPsi(root).getChildren();
 
-      for(int i = 0; i < children.length; i++){
+      for (int i = 0; i < children.length; i++) {
         PsiElement child = children[i];
-        treeToBufferWithUserData(buffer, SourceTreeToPsiMap.psiElementToTree(child), indent + 2, skipWhiteSpaces);
+        treeToBufferWithUserData(buffer, (TreeElement)SourceTreeToPsiMap.psiElementToTree(child), indent + 2, skipWhiteSpaces);
       }
 
-      if (children.length == 0){
-        for(int i = 0; i < indent + 2; i++){
+      if (children.length == 0) {
+        for (int i = 0; i < indent + 2; i++) {
           buffer.append(' ');
         }
         buffer.append("<empty list>\n");
@@ -116,13 +118,13 @@ public class DebugUtil {
   private static void treeToBufferWithUserData(StringBuffer buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
-    for(int i = 0; i < indent; i++){
+    for (int i = 0; i < indent; i++) {
       buffer.append(' ');
     }
-    if (root instanceof CompositeElement){
+    if (root instanceof CompositeElement) {
       buffer.append(root);
     }
-    else{
+    else {
       String text = root.getText();
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
@@ -134,13 +136,13 @@ public class DebugUtil {
 
     PsiElement[] children = root.getChildren();
 
-    for(int i = 0; i < children.length; i++){
+    for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       treeToBufferWithUserData(buffer, child, indent + 2, skipWhiteSpaces);
     }
 
-    if (children.length == 0){
-      for(int i = 0; i < indent + 2; i++){
+    if (children.length == 0) {
+      for (int i = 0; i < indent + 2; i++) {
         buffer.append(' ');
       }
       buffer.append("<empty list>\n");
@@ -150,45 +152,45 @@ public class DebugUtil {
 
   public static void checkTreeStructure(ASTNode anyElement) {
     ASTNode root = anyElement;
-    while(root.getTreeParent() != null){
+    while (root.getTreeParent() != null) {
       root = root.getTreeParent();
     }
     if (root instanceof CompositeElement) {
-      synchronized (PsiLock.LOCK) {
-        checkSubtree(root);
-      }
+    synchronized (PsiLock.LOCK) {
+      checkSubtree(root);
+    }
     }
   }
 
   private static void checkSubtree(ASTNode root) {
-    if (root.getFirstChildNode() == null){
-      if (root.getLastChildNode() != null){
+    if (root.getFirstChildNode() == null) {
+      if (root.getLastChildNode() != null) {
         throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
       }
     }
-    else{
-      for(ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()){
-        if (child instanceof CompositeElement){
+    else {
+      for (ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        if (child instanceof CompositeElement) {
           checkSubtree(child);
         }
-        if (child.getTreeParent() != root){
+        if (child.getTreeParent() != root) {
           throw new IncorrectTreeStructureException(child, "child has wrong parent value");
         }
-        if (child == root.getFirstChildNode()){
-          if (child.getTreePrev() != null){
+        if (child == root.getFirstChildNode()) {
+          if (child.getTreePrev() != null) {
             throw new IncorrectTreeStructureException(root, "firstChild.prev != null");
           }
         }
-        else{
-          if (child.getTreePrev() == null){
+        else {
+          if (child.getTreePrev() == null) {
             throw new IncorrectTreeStructureException(child, "not first child has prev == null");
           }
-          if (child.getTreePrev().getTreeNext() != child){
+          if (child.getTreePrev().getTreeNext() != child) {
             throw new IncorrectTreeStructureException(child, "element.prev.next != element");
           }
         }
-        if (child.getTreeNext() == null){
-          if (root.getLastChildNode() != child){
+        if (child.getTreeNext() == null) {
+          if (root.getLastChildNode() != child) {
             throw new IncorrectTreeStructureException(child, "not last child has next == null");
           }
         }

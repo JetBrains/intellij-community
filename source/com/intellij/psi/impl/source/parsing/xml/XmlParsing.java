@@ -26,10 +26,12 @@ import java.util.Set;
 public class XmlParsing implements ElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.xml.XmlParser");
 
-  public static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{XML_WHITE_SPACE, XML_COMMENT_START, XML_COMMENT_CHARACTERS,
-                                                                                                       XML_COMMENT_END, XML_BAD_CHARACTER});
+  public static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET =
+    TokenSet.create(new IElementType[]{XML_WHITE_SPACE, XML_COMMENT_START, XML_COMMENT_CHARACTERS,
+                                                                                        XML_COMMENT_END, XML_BAD_CHARACTER});
 
-  public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
+  public static final TokenSet XML_COMMENT_BIT_SET =
+    TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
 
   private ParsingContext myContext;
 
@@ -49,7 +51,7 @@ public class XmlParsing implements ElementType {
     TreeUtil.addChildren(root, parseProlog(lexer));
     parseGenericXml(lexer, root, new HashSet<String>());
 
-    ParseUtil.insertMissingTokens((CompositeElement)root,
+    ParseUtil.insertMissingTokens(root,
                                   originalLexer,
                                   startOffset,
                                   endOffset,
@@ -208,7 +210,7 @@ public class XmlParsing implements ElementType {
     }
 
     String openedName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
-                                                                    lexer.getTokenEnd() - lexer.getTokenStart());
+                                                                      lexer.getTokenEnd() - lexer.getTokenStart());
     addToken(tag, lexer);
 
     parseAttributeList(tag, lexer);
@@ -269,7 +271,7 @@ public class XmlParsing implements ElementType {
       }
 
       String closingName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
-                                                                       lexer.getTokenEnd() - lexer.getTokenStart());
+                                                                         lexer.getTokenEnd() - lexer.getTokenStart());
 
       if (!closingName.equals(openedName) && names.contains(closingName)) {
         ParseUtil.restorePosition(lexer, pos);
@@ -573,7 +575,7 @@ public class XmlParsing implements ElementType {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         TreeUtil.addChildren(enumeratedType, parseEntityRef(lexer));
-        continue;
+      continue;
       }
 
       if (lexer.getTokenType() != XML_NAME && lexer.getTokenType() != XML_BAR) break;
@@ -606,7 +608,7 @@ public class XmlParsing implements ElementType {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         TreeUtil.addChildren(tag, parseEntityRef(lexer));
-        continue;
+      continue;
       }
 
       if (lexer.getTokenType() != XML_NAME) {
@@ -624,7 +626,7 @@ public class XmlParsing implements ElementType {
 
       if (lexer.getTokenType() != XML_EQ) {
         TreeUtil.addChildren(tag, Factory.createErrorElement("'=' expected"));
-        continue;
+      continue;
       }
 
       addToken(tag, lexer);
@@ -640,10 +642,12 @@ public class XmlParsing implements ElementType {
         if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
           lastPosition = lexer.getTokenEnd();
           addToken(tag, lexer);
-        } else {
+        }
+        else {
           lastPosition = -1;
         }
-      } else {
+      }
+      else {
         lastPosition = -1;
       }
     }
@@ -699,12 +703,12 @@ public class XmlParsing implements ElementType {
     CompositeElement markupDecl = Factory.createCompositeElement(XmlElementType.XML_MARKUP_DECL);
     TreeUtil.addChildren(dummyRoot, markupDecl);
     parseMarkupContent(lexer, markupDecl);
-    while(lexer.getTokenType() != null){
+    while (lexer.getTokenType() != null) {
       TreeUtil.addChildren(markupDecl, ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable()));
       lexer.advance();
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
-    ParseUtil.insertMissingTokens((CompositeElement)dummyRoot,
+    ParseUtil.insertMissingTokens(dummyRoot,
                                   originalLexer,
                                   start,
                                   end,

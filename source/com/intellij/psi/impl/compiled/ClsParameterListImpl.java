@@ -20,15 +20,15 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     myParameters = parameters;
   }
 
-  public PsiElement[] getChildren(){
+  public PsiElement[] getChildren() {
     return myParameters;
   }
 
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return myParent;
   }
 
-  public PsiParameter[] getParameters(){
+  public PsiParameter[] getParameters() {
     return myParameters;
   }
 
@@ -37,10 +37,10 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
-  public String getMirrorText(){
+  public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
     buffer.append('(');
-    for(int i = 0; i < myParameters.length; i++) {
+    for (int i = 0; i < myParameters.length; i++) {
       PsiParameter parm = myParameters[i];
       if (i > 0) buffer.append(",");
       buffer.append(((ClsElementImpl)parm).getMirrorText());
@@ -49,21 +49,21 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     return buffer.toString();
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 
     PsiParameter[] parms = getParameters();
     PsiParameter[] parmMirrors = ((PsiParameterList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getParameters();
     LOG.assertTrue(parms.length == parmMirrors.length);
-    if (parms.length == parmMirrors.length){
-      for(int i = 0; i < parms.length; i++) {
-        ((ClsElementImpl)parms[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(parmMirrors[i]));
+    if (parms.length == parmMirrors.length) {
+      for (int i = 0; i < parms.length; i++) {
+          ((ClsElementImpl)parms[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(parmMirrors[i]));
       }
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(PsiElementVisitor visitor) {
     visitor.visitParameterList(this);
   }
 

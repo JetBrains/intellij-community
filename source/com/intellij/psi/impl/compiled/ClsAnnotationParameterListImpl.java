@@ -49,7 +49,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     PsiNameValuePair[] attrs = mirror.getAttributes();
     LOG.assertTrue(myAttributes.length == attrs.length);
     for (int i = 0; i < myAttributes.length; i++) {
-      myAttributes[i].setMirror(SourceTreeToPsiMap.psiElementToTree(attrs[i]));
+      myAttributes[i].setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(attrs[i]));
     }
   }
 

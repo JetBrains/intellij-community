@@ -30,39 +30,39 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     myReferences = references;
   }
 
-  public PsiElement[] getChildren(){
+  public PsiElement[] getChildren() {
     return myReferences;
   }
 
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return myParent;
   }
 
-  public PsiJavaCodeReferenceElement[] getReferenceElements(){
+  public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return myReferences;
   }
 
   public PsiClassType[] getReferencedTypes() {
-    synchronized (PsiLock.LOCK) {
-      if (myTypes == null) {
-        final PsiElementFactory factory = getManager().getElementFactory();
-        myTypes = new PsiClassType[myReferences.length];
-        for (int i = 0; i < myReferences.length; i++) {
-          PsiJavaCodeReferenceElement reference = myReferences[i];
-          myTypes[i] = factory.createType(reference);
-        }
+  synchronized (PsiLock.LOCK) {
+    if (myTypes == null) {
+      final PsiElementFactory factory = getManager().getElementFactory();
+      myTypes = new PsiClassType[myReferences.length];
+      for (int i = 0; i < myReferences.length; i++) {
+        PsiJavaCodeReferenceElement reference = myReferences[i];
+        myTypes[i] = factory.createType(reference);
       }
-      ;
     }
-    return myTypes;
+  ;
+  }
+               return myTypes;
   }
 
-  public String getMirrorText(){
+  public String getMirrorText() {
     if (myReferences.length == 0) return "";
     StringBuffer buffer = new StringBuffer();
     buffer.append(myType);
     buffer.append(" ");
-    for(int i = 0; i < myReferences.length; i++) {
+    for (int i = 0; i < myReferences.length; i++) {
       PsiJavaCodeReferenceElement ref = myReferences[i];
       if (i > 0) buffer.append(",");
       buffer.append(((ClsElementImpl)ref).getMirrorText());
@@ -70,21 +70,21 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     return buffer.toString();
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();
     PsiJavaCodeReferenceElement[] refMirrors = ((PsiReferenceList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getReferenceElements();
     LOG.assertTrue(refs.length == refMirrors.length);
-    if (refs.length == refMirrors.length){
-      for(int i = 0; i < refs.length; i++) {
-        ((ClsElementImpl)refs[i]).setMirror(SourceTreeToPsiMap.psiElementToTree(refMirrors[i]));
+    if (refs.length == refMirrors.length) {
+      for (int i = 0; i < refs.length; i++) {
+          ((ClsElementImpl)refs[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(refMirrors[i]));
       }
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(PsiElementVisitor visitor) {
     visitor.visitReferenceList(this);
   }
 

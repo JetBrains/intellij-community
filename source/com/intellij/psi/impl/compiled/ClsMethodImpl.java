@@ -83,7 +83,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       + (returnType != null ? 1 : 0)
       + (name != null ? 1 : 0)
       + (throwsList != null ? 1 : 0)
-      + (defaultValue != null ? 1 : 0);;
+      + (defaultValue != null ? 1 : 0);
+  ;
     PsiElement[] children = new PsiElement[count];
 
     int offset = 0;
@@ -111,7 +112,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public PsiElement getParent() {
     final long parentId = getParentId();
-    if(parentId < 0) return myParent;
+    if (parentId < 0) return myParent;
     return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
   }
 
@@ -120,13 +121,13 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiIdentifier getNameIdentifier() {
-    synchronized (PsiLock.LOCK) {
-      if (myNameIdentifier == null) {
-        myNameIdentifier = new ClsIdentifierImpl(this, getName());
-      }
-      ;
+  synchronized (PsiLock.LOCK) {
+    if (myNameIdentifier == null) {
+      myNameIdentifier = new ClsIdentifierImpl(this, getName());
     }
-    return myNameIdentifier;
+  ;
+  }
+               return myNameIdentifier;
   }
 
   public PsiMethod[] findSuperMethods() {
@@ -160,38 +161,38 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public String getName() {
     if (myName == null) {
-      synchronized (PsiLock.LOCK) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          try {
-            ClassFileData classFileData = myParent.getClassFileData();
-            byte[] data = classFileData.getData();
-            int offset = myStartOffset + 2;
-            int b1 = data[offset++] & 0xFF;
-            int b2 = data[offset++] & 0xFF;
-            int index = (b1 << 8) + b2;
-            offset = classFileData.getOffsetInConstantPool(index);
-            String name = ClsUtil.readUtf8Info(data, offset);
-            if (name.equals("<init>")) {
-              name = myParent.getName();
-              myConstructorFlag = true;
-            }
-            else {
-              myConstructorFlag = false;
-            }
-            myName = name;
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        try {
+          ClassFileData classFileData = myParent.getClassFileData();
+          byte[] data = classFileData.getData();
+          int offset = myStartOffset + 2;
+          int b1 = data[offset++] & 0xFF;
+          int b2 = data[offset++] & 0xFF;
+          int index = (b1 << 8) + b2;
+          offset = classFileData.getOffsetInConstantPool(index);
+          String name = ClsUtil.readUtf8Info(data, offset);
+          if (name.equals("<init>")) {
+            name = myParent.getName();
+            myConstructorFlag = true;
           }
-          catch (ClsFormatException e) {
-            myName = "";
+          else {
+            myConstructorFlag = false;
           }
+          myName = name;
         }
-        else {
-          MethodView methodView = getRepositoryManager().getMethodView();
-          myName = methodView.getName(repositoryId);
-          myConstructorFlag = methodView.getReturnTypeText(repositoryId) == null;
+        catch (ClsFormatException e) {
+          myName = "";
         }
-        ;
       }
+      else {
+        MethodView methodView = getRepositoryManager().getMethodView();
+        myName = methodView.getName(repositoryId);
+        myConstructorFlag = methodView.getReturnTypeText(repositoryId) == null;
+      }
+    ;
+    }
     }
     return myName;
   }
@@ -202,44 +203,44 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiTypeElement getReturnTypeElement() {
-    if (isConstructor()) return null;
+               if (isConstructor()) return null;
 
-    synchronized (PsiLock.LOCK) {
-      if (myReturnType == null) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          if (!parseViaGenericSignature()) {
-            try {
-              ClassFileData classFileData = myParent.getClassFileData();
-              byte[] data = classFileData.getData();
-              int offset = myStartOffset + 4;
-              int b1 = data[offset++] & 0xFF;
-              int b2 = data[offset++] & 0xFF;
-              int index = (b1 << 8) + b2;
-              offset = classFileData.getOffsetInConstantPool(index);
-              offset += 3; // skip tag and length
-              while (true) {
-                if (offset >= data.length) {
-                  throw new ClsFormatException();
-                }
-                if (data[offset++] == ')') break;
+  synchronized (PsiLock.LOCK) {
+    if (myReturnType == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        if (!parseViaGenericSignature()) {
+          try {
+            ClassFileData classFileData = myParent.getClassFileData();
+            byte[] data = classFileData.getData();
+            int offset = myStartOffset + 4;
+            int b1 = data[offset++] & 0xFF;
+            int b2 = data[offset++] & 0xFF;
+            int index = (b1 << 8) + b2;
+            offset = classFileData.getOffsetInConstantPool(index);
+            offset += 3; // skip tag and length
+            while (true) {
+              if (offset >= data.length) {
+                throw new ClsFormatException();
               }
-              String typeText = ClsUtil.getTypeText(data, offset);
-              myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+              if (data[offset++] == ')') break;
             }
-            catch (ClsFormatException e) {
-              myReturnType = null;
-            }
+            String typeText = ClsUtil.getTypeText(data, offset);
+            myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+          }
+          catch (ClsFormatException e) {
+            myReturnType = null;
           }
         }
-        else {
-          String typeText = getRepositoryManager().getMethodView().getReturnTypeText(repositoryId);
-          myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-        }
       }
-      ;
+      else {
+        String typeText = getRepositoryManager().getMethodView().getReturnTypeText(repositoryId);
+        myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+      }
     }
-    return myReturnType;
+  ;
+  }
+               return myReturnType;
   }
 
   public PsiType getReturnType() {
@@ -248,14 +249,14 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiModifierList getModifierList() {
-    synchronized (PsiLock.LOCK) {
-      if (myModifierList == null) {
-        int flags = getAccessFlags();
-        myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
-      }
-      ;
+  synchronized (PsiLock.LOCK) {
+    if (myModifierList == null) {
+      int flags = getAccessFlags();
+      myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
     }
-    return myModifierList;
+  ;
+  }
+               return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {
@@ -263,44 +264,44 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   private int getAccessFlags() {
-    synchronized (PsiLock.LOCK) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          int offset = myStartOffset;
-          byte[] data = myParent.getClassFileData().getData();
-          if (offset + 2 > data.length) {
-            throw new ClsFormatException();
-          }
-          int b1 = data[offset++] & 0xFF;
-          int b2 = data[offset++] & 0xFF;
-          return (b1 << 8) + b2;
+  synchronized (PsiLock.LOCK) {
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) {
+      try {
+        int offset = myStartOffset;
+        byte[] data = myParent.getClassFileData().getData();
+        if (offset + 2 > data.length) {
+          throw new ClsFormatException();
         }
-        catch (ClsFormatException e) {
-          return 0;
-        }
+        int b1 = data[offset++] & 0xFF;
+        int b2 = data[offset++] & 0xFF;
+        return (b1 << 8) + b2;
       }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-        return methodView.getModifiers(repositoryId);
+      catch (ClsFormatException e) {
+        return 0;
       }
     }
+    else {
+      MethodView methodView = getRepositoryManager().getMethodView();
+      return methodView.getModifiers(repositoryId);
+    }
+  }
   }
 
-  boolean isBridge () throws ClsFormatException {
-      return ClsUtil.isBridge(getAccessFlags()) ||
-             //This is 2.2 spec rudiment; TODO remove it
-        myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
+  boolean isBridge() throws ClsFormatException {
+    return ClsUtil.isBridge(getAccessFlags()) ||
+           //This is 2.2 spec rudiment; TODO remove it
+      myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
   }
 
   public PsiParameterList getParameterList() {
-    synchronized (PsiLock.LOCK) {
-      if (myParameterList == null && !parseViaGenericSignature()) {
-        myParameterList = createParameters(calcParameterTypes());
-      }
+  synchronized (PsiLock.LOCK) {
+    if (myParameterList == null && !parseViaGenericSignature()) {
+      myParameterList = createParameters(calcParameterTypes());
     }
+  }
 
-    return myParameterList;
+               return myParameterList;
   }
 
   private PsiParameterList createParameters(ArrayList<String> types) {
@@ -316,16 +317,16 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return parameterList;
   }
 
-  private ClsAnnotationImpl[][] calcParameterAnnotations () {
+  private ClsAnnotationImpl[][] calcParameterAnnotations() {
     long repositoryId = getRepositoryId();
     if (repositoryId < 0) {
       ClassFileData classFileData = myParent.getClassFileData();
       try {
-        BytePointer pointer1 = classFileData.findAttribute(myStartOffset + 6,  "RuntimeVisibleParameterAnnotations");
+        BytePointer pointer1 = classFileData.findAttribute(myStartOffset + 6, "RuntimeVisibleParameterAnnotations");
         ClsParameterImpl[] parameters = (ClsParameterImpl[])myParameterList.getParameters();
         if (pointer1 != null) {
           ClsAnnotationImpl[][] ann1 = readParameterAnnotations(pointer1, parameters);
-          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6,  "RuntimeInvisibleParameterAnnotations");
+          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
           if (pointer2 != null) {
             ClsAnnotationImpl[][] ann2 = readParameterAnnotations(pointer2, parameters);
             ClsAnnotationImpl[][] result = ArrayUtil.mergeArrays(ann1, ann2, ClsAnnotationImpl[].class);
@@ -336,7 +337,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           }
         }
         else {
-          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6,  "RuntimeInvisibleParameterAnnotations");
+          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
           if (pointer2 != null) {
             return readParameterAnnotations(pointer2, parameters);
           }
@@ -348,7 +349,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       catch (ClsFormatException e) {
         return new ClsAnnotationImpl[0][];
       }
-    } else {
+    }
+    else {
       MethodView methodView = getRepositoryManager().getMethodView();
 
       String[][] parameterAnnotations = methodView.getParameterAnnotations(repositoryId);
@@ -358,7 +360,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         ClsParameterImpl parameter = (ClsParameterImpl)myParameterList.getParameters()[i];
         result[i] = new ClsAnnotationImpl[annotations.length];
         for (int j = 0; j < annotations.length; j++) {
-          result[i][j] = (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotations[j], myManager, (ClsElementImpl)parameter.getModifierList());
+          result[i][j] = (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotations[j], myManager,
+                                                                                         (ClsElementImpl)parameter.getModifierList());
         }
       }
 
@@ -449,68 +452,68 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     if (isVarArgs()) {
       String lastParamTypeText = types.get(types.size() - 1);
       LOG.assertTrue(lastParamTypeText.endsWith("[]"));
-      lastParamTypeText = lastParamTypeText.substring(0 ,lastParamTypeText.length() - 2) + "...";
+      lastParamTypeText = lastParamTypeText.substring(0, lastParamTypeText.length() - 2) + "...";
       types.set(types.size() - 1, lastParamTypeText);
     }
   }
 
   public PsiReferenceList getThrowsList() {
-    synchronized (PsiLock.LOCK) {
-      if (myThrowsList == null) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          parseViaGenericSignature();
-          if (myThrowsList == null) {
-            try {
-              ClassFileData classFileData = myParent.getClassFileData();
-              BytePointer ptr = classFileData.findAttribute(myStartOffset + 6, "Exceptions");
-              if (ptr != null) {
-                ptr.offset += 4; // skip length
-                int exceptionCount = ClsUtil.readU2(ptr);
-                ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[exceptionCount];
-                int jj = 0;
-                for (int j = 0; j < exceptionCount; j++) {
-                  int index = ClsUtil.readU2(ptr);
-                  if (index != 0) {
-                    refs[jj++] = classFileData.buildReference(index);
-                  }
-                }
-                if (jj < exceptionCount) {
-                  ClsJavaCodeReferenceElementImpl[] refs1 = new ClsJavaCodeReferenceElementImpl[jj];
-                  System.arraycopy(refs, 0, refs1, 0, jj);
-                  refs = refs1;
-                }
-
-                myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-                for (int j = 0; j < refs.length; j++) {
-                  refs[j].setParent(myThrowsList);
+  synchronized (PsiLock.LOCK) {
+    if (myThrowsList == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        parseViaGenericSignature();
+        if (myThrowsList == null) {
+          try {
+            ClassFileData classFileData = myParent.getClassFileData();
+            BytePointer ptr = classFileData.findAttribute(myStartOffset + 6, "Exceptions");
+            if (ptr != null) {
+              ptr.offset += 4; // skip length
+              int exceptionCount = ClsUtil.readU2(ptr);
+              ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[exceptionCount];
+              int jj = 0;
+              for (int j = 0; j < exceptionCount; j++) {
+                int index = ClsUtil.readU2(ptr);
+                if (index != 0) {
+                  refs[jj++] = classFileData.buildReference(index);
                 }
               }
-            }
-            catch (ClsFormatException e) {
-            }
-            if (myThrowsList == null) {
-              myThrowsList = new ClsReferenceListImpl(this, new ClsJavaCodeReferenceElementImpl[0], PsiKeyword.THROWS);
+              if (jj < exceptionCount) {
+                ClsJavaCodeReferenceElementImpl[] refs1 = new ClsJavaCodeReferenceElementImpl[jj];
+                System.arraycopy(refs, 0, refs1, 0, jj);
+                refs = refs1;
+              }
+
+              myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
+              for (int j = 0; j < refs.length; j++) {
+                refs[j].setParent(myThrowsList);
+              }
             }
           }
-        }
-        else {
-          MethodView methodView = getRepositoryManager().getMethodView();
-          String[] refTexts = methodView.getThrowsList(repositoryId);
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
-          for (int i = 0; i < refTexts.length; i++) {
-            refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
+          catch (ClsFormatException e) {
           }
-          myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-          for (int i = 0; i < refs.length; i++) {
-            ClsJavaCodeReferenceElementImpl ref = refs[i];
-            ref.setParent(myThrowsList);
+          if (myThrowsList == null) {
+            myThrowsList = new ClsReferenceListImpl(this, new ClsJavaCodeReferenceElementImpl[0], PsiKeyword.THROWS);
           }
         }
       }
-      ;
+      else {
+        MethodView methodView = getRepositoryManager().getMethodView();
+        String[] refTexts = methodView.getThrowsList(repositoryId);
+        ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+        for (int i = 0; i < refTexts.length; i++) {
+          refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
+        }
+        myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
+        for (int i = 0; i < refs.length; i++) {
+          ClsJavaCodeReferenceElementImpl ref = refs[i];
+          ref.setParent(myThrowsList);
+        }
+      }
     }
-    return myThrowsList;
+  ;
+  }
+               return myThrowsList;
   }
 
   public PsiCodeBlock getBody() {
@@ -518,33 +521,33 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public boolean isDeprecated() {
-    synchronized (PsiLock.LOCK) {
-      if (myIsDeprecated == null) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          try {
-            boolean isDeprecated = myParent.getClassFileData().findAttribute(myStartOffset + 6, "Deprecated") != null;
-            myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
-          }
-          catch (ClsFormatException e) {
-            myIsDeprecated = Boolean.FALSE;
-          }
-        }
-        else {
-          boolean isDeprecated = getRepositoryManager().getMethodView().isDeprecated(repositoryId);
+  synchronized (PsiLock.LOCK) {
+    if (myIsDeprecated == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        try {
+          boolean isDeprecated = myParent.getClassFileData().findAttribute(myStartOffset + 6, "Deprecated") != null;
           myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
         }
+        catch (ClsFormatException e) {
+          myIsDeprecated = Boolean.FALSE;
+        }
       }
-      ;
+      else {
+        boolean isDeprecated = getRepositoryManager().getMethodView().isDeprecated(repositoryId);
+        myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
+      }
     }
-    return myIsDeprecated.booleanValue();
+  ;
+  }
+               return myIsDeprecated.booleanValue();
   }
 
-  ClassFileData getClassFileData () {
+  ClassFileData getClassFileData() {
     return myParent.getClassFileData();
   }
 
-  public PsiAnnotationMemberValue getDefaultValue () {
+  public PsiAnnotationMemberValue getDefaultValue() {
     if (myDefaultValue == null) {
       myDefaultValue = new PsiAnnotationMemberValue[1];
 
@@ -600,7 +603,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         iterator.next();
         myThrowsList = new ClsReferenceListImpl(this, "throws");
         PsiJavaCodeReferenceElement[] refs = GenericSignatureParsing.parseToplevelClassRefSignatures(iterator, myThrowsList);
-        ((ClsReferenceListImpl)myThrowsList).setReferences(refs);
+          ((ClsReferenceListImpl)myThrowsList).setReferences(refs);
       }
 
       return true;
@@ -621,15 +624,15 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiDocComment getDocComment() {
-    if (!isDeprecated()) return null;
+               if (!isDeprecated()) return null;
 
-    synchronized (PsiLock.LOCK) {
-      if (myDocComment == null) {
-        myDocComment = new ClsDocCommentImpl(this);
-      }
-      ;
+  synchronized (PsiLock.LOCK) {
+    if (myDocComment == null) {
+      myDocComment = new ClsDocCommentImpl(this);
     }
-    return myDocComment;
+  ;
+  }
+               return myDocComment;
   }
 
 
@@ -643,7 +646,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       boolean isVarArgs;
       if (getRepositoryId() < 0) {
         isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
-      } else {
+      }
+      else {
         RepositoryManager repositoryManager = getRepositoryManager();
         isVarArgs = repositoryManager.getMethodView().isVarArgs(getRepositoryId());
       }
@@ -702,21 +706,21 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
     PsiMethod mirror = (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(element);
     if (getDocComment() != null) {
-      ((ClsElementImpl)getDocComment()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
+        ((ClsElementImpl)getDocComment()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
     }
-    ((ClsElementImpl)getModifierList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
+      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
     if (!isConstructor() && mirror.getReturnTypeElement() != null) {
-      ((ClsElementImpl)getReturnTypeElement()).setMirror(
-        SourceTreeToPsiMap.psiElementToTree(mirror.getReturnTypeElement()));
+        ((ClsElementImpl)getReturnTypeElement()).setMirror(
+        (TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getReturnTypeElement()));
     }
-    ((ClsElementImpl)getNameIdentifier()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
-    ((ClsElementImpl)getParameterList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
-    ((ClsElementImpl)getThrowsList()).setMirror(SourceTreeToPsiMap.psiElementToTree(mirror.getThrowsList()));
-    ((ClsElementImpl)getTypeParameterList()).setMirror(
-      SourceTreeToPsiMap.psiElementToTree(mirror.getTypeParameterList()));
+      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+      ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
+      ((ClsElementImpl)getThrowsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getThrowsList()));
+      ((ClsElementImpl)getTypeParameterList()).setMirror(
+      (TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeParameterList()));
     if (getDefaultValue() != null) {
       LOG.assertTrue(mirror instanceof PsiAnnotationMethod);
-      ((ClsElementImpl)getDefaultValue()).setMirror(SourceTreeToPsiMap.psiElementToTree(((PsiAnnotationMethod)mirror).getDefaultValue()));
+        ((ClsElementImpl)getDefaultValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(((PsiAnnotationMethod)mirror).getDefaultValue()));
     }
   }
 
@@ -748,46 +752,46 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   public PsiElement getNavigationElement() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     PsiMethod sourceMethodMirror = sourceClassMirror != null
-                                   ? sourceClassMirror.findMethodBySignature(this, false)
-                                   : null;
+      ? sourceClassMirror.findMethodBySignature(this, false)
+      : null;
     return sourceMethodMirror != null ? sourceMethodMirror : this;
   }
 
   public PsiTypeParameterList getTypeParameterList() {
-    synchronized (PsiLock.LOCK) {
-      if (myTypeParameters == null) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          if (!parseViaGenericSignature()) {
-            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
-          }
+  synchronized (PsiLock.LOCK) {
+    if (myTypeParameters == null) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        if (!parseViaGenericSignature()) {
+          myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+        }
+      }
+      else {
+        MethodView methodView = getRepositoryManager().getMethodView();
+        int count = methodView.getTypeParametersCount(repositoryId);
+        if (count == 0) {
+          myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
         }
         else {
-          MethodView methodView = getRepositoryManager().getMethodView();
-          int count = methodView.getTypeParametersCount(repositoryId);
-          if (count == 0) {
-            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+          StringBuffer compiledParams = new StringBuffer();
+          compiledParams.append('<');
+          for (int i = 0; i < count; i++) {
+            compiledParams.append(methodView.getTypeParameterText(repositoryId, i));
           }
-          else {
-            StringBuffer compiledParams = new StringBuffer();
-            compiledParams.append('<');
-            for (int i = 0; i < count; i++) {
-              compiledParams.append(methodView.getTypeParameterText(repositoryId, i));
-            }
-            compiledParams.append('>');
-            try {
-              final String signature = compiledParams.toString();
-              myTypeParameters =
-              GenericSignatureParsing.parseTypeParametersDeclaration(new StringCharacterIterator(signature, 0), this, signature);
-            }
-            catch (ClsFormatException e) {
-              LOG.error(e); // dsl: should not happen when stuff is parsed from repository
-            }
+          compiledParams.append('>');
+          try {
+            final String signature = compiledParams.toString();
+            myTypeParameters =
+            GenericSignatureParsing.parseTypeParametersDeclaration(new StringCharacterIterator(signature, 0), this, signature);
+          }
+          catch (ClsFormatException e) {
+            LOG.error(e); // dsl: should not happen when stuff is parsed from repository
           }
         }
       }
-      return myTypeParameters;
     }
+    return myTypeParameters;
+  }
   }
 
   public boolean hasTypeParameters() {

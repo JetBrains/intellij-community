@@ -49,15 +49,17 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PsiEnumConstantInitializer getInitializingClass() {
     if (myCachedInitializingClass == null) {
       if (getTreeElement() != null) {
-        myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)getTreeElement().findChildByRoleAsPsiElement(ChildRole.ANONYMOUS_CLASS));
+        myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)getTreeElement()
+                                                 .findChildByRoleAsPsiElement(ChildRole.ANONYMOUS_CLASS));
       }
       else {
         long initializingClass = getRepositoryManager().getFieldView().getEnumConstantInitializer(getRepositoryId());
         if (initializingClass < 0) {
-          myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)null);
+          myCachedInitializingClass = Ref.create(null);
         }
         else {
-          PsiEnumConstantInitializer repoElement = (PsiEnumConstantInitializer)getRepositoryElementsManager().findOrCreatePsiElementById(initializingClass);
+          PsiEnumConstantInitializer repoElement = (PsiEnumConstantInitializer)getRepositoryElementsManager()
+            .findOrCreatePsiElementById(initializingClass);
           myCachedInitializingClass = Ref.create(repoElement);
         }
       }
@@ -124,7 +126,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     return true;
   }
 
-  public void normalizeDeclaration() throws IncorrectOperationException {}
+  public void normalizeDeclaration() throws IncorrectOperationException { }
 
   public Object computeConstantValue() {
     return null;
@@ -133,14 +135,16 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PsiMethod resolveMethod() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
-    ResolveResult resolveResult = getManager().getResolveHelper().resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
+    ResolveResult resolveResult = getManager().getResolveHelper()
+      .resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
     return (PsiMethod)resolveResult.getElement();
   }
 
   public ResolveResult resolveMethodGenerics() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
-    return getManager().getResolveHelper().resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
+    return getManager().getResolveHelper()
+      .resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -264,9 +268,9 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
     public boolean isReferenceTo(PsiElement element) {
       return element instanceof PsiMethod
-             && ((PsiMethod)element).isConstructor()
-             && ((PsiMethod)element).getContainingClass() == getContainingClass()
-             && getManager().areElementsEquivalent(resolve(), element);
+        && ((PsiMethod)element).isConstructor()
+        && ((PsiMethod)element).getContainingClass() == getContainingClass()
+        && getManager().areElementsEquivalent(resolve(), element);
     }
   }
 
