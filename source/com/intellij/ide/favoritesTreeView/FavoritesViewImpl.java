@@ -160,6 +160,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public void readExternal(Element element) throws InvalidDataException {
     final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
+    favoritesActionsGroup.removeAll();
     favoritesActionsGroup.add(new AddToNewFavoritesListAction());
     favoritesActionsGroup.addSeparator();
     for (Iterator<Element> iterator = element.getChildren("favorites_list").iterator(); iterator.hasNext();) {
