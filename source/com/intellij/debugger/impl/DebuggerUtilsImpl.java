@@ -109,7 +109,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return dialog.getSelectedClass();
   }
 
-  public CompletitionEditor createEditor(Project project, PsiElement context, String recentsId) {
+  public CompletionEditor createEditor(Project project, PsiElement context, String recentsId) {
     return new DebuggerExpressionComboBox(project, context, recentsId);
   }
 }

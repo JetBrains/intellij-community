@@ -118,7 +118,14 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   public void iterateRenderers(InternalIterator<AutoRendererNode> iterator) {
     for (Iterator<AutoRendererNode> it = myRepresentationNodes.iterator(); it.hasNext();) {
       AutoRendererNode autoRendererNode = it.next();
-      iterator.visit(autoRendererNode);
+      final boolean shouldContinue = iterator.visit(autoRendererNode);
+      if (!shouldContinue) {
+        break;
+      }
     }
+  }
+
+  public int getRendererCount() {
+    return myRepresentationNodes.size();
   }
 }

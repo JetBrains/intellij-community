@@ -2,7 +2,7 @@ package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.ui.CompletitionEditor;
+import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
@@ -50,7 +50,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     getModel().addColumn("Expression", (Object[])null);
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
-    final CompletitionEditor editor =
+    final CompletionEditor editor =
       ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
@@ -150,7 +150,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
 
   /*
   private class TextWithImportsTableRenderer implements TableCellRenderer{
-    private final CompletitionEditor myEditor;
+    private final CompletionEditor myEditor;
 
     private TextWithImportsTableRenderer () {
       PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);

@@ -9,7 +9,7 @@ import javax.swing.*;
  * Use is subject to license terms.
  */
 
-public abstract class CompletitionEditor extends JComponent{
-  public abstract void            setText  (TextWithImports text);
+public abstract class CompletionEditor extends JComponent{
+  public abstract void setText  (TextWithImports text);
   public abstract TextWithImports getText  ();
 }

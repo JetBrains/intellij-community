@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.ui.CompletitionEditor;
+import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.LabelRenderer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ public class ClassLabelExpressionConfigurable implements UnnamedConfigurable{
 
   private final Project                      myProject;
   private final LabelRenderer myRenderer;
-  private LabeledComponent<CompletitionEditor> myCompletitionEditor;
+  private LabeledComponent<CompletionEditor> myCompletitionEditor;
   private final JPanel myPanel;
 
   public ClassLabelExpressionConfigurable(Project project, LabelRenderer renderer) {
@@ -32,7 +32,7 @@ public class ClassLabelExpressionConfigurable implements UnnamedConfigurable{
     myProject = project;
     myRenderer = renderer;
 
-    myCompletitionEditor = new LabeledComponent<CompletitionEditor>();
+    myCompletitionEditor = new LabeledComponent<CompletionEditor>();
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
     myCompletitionEditor.setComponent(((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "ClassLabelExpression"));
     myCompletitionEditor.setText("Node label expression");

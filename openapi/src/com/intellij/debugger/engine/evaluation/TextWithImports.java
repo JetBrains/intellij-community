@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
  */
 
 public interface TextWithImports {
-  public String          toString();
+  public String toString();
   public PsiCodeFragment createCodeFragment(PsiElement context, Project project);
 
   public TextWithImports createText(String newText);

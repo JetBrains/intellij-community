@@ -25,6 +25,16 @@ public class ElementsChooser<T> extends JPanel {
     this(null, false);
   }
 
+  public void refresh() {
+    myTableModel.fireTableDataChanged();
+  }
+  public void refresh(T element) {
+    final int row = myTableModel.getElementRow(element);
+    if (row >= 0) {
+      myTableModel.fireTableRowsUpdated(row, row);
+    }
+  }
+
   public static interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
   }
@@ -111,6 +121,50 @@ public class ElementsChooser<T> extends JPanel {
     addElement(element, isMarked, null);
   }
 
+  public void removeElement(T element) {
+    final int elementRow = myTableModel.getElementRow(element);
+    if (elementRow < 0) {
+      return; // no such element
+    }
+    final boolean wasSelected = myTable.getSelectionModel().isSelectedIndex(elementRow);
+
+    myTableModel.removeElement(element);
+    myElementToPropertiesMap.remove(element);
+
+    if (wasSelected) {
+      final int rowCount = myTableModel.getRowCount();
+      if (rowCount > 0) {
+        selectRow((elementRow + 1) % rowCount);
+      }
+      else {
+        myTable.getSelectionModel().clearSelection();
+      }
+    }
+    myTable.requestFocus();
+  }
+
+  public void removeAllElements() {
+    myTableModel.removeAllElements();
+    myTable.getSelectionModel().clearSelection();
+  }
+
+  private void selectRow(final int row) {
+    myTable.getSelectionModel().setSelectionInterval(row, row);
+    myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
+  }
+
+  public void moveElement(T element, int newRow) {
+    final int elementRow = myTableModel.getElementRow(element);
+    if (elementRow < 0 || elementRow == newRow || newRow < 0 || newRow >= myTableModel.getRowCount()) {
+      return;
+    }
+    final boolean wasSelected = myTable.getSelectionModel().isSelectedIndex(elementRow);
+    myTableModel.changeElementRow(element, newRow);
+    if (wasSelected) {
+      selectRow(newRow);
+    }
+  }
+
   public static interface ElementProperties {
     Icon getIcon();
     Color getColor();
@@ -118,9 +172,7 @@ public class ElementsChooser<T> extends JPanel {
   public void addElement(T element, final boolean isMarked, ElementProperties elementProperties) {
     myTableModel.addElement(element, isMarked);
     myElementToPropertiesMap.put(element, elementProperties);
-    final int row = myTableModel.getRowCount() - 1;
-    myTable.getSelectionModel().setSelectionInterval(row, row);
-    myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
+    selectRow(myTableModel.getRowCount() - 1);
     myTable.requestFocus();
   }
 
@@ -130,8 +182,12 @@ public class ElementsChooser<T> extends JPanel {
   }
 
   public T getSelectedElement() {
-    final int selectedRow = myTable.getSelectedRow();
+    final int selectedRow = getSelectedElementRow();
     return selectedRow < 0? null : myTableModel.getElementAt(selectedRow);
+  }
+
+  public int getSelectedElementRow() {
+    return myTable.getSelectedRow();
   }
 
   public List<T> getSelectedElements() {
@@ -261,8 +317,21 @@ public class ElementsChooser<T> extends JPanel {
       }
     }
 
+    public void changeElementRow(T element, int row) {
+      final boolean reallyRemoved = myElements.remove(element);
+      if (reallyRemoved) {
+        myElements.add(row, element);
+        fireTableDataChanged();
+      }
+    }
+
     public int getElementRow(T element) {
       return myElements.indexOf(element);
+    }
+
+    public void removeAllElements() {
+      myElements.clear();
+      fireTableDataChanged();
     }
 
     public void removeRows(int[] rows) {

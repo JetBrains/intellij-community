@@ -48,6 +48,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     public void setItem(Object item) {
       super.setItem(createDocument((TextWithImportsImpl)item));
     }
+
   }
 
   public void setText(TextWithImports item) {
@@ -58,7 +59,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     myComboBox.setSelectedIndex(0);
     if(myComboBox.isEditable()) {
       myComboBox.getEditor().setItem(item);
-    } else {
+    }
+    else {
       myItem =  (TextWithImportsImpl)item;
     }
   }

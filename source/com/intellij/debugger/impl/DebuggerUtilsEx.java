@@ -8,7 +8,7 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.CompletitionEditor;
+import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -346,7 +346,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
-  public abstract CompletitionEditor createEditor(Project project, PsiElement context, String recentsId);
+  public abstract CompletionEditor createEditor(Project project, PsiElement context, String recentsId);
 
   private static class SigReader {
     final String buffer;

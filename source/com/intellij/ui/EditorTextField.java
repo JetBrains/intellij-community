@@ -55,7 +55,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
     setDocument(document);
     myProject = project;
     myFileType = fileType;
-    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    setLayout(new BorderLayout());
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     // todo[dsl,max]
     setFocusable(true);
@@ -131,7 +131,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
     boolean isFocused = isFocusOwner();
     Editor editor = myEditor;
     myEditor = createEditor();
-    add(myEditor.getComponent());
+    add(myEditor.getComponent(), BorderLayout.CENTER);
     releaseEditor(editor);
 
     validate();
@@ -213,7 +213,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
     boolean isFocused = isFocusOwner();
 
     myEditor = createEditor();
-    add(myEditor.getComponent());
+    add(myEditor.getComponent(), BorderLayout.CENTER);
 
     super.addNotify();
 
@@ -291,6 +291,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
     }
 
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
+    editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
     return editor;
   }
 
@@ -301,10 +302,12 @@ public class EditorTextField extends JPanel implements DocumentListener {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myIsViewer = !enabled;
-    if (myEditor == null) return;
+    if (myEditor == null) {
+      return;
+    }
     Editor editor = myEditor;
     myEditor = createEditor();
-    add(myEditor.getComponent());
+    add(myEditor.getComponent(), BorderLayout.CENTER);
     revalidate();
     releaseEditor(editor);
   }
@@ -315,7 +318,17 @@ public class EditorTextField extends JPanel implements DocumentListener {
   }
 
   public Dimension getPreferredSize() {
-    if (myEditor != null) return myEditor.getComponent().getPreferredSize();
+    if (myEditor != null) {
+      final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
+      final Insets insets = getInsets();
+      if (insets != null) {
+        preferredSize.width += insets.left;
+        preferredSize.width += insets.right;
+        preferredSize.height += insets.top;
+        preferredSize.height += insets.bottom;
+      }
+      return preferredSize;
+    }
     return new Dimension(100, 20);
   }
 

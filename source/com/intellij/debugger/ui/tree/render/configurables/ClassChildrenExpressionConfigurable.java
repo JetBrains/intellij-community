@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.ui.CompletitionEditor;
+import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
@@ -26,8 +26,8 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
   private LabeledComponent<JPanel> myChildrenPanel;
   private LabeledComponent<JPanel> myExpandablePanel;
 
-  private final CompletitionEditor myChildrenEditor;
-  private final CompletitionEditor myExpandableEditor;
+  private final CompletionEditor myChildrenEditor;
+  private final CompletionEditor myExpandableEditor;
 
   public ClassChildrenExpressionConfigurable(Project project, ExpressionChildrenRenderer renderer) {
     myProject = project;

@@ -19,11 +19,12 @@ public class EditorComboBoxRenderer extends BasicComboBoxRenderer {
                                                 int index,
                                                 boolean isSelected,
                                                 boolean cellHasFocus) {
-    Font editorFont = myEditor.getEditorComponent().getFont();
+    final Component editorComponent = myEditor.getEditorComponent();
+    Font editorFont = editorComponent.getFont();
 
-    final Component component = super.getListCellRendererComponent(list, value, index,
-                                                                   isSelected, cellHasFocus);
+    final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     component.setFont(editorFont);
+    component.setSize(editorComponent.getSize());
     return component;
   }
 }

@@ -23,7 +23,7 @@ import java.util.List;
  * Time: 2:46:02 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class DebuggerEditorImpl extends CompletitionEditor {
+public abstract class DebuggerEditorImpl extends CompletionEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerEditorImpl");
 
   public static final char SEPARATOR = 13;

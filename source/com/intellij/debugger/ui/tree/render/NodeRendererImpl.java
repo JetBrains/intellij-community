@@ -56,4 +56,8 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   public void writeExternal(Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
   }
+
+  public String toString() {
+    return getName();
+  }
 }
