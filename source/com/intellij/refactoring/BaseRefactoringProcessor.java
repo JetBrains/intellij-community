@@ -192,6 +192,7 @@ public abstract class BaseRefactoringProcessor {
     presentation.setShowCancelButton(true);
     presentation.setCodeUsagesString(descriptor.getCodeReferencesText(1, 1));    //TODO
     presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(1, 1)); //TODO
+    presentation.setUsagesString("usages");
     return presentation;
   }
 
