@@ -430,7 +430,7 @@ public class ChangeUtil implements Constants {
     new DummyHolder(manager, element, null, table).getTreeElement();
     encodeInformation(element, original);
     //  CodeEditUtil.normalizeCloneIndent(element, original, table);
-    CodeEditUtil.unindentSubtree(element, original, table);
+    TreeUtil.clearCaches(element);
     return element;
   }
 
