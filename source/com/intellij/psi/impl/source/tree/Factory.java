@@ -33,18 +33,10 @@ import java.util.List;
 public class Factory implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.Factory");
 
-  private static final List<ElementFactory> ourElementFactories = new ArrayList<ElementFactory>();
+  private static final List<TreeElementFactory> ourElementFactories = new ArrayList<TreeElementFactory>();
 
-  public static void addElementFactory(ElementFactory factory) {
+  public static void addElementFactory(TreeElementFactory factory) {
     ourElementFactories.add(factory);
-  }
-
-  public interface ElementFactory {
-    LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table);
-
-    CompositeElement createCompositeElement(IElementType type);
-
-    boolean isMyElementType(IElementType type);
   }
 
   public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
@@ -151,7 +143,7 @@ public class Factory implements Constants {
       }
       else {
         for (int size = ourElementFactories.size(), i = 0; i < size; i++) {
-          ElementFactory elementFactory = ourElementFactories.get(i);
+          TreeElementFactory elementFactory = ourElementFactories.get(i);
           if (elementFactory.isMyElementType(type)) {
             element = elementFactory.createLeafElement(type, buffer, startOffset, endOffset, lexerState, table);
           }
@@ -528,7 +520,7 @@ public class Factory implements Constants {
       }
       else {
         for (int size = ourElementFactories.size(), i = 0; i < size; i++) {
-          ElementFactory elementFactory = ourElementFactories.get(i);
+          TreeElementFactory elementFactory = ourElementFactories.get(i);
           if (elementFactory.isMyElementType(type)) {
             element = elementFactory.createCompositeElement(type);
           }
