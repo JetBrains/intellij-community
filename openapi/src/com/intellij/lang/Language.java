@@ -70,6 +70,10 @@ public abstract class Language {
     return null;
   }
 
+  public Commenter getCommenter() {
+    return null;
+  }
+
   public Annotator getAnnotator() {
     return null;
   }

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -16,12 +18,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType, Reparseable {
+public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType, Reparseable, PsiJavaToken {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(new IElementType[]{DOC_TAG});

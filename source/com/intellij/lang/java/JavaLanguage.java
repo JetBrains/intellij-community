@@ -2,6 +2,7 @@ package com.intellij.lang.java;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
@@ -39,5 +40,9 @@ public class JavaLanguage extends Language {
 
   public ParserDefinition getParserDefinition() {
     return new JavaParserDefinition();
+  }
+
+  public Commenter getCommenter() {
+    return new JavaCommenter();
   }
 }

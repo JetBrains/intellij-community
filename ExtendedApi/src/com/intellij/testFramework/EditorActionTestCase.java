@@ -4,6 +4,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiDocumentManager;
 
 import java.io.IOException;
 
@@ -40,6 +42,12 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
   protected void doTextTest(String fileName, String textBefore, String textAfter, boolean ignoreTrailingSpaces) throws IOException {
     configureFromFileText(fileName, textBefore);
     invokeAction();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+    });
+    assertEquals("Reparse error!", myEditor.getDocument().getText(), myFile.getText());
     checkResultByText(null, textAfter, ignoreTrailingSpaces);
   }
 

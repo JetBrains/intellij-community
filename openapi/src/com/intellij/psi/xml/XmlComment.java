@@ -4,8 +4,10 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.psi.PsiComment;
+
 /**
  * @author Mike
  */
-public interface XmlComment extends XmlElement {
+public interface XmlComment extends XmlElement, PsiComment {
 }

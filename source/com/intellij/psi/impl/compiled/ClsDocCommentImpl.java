@@ -4,13 +4,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.IElementType;
 
-class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTokenType{
+class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTokenType, PsiJavaToken {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocCommentImpl");
 
   private final ClsElementImpl myParent;

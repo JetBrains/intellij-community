@@ -67,7 +67,7 @@ public abstract class JavaElementVisitor {
   }
 
   public void visitComment(PsiComment comment) {
-    visitJavaToken(comment);
+    visitElement(comment);
   }
 
   public void visitConditionalExpression(PsiConditionalExpression expression) {

@@ -4,6 +4,9 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.tree.IElementType;
 
-public interface PsiComment extends PsiJavaToken {
+
+public interface PsiComment extends PsiElement {
+  IElementType getTokenType();
 }

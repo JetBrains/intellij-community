@@ -3,276 +3,35 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.text.CharArrayUtil;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class CommentByBlockCommentHandler implements CodeInsightActionHandler, BlockCommenter.BlockCommenterContext {
+public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
   private Editor myEditor;
   private PsiFile myFile;
   private Document myDocument;
-
-  private static final Map<FileType, BlockCommenter> customCommenters = new HashMap<FileType, BlockCommenter>(4);
-
-  public static final void registerCommenter(FileType fileType, BlockCommenter blockCommenter) {
-    customCommenters.put(fileType, blockCommenter);
-  }
-
-  public static BlockCommenter getCustomCommenter(FileType fileType) {
-    return customCommenters.get(fileType);
-  }
-
-  public static BlockCommenter getCommenter(PsiFile file) {
-    BlockCommenter blockCommenter = customCommenters.get(file.getFileType());
-    if (blockCommenter!=null) return blockCommenter;
-
-    if (isJavaFile(file)) {
-      return new JavaBlockCommenter();
-    } else if (file instanceof XmlFile) {
-      return new XmlBlockCommenter();
-    } else if (file instanceof JspFile) {
-      return new JspBlockCommenter();
-    }
-
-    return null;
-  }
-
-  static {
-    registerCommenter(StdFileTypes.JAVA,new JavaBlockCommenter());
-    registerCommenter(StdFileTypes.JSP,new JspBlockCommenter());
-    registerCommenter(StdFileTypes.XML,new XmlBlockCommenter());
-
-    HtmlBlockCommenter blockCommenter = new HtmlBlockCommenter();
-    registerCommenter(StdFileTypes.HTML,blockCommenter);
-    registerCommenter(StdFileTypes.XHTML,blockCommenter);
-    registerCommenter(StdFileTypes.JSPX,new JspxBlockCommenter());
-  }
-
-  static class JavaBlockCommenter implements BlockCommenter {
-    public void commentRange(int start, int end, BlockCommenterContext context) {
-      context.commentRange(start,end,"/*","*/");
-    }
-
-    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
-      if (element instanceof PsiComment && element.getText().startsWith("/*")) {
-        context.uncommentRange(element.getTextRange(),"/*", "*/");
-      } else {
-        context.insertEmptyComment(commentStart, "/*", "*/");
-      }
-    }
-
-    public Object clone() {
-      try {
-        return super.clone();
-      }
-      catch (CloneNotSupportedException e) {
-        return null;
-      }
-    }
-  }
-
-  static class XmlBlockCommenter implements BlockCommenter {
-    public void commentRange(int start, int end, BlockCommenterContext context) {
-      context.commentRange(start, end, "<!--", "-->");
-    }
-
-    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
-      if (element.getParent() instanceof XmlComment) {
-        context.uncommentRange(element.getParent().getTextRange(), "<!--", "-->");
-      } else {
-        context.insertEmptyComment(commentStart, "<!--", "-->");
-      }
-    }
-
-    public Object clone() {
-      try {
-        return super.clone();
-      }
-      catch (CloneNotSupportedException e) {
-        return null;
-      }
-    }
-  }
-
-  public static class HtmlBlockCommenter implements BlockCommenter {
-    private static BlockCommenter ourStyleCommenter;
-    private boolean myInitialized;
-    private BlockCommenter myCommenterToUse;
-    private static BlockCommenter ourScriptCommenter;
-
-    private void initialize(PsiElement element, int start, int end, BlockCommenterContext context) {
-      if (!myInitialized) {
-        myInitialized = true;
-
-        if (element==null) {
-          element = PsiUtil.getElementInclusiveRange(
-            context.getFile(),
-            new TextRange(start,end)
-          );
-        }
-
-        if (element!=null) {
-          element = PsiTreeUtil.getParentOfType(element, XmlTag.class,false);
-
-          if (element instanceof XmlTag) {
-            final String name = ((XmlTag)element).getName();
-
-            if (name.equalsIgnoreCase("style") &&
-              ourStyleCommenter!=null
-              ) {
-              myCommenterToUse = (BlockCommenter)ourStyleCommenter.clone();
-            } else if (name.equalsIgnoreCase("script") && ourScriptCommenter!=null) {
-              myCommenterToUse = (BlockCommenter)ourScriptCommenter.clone();
-            }
-          }
-        }
-
-        if (myCommenterToUse==null) {
-          myCommenterToUse = new XmlBlockCommenter();
-        }
-      }
-    }
-
-    public static final void setStyleCommenter(BlockCommenter _styleCommenter) {
-      ourStyleCommenter = _styleCommenter;
-    }
-
-    public void commentRange(int start, int end, BlockCommenterContext context) {
-      initialize(null, start, end, context);
-      myCommenterToUse.commentRange(start, end, context);
-    }
-
-    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
-      initialize(element, -1, -1, context);
-      myCommenterToUse.uncommentRange(element, commentStart, context);
-    }
-
-    public Object clone() {
-      try {
-        return super.clone();
-      }
-      catch (CloneNotSupportedException e) {
-        e.printStackTrace();
-        return null;
-      }
-    }
-
-    public static void setScriptCommenter(BlockCommenter scriptCommenter) {
-      ourScriptCommenter = scriptCommenter;
-    }
-  }
-
-  static class JspxBlockCommenter extends HtmlBlockCommenter {
-    private BlockCommenter javaCommenter = new JavaBlockCommenter();
-
-    private boolean isJavaCommentInsideXml(PsiElement element) {
-      boolean javaComment = false;
-
-      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-
-      if (tag.getName().equals("jsp:scriplet") || tag.getName().equals("jsp:declaration")) {
-        javaComment = true;
-      }
-
-      return javaComment;
-    }
-
-    public void commentRange(int start, int end, BlockCommenterContext context) {
-      if (isJavaCommentInsideXml( context.getFile().findElementAt(start))) {
-        javaCommenter.commentRange(start, end, context);
-      } else {
-        super.commentRange(start, end, context);
-      }
-    }
-
-    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
-      if (isJavaCommentInsideXml( context.getFile().findElementAt(commentStart))) {
-        javaCommenter.uncommentRange(element, commentStart, context);
-      } else {
-        super.uncommentRange(element, commentStart, context);
-      }
-    }
-
-    public Object clone() {
-      final JspxBlockCommenter commenter = (JspxBlockCommenter)super.clone();
-      commenter.javaCommenter = (BlockCommenter)javaCommenter.clone();
-      return commenter;
-    }
-  }
-
-  static class JspBlockCommenter implements BlockCommenter {
-
-    public void commentRange(int start, int end, BlockCommenterContext context) {
-      PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
-      PsiElement element = context.getFile().findElementAt(start);
-
-      if (isJavaCommentInsideJsp(element, end)) {
-        context.commentRange(start, end, "/*", "*/");
-      } else {
-        context.commentRange(start, end, "<%--", "--%>");
-      }
-    }
-
-    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
-      if (element instanceof JspToken && ((JspToken) element).getTokenType() == JspTokenType.JSP_COMMENT) {
-        context.uncommentRange(element.getTextRange(), "<%--", "--%>");
-      } else {
-        if (element instanceof PsiComment && element.getText().startsWith("/*")) {
-          context.uncommentRange(element.getTextRange(), "/*", "*/");
-        } else {
-          if (!isJavaCommentInsideJsp(element, commentStart)) {
-            context.insertEmptyComment(commentStart, "%--", "--%");
-          } else {
-            context.insertEmptyComment(commentStart, "/*", "*/");
-          }
-        }
-      }
-    }
-
-    public Object clone() {
-      try {
-        return super.clone();
-      }
-      catch (CloneNotSupportedException e) {
-        return null;
-      }
-    }
-
-    private boolean isJavaCommentInsideJsp(PsiElement element, int endOffset) {
-      boolean javaComment = !(element instanceof JspToken);
-
-      while (element != null && element.getTextRange().getEndOffset() <= endOffset) {
-        if (element instanceof JspToken) {
-          javaComment = false;
-          break;
-        }
-        element = element.getNextSibling();
-      }
-      return javaComment;
-    }
-  }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     myProject = project;
@@ -282,47 +41,128 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
     myDocument = editor.getDocument();
 
     if (!myFile.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(getDocument(), project)){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)){
         return;
       }
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    BlockCommenter commenter = getCommenter(myFile);
+    final Commenter commenter = getCommenter();
     if (commenter == null) return;
-    final BlockCommenter blockCommenter = (BlockCommenter)commenter.clone();
 
-    if (selectionModel.hasSelection()) {
-      int startOffset = selectionModel.getSelectionStart();
-      int endOffset = selectionModel.getSelectionEnd();
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
 
-      blockCommenter.commentRange(startOffset, endOffset, this);
-    } else {
-      int offset = editor.getCaretModel().getOffset();
-      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
-      PsiElement element = file.findElementAt(offset);
-      if (element == null && offset > 0) {
-        element = file.findElementAt(offset - 1);
+    final String prefix = commenter.getBlockCommentPrefix();
+    final String suffix = commenter.getBlockCommentSuffix();
+    if (prefix == null || suffix == null) return;
+
+    TextRange commentedRange = findCommentedRange(commenter);
+    if (commentedRange != null) {
+      uncommentRange(commentedRange, prefix, suffix);
+    }
+    else {
+      if (selectionModel.hasBlockSelection()) {
+        final LogicalPosition start = selectionModel.getBlockStart();
+        final LogicalPosition end = selectionModel.getBlockEnd();
+        int startColumn = Math.min(start.column, end.column);
+        int endColumn = Math.max(start.column, end.column);
+        int startLine = Math.min(start.line, end.line);
+        int endLine = Math.max(start.line, end.line);
+
+        for (int i = startLine; i <= endLine; i++) {
+          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, endColumn));
+          EditorModificationUtil.insertStringAtCaret(editor, suffix, true, true);
+        }
+
+        for (int i = startLine; i <= endLine; i++) {
+          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, startColumn));
+          EditorModificationUtil.insertStringAtCaret(editor, prefix, true, true);
+        }
       }
-      if (element == null) return;
-      int commentStart = (element instanceof PsiWhiteSpace) ? offset : element.getTextRange().getStartOffset();
-      blockCommenter.uncommentRange(element, commentStart, this);
+      else if (selectionModel.hasSelection()) {
+        int selectionStart = selectionModel.getSelectionStart();
+        int selectionEnd = selectionModel.getSelectionEnd();
+        commentRange(selectionStart, selectionEnd, prefix, suffix);
+      }
+      else {
+        final LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
+        EditorUtil.fillVirtualSpaceUntil(editor, caretPosition.column, caretPosition.line);
+        int caretOffset = myEditor.getCaretModel().getOffset();
+        myDocument.insertString(caretOffset, prefix + suffix);
+        myEditor.getCaretModel().moveToOffset(caretOffset + prefix.length());
+      }
     }
   }
 
-  private static boolean isJavaFile(PsiFile file) {
-    return file instanceof PsiJavaFile || file instanceof PsiCodeFragment;
+  private TextRange findCommentedRange(final Commenter commenter) {
+    final FileType fileType = myFile.getFileType();
+    if (fileType instanceof CustomFileType) {
+      Lexer lexer = new CustomFileTypeLexer(((CustomFileType)fileType).getSyntaxTable());
+      final CharSequence text = myDocument.getCharsSequence();
+      int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), myEditor.getCaretModel().getOffset());
+      if (commentStart == -1) return null;
+      char[] chars = CharArrayUtil.fromSequence(text);
+      lexer.start(chars, commentStart, text.length());
+
+      if (lexer.getTokenType() == CustomHighlighterTokenType.MULTI_LINE_COMMENT) {
+        return new TextRange(commentStart, lexer.getTokenEnd());
+      }
+      return null;
+    }
+
+    TextRange commentedRange = null;
+    PsiElement comment = findCommentAtCaret(commenter);
+    if (comment != null) {
+      String commentText = comment.getText();
+      String prefix = commenter.getBlockCommentPrefix();
+      String suffix = commenter.getBlockCommentSuffix();
+      if (!commentText.startsWith(prefix) || !commentText.endsWith(suffix)) return null;
+      commentedRange = comment.getTextRange();
+    }
+    return commentedRange;
+  }
+
+  private Commenter getCommenter() {
+    final FileType fileType = myFile.getFileType();
+    if (fileType instanceof CustomFileType) {
+      return ((CustomFileType)fileType).getCommenter();
+    }
+
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    Language lang = getLanguageAtOffset(caretOffset);
+    if (lang == null) return null;
+    if (selectionModel.hasSelection()) {
+      Language l1 = getLanguageAtOffset(selectionModel.getSelectionStart());
+      Language l2 = getLanguageAtOffset(selectionModel.getSelectionEnd());
+      if (!Comparing.equal(lang, l1) || !Comparing.equal(lang, l2)) {
+        // selection covers multiple languages use language of the file to comment
+        lang = myFile.getLanguage();
+      }
+    }
+
+    return lang.getCommenter();
+  }
+
+  private PsiElement findCommentAtCaret(Commenter commenter) {
+    PsiElement elt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+    if (elt == null) return null;
+    final ASTNode node = elt.getNode();
+    if (node != null && commenter.getBlockCommentToken() == node.getElementType()) return elt;
+    return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
+  }
+
+  private Language getLanguageAtOffset(final int offset) {
+    PsiElement elt = myFile.findElementAt(offset);
+    if (elt == null) {
+      if (offset > 0) elt = myFile.findElementAt(offset-1);
+      if (elt == null) return null;
+    }
+    return elt.getLanguage();
   }
 
   public boolean startInWriteAction() {
     return true;
   }
-
-  public void insertEmptyComment(int offset, String commentStart, String commentEnd) {
-    myEditor.getDocument().insertString(offset, commentStart + commentEnd);
-    myEditor.getCaretModel().moveToOffset(offset + commentStart.length());
-  }
-
 
   public void commentRange(int startOffset, int endOffset, String commentPrefix, String commentSuffix) {
     CharSequence chars = myDocument.getCharsSequence();
@@ -361,22 +201,6 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
     LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + commentPrefix.length());
     myEditor.getCaretModel().moveToLogicalPosition(pos);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-  }
-
-  public PsiFile getFile() {
-    return myFile;
-  }
-
-  public Document getDocument() {
-    return myDocument;
-  }
-
-  public Project getProject() {
-    return myProject;
-  }
-
-  public Editor getEditor() {
-    return myEditor;
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix) {

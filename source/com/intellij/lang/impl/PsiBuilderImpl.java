@@ -269,7 +269,7 @@ public class PsiBuilderImpl implements PsiBuilder {
         TreeUtil.addChildren((CompositeElement)curNode, errorElement);
       }
     }
-
+     
     LOG.assertTrue(curToken == myLexems.size(), "Not all of the tokens inserted to the tree");
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
@@ -280,16 +280,21 @@ public class PsiBuilderImpl implements PsiBuilder {
     lastIdx = Math.min(lastIdx, myLexems.size());
     while (curToken < lastIdx) {
       Token lexem = myLexems.get(curToken++);
-      final IElementType type = lexem.getTokenType();
-      final LeafPsiElement childNode = new LeafPsiElement(type,
-                                                          myLexer.getBuffer(),
-                                                          lexem.myTokenStart,
-                                                          lexem.myTokenEnd,
-                                                          lexem.myState,
-                                                          myCharTable);
+      final LeafPsiElement childNode = createLeaf(lexem);
       TreeUtil.addChildren((CompositeElement)curNode, childNode);
     }
     return curToken;
+  }
+
+  private LeafPsiElement createLeaf(final Token lexem) {
+    final IElementType type = lexem.getTokenType();
+    if (myWhitespaces.isInSet(type)) {
+      return new PsiWhiteSpaceImpl(myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    }
+    else if (myComments.isInSet(type)) {
+      return new PsiCommentImpl(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    }
+    return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
   }
 
   /**

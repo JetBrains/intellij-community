@@ -4,6 +4,7 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
+import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -52,5 +53,9 @@ public class XMLLanguage extends Language {
 
   public FindUsagesProvider getFindUsagesProvider() {
     return FIND_USAGES_HANDLER;
+  }
+
+  public Commenter getCommenter() {
+    return new XmlCommenter();
   }
 }
