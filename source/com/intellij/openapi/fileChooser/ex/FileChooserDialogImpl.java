@@ -144,7 +144,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       myChooserDescriptor.validateSelectedFiles(selectedFiles);
     }
     catch (Exception e) {
-      Messages.showErrorDialog(getContentPane(), e.getMessage(), myChooserDescriptor.getTitle());
+      Messages.showErrorDialog(getContentPane(), e.getMessage(), "Select Path");
       return;
     }
 
