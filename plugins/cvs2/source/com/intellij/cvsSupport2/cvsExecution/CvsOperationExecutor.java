@@ -47,7 +47,8 @@ public class CvsOperationExecutor {
   private final boolean myShowProgress;
   private final Project myProject;
   private final ModalityContext myExecutor;
-  private boolean myshowErrors = true;
+  private boolean myShowErrors = true;
+  private boolean myIsQuietOperation = false;
 
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityState modalityState) {
     myProject = project;
@@ -114,12 +115,6 @@ public class CvsOperationExecutor {
           if (handler == CvsHandler.NULL) return;
           setText("Preparing for login...");
 
-          //myExecutor.runInDispatchThread(new Runnable() {
-          //  public void run() {
-          //    handler.beforeLogin();
-          //  }
-          //});
-          
           handler.beforeLogin();
 
 
@@ -222,7 +217,7 @@ public class CvsOperationExecutor {
   protected void showErrors(final List errors,
                             final List warnings,
                             final CvsTabbedWindow tabbedWindow) {
-    if (!myshowErrors) return;
+    if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) return;
     if (errors.isEmpty() && warnings.isEmpty()) {
       tabbedWindow.hideErrors();
@@ -290,7 +285,7 @@ public class CvsOperationExecutor {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (myProject != null) {
       final CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
-      if (CvsConfiguration.getInstance(myProject).SHOW_OUTPUT) {
+      if (CvsConfiguration.getInstance(myProject).SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
           Editor view = createView(myProject);
           if (view != null) {
@@ -347,6 +342,10 @@ public class CvsOperationExecutor {
   }
 
   public void setShowErrors(boolean showErrors) {
-    myshowErrors = showErrors;
+    myShowErrors = showErrors;
+  }
+
+  public void setIsQuietOperation(final boolean isQuietOperation) {
+    myIsQuietOperation = isQuietOperation;
   }
 }

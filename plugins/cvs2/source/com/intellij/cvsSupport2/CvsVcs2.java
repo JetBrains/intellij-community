@@ -168,6 +168,13 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     }
   }
 
+  public static void executeQuietOperation(String title, CvsOperation operation, final Project project){
+    CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.setIsQuietOperation(true);
+    executor.performActionSync(new CommandCvsHandler(title, operation),
+                               CvsOperationExecutorCallback.EMPTY);
+  }
+
   private static class MyFileStatusProvider implements FileStatusProvider {
     public FileStatus getStatus(VirtualFile virtualFile) {
       return CvsStatusProvider.getStatus(virtualFile);
