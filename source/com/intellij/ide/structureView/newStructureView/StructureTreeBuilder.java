@@ -1,13 +1,8 @@
-package com.intellij.ide.structureView.impl;
+package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.impl.StructureViewWrapper;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 
@@ -17,38 +12,45 @@ import javax.swing.tree.DefaultTreeModel;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
-  private final PsiFile myFile;
-
-//  private boolean myGroupOverridingMethods;
-//  private boolean myGroupImplementingMethods;
 
   private final MyCopyPasteListener myCopyPasteListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
-  private final StructureViewWrapper myWrapper;
+  private final StructureViewComponent myStructureViewComponent;
+  private boolean myStateIsSaved = false;
 
   public StructureTreeBuilder(Project project,
                             JTree tree,
                             DefaultTreeModel treeModel,
-                            PsiFile file,
                             AbstractTreeStructure treeStructure,
-                            StructureViewWrapper wrapper) {
+                            final StructureViewComponent structureViewComponent) {
     super(
       tree,
       treeModel,
       treeStructure, null
     );
 
+    myStructureViewComponent = structureViewComponent;
     myProject = project;
-    myFile = file;
-    myWrapper = wrapper;
 
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
     myCopyPasteListener = new MyCopyPasteListener();
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
-
     initRootNode();
+
+    myUpdater.runAfterUpdate(new Runnable() {
+      public void run() {
+        if (myStateIsSaved) {
+          try {
+            myStructureViewComponent.restoreStructureViewState();
+          }
+          finally {
+            myStateIsSaved = false;
+          }
+        }
+      }
+    });
   }
 
   public void dispose() {
@@ -58,11 +60,11 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return false;
+    return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return true;
+    return false;
   }
 
   protected boolean isSmartExpand() {
@@ -70,15 +72,9 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected final AbstractTreeUpdater createUpdater(){
-    return new AbstractTreeUpdater(this){
-      protected void updateSubtree(DefaultMutableTreeNode node){
-        if (!myFile.isValid()) {
-          myWrapper.rebuild();
-          return;
-        }
-        Module module = ModuleUtil.findModuleForPsiElement(myFile);
-        if (module != null && module.isDisposed()) return;
-
+    return new AbstractTreeUpdater(this) {
+      protected void updateSubtree(DefaultMutableTreeNode node) {
+        //((CachingChildrenTreeNode)node.getUserObject()).rebuildChildren();
         super.updateSubtree(node);
       }
     };
@@ -89,13 +85,13 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     public void childRemoved(PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
-      childrenChanged(event.getFile(), event.getParent());
+      childrenChanged();
     }
 
     public void childAdded(PsiTreeChangeEvent event) {
       PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
-      childrenChanged(event.getFile(), event.getParent());
+      childrenChanged();
     }
 
     public void childReplaced(PsiTreeChangeEvent event) {
@@ -103,54 +99,34 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
       if (oldChild instanceof PsiCodeBlock && newChild instanceof PsiCodeBlock) return; //optimization
-      childrenChanged(event.getFile(), event.getParent());
+      childrenChanged();
     }
 
     public void childMoved(PsiTreeChangeEvent event) {
-      childrenChanged(event.getFile(), event.getOldParent());
-      childrenChanged(event.getFile(), event.getNewParent());
+      childrenChanged();
+      childrenChanged();
     }
 
     public void childrenChanged(PsiTreeChangeEvent event) {
-      childrenChanged(event.getFile(), event.getParent());
+      childrenChanged();
     }
 
-    private void childrenChanged(PsiFile file, PsiElement parent) {
-      if (!myFile.isValid()) {
-        myUpdater.cancelAllRequests();
-        return;
+    private void childrenChanged() {
+      if (!myStateIsSaved) {
+        try {
+          myStructureViewComponent.saveStructureViewState();
+        }
+        finally {
+          myStateIsSaved = true;
+        }
       }
-
-      if (!myFile.equals(file)){
-        myUpdater.addSubtreeToUpdate(myRootNode);
-        return;
-      }
-
-      // See SCR 8388
+      ((SmartTreeStructure)getTreeStructure()).rebuildTree();
       myUpdater.addSubtreeToUpdate(myRootNode);
       return;
-
     }
 
     public void propertyChanged(PsiTreeChangeEvent event) {
-      String propertyName = event.getPropertyName();
-      PsiElement element = event.getElement();
-      if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-        if (element.equals(myFile)){
-          myUpdater.addSubtreeToUpdate(myRootNode);
-        }
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME)){
-        if (element.equals(myFile)){
-          myUpdater.addSubtreeToUpdate(myRootNode);
-        }
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
-        myUpdater.addSubtreeToUpdate(myRootNode);
-      }
-      else{
-        myUpdater.addSubtreeToUpdate(myRootNode);
-      }
+      myUpdater.addSubtreeToUpdate(myRootNode);
     }
   }
 

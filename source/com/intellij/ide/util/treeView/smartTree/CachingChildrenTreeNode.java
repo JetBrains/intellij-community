@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 
 import java.util.*;
 
-abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
+public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
   protected final TreeModel myTreeModel;
 

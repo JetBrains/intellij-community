@@ -75,17 +75,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper);
     JTree tree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
-    myAbstractTreeBuilder = new AbstractTreeBuilder(tree,
-                                                    (DefaultTreeModel)tree.getModel(),
-                                                    treeStructure, null) {
-      protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-        return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
-      }
-
-      protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
-      }
-    };
+    myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
+                                                    (DefaultTreeModel)tree.getModel(),treeStructure,
+                                                    this);
     myAbstractTreeBuilder.updateFromRoot();
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
