@@ -4,6 +4,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 
 public class SmartTreeStructure extends AbstractTreeStructure {
 
@@ -11,7 +12,12 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private TreeElementWrapper myRootElementWrapper;
 
+  private static Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.SmartTreeStructure");
+
   public SmartTreeStructure(Project project, TreeModel model) {
+
+    LOG.assertTrue(model != null);
+
     myModel = model;
     myProject = project;
 
