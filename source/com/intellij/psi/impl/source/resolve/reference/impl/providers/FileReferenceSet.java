@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 
@@ -70,7 +71,7 @@ public class FileReferenceSet {
     return myReferences[index];
   }
 
-  protected Reference[] getAllReferences(){
+  public Reference[] getAllReferences(){
     return myReferences;
   }
 
@@ -120,10 +121,18 @@ public class FileReferenceSet {
 
     public void processVariants(final PsiScopeProcessor processor) {
       final PsiElement context = getContext();
+
       if (context instanceof WebDirectoryElement) {
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
         for (int i = 0; i < children.length; i++) {
           PsiFileSystemItem item = children[i].isDirectory() ? ((PsiFileSystemItem)children[i]) : children[i].getOriginalFile();
+          if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
+        }
+      } else if (context instanceof PsiDirectory) {
+        final PsiElement[] children = ((PsiDirectory)context).getChildren();
+
+        for (int i = 0; i < children.length; i++) {
+          PsiFileSystemItem item = (PsiFileSystemItem) children[i];
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       }
@@ -142,6 +151,18 @@ public class FileReferenceSet {
           WebDirectoryElement child = children[i];
           if (myText.equals(child.getName())) {
             return child.isDirectory() ? ((PsiFileSystemItem)child) : child.getOriginalFile();
+          }
+        }
+      } else if (context instanceof PsiDirectory) {
+        if (".".equals(myText)) return context;
+        if ("..".equals(myText)) return ((PsiDirectory)context).getParentDirectory();
+        PsiElement[] children = ((PsiElement)context).getChildren();
+
+        for (int i = 0; i < children.length; i++) {
+          PsiFileSystemItem child = (PsiFileSystemItem)children[i];
+
+          if (myText.equals(child.getName())) {
+            return child;
           }
         }
       }
@@ -180,30 +201,35 @@ public class FileReferenceSet {
     return false;
   }
 
-  public static WebDirectoryElement getDefaultContext (PsiElement  element) {
-    if (element instanceof XmlAttributeValue) {
-      XmlAttributeValue attribute = (XmlAttributeValue)element;
-      Project project = attribute.getProject();
-      final String path = attribute.getValue().trim();
-      PsiFile file = (PsiFile)attribute.getContainingFile();
+  public static PsiElement getDefaultContext (PsiElement element) {
+    Project project = element.getProject();
+    final String path = element.getText().trim();
+    PsiFile file = (PsiFile)element.getContainingFile();
 
-      if (!(file.isPhysical())) file = (JspFile)file.getOriginalFile();
-      if (file == null) return null;
-      final WebModuleProperties properties = JspImplUtil.getWebModuleProperties(file);
+    if (!(file.isPhysical())) file = file.getOriginalFile();
+    if (file == null) return null;
+    final WebModuleProperties properties = JspImplUtil.getWebModuleProperties(file);
 
+    if (path.startsWith(SEPARATOR_STRING)) {
       if (properties != null) {
-        final JspManager jspManager = JspManager.getInstance(project);
-        if (path.startsWith(SEPARATOR_STRING)) {
-          return jspManager.findWebDirectoryElementByPath("/", properties);
-        }
-        else {
-          final PsiDirectory dir = file.getContainingDirectory();
-          if (dir != null) {
-            return jspManager.findWebDirectoryByFile(dir.getVirtualFile(), properties);
-          }
+        return JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
+      } else {
+        return PsiManager.getInstance(file.getProject()).findDirectory(
+          ProjectRootManager.getInstance(file.getProject()).getFileIndex().getContentRootForFile(file.getVirtualFile())
+        );
+      }
+    }
+    else {
+      final PsiDirectory dir = file.getContainingDirectory();
+      if (dir != null) {
+        if (properties != null) {
+          return JspManager.getInstance(project).findWebDirectoryByFile(dir.getVirtualFile(), properties);
+        } else {
+          return dir;
         }
       }
     }
+
     return null;
   }
 }
