@@ -96,7 +96,7 @@ class FileInfo {
       myEditFileProvider.editFiles(new VirtualFile[]{file});
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          file.refresh(true, false);
+          file.refresh(false, false);
         }
       });
     }
@@ -105,6 +105,7 @@ class FileInfo {
         public void run() {
           try {
             ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
+            file.refresh(false, false);
           }
           catch (IOException e) {
             //ignore
