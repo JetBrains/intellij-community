@@ -41,9 +41,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private boolean myAvailabilityNotificationsActive = true;
 
   private final AreaInstance myAreaInstance;
-  private MultiMap myServiceRegistry = new MultiHashMap();
   private final String myAreaClass;
-  private Map myServiceClass2ServicesCache = new HashMap();
   private Map myExtensionElement2extension = new HashMap();
   private Map myPluginName2picoContainer = new HashMap();
 
@@ -93,7 +91,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void registerExtension(final String pluginName, final Element extensionElement) {
     String epName = extractEPName(extensionElement);
     ExtensionComponentAdapter adapter;
-    String implClass = null;
+    String implClass;
     Class extensionClass = getExtensionPoint(epName).getExtensionClass();
     implClass = extensionElement.getAttributeValue("implementation");
     if (extensionClass.isInterface() || Modifier.isAbstract(extensionClass.getModifiers())) {
@@ -351,29 +349,5 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   public void killPendingInteractions() {
     mySuspendedListenerActions.clear();
-  }
-
-  private Set collectInterfaces(String className) {
-    try {
-      Class serviceClass = Class.forName(className);
-      Set classes = new HashSet();
-      classes.add(serviceClass.getName());
-      collectInterfaces(serviceClass, classes);
-      return classes;
-    }
-    catch (ClassNotFoundException e) {
-      return Collections.EMPTY_SET;
-    }
-  }
-
-  private void collectInterfaces(Class serviceClass, Set classes) {
-    Class[] interfaces = serviceClass.getInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      Class anInterface = interfaces[i];
-      if (!classes.contains(anInterface.getName())) {
-        classes.add(anInterface.getName());
-        collectInterfaces(anInterface, classes);
-      }
-    }
   }
 }
