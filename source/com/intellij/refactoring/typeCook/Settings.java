@@ -13,4 +13,5 @@ public interface Settings {
   boolean leaveObjectParameterizedTypesRaw();
   boolean exhaustive();
   boolean cookObjects();
+  boolean cookToWildcards();
 }

@@ -65,7 +65,8 @@ public abstract class RefactoringFactory {
                                                      boolean leaveObjectsRaw,
                                                      boolean preserveRawArrays,
                                                      boolean exhaustive,
-                                                     boolean cookObjects);
+                                                     boolean cookObjects,
+                                                     boolean cookToWildcards);
 
   /**
    * Creates Introduce Parameter refactoring that replaces local variable with parameter.

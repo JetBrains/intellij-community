@@ -28,6 +28,7 @@ public class TypeCookDialog extends RefactoringDialog {
   private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox("Leave Object-parameterized types raw");
   private JCheckBox myCbExhaustive = new JCheckBox("Perform exhaustive search");
   private JCheckBox myCbCookObjects = new JCheckBox("Generify Objects");
+  private JCheckBox myCbCookToWildcards = new JCheckBox("Produce wildcard types");
 
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
@@ -102,11 +103,17 @@ public class TypeCookDialog extends RefactoringDialog {
         RefactoringSettings.getInstance().TYPE_COOK_COOK_OBJECTS);
     }
 
+    if (myCbCookToWildcards.isEnabled()) {
+      myCbCookToWildcards.setSelected(
+        RefactoringSettings.getInstance().TYPE_COOK_PRODUCE_WILDCARDS);
+    }
+
     myCbDropCasts.setMnemonic('D');
     myCbPreserveRawArrays.setMnemonic('A');
     myCbLeaveObjectParameterizedTypesRaw.setMnemonic('L');
     myCbExhaustive.setMnemonic('E');
     myCbCookObjects.setMnemonic('O');
+    myCbCookToWildcards.setMnemonic('W');
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
 
@@ -119,6 +126,7 @@ public class TypeCookDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 1;
+    gbConstraints.gridy = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     optionsPanel.add(myCbDropCasts, gbConstraints);
 
@@ -130,15 +138,17 @@ public class TypeCookDialog extends RefactoringDialog {
 
     gbConstraints.gridx = 0;
     gbConstraints.gridwidth = 2;
+    gbConstraints.gridy = 2;
     optionsPanel.add(myCbLeaveObjectParameterizedTypesRaw, gbConstraints);
 
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = 2;
+    gbConstraints.gridy++;
     optionsPanel.add(myCbExhaustive, gbConstraints);
 
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = 2;
+    gbConstraints.gridy++;
     optionsPanel.add(myCbCookObjects, gbConstraints);
+
+    gbConstraints.gridy++;
+    optionsPanel.add(myCbCookToWildcards, gbConstraints);
 
     return optionsPanel;
   }
@@ -148,6 +158,9 @@ public class TypeCookDialog extends RefactoringDialog {
     settings.TYPE_COOK_DROP_CASTS = myCbDropCasts.isSelected();
     settings.TYPE_COOK_PRESERVE_RAW_ARRAYS = myCbPreserveRawArrays.isSelected();
     settings.TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = myCbLeaveObjectParameterizedTypesRaw.isSelected();
+    settings.TYPE_COOK_EXHAUSTIVE = myCbExhaustive.isSelected();
+    settings.TYPE_COOK_COOK_OBJECTS = myCbCookObjects.isSelected();
+    settings.TYPE_COOK_PRODUCE_WILDCARDS = myCbCookToWildcards.isSelected();
 
     invokeRefactoring(new TypeCookProcessor(getProject(), myElements, getSettings()));
   }
@@ -158,6 +171,7 @@ public class TypeCookDialog extends RefactoringDialog {
     final boolean leaveObjectParameterizedTypesRaw = myCbLeaveObjectParameterizedTypesRaw.isSelected();
     final boolean exhaustive = myCbExhaustive.isSelected();
     final boolean cookObjects = myCbCookObjects.isSelected();
+    final boolean cookToWildcards = myCbCookToWildcards.isSelected();
 
     return new Settings() {
       public boolean dropObsoleteCasts() {
@@ -178,6 +192,10 @@ public class TypeCookDialog extends RefactoringDialog {
 
       public boolean cookObjects() {
         return cookObjects;
+      }
+
+      public boolean cookToWildcards() {
+        return cookToWildcards;
       }
     };
   }

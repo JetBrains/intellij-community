@@ -1,21 +1,18 @@
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.PsiTypeVariable;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeCook.Settings;
+import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
-import com.intellij.psi.Bottom;
-import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
 
 import java.util.*;
 
@@ -36,7 +33,6 @@ public class ResolverTree {
   private Project myProject;
   private HashMap<PsiTypeVariable, Integer> myBindingDegree; //How many times this type variable is bound in the system
   private Settings mySettings;
-  private boolean myCookWildcards = false;
 
   private HashSet<Constraint> myConstraints;
 
@@ -60,7 +56,6 @@ public class ResolverTree {
     myProject = parent.myProject;
     myBindingDegree = calculateDegree();
     mySettings = parent.mySettings;
-    myCookWildcards = parent.myCookWildcards;
   }
 
   private static class PsiTypeVarCollector extends PsiExtendedTypeVisitor {
@@ -285,14 +280,16 @@ public class ResolverTree {
   private void reduceTypeType(final Constraint constr) {
     final PsiType left = constr.getLeft();
     final PsiType right = constr.getRight();
-    final HashSet<Constraint> addendum = new HashSet<Constraint>();
+    final HashSet<Constraint> addendumRise = new HashSet<Constraint>();
+    final HashSet<Constraint> addendumSink = new HashSet<Constraint>();
+    final HashSet<Constraint> addendumWcrd = new HashSet<Constraint>();
 
     int numSons = 0;
-    Binding riseBinding = myBindingFactory.rise(left, right, null);
+    Binding riseBinding = myBindingFactory.rise(left, right, addendumRise);
     if (riseBinding != null) numSons++;
-    Binding sinkBinding = myBindingFactory.sink(left, right, null);
+    Binding sinkBinding = myBindingFactory.sink(left, right, addendumSink);
     if (sinkBinding != null) numSons++;
-    Binding wcrdBinding = myCookWildcards ? myBindingFactory.riseWithWildcard(left, right, addendum) : null;
+    Binding wcrdBinding = mySettings.cookToWildcards() ? myBindingFactory.riseWithWildcard(left, right, addendumWcrd) : null;
     if (wcrdBinding != null) numSons++;
 
     if (numSons == 0) return;
@@ -314,15 +311,15 @@ public class ResolverTree {
     int n = 0;
 
     if (riseBinding != null) {
-      mySons[n++] = applyRule(riseBinding);
+      mySons[n++] = applyRule(riseBinding, addendumRise);
     }
 
     if (sinkBinding != null) {
-      mySons[n++] = applyRule(sinkBinding);
+      mySons[n++] = applyRule(sinkBinding, addendumSink);
     }
 
     if (wcrdBinding != null) {
-      mySons[n++] = applyRule(wcrdBinding, addendum);
+      mySons[n++] = applyRule(wcrdBinding, addendumWcrd);
     }
   }
 
@@ -344,9 +341,9 @@ public class ResolverTree {
         for (int i = 0; i < parents.length; i++) {
           final PsiClass parent = parents[i];
 
-          if (InheritanceUtil.isCorrectDescendant(parent, lowerClass, true)) {
-            final PsiClassType type = factory.createType(parent,
-                                                         TypeConversionUtil.getSuperClassSubstitutor(parent, upperClass, upperSubst));
+          final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(parent, upperClass, upperSubst);
+          if (superSubstitutor != null) {
+            final PsiClassType type = factory.createType(parent, superSubstitutor);
             holder.add(type);
             fillTypeRange(lowerBound, type, holder);
           }
@@ -500,46 +497,7 @@ public class ResolverTree {
     }
 
     //T1 < a < b ... < T2
-    if (myCookWildcards) {
-      final HashSet<PsiTypeVariable> haveRightBound = new HashSet<PsiTypeVariable>();
-
-      Constraint target = null;
-      final HashSet<PsiTypeVariable> boundVariables = new HashSet<PsiTypeVariable>();
-
-      for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-        final Constraint constr = c.next();
-        final PsiType leftType = constr.getLeft();
-        final PsiType rightType = constr.getRight();
-
-        if (rightType instanceof PsiTypeVariable) {
-          boundVariables.add((PsiTypeVariable)rightType);
-
-          if (leftType instanceof PsiTypeVariable) {
-            boundVariables.add((PsiTypeVariable)leftType);
-            haveRightBound.add(((PsiTypeVariable)leftType));
-          }
-          else if (!Util.bindsTypeVariables(leftType)) {
-            target = constr;
-          }
-        }
-      }
-
-      if (target != null) {
-        final PsiType type = target.getLeft();
-        final PsiTypeVariable var = (PsiTypeVariable)target.getRight();
-
-        final Binding binding =
-          haveRightBound.contains(var) || type instanceof PsiWildcardType
-          ? myBindingFactory.create(var, type)
-          : myBindingFactory.create(var, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), type));
-
-        myConstraints.remove(target);
-
-        mySons = new ResolverTree[]{applyRule(binding)};
-
-        return;
-      }
-    } else {
+    {
       for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
         final Constraint constr = c.next();
         final PsiType left = constr.getLeft();
@@ -622,7 +580,7 @@ public class ResolverTree {
         final PsiTypeVariable var = (PsiTypeVariable)target.getLeft();
 
         final Binding binding =
-          (haveLeftBound.contains(var) || type instanceof PsiWildcardType) || !myCookWildcards
+          (haveLeftBound.contains(var) || type instanceof PsiWildcardType) || !mySettings.cookToWildcards()
           ? myBindingFactory.create(var, type)
           : myBindingFactory.create(var, PsiWildcardType.createExtends(PsiManager.getInstance(myProject), type));
 

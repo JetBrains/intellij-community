@@ -668,16 +668,7 @@ public class BindingFactory {
            case 1:
                 if (((PsiWildcardType)x).isExtends()) {
                   /* ? extends T1, T2 */
-                  if (xType instanceof PsiTypeVariable) {
-                    return create((PsiTypeVariable)xType, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), yType));
-                  }
-                  else {
-                    if (constraints != null) {
-                      constraints.add(new Subtype(xType, yType));
-                    }
-
-                    return balance(xType, yType, balancer, constraints);
-                  }
+                  return null;
                 }
                 else {
                   /* ? super T1, T2 */
@@ -690,7 +681,16 @@ public class BindingFactory {
            case 2:
                 if (((PsiWildcardType)y).isExtends()) {
                   /* T1, ? extends T2 */
-                  return null;
+                 if (yType instanceof PsiTypeVariable) {
+                    return create((PsiTypeVariable)yType, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), xType));
+                  }
+                  else {
+                    if (constraints != null) {
+                      constraints.add(new Subtype(xType, yType));
+                    }
+
+                    return balance(xType, yType, balancer, constraints);
+                  }
                 }
                 else {/* T1, ? super T2 */
                   if (yType instanceof PsiTypeVariable) {
@@ -748,16 +748,8 @@ public class BindingFactory {
            if (xClass != null && yClass != null) {
              final PsiSubstitutor ySubst = resultY.getSubstitutor();
 
-             PsiSubstitutor xSubst = resultX.getSubstitutor();
-
-             if (!xClass.equals(yClass)) {
-               if (InheritanceUtil.isCorrectDescendant(xClass, yClass, true)) {
-                 xSubst = TypeConversionUtil.getSuperClassSubstitutor(yClass, xClass, xSubst);
-               }
-               else {
-                 return null;
-               }
-             }
+             PsiSubstitutor xSubst = TypeConversionUtil.getClassSubstitutor(yClass, xClass, resultX.getSubstitutor());
+             if (xSubst == null) return null;
 
              Binding b = create();
 
