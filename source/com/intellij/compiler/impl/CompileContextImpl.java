@@ -39,6 +39,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
   private final CompileDriver myCompileDriver;
+  private final boolean myMake;
   private boolean myRebuildRequested = false;
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
@@ -49,12 +50,14 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
                             CompilerProgressIndicator indicator,
                             CompileScope compileScope,
                             DependencyCache dependencyCache,
-                            CompileDriver compileDriver) {
+                            CompileDriver compileDriver,
+                            boolean isMake) {
     myProject = project;
     myProgressIndicator = indicator;
     myCompileScope = compileScope;
     myDependencyCache = dependencyCache;
     myCompileDriver = compileDriver;
+    myMake = isMake;
     myOutputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(project).getModules());
   }
 
@@ -227,6 +230,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, true);
+  }
+
+  public boolean isMake() {
+    return myMake;
   }
 
 }

@@ -84,4 +84,9 @@ public interface CompileContext extends UserDataHolder {
    * output directory for tests is not configured explicitly, but the output path is present, the output path will be returned.
    */
   VirtualFile getModuleOutputDirectoryForTests(Module module);
+
+  /**
+   * @return true if compilation is incremental, i.e. triggered by one of "Make" actions
+   */
+  boolean isMake();
 }

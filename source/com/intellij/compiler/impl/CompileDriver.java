@@ -240,7 +240,7 @@ public class CompileDriver {
     );
     WindowManager.getInstance().getStatusBar(myProject).setInfo("");
 
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, new DependencyCache(myCachesDirectoryPath), this);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, new DependencyCache(myCachesDirectoryPath), this, (!isRebuild && !forceCompile));
     for (Iterator<Pair<Compiler, Module>> it = myGenerationCompilerModuleToOutputDirMap.keySet().iterator(); it.hasNext();) {
       Pair<Compiler, Module> pair = it.next();
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
@@ -1262,16 +1262,13 @@ public class CompileDriver {
     return description.toLowerCase().replaceAll("\\s+", "_");
   }
 
-  public void executeCompileTask(final CompileTask task,
-                                 final CompileScope scope,
-                                 final String contentName,
-                                 final Runnable onTaskFinished) {
+  public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
       contentName
     );
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, null, this);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, null, this, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
 

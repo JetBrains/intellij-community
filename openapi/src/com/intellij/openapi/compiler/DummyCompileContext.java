@@ -63,4 +63,8 @@ public class DummyCompileContext implements CompileContext {
 
   public <T> void putUserData(Key<T> key, T value) {
   }
+
+  public boolean isMake() {
+    return false; // stub implementation
+  }
 }
