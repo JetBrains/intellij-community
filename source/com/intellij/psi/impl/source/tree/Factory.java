@@ -9,8 +9,8 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspTokenType;
@@ -126,7 +126,7 @@ public class Factory implements Constants {
       element = new JspDeclarationChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
-      element = new JspText(buffer, startOffset, endOffset, table);
+      element = new JspText(null, buffer, startOffset, endOffset, table);
     }
     else {
       if (KEYWORD_BIT_SET.isInSet(type)) {
