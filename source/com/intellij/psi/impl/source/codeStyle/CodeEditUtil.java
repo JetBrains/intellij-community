@@ -6,11 +6,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -425,14 +424,15 @@ public class CodeEditUtil {
       }
     }
     else {
-      return getWhiteSpaceBeforeToken(second, language).generateNewWhiteSpace();
+      return getWhiteSpaceBeforeToken(second, language, false).generateNewWhiteSpace();
     }
 
   }
 
   public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                        final Language language) {
-    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language));
+                                                        final Language language,
+                                                        final boolean ignoreAlignment) {
+    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language), ignoreAlignment);
   }
 
   private static Language chooseLanguage(final ASTNode tokenNode, final Language language) {
@@ -455,7 +455,8 @@ public class CodeEditUtil {
   }
 
   public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                  final Language language) {
+                                                  final Language language,
+                                                  final boolean ignoreAlignment) {
     LOG.assertTrue(tokenNode != null);
     final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
     LOG.assertTrue(secondAsPsiElement != null);
@@ -474,7 +475,7 @@ public class CodeEditUtil {
                                                             settings,
                                                             file);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset, ignoreAlignment);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
