@@ -23,7 +23,7 @@ public class VariableTypeFix implements IntentionAction {
 
   public VariableTypeFix(PsiVariable variable, PsiType toReturn) {
     myVariable = variable;
-    myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
+    myReturnType = toReturn != null ? GenericsUtil.getVariableTypeByExpressionType(toReturn) : null;
   }
 
   public String getText() {
