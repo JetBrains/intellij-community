@@ -271,7 +271,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           if (dlg.isOK()){
             myInspectionProfile = manager.getCurrentProfile();
             manager.setProfile(InspectionProfileManager.getInstance().getProfile(currentProfileName));
-            InspectionResultsView.this.update(myInspectionProfile.getInspectionTools(myProject));
+            InspectionResultsView.this.update();
           }
         }
       });
@@ -455,7 +455,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-  public boolean update(InspectionTool[] tools) {
+  public boolean update() {
+    InspectionTool[] tools = myInspectionProfile.getInspectionTools(myProject);
     myTree.removeAllNodes();
     boolean resultsFound = false;
     myGroups = new HashMap<String, InspectionGroupNode>();
@@ -626,7 +627,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         };
             CommandProcessor.getInstance().executeCommand(myProject, command, fix.getName(), null);
             ((DescriptorProviderInspection)getSelectedTool()).ignoreProblem(element, descriptor);
-            ((InspectionManagerEx)InspectionManager.getInstance(myProject)).refreshViews();
+            update();
           }
         });
       }
@@ -788,7 +789,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     actions.add(new AnAction("Edit Tool Settings") {
       public void actionPerformed(AnActionEvent e) {
         new SwitchOffToolAction(HighlightDisplayKey.find(tool.getShortName())).editToolSettings(myProject, myInspectionProfile);
-        InspectionResultsView.this.update(myInspectionProfile.getInspectionTools(myProject));
+        InspectionResultsView.this.update();
       }
 
       public void update(AnActionEvent e) {

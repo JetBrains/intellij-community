@@ -607,7 +607,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
     InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
     InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
-    if (!view.update(tools)) {
+    if (!view.update()) {
       Messages.showMessageDialog(myProject,
                                  "No suspicious code found",
                                  "Code Inspection",
@@ -793,8 +793,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public void refreshViews() {
-    InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
-    myView.update(tools);
+    myView.update();
   }
 
   public void incrementJobDoneAmount(JobDescriptor job, String message) {
