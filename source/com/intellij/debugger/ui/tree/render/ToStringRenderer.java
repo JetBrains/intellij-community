@@ -2,9 +2,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -121,21 +119,19 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-    getDefaultRenderer(value, evaluationContext).buildChildren(value, builder, evaluationContext);
+    final DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
+    debugProcess.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
   }
 
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     final Value parentValue = ((ValueDescriptor)node.getParent().getDescriptor()).getValue();
-    return getDefaultRenderer(parentValue, context).getChildValueExpression(node, context);
+    final DebugProcessImpl debugProcess = (DebugProcessImpl)context.getDebugProcess();
+    return debugProcess.getDefaultRenderer(parentValue).getChildValueExpression(node, context);
   }
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return getDefaultRenderer(value, evaluationContext).isExpandable(value, evaluationContext, parentDescriptor);
-  }
-
-  private static NodeRenderer getDefaultRenderer(Value value, StackFrameContext context) {
-    final Type type = (value != null) ? value.type() : null;
-    return ((DebugProcessImpl)context.getDebugProcess()).getDefaultRenderer(type);
+    final DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
+    return debugProcess.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

@@ -16,6 +16,7 @@ import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,7 +67,7 @@ public class ValueHint {
   private Cursor myStoredCursor = null;
   private PsiExpression myCurrentExpression = null;
 
-  private int myType;
+  private final int myType;
 
   private boolean myShowHint = true;
 
@@ -152,6 +153,11 @@ public class ValueHint {
             TextWithImportsImpl text = TextWithImportsImpl.createExpressionText(myCurrentExpression.getText());
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
             descriptor.setContext(evaluationContext);
+            if (myType == MOUSE_OVER_HINT) {
+              // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
+              // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
+              descriptor.setRenderer(debuggerContext.getDebugProcess().getDefaultRenderer(value));
+            }
             descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
               public void labelChanged() {
                 if(myCurrentRange != null) {
