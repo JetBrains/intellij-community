@@ -59,6 +59,7 @@
       <action id="Subversion.Resolved" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolved confilct" description="Tell Subversion that the conflict has been resolved"/>
       <separator/>
       <reference id="Subversion.ShowDiffAction"/>
+      <reference id="Annotate"/>
       <!--
       <action id="Subversion.ShowDiffExented" class="com.qintsoft.svn4idea.actions.ShowDiffExtendedAction" text="Show Diff extented..." description="Show difference with selection of Subversion revision"/>
       -->
