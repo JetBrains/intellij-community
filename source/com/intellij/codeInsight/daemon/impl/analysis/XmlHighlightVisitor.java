@@ -473,7 +473,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
 
     if (elementDescriptor instanceof Validator) {
       final String s = ((Validator)elementDescriptor).validate(tag);
-      myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,tag,s));
+      if (s!=null && s.length() > 0) {
+        myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,tag,s));
+      }
     }
   }
 
