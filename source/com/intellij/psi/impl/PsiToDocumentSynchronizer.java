@@ -222,6 +222,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if(!myTransactionsMap.containsKey(doc)){
       //LOG.assertTrue(doc.getText().equals(scope.getContainingFile().getText()),
       //               "Document and PSI not synchronized on transaction start (don't send to IK)");
+      myTransactionsMap.put(doc, new DocumentChangeTransaction(doc, scope));
     }
   }
 
