@@ -175,9 +175,12 @@ public class HtmlUtil {
         String text = element.getText();
         int offset = 0;
         if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
-        text = text.substring(offset,text.length() - offset);
 
-        if (text.indexOf("http://") == -1 && text.indexOf("mailto:") == -1) {
+        text = text.substring(offset,text.length() - offset);
+        int hashInd = text.lastIndexOf('#');
+        if (hashInd != -1) text = text.substring(0,hashInd);
+
+        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:")) {
           refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
         } else {
           refs = PsiReference.EMPTY_ARRAY;
