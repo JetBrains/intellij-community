@@ -80,10 +80,12 @@ public class ImportsTextParsing extends Parsing {
     }
 
     CompositeElement refElement = parseJavaCodeReference(lexer, true);
-    if (refElement.getLastChildNode().getElementType() == ERROR_ELEMENT){
+    final TreeElement refParameterList = (TreeElement)refElement.getLastChildNode();
+    if (refParameterList.getTreePrev().getElementType() == ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
-      TreeUtil.remove((TreeElement)refElement.getLastChildNode());
+      TreeUtil.remove(refParameterList.getTreePrev());
+      TreeUtil.remove(refParameterList);
       TreeUtil.addChildren(statement, (TreeElement)qualifier);
       if (lexer.getTokenType() == ASTERISK){
         TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));

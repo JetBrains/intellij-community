@@ -78,6 +78,7 @@ public class Parsing implements Constants{
       TreeUtil.addChildren(refElement1, dot);
       if (identifier == null){
         TreeUtil.addChildren(refElement1, Factory.createErrorElement("Identifier expected"));
+        TreeUtil.addChildren(refElement1, Factory.createCompositeElement(REFERENCE_PARAMETER_LIST));
         return refElement1;
       }
       TreeUtil.addChildren(refElement1, identifier);
