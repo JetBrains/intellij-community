@@ -4,8 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
+import com.intellij.psi.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.util.IncorrectOperationException;
 
@@ -310,57 +309,6 @@ public class Util {
     return t;
   }
 
-  public static PsiType substituteType(final PsiType type, final PsiSubstitutor subst) {
-    if (type == null) return null;
-    if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wcType = ((PsiWildcardType)type);
-      final PsiType bound = wcType.getBound();
-
-      if (bound != null) {
-        final PsiClass aClass = resolveType(bound).getElement();
-
-        if (aClass != null) {
-          final PsiManager manager = aClass.getManager();
-
-          return wcType.isExtends()
-                 ? PsiWildcardType.createExtends(manager, substituteType(bound, subst))
-                 : PsiWildcardType.createSuper(manager, substituteType(bound, subst));
-        }
-      }
-
-      return type;
-    }
-    else {
-      final int level = type.getArrayDimensions();
-      final PsiClassType.ClassResolveResult result = resolveType(type);
-      final PsiClass aClass = result.getElement();
-
-      if (aClass != null) {
-        final PsiSubstitutor aSubst = result.getSubstitutor();
-        final PsiManager manager = aClass.getManager();
-
-        if (aClass instanceof PsiTypeParameter) {
-          final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
-
-          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : sType, level);
-        }
-
-        final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
-        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-        for (int i = 0; i < aParms.length; i++) {
-          PsiTypeParameter aParm = aParms[i];
-
-          theSubst = theSubst.put(aParm, substituteType(aSubst.substitute(aParm), subst));
-        }
-
-        return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
-      }
-
-      return type;
-    }
-  }
-
   public static boolean bindsTypeVariables(final PsiType t) {
     if (t == null) {
       return false;
@@ -378,10 +326,12 @@ public class Util {
       return bindsTypeVariables(((PsiWildcardType)t).getBound());
     }
 
-    if (t instanceof PsiTypeIntersection) {
-      final PsiTypeIntersection itype = ((PsiTypeIntersection)t);
-
-      return bindsTypeVariables(itype.getLeft()) || bindsTypeVariables(itype.getRight());
+    if (t instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)t).getConjuncts();
+      for (int i = 0; i < conjuncts.length; i++) {
+        if (bindsTypeVariables(conjuncts[i])) return true;
+      }
+      return false;
     }
 
     final PsiClassType.ClassResolveResult result = resolveType(t);

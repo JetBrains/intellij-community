@@ -2,10 +2,10 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
+import com.intellij.psi.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
-import com.intellij.refactoring.typeCook.Bottom;
+import com.intellij.psi.Bottom;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.openapi.project.Project;

@@ -3,10 +3,9 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.Bottom;
+import com.intellij.psi.Bottom;
 import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
+import com.intellij.psi.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.openapi.project.Project;
@@ -207,7 +206,7 @@ public class System {
               boundVars.add((PsiTypeVariable)t);
             }
             else if (t instanceof PsiArrayType) {
-              visit(((PsiArrayType)t).getDeepComponentType());
+              visit(t.getDeepComponentType());
             }
             else if (t instanceof PsiClassType) {
               final PsiSubstitutor subst = Util.resolveType(t).getSubstitutor();
@@ -216,9 +215,12 @@ public class System {
                 visit(j.next());
               }
             }
-            else if (t instanceof PsiTypeIntersection) {
-              visit(((PsiTypeIntersection)t).getLeft());
-              visit(((PsiTypeIntersection)t).getRight());
+            else if (t instanceof PsiIntersectionType) {
+              final PsiType[] conjuncts = ((PsiIntersectionType)t).getConjuncts();
+              for (int j = 0; j < conjuncts.length; j++) {
+                visit(conjuncts[j]);
+
+              }
             }
           }
         }.visit(constraint);

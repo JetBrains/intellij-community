@@ -1,8 +1,6 @@
 package com.intellij.refactoring.typeCook.deductive;
 
-import com.intellij.psi.PsiTypeVisitor;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 
 import java.util.Iterator;
 
@@ -13,9 +11,7 @@ import java.util.Iterator;
  * Time: 7:20:09 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class PsiExtendedTypeVisitor <X> extends PsiTypeVisitor<X> {
-  public abstract X visitTypeVariable(PsiTypeVariable var);
-
+public abstract class PsiExtendedTypeVisitor <X> extends PsiTypeVisitorEx<X> {
   public X visitClassType(final PsiClassType classType) {
     super.visitClassType(classType);
     final PsiClassType.ClassResolveResult result = classType.resolveGenerics();

@@ -155,14 +155,6 @@ public class PsiTypeVariableFactory {
         return text.equals(getPresentableText());
       }
 
-      public <A> A accept(PsiTypeVisitor<A> visitor) {
-        if (visitor instanceof PsiExtendedTypeVisitor) {
-          return ((PsiExtendedTypeVisitor<A>)visitor).visitTypeVariable(this);
-        }
-
-        return null;
-      }
-
       public GlobalSearchScope getResolveScope() {
         return null;
       }

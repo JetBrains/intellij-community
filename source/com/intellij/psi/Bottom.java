@@ -1,15 +1,9 @@
-package com.intellij.refactoring.typeCook;
+package com.intellij.psi;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 18.12.2003
- * Time: 18:55:48
- * To change this template use Options | File Templates.
+ * Used in Generify refactoring
  */
 public class Bottom extends PsiType {
   public final static Bottom BOTTOM = new Bottom();
@@ -47,7 +41,10 @@ public class Bottom extends PsiType {
   }
 
   public <A> A accept(PsiTypeVisitor<A> visitor) {
-    return null;
+    if (visitor instanceof PsiTypeVisitorEx) {
+      return ((PsiTypeVisitorEx<A>)visitor).visitBottom(this);
+    }
+    return visitor.visitType(this);
   }
 
   public PsiType[] getSuperTypes() {

@@ -52,7 +52,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
   }
 
-  private abstract class SubstitutionVisitor extends PsiTypeVisitor<PsiType> {
+  private abstract class SubstitutionVisitor extends PsiTypeVisitorEx<PsiType> {
     public PsiType visitType(PsiType type) {
       LOG.assertTrue(false);
       return null;
@@ -101,6 +101,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       if (substitutedComponentType == null) return null;
       if (substitutedComponentType == componentType) return ellipsisType; // optimization
       return new PsiEllipsisType(substitutedComponentType);
+    }
+
+    public PsiType visitTypeVariable(final PsiTypeVariable var) {
+      return var;
+    }
+
+    public PsiType visitBottom(final Bottom bottom) {
+      return bottom;
     }
 
     public abstract PsiType visitClassType(PsiClassType classType);

@@ -1,12 +1,12 @@
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
+import com.intellij.psi.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.Bottom;
+import com.intellij.psi.Bottom;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.GlobalSearchScope;
