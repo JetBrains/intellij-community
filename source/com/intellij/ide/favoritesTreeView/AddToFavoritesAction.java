@@ -37,14 +37,20 @@ import java.util.Set;
 public class AddToFavoritesAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.AddToFavoritesAction");
 
+  private String myFavoritesList;
+  public AddToFavoritesAction(String choosenList) {
+    super(choosenList);
+    myFavoritesList = choosenList;
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final AbstractTreeNode[] nodes = createNode(dataContext);
+    final AbstractTreeNode[] nodes = createNodes(dataContext);
     if (nodes != null) {
       for (int i = 0; i < nodes.length; i++) {
         AbstractTreeNode node = nodes[i];
-        FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel().addToFavorites(node);
+        FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).addToFavorites(node);
       }
     }
   }
@@ -56,19 +62,23 @@ public class AddToFavoritesAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
     else {
-      e.getPresentation().setEnabled(createNode(dataContext) != null);
+      e.getPresentation().setEnabled(createNodes(dataContext) != null);
     }
   }
 
-  private AbstractTreeNode[] createNode(DataContext dataContext) {
+  protected boolean isEnabled() {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  private AbstractTreeNode[] createNodes(DataContext dataContext) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesTreeViewConfiguration.getInstance(project);
+    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel().getFavoritesTreeStructure().getFavoritesConfiguration();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
-    if (currentViewId == J2EEProjectViewPane.ID){
+    if (currentViewId.equals(J2EEProjectViewPane.ID)){
       J2EENodeDescriptor j2eeNodeDescriptor = (J2EENodeDescriptor)pane.getSelectedDescriptor();
     }
 
@@ -101,7 +111,7 @@ public class AddToFavoritesAction extends AnAction {
     //on module node
     Module module = (Module)dataContext.getData(DataConstants.MODULE);
     if (module != null) {
-      if (currentViewId == PackageViewPane.ID) {
+      if (currentViewId.equals(PackageViewPane.ID)) {
         result.add(new PackageViewModuleNode(project, module, favoritesConfig));
       }
       else {
@@ -114,7 +124,7 @@ public class AddToFavoritesAction extends AnAction {
     Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     if (modules != null) {
       for (int i = 0; i < modules.length; i++) {
-        if (currentViewId == PackageViewPane.ID) {
+        if (currentViewId.equals(PackageViewPane.ID)) {
           result.add(new PackageViewModuleNode(project, modules[i], favoritesConfig));
         }
         else {
@@ -128,7 +138,7 @@ public class AddToFavoritesAction extends AnAction {
     ModuleGroup[] moduleGroups = (ModuleGroup[])dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY);
     if (moduleGroups != null) {
       boolean isPackageView = false;
-      if (currentViewId == PackageViewPane.ID) {
+      if (currentViewId.equals(PackageViewPane.ID)) {
         isPackageView = true;
       }
       for (int i = 0; i < moduleGroups.length; i++) {
@@ -248,4 +258,5 @@ public class AddToFavoritesAction extends AnAction {
     }
     return psiElement;
   }
+
 }

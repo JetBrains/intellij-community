@@ -15,8 +15,11 @@
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction" text="Show History _for Selection" description="Show history for editor selection"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
 
-    <action id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesAction" text="Add To Favorites" description="Add selected node to favorites" internal="true"/>
-
+    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction" text="Add To Favorites" description="Add selected node to favorites" internal="true"/>
+    <group id="AddToFavorites" popup="true" text="_Add To Favorites"/>
+    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List" internal="true"/>
+    <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.RemoveFavoritesListAction" text="Remove Favorites List" description="REmove Favorites List" internal="true"/>
+    <group id="SendToFavoritesGroup" popup="true" text="_Send Favorites"/>
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="com.intellij.execution.actions.CreateAction"/>
     </group>
@@ -172,7 +175,7 @@
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles" text="Compare Two _Files" description="Compare two selected files"/>
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor" text="Co_mpare File with Editor" description="Compare selected file with editor"/>
 
-    <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version Control" popup="true">
+    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version Control" popup="true">
 
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
@@ -850,6 +853,7 @@
       <reference ref="EditSource"/>
       <separator/>
       <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction" text="Remove From Favorites" description="Remove selected node from favorites" internal="true"/>
+      <reference ref="SendToFavoritesGroup"/>
       <separator />
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>

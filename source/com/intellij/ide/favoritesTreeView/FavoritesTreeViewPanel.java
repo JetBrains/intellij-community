@@ -66,27 +66,30 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final FavoritesTreeViewConfiguration myFavoritesConfiguration;
 
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-
-  public FavoritesTreeViewPanel(Project project, String helpId) {
+  private String myName;
+  public FavoritesTreeViewPanel(Project project, String helpId, String name) {
     myProject = project;
     myHelpId = helpId;
+    myName = name;
     setLayout(new BorderLayout());
 
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
       protected boolean isAutoScrollMode() {
-        return FavoritesTreeViewConfiguration.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE;
+        return myFavoritesConfiguration.IS_AUTOSCROLL_TO_SOURCE;
       }
 
       protected void setAutoScrollMode(boolean state) {
-        FavoritesTreeViewConfiguration.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
+        myFavoritesConfiguration.IS_AUTOSCROLL_TO_SOURCE = state;
       }
     };
 
     //JPanel myCenterPanel = new JPanel(new BorderLayout());
 
-    myFavoritesTreeStructure = FavoritesTreeStructure.getInstance(project);
+    myFavoritesTreeStructure = new FavoritesTreeStructure(project);
+    myFavoritesConfiguration = myFavoritesTreeStructure.getFavoritesConfiguration();
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -176,6 +179,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public Tree getTree() {
     return myTree;
+  }
+
+  public String getName() {
+    return myName;
   }
 
   private PsiElement[] getSelectedPsiElements() {
@@ -335,15 +342,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private JComponent createActionsToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.removeAll();
-    final FavoritesTreeViewConfiguration favoritesConf = FavoritesTreeViewConfiguration.getInstance(myProject);
     group.add(new ToggleAction("Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png")) {
       public boolean isSelected(AnActionEvent e) {
-        return favoritesConf.IS_FLATTEN_PACKAGES;
+        return myFavoritesConfiguration.IS_FLATTEN_PACKAGES;
       }
 
       public void setSelected(AnActionEvent event, boolean flag) {
         final SelectionInfo selectionInfo = new SelectionInfo();
-        favoritesConf.IS_FLATTEN_PACKAGES = flag;
+        myFavoritesConfiguration.IS_FLATTEN_PACKAGES = flag;
         myBuilder.updateTree();
         selectionInfo.apply();
       }
@@ -351,12 +357,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
     group.add(new ToggleAction("") {
       public boolean isSelected(AnActionEvent e) {
-        return favoritesConf.IS_HIDE_EMPTY_MIDDLE_PACKAGES;
+        return myFavoritesConfiguration.IS_HIDE_EMPTY_MIDDLE_PACKAGES;
       }
 
       public void setSelected(AnActionEvent event, boolean flag) {
         final SelectionInfo selectionInfo = new SelectionInfo();
-        favoritesConf.IS_HIDE_EMPTY_MIDDLE_PACKAGES = flag;
+        myFavoritesConfiguration.IS_HIDE_EMPTY_MIDDLE_PACKAGES = flag;
         myBuilder.updateTree();
         selectionInfo.apply();
       }
@@ -364,7 +370,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       public void update(AnActionEvent e) {
         super.update(e);
         final Presentation presentation = e.getPresentation();
-        if (favoritesConf.IS_FLATTEN_PACKAGES) {
+        if (myFavoritesConfiguration.IS_FLATTEN_PACKAGES) {
           presentation.setText("Hide Empty Middle Packages");
           presentation.setDescription("Show/Hide Empty Middle Packages");
           presentation.setIcon(HIDE_EMPTY_MIDDLE_PACKAGES_ICON);
@@ -379,26 +385,26 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     group.add(new ToggleAction("Abbreviate Qualified Package Names", "Abbreviate Qualified Package Names",
                                IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png")) {
       public boolean isSelected(AnActionEvent e) {
-        return favoritesConf.IS_ABBREVIATION_PACKAGE_NAMES;
+        return myFavoritesConfiguration.IS_ABBREVIATION_PACKAGE_NAMES;
       }
 
       public void setSelected(AnActionEvent e, boolean state) {
-        favoritesConf.IS_ABBREVIATION_PACKAGE_NAMES = state;
+        myFavoritesConfiguration.IS_ABBREVIATION_PACKAGE_NAMES = state;
         myBuilder.updateTree();
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(favoritesConf.IS_FLATTEN_PACKAGES);
+        e.getPresentation().setEnabled(myFavoritesConfiguration.IS_FLATTEN_PACKAGES);
       }
     });
     group.add(new ToggleAction("Show Members", "Show/Hide Members", IconLoader.getIcon("/objectBrowser/showMembers.png")) {
       public boolean isSelected(AnActionEvent e) {
-        return favoritesConf.IS_SHOW_MEMBERS;
+        return myFavoritesConfiguration.IS_SHOW_MEMBERS;
       }
 
       public void setSelected(AnActionEvent e, boolean state) {
         SelectionInfo selectionInfo = new SelectionInfo();
-        favoritesConf.IS_SHOW_MEMBERS = state;
+        myFavoritesConfiguration.IS_SHOW_MEMBERS = state;
         myBuilder.updateTree();
         selectionInfo.apply();
       }
@@ -406,6 +412,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     group.add(myAutoScrollToSourceHandler.createToggleAction());
     //group.add(new ShowStructureAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ADD_NEW_FAVORITES_LIST));
+    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FAVORITES_LIST));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.FAVORITES_VIEW_TOOLBAR, group, true).getComponent();
   }
 
@@ -431,7 +439,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       FavoritesTreeNodeDescriptor treeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
       result.add(treeNodeDescriptor);
     }
-    return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
   }
 
   public static String getQualifiedName(final VirtualFile file) {

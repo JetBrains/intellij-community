@@ -2,7 +2,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.FormNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -16,9 +15,7 @@ import com.intellij.j2ee.module.view.web.FilterUrl;
 import com.intellij.j2ee.module.view.web.ListenerUrl;
 import com.intellij.j2ee.module.view.web.ServletUrl;
 import com.intellij.j2ee.module.view.web.WebRootFileUrl;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -33,7 +30,7 @@ import java.util.*;
  * User: anna
  * Date: Feb 15, 2005
  */
-public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase implements ProjectComponent, JDOMExternalizable {
+public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase implements JDOMExternalizable {
   private static final ArrayList<AbstractUrl> ourAbstractUrlProviders = new ArrayList<AbstractUrl>();
 
   static {
@@ -68,7 +65,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   private Set<AbstractTreeNode> myFavorites = new HashSet<AbstractTreeNode>();
   private HashMap<AbstractUrl, String> myAbstractUrls = new HashMap<AbstractUrl, String>();
-
+  private FavoritesTreeViewConfiguration myFavoritesConfiguration = new FavoritesTreeViewConfiguration();
   public FavoritesTreeStructure(Project project) {
     super(project);
     myRoot = new AbstractTreeNode(myProject, "Root") {
@@ -132,43 +129,26 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     myFavorites.remove(element);
   }
 
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        final ViewSettings favoritesConfig = FavoritesTreeViewConfiguration.getInstance(myProject);
-        for (Iterator<AbstractUrl> iterator = myAbstractUrls.keySet().iterator(); iterator.hasNext();) {
-          AbstractUrl abstractUrl = iterator.next();
-          final Object[] path = abstractUrl.createPath(myProject);
-          try {
-            if (abstractUrl instanceof FormUrl){
-              final PsiManager psiManager = PsiManager.getInstance(myProject);
-              myFavorites.add(FormNode.constructFormNode(psiManager, (PsiClass)path[0], myProject, favoritesConfig));
-            } else {
-              myFavorites.add(ProjectViewNode.createTreeNode(Class.forName(myAbstractUrls.get(abstractUrl)), myProject, path[path.length - 1],
-                                                             favoritesConfig));
-            }
-          }
-          catch (Exception e) {
-          }
+  public void initFavoritesList() {
+    for (Iterator<AbstractUrl> iterator = myAbstractUrls.keySet().iterator(); iterator.hasNext();) {
+      AbstractUrl abstractUrl = iterator.next();
+      final Object[] path = abstractUrl.createPath(myProject);
+      try {
+        if (abstractUrl instanceof FormUrl){
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
+          myFavorites.add(FormNode.constructFormNode(psiManager, (PsiClass)path[0], myProject, myFavoritesConfiguration));
+        } else {
+          myFavorites.add(ProjectViewNode.createTreeNode(Class.forName(myAbstractUrls.get(abstractUrl)), myProject, path[path.length - 1],
+                                                         myFavoritesConfiguration));
         }
       }
-    });
+      catch (Exception e) {
+      }
+    }
   }
 
-  public void projectClosed() {
-
-  }
-
-  public String getComponentName() {
-    return "FavoritesTreeStructure";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
+  public FavoritesTreeViewConfiguration getFavoritesConfiguration() {
+    return myFavoritesConfiguration;
   }
 
   private AbstractUrl createUrlByElement(Object element) {
@@ -201,6 +181,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
       final AbstractUrl abstractUrl = readUrlFromElement(favorite);
       myAbstractUrls.put(abstractUrl, klass);
     }
+    myFavoritesConfiguration.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -211,11 +192,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
       favorite.setAttribute("klass", favoritesTreeElement.getClass().getName());
       element.addContent(favorite);
     }
+    myFavoritesConfiguration.writeExternal(element);
   }
-
-  public static FavoritesTreeStructure getInstance(final Project project) {
-    return project.getComponent(FavoritesTreeStructure.class);
-  }
-
 
 }

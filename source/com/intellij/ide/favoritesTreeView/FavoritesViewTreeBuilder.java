@@ -46,7 +46,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
 
       protected boolean isFlattenPackages() {
-        return FavoritesTreeViewConfiguration.getInstance(myProject).IS_FLATTEN_PACKAGES;
+        return ((FavoritesTreeStructure)myTreeStructure).getFavoritesConfiguration().IS_FLATTEN_PACKAGES;
       }
     };
     myModuleRootListener = new ModuleRootListener() {
