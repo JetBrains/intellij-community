@@ -268,13 +268,13 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * Sets window weight and adjust it to [0..1] range if necessary.
    */
-  void setWeight(float weigth){
-    if(weigth<.0f){
-      weigth=.0f;
-    }else if(weigth>1.0f){
-      weigth=1.0f;
+  void setWeight(float weight){
+    if(weight<.0f){
+      weight=.0f;
+    }else if(weight>1.0f){
+      weight=1.0f;
     }
-    myWeight=weigth;
+    myWeight=weight;
   }
 
   public void writeExternal(final Element element){
