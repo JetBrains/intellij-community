@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -245,12 +244,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     try {
       boolean isReadOnly = !document.isWritable();
       ex.setReadOnly(false);
-      final List<Pair<TextRange, StringBuffer>> affectedFragments = documentChangeTransaction.getAffectedFragments();
-      final Iterator<Pair<TextRange, StringBuffer>> iterator = affectedFragments.iterator();
+      final Set<Pair<MutableTextRange, StringBuffer>> affectedFragments = documentChangeTransaction.getAffectedFragments();
+      final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = affectedFragments.iterator();
       while (iterator.hasNext()) {
-        final Pair<TextRange, StringBuffer> pair = iterator.next();
+        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
         final StringBuffer replaceBuffer = pair.getSecond();
-        final TextRange range = pair.getFirst();
+        final MutableTextRange range = pair.getFirst();
         if(replaceBuffer.length() == 0){
           ex.deleteString(range.getStartOffset(), range.getEndOffset());
         }
@@ -264,6 +263,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         }
       }
       ex.setReadOnly(isReadOnly);
+      if(documentChangeTransaction.getChangeScope() != null && documentChangeTransaction.getChangeScope().getContainingFile() != null)
+        LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getContainingFile().getText()));
     }
     finally {
       ex.unSuppressGuardedExceptions();
@@ -275,7 +276,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public class DocumentChangeTransaction{
-    List<Pair<TextRange,StringBuffer>> myAffectedFragments = new ArrayList<Pair<TextRange, StringBuffer>>();
+    private final Set<Pair<MutableTextRange,StringBuffer>> myAffectedFragments = new TreeSet<Pair<MutableTextRange, StringBuffer>>(new Comparator<Pair<MutableTextRange, StringBuffer>>() {
+      public int compare(final Pair<MutableTextRange, StringBuffer> o1,
+                         final Pair<MutableTextRange, StringBuffer> o2) {
+        return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
+      }
+    });
     private final Document myDocument;
     private final PsiElement myChangeScope;
 
@@ -284,7 +290,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       myChangeScope = scope;
     }
 
-    public List<Pair<TextRange, StringBuffer>> getAffectedFragments() {
+    public Set<Pair<MutableTextRange, StringBuffer>> getAffectedFragments() {
       return myAffectedFragments;
     }
 
@@ -325,9 +331,20 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           length = end - start;
         }
 
-        final Pair<TextRange, StringBuffer> fragment = getFragmentByRange(start, length);
+        final Pair<MutableTextRange, StringBuffer> fragment = getFragmentByRange(start, length);
         fragmentReplaceText = fragment.getSecond();
         startInFragment = start - fragment.getFirst().getStartOffset();
+        { // text range adjustment
+          final int lengthDiff = str.length() - length;
+          final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
+          boolean adjust = false;
+          while (iterator.hasNext()) {
+            final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+            if(adjust) pair.getFirst().shift(lengthDiff);
+            if(pair == fragment)
+              adjust = true;
+          }
+        }
       }
 
       fragmentReplaceText.replace(startInFragment, startInFragment + length, str);
@@ -337,10 +354,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       int documentOffset = 0;
       int effectiveOffset = 0;
       StringBuffer text = new StringBuffer();
-      Iterator<Pair<TextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
+      Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
       while (iterator.hasNext() && effectiveOffset < end) {
-        final Pair<TextRange, StringBuffer> pair = iterator.next();
-        final TextRange range = pair.getFirst();
+        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+        final MutableTextRange range = pair.getFirst();
         final StringBuffer buffer = pair.getSecond();
         final int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
 
@@ -372,7 +389,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return text.toString();
     }
 
-    private Pair<TextRange, StringBuffer> getFragmentByRange(int start, final int length) {
+    private Pair<MutableTextRange, StringBuffer> getFragmentByRange(int start, final int length) {
       final StringBuffer fragmentBuffer = new StringBuffer();
       int end = start + length;
 
@@ -381,10 +398,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         int documentOffset = 0;
         int effectiveOffset = 0;
 
-        Iterator<Pair<TextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
+        Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
         while (iterator.hasNext() && effectiveOffset < end) {
-          final Pair<TextRange, StringBuffer> pair = iterator.next();
-          final TextRange range = pair.getFirst();
+          final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+          final MutableTextRange range = pair.getFirst();
           final StringBuffer buffer = pair.getSecond();
           final int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
 
@@ -418,17 +435,39 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
       }
 
-      final Pair<TextRange, StringBuffer> pair = new Pair<TextRange, StringBuffer>(new TextRange(start, end), fragmentBuffer);
-      int i;
-      for(i = 0; i < myAffectedFragments.size(); i++){
-        if(start > pair.getFirst().getStartOffset()){
-          myAffectedFragments.add(i, pair);
-          break;
-        }
-      }
-      if(i == myAffectedFragments.size()) myAffectedFragments.add(pair);
-
+      final Pair<MutableTextRange, StringBuffer> pair = new Pair<MutableTextRange, StringBuffer>(new MutableTextRange(start, end), fragmentBuffer);
+      myAffectedFragments.add(pair);
       return pair;
+    }
+  }
+
+  public static class MutableTextRange{
+    private int myLength;
+    private int myStartOffset;
+
+    public MutableTextRange(final int startOffset, final int endOffset) {
+      myStartOffset = startOffset;
+      myLength = endOffset - startOffset;
+    }
+
+    public int getStartOffset() {
+      return myStartOffset;
+    }
+
+    public int getEndOffset() {
+      return myStartOffset + myLength;
+    }
+
+    public int getLength() {
+      return myLength;
+    }
+
+    public String toString() {
+      return "[" + getStartOffset() + ", " + getEndOffset() + "]";
+    }
+
+    public void shift(final int lengthDiff) {
+      myStartOffset += lengthDiff;
     }
   }
 }
