@@ -20,9 +20,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 
 public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
   private JPanel myWholePanel;
@@ -173,7 +172,13 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
       myTable.getCellEditor().stopCellEditing();
     }
 
-    configuration.setAppletParameters(myParameters.getItems());
+    final List<AppletConfiguration.AppletParameter> items = myParameters.getItems();
+    final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
+    for (Iterator<AppletConfiguration.AppletParameter> iterator = items.iterator(); iterator.hasNext();) {
+      AppletConfiguration.AppletParameter appletParameter = iterator.next();
+      params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
+    }
+    configuration.setAppletParameters(params);
   }
 
   private JTextField getWidthComponent() {
