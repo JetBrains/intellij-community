@@ -590,9 +590,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     processMethodUsage(callExpression.getMethodExpression(), myChangeInfo, true, false, callee);
   }
 
-  private PsiParameter createNewParameter(ParameterInfo newParm, PsiSubstitutor substitutor) throws IncorrectOperationException {
+  private PsiParameter createNewParameter(ParameterInfo newParm,
+                                          PsiSubstitutor substitutor,
+                                          PsiMethod methodToInsertTo) throws IncorrectOperationException {
     final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    final PsiParameter newParameter = factory.createParameterFromText("X " + newParm.getName(), null);
+    final PsiParameter newParameter = factory.createParameterFromText("X " + newParm.getName(), methodToInsertTo);
     final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList()));
     newParameter.getTypeElement().replace(factory.createTypeElement(type));
     return newParameter;
@@ -888,7 +890,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final ParameterInfo[] primaryNewParms = myChangeInfo.newParms;
       PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(caller, baseMethod);
       for (int i = 0; i < primaryNewParms.length; i++) {
-        if (primaryNewParms[i].oldParameterIndex < 0) newParameters.add(createNewParameter(primaryNewParms[i], substitutor));
+        if (primaryNewParms[i].oldParameterIndex < 0) newParameters.add(createNewParameter(primaryNewParms[i], substitutor, caller));
       }
       PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
       boolean[] toRemoveParm = new boolean[arrayed.length];
@@ -985,7 +987,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           parameter.getTypeElement().replace(factory.createTypeElement(newType));
         }
       } else {
-        newParms[i] = createNewParameter(info, substitutor);
+        newParms[i] = createNewParameter(info, substitutor, method);
       }
     }
 
