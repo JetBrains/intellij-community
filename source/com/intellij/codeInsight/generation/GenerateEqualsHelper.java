@@ -237,7 +237,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private void addInstanceOfToText(StringBuffer buffer, String returnValue) {
-    buffer.append("if(getClass() != " + myParameterName + ".getClass()) " +
+    buffer.append("if(" + myParameterName + "== null || getClass() != " + myParameterName + ".getClass()) " +
             "return " + returnValue + ";\n");
   }
 
