@@ -8,14 +8,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.projectRoots.ProjectRootListener;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -36,7 +41,7 @@ import java.util.List;
  * User: anna
  * Date: Feb 10, 2005
  */
-public class ModulesDependenciesPanel extends JPanel{
+public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener{
 
   private Content myContent;
   private Project myProject;
@@ -49,6 +54,7 @@ public class ModulesDependenciesPanel extends JPanel{
   private Graph<Module> myModulesGraph;
   private Module[] myModules;
 
+  private Splitter mySplitter;
   public ModulesDependenciesPanel(final Project project, final Module[] modules) {
     super(new BorderLayout());
     myProject = project;
@@ -60,11 +66,27 @@ public class ModulesDependenciesPanel extends JPanel{
 
     initLeftTree();
 
-    Splitter treeSplitter = new Splitter();
-    treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
-    treeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
-    add(treeSplitter, BorderLayout.CENTER);
+    mySplitter = new Splitter();
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
+    mySplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
+
+    setSplitterProportion();
+    add(mySplitter, BorderLayout.CENTER);
     add(createNorthPanel(), BorderLayout.NORTH);
+
+    ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
+  }
+
+  private void setSplitterProportion() {
+    if (mySplitter == null){
+      return;
+    }
+    myModulesGraph = buildGraph();
+    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModulesGraph);
+    builder.buildDFST();
+    if (builder.isAcyclic()){
+      mySplitter.setProportion(1.f);
+    }
   }
 
   public ModulesDependenciesPanel(final Project project) {
@@ -79,16 +101,6 @@ public class ModulesDependenciesPanel extends JPanel{
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
     });
-
-    final AnAction rerunAction =
-    new AnAction("Rerun", "Rerun modules dependencies analyzer", IconLoader.getIcon("/actions/refreshUsages.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        initLeftTreeModel();
-        TreeUtil.selectFirstNode(myLeftTree);
-      }
-    };
-    group.add(rerunAction);
-    rerunAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
@@ -117,8 +129,9 @@ public class ModulesDependenciesPanel extends JPanel{
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myLeftTreeModel.getRoot();
     root.removeAllChildren();
     myModulesGraph = buildGraph();
-    for (Iterator<Module> iterator = myModulesGraph.getNodes().iterator(); iterator.hasNext();) {
-      Module module = iterator.next();
+    setSplitterProportion();
+    for (int i = 0; i < myModules.length; i++) {
+      Module module = myModules[i];
       final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
       root.add(moduleNode);
       final Iterator<Module> out = myModulesGraph.getOut(module);
@@ -270,14 +283,11 @@ public class ModulesDependenciesPanel extends JPanel{
   private Graph<Module> buildGraph() {
     final Graph<Module> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
       public Collection<Module> getNodes() {
-        return Arrays.asList(myModules);
+        return Arrays.asList(ModuleManager.getInstance(myProject).getModules());
       }
 
       public Iterator<Module> getIn(Module module) {
-        //only in choosen modules scope
-        final HashSet<Module> depModules = new HashSet<Module>(Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()));
-        depModules.retainAll(Arrays.asList(myModules));
-        return depModules.iterator();
+        return Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()).iterator();
       }
     }));
     return graph;
@@ -285,6 +295,14 @@ public class ModulesDependenciesPanel extends JPanel{
 
   public void setContent(final Content content) {
     myContent = content;
+  }
+
+  public void beforeRootsChange(ModuleRootEvent event) {
+  }
+
+  public void rootsChanged(ModuleRootEvent event) {
+    initLeftTreeModel();
+    TreeUtil.selectFirstNode(myLeftTree);
   }
 
   private static class MyUserObject{
