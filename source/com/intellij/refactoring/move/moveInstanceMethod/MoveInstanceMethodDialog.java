@@ -47,6 +47,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(myMethod.getContainingClass());
     myOldClassParameterNameField = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
     mainPanel.add(myOldClassParameterNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    myOldClassParameterNameField.setEnabled(MoveMethodUtil.isOldThisNeeded (myMethod));
 
     jLabel.setLabelFor(myList);
     jLabel1.setLabelFor(myOldClassParameterNameField);
@@ -54,14 +55,20 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   protected void doAction() {
-    final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
-    final String parameterName = myOldClassParameterNameField.getText().trim();
-    if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName) &&
-        MoveMethodUtil.isOldThisNeeded (myMethod)) {
-      Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
-      return;
+
+    final String parameterName;
+    if (myOldClassParameterNameField.isEnabled()) {
+      parameterName = myOldClassParameterNameField.getText().trim();
+      if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
+        Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
+        return;
+      }
+    }
+    else {
+      parameterName = null;
     }
 
+    final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
     final MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(myMethod.getProject(),
                                                                                             myMethod, targetVariable,
                                                                                             myVisibilityPanel.getVisibility(),

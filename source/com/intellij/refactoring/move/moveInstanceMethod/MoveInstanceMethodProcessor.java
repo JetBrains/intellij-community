@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -58,7 +59,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiClass targetClass = ((PsiClassType) type).resolve();
     myTargetClass = targetClass;
     myNewVisibility = newVisibility;
-    myOldThisNeeded = MoveMethodUtil.isOldThisNeeded(myMethod);
+    myOldThisNeeded = myOldClassParameterName != null;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -230,7 +231,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
         final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
         if (index < arguments.length) {
-          if (isInternalCall && (oldQualifier == null || isTrivialThisQualifier(oldQualifier))) {
+          if (isInternalCall && (oldQualifier == null || isThisQualified(oldQualifier, myMethod.getContainingClass()))) {
             //See MoveInstanceMethodTest.testRecursive
             LOG.assertTrue(myOldThisNeeded);
             newQualifier = manager.getElementFactory().createExpressionFromText(myOldClassParameterName, null);
@@ -252,8 +253,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
 
       if (newQualifier != null) {
-        if (isTrivialThisQualifier(newQualifier)) {
-          //Remove redundant 'this' qualifier
+        if (newQualifier instanceof PsiThisExpression && ((PsiThisExpression)newQualifier).getQualifier() == null) {
+          //Remove now redundant 'this' qualifier
           if (oldQualifier != null) oldQualifier.delete();
         }
         else {
@@ -268,8 +269,20 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private boolean isTrivialThisQualifier(final PsiExpression newQualifier) {
-    return newQualifier instanceof PsiThisExpression && ((PsiThisExpression)newQualifier).getQualifier() == null;
+  private boolean isThisQualified(final PsiExpression qualifier, PsiClass refClass) {
+    if (qualifier == null ||
+        (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+      return refClass.equals(PsiTreeUtil.getParentOfType(qualifier, PsiClass.class));
+    }
+
+    if (qualifier instanceof PsiThisExpression) {
+      PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)qualifier).getQualifier();
+      final PsiElement resolved = thisQualifier.resolve();
+      if (!(resolved instanceof PsiClass)) return false;
+      return InheritanceUtil.isInheritorOrSelf(((PsiClass)resolved), refClass, true) &&
+             !PsiTreeUtil.isAncestor(refClass, resolved, true);
+    }
+    return false;
   }
 
   private PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
