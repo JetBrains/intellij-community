@@ -36,6 +36,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeEventQueue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,8 +57,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       modificationStamps[i] = files[i].getModificationStamp();
     }
 
+    // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
+    // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
+    // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
+    int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     HandleReadOnlyStatusDialog dialog = new HandleReadOnlyStatusDialog(myProject, createFileInfos(files));
     dialog.show();
+    IdeEventQueue.getInstance().setEventCount(savedEventCount);
+
     List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     List<VirtualFile> updatedFiles = new ArrayList<VirtualFile>();
     for (int i = 0; i < files.length; i++) {

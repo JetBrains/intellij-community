@@ -216,6 +216,10 @@ public class IdeEventQueue extends EventQueue {
     return myEventCount;
   }
 
+  public void setEventCount(int evCount) {
+    myEventCount = evCount;
+  }
+
   public boolean isInInputEvent(){
     return myIsInInputEvent;
   }
