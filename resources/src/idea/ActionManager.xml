@@ -570,7 +570,6 @@
           <action id="LocalVcs.ShowStatistics" class="com.intellij.localVcs.actions.ShowStatistics" text="Show Local VCS Statistics..." description="Show Local VCS statistics" internal="true"/>
           <action id="LocalVcs.ShowRepHistory" class="com.intellij.localVcs.actions.PringRepositoryHistoryAction" text="Repository History" internal="true"/>
           <separator/>
-          <action id="Compile2" class="com.intellij.intellijac.CompileAction" text="_Compile(Intellijac)..." description="" internal="true"/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
           <separator/>
           <action id="Deductive Cook" class="com.intellij.refactoring.actions.DeductiveTypeCookAction" text="Deductive Type Cook..." description="Reimplementation of Type Cook"/>
