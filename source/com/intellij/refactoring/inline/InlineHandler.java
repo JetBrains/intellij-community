@@ -14,20 +14,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.ide.DataManager;
 
 public class InlineHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
+    if (dataContext == null) {
+      dataContext = DataManager.getInstance().getDataContext();
+    }
+    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (elements[0] instanceof PsiMethod) {
-      new InlineMethodHandler().invoke(project, null, (PsiMethod) elements[0]);
+      new InlineMethodHandler().invoke(project, editor, (PsiMethod) elements[0]);
     } else if (elements[0] instanceof  PsiPointcutDef) {
-      new InlinePointcutHandler().invoke(project, null, (PsiPointcutDef) elements[0]);
+      new InlinePointcutHandler().invoke(project, editor, (PsiPointcutDef) elements[0]);
     } else if (elements[0] instanceof  PsiField) {
-      new InlineConstantFieldHandler().invoke(project, null, (PsiField) elements[0]);
+      new InlineConstantFieldHandler().invoke(project, editor, (PsiField) elements[0]);
     } else if (elements[0] instanceof PsiLocalVariable) {
-      new InlineLocalHandler().invoke(project, null, (PsiLocalVariable)elements[0]);
+      new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable)elements[0]);
     } else {
       LOG.error("Unknown element type to inline:" + elements[0]);
     }
