@@ -2,6 +2,7 @@ package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -68,17 +69,21 @@ public class MethodNode extends CheckedTreeNode {
   private PsiMethod[] findCallers() {
     if (myMethod == null) return PsiMethod.EMPTY_ARRAY;
     final Project project = myMethod.getProject();
-    final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);
-    List<PsiMethod> callers = new ArrayList<PsiMethod>();
-    for (int i = 0; i < refs.length; i++) {
-      final PsiElement element = refs[i].getElement();
-      if (!(element instanceof PsiReferenceExpression) ||
-          !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
-        final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
-        if (enclosingContext instanceof PsiMethod) callers.add((PsiMethod)enclosingContext);
+    final List<PsiMethod> callers = new ArrayList<PsiMethod>();
+    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
+        final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);
+        for (int i = 0; i < refs.length; i++) {
+          final PsiElement element = refs[i].getElement();
+          if (!(element instanceof PsiReferenceExpression) ||
+              !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
+            final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
+            if (enclosingContext instanceof PsiMethod) callers.add((PsiMethod)enclosingContext);
+          }
+        }
       }
-    }
+    }, "Looking For Callers...", false, project);
     return callers.toArray(new PsiMethod[callers.size()]);
   }
 
