@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
@@ -7,7 +8,6 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -74,7 +74,6 @@ public class ChameleonTransforming implements Constants {
         }
         child = child.getTreeNext();
       }
-      ;
     }
   }
 }

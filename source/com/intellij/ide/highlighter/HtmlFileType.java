@@ -31,8 +31,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.html.HTMLLanguage;
@@ -105,11 +103,6 @@ public class HtmlFileType extends LanguageFileType {
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
     return capabilities;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
-    return new HtmlPseudoTextBuilder();
-    //return null;
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {

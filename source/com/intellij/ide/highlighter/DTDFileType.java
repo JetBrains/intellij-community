@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
@@ -102,10 +101,6 @@ public class DTDFileType extends LanguageFileType {
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
     return mySupportCapabilities;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
-    return null;
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {

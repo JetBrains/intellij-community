@@ -31,12 +31,9 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -46,8 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
 
@@ -86,19 +81,6 @@ public class XmlFileType extends LanguageFileType {
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
     return null;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
-    if (CodeFormatterFacade.USE_NEW_CODE_FORMATTER <= 0) {
-      return new JavaAdapter() {
-        protected FileType getFileType() {
-          return XmlFileType.this;
-        }
-      };
-    }
-    else {
-      return new XmlPseudoTextBuilder();
-    }
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {

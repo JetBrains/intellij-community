@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
@@ -91,10 +90,6 @@ public class ModuleFileType implements FileType {
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
     return null;
   }
 

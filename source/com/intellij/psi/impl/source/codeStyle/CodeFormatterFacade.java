@@ -110,7 +110,7 @@ public class CodeFormatterFacade implements Constants {
   public ASTNode processRange(ASTNode element, int startOffset, int endOffset) {
     FileType fileType = myHelper.getFileType();
     if (useNewFormatter(fileType)) {
-      PseudoTextBuilder pseudoTextBuilder = fileType.getPseudoTextBuilder();
+      PseudoTextBuilder pseudoTextBuilder = fileType.getLanguage().getFormatter();
       if (pseudoTextBuilder == null) {
         return element;
       }

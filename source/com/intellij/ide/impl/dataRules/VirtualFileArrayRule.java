@@ -81,6 +81,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     if (usages != null) {
       for (int i = 0; i < usages.length; i++) {
         Usage usage = usages[i];
+        if (!usage.isValid()) continue;
         if (usage instanceof UsageInFile) {
           UsageInFile usageInFile = (UsageInFile)usage;
           result.add(usageInFile.getFile());
@@ -96,6 +97,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     if (usageTargets != null) {
       for (int i = 0; i < usageTargets.length; i++) {
         UsageTarget usageTarget = usageTargets[i];
+        if (!usageTarget.isValid()) continue;
         VirtualFile[] files = usageTarget.getFiles();
         if (files != null) {
           result.addAll(Arrays.asList(files));

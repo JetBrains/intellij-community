@@ -6,7 +6,6 @@
  */
 package com.intellij.openapi.fileTypes.ex;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
@@ -49,10 +48,6 @@ public abstract class FakeFileType implements FileType {
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
     return null;
   }
 

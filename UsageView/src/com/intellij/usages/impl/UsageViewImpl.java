@@ -28,8 +28,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -669,7 +669,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {
     if (node instanceof UsageNode) {
       UsageNode usageNode = (UsageNode)node;
-      usages.add(usageNode.getUsage());
+      final Usage usage = usageNode.getUsage();
+      if (usage != null && usage.isValid()) {
+        usages.add(usage);
+      }
     }
 
     Enumeration enumeration = node.children();
@@ -690,7 +693,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (lastPathComponent instanceof UsageTargetNode) {
         UsageTargetNode usageTargetNode = (UsageTargetNode)lastPathComponent;
         UsageTarget target = usageTargetNode.getTarget();
-        targets.add(target);
+        if (target != null && target.isValid()) {
+          targets.add(target);
+        }
       }
     }
 

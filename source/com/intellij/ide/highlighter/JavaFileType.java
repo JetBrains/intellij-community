@@ -31,11 +31,9 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -49,7 +47,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
-import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 
 import javax.swing.*;
 
@@ -90,14 +87,6 @@ public class JavaFileType extends LanguageFileType {
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
     return null;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
-    return new JavaAdapter() {
-      protected FileType getFileType() {
-        return JavaFileType.this;
-      }
-    };
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {

@@ -1,5 +1,8 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.codeFormatting.PseudoText;
+import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,9 +15,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.codeFormatting.PseudoText;
-import com.intellij.lang.ASTNode;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
@@ -411,7 +411,7 @@ public class CodeEditUtil {
     LOG.assertTrue(firstAsPsiElement != null);
     final PsiFile file = firstAsPsiElement.getContainingFile();
     final FileType fileType = file.getVirtualFile().getFileType();
-    final PseudoTextBuilder pseudoTextBuilder = fileType.getPseudoTextBuilder();
+    final PseudoTextBuilder pseudoTextBuilder = fileType.getLanguage().getFormatter();
     LOG.assertTrue(pseudoTextBuilder != null);
     final Project project = firstAsPsiElement.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();

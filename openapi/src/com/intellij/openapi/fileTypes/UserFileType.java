@@ -31,7 +31,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.options.SettingsEditor;
@@ -99,10 +98,6 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
     return null;
   }
 

@@ -4,7 +4,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
@@ -37,8 +36,6 @@ public interface FileType {
   PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset);
 
   FileTypeSupportCapabilities getSupportCapabilities();
-
-  PseudoTextBuilder getPseudoTextBuilder();
 
   StructureViewModel getStructureViewModel(VirtualFile file, Project project);
 

@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
@@ -102,10 +101,6 @@ public class XHtmlFileType extends LanguageFileType {
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
     return capabilities;
-  }
-
-  public PseudoTextBuilder getPseudoTextBuilder() {
-    return null;
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
