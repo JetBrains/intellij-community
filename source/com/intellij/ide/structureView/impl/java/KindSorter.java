@@ -51,16 +51,22 @@ public class KindSorter implements Sorter {
 
     private int getWeight(final Object value1) {
       if (value1 instanceof JavaClassTreeElement) {
-        return 1;
+        return 0;
       }
-      else if (value1 instanceof PsiFieldTreeElement) {
+      else if (value1 instanceof SuperTypeGroup) {
         return 2;
       }
       else if (value1 instanceof PsiMethodTreeElement) {
         return 3;
       }
-      else {
+      else if (value1 instanceof PropertyGroup) {
         return 4;
+      }
+      else if (value1 instanceof PsiFieldTreeElement) {
+        return 5;
+      }
+      else {
+        return 6;
       }
     }
   };

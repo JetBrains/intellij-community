@@ -94,6 +94,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
   }
 
   public boolean isActionActive(String name) {
-    return InheritedMembersFilter.ID.equals(name) || KindSorter.ID.equals(name) || Sorter.ALPHA_SORTER_ID.equals(name);
+    return InheritedMembersFilter.ID.equals(name)
+           || KindSorter.ID.equals(name)
+           || Sorter.ALPHA_SORTER_ID.equals(name);
   }
 }

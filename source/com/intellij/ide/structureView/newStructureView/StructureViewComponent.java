@@ -453,7 +453,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public boolean isActionActive(String name) {
-    return StructureViewFactory.getInstance(myProject).isActionActive(name);
+    return KindSorter.ID.equals(name) || StructureViewFactory.getInstance(myProject).isActionActive(name);
   }
 
   public AbstractTreeStructure getTreeStructure() {
