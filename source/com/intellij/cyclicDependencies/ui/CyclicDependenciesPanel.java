@@ -362,10 +362,6 @@ public class CyclicDependenciesPanel extends JPanel {
       else {
         setIcon(node.getClosedIcon());
       }
-
-      if (node.hasMarked() && !selected) {
-        setForeground(Color.red);
-      }
       append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

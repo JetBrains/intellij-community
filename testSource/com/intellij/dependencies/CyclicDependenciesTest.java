@@ -130,6 +130,33 @@ public class CyclicDependenciesTest extends PsiTestCase {
     checkResult(expected, cyclicDependencies, true);
   }
 
+  public void testT6() {
+    //A->B1
+    //B2->C
+    //C->A
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
+                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+    builder.analyze();
+    final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
+    HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
+    expected.put("com.b", new String[][]{{"com.a", "com.c", "com.b"}});
+    expected.put("com.c", new String[][]{{"com.b", "com.a", "com.c"}});
+    expected.put("com.a", new String[][]{{"com.c", "com.b", "com.a"}});
+    checkResult(expected, cyclicDependencies, true);
+  }
+
+  public void testNoCycle(){
+    //B->A
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
+                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+    builder.analyze();
+    final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
+    HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
+    expected.put("com.b", new String[0][0]);
+    expected.put("com.a", new String[0][0]);
+    checkResult(expected, cyclicDependencies, true);
+  }
+
   private void checkResult(HashMap<String, String[][]> expected, HashMap<PsiPackage, Set<List<PsiPackage>>> cycles) {
     assertEquals(expected.size(), cycles.size());
     Iterator<PsiPackage> it = cycles.keySet().iterator();
