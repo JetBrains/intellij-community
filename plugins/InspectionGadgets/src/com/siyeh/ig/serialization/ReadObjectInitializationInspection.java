@@ -63,7 +63,7 @@ public class ReadObjectInitializationInspection extends FieldInspection {
                 return true;
             }
             final PsiCodeBlock body = method.getBody();
-            return InitializationUtils.blockMustAssignVariable(field, body);
+            return InitializationUtils.blockMustAssignVariableOrFail(field, body);
         }
 
     }

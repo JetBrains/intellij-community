@@ -25,11 +25,11 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SerializableDefinesSerialVersionUIDVisitor(this, inspectionManager, onTheFly);
+        return new NonSerializableWithSerialVersionUIDVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-        private SerializableDefinesSerialVersionUIDVisitor(BaseInspection inspection,
+    private static class NonSerializableWithSerialVersionUIDVisitor extends BaseInspectionVisitor {
+        private NonSerializableWithSerialVersionUIDVisitor(BaseInspection inspection,
                                                            InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
