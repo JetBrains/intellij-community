@@ -435,13 +435,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myFileTypes.add(fileType);
     if (extensions != null) {
       for (int i = 0; i < extensions.length; i++) {
-        String extension = extensions[i];
-        if (myExtToFileTypeMap.containsKey(extension)) {
-          LOG.info("Extension '" + extension + "' is already registered to " + myExtToFileTypeMap.get(extension));
-        }
-        else {
-          myExtToFileTypeMap.put(extension, fileType);
-        }
+        myExtToFileTypeMap.put(extensions[i], fileType);
       }
     }
     if (fileType instanceof FakeFileType) {
