@@ -2,10 +2,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.AddNoInspectionCommentAction;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -387,6 +384,7 @@ public abstract class GenericsHighlightUtil {
                                                                       elementToHighlight,
                                                                       description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
       QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
       return highlightInfo;
@@ -423,6 +421,7 @@ public abstract class GenericsHighlightUtil {
                                                                         description);
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()));
         QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
         QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         return highlightInfo;
       }
@@ -552,6 +551,7 @@ public abstract class GenericsHighlightUtil {
           HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
           QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
           QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+          QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
           QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
           return highlightInfo;
         }

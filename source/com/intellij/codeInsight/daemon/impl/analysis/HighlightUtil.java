@@ -2036,7 +2036,7 @@ public class HighlightUtil {
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 
     final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
-    if (!manager.isToCheckMember(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (!manager.isToCheckMember(((PsiDocCommentOwner)elementToHighlight), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     if (manager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{

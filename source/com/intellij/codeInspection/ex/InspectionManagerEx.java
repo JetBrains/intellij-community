@@ -193,14 +193,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return false;
   }
 
-  public static boolean isToCheckMember(PsiElement member, String inspectionToolID) {
-    PsiDocCommentOwner owner;
-    if (member instanceof PsiDocCommentOwner){
-      owner = (PsiDocCommentOwner)member;
-    } else {
-      owner = PsiTreeUtil.getParentOfType(member, PsiDocCommentOwner.class);
-    }
-    if (owner == null) return false;
+  public boolean isToCheckMember(PsiDocCommentOwner owner, String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
@@ -231,7 +224,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  public static boolean inspectionResultSuppressed(PsiElement place, String id) {
+  public boolean inspectionResultSuppressed(final PsiElement place, String id) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
@@ -243,7 +236,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
       }
     }
-    return false;
+
+    PsiElement container = place;
+    do {
+      container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
+    }
+    while (container instanceof PsiTypeParameter);
+    return container == null || !isToCheckMember((PsiDocCommentOwner)container, id);
   }
 
   public UIOptions getUIOptions() {

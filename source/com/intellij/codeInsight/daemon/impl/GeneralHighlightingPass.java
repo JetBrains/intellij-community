@@ -297,6 +297,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                 for (int i = 0; i < rules.length; i++) {
                   QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[i]));
                 }
+                QuickFixAction.registerQuickFixAction(info, new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
               }

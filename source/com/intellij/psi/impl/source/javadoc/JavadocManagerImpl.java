@@ -33,6 +33,9 @@ public class JavadocManagerImpl implements JavadocManager {
     infos.add(new SimpleDocTagInfo("literal", PsiElement.class, true, LanguageLevel.JDK_1_5));
     infos.add(new SimpleDocTagInfo("code", PsiElement.class, true, LanguageLevel.JDK_1_5));
 
+    //Not a standard tag, but added by IDEA for inspection suppression
+    infos.add(new SimpleDocTagInfo("noinspection", PsiElement.class, false, LanguageLevel.JDK_1_3));
+
     infos.add(new ParamDocTagInfo());
     infos.add(new ReturnDocTagInfo());
     infos.add(new SerialDocTagInfo());

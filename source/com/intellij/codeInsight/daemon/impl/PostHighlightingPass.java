@@ -204,7 +204,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(myProject));
     if (manager.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
-    if (!manager.isToCheckMember(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
     HighlightInfo info;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
@@ -227,11 +226,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     else {
       return null;
     }
-    QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL,
-                                                                                 identifier));
-    QuickFixAction.registerQuickFixAction(info, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL,
+    if (info != null) {
+      QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL,
                                                                                    identifier));
-    QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
+      QuickFixAction.registerQuickFixAction(info, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL,
+                                                                                     identifier));
+      QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
+    }
     return info;
   }
 
