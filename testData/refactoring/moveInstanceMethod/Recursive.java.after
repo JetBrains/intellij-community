@@ -1,0 +1,6 @@
+public class MoveMethodTest {
+
+    void foo(MoveMethodTest moveMethodTest) {
+      foo(this);
+    }
+}

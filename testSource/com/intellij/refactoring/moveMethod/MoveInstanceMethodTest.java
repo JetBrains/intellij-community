@@ -13,19 +13,21 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  */
 public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
-  public void testSimple() throws Exception { doTestForTargetParameter(true, 0); }
+  public void testSimple() throws Exception { doTest(true, 0); }
 
-  public void testSimpleWithTargetField() throws Exception { doTestForTargetParameter(false, 1); }
+  public void testSimpleWithTargetField() throws Exception { doTest(false, 1); }
 
-  public void testInterface() throws Exception { doTestForTargetParameter(true, 0); }
+  public void testInterface() throws Exception { doTest(true, 0); }
 
-  public void testWithInner() throws Exception { doTestForTargetParameter(true, 0); }
+  public void testWithInner() throws Exception { doTest(true, 0); }
 
-  public void testJavadoc() throws Exception { doTestForTargetParameter(true, 0); }
+  public void testJavadoc() throws Exception { doTest(true, 0); }
+
+  public void testRecursive() throws Exception { doTest(true, 0); }
 
 
 
-  private void doTestForTargetParameter(boolean isTargetParameter, final int targetIndex) throws Exception {
+  private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     final String filePath = "/refactoring/moveInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);

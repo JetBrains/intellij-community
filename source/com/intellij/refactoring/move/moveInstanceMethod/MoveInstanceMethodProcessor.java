@@ -277,29 +277,26 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       if (body != null) {
         body.accept(new PsiRecursiveElementVisitor() {
           public void visitReferenceExpression(PsiReferenceExpression expression) {
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier == null || qualifier instanceof PsiThisExpression) {
-              final PsiElement resolved = expression.resolve();
-              if (resolved instanceof PsiMember &&
-                  ((PsiMember)resolved).getContainingClass().equals(methodCopy.getContainingClass())) {
-                try {
+            try {
+              final PsiExpression qualifier = expression.getQualifierExpression();
+              if (qualifier == null || qualifier instanceof PsiThisExpression) {
+                final PsiElement resolved = expression.resolve();
+                if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass().equals(methodCopy.getContainingClass())) {
                   PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText(myOldClassParameterName + ".f", null);
                   qualified.getReferenceNameElement().replace(expression.getReferenceNameElement());
                   expression.replace(qualified);
                 }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
+                else if (variableCopy.equals(resolved)) {
+                  PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
+                  expression.replace(thisExpression);
                 }
-              }
-            } else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(variableCopy)) {
-              try {
-                qualifier.delete();
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              } else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(variableCopy)) {
+              qualifier.delete();              }
+              super.visitReferenceExpression(expression);
             }
-            super.visitReferenceExpression(expression);
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
           }
 
 
