@@ -39,10 +39,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     myPluginXML.createIfNotExists();
   }
 
-  public static PluginModuleBuildProperties getInstance(Module module) {
-    return module.getComponent(PluginModuleBuildProperties.class);
-  }
-
   public String getArchiveExtension() {
     return "jar";
   }
