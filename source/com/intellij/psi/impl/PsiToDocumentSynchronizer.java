@@ -415,7 +415,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
                                     effectiveStart - effectiveOffset + documentOffset,
                                     Math.min(range.getStartOffset(), end) - effectiveStart);
             }
-            if(end > range.getStartOffset()){
+            if(end >= range.getStartOffset()){
               fragmentBuffer.append(buffer);
               end = end > effectiveFragmentEnd ? end - (buffer.length() - range.getLength()) : range.getEndOffset();
               effectiveFragmentEnd = range.getEndOffset();
