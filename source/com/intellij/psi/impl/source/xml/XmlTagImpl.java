@@ -302,10 +302,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     XmlNSDescriptor descriptor;
     descriptor = (XmlNSDescriptor)file.getDocument().getMetaData();
 
-    PsiFile myContainingFile = getContainingFile();
-    if (myContainingFile!=null) {
-      if(myContainingFile.getFileType() == StdFileTypes.JSPX && namespace.equals(XmlUtil.XHTML_URI)) {
-        descriptor = new JspXHTMLDescriptor(descriptor);
+    if (descriptor!=null) {
+      PsiFile myContainingFile = getContainingFile();
+      
+      if (myContainingFile!=null) {
+        if(myContainingFile.getFileType() == StdFileTypes.JSPX && namespace.equals(XmlUtil.XHTML_URI)) {
+          descriptor = new JspXHTMLDescriptor(descriptor);
+        }
       }
     }
     return descriptor;
