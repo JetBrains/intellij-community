@@ -172,7 +172,7 @@ public class OSProcessHandler extends ProcessHandler {
     private boolean myIsClosed = false;
 
     public ReadProcessThread(final Reader reader) {
-      LOG.assertTrue(reader != null);
+      super("ReadProcessThread "+reader.getClass().getName());
       setPriority(Thread.MAX_PRIORITY);
       myReader = reader;
       myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
