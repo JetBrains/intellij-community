@@ -39,6 +39,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -113,11 +114,15 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     List<FileInfo> fileInfos = new ArrayList<FileInfo>();
     for (int i = 0; i < files.length; i++) {
       final VirtualFile file = files[i];
-      if (file != null && !file.isWritable()) {
+      if (file != null && !file.isWritable() && isLocal(file)) {
         fileInfos.add(new FileInfo(file, myProject));
       }
     }
     return fileInfos.toArray(new FileInfo[fileInfos.size()]);
+  }
+
+  private boolean isLocal(final VirtualFile file) {
+    return file.getFileSystem() == LocalFileSystem.getInstance();
   }
 
   public void projectOpened() {
