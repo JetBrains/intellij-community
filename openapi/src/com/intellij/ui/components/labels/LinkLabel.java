@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.UI;
 
 import javax.swing.*;
@@ -42,6 +43,10 @@ public class LinkLabel extends JLabel {
   private boolean myPaintDefaultIcon = false;
   protected final int DEFAULT_ICON_GAP = 2;
   private static final Icon LINK = IconLoader.getIcon("/ide/link.png");
+
+  public LinkLabel() {
+    this("", LINK);
+  }
 
   public LinkLabel(String text, Icon icon) {
     this(text, icon, null, null, null);
@@ -208,6 +213,7 @@ public class LinkLabel extends JLabel {
   }
 
   private void setStatusBarText(String statusBarText) {
+    if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < projects.length; i++) {
       WindowManager.getInstance().getStatusBar(projects[i]).setInfo(statusBarText);
