@@ -42,7 +42,9 @@ public class SuspendManagerImpl implements SuspendManager {
   public SuspendContextImpl pushSuspendContext(final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
       protected void resumeImpl() {
-        LOG.debug("Start resuming...");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Start resuming...");
+        }
         myDebugProcess.logThreads();
         switch(getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL:
@@ -61,7 +63,9 @@ public class SuspendManagerImpl implements SuspendManager {
                 LOG.error(e);
               }
             }
-            LOG.debug("VM resumed ");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("VM resumed ");
+            }
             break;
           case EventRequest.SUSPEND_EVENT_THREAD:
             getThread().resume();
@@ -70,7 +74,9 @@ public class SuspendManagerImpl implements SuspendManager {
             }
             break;
           case EventRequest.SUSPEND_NONE:
-            LOG.debug("None resumed");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("None resumed");
+            }
             break;
         }
         if (LOG.isDebugEnabled()) {
@@ -105,7 +111,9 @@ public class SuspendManagerImpl implements SuspendManager {
             LOG.error(e);
           }
         }
-        LOG.debug("Set resumed ");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Set resumed ");
+        }
         myDebugProcess.logThreads();
       }
     };

@@ -177,7 +177,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
           try {
-            LOG.debug("Listening events");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Listening events");
+            }
             final EventSet eventSet = eventQueue.remove();
 
             if (LOG.isDebugEnabled()) {

@@ -173,15 +173,9 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
-    private final DebuggerContextImpl myDebuggerContext;
 
     public RefreshFramePanelCommand() {
       super(getContext());
-      myDebuggerContext = getContext();
-    }
-
-    public DebuggerContextImpl getDebuggerContext() {
-      return myDebuggerContext;
     }
 
     private java.util.List<ThreadDescriptorImpl> getThreadList() {

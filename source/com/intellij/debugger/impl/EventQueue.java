@@ -40,7 +40,9 @@ public class EventQueue<E> {
   }
 
   public void close(){
-    LOG.debug("events closed");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("events closed");
+    }
     myIsClosed = true;
     synchronized(myEvents) {
       myEvents.notifyAll();

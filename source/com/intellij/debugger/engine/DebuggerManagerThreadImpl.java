@@ -199,7 +199,9 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     finally {
       final WorkerThread thread = (WorkerThread)Thread.currentThread();
 
-      LOG.debug("Switching back to " + thread);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Switching back to " + thread);
+      }
 
       super.invokeAndWait(new DebuggerCommandImpl() {
         protected void action() throws Exception {
@@ -207,7 +209,9 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
         }
 
         protected void commandCancelled() {
-          LOG.debug("Event queue was closed, killing thread");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Event queue was closed, killing thread");
+          }
           thread.interrupt();
         }
       }, NORMAL_PRIORITY);

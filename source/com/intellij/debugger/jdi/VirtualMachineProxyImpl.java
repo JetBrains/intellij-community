@@ -109,9 +109,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public void resume() {    
     DebuggerManagerThreadImpl.assertIsManagerThread();
     clearCaches();
-    LOG.debug("before resume VM");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("before resume VM");
+    }
     myVirtualMachine.resume();
-    LOG.debug("VM resumed");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("VM resumed");
+    }
     //logThreads();
   }
 

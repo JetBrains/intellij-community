@@ -118,7 +118,9 @@ public abstract class InvokeThread<E> {
   protected void switchToThread(WorkerThread newWorkerThread) {
     LOG.assertTrue(Thread.currentThread() instanceof WorkerThread);
     myWorkerThread = newWorkerThread;
-    LOG.debug("Closing " + Thread.currentThread() + " new thread = " + newWorkerThread);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Closing " + Thread.currentThread() + " new thread = " + newWorkerThread);
+    }
     Thread.currentThread().interrupt();
   }
 
@@ -128,6 +130,8 @@ public abstract class InvokeThread<E> {
 
   public void close() {
     myEvents.close();
-    LOG.debug("Closing evaluation");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Closing evaluation");
+    }
   }
 }
