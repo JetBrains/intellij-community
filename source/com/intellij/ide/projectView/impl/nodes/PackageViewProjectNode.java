@@ -91,7 +91,8 @@ public class PackageViewProjectNode extends AbstractProjectNode {
       }
 
       for (Iterator<PsiPackage> it = topLevelPackages.iterator(); it.hasNext();) {
-        PackageUtil.addPackageAsChild(children, it.next(), null, getSettings(), false);
+        final PsiPackage psiPackage = it.next();
+        PackageUtil.addPackageAsChild(children, psiPackage, null, getSettings(), false);
       }
 
       if (getSettings().isShowLibraryContents()) {

@@ -111,7 +111,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private UsageFilteringRule[] getActiveFilteringRules(final Project project) {
+  private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
     List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>();
     for (int i = 0; i < providers.length; i++) {
@@ -120,7 +120,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
-  private UsageGroupingRule[] getActiveGroupingRules(final Project project) {
+  private static UsageGroupingRule[] getActiveGroupingRules(final Project project) {
     final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>();
     for (int i = 0; i < providers.length; i++) {
@@ -149,7 +149,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             TreePath leadSelectionPath = myTree.getLeadSelectionPath();
             if (leadSelectionPath == null) return;
 
-            DefaultMutableTreeNode node = ((DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent());
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
             if (node instanceof UsageNode) {
               final Usage usage = ((UsageNode)node).getUsage();
               usage.navigate(false);
@@ -683,7 +683,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     TreePath leadSelectionPath = myTree.getLeadSelectionPath();
     if (leadSelectionPath == null) return null;
 
-    DefaultMutableTreeNode node = ((DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent());
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
     return node instanceof Node ? (Node)node : null;
   }
 
@@ -737,7 +737,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return targets.size() > 0 ? targets.toArray(new UsageTarget[targets.size()]) : null;
   }
 
-  private Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
+  private static Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
     if (node == null) {
       return null;
     }
@@ -846,8 +846,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private final class ButtonPanel extends JPanel {
     public ButtonPanel() {
-      super();
-
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
     }
 

@@ -1,11 +1,14 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -107,11 +110,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     final boolean anyChanged = changePackagePrefixes(oldQualifedName, newQualifiedName);
     if (anyChanged) {
       UndoManager.getInstance(myManager.getProject()).undoableActionPerformed(new UndoableAction() {
-        public void undo() throws UnexpectedUndoException {
+        public void undo() {
           changePackagePrefixes(newQualifiedName, oldQualifedName);
         }
 
-        public void redo() throws UnexpectedUndoException {
+        public void redo() {
           changePackagePrefixes(oldQualifedName, newQualifiedName);
         }
 
@@ -416,7 +419,18 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean canNavigate() {
-    return false;
+    return true;
+  }
+
+  public void navigate(boolean requestFocus) {
+    final ProjectView projectView = ProjectView.getInstance(getProject());
+    projectView.changeView(PackageViewPane.ID);
+    final PsiDirectory[] directories = getDirectories();
+    final VirtualFile firstDir = directories[0].getVirtualFile();
+    final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, getProject());
+
+    final PackageElement packageElement = new PackageElement(null, this, isLibraryRoot);
+    projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
   }
 
   public boolean isPhysical() {

@@ -3,6 +3,8 @@ package com.intellij.psi.impl.file;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -594,6 +596,16 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public ASTNode getNode() {
     return null;
+  }
+
+  public boolean canNavigate() {
+    return true;
+  }
+
+  public void navigate(boolean requestFocus) {
+    final ProjectView projectView = ProjectView.getInstance(getProject());
+    projectView.changeView(ProjectViewPane.ID);
+    projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
   }
 }
 

@@ -2,10 +2,8 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.Usage;
@@ -24,8 +22,6 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassGroupingRule implements UsageGroupingRule {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.ClassGroupingRule");
-
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();

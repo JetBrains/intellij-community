@@ -135,9 +135,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
 
     if (showFwName(aPackage)) {
-      presentation.setPresentableText((getSettings().isAbbreviatePackageNames()
-                                       ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
-                                       : aPackage.getQualifiedName()));
+      presentation.setPresentableText(getSettings().isAbbreviatePackageNames()
+                                ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
+                                : aPackage.getQualifiedName());
     }
     else {
       if (!(getParentValue() instanceof PackageElement)) {

@@ -74,10 +74,11 @@ public class PackageGroupingRule implements UsageGroupingRule {
     }
 
     public void navigate(boolean focus) throws UnsupportedOperationException {
+      myPackage.navigate(focus);
     }
 
     public boolean canNavigate() {
-      return false;
+      return myPackage.canNavigate();
     }
 
     public int compareTo(UsageGroup usageGroup) {
@@ -127,10 +128,18 @@ public class PackageGroupingRule implements UsageGroupingRule {
     }
 
     public void navigate(boolean focus) throws UnsupportedOperationException {
+      final PsiDirectory directory = getDirectory();
+      if (directory != null && directory.canNavigate()) {
+        directory.navigate(focus);
+      }
     }
 
+    private PsiDirectory getDirectory() {
+      return PsiManager.getInstance(myProject).findDirectory(myDir);
+    }
     public boolean canNavigate() {
-      return false;
+      final PsiDirectory directory = getDirectory();
+      return directory != null && directory.canNavigate();
     }
 
     public int compareTo(UsageGroup usageGroup) {

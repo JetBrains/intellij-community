@@ -63,7 +63,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public int hashCode() {
-      return (myFile != null ? myFile.hashCode() : 0);
+      return myFile != null ? myFile.hashCode() : 0;
     }
 
     public Icon getIcon(boolean isOpen) {
