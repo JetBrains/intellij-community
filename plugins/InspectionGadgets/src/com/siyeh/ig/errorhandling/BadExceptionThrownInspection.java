@@ -72,11 +72,11 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
     }
 
     public String getID(){
-        return "ProhibittedExceptionThrown";
+        return "ProhibitedExceptionThrown";
     }
 
     public String getDisplayName() {
-        return "Prohibitted exception thrown";
+        return "Prohibited exception thrown";
     }
 
     public String getGroupDisplayName() {
@@ -93,7 +93,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
         final String exceptionName = type.getPresentableText();
-        return "Prohibitted exception '" + exceptionName + "' thrown. #loc ";
+        return "Prohibited exception '" + exceptionName + "' thrown. #loc ";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
