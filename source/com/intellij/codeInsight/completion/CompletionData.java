@@ -55,23 +55,6 @@ public class CompletionData
 
   public CompletionData(){ }
 
-  protected static class AllWordsGetter implements ContextGetter {
-    public Object[] get(final PsiElement context, final CompletionContext completionContext) {
-      final char [] chars = context.getContainingFile().getText().toCharArray();
-      final ArrayList<Object> objs = new ArrayList<Object>();
-      IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor(){
-        public void run(final char[] chars, final int start, final int end) {
-          final int len = end - start;
-          if (completionContext != null && start <= completionContext.offset && completionContext.offset < end)
-            ;
-          else
-            objs.add (String.valueOf(chars, start, len));
-        }
-      }, chars, 0, chars.length);
-      return objs.toArray();
-    }
-  }
-
   public final void declareFinalScope(Class scopeClass){
     myFinalScopes.add(scopeClass);
   }
@@ -280,33 +263,5 @@ public class CompletionData
     }
 
     return "";
-  }
-
-
-  protected void addWordCompletionVariant() {
-    final CompletionVariant variant = new CompletionVariant(PsiPlainTextFile.class, TrueFilter.INSTANCE);
-    variant.includeScopeClass(PsiPlainText.class, true);
-    variant.includeScopeClass(PsiComment.class, true);
-    variant.includeScopeClass(PsiDocComment.class, true);
-    variant.includeScopeClass(PsiLiteralExpression.class, true);
-    /*
-    variant.addCompletionFilterOnElement(new ElementFilter () {
-      public boolean isAcceptable(Object element, PsiElement context) {
-        if (element instanceof PsiPlainText) return true;
-        if (element instanceof PsiComment) return true;
-        if (element instanceof PsiLiteralExpression) {
-          final PsiLiteralExpression lit = (PsiLiteralExpression) element;
-          if (lit.getValue() instanceof String) return true;
-        }
-        return false;
-      }
-
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    });
-    */
-    variant.addCompletion(new AllWordsGetter(), TailType.NONE);
-    this.registerVariant(variant);
   }
 }
