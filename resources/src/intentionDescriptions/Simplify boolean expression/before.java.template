@@ -1,5 +1,5 @@
 public class X {
   void f(int i) {
-    if (this == null || <spot>true</spot> || i == 0) return;
+    if (<spot>this == null || true || i == 0</spot>) return;
   }
 }
