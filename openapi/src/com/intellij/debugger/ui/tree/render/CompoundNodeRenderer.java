@@ -30,10 +30,10 @@ public class CompoundNodeRenderer implements NodeRenderer{
   public static final String UNIQUE_ID = "CompoundNodeRenderer";
 
   private String myName;
-  private RendererProvider     myRendererProvider;
+  private RendererProvider myRendererProvider;
   
-  protected ValueLabelRenderer   myLabelRenderer;
-  protected ChildrenRenderer     myChildrenRenderer;
+  protected ValueLabelRenderer myLabelRenderer;
+  protected ChildrenRenderer myChildrenRenderer;
 
   public CompoundNodeRenderer(RendererProvider provider, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     myRendererProvider = provider;
@@ -75,8 +75,8 @@ public class CompoundNodeRenderer implements NodeRenderer{
     getChildrenRenderer().buildChildren(value, builder, evaluationContext);
   }
 
-  public PsiExpression getChildrenValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return getChildrenRenderer().getChildrenValueExpression(node, context);
+  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+    return getChildrenRenderer().getChildValueExpression(node, context);
   }
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
@@ -109,7 +109,9 @@ public class CompoundNodeRenderer implements NodeRenderer{
 
   public void readExternal(Element element) throws InvalidDataException {
     myName = element.getAttributeValue("NAME");
-    if(myName == null) myName = "<unknown>";
+    if(myName == null) {
+      myName = "<unknown>";
+    }
     List<Element> children = element.getChildren();
     myLabelRenderer    = (ValueLabelRenderer) NodeRendererExternalizer.readRenderer(children.get(0));
     myChildrenRenderer = (ChildrenRenderer)   NodeRendererExternalizer.readRenderer(children.get(1));

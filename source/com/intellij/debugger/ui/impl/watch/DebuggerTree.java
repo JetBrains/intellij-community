@@ -21,6 +21,7 @@ import com.intellij.debugger.ui.impl.DebuggerTreeBase;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.render.NodeRendererSettingsListener;
@@ -66,8 +67,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     myDescriptorManager = new NodeManagerImpl(project, this);
     TreeBuilder model = new TreeBuilder(this) {
       protected void buildChildren(TreeBuilderNode node) {
-        if (((DebuggerTreeNodeImpl)node).getDescriptor() instanceof DefaultNodeDescriptor) return;
-        buildNode((DebuggerTreeNodeImpl)node);
+        final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
+        if (debuggerTreeNode.getDescriptor() instanceof DefaultNodeDescriptor) {
+          return;
+        }
+        buildNode(debuggerTreeNode);
       }
 
       protected boolean isExpandable(TreeBuilderNode builderNode) {
@@ -145,7 +149,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
 
   private void buildNode(final DebuggerTreeNodeImpl node) {
-    if (node == null || node.getDescriptor() == null) return;
+    if (node == null || node.getDescriptor() == null) {
+      return;
+    }
 
     BuildNodeCommand builder = getBuildNodeCommand(node);
     builder.getNode().add(myDescriptorManager.createMessageNode(MessageDescriptor.EVALUATING));
@@ -526,28 +532,32 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     public void threadAction() {
       try {
-        StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
-        StackFrameProxyImpl frame = stackDescriptor.getStackFrame();
-        if(!getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) return;
+        final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
+        final StackFrameProxyImpl frame = stackDescriptor.getStackFrame();
+        final DebuggerContextImpl debuggerContext = getDebuggerContext();
+        if(!debuggerContext.getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) {
+          return;
+        }
 
-        LOG.assertTrue(frame.threadProxy().isSuspended());
+        final ObjectReference thisObjectReference = frame.thisObject();
 
-        ObjectReference thisObjectReference = frame.thisObject();
+        final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
-        EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
-
+        final NodeDescriptor descriptor;
         if (thisObjectReference != null) {
-          myChildren.add(myDescriptorManager.createNode(myDescriptorManager.getThisDescriptor(stackDescriptor, thisObjectReference), evaluationContext));
+          descriptor = myDescriptorManager.getThisDescriptor(stackDescriptor, thisObjectReference);
         }
         else {
-          ReferenceType type = frame.location().method().declaringType();
-          myChildren.add(myDescriptorManager.createNode(myDescriptorManager.getStaticDescriptor(stackDescriptor, type), evaluationContext));
+          final ReferenceType type = frame.location().method().declaringType();
+          descriptor = myDescriptorManager.getStaticDescriptor(stackDescriptor, type);
         }
+        myChildren.add(myDescriptorManager.createNode(descriptor, evaluationContext));
         try {
           for (Iterator<LocalVariableProxyImpl> iterator = frame.visibleVariables().iterator(); iterator.hasNext();) {
-            LocalVariableProxyImpl local = iterator.next();
-
-            myChildren.add(myDescriptorManager.createNode(myDescriptorManager.getLocalVariableDescriptor(stackDescriptor, local), evaluationContext));
+            final LocalVariableProxyImpl local = iterator.next();
+            final LocalVariableDescriptorImpl localVariableDescriptor = myDescriptorManager.getLocalVariableDescriptor(stackDescriptor, local);
+            final DebuggerTreeNodeImpl variableNode = myDescriptorManager.createNode(localVariableDescriptor, evaluationContext);
+            myChildren.add(variableNode);
           }
         }
         catch (EvaluateException e) {

@@ -189,8 +189,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public NodeRenderer getRenderer (DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     Type type = getType();
-    if(type != null && myRenderer != null && myRenderer.isApplicable(type))
+    if(type != null && myRenderer != null && myRenderer.isApplicable(type)) {
       return myRenderer;
+    }
 
     myAutoRenderer = debugProcess.getNodeRendererManager().getAutoRenderer(this);
     return myAutoRenderer;
@@ -210,7 +211,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation((DebuggerTreeNodeImpl)debuggerTreeNode.getParent(), context);
 
       return DebuggerTreeNodeExpression.substituteThis(
-              vDescriptor.getRenderer(context.getDebugProcess()).getChildrenValueExpression(debuggerTreeNode, context),
+              vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(debuggerTreeNode, context),
               parentEvaluation, vDescriptor.getValue());
     }
     else {

@@ -52,12 +52,18 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       // this field actually mirrors a local variable in the outer class
       String varName = fieldName.substring(fieldName.lastIndexOf('$') + 1);
       PsiElement element = PositionUtil.getContextElement(context);
-      if (element == null) return null;
+      if (element == null) {
+        return null;
+      }
       PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-      if (aClass == null) return null;
+      if (aClass == null) {
+        return null;
+      }
       aClass = (PsiClass) aClass.getNavigationElement();
       PsiVariable psiVariable = psiManager.getResolveHelper().resolveReferencedVariable(varName, aClass);
-      if (psiVariable == null) return null;
+      if (psiVariable == null) {
+        return null;
+      }
       return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
     }
     else {

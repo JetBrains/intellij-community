@@ -11,11 +11,6 @@ import com.intellij.debugger.DebuggerContext;
 import com.sun.jdi.Value;
 import com.sun.tools.corba.se.idl.constExpr.EvaluationException;
 
-/**
- * User: lex
- * Date: Sep 20, 2003
- * Time: 10:12:01 PM
- */
 public interface ChildrenRenderer extends Renderer {
   ChildrenRenderer clone();
 
@@ -27,13 +22,13 @@ public interface ChildrenRenderer extends Renderer {
    *    + node
    *    + ...
    *
-   * function is invoked for the renderer in parenNode
-   * returns expression that evaluates node
-   * use 'this' to refer expression that evaluate parentNode
-   @param node  -
+   * is invoked on the renderer of the parentNode
+   * @param node a child node
+   * @return expression that evaluates the child node.
+   *         Use 'this' to refer the expression that evaluates this (parent) node
    * @param context
    */
-  PsiExpression getChildrenValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException;
+  PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException;
 
   boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor);
 }

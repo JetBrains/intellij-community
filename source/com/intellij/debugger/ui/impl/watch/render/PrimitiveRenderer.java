@@ -66,7 +66,8 @@ public class PrimitiveRenderer implements NodeRenderer, Cloneable {
     Value value = valueDescriptor.getValue();
     if(value == null) {
       return "null";
-    } else if (value instanceof PrimitiveValue) {
+    }
+    else if (value instanceof PrimitiveValue) {
       StringBuffer buf = new StringBuffer(16);
       if (value instanceof CharValue) {
         buf.append("'");
@@ -91,7 +92,8 @@ public class PrimitiveRenderer implements NodeRenderer, Cloneable {
         buf.append(DebuggerUtilsEx.translateStringValue(value.toString()));
       }
       return buf.toString();
-    } else {
+    }
+    else {
       return "undefined";
     }
   }
@@ -116,7 +118,7 @@ public class PrimitiveRenderer implements NodeRenderer, Cloneable {
     return this;
   }
 
-  public PsiExpression getChildrenValueExpression(DebuggerTreeNode node, DebuggerContext context) {
+  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
     LOG.assertTrue(false);
     return null;
   }

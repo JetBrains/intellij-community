@@ -113,39 +113,37 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     }
 
     labelChanged();
-    if(!labelOnly) childrenChanged();
+    if(!labelOnly) {
+      childrenChanged();
+    }
   }
 
   public void calcLabel() {
     final DebuggerContextImpl context = getTree().getDebuggerContext();
-    update(
-      context,
-      new Runnable() {
-        public void run() {
-          getDescriptor().updateRepresentation(context.createEvaluationContext(), new DescriptorLabelListener() {
-            public void labelChanged() {
-              updateCaches();
-              DebuggerTreeNodeImpl.this.labelChanged();
-            }
-          });
-        }
-      }, true);
+    update(context, new Runnable() {
+      public void run() {
+        getDescriptor().updateRepresentation(context.createEvaluationContext(), new DescriptorLabelListener() {
+          public void labelChanged() {
+            updateCaches();
+            DebuggerTreeNodeImpl.this.labelChanged();
+          }
+        });
+      }
+    }, true);
   }
 
   public void calcRepresentation() {
     final DebuggerContextImpl context = getTree().getDebuggerContext();
-    update(
-      context,
-      new Runnable() {
-        public void run() {
-          getDescriptor().updateRepresentation(context.createEvaluationContext(), new DescriptorLabelListener() {
-            public void labelChanged() {
-              updateCaches();
-              DebuggerTreeNodeImpl.this.labelChanged();
-            }
-          });
-        }
-      }, false);
+    update(context, new Runnable() {
+      public void run() {
+        getDescriptor().updateRepresentation(context.createEvaluationContext(), new DescriptorLabelListener() {
+          public void labelChanged() {
+            updateCaches();
+            DebuggerTreeNodeImpl.this.labelChanged();
+          }
+        });
+      }
+    }, false);
   }
 
   public void calcValue() {

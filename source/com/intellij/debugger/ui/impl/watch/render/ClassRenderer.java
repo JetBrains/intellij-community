@@ -79,7 +79,8 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
     }
     else if(value == null) {
       return "null";
-    } else {
+    }
+    else {
       return "undefined";
     }
   }
@@ -87,7 +88,7 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
   public void buildChildren(final Value value, final ChildrenBuilder builder, final EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ValueDescriptorImpl parentDescriptor = (ValueDescriptorImpl)builder.getParentDescriptor();
-    final NodeManager nodeManager                    = builder.getNodeManager();
+    final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
     List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
@@ -95,18 +96,21 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
       final ObjectReference objRef = (ObjectReference)value;
       final ReferenceType refType = objRef.referenceType();
       // default ObjectReference processing
-      List fields = refType.allFields();
+      final List fields = refType.allFields();
       if (fields.size() > 0) {
         for (Iterator it = fields.iterator(); it.hasNext();) {
           Field jdiField = (Field)it.next();
-          if (!shouldDisplay(jdiField)) continue;
+          if (!shouldDisplay(jdiField)) {
+            continue;
+          }
           children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, jdiField), evaluationContext));
         }
 
         if(SORT_ASCENDING) {
           Collections.sort(children, NodeManagerImpl.getNodeComparator());
         }
-      } else {
+      }
+      else {
         children.add(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel()));
       }
     }
@@ -146,7 +150,7 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public PsiExpression getChildrenValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
     PsiElementFactory elementFactory = PsiManager.getInstance(node.getProject()).getElementFactory();
@@ -162,7 +166,8 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
     try {
       if(value instanceof ArrayReference) {
         return ((ArrayReference)value).length() > 0;
-      } else if(value instanceof ObjectReference) {
+      }
+      else if(value instanceof ObjectReference) {
         return ((ObjectReference)value).referenceType().allFields().size() > 0;
       }
     }

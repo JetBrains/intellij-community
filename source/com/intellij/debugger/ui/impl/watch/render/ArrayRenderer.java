@@ -159,7 +159,7 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public PsiExpression getChildrenValueExpression(DebuggerTreeNode node, DebuggerContext context) {
+  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
