@@ -588,7 +588,7 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   public DocumentationProvider getProviderFromElement(final PsiElement element) {
-    PsiElement originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+    PsiElement originalElement = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiFile containingFile = (originalElement!=null)?originalElement.getContainingFile() : element.getContainingFile();
     VirtualFile vfile = (containingFile!=null)?containingFile.getVirtualFile() : null;
 
