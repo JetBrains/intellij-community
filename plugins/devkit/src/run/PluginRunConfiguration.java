@@ -100,6 +100,15 @@ public class PluginRunConfiguration extends RunConfigurationBase {
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
+        if (getSandbox() == null){
+          throw new CantRunException("No sandbox specified");
+        }
+
+        Module[] modules = getModules();
+        if (modules.length == 0) {
+          throw new CantRunException("No plugin modules selected");
+        }
+
         final JavaParameters params = new JavaParameters();
 
         ParametersList vm = params.getVMParametersList();
@@ -118,10 +127,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
         params.setWorkingDirectory(getBasePath() + "/bin/");
 
-        Module[] modules = getModules();
-        if (modules.length == 0) {
-          throw new CantRunException("No plugin modules selected");
-        }
+
 
         //TODO: Should run against same JRE IDEA runs against, right?
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);
@@ -147,6 +153,9 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
+    if (getSandbox() == null){
+      throw new RuntimeConfigurationException("No sandbox specified");
+    }
     /*
     final Module module = getModule();
     if (module != null) {
