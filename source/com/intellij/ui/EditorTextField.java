@@ -37,6 +37,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
   private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
+  private boolean myInheritSwingFont = true;
 
   public EditorTextField(String text) {
     this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
@@ -70,7 +71,10 @@ public class EditorTextField extends JPanel implements DocumentListener {
     });
   }
 
-
+  public void setFontInheritedFromLAF(boolean b) {
+    myInheritSwingFont = b;
+    setDocument(myDocument); // reinit editor.
+  }
 
   public String getText() {
     return myDocument.getText();
@@ -237,8 +241,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
   public void setFont(Font font) {
     super.setFont(font);
     if (myEditor != null) {
-      myEditor.getColorsScheme().setEditorFontName(getFont().getFontName());
-      myEditor.getColorsScheme().setEditorFontSize(getFont().getSize());
+      setupEditorFont(myEditor);
     }
   }
 
@@ -270,8 +273,7 @@ public class EditorTextField extends JPanel implements DocumentListener {
     editor.setVerticalScrollbarVisible(false);
     settings.setLineCursorWidth(1);
 
-    editor.getColorsScheme().setEditorFontName(getFont().getFontName());
-    editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+    setupEditorFont(editor);
 
     if (myProject != null) {
       editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, myFileType));
@@ -293,6 +295,13 @@ public class EditorTextField extends JPanel implements DocumentListener {
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
     editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
     return editor;
+  }
+
+  private void setupEditorFont(final EditorEx editor) {
+    if (myInheritSwingFont) {
+      editor.getColorsScheme().setEditorFontName(getFont().getFontName());
+      editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+    }
   }
 
   protected boolean shouldHaveBorder() {
