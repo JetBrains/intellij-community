@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 public class SuperTypesGrouper implements Grouper{
-  public static final Key<WeakReference> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
+  public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
   public static final String ID = "SHOW_INTERFACES";
 
   public Collection<Group> group(Collection<TreeElement> children) {
@@ -27,7 +27,7 @@ public class SuperTypesGrouper implements Grouper{
 
         if (superMethods.length > 0) {
           PsiMethod superMethod = superMethods[0];
-          method.putUserData(SUPER_METHOD_KEY, new WeakReference(superMethod));
+          method.putUserData(SUPER_METHOD_KEY, new WeakReference<PsiMethod>(superMethod));
           PsiClass superClass = superMethod.getContainingClass();
           boolean overrides = methodOverridesSuper(method, superMethod);
           groups.add(new SuperTypeGroup(superClass, overrides));

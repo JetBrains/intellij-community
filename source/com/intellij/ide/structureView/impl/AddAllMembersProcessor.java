@@ -16,18 +16,18 @@ import java.util.Map;
  * @deprecated use conflict-filter processor with dublicates resolver {@link com.intellij.psi.scope.processor.ConflictFilterProcessor}
  */
 public class AddAllMembersProcessor extends BaseScopeProcessor {
-  private ArrayList myAllMembers;
+  private List<PsiElement> myAllMembers;
   private PsiClass myPsiClass;
-  private Map myMethodsBySignature = new com.intellij.util.containers.HashMap();
+  private Map<MethodSignature,PsiMethod> myMethodsBySignature = new com.intellij.util.containers.HashMap<MethodSignature, PsiMethod>();
   private MemberFilter myFilter;
 
-  public AddAllMembersProcessor(ArrayList allMembers, PsiClass psiClass) {
+  public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass) {
     this(allMembers, psiClass, ALL_ACCESSIBLE);
   }
 
-  public AddAllMembersProcessor(ArrayList allMembers, PsiClass psiClass, MemberFilter filter) {
-    for (Iterator iterator = allMembers.iterator(); iterator.hasNext();) {
-      PsiElement psiElement = (PsiElement) iterator.next();
+  public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass, MemberFilter filter) {
+    for (Iterator<PsiElement> iterator = allMembers.iterator(); iterator.hasNext();) {
+      PsiElement psiElement = iterator.next();
       if (psiElement instanceof PsiMethod)
         mapMethodBySignature((PsiMethod) psiElement);
     }
@@ -69,7 +69,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
 
   private boolean shouldAdd(PsiMethod psiMethod) {
     MethodSignature signature = psiMethod.getSignature(PsiSubstitutor.EMPTY);
-    PsiMethod  previousMethod = (PsiMethod) myMethodsBySignature.get(signature);
+    PsiMethod  previousMethod = myMethodsBySignature.get(signature);
     if (previousMethod == null)
       return true;
     if (isInheritor(psiMethod, previousMethod)) {

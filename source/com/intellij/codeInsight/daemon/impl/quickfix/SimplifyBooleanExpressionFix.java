@@ -109,18 +109,6 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       }
       else if (rConstBoolean != null) {
         simplifyBinary(tokenType, rConstBoolean, lOperand);
-        //if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
-        //  resultExpression = rConstBoolean.booleanValue() ? lOperand : falseExpression;
-        //}
-        //else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
-        //  resultExpression = rConstBoolean.booleanValue() ? trueExpression : lOperand;
-        //}
-        //else if (JavaTokenType.EQEQ == tokenType) {
-        //  simplifyEquation(rConstBoolean, lOperand);
-        //}
-        //else if (JavaTokenType.NE == tokenType) {
-        //  simplifyEquation(rConstBoolean, createNegatedExpression(lOperand));
-        //}
       }
     }
 

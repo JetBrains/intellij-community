@@ -33,6 +33,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.psi.PsiMethod;
 
 import java.util.Comparator;
 
@@ -49,24 +50,27 @@ public class KindSorter implements Sorter {
       return weight1 - weight2;
     }
 
-    private int getWeight(final Object value1) {
-      if (value1 instanceof JavaClassTreeElement) {
-        return 0;
+    private int getWeight(final Object value) {
+      if (value instanceof JavaClassTreeElement) {
+        return 10;
       }
-      else if (value1 instanceof SuperTypeGroup) {
-        return 2;
+      else if (value instanceof SuperTypeGroup) {
+        return 20;
       }
-      else if (value1 instanceof PsiMethodTreeElement) {
-        return 3;
+      else if (value instanceof PsiMethodTreeElement) {
+        final PsiMethodTreeElement methodTreeElement = ((PsiMethodTreeElement)value);
+        final PsiMethod method = methodTreeElement.getMethod();
+
+        return method.isConstructor() ? 30 : 35;
       }
-      else if (value1 instanceof PropertyGroup) {
-        return 4;
+      else if (value instanceof PropertyGroup) {
+        return 40;
       }
-      else if (value1 instanceof PsiFieldTreeElement) {
-        return 5;
+      else if (value instanceof PsiFieldTreeElement) {
+        return 50;
       }
       else {
-        return 6;
+        return 60;
       }
     }
   };
