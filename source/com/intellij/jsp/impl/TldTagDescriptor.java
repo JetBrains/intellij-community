@@ -11,6 +11,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TeiClassLoader;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -19,21 +20,10 @@ import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.impl.jar.VirtualFileImpl;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.diagnostic.Logger;
-
 import javax.servlet.jsp.tagext.*;
 import java.net.URL;
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.ArrayList;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,8 +33,6 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class TldTagDescriptor implements XmlElementDescriptor,Validator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.TldTagDescriptor");
-
   private XmlTag myTag;
   private String myName;
   private XmlAttributeDescriptor[] myAttributeDescriptors;
@@ -266,35 +254,9 @@ public class TldTagDescriptor implements XmlElementDescriptor,Validator {
     TagExtraInfo castedTei = null;
 
     if (myTeiClass != null) {
-      List<URL> urls = new ArrayList<URL>();
-
       final VirtualFile virtualFile = myTag.getContainingFile().getVirtualFile();
 
-      if (virtualFile != null){
-        final String ext = virtualFile.getExtension();
-        if(ext != null && ext.equalsIgnoreCase("jar")) {
-          addUrl(urls, virtualFile);
-        }
-      }
-
-      if (moduleProperties != null) {
-        final VirtualFile[] files = ModuleRootManager.getInstance(moduleProperties.getModule()).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-
-        for (int j = 0; j < files.length; j++) {
-          final VirtualFile file;
-          try {
-            if(files[j] instanceof VirtualFileImpl){
-              file = LocalFileSystem.getInstance().findFileByIoFile(new File(JarFileSystem.getInstance().getJarFile(files[j]).getName()));
-            }
-            else file = files[j];
-            addUrl(urls, file);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      }
-
+      List<URL> urls = TldUtil.buildUrls(virtualFile, moduleProperties);
       TeiClassLoader classLoader = new TeiClassLoader(urls, getClass().getClassLoader());
 
       try {
@@ -320,41 +282,5 @@ public class TldTagDescriptor implements XmlElementDescriptor,Validator {
       return castedTei;
 
     return new MyTEI(myTLDVars);
-  }
-
-  private void addUrl(List<URL> urls, VirtualFile file) {
-    if (file == null || !file.isValid()) return;
-    final URL url = getUrl(file);
-    if (url != null) {
-      urls.add(url);
-    }
-  }
-
-  private URL getUrl(final VirtualFile file) {
-    if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) return null;
-
-    String path = file.getPath();
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - 2);
-    }
-
-    String url;
-    if (SystemInfo.isWindows) {
-      url = "file:/" + path;
-    }
-    else {
-      url = "file://" + path;
-    }
-
-    if (file.isDirectory() && !(file.getFileSystem() instanceof JarFileSystem)) url += "/";
-
-
-    try {
-      return new URL(url);
-    }
-    catch (MalformedURLException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 }
