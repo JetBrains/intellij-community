@@ -700,6 +700,7 @@ public class DeclarationParsing extends Parsing {
     TreeUtil.addChildren(root, lbrace);
     lexer.advance();
     final int chameleonStart = lexer.getTokenStart();
+    final int state = lexer.getState();
     LeafElement rbrace = null;
     int braceCount = 1;
     int chameleonEnd = chameleonStart;
@@ -722,7 +723,7 @@ public class DeclarationParsing extends Parsing {
     final int context = annotationInterface ? ClassBodyParsing.ANNOTATION : isEnum ? ClassBodyParsing.ENUM : ClassBodyParsing.CLASS;
     final int bufferEnd = lexer.getBufferEnd();
     final int endOffset = rbrace != null ? chameleonEnd - 1: bufferEnd;
-    final int state = lexer.getState();
+
     lexer.start(lexer.getBuffer(), chameleonStart, endOffset, state);
     myContext.getClassBodyParsing().parseClassBody(root, lexer, context);
     lexer.start(lexer.getBuffer(), chameleonStart, bufferEnd, state);
