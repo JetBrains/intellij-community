@@ -136,7 +136,8 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     return null; //todo
   }
 
-  public void moduleStateChanged(ModifiableRootModel model) {
+  public void moduleStateChanged() {
+    /*
     if (model.getModule().equals(myState.getRootModel().getModule())) {
       return;
     }
@@ -153,6 +154,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
         myModified = true;
       }
     }
+    */
   }
 
 
