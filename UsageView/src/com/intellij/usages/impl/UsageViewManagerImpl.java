@@ -118,7 +118,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     return "Searching for " + presentation.getUsagesString() + " in " + scopeText + "...";
   }
 
-  public void showToolWindow(boolean activateWindow) {
+  private void showToolWindow(boolean activateWindow) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
     toolWindow.show(null);
     if (activateWindow && !toolWindow.isActive()) {
