@@ -1,7 +1,7 @@
 <idea-plugin>
     <name>Inspection Gadgets</name>
     <category>inspection</category>
-    <description>Over 320 new automated code inspections for IDEA</description>
+    <description>Over 360 new automated code inspections for IDEA</description>
     <vendor>InspectionGadgets Software</vendor>
     <version>1.0</version>
     <idea-version min="4.0" max="4.1"/>
@@ -11,9 +11,13 @@
             <implementation-class>com.siyeh.ig.InspectionGadgetsPlugin</implementation-class>
         </component>
     </application-components>
+    <!--project-components>
+        <component>
+            <implementation-class>com.siyeh.ig.dependency.DependencyMap</implementation-class>
+        </component>
+    </project-components-->
 
     <actions>
-
         <group>
             <action id="InspectionGadgets.Toggle"
                 class="com.siyeh.ig.TogglePluginAction"
