@@ -75,8 +75,8 @@ public class XmlTagValueImpl implements XmlTagValue{
         myTag.deleteChildRange(myElements[0], myElements[myElements.length - 1]);
       }
       if(value != null && value.length() > 0) {
-        final XmlText displayText = myTag.getManager().getElementFactory().createDisplayText(" ");
-        myTag.add(displayText);
+        XmlText displayText = myTag.getManager().getElementFactory().createDisplayText(" ");
+        displayText = (XmlText)myTag.add(displayText);
         displayText.setValue(value);
       }
     }
