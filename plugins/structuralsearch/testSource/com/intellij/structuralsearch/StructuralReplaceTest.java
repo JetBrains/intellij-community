@@ -30,53 +30,75 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplaceInLiterals() {
-    String s43 = "String ID_SPEED = \"Speed\";";
-    String s44 = "String 'name = \"'string\";";
-    String s44_2 = "String 'name = \"'string:[regex( .* )]\";";
-    String s45 = "VSegAttribute $name$ = new VSegAttribute(\"$string$\");";
-    String expectedResult16 = "    VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
+    String s1 = "String ID_SPEED = \"Speed\";";
+    String s2 = "String 'name = \"'string\";";
+    String s2_2 = "String 'name = \"'string:[regex( .* )]\";";
+    String s3 = "VSegAttribute $name$ = new VSegAttribute(\"$string$\");";
+    String expectedResult = "    VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
 
-    String actualResult = replacer.testReplace(s43,s44,s45,options);
+    String actualResult = replacer.testReplace(s1,s2,s3,options);
     assertEquals(
       "Matching/replacing literals",
-      expectedResult16,
+      expectedResult,
       actualResult
     );
 
-    actualResult = replacer.testReplace(s43,s44_2,s45,options);
+    actualResult = replacer.testReplace(s1,s2_2,s3,options);
     assertEquals(
       "Matching/replacing literals",
-      expectedResult16,
+      expectedResult,
       actualResult
     );
 
-    String s58 = "params.put(\"BACKGROUND\", \"#7B528D\");";
-    String s59 = "params.put(\"$FieldName$\", \"#$exp$\");";
-    String s60 = "String $FieldName$ = \"$FieldName$\";\n" +
+    String s4 = "params.put(\"BACKGROUND\", \"#7B528D\");";
+    String s5 = "params.put(\"$FieldName$\", \"#$exp$\");";
+    String s6 = "String $FieldName$ = \"$FieldName$\";\n" +
                  "params.put($FieldName$, \"$exp$\");";
-    String expectedResult21 = "    String BACKGROUND = \"BACKGROUND\";\n" +
+    String expectedResult2 = "    String BACKGROUND = \"BACKGROUND\";\n" +
                               "    params.put(BACKGROUND, \"7B528D\");";
 
-    actualResult = replacer.testReplace(s58,s59,s60,options);
+    actualResult = replacer.testReplace(s4,s5,s6,options);
 
     assertEquals(
       "string literal replacement 2",
-      expectedResult21,
+      expectedResult2,
       actualResult
     );
 
-    String s61 = "IconLoader.getIcon(\"/ant/property.png\");\n" +
+    String s7 = "IconLoader.getIcon(\"/ant/property.png\");\n" +
                  "IconLoader.getIcon(\"/ant/another/property.png\");\n";
-    String s62 = "IconLoader.getIcon(\"/'module/'name:[regex( \\w+ )].png\");";
-    String s63 = "Icons.$module$.$name$;";
-    String expectedResult22 = "    Icons.ant.property;\n" +
+    String s8 = "IconLoader.getIcon(\"/'module/'name:[regex( \\w+ )].png\");";
+    String s9 = "Icons.$module$.$name$;";
+    String expectedResult3 = "    Icons.ant.property;\n" +
                               "    IconLoader.getIcon(\"/ant/another/property.png\");\n";
 
-    actualResult = replacer.testReplace(s61,s62,s63,options);
+    actualResult = replacer.testReplace(s7,s8,s9,options);
 
     //assertEquals(
     //  "string literal replacement 3",
-    //  expectedResult22,
+    //  expectedResult3,
+    //  actualResult
+    //);
+
+    String s10 = "configureByFile(path + \"1.html\");\n" +
+             "    checkResultByFile(path + \"1_after.html\");\n" +
+             "    checkResultByFile(path + \"1_after2.html\");\n" +
+             "    checkResultByFile(path + \"1_after3.html\");\n" +
+             "    checkResultByFile(path + \"1_after4.html\");\n" +
+             "    checkResultByFile(path + \"1_after5.html\");";
+    String s11 = "\"$a$.html\"";
+    String s12 = "\"$a$.\"+ext";
+    String expectedResult4 = "configureByFile(path + (\"1.\"+ext));\n" +
+             "    checkResultByFile(path + (\"1_after.\"+ext));\n" +
+             "    checkResultByFile(path + (\"1_after2.\"+ext));\n" +
+             "    checkResultByFile(path + (\"1_after3.\"+ext));\n" +
+             "    checkResultByFile(path + (\"1_after4.\"+ext));\n" +
+             "    checkResultByFile(path + (\"1_after5.\"+ext));";
+
+    actualResult = replacer.testReplace(s10,s11,s12,options);
+    //assertEquals(
+    //  "string literal replacement 4",
+    //  expectedResult4,
     //  actualResult
     //);
   }
