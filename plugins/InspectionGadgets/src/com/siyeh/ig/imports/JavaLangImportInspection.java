@@ -5,10 +5,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
 
 public class JavaLangImportInspection extends ClassInspection {
-    private final JavaLangImportFix fix = new JavaLangImportFix();
+    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName() {
         return "java.lang import";
@@ -24,18 +25,6 @@ public class JavaLangImportInspection extends ClassInspection {
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class JavaLangImportFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Delete unnecessary import";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
-            final PsiElement importStatement = descriptor.getPsiElement();
-            deleteElement(importStatement);
-        }
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
