@@ -203,7 +203,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public boolean isValid() {
-    return getManager() != null;
+    return getContainingFile().isValid();
   }
 
   public boolean isWritable() {
