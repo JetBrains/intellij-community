@@ -92,7 +92,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "Local Code Analysis";
+    return "Verbose or redundant code constructs";
   }
 
   public String getShortName() {
