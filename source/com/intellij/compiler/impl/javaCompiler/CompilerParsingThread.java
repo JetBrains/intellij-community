@@ -18,7 +18,7 @@ import java.io.Reader;
 public abstract class CompilerParsingThread extends Thread implements OutputParser.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompilerParsingThread");
   public static final String TERMINATION_STRING = "__terminate_read__";
-  private Reader myErrorStreamReader;
+  private Reader myCompilerOutStreamReader;
   private Process myProcess;
   private OutputParser myOutputParser;
   private boolean mySkipLF = false;
@@ -26,10 +26,11 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
   private final boolean myIsUnitTestMode;
   private String myClassFileToProcess = null;
 
+  
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream) {
     myProcess = process;
     myOutputParser = outputParser;
-    myErrorStreamReader = new BufferedReader(new InputStreamReader(readErrorStream? process.getErrorStream() : process.getInputStream()), 16384);
+    myCompilerOutStreamReader = new BufferedReader(new InputStreamReader(readErrorStream? process.getErrorStream() : process.getInputStream()), 16384);
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
 
@@ -73,7 +74,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   public final String getNextLine() {
     try {
-      final String line = readLine(myErrorStreamReader);
+      final String line = readLine(myCompilerOutStreamReader);
       if (LOG.isDebugEnabled()) {
         LOG.debug("LIne read: " + line);
       }
