@@ -19,7 +19,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Icons;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
 
   private LineMarkerInfo[] myMarkers = LineMarkerInfo.EMPTY_ARRAY;
 
-  private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new HashMap<PsiClass, PsiClass>();
+  private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new THashMap<PsiClass, PsiClass>();
 
   public OverridenMarkersPass(
     Project project,

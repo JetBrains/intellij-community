@@ -1,7 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.util.MemberContainerCellRenderer;
+import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -129,7 +129,7 @@ public class LineMarkerInfo {
       PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
       if (overridings.length == 0) return null;
 
-      Comparator comparator = new MemberContainerCellRenderer(false).getComparator();
+      Comparator comparator = new MethodCellRenderer(false).getComparator();
       Arrays.sort(overridings, comparator);
 
       String start = isAbstract ? "Is implemented in <br>" : "Is overridden in <br>";

@@ -1,7 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.util.MemberContainerCellRenderer;
+import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -34,7 +34,7 @@ class LineMarkerNavigator {
         PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method, false);
         if (superMethods.length == 0) return;
         boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
-        openTargets(e, superMethods, "Choose Super Method of " + method.getName(), new MemberContainerCellRenderer(showMethodNames));
+        openTargets(e, superMethods, "Choose Super Method of " + method.getName(), new MethodCellRenderer(showMethodNames));
       }
       else if (info.type == LineMarkerInfo.OVERRIDEN_METHOD){
         PsiManager manager = method.getManager();
@@ -46,7 +46,7 @@ class LineMarkerNavigator {
         String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?  "Choose Implementation of " : "Choose Overriding Method of ";
         title += method.getName();
         boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
-        MemberContainerCellRenderer renderer = new MemberContainerCellRenderer(showMethodNames);
+        MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
         Arrays.sort(overridings, renderer.getComparator());
         openTargets(e, overridings, title, renderer);
       }

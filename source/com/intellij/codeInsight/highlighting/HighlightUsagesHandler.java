@@ -8,7 +8,6 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -220,7 +219,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                 myEditor, myFile).run();
       }
       else if (myExceptionClasses.length > 0) {
-        PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+        PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
 
         Arrays.sort(myExceptionClasses, renderer.getComparator());
 

@@ -7,16 +7,15 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 
 import java.awt.*;
 
-class GotoFileCellRenderer extends PsiElementListCellRenderer{
+public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
   public GotoFileCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
     setFont(editorFont);
   }
 
-  public String getElementText(PsiElement element) {
-    final PsiFile file = (PsiFile)element;
-    return file.getName();
+  public String getElementText(PsiFile element) {
+    return element.getName();
   }
 
   protected String getContainerText(PsiElement element) {

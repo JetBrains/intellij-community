@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public abstract class PsiElementListCellRenderer extends JPanel implements ListCellRenderer {
+public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
   }
@@ -30,7 +30,7 @@ public abstract class PsiElementListCellRenderer extends JPanel implements ListC
       ) {
       if (value instanceof PsiElement) {
         PsiElement element = (PsiElement)value;
-        String name = getElementText(element);
+        String name = getElementText((T)element);
         Color color = list.getForeground();
         PsiFile psiFile = element.getContainingFile();
         if (psiFile != null) {
@@ -80,7 +80,7 @@ public abstract class PsiElementListCellRenderer extends JPanel implements ListC
     return this;
   }
 
-  public abstract String getElementText(PsiElement element);
+  public abstract String getElementText(T element);
 
   protected abstract String getContainerText(PsiElement element);
 
@@ -90,22 +90,16 @@ public abstract class PsiElementListCellRenderer extends JPanel implements ListC
     return element.getIcon(getIconFlags());
   }
 
-  public Comparator<Object> getComparator() {
-    return new Comparator<Object>() {
-      public int compare(Object o1, Object o2) {
+  public Comparator<T> getComparator() {
+    return new Comparator<T>() {
+      public int compare(T o1, T o2) {
         return getText(o1).compareTo(getText(o2));
       }
 
-      private String getText(Object o) {
-        if (o instanceof PsiElement) {
-          PsiElement element = (PsiElement)o;
-          String elementText = getElementText(element);
-          String containerText = getContainerText(element);
-          return containerText != null ? elementText + " " + containerText : elementText;
-        }
-        else {
-          return o.toString();
-        }
+      private String getText(T element) {
+        String elementText = getElementText(element);
+        String containerText = getContainerText(element);
+        return containerText != null ? elementText + " " + containerText : elementText;
       }
     };
   }
@@ -114,7 +108,7 @@ public abstract class PsiElementListCellRenderer extends JPanel implements ListC
     new ListSpeedSearch(list) {
       protected String getElementText(Object o) {
         if (o instanceof PsiElement) {
-          return PsiElementListCellRenderer.this.getElementText((PsiElement)o);
+          return PsiElementListCellRenderer.this.getElementText((T)o);
         }
         else {
           return o.toString();

@@ -6,9 +6,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 
-public class PsiClassListCellRenderer extends PsiElementListCellRenderer {
-  public String getElementText(PsiElement element) {
-    return ClassPresentationUtil.getNameForClass((PsiClass)element, false);
+public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClass> {
+  public String getElementText(PsiClass element) {
+    return ClassPresentationUtil.getNameForClass(element, false);
   }
 
   protected String getContainerText(PsiElement element) {
