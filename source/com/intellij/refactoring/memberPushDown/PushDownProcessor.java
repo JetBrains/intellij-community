@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -24,11 +23,10 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private JavaDocPolicy myJavaDocPolicy;
 
   public PushDownProcessor(Project project,
-                         MemberInfo[] memberInfos,
-                         PsiClass aClass,
-                         JavaDocPolicy javaDocPolicy,
-                         Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
+                           MemberInfo[] memberInfos,
+                           PsiClass aClass,
+                           JavaDocPolicy javaDocPolicy) {
+    super(project);
     myMemberInfos = memberInfos;
     myClass = aClass;
     myJavaDocPolicy = javaDocPolicy;

@@ -69,10 +69,7 @@ public class MoveToPackageFix implements IntentionAction {
               new PsiElement[]{((PsiJavaFile) myFile).getClasses()[0]},
               new SingleSourceRootMoveDestination(PackageWrapper.create(directory.getPackage()), directory), false,
               false,
-              false,
-              null,
-              new Runnable() { public void run() { /* do nothing */ } }
-      ).run(null);
+              null).run(null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -12,10 +12,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringDialog;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.*;
+import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -35,9 +34,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
-  public static interface Callback {
-    void run(MoveClassesOrPackagesDialog dialog);
-  }
+  private final PsiElement[] myElementsToMove;
+  private final MoveCallback myMoveCallback;
 
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog");
@@ -51,19 +49,21 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JCheckBox myCbPreserveSourceFolders;
   private String myHelpID;
   private Project myProject;
-  private final Callback myCallback;
   private boolean mySearchInNonJavaEnabled;
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
-  private MoveDestination myMoveDestination;
   private boolean myTargetDirectoryFixed;
 
 
-  public MoveClassesOrPackagesDialog(Project project, Callback callback, boolean searchInNonJavaEnabled) {
+  public MoveClassesOrPackagesDialog(Project project,
+                                     boolean searchInNonJavaEnabled,
+                                     PsiElement[] elementsToMove,
+                                     MoveCallback moveCallback) {
     super(project, true);
+    myElementsToMove = elementsToMove;
+    myMoveCallback = moveCallback;
     setTitle("Move");
     myProject = project;
-    myCallback = callback;
     mySearchInNonJavaEnabled = searchInNonJavaEnabled;
 
     myNameLabel = new JLabel();
@@ -230,16 +230,64 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
   }
 
-  public MoveDestination getMoveDestination() {
-    return myMoveDestination;
+  private static String verifyDestinationForElement(final PsiElement element, final MoveDestination moveDestination) {
+    final String message;
+    if (element instanceof PsiDirectory) {
+      message = moveDestination.verify((PsiDirectory)element);
+    }
+    else if (element instanceof PsiPackage) {
+      message = moveDestination.verify((PsiPackage)element);
+    }
+    else {
+      message = moveDestination.verify(element.getContainingFile());
+    }
+    return message;
   }
 
-
   protected void doAction() {
-    myMoveDestination = selectDestination();
-    if (myMoveDestination == null) return;
+    final MoveDestination destination = selectDestination();
+    if (destination == null) return;
+
     RefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
-    myCallback.run(this);
+
+    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final boolean searchInComments = isSearchInComments();
+    final boolean searchInNonJavaFiles = isSearchInNonJavaFiles();
+    refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
+    refactoringSettings.MOVE_SEARCH_IN_NONJAVA_FILES = searchInNonJavaFiles;
+    PsiManager manager = PsiManager.getInstance(getProject());
+    for (int i = 0; i < myElementsToMove.length; i++) {
+      final PsiElement element = myElementsToMove[i];
+      String message = verifyDestinationForElement(element, destination);
+      if (message != null) {
+        String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
+        RefactoringMessageUtil.showErrorMessage("Error", message, helpId, getProject());
+        return;
+      }
+    }
+    try {
+      for (int idx = 0; idx < myElementsToMove.length; idx++) {
+        PsiElement psiElement = myElementsToMove[idx];
+        if (psiElement instanceof PsiClass) {
+          final PsiDirectory targetDirectory = destination.getTargetIfExists(psiElement.getContainingFile());
+          if (targetDirectory != null) {
+            manager.checkMove(psiElement, targetDirectory);
+          }
+        }
+      }
+
+      invokeRefactoring(new MoveClassesOrPackagesProcessor(
+        getProject(),
+        myElementsToMove,
+        destination, searchInComments,
+        searchInNonJavaFiles,
+        myMoveCallback));
+    }
+    catch (IncorrectOperationException e) {
+      String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
+      RefactoringMessageUtil.showErrorMessage("Error", e.getMessage(), helpId, getProject());
+      return;
+    }
   }
 
   public boolean isSearchInNonJavaFiles() {

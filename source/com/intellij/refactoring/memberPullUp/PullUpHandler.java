@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
+import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -147,7 +148,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
 
   private void doRefactoring(PullUpDialog dialog) {
-    com.intellij.openapi.localVcs.LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       try {
         PullUpHelper helper = new PullUpHelper(mySubclass,

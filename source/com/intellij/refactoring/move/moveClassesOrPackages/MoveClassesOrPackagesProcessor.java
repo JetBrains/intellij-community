@@ -42,7 +42,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElementsToMove;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
-  private boolean myPreviewUsages;
   private PackageWrapper myTargetPackage;
   private MoveCallback myMoveCallback;
   private final MoveDestination myMoveDestination;
@@ -51,18 +50,16 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   public MoveClassesOrPackagesProcessor(
     Project project,
     PsiElement[] elements,
-    final MoveDestination moveDestination, boolean searchInComments,
+    final MoveDestination moveDestination,
+    boolean searchInComments,
     boolean searchInNonJavaFiles,
-    boolean previewUsages,
-    MoveCallback moveCallback,
-    Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
+    MoveCallback moveCallback) {
+    super(project);
     myElementsToMove = elements;
     myMoveDestination = moveDestination;
     myTargetPackage = myMoveDestination.getTargetPackage();
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
-    myPreviewUsages = previewUsages;
     myMoveCallback = moveCallback;
   }
 
@@ -413,14 +410,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myPreviewUsages;
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(
         "Occurrences found in comments, strings and non-java files");
       return true;
     }
     else {
-      return super.isPreviewUsages(usages) || toPreview;
+      return super.isPreviewUsages(usages);
     }
   }
 

@@ -2,13 +2,13 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
@@ -21,20 +21,14 @@ import java.util.ArrayList;
 public class PushDownDialog extends RefactoringDialog {
   private MemberInfo[] myMemberInfos;
   private PsiClass myClass;
-  private final Callback myCallback;
   private MemberSelectionPanel myMemberSelectionPanel;
   private JavaDocPanel myJavaDocPanel;
   private MemberInfoModel myMemberInfoModel;
 
-  public static interface Callback {
-    void run(PushDownDialog dialog);
-  }
-
-  public PushDownDialog(Project project, MemberInfo[] memberInfos, PsiClass aClass, Callback callback) {
+  public PushDownDialog(Project project, MemberInfo[] memberInfos, PsiClass aClass) {
     super(project, true);
     myMemberInfos = memberInfos;
     myClass = aClass;
-    myCallback = callback;
 
     setTitle(PushDownHandler.REFACTORING_NAME);
 
@@ -101,7 +95,10 @@ public class PushDownDialog extends RefactoringDialog {
     if(!isOKActionEnabled()) return;
 
     RefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreviewUsages();
-    myCallback.run(this);
+
+    invokeRefactoring (new PushDownProcessor(
+            getProject(), getSelectedMemberInfos(), myClass,
+            new JavaDocPolicy(getJavaDocPolicy())));
   }
 
   private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel {

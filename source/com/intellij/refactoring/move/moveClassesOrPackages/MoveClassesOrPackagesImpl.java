@@ -12,14 +12,12 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
@@ -91,66 +89,13 @@ public class MoveClassesOrPackagesImpl {
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, psiElements);
     final boolean isTargetDirectoryFixed = getContainerDirectory(initialTargetElement) != null;
 
-    final MoveClassesOrPackagesDialog.Callback doRun = new MoveClassesOrPackagesDialog.Callback() {
-      public void run(final MoveClassesOrPackagesDialog moveDialog) {
-        final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
-        final boolean searchInComments = moveDialog.isSearchInComments();
-        final boolean searchInNonJavaFiles = moveDialog.isSearchInNonJavaFiles();
-        refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
-        refactoringSettings.MOVE_SEARCH_IN_NONJAVA_FILES = searchInNonJavaFiles;
-
-        final MoveDestination moveDestination = moveDialog.getMoveDestination();
-
-        PsiManager manager = PsiManager.getInstance(project);
-        for (int i = 0; i < psiElements.length; i++) {
-          final PsiElement element = psiElements[i];
-          String message = verifyDestinationForElement(element, moveDestination);
-          if (message != null) {
-            String helpId = HelpID.getMoveHelpID(psiElements[0]);
-            RefactoringMessageUtil.showErrorMessage("Error", message, helpId, project);
-            return;
-          }
-        }
-        try {
-          for (int idx = 0; idx < psiElements.length; idx++) {
-            PsiElement psiElement = psiElements[idx];
-            if (psiElement instanceof PsiClass) {
-              final PsiDirectory targetDirectory = moveDestination.getTargetIfExists(psiElement.getContainingFile());
-              if (targetDirectory != null) {
-                manager.checkMove(psiElement, targetDirectory);
-              }
-            }
-          }
-
-          new MoveClassesOrPackagesProcessor(
-            project,
-            psiElements,
-            moveDestination, searchInComments,
-            searchInNonJavaFiles,
-            moveDialog.isPreviewUsages(),
-            moveCallback,
-            new Runnable() {
-              public void run() {
-                moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }).run(null);
-        }
-        catch (IncorrectOperationException e) {
-          String helpId = HelpID.getMoveHelpID(psiElements[0]);
-          RefactoringMessageUtil.showErrorMessage("Error", e.getMessage(), helpId, project);
-          return;
-        }
-      }
-    };
-
-
     boolean searchInNonJavaEnabled = false;
     for (int i = 0; i < psiElements.length && !searchInNonJavaEnabled; i++) {
       PsiElement psiElement = psiElements[i];
       searchInNonJavaEnabled = RefactoringUtil.isSearchInNonJavaEnabled(psiElement);
     }
-    final MoveClassesOrPackagesDialog moveDialog = new MoveClassesOrPackagesDialog(project, doRun,
-                                                                                   searchInNonJavaEnabled);
+    final MoveClassesOrPackagesDialog moveDialog = new MoveClassesOrPackagesDialog(project,
+                                                                                   searchInNonJavaEnabled, psiElements, moveCallback);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchInNonJavaFiles = RefactoringSettings.getInstance().MOVE_SEARCH_IN_NONJAVA_FILES;
     moveDialog.setData(
@@ -170,19 +115,7 @@ public class MoveClassesOrPackagesImpl {
     return !operationStatus.hasReadonlyFiles();
   }
 
-  private static String verifyDestinationForElement(final PsiElement element, final MoveDestination moveDestination) {
-    final String message;
-    if (element instanceof PsiDirectory) {
-      message = moveDestination.verify((PsiDirectory)element);
-    }
-    else if (element instanceof PsiPackage) {
-      message = moveDestination.verify((PsiPackage)element);
-    }
-    else {
-      message = moveDestination.verify(element.getContainingFile());
-    }
-    return message;
-  }
+
 
   private static PsiElement checkMovePackage(Project project, PsiPackage aPackage, List<VirtualFile> readOnly) {
     PsiElement element;

@@ -37,7 +37,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
         assertNotNull(targetPackage);
         new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
                                            new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
-                                           true, true, false, null, null).testRun();
+                                           true, true, null).testRun();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };

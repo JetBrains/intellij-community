@@ -1,14 +1,11 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -18,11 +15,9 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class PushDownHandler implements RefactoringActionHandler, PushDownDialog.Callback {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownHandler");
+public class PushDownHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = "Push Members Down";
   private PsiClass myClass;
-  private Project myProject;
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
@@ -52,7 +47,6 @@ public class PushDownHandler implements RefactoringActionHandler, PushDownDialog
 
   public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
-    myProject = project;
 
     PsiElement element = elements[0];
     PsiClass aClass;
@@ -96,19 +90,7 @@ public class PushDownHandler implements RefactoringActionHandler, PushDownDialog
     PushDownDialog dialog = new PushDownDialog(
             project,
             members.toArray(new MemberInfo[members.size()]),
-            myClass, this
-    );
+            myClass);
     dialog.show();
-  }
-
-  public void run(final PushDownDialog dialog) {
-    new PushDownProcessor(
-            myProject, dialog.getSelectedMemberInfos(), myClass,
-            new JavaDocPolicy(dialog.getJavaDocPolicy()), new Runnable() {
-              public void run() {
-                dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }
-    ).run(null);
   }
 }

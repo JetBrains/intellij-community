@@ -383,21 +383,13 @@ public abstract class BaseRefactoringProcessor {
   }
 
   public boolean showConflicts(final ArrayList<String> conflicts, UsageInfo[][] usages) {
-    boolean result;
     if (conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
       conflictsDialog.show();
-      result = conflictsDialog.isOK();
+      if (!conflictsDialog.isOK()) return false;
     }
-    else {
-      result = true;
-    }
-    if (result) {
-      prepareSuccessful();
-      return true;
-    }
-    else {
-      return false;
-    }
+
+    prepareSuccessful();
+    return true;
   }
 }

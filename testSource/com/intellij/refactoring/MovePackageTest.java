@@ -53,7 +53,7 @@ public class MovePackageTest extends MultiFileTestCase {
 
     new MoveClassesOrPackagesProcessor(myProject, packages,
                                        new SingleSourceRootMoveDestination(PackageWrapper.create(newParentPackage), dirs[0]),
-                                       true, false, false, null, null).testRun();
+                                       true, false, null).testRun();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

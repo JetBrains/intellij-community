@@ -18,7 +18,7 @@ public class MoveClassesOrPackagesRefactoringImpl extends RefactoringImpl<MoveCl
 
 
   public MoveClassesOrPackagesRefactoringImpl(Project project, PsiElement[] elements, MoveDestination moveDestination) {
-    super(new MoveClassesOrPackagesProcessor(project, elements, moveDestination, true, true, true, null, BaseRefactoringProcessor.EMPTY_CALLBACK));
+    super(new MoveClassesOrPackagesProcessor(project, elements, moveDestination, true, true, null));
   }
 
   public List<PsiElement> getElements() {
