@@ -85,7 +85,7 @@ public class IdTableBuilding {
 
     public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
       Lexer lexer = createLexer();
-      JavaJspFilterLexer filterLexer = new JavaJspFilterLexer(lexer, wordsTable, todoCounts);
+      JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
       lexer.start(chars);
       while (lexer.getTokenType() != null) lexer.advance();
@@ -101,7 +101,7 @@ public class IdTableBuilding {
   static class JspIdCacheBuilder implements IdCacheBuilder {
     public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
       Lexer lexer = new JspStep1Lexer(LanguageLevel.JDK_1_3);
-      JavaJspFilterLexer filterLexer = new JavaJspFilterLexer(lexer, wordsTable, todoCounts);
+      JspFilterLexer filterLexer = new JspFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
       lexer.start(chars);
       while (lexer.getTokenType() != null) lexer.advance();
@@ -132,6 +132,16 @@ public class IdTableBuilding {
   static class XHtmlIdCacheBuilder extends XmlIdCacheBuilder {
     protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
       return new XmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts, false);
+    }
+  }
+
+  static class JspxIdCacheBuilder implements IdCacheBuilder {
+    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+      Lexer lexer = new JspxHighlightingLexer();
+      JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
+      lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
+      lexer.start(chars);
+      while (lexer.getTokenType() != null) lexer.advance();
     }
   }
 
@@ -175,7 +185,7 @@ public class IdTableBuilding {
 
     registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.JSPX,new XHtmlIdCacheBuilder());
+    registerCacheBuilder(StdFileTypes.JSPX,new JspxIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.JSP,new JspIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
