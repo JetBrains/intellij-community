@@ -127,7 +127,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myText = "<html><body>" + html1 + "<br>" + html2 + "</body></html>";
   }
 
-  private String getHtmlBody(String text) {
+  private static String getHtmlBody(String text) {
     if (!text.startsWith("<html>")) {
       return text.replaceAll("\n","<br>");
     }
@@ -150,6 +150,10 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   public int hashCode() {
-    return (myText != null ? myText.hashCode() : 0);
+    return myText != null ? myText.hashCode() : 0;
+  }
+
+  public String getText() {
+    return myText;
   }
 }
