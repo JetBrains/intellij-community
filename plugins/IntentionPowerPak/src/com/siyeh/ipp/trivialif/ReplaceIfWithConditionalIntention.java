@@ -3,6 +3,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
@@ -110,12 +111,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             final PsiExpression condition = ifStatement.getCondition();
             final PsiStatement rawThenBranch = ifStatement.getThenBranch();
             final PsiReturnStatement thenBranch = (PsiReturnStatement) ConditionalUtils.stripBraces(rawThenBranch);
-            PsiElement nextStatement = ifStatement.getNextSibling();
-            while (nextStatement instanceof PsiWhiteSpace) {
-                nextStatement = nextStatement.getNextSibling();
-            }
-
-            final PsiReturnStatement elseBranch = (PsiReturnStatement) nextStatement;
+            PsiReturnStatement elseBranch = (PsiReturnStatement)PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
 
             final String thenValue;
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();

@@ -3,6 +3,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
@@ -45,10 +46,7 @@ public class SimplifyIfElseIntention extends Intention {
     private static void replaceSimplifiableImplicitReturn(PsiIfStatement statement, Project project) throws IncorrectOperationException {
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
-        PsiElement nextStatement = statement.getNextSibling();
-        while (nextStatement instanceof PsiWhiteSpace) {
-            nextStatement = nextStatement.getNextSibling();
-        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, new Class[] {PsiWhiteSpace.class});
         final String newStatement = "return " + conditionText + ';';
         replaceStatement(project, newStatement, statement);
         nextStatement.delete();
@@ -77,10 +75,7 @@ public class SimplifyIfElseIntention extends Intention {
     private static void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement, Project project) throws IncorrectOperationException {
         final PsiExpression condition = statement.getCondition();
         final String conditionText =BoolUtils.getNegatedExpressionText(condition);
-        PsiElement nextStatement = statement.getNextSibling();
-        while (nextStatement instanceof PsiWhiteSpace) {
-            nextStatement = nextStatement.getNextSibling();
-        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, new Class[] {PsiWhiteSpace.class});
         final String newStatement = "return " + conditionText + ';';
         replaceStatement(project, newStatement, statement);
         nextStatement.delete();

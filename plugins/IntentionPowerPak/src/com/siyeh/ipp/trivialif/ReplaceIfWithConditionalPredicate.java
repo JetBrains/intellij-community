@@ -1,10 +1,10 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
+import com.siyeh.ipp.psiutils.EquivalenceChecker;
 
 class ReplaceIfWithConditionalPredicate implements PsiElementPredicate
 {
@@ -38,13 +38,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate
     }
 
     public static boolean isReplaceableImplicitReturn(PsiIfStatement ifStatement) {
-        PsiElement nextStatement = ifStatement.getNextSibling();
-        while (nextStatement != null && nextStatement instanceof PsiWhiteSpace) {
-            nextStatement = nextStatement.getNextSibling();
-        }
-        if (nextStatement == null) {
-            return false;
-        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiReturnStatement)) {
             return false;
         }

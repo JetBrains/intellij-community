@@ -1,7 +1,7 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
@@ -46,13 +46,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
     public static boolean isSimplifiableImplicitReturn(PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
-        PsiElement nextStatement = ifStatement.getNextSibling();
-        while (nextStatement != null && nextStatement instanceof PsiWhiteSpace) {
-            nextStatement = nextStatement.getNextSibling();
-        }
-        if (nextStatement == null) {
-            return false;
-        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
@@ -66,13 +60,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
     public static boolean isSimplifiableImplicitReturnNegated(PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
-        PsiElement nextStatement = ifStatement.getNextSibling();
-        while (nextStatement != null && nextStatement instanceof PsiWhiteSpace) {
-            nextStatement = nextStatement.getNextSibling();
-        }
-        if (nextStatement == null) {
-            return false;
-        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
