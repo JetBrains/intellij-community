@@ -70,8 +70,8 @@ public class FileSetCompileScope implements CompileScope {
     if (getUrls().contains(url)) {
       return true;
     }
-    for (Iterator it = myDirectoryUrls.iterator(); it.hasNext();) {
-      String directoryUrl = (String)it.next();
+    for (Iterator<String> it = myDirectoryUrls.iterator(); it.hasNext();) {
+      String directoryUrl = it.next();
       if (CompilerUtil.startsWith(url, directoryUrl)) {
         return true;
       }
@@ -79,7 +79,7 @@ public class FileSetCompileScope implements CompileScope {
     return false;
   }
 
-  private Set getUrls() {
+  private Set<String> getUrls() {
     if (myUrls == null) {
       myUrls = new HashSet<String>();
       for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
@@ -99,7 +99,7 @@ public class FileSetCompileScope implements CompileScope {
     myUrls = null;
   }
 
-  private void addRecursively(final Collection container, final VirtualFile fromDirectory, FileType fileType) {
+  private void addRecursively(final Collection<VirtualFile> container, final VirtualFile fromDirectory, FileType fileType) {
     VirtualFile[] children = fromDirectory.getChildren();
     if (children.length > 0) {
       final FileTypeManager typeManager = FileTypeManager.getInstance();
