@@ -23,7 +23,7 @@ public interface DebugProcessListener extends EventListener{
   void resumed(SuspendContext suspendContext);
 
   //executed in manager thread
-  void processDetached(DebugProcess process);
+  void processDetached(DebugProcess process, boolean closedByUser);
 
   //executed in manager thread
   void processAttached(DebugProcess process);

@@ -289,10 +289,12 @@ public class DebuggerSession {
         });
       }
 
-      public void processDetached(final DebugProcessImpl debugProcess) {
-        ExecutionResult executionResult = debugProcess.getExecutionResult();
-        if(executionResult != null) {
-          executionResult.getProcessHandler().notifyTextAvailable(DebugProcessImpl.createConnectionStatusMessage(MSG_DISCONNECTED, getProcess().getConnection()) + "\n", ProcessOutputTypes.SYSTEM);
+      public void processDetached(final DebugProcessImpl debugProcess, boolean closedByUser) {
+        if (!closedByUser) {
+          ExecutionResult executionResult = debugProcess.getExecutionResult();
+          if(executionResult != null) {
+            executionResult.getProcessHandler().notifyTextAvailable(DebugProcessImpl.createConnectionStatusMessage(MSG_DISCONNECTED, getProcess().getConnection()) + "\n", ProcessOutputTypes.SYSTEM);
+          }
         }
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {

@@ -2,9 +2,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ModalityState;
 
 import java.io.OutputStream;
 
@@ -24,7 +22,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
       //executed in manager thread
-      public void processDetached(DebugProcess process) {
+      public void processDetached(DebugProcess process, boolean closedByUser) {
         notifyProcessDetached();
       }
     });

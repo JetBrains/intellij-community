@@ -11,7 +11,6 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -22,7 +21,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.HashMap;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -318,7 +316,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return findRequests(requestor).size() > 1;
   }
 
-  public void processDetached(DebugProcessImpl process) {
+  public void processDetached(DebugProcessImpl process, boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myEventRequestManager = null;
     myInvalidRequestors.clear();

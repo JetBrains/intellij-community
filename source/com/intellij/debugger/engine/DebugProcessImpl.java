@@ -283,7 +283,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       LOG.error(e);
     }
     finally {
-      closeProcess();
+      closeProcess(true);
     }
   }
 
@@ -682,7 +682,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  protected void closeProcess() {
+  protected void closeProcess(boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (isDetached() || isDetaching()) {
@@ -696,7 +696,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     DebugProcessImpl.this.getManagerThread().close();
 
     setIsDetached();
-    myDebugProcessDispatcher.getMulticaster().processDetached(DebugProcessImpl.this);
+    myDebugProcessDispatcher.getMulticaster().processDetached(DebugProcessImpl.this, closedByUser);
     myWaitFor.up();
   }
 

@@ -32,7 +32,7 @@ public class SuspendManagerImpl implements SuspendManager {
   public SuspendManagerImpl(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
     myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
-      public void processDetached(DebugProcessImpl process) {
+      public void processDetached(DebugProcessImpl process, boolean closedByUser) {
         myEventContexts.clear();
         myPausedContexts.clear();
         myFrozenThreads.clear();

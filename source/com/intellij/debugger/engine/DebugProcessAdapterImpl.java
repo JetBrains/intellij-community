@@ -28,8 +28,8 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
   }
 
   //executed in manager thread
-  public final void processDetached(DebugProcess process) {
-    processDetached(((DebugProcessImpl)process));
+  public final void processDetached(DebugProcess process, boolean closedByUser) {
+    processDetached(((DebugProcessImpl)process), closedByUser);
   }
 
   //executed in manager thread
@@ -51,7 +51,7 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
   }
 
   //executed in manager thread
-  public void processDetached(DebugProcessImpl process) {
+  public void processDetached(DebugProcessImpl process, boolean closedByUser) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 

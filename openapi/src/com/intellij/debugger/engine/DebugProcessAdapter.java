@@ -5,7 +5,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 
@@ -25,7 +24,7 @@ public class DebugProcessAdapter implements DebugProcessListener{
   }
 
   //executed in manager thread
-  public void processDetached(DebugProcess process) {
+  public void processDetached(DebugProcess process, boolean closedByUser) {
 
   }
 
