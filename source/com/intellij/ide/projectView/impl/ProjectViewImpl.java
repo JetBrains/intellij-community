@@ -6,9 +6,9 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -149,74 +149,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         setAutoscrollToSource(state, myCurrentViewId);
       }
     };
-    myAutoScrollFromSourceHandler = new AutoScrollFromSourceHandler(myProject) {
-      private Alarm myAlarm = new Alarm();
-      private FileEditorManagerAdapter myEditorManagerListener;
 
-      public void install() {
-        myEditorManagerListener = new FileEditorManagerAdapter() {
-          public void selectionChanged(final FileEditorManagerEvent event) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(new Runnable() {
-              public void run() {
-                if(myProject.isDisposed()) return;
-                if (isAutoscrollFromSource(getCurrentViewId())) {
-                  FileEditor newEditor = event.getNewEditor();
-                  if (newEditor instanceof TextEditor) {
-                    Editor editor = ((TextEditor)newEditor).getEditor();
-                    selectElementAtCaretNotLosingFocus(editor);
-                  }
-                }
-              }
-            }, 400);
-          }
-        };
-        FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myEditorManagerListener);
-      }
-
-      private void selectElementAtCaretNotLosingFocus(Editor editor) {
-        if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-        if (file == null) return;
-        final SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
-        for (int i = 0; i < targets.length; i++) {
-          SelectInTarget target = targets[i];
-          if (!ToolWindowId.PROJECT_VIEW.equals(target.getToolWindowId())) continue;
-          String compatiblePaneViewId = target.getMinorViewId();
-          if (!Comparing.strEqual(compatiblePaneViewId, getCurrentViewId())) continue;
-          if (!target.canSelect(file)) continue;
-          final int offset = editor.getCaretModel().getOffset();
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          PsiElement e = file.findElementAt(offset);
-          if (e == null) {
-            e = file;
-          }
-          target.select(e, false);
-          break;
-        }
-      }
-
-      public void dispose() {
-        if (myEditorManagerListener != null) {
-          FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myEditorManagerListener);
-        }
-      }
-
-      protected boolean isAutoScrollMode() {
-        return isAutoscrollFromSource(myCurrentViewId);
-      }
-
-      protected void setAutoScrollMode(boolean state) {
-        setAutoscrollFromSource(state, myCurrentViewId);
-        if (state) {
-          final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-          if (editor != null) {
-            selectElementAtCaretNotLosingFocus(editor);
-          }
-        }
-      }
-    };
+    myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
   }
 
   public void disposeComponent() {
@@ -1171,5 +1105,114 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void selectModuleGroup(ModuleGroup moduleGroup, boolean b) {
+  }
+
+
+
+  private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+    private Alarm myAlarm = new Alarm();
+    private FileEditorManagerAdapter myEditorManagerListener;
+
+    public MyAutoScrollFromSourceHandler() {
+      super(ProjectViewImpl.this.myProject);
+    }
+
+    public void install() {
+      myEditorManagerListener = new FileEditorManagerAdapter() {
+        public void selectionChanged(final FileEditorManagerEvent event) {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            public void run() {
+              if(myProject.isDisposed()) return;
+              if (isAutoscrollFromSource(getCurrentViewId())) {
+                FileEditor newEditor = event.getNewEditor();
+                if (newEditor instanceof TextEditor) {
+                  Editor editor = ((TextEditor)newEditor).getEditor();
+                  selectElementAtCaretNotLosingFocus(editor);
+                }
+              }
+            }
+          }, 400);
+        }
+      };
+      FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myEditorManagerListener);
+    }
+
+    private void selectElementAtCaretNotLosingFocus(final Editor editor) {
+      if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
+      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (file == null) return;
+
+      final MySelectInContext selectInContext = new MySelectInContext(file, editor);
+
+      final SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
+      for (int i = 0; i < targets.length; i++) {
+        SelectInTarget target = targets[i];
+        if (!ToolWindowId.PROJECT_VIEW.equals(target.getToolWindowId())) continue;
+        String compatiblePaneViewId = target.getMinorViewId();
+        if (!Comparing.strEqual(compatiblePaneViewId, getCurrentViewId())) continue;
+
+        if (!target.canSelect(selectInContext)) continue;
+        target.selectIn(selectInContext, false);
+        break;
+      }
+    }
+
+    public void dispose() {
+      if (myEditorManagerListener != null) {
+        FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myEditorManagerListener);
+      }
+    }
+
+    protected boolean isAutoScrollMode() {
+      return isAutoscrollFromSource(myCurrentViewId);
+    }
+
+    protected void setAutoScrollMode(boolean state) {
+      setAutoscrollFromSource(state, myCurrentViewId);
+      if (state) {
+        final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        if (editor != null) {
+          selectElementAtCaretNotLosingFocus(editor);
+        }
+      }
+    }
+
+    private class MySelectInContext implements SelectInContext {
+      private final PsiFile myPsiFile;
+      private final Editor myEditor;
+
+      public MySelectInContext(final PsiFile psiFile, Editor editor) {
+        myPsiFile = psiFile;
+        myEditor = editor;
+      }
+
+      public Project getProject() {
+        return getPsiFile().getProject();
+      }
+
+      public PsiFile getPsiFile() {
+        return myPsiFile;
+      }
+
+      public PsiElement getPsiElement() {
+        final int offset = myEditor.getCaretModel().getOffset();
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        PsiElement e = getPsiFile().findElementAt(offset);
+        if (e == null) {
+          e = getPsiFile();
+        }
+        return e;
+      }
+
+      public VirtualFile getVirtualFile() {
+        return getPsiFile().getVirtualFile();
+      }
+
+      public Object getSelectorInFile() {
+        return getPsiElement();
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.commander;
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -22,11 +23,11 @@ final class CommanderSelectInTarget implements SelectInTarget {
     return "Commander";
   }
 
-  public boolean canSelect(final PsiFile file) {
+  private boolean canSelect(final PsiFile file) {
     return file.getManager().isInProject(file);
   }
 
-  public void select(PsiElement element, boolean requestFocus) {
+  private void select(PsiElement element, boolean requestFocus) {
     while (true) {
       if (element instanceof PsiFile) {
         break;
@@ -63,6 +64,14 @@ final class CommanderSelectInTarget implements SelectInTarget {
     else {
       runnable.run();
     }
+  }
+
+  public boolean canSelect(SelectInContext context) {
+    return canSelect(context.getPsiFile());
+  }
+
+  public void selectIn(SelectInContext context, final boolean requestFocus) {
+    select(context.getPsiElement(), requestFocus);
   }
 
   public String getToolWindowId() {

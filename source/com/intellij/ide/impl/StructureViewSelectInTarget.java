@@ -1,6 +1,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -28,7 +29,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   /**
    * This is called in an atomic action
    */
-  public boolean canSelect(PsiFile file) {
+  private boolean canSelect(PsiFile file) {
     StructureView structureView = getStructureView();
     if (file == null) {
       return false;
@@ -41,7 +42,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     }
   }
 
-  public void select(PsiElement element, final boolean requestFocus) {
+  private void select(PsiElement element, final boolean requestFocus) {
     PsiElement targetElement = element;
     while (true) {
       if (targetElement instanceof PsiClass && !(targetElement instanceof PsiAnonymousClass)) break;
@@ -69,6 +70,14 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     else {
       runnable.run();
     }
+  }
+
+  public boolean canSelect(SelectInContext context) {
+    return canSelect(context.getPsiFile());
+  }
+
+  public void selectIn(SelectInContext context, final boolean requestFocus) {
+    select(context.getPsiElement(), requestFocus);
   }
 
   private StructureView getStructureView() {

@@ -1,14 +1,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.execution.Location;
-import com.intellij.ide.SelectInManager;
-import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -18,8 +15,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -30,45 +25,49 @@ import com.intellij.util.IJSwingUtilities;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
 
-abstract class SelectInContext {
-  private final PopupLocation myPopupLocation;
+abstract class SelectInContextImpl implements SelectInContext {
   private final PsiFile myPsiFile;
 
-  protected SelectInContext(PopupLocation popupLocation, PsiFile psiFile) {
-    myPopupLocation = popupLocation;
+  protected SelectInContextImpl(PsiFile psiFile) {
     myPsiFile = psiFile;
   }
 
-  public SelectInManager getManager() { return SelectInManager.getInstance(getProject()); }
   public Project getProject() { return myPsiFile.getProject(); }
-  public SelectInTarget[] getTargets() { return getTargets(myPsiFile); }
-  public Point getPoint() { return myPopupLocation.getPoint(); }
-  protected PsiFile getPsiFile() { return myPsiFile; }
 
-  public abstract void selectIn(SelectInTarget selected);
+  public PsiFile getPsiFile() { return myPsiFile; }
+  public VirtualFile getVirtualFile() { return myPsiFile.getVirtualFile(); }
 
-  public static SelectInContext createContext(AnActionEvent event) {
+  public Object getSelectorInFile() {
+    return getPsiElement();
+  }
+
+  public static SelectInContextProvider createContext(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    SelectInContext result = createEditorContext(dataContext);
+
+    SelectInContextProvider result = createEditorContext(dataContext);
     if (result != null) return result;
 
     JComponent sourceComponent = getEventComponent(event);
     if (sourceComponent == null) return null;
     ComponentCenterLocation popupLocation = new ComponentCenterLocation(sourceComponent);
 
-    SelectInContext psiContext = createPsiContext(event, popupLocation);
-    if (psiContext != null) return psiContext;
+    SelectInContext selectInContext = ((SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID));
+    if (selectInContext == null) {
+      selectInContext = createPsiContext(event);
+    }
+    if (selectInContext == null) {
+      Navigatable descriptor = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+      if (!(descriptor instanceof OpenFileDescriptor)) return null;
 
-    Navigatable descriptor = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    if (!(descriptor instanceof OpenFileDescriptor)) return null;
+      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      selectInContext = OpenFileDescriptorContext.create(project, (OpenFileDescriptor)descriptor);
+    }
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    return OpenFileDescriptorContext.create(project, popupLocation, (OpenFileDescriptor)descriptor);
+    return new SelectInContextProvider(selectInContext, popupLocation);
   }
 
-  private static SelectInContext createEditorContext(DataContext dataContext) {
+  private static SelectInContextProvider createEditorContext(DataContext dataContext) {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
     if (project == null || editor == null) return null;
@@ -76,15 +75,22 @@ abstract class SelectInContext {
     if (file == null) return null;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
+
     if (editor instanceof TextEditor) {
-      return new TextEditorContext((TextEditor)editor, psiFile);
+      return new SelectInContextProvider(
+        new TextEditorContext((TextEditor)editor, psiFile),
+        new EditorCaretLocation(((TextEditor)editor).getEditor())
+      );
     }
     else {
-      return new SimpleContext(new ComponentCenterLocation(editor.getComponent()), psiFile);
+      return new SelectInContextProvider(
+        new SimpleSelectInContext(psiFile),
+        new ComponentCenterLocation(editor.getComponent())
+      );
     }
   }
 
-  private static SelectInContext createPsiContext(AnActionEvent event, PopupLocation popupLocation) {
+  private static SelectInContext createPsiContext(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiElement == null || !psiElement.isValid()) {
@@ -94,7 +100,7 @@ abstract class SelectInContext {
     if (psiFile == null) {
       return null;
     }
-    return new SimpleContext(popupLocation, psiFile, psiElement);
+    return new SimpleSelectInContext(psiFile, psiElement);
   }
 
   private static JComponent getEventComponent(AnActionEvent event) {
@@ -108,33 +114,20 @@ abstract class SelectInContext {
     }
   }
 
-  protected SelectInTarget[] getTargets(PsiFile psiFile) {
-    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>();
-    final SelectInTarget[] targets = getManager().getTargets();
-    for (int i = 0; i < targets.length; i++) {
-      SelectInTarget target = targets[i];
-      if (target.canSelect(psiFile)) {
-        result.add(target);
-      }
+  static class SelectInContextProvider {
+    private final SelectInContext myContext;
+    private final PopupLocation myPopupLocation;
+
+    public SelectInContextProvider(SelectInContext context, PopupLocation popupLocation) {
+      assert context != null : "Null SelectInContext";
+      assert popupLocation != null : "Null PopupLocation";
+
+      myContext = context;
+      myPopupLocation = popupLocation;
     }
-    if (result.size() > 1) {
-      final String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
-      if (activeToolWindowId != null) {
-        SelectInTarget firstTarget = result.get(0);
-        if (activeToolWindowId.equals(firstTarget.getToolWindowId())) {
-          boolean shouldMoveToBottom = true;
-          if (ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)) {
-            final String currentMinorViewId = ProjectView.getInstance(getProject()).getCurrentViewId();
-            shouldMoveToBottom = (currentMinorViewId != null) && currentMinorViewId.equals(firstTarget.getMinorViewId());
-          }
-          if (shouldMoveToBottom) {
-            result.remove(0);
-            result.add(firstTarget);
-          }
-        }
-      }
-    }
-    return result.toArray(new SelectInTarget[result.size()]);
+
+    public SelectInContext getContext() { return myContext; }
+    public Point getInvocationPoint() { return myPopupLocation.getPoint(); }
   }
 
   private interface PopupLocation {
@@ -181,49 +174,43 @@ abstract class SelectInContext {
     }
   }
 
-  private static class TextEditorContext extends SelectInContext {
+  private static class TextEditorContext extends SelectInContextImpl {
     private final TextEditor myEditor;
 
     public TextEditorContext(TextEditor editor, PsiFile psiFile) {
-      super(new EditorCaretLocation(editor.getEditor()), psiFile);
+      super(psiFile);
       myEditor = editor;
     }
 
-    public void selectIn(final SelectInTarget selected) {
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      Runnable runnable = new Runnable() {
-        public void run() {
-          PsiElement element = getPsiFile();
-          Editor editor = myEditor.getEditor();
-          final int offset = editor.getCaretModel().getOffset();
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          PsiElement e = getPsiFile().findElementAt(offset);
-          if (e != null) {
-            element = e;
-          }
-          selected.select(element, true);
-        }
-      };
-      commandProcessor.executeCommand(getProject(), runnable, "Select in " + selected, null);
+    public PsiElement getPsiElement() {
+      PsiElement element = getPsiFile();
+      Editor editor = myEditor.getEditor();
+      final int offset = editor.getCaretModel().getOffset();
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiElement e = getPsiFile().findElementAt(offset);
+      if (e != null) {
+        element = e;
+      }
+      return element;
     }
   }
 
-  private static class OpenFileDescriptorContext extends SelectInContext {
+  private static class OpenFileDescriptorContext extends SelectInContextImpl {
     private final OpenFileDescriptor myDescriptor;
 
-    public OpenFileDescriptorContext(PopupLocation popupLocation, PsiFile psiFile, OpenFileDescriptor descriptor) {
-      super(popupLocation, psiFile);
+    public OpenFileDescriptorContext(PsiFile psiFile, OpenFileDescriptor descriptor) {
+      super(psiFile);
       myDescriptor = descriptor;
     }
 
-    public void selectIn(SelectInTarget selected) {
+    public PsiElement getPsiElement() {
       PsiElement psiElement;
       if (myDescriptor.getOffset() >= 0) psiElement = findElementAt(myDescriptor.getOffset());
       else {
         String text = LoadTextUtil.loadText(myDescriptor.getFile(), new String[1]).toString();
         psiElement = findElementAt(StringUtil.lineColToOffset(text, myDescriptor.getLine(), myDescriptor.getColumn()));
       }
-      selected.select(psiElement, true);
+      return psiElement;
     }
 
     private PsiElement findElementAt(int offset) {
@@ -231,30 +218,30 @@ abstract class SelectInContext {
       return psiElement != null ? psiElement : getPsiFile();
     }
 
-    public static SelectInContext create(Project project, PopupLocation popupLocation, OpenFileDescriptor descriptor) {
+    public static SelectInContext create(Project project, OpenFileDescriptor descriptor) {
       if (descriptor == null) return null;
       VirtualFile file = descriptor.getFile();
       if (file == null || !file.isValid()) return null;
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
-      return new OpenFileDescriptorContext(popupLocation, psiFile, descriptor);
+      return new OpenFileDescriptorContext(psiFile, descriptor);
     }
   }
 
-  private static class SimpleContext extends SelectInContext {
+  private static class SimpleSelectInContext extends SelectInContextImpl {
     private final PsiElement myElementToSelect;
 
-    public SimpleContext(PopupLocation popupLocation, PsiFile psiFile) {
-      this(popupLocation, psiFile, psiFile);
+    public SimpleSelectInContext(PsiFile psiFile) {
+      this(psiFile, psiFile);
     }
 
-    public SimpleContext(PopupLocation popupLocation, PsiFile psiFile, PsiElement elementToSelect) {
-      super(popupLocation, psiFile);
+    public SimpleSelectInContext(PsiFile psiFile, PsiElement elementToSelect) {
+      super(psiFile);
       myElementToSelect = elementToSelect;
     }
 
-    public void selectIn(SelectInTarget selected) {
-      selected.select(myElementToSelect, true);
+    public PsiElement getPsiElement() {
+      return myElementToSelect;
     }
   }
 }
