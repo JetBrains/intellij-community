@@ -1,5 +1,6 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -10,22 +11,20 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lang.ASTNode;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
@@ -186,16 +185,19 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       new CommitToPsiFileAction() {
         public void run() {
           if (!isUncommited(document)) return;
-          myUncommittedDocuments.remove(document);
 
           final PsiFile file = getCachedPsiFile(document);
-          if (file == null || !file.isValid()) return;
+          if (file == null || !file.isValid()){
+            myUncommittedDocuments.remove(document);
+            return;
+          }
           /* This is right code. Commented out due TODO in getCachedPsiFile()
           if (file == null) return;
           LOG.assertTrue(file.isValid());
           */
 
           commit(document, file);
+          myUncommittedDocuments.remove(document);
         }
       }
     );
