@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +43,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file) {
+    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
     LOG.assertTrue(baseClass != null && substitutor != null);
