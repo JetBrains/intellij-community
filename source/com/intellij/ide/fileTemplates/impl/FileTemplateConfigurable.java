@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.lexer.CompositeLexer;
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -344,7 +345,7 @@ public class FileTemplateConfigurable implements Configurable {
     public TemplateHighlighter(SyntaxHighlighter original) {
       myOriginalHighlighter = original;
       Lexer originalLexer = original.getHighlightingLexer();
-      Lexer templateLexer = new FileTemplateTextLexer();
+      Lexer templateLexer = new FlexAdapter(new FileTemplateTextLexer());
       templateLexer = new MergingLexerAdapter(templateLexer, TOKENS_TO_MERGE);
 
       myLexer = new CompositeLexer(originalLexer, templateLexer) {

@@ -16,7 +16,7 @@ public class FlexAdapter implements Lexer {
   private int myEnd;
   private char[] myBuffer;
 
-  protected FlexAdapter(final FlexLexer flex) {
+  public FlexAdapter(final FlexLexer flex) {
     myFlex = flex;
   }
 
