@@ -22,7 +22,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   private SmartPsiElementPointer myFieldPointer;
   private SmartPsiElementPointer myGetterPointer;
   private SmartPsiElementPointer mySetterPointer;
-  private final boolean myIsStatic;
+  private boolean myIsStatic;
   public static final Icon PROPERTY_READ_ICON = loadIcon("/nodes/propertyRead.png");
   public static final Icon PROPERTY_READ_STATIC_ICON = loadIcon("/nodes/propertyReadStatic.png");
   public static final Icon PROPERTY_WRITE_ICON = loadIcon("/nodes/propertyWrite.png");
@@ -122,7 +122,6 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
     if (myPropertyName != null ? !myPropertyName.equals(propertyGroup.myPropertyName) : propertyGroup.myPropertyName != null) return false;
     if (myPropertyType != null ? !myPropertyType.equals(propertyGroup.myPropertyType) : propertyGroup.myPropertyType != null) return false;
-    if (myIsStatic != propertyGroup.myIsStatic) return false;
     return true;
   }
 
@@ -132,7 +131,6 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     int result;
     result = (myPropertyName != null ? myPropertyName.hashCode() : 0);
     result = 29 * result + (myPropertyType != null ? myPropertyType.hashCode() : 0);
-    result = 29 * result + (myIsStatic ? 1 : 0);
     return result;
   }
 
@@ -170,14 +168,17 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public void setField(PsiField field) {
     myFieldPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(field);
+    myIsStatic = myIsStatic && field.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public void setGetter(PsiMethod getter) {
     myGetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(getter);
+    myIsStatic = myIsStatic && getter.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public void setSetter(PsiMethod setter) {
     mySetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(setter);
+    myIsStatic = myIsStatic && setter.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public PsiField getField() {
