@@ -4,15 +4,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.usages.UsageView;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -27,7 +26,7 @@ import java.util.List;
  * Time: 8:20:57 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageFilteringRuleProviderImpl extends UsageFilteringRuleProvider implements ApplicationComponent, JDOMExternalizable {
+public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
   public boolean SHOW_READ_ACCESS = true;
   public boolean SHOW_WRITE_ACCESS = true;

@@ -64,8 +64,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private ButtonPanel myButtonPanel = new ButtonPanel();
   private boolean myChangesDetected = false;
   private List<Usage> myUsagesToFlush = new ArrayList<Usage>();
-  private UsageGroupingRuleProvider myUsageGroupingRuleProvider = new CompositeUsageGroupingRuleProvider();
-  private UsageFilteringRuleProvider myUsageFilteringRuleProvider = new CompositeUsageFilteringRuleProvider();
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -79,7 +77,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myRootPanel = new MyPanel(myTree);
 
     UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myBuilder = new UsageNodeTreeBuilder(myUsageGroupingRuleProvider.getActiveRules(project), myUsageFilteringRuleProvider.getActiveRules(project), (GroupNode)model.getRoot());
+    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), (GroupNode)model.getRoot());
     myTree.setModel(model);
 
     myRootPanel.setLayout(new BorderLayout());
@@ -111,6 +109,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }, "Cancel", 'C');
     }
+  }
+
+  private UsageFilteringRule[] getActiveFilteringRules(final Project project) {
+    final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
+    List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>();
+    for (int i = 0; i < providers.length; i++) {
+      list.addAll(Arrays.asList(providers[i].getActiveRules(project)));
+    }
+    return list.toArray(new UsageFilteringRule[list.size()]);
+  }
+
+  private UsageGroupingRule[] getActiveGroupingRules(final Project project) {
+    final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
+    List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>();
+    for (int i = 0; i < providers.length; i++) {
+      list.addAll(Arrays.asList(providers[i].getActiveRules(project)));
+    }
+    return list.toArray(new UsageGroupingRule[list.size()]);
   }
 
   public void modelChanged(boolean isPropertyChange) {
@@ -228,11 +244,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private AnAction[] createGroupingActions() {
-    return myUsageGroupingRuleProvider.createGroupingActions(this);
+    final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
+    List<AnAction> list = new ArrayList<AnAction>();
+    for (int i = 0; i < providers.length; i++) {
+      list.addAll(Arrays.asList(providers[i].createGroupingActions(this)));
+    }
+    return list.toArray(new AnAction[list.size()]);
   }
 
   private AnAction[] createFilteringActions() {
-    return myUsageFilteringRuleProvider.createFilteringActions(this);
+    final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
+    List<AnAction> list = new ArrayList<AnAction>();
+    for (int i = 0; i < providers.length; i++) {
+      list.addAll(Arrays.asList(providers[i].createFilteringActions(this)));
+    }
+    return list.toArray(new AnAction[list.size()]);
   }
 
   public void rulesChanged() {
@@ -240,8 +266,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     Collection<Usage> allUsages = myUsageNodes.keySet();
     reset();
-    myBuilder.setGroupingRules(myUsageGroupingRuleProvider.getActiveRules(myProject));
-    myBuilder.setFilteringRules(myUsageFilteringRuleProvider.getActiveRules(myProject));
+    myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
+    myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
     for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
       Usage usage = i.next();
       if (!usage.isValid()) {

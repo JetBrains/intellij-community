@@ -2,6 +2,7 @@ package com.intellij.usages.rules;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.usages.UsageView;
 
 /**
@@ -11,8 +12,8 @@ import com.intellij.usages.UsageView;
  * Time: 8:19:16 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class UsageGroupingRuleProvider {
-  public abstract UsageGroupingRule[] getActiveRules(Project project);
+public interface UsageGroupingRuleProvider extends ApplicationComponent{
+  UsageGroupingRule[] getActiveRules(Project project);
 
-  public abstract AnAction[] createGroupingActions(UsageView view);
+  AnAction[] createGroupingActions(UsageView view);
 }

@@ -1,13 +1,12 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import com.intellij.usages.UsageView;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import java.util.List;
  * Time: 8:20:57 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageGroupingRuleProviderImpl extends UsageGroupingRuleProvider implements ApplicationComponent, JDOMExternalizable {
+public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider, JDOMExternalizable {
   public boolean GROUP_BY_USAGE_TYPE = true;
   public boolean GROUP_BY_MODULE = true;
   public boolean GROUP_BY_PACKAGE = true;
