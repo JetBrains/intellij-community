@@ -1,20 +1,20 @@
 package com.intellij.psi.formatter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.ASTNode;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public abstract class AbstractXmlBlock implements Block {
@@ -111,11 +111,11 @@ public abstract class AbstractXmlBlock implements Block {
     return true;
   }
 
-  private Wrap.Type getWrapType(final int type) {
-    if (type == CodeStyleSettings.DO_NOT_WRAP) return Wrap.Type.DO_NOT_WRAP;
-    if (type == CodeStyleSettings.WRAP_ALWAYS) return Wrap.Type.WRAP_ALWAYS;
-    if (type == CodeStyleSettings.WRAP_AS_NEEDED) return Wrap.Type.WRAP_AS_NEEDED;
-    return Wrap.Type.CHOP_IF_NEEDED;
+  private int getWrapType(final int type) {
+    if (type == CodeStyleSettings.DO_NOT_WRAP) return Wrap.NONE;
+    if (type == CodeStyleSettings.WRAP_ALWAYS) return Wrap.ALWAYS;
+    if (type == CodeStyleSettings.WRAP_AS_NEEDED) return Wrap.NORMAL;
+    return Wrap.CHOP_DOWN_IF_LONG;
   }
 
   private Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
@@ -273,9 +273,9 @@ public abstract class AbstractXmlBlock implements Block {
     return (XmlTag)SourceTreeToPsiMap.treeElementToPsi(node);
   }
 
-  protected abstract Wrap.Type getWrappingTypeForTagEnd(final XmlTag xmlTag);
+  protected abstract int getWrappingTypeForTagEnd(final XmlTag xmlTag);
 
-  protected abstract Wrap.Type getWrappingTypeForTagBegin();
+  protected abstract int getWrappingTypeForTagBegin();
 
   protected abstract boolean insertLineBreakBeforeTag(final XmlTag xmlTag);
 

@@ -22,7 +22,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     return new IndentImpl(IndentImpl.Type.NONE, 0,0);
   }
 
-  public Wrap createWrap(Wrap.Type type, boolean wrapFirstElement) {
+  public Wrap createWrap(int type, boolean wrapFirstElement) {
     return new WrapImpl(type, wrapFirstElement);
   }
 

@@ -1,10 +1,9 @@
 package com.intellij.newCodeFormatting.impl;
 
+import com.intellij.newCodeFormatting.Block;
+import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.newCodeFormatting.FormattingModel;
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.Wrap;
 
 import java.util.*;
 
@@ -210,7 +209,7 @@ class FormatProcessor {
     if (wrap == null) return false;
     if (!isSuitableInTheCurrentPosition(wrap)) return false;
     if (wrap.isIsActive()) return true;
-    final Wrap.Type type = wrap.getType();
+    final WrapImpl.Type type = wrap.getType();
     if (type == WrapImpl.Type.WRAP_ALWAYS) return true;
     if (type == WrapImpl.Type.WRAP_AS_NEEDED || type == WrapImpl.Type.CHOP_IF_NEEDED) {
       return lineOver();

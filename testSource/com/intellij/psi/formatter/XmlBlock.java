@@ -32,12 +32,12 @@ public class XmlBlock extends AbstractXmlBlock {
     return false;
   }
 
-  protected Wrap.Type getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return xmlTag.getSubTags().length > 0 ? Wrap.Type.WRAP_ALWAYS : Wrap.Type.WRAP_AS_NEEDED;
+  protected int getWrappingTypeForTagEnd(final XmlTag xmlTag) {
+    return xmlTag.getSubTags().length > 0 ? Wrap.ALWAYS : Wrap.NORMAL;
   }
 
-  protected Wrap.Type getWrappingTypeForTagBegin() {
-    return Wrap.Type.WRAP_ALWAYS;
+  protected int getWrappingTypeForTagBegin() {
+    return Wrap.ALWAYS;
   }
 
   protected boolean isTextElement(XmlTag tag) {
