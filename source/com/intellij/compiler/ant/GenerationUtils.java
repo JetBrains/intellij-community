@@ -26,17 +26,23 @@ public class GenerationUtils {
                                       final String baseDirPropertyName,
                                       GenerationOptions genOptions,
                                       boolean useAbsolutePathsForOuterPaths) {
+    final String substitutedPath = genOptions.subsitutePathWithMacros(path);
+    if (!substitutedPath.equals(path)) {
+      // path variable substitution has highest priority
+      return substitutedPath;
+    }
     if (baseDir != null) {
       final String relativepath = FileUtil.getRelativePath(baseDir, new File(path));
       if (relativepath != null) {
-        if (!useAbsolutePathsForOuterPaths || relativepath.indexOf("..") < 0) {
+        final boolean shouldUseAbsolutePath = useAbsolutePathsForOuterPaths && relativepath.indexOf("..") >= 0;
+        if (!shouldUseAbsolutePath) {
           final String _relativePath = relativepath.replace(File.separatorChar, '/');
           final String root = BuildProperties.propertyRef(baseDirPropertyName);
           return ".".equals(_relativePath)? root : root + "/" + _relativePath;
         }
       }
     }
-    return genOptions.subsitutePathWithMacros(path);
+    return substitutedPath;
   }
 
   public static String trimJarSeparator(final String path) {
