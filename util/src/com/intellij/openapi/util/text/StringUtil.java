@@ -492,6 +492,11 @@ public class StringUtil {
     return s == null || s.length() == 0;
   }
 
+  public static boolean isEmptyOrSpaces(final String s) {
+    return s == null || s.trim().length() == 0;
+  }
+
+
   public static String getThrowableText(Throwable aThrowable) {
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
