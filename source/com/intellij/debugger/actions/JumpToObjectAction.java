@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  */
 
 public class JumpToObjectAction extends DebuggerAction{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
 
@@ -98,14 +100,19 @@ public class JumpToObjectAction extends DebuggerAction{
         }
 
         if(type instanceof ClassType) {
-          List<Location> locations = ((ClassType)type).allLineLocations();
-          if(locations.size() > 0) {
-            final Location location = locations.get(0);
-            return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-              public SourcePosition compute() {
-                return debugProcess.getPositionManager().getSourcePosition(location);
-              }
-            });
+          try {
+            List<Location> locations = ((ClassType)type).allLineLocations();
+            if(locations.size() > 0) {
+              final Location location = locations.get(0);
+              return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+                public SourcePosition compute() {
+                  return debugProcess.getPositionManager().getSourcePosition(location);
+                }
+              });
+            }
+          }
+          catch (AbsentInformationException e) {
+            LOG.debug(e);
           }
         }
       }

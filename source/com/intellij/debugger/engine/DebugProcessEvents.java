@@ -363,20 +363,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    final DebugProcessEvents debugProcess = (DebugProcessEvents)suspendContext.getDebugProcess();
-
     //we use invokeLater to allow processing events during processing this one
     //this is especially nesessary if a method is breakpoint condition
-    debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(suspendContext) {
+    getManagerThread().invokeLater(new SuspendContextCommandImpl(suspendContext) {
       public void contextAction() throws Exception {
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(debugProcess.getSuspendManager(), getSuspendContext().getThread());
+        final SuspendManager suspendManager = getSuspendManager();
+        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
 
         if(evaluatingContext != null && !evaluatingContext.getEvaluationContext().isAllowBreakpoints()) {
-          getSuspendManager().voteResume(suspendContext);
+          suspendManager.voteResume(suspendContext);
           return;
         }
 
-        LocatableEventRequestor requestor = (LocatableEventRequestor) debugProcess.getRequestsManager().findRequestor(event.request());
+        LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
         boolean shouldResumeExecution = true;
 
@@ -385,12 +384,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
 
         if(shouldResumeExecution) {
-          getSuspendManager().voteResume(suspendContext);
+          suspendManager.voteResume(suspendContext);
         }
         else {
           //suspendContext.voteResume();
-          getSuspendManager().voteSuspend(suspendContext);
-          showStatusText(debugProcess, event);
+          suspendManager.voteSuspend(suspendContext);
+          showStatusText(DebugProcessEvents.this, event);
         }
       }
     });

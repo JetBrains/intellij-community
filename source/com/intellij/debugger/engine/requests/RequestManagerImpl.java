@@ -51,7 +51,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myDebugProcess.addDebugProcessListener(this);
   }
 
-
   public Set findRequests(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!myRequestorToBelongedRequests.containsKey(requestor)) {
@@ -158,11 +157,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
     }
 
-    belongsToRequestor(requestor, request);
+    registerRequest(requestor, request);
     callbackOnEvent(requestor, request);
   }
 
-  private void belongsToRequestor(Requestor requestor, EventRequest request) {
+  private void registerRequest(Requestor requestor, EventRequest request) {
     Set<EventRequest> reqSet = myRequestorToBelongedRequests.get(requestor);
     if(reqSet == null) {
       reqSet = new HashSet<EventRequest>();
@@ -183,7 +182,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     classPrepareRequest.addClassFilter(pattern);
     classPrepareRequest.putProperty(CLASS_NAME, pattern);
 
-    belongsToRequestor(requestor, classPrepareRequest);
+    registerRequest(requestor, classPrepareRequest);
     callbackOnEvent(requestor, classPrepareRequest);
     return classPrepareRequest;
   }
@@ -270,7 +269,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       return;
     }
 
-    belongsToRequestor(requestor, prepareRequest);
+    registerRequest(requestor, prepareRequest);
     prepareRequest.enable();
   }
 
@@ -278,7 +277,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassPrepareRequest classPrepareRequest = createClassPrepareRequest(requestor, classOrPatternToBeLoaded);
 
-    belongsToRequestor(requestor, classPrepareRequest);
+    registerRequest(requestor, classPrepareRequest);
     classPrepareRequest.enable();
     if (LOG.isDebugEnabled()) {
       LOG.debug("classOrPatternToBeLoaded = " + classOrPatternToBeLoaded);
