@@ -1,13 +1,12 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.DeleteImportFix;
 
 public class UnusedImportInspection extends ClassInspection {
-    private final UnusedImportFix fix = new UnusedImportFix();
+    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName() {
         return "Unused import";
@@ -23,18 +22,6 @@ public class UnusedImportInspection extends ClassInspection {
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class UnusedImportFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Delete unused import";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
-            final PsiElement importStatement = descriptor.getPsiElement();
-            deleteElement(importStatement);
-        }
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

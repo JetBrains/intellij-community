@@ -1,17 +1,16 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class RedundantImportInspection extends ClassInspection {
-    private final RedundantImportFix fix = new RedundantImportFix();
+    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName() {
         return "Redundant import";
@@ -27,18 +26,6 @@ public class RedundantImportInspection extends ClassInspection {
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class RedundantImportFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Delete redundant import";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
-            final PsiElement importStatement = descriptor.getPsiElement();
-            deleteElement(importStatement);
-        }
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
