@@ -72,7 +72,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private class MarkSpots {
-    private List<MarkSpot> mySpots = null;
+    private List<MarkSpot> mySpots;
     private List<MarkSpot> mySpotsSortedByLayer;
     private void clear() {
       mySpots = null;
@@ -80,6 +80,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
+      recalcMarkSpots();
       LineTooltipRenderer bigRenderer = null;
       List<RangeHighlighter> highlighters = new SmartList<RangeHighlighter>();
       boolean wereInsideMarkSpot = false;
@@ -223,6 +224,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public void doClick(final MouseEvent e, final int width) {
+      recalcMarkSpots();
       MarkSpot nearestSpot = null;
       for (int i = 0; i < mySpots.size(); i++) {
         MarkSpot markSpot = mySpots.get(i);
