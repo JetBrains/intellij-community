@@ -18,7 +18,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -53,7 +52,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.InternalIterator;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -1070,10 +1068,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (vmProxy == null) {
         throw new VMDisconnectedException();
       }
-      List list = vmProxy.classesByName(className);
+      final List list = vmProxy.classesByName(className);
       for (Iterator it = list.iterator(); it.hasNext();) {
-        ReferenceType refType = (ReferenceType)it.next();
-        if (refType.isPrepared() && Comparing.equal(refType.classLoader(), classLoader)) {
+        final ReferenceType refType = (ReferenceType)it.next();
+        if (refType.isPrepared() && isVisibleFromClassLoader(classLoader, refType)) {
           result = refType;
           break;
         }
@@ -1097,6 +1095,42 @@ public abstract class DebugProcessImpl implements DebugProcess {
     catch (InvalidTypeException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
+  }
+
+  private boolean isVisibleFromClassLoader(final ClassLoaderReference fromLoader, final ReferenceType refType) {
+    final ClassLoaderReference typeLoader = refType.classLoader();
+    if (typeLoader == null) {
+      return true; // optimization: if class is loaded by a bootstrap loader, it is visible from every other loader
+    }
+    for (ClassLoaderReference checkLoader = fromLoader; checkLoader != null; checkLoader = getParentLoader(checkLoader)) {
+      if (Comparing.equal(typeLoader, checkLoader)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
+    final ReferenceType refType = fromLoader.referenceType();
+    Field field = refType.fieldByName("parent");
+    if (field == null) {
+      final List allFields = refType.allFields();
+      for (Iterator it = allFields.iterator(); it.hasNext();) {
+        final Field candidateField = (Field)it.next();
+        try {
+          final Type checkedType = candidateField.type();
+          if (checkedType instanceof ReferenceType && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", (ReferenceType)checkedType)) {
+            field = candidateField;
+            break;
+          }
+        }
+        catch (ClassNotLoadedException e) {
+          // ignore this and continue,
+          // java.lang.ClassLoader must be loaded at the moment of check, so if this happens, the field's type is definitely not java.lang.ClassLoader
+        }
+      }
+    }
+    return field != null? (ClassLoaderReference)fromLoader.getValue(field) : null;
   }
 
   private String reformatArrayName(String className) {
