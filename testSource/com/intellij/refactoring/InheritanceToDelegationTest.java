@@ -63,9 +63,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
   }
 
   public void testAbstractBase1() throws Exception {
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 8, 12, 0, "lesya", "Indent")) {
-      doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
-    }
+    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testHierarchy() throws Exception {
