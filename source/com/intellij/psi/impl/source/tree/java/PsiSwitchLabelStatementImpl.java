@@ -26,8 +26,10 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
   }
 
   public PsiSwitchStatement getEnclosingSwitchStatement() {
-    if (getTreeParent().getTreeParent().getElementType() == SWITCH_STATEMENT) return (PsiSwitchStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent().getTreeParent());
-    return null;
+    final CompositeElement guessedSwitch = getTreeParent().getTreeParent();
+    return guessedSwitch != null && guessedSwitch.getElementType() == SWITCH_STATEMENT
+           ? (PsiSwitchStatement)SourceTreeToPsiMap.treeElementToPsi(guessedSwitch)
+           : null;
   }
 
   public ASTNode findChildByRole(int role) {
