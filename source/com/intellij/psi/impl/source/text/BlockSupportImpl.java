@@ -102,7 +102,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
           final ChameleonElement chameleon =
             (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
                                                               textRange.getEndOffset() + lengthShift, null, null);
-          ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon, project).getTreeParent());
+          ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
           return;
         }
         else if(reparseable instanceof IErrorCounterChameleonElementType){

@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.parsing.JavadocParsing;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.text.CharArrayUtil;
 
 public interface JavaDocElementType {
@@ -21,25 +22,27 @@ public interface JavaDocElementType {
   IElementType DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
 
   IElementType DOC_REFERENCE_HOLDER = new IChameleonElementType("DOC_REFERENCE_HOLDER", Language.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon, Project project) {
+    public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(project),
+      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
                                                   ((LeafElement)chameleon).getState(), false);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType DOC_TYPE_HOLDER = new IChameleonElementType("DOC_TYPE_HOLDER", Language.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon, Project project) {
+    public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(project),
+      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
                                                   ((LeafElement)chameleon).getState(), true);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType DOC_COMMENT = new IChameleonElementType("DOC_COMMENT", Language.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon, Project project) {
+    public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
       return context.getJavadocParsing().parseDocCommentText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length);
