@@ -33,7 +33,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public String myPluginXMLPath;
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
-    myPluginXMLPath = new File(myModule.getModuleFilePath()).getParent();
+    myPluginXMLPath = FileUtil.toSystemIndependentName(new File(myModule.getModuleFilePath()).getParent());
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
     myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
     myPluginXML.createIfNotExists();
@@ -111,11 +111,11 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public String getPluginXMLPath() {
-    return myPluginXMLPath;
+    return FileUtil.toSystemDependentName(myPluginXMLPath);
   }
 
   public void setPluginXMLPath(String pluginXMLPath) {
-    myPluginXMLPath = pluginXMLPath;
+    myPluginXMLPath = FileUtil.toSystemIndependentName(pluginXMLPath);
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
     myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
     myPluginXML.createIfNotExists();
