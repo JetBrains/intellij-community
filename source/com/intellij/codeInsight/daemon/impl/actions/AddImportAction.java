@@ -106,11 +106,11 @@ public class AddImportAction implements QuestionAction {
       myEditor.getCaretModel().moveToLogicalPosition(pos);
 
       try{
-        if (!(ref instanceof PsiImportStaticReferenceElement)) {
-          ref.bindToElement(targetClass);
+        if (ref instanceof PsiImportStaticReferenceElement) {
+          ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
         }
         else {
-          ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
+          ref.bindToElement(targetClass);
         }
       }
       catch(IncorrectOperationException e){

@@ -49,23 +49,22 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    boolean isOriginal = isOriginal(event.getParent(), psiFile, document);
+    if (!isOriginal(event.getParent(), psiFile, document)) {
+      return;
+    }
 
-    if (isOriginal) {
-      final boolean insideTransaction = myTransactionsMap.containsKey(document);
+    myPsiDocumentManager.setProcessDocumentEvents(false);
+    syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
+    myPsiDocumentManager.setProcessDocumentEvents(true);
 
-      myPsiDocumentManager.setProcessDocumentEvents(false);
-      syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-      if(!insideTransaction) document.setModificationStamp(psiFile.getModificationStamp());
-      myPsiDocumentManager.setProcessDocumentEvents(true);
-
-      if(!insideTransaction){
-        mySmartPointerManager.synchronizePointers(psiFile);
-        if (LOG.isDebugEnabled()) {
-          PsiDocumentManagerImpl.checkConsistency(psiFile, document);
-          if (psiFile instanceof JspxFileImpl) {
-            ( (JspxFileImpl)psiFile).checkAllConsistent();
-          }
+    final boolean insideTransaction = myTransactionsMap.containsKey(document);
+    if(!insideTransaction){
+      document.setModificationStamp(psiFile.getModificationStamp());
+      mySmartPointerManager.synchronizePointers(psiFile);
+      if (LOG.isDebugEnabled()) {
+        PsiDocumentManagerImpl.checkConsistency(psiFile, document);
+        if (psiFile instanceof JspxFileImpl) {
+          ((JspxFileImpl)psiFile).checkAllConsistent();
         }
       }
     }
@@ -224,8 +223,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void commitTransaction(Document document){
-    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
-    myTransactionsMap.remove(document);
+    final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.remove(document);
     if(documentChangeTransaction == null) return;
     if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
 
@@ -244,7 +242,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     doCommitTransaction(document, myTransactionsMap.get(document));
   }
 
-  private void doCommitTransaction(final Document document,
+  private static void doCommitTransaction(final Document document,
                                    final DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
@@ -315,23 +313,20 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           int end = start + length;
 
           final int newStringLength = str.length();
-          final String chars = getText(start, length + start);
+          final String chars = getText(start, end);
           int newStartInString = 0;
           int newEndInString = newStringLength;
-          {
-            while (newStartInString < newStringLength &&
-                   start < end &&
-                   str.charAt(newStartInString) == chars.charAt(start - oldStart)) {
-              start++;
-              newStartInString++;
-            }
-
-            while (end > start &&
-                   newEndInString > newStartInString &&
-                   str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
-              newEndInString--;
-              end--;
-            }
+          while (newStartInString < newStringLength &&
+                 start < end &&
+                 str.charAt(newStartInString) == chars.charAt(start - oldStart)) {
+            start++;
+            newStartInString++;
+          }
+          while (end > start &&
+                 newEndInString > newStartInString &&
+                 str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
+            newEndInString--;
+            end--;
           }
 
           str = str.substring(newStartInString, newEndInString);
