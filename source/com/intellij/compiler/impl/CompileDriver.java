@@ -257,7 +257,17 @@ public class CompileDriver {
         synchronized (CompilerManager.getInstance(myProject)) {
           ProgressManager.getInstance().runProcess(new Runnable() {
             public void run() {
-              doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
+              try {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("COMPILATION STARTED");
+                }
+                doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
+              }
+              finally {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("COMPILATION FINISHED");
+                }
+              }
             }
           }, compileContext.getProgressIndicator());
         }
@@ -838,7 +848,13 @@ public class CompileDriver {
       if (cache.isDirty()) {
         context.getProgressIndicator().setText("Saving caches...");
         if (cache.isDirty()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("--Saving translating cache for compiler " + compiler.getDescription());
+          }
           cache.save();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("--Done");
+          }
         }
       }
       context.getProgressIndicator().popState();
@@ -936,6 +952,9 @@ public class CompileDriver {
       public void run() {
         context.getProgressIndicator().setText("Updating caches...");
         final FileTypeManager typeManager = FileTypeManager.getInstance();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Updating internal caches: successfully compiled " + successfullyCompiled.length + " files; toRecompile: " + filesToRecompile.length + " files");
+        }
         for (int idx = 0; idx < successfullyCompiled.length; idx++) {
           final TranslatingCompiler.OutputItem item = successfullyCompiled[idx];
           final String outputPath = item.getOutputPath();
@@ -952,6 +971,9 @@ public class CompileDriver {
           }
           else {
             className = null;
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Putting: [outputPath, className, sourceFile] = [" + outputPath + ";" + className + ";" + sourceFile.getPresentableUrl() + "]");
           }
           cache.update(outputPath, className, sourceFile);
         }
@@ -1019,6 +1041,10 @@ public class CompileDriver {
         }
       }
       if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(snapshot.getUrlByFile(file))) {
+        if (LOG.isDebugEnabled()) {
+          final String url = snapshot.getUrlByFile(file);
+          LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " + cache.getSourceTimestamp(url));
+        }
         toCompile.add(file);
       }
     }

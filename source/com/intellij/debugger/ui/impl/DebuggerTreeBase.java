@@ -19,6 +19,7 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -140,34 +141,38 @@ public class DebuggerTreeBase extends Tree {
 
   public JComponent createToolTip(MouseEvent e) {
     DebuggerTreeNodeImpl node = getNodeToShowTip(e);
-    if (node == null) return null;
+    if (node == null) {
+      return null;
+    }
 
-    if(myCurrentTooltip != null &&
-       myCurrentTooltip.isShowing() &&
-       myCurrentTooltipNode == node) return myCurrentTooltip;
+    if(myCurrentTooltip != null && myCurrentTooltip.isShowing() && myCurrentTooltipNode == node) {
+      return myCurrentTooltip;
+    }
     
     myCurrentTooltipNode = node;
 
-    JToolTip toolTip = new JToolTip();
-    toolTip.setLayout(new BorderLayout());
+    final String toolTipText = getTipText(node);
+    if(toolTipText == null) {
+      return null;
+    }
 
-    String toolTipText = getTipText(node);
-    if(toolTipText == null) return null;
-
-    JScrollPane scrollPane = new JScrollPane(createTipContent(toolTipText));
+    final JComponent tipContent = createTipContent(toolTipText);
+    final JScrollPane scrollPane = new JScrollPane(tipContent);
     scrollPane.setBorder(null);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    toolTip.add(scrollPane);
 
-    JComponent tipContent = createTipContent(toolTipText);
+    final JToolTip toolTip = new JToolTip();
+    toolTip.setLayout(new BorderLayout());
+    toolTip.add(scrollPane, BorderLayout.CENTER);
+
     Rectangle tipRectangle = getTipRectangle(e, tipContent.getPreferredSize());
-    if(toolTip.getBorder() != null) {
-      Insets borderInsets = toolTip.getBorder().getBorderInsets(this);
-      tipRectangle.setSize(tipRectangle.width  + borderInsets.left + borderInsets.right,
-                           tipRectangle.height + borderInsets.top  + borderInsets.bottom);
+    final Border tooltipBorder = toolTip.getBorder();
+    if(tooltipBorder != null) {
+      final Insets borderInsets = tooltipBorder.getBorderInsets(this);
+      tipRectangle.setSize(tipRectangle.width  + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top  + borderInsets.bottom);
     }
-    Dimension tipSize = new Dimension(tipRectangle.getSize());
+    final Dimension tipSize = new Dimension(tipRectangle.getSize());
 
     if(tipRectangle.getWidth() < tipContent.getPreferredSize().getWidth()) {
       tipSize.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
@@ -215,7 +220,9 @@ public class DebuggerTreeBase extends Tree {
     TreePath path = getPathForLocation(event.getX(), event.getY());
     if (path != null) {
       Object last = path.getLastPathComponent();
-      if (last instanceof DebuggerTreeNodeImpl) return (DebuggerTreeNodeImpl)last;
+      if (last instanceof DebuggerTreeNodeImpl) {
+        return (DebuggerTreeNodeImpl)last;
+      }
     }
 
     return null;
@@ -237,16 +244,21 @@ public class DebuggerTreeBase extends Tree {
     if(event.getY() > contentRect.y + contentRect.height / 2) {
       y = Math.max(contentRect.y, nodeBounds.y - tipContentSize.height - vgap);
       height = Math.min(tipContentSize.height, nodeBounds.y - contentRect.y - vgap);
-    } else {
+    }
+    else {
       y = nodeBounds.y + nodeBounds.height + vgap;
       height = Math.min(tipContentSize.height, contentRect.height - y);
     }
 
-    Dimension tipSize = new Dimension(width, height);
+    final Dimension tipSize = new Dimension(width, height);
 
     x = event.getX() - width / 2;
-    if(x < contentRect.x) x = contentRect.x;
-    if(x + width > contentRect.x + contentRect.width) x = contentRect.x + contentRect.width - width;
+    if(x < contentRect.x) {
+      x = contentRect.x;
+    }
+    if(x + width > contentRect.x + contentRect.width) {
+      x = contentRect.x + contentRect.width - width;
+    }
 
     return new Rectangle(new Point(x, y), tipSize);
   }

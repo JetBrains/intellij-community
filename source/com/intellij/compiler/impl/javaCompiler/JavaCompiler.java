@@ -17,8 +17,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 
 public class JavaCompiler implements TranslatingCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
   private Project myProject;
   private BackendCompiler JAVAC_BACKEND;
   private BackendCompiler JIKES_BACKEND;
@@ -49,6 +51,9 @@ public class JavaCompiler implements TranslatingCompiler {
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
     }
     catch (CacheCorruptedException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
       context.requestRebuildNextTime(e.getMessage());
     }
 

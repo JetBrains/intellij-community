@@ -469,7 +469,11 @@ class BackendCompilerWrapper {
         final String outputDirPath = outputDir.replace(File.separatorChar, '/');
         for (int idx = 0; idx < sourceRoots.length; idx++) {
           final VirtualFile root = sourceRoots[idx];
-          buildOutputItemsList(outputDirPath, root, typeManager, compiledWithErrors, root, myProjectFileIndex.getPackageNameByDirectory(root));
+          final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" + packagePrefix + "\"");
+          }
+          buildOutputItemsList(outputDirPath, root, typeManager, compiledWithErrors, root, packagePrefix);
         }
       }
     });
@@ -605,9 +609,9 @@ class BackendCompilerWrapper {
   }
 
   private void updateOutputItemsList(final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) {
-    String name = javaFile.getName();
-    if (myFileNameToSourceMap.containsKey(name)) {
-      Set<Pair<String, String>> paths = myFileNameToSourceMap.get(name);
+    final String javaFileName = javaFile.getName();
+    if (myFileNameToSourceMap.containsKey(javaFileName)) {
+      Set<Pair<String, String>> paths = myFileNameToSourceMap.get(javaFileName);
 
       if (paths != null && paths.size() > 0) {
         final String prefix = packagePrefix != null && packagePrefix.length() > 0? packagePrefix.replace('.', '/') + "/" : "";
@@ -621,8 +625,16 @@ class BackendCompilerWrapper {
             final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, javaFile);
             if (realLocation != null) {
               myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), javaFile));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " + realLocation.getSecond() + "; " + javaFile.getPresentableUrl() + "]");
+              }
               if (!compiledWithErrors.contains(javaFile)) {
                 mySuccesfullyCompiledJavaFiles.add(javaFile);
+              }
+            }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to move to real location: " + outputPath + "; from " + outputDir);
               }
             }
           }

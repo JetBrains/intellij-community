@@ -20,6 +20,9 @@ public class TimestampCache extends StateCache <Long> {
 
   public void update(String url, Long state) {
     LOG.assertTrue(state != null);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("TimestampCache.update: " + url + "; " + state);
+    }
     super.update(url, state);
   }
 
@@ -30,4 +33,41 @@ public class TimestampCache extends StateCache <Long> {
   public void write(Long aLong, DataOutputStream stream) throws IOException {
     stream.writeLong(aLong.longValue());
   }
+
+  protected boolean load() {
+    final boolean notInitialized = (myMap == null);
+    if (LOG.isDebugEnabled() && notInitialized) {
+      LOG.debug("TimestampCache.load");
+    }
+    try {
+      return super.load();
+    }
+    finally {
+      if (LOG.isDebugEnabled() && notInitialized) {
+        LOG.debug("TimestampCache.loaded: " + (myMap != null? myMap.size() + " items" : "empty map"));
+      }
+    }
+  }
+
+  public void save() {
+    if (LOG.isDebugEnabled() && myMap != null) {
+      LOG.debug("TimestampCache.save");
+    }
+    super.save();
+  }
+
+  public boolean wipe() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("TimestampCache.wipe");
+    }
+    return super.wipe();
+  }
+
+  public void remove(final String url) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("TimestampCache.remove: " + url);
+    }
+    super.remove(url);
+  }
+
 }
