@@ -131,31 +131,37 @@ public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer im
   }
 
   public Collection getComponentAdapters() {
-    final List result = new ArrayList();
+    final Set result = new HashSet();
     if (getParent() != null) {
       result.addAll(getParent().getComponentAdapters());
     }
+
+    result.addAll(super.getComponentAdapters());
+
     accept(new EmptyPicoVisitor() {
-      public void visitComponentAdapter(ComponentAdapter componentAdapter) {
-        result.add(componentAdapter);
+      public void visitContainer(PicoContainer pico) {
+        if (pico != getDelegate()) result.addAll(pico.getComponentAdapters());
       }
     });
+
     return result;
   }
 
   public List getComponentAdaptersOfType(final Class componentType) {
-    final List result = new ArrayList();
+    final Set result = new HashSet();
     if (getParent() != null) {
       result.addAll(getParent().getComponentAdaptersOfType(componentType));
     }
-    accept(new EmptyPicoVisitor() {
-      public void visitComponentAdapter(ComponentAdapter componentAdapter) {
-        if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
-          result.add(componentAdapter);
-        }
+
+    final List componentAdapters = new ArrayList(getComponentAdapters());
+    for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext();) {
+      ComponentAdapter componentAdapter = (ComponentAdapter) iterator.next();
+      if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
+        result.add(componentAdapter);
       }
-    });
-    return result;
+    }
+
+    return new ArrayList(result);
   }
 
   public MutablePicoContainer makeChildContainer() {
