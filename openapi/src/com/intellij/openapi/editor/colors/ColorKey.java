@@ -93,11 +93,10 @@ public final class ColorKey implements Comparable<ColorKey> {
     if (key == null) {
       key = find(externalName);
     }
-    else {
-      LOG.assertTrue(key.getDefaultColor() == null, "default color already assigned");
-    }
 
-    key.myDefaultColor = defaultColor;
+    if (key.getDefaultColor() == null) {
+      key.myDefaultColor = defaultColor;
+    }
     return key;
   }
 }
