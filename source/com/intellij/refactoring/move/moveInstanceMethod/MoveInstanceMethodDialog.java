@@ -56,7 +56,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   protected void doAction() {
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
     final String parameterName = myOldClassParameterNameField.getText().trim();
-    if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
+    if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName) &&
+        MoveMethodUtil.isOldThisNeeded (myMethod)) {
       Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
       return;
     }

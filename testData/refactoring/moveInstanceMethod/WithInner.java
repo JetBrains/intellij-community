@@ -5,6 +5,7 @@ class Foreign {
 
 public abstract class Test1 {
     void <caret>foo (Foreign f, Inner i) {
+      new Inner();
     }
 
     class Inner {}

@@ -25,7 +25,7 @@ import java.util.List;
  * @author ven
  */
 public class MoveInstanceMethodHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler");
   static final String REFACTORING_NAME = "Move Instance Method";
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {

@@ -31,7 +31,7 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   }
 
   public String getProcessedElementsHeader() {
-    return "Convert to instance method";
+    return "Move instance method";
   }
 
   public boolean canRefresh() {

@@ -7,6 +7,7 @@ public abstract class Test1 {
      * @param f
      */
     void <caret>foo (Foreign f) {
+      bar();
     }
 
     /**

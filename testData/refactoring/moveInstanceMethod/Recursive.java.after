@@ -1,6 +1,7 @@
 public class MoveMethodTest {
 
     void foo(MoveMethodTest moveMethodTest) {
+      moveMethodTest.foo(this);
       foo(this);
     }
 }
