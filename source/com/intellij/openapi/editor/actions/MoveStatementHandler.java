@@ -3,7 +3,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +86,7 @@ class MoveStatementHandler extends EditorActionHandler {
     if (editor.isOneLineMode()) {
       return false;
     }
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     final PsiFile file = documentManager.getPsiFile(document);
