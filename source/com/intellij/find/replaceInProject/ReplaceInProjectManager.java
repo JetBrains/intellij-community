@@ -140,7 +140,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
             addReplaceActions(context[0]);
           }
 
-        public void findingUsagesFinished() {
+        public void findingUsagesFinished(final UsageView usageView) {
           if (context[0]!=null && findManager.getFindInProjectModel().isPromptOnReplace()){
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {

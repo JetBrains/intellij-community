@@ -18,11 +18,12 @@ public interface UsageViewManager {
   UsageView searchAndShowUsages(UsageTarget[] searchFor,
                                 Factory<UsageSearcher> searcherFactory,
                                 boolean showPanelIfOnlyOneUsage,
-                                boolean showNotFoundMessage, UsageViewPresentation presentation);
+                                boolean showNotFoundMessage, UsageViewPresentation presentation,
+                                UsageViewStateListener listener);
 
   interface UsageViewStateListener {
     void usageViewCreated(UsageView usageView);
-    void findingUsagesFinished();
+    void findingUsagesFinished(final UsageView usageView);
   }
 
   void searchAndShowUsages(UsageTarget[] searchFor,

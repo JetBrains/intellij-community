@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -187,8 +188,6 @@ public abstract class BaseRefactoringProcessor {
     presentation.setTargetsNodeText(descriptor.getProcessedElementsHeader());
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
-    presentation.setCodeUsagesString(descriptor.getCodeReferencesText(1, 1));    //TODO
-    presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(1, 1)); //TODO
     presentation.setUsagesString("usages");
     return presentation;
   }
@@ -244,7 +243,39 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    final UsageView usageView = viewManager.searchAndShowUsages(targets, searcherFactory, true, false, createPresentation(viewDescriptor));
+    final UsageViewPresentation presentation = createPresentation(viewDescriptor);
+
+    final UsageView usageView = viewManager.searchAndShowUsages(targets, searcherFactory, true, false, presentation,
+                                                                new UsageViewManager.UsageViewStateListener() {
+        public void usageViewCreated(UsageView usageView) {}
+
+        public void findingUsagesFinished(final UsageView usageView) {
+          if (usageView == null) return;
+          final Set<Usage> usages = usageView.getUsages();
+          int codeUsageCount = 0;
+          int nonCodeUsageCount = 0;
+          Set<PsiFile> codeFiles = new HashSet<PsiFile>();
+          Set<PsiFile> nonCodeFiles = new HashSet<PsiFile>();
+          for (Iterator<Usage> iterator = usages.iterator(); iterator.hasNext();) {
+            Usage usage = iterator.next();
+            if (usage instanceof PsiElementUsage) {
+              final PsiElementUsage elementUsage = ((PsiElementUsage)usage);
+              if (elementUsage.isNonCodeUsage()) {
+                nonCodeUsageCount++;
+                nonCodeFiles.add(elementUsage.getElement().getContainingFile());
+              } else {
+                codeUsageCount++;
+                codeFiles.add(elementUsage.getElement().getContainingFile());
+              }
+            }
+          }
+          codeFiles.remove(null);
+          nonCodeFiles.remove(null);
+
+          presentation.setCodeUsagesString(viewDescriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
+          presentation.setNonCodeUsagesString(viewDescriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
+        }
+      });
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {

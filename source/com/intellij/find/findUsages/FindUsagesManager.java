@@ -536,7 +536,7 @@ public class FindUsagesManager {
       }
     };
     final PsiElement2UsageTargetAdapter[] targets = convertToUsageTargets(descriptor.getPrimaryElements(), descriptor.getAdditionalElements());
-    myAnotherManager.searchAndShowUsages(targets, searcherFactory, !toSkipUsagePanelWhenOneUsage, true, presentation);
+    myAnotherManager.searchAndShowUsages(targets, searcherFactory, !toSkipUsagePanelWhenOneUsage, true, presentation, null);
   }
 
   private UsageViewPresentation createPresentation(PsiElement psiElement, final FindUsagesOptions findUsagesOptions, boolean toOpenInNewTab) {

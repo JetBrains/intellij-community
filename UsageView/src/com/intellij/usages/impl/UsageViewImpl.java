@@ -24,11 +24,16 @@ import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,7 +41,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -62,6 +66,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private UsageModelTracker myModelTracker;
+  Set<Usage> myUsages = new HashSet<Usage>();
   private Map<Usage, UsageNode> myUsageNodes = new HashMap<Usage, UsageNode>();
   private ButtonPanel myButtonPanel = new ButtonPanel();
 
@@ -428,6 +433,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void appendUsageLater(final Usage usage) {
+    myUsages.add(usage);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       myFlushAlarm.cancelAllRequests();
@@ -463,6 +469,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private boolean myIsFirstVisibleUsageFound = false;
 
   public void appendUsage(Usage usage) {
+    myUsages.add(usage);
     final UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node);
     if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
@@ -768,9 +775,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public Set<Usage> getUsages() {
-    final LinkedHashSet<Usage> usages = new LinkedHashSet<Usage>();
-    collectUsages((DefaultMutableTreeNode)myTree.getModel().getRoot(), usages);
-    return usages;
+    return myUsages;
   }
 
   private void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {

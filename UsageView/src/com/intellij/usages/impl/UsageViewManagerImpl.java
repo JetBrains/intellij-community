@@ -65,7 +65,8 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
   public UsageView searchAndShowUsages(final UsageTarget[] searchFor,
                                        final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
-                                       final boolean showNotFoundMessage, final UsageViewPresentation presentation) {
+                                       final boolean showNotFoundMessage, final UsageViewPresentation presentation,
+                                       UsageViewStateListener listener) {
 
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
 
@@ -75,7 +76,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
     final Application application = ApplicationManager.getApplication();
     application.runProcessWithProgressSynchronously(
-      new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, null),
+      new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener),
       getProgressTitle(presentation),
       true,
       myProject
@@ -155,14 +156,14 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     private final UsageTarget[] mySearchFor;
     private final Factory<UsageSearcher> mySearcherFactory;
     private final FindUsagesProcessPresentation myProcessPresentation;
-    private UsageViewManager.UsageViewStateListener myListener;
+    private UsageViewStateListener myListener;
 
     public SearchForUsagesRunnable(final UsageViewImpl[] usageView,
-                   final UsageViewPresentation presentation,
-                   final UsageTarget[] searchFor,
-                   final Factory<UsageSearcher> searcherFactory,
-                   FindUsagesProcessPresentation processPresentation,
-                   final UsageViewManager.UsageViewStateListener listener) {
+                                   final UsageViewPresentation presentation,
+                                   final UsageTarget[] searchFor,
+                                   final Factory<UsageSearcher> searcherFactory,
+                                   FindUsagesProcessPresentation processPresentation,
+                                   final UsageViewManager.UsageViewStateListener listener) {
       myUsageView = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;
@@ -279,7 +280,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
       }
 
       if (myListener != null) {
-        myListener.findingUsagesFinished();
+        myListener.findingUsagesFinished(myUsageView[0]);
       }
     }
   }
