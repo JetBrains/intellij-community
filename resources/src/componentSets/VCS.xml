@@ -51,6 +51,9 @@
       <implementation-class>com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings</implementation-class>
+    </component>
   </project-components>
 
   <module-components>

@@ -29,6 +29,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
+import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -289,7 +291,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                  final AbstractVcs abstractVcs,
                                  final Object checkinParameters,
                                  final ArrayList<VcsException> exceptions) {
-    Collection<VirtualFile> roots = ((CheckinProjectPanelImpl)checkinProjectPanel).getRoots();
+    Collection<VirtualFile> roots = (checkinProjectPanel).getRoots();
     Collection<VirtualFile> correspondingRoots = new ArrayList<VirtualFile>();
     for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
       VirtualFile virtualFile = iterator.next();
@@ -433,6 +435,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       showError(new VcsException(e), "Diff");
     }
 
+  }
+
+  public void showChangesBrowser(VersionsProvider versionsProvider) {
+    new ChangesBrowser(myProject, versionsProvider).show();
   }
 
   private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
