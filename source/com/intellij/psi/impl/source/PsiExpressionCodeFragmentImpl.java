@@ -13,7 +13,7 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
                                        boolean isPhysical,
                                        String name,
                                        CharSequence text) {
-    super(project, JavaElementType.EXPRESSION_STATEMENT, isPhysical, name, text);
+    super(project, JavaElementType.EXPRESSION_TEXT, isPhysical, name, text);
   }
 
   public PsiExpression getExpression() {

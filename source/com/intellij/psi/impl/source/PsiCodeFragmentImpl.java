@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.ICodeFragmentElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -171,7 +172,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
 
     IElementType i = myContentElementType;
-    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
+    if (i instanceof ICodeFragmentElementType) {
       return true;
     } else {
       {
