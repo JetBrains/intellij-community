@@ -65,7 +65,7 @@ public class FormatterUtil {
     }
     final CompositeElement treeParent = element.getTreeParent();
 
-    if (treeParent == null || treeParent.getElementType() == fileElementType) {
+    if (treeParent == null || treeParent.getTreeParent() == null || treeParent.getElementType() == fileElementType) {
       return element;
     } else {
       return getWsCandidate(treeParent, fileElementType);
