@@ -26,6 +26,12 @@ public class PropertiesGrouper implements Grouper{
         }
       }
     }
+    for (Iterator<Group> iterator = result.keySet().iterator(); iterator.hasNext();) {
+      PropertyGroup group = (PropertyGroup)iterator.next();
+      if (!group.isComplete()) {
+        iterator.remove();
+      }
+    }
     return result.values();
   }
 

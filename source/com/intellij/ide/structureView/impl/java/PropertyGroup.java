@@ -1,17 +1,17 @@
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Icons;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 
 import javax.swing.*;
 
@@ -19,37 +19,45 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   private final String myPropertyName;
   private final PsiType myPropertyType;
 
-  private PsiField myField;
-  private PsiMethod myGetter;
-  private PsiMethod mySetter;
+  private SmartPsiElementPointer myFieldPointer;
+  private SmartPsiElementPointer myGetterPointer;
+  private SmartPsiElementPointer mySetterPointer;
+  private final boolean myIsStatic;
   public static final Icon PROPERTY_READ_ICON = loadIcon("/nodes/propertyRead.png");
   public static final Icon PROPERTY_READ_STATIC_ICON = loadIcon("/nodes/propertyReadStatic.png");
   public static final Icon PROPERTY_WRITE_ICON = loadIcon("/nodes/propertyWrite.png");
   public static final Icon PROPERTY_WRITE_STATIC_ICON = loadIcon("/nodes/propertyWriteStatic.png");
   public static final Icon PROPERTY_READ_WRITE_ICON = loadIcon("/nodes/propertyReadWrite.png");
   public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = loadIcon("/nodes/propertyReadWriteStatic.png");
+  private final Project myProject;
 
-  private PropertyGroup(String propertyName, PsiType propertyType) {
+  private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, Project project) {
     myPropertyName = propertyName;
     myPropertyType = propertyType;
+    myIsStatic = isStatic;
+    myProject = project;
   }
 
   public static final PropertyGroup createOn(PsiElement object) {
     if (object instanceof PsiField) {
       PsiField field = ((PsiField)object);
-      PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field.getProject(), field), field.getType());
+      PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field.getProject(), field), field.getType(),
+                                              field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
       group.setField(field);
       return group;
     }
     else if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;
       if (PropertyUtil.isSimplePropertyGetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameByGetter(method), method.getReturnType());
+        PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameByGetter(method), method.getReturnType(),
+                                                method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setGetter(method);
         return group;
       }
       else if (PropertyUtil.isSimplePropertySetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType());
+        PropertyGroup group =
+          new PropertyGroup(PropertyUtil.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
+                            method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setSetter(method);
         return group;
       }
@@ -59,8 +67,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public boolean contains(TreeElement object) {
     if (object instanceof JavaClassTreeElementBase){
-      PropertyGroup objectGroup = createOn(((JavaClassTreeElementBase)object).getElement());
-      return equals(objectGroup);
+      return equals(createOn(((JavaClassTreeElementBase)object).getElement()));
     }
     return false;
   }
@@ -70,7 +77,28 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   }
 
   public Icon getIcon(boolean open) {
-    return Icons.PROPERTY_ICON;
+    if (isStatic()) {
+      if (getGetter() != null && getSetter() != null) {
+        return PROPERTY_READ_WRITE_STATIC_ICON;
+      } else if (getGetter() != null) {
+        return PROPERTY_READ_STATIC_ICON;
+      } else {
+        return PROPERTY_WRITE_STATIC_ICON;
+      }
+    } else {
+      if (getGetter() != null && getSetter() != null) {
+        return PROPERTY_READ_WRITE_ICON;
+      } else if (getGetter() != null) {
+        return PROPERTY_READ_ICON;
+      } else {
+        return PROPERTY_WRITE_ICON;
+      }
+    }
+
+  }
+
+  private boolean isStatic() {
+    return myIsStatic;
   }
 
   public String getLocationString() {
@@ -85,6 +113,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     return myPropertyName;
   }
 
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PropertyGroup)) return false;
@@ -93,16 +122,21 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
     if (myPropertyName != null ? !myPropertyName.equals(propertyGroup.myPropertyName) : propertyGroup.myPropertyName != null) return false;
     if (myPropertyType != null ? !myPropertyType.equals(propertyGroup.myPropertyType) : propertyGroup.myPropertyType != null) return false;
-
+    if (myIsStatic != propertyGroup.myIsStatic) return false;
     return true;
   }
+
+
 
   public int hashCode() {
     int result;
     result = (myPropertyName != null ? myPropertyName.hashCode() : 0);
     result = 29 * result + (myPropertyType != null ? myPropertyType.hashCode() : 0);
+    result = 29 * result + (myIsStatic ? 1 : 0);
     return result;
   }
+
+
 
   public Object getValue() {
     return this;
@@ -114,14 +148,14 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public int getAccessLevel() {
     int result = PsiUtil.ACCESS_LEVEL_PRIVATE;
-    if (myGetter != null) {
-      result = Math.max(result, PsiUtil.getAccessLevel(myGetter.getModifierList()));
+    if (getGetter() != null) {
+      result = Math.max(result, PsiUtil.getAccessLevel(getGetter().getModifierList()));
     }
-    if (mySetter != null) {
-      result = Math.max(result, PsiUtil.getAccessLevel(mySetter.getModifierList()));
+    if (getSetter() != null) {
+      result = Math.max(result, PsiUtil.getAccessLevel(getSetter().getModifierList()));
     }
-    if (myField != null) {
-      result = Math.max(result, PsiUtil.getAccessLevel(myField.getModifierList()));
+    if (getField() != null) {
+      result = Math.max(result, PsiUtil.getAccessLevel(getField().getModifierList()));
     }
     return result;
   }
@@ -135,27 +169,27 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   }
 
   public void setField(PsiField field) {
-    myField = field;
+    myFieldPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(field);
   }
 
   public void setGetter(PsiMethod getter) {
-    myGetter = getter;
+    myGetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(getter);
   }
 
   public void setSetter(PsiMethod setter) {
-    mySetter = setter;
+    mySetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(setter);
   }
 
   public PsiField getField() {
-    return myField;
+    return (PsiField)(myFieldPointer == null ? null : myFieldPointer.getElement());
   }
 
   public PsiMethod getGetter() {
-    return myGetter;
+    return (PsiMethod)(myGetterPointer == null ? null : myGetterPointer.getElement());
   }
 
   public PsiMethod getSetter() {
-    return mySetter;
+    return (PsiMethod)(mySetterPointer == null ? null : mySetterPointer.getElement());
   }
 
   public void copyAccessorsFrom(PropertyGroup group) {
@@ -186,5 +220,9 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     if (!element.isValid()) return false;
     if (!(element instanceof PsiDocCommentOwner)) return false;
     return ((PsiDocCommentOwner)element).isDeprecated();
+  }
+
+  public boolean isComplete() {
+    return getGetter() != null || getSetter() != null;
   }
 }
