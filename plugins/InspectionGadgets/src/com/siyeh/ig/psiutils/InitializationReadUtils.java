@@ -181,8 +181,7 @@ public class InitializationReadUtils {
         if (expressionMustAssignVariable(field, condition, checkedMethods)) {
             return true;
         }
-        final PsiExpression test = condition;
-        if (BoolUtils.isTrue(test)) {
+        if (BoolUtils.isTrue(condition)) {
             final PsiStatement body = whileStatement.getBody();
             if (statementMustAssignVariable(field, body, checkedMethods)) {
                 return true;

@@ -83,16 +83,20 @@ public class ExceptionUtils {
         public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiMethod method = expression.resolveMethod();
-            if (method != null) {
-                final PsiReferenceList throwsList = method.getThrowsList();
-                final PsiJavaCodeReferenceElement[] list = throwsList.getReferenceElements();
-                for (int i = 0; i < list.length; i++) {
-                    final PsiJavaCodeReferenceElement referenceElement = list[i];
-                    final PsiClass exceptionClass = (PsiClass) referenceElement.resolve();
-                    if (exceptionClass != null) {
-                        final PsiClassType exceptionType = m_factory.createType(exceptionClass);
-                        m_exceptionsThrown.add(exceptionType);
-                    }
+            if (method == null) {
+                return;
+            }
+            final PsiReferenceList throwsList = method.getThrowsList();
+            if (throwsList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] list = throwsList.getReferenceElements();
+            for (int i = 0; i < list.length; i++) {
+                final PsiJavaCodeReferenceElement referenceElement = list[i];
+                final PsiClass exceptionClass = (PsiClass) referenceElement.resolve();
+                if (exceptionClass != null) {
+                    final PsiClassType exceptionType = m_factory.createType(exceptionClass);
+                    m_exceptionsThrown.add(exceptionType);
                 }
             }
         }

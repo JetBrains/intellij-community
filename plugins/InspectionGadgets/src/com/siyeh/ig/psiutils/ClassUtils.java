@@ -75,7 +75,7 @@ public class ClassUtils {
     }
 
     public static boolean isPrimitive(PsiType type) {
-        return
+        return  (type!=null) &&(
                 type.equals(PsiType.BOOLEAN) ||
                 type.equals(PsiType.LONG) ||
                 type.equals(PsiType.INT) ||
@@ -83,16 +83,16 @@ public class ClassUtils {
                 type.equals(PsiType.CHAR) ||
                 type.equals(PsiType.BYTE) ||
                 type.equals(PsiType.FLOAT) ||
-                type.equals(PsiType.DOUBLE);
+                type.equals(PsiType.DOUBLE));
     }
 
     public static boolean isIntegral(PsiType type) {
-        return
+        return (type != null) && ( 
                 type.equals(PsiType.LONG) ||
                 type.equals(PsiType.INT) ||
                 type.equals(PsiType.SHORT) ||
                 type.equals(PsiType.CHAR) ||
-                type.equals(PsiType.BYTE);
+                type.equals(PsiType.BYTE));
     }
 
     public static boolean isImmutable(PsiType type) {
@@ -159,9 +159,7 @@ public class ClassUtils {
     }
 
     public static PsiClass getContainingClass(PsiElement aClass) {
-        final PsiClass parentClass =
-                (PsiClass) PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
-        return parentClass;
+        return (PsiClass) PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
 
     public static PsiClass getOutermostContainingClass(PsiClass aClass) {

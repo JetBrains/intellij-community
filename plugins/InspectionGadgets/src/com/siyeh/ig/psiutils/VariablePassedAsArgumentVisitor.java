@@ -56,14 +56,13 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor 
         }
         for (int i = 0; i < args.length; i++) {
             final PsiExpression arg = args[i];
-            if (arg instanceof PsiReferenceExpression) {
+            if (arg!=null && arg instanceof PsiReferenceExpression) {
                 final PsiElement referent = ((PsiReference) arg).resolve();
-                if (referent.equals(variable)) {
+                if (referent!=null && referent.equals(variable)) {
                     passed = true;
                 }
             }
         }
-
     }
 
     public boolean isPassed() {

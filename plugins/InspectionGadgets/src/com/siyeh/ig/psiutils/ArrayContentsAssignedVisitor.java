@@ -25,7 +25,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
     public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
         super.visitAssignmentExpression(assignment);
         final PsiJavaToken operationSign = assignment.getOperationSign();
-        if (operationSign.getTokenType() != JavaTokenType.EQ) {
+        if (!(operationSign.getTokenType() == JavaTokenType.EQ)) {
             return;
         }
         final PsiExpression arg = assignment.getLExpression();

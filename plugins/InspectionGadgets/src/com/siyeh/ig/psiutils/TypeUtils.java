@@ -44,6 +44,10 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
+        return typeInherits(type, typeName);
+    }
+
+    private static boolean typeInherits(final PsiType type, String typeName) {
         final String text = type.getCanonicalText();
         if(typeName.equals(text))
         {
@@ -51,8 +55,7 @@ public class TypeUtils {
         }
         final PsiType[] superTypes = type.getSuperTypes();
         for (int i = 0; i < superTypes.length; i++) {
-            final String superTypeName = superTypes[i].getCanonicalText();
-            if (typeName.equals(superTypeName)) {
+            if (typeInherits(superTypes[i], typeName)) {
                 return true;
             }
         }

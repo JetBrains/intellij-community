@@ -1,6 +1,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 
 public class SideEffectChecker {
     private SideEffectChecker() {
@@ -50,8 +51,9 @@ public class SideEffectChecker {
         public void visitPostfixExpression(PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign.getTokenType() == JavaTokenType.PLUSPLUS ||
-                    sign.getTokenType() == JavaTokenType.PLUSPLUS) {
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
+                    tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 m_mayHaveSideEffects = true;
             }
         }
@@ -59,8 +61,9 @@ public class SideEffectChecker {
         public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign.getTokenType() == JavaTokenType.PLUSPLUS ||
-                    sign.getTokenType() == JavaTokenType.PLUSPLUS) {
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
+                    tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 m_mayHaveSideEffects = true;
             }
         }

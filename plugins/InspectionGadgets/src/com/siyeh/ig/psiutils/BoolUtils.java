@@ -16,7 +16,7 @@ public class BoolUtils {
         }
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiJavaToken sign = prefixExp.getOperationSign();
-        return sign.getTokenType() == JavaTokenType.EXCL;
+        return !(sign.getTokenType() != JavaTokenType.EXCL);
     }
 
     private static PsiExpression getNegated(PsiExpression exp) {

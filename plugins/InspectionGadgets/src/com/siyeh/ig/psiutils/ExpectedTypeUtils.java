@@ -2,12 +2,13 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 
 public class ExpectedTypeUtils {
 
     private ExpectedTypeUtils() {
+        super();
     }
 
     public static PsiType findExpectedType(PsiExpression exp) {
@@ -43,30 +44,80 @@ public class ExpectedTypeUtils {
                 }
             }
 
+        } else if (context instanceof PsiArrayInitializerExpression) {
+            final PsiArrayInitializerExpression initializer = (PsiArrayInitializerExpression) context;
+            final PsiArrayType arrayType = (PsiArrayType) initializer.getType();
+            if(arrayType!=null)
+            {
+                return arrayType.getComponentType();
+            }
+        }else if (context instanceof PsiArrayAccessExpression) {
+            final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression) context;
+            if(accessExpression.getIndexExpression().equals(wrappedExp))
+            {
+                return PsiType.INT;
+            }
         } else if (context instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignment = (PsiAssignmentExpression) context;
             final PsiExpression rExpression = assignment.getRExpression();
             if (rExpression != null) {
                 if (rExpression.equals(wrappedExp)) {
                     final PsiExpression lExpression = assignment.getLExpression();
-                  PsiType lType = lExpression.getType();
-                  if (lType == null) return null;
-                  // e.g. String += any type
-                  if (TypeUtils.isJavaLangString(lType) && JavaTokenType.PLUSEQ.equals(assignment.getOperationSign().getTokenType())) {
-                    return rExpression.getType();
-                  }
-                  return lType;
+                    PsiType lType = lExpression.getType();
+                    if (lType == null) return null;
+                    // e.g. String += any type
+                    if (TypeUtils.isJavaLangString(lType) && JavaTokenType.PLUSEQ.equals(assignment.getOperationSign().getTokenType())) {
+                      return rExpression.getType();
+                    }
+                    return lType;
                 }
+            }
+        } else if (context instanceof PsiDeclarationStatement) {
+            final PsiDeclarationStatement assignment = (PsiDeclarationStatement) context;
+            final PsiElement[] declaredElements = assignment.getDeclaredElements();
+            for (int i = 0; i < declaredElements.length; i++) {
+                if (declaredElements[i] instanceof PsiVariable) {
+                    final PsiVariable declaredElement = (PsiVariable) declaredElements[i];
+                    final PsiExpression initializer = declaredElement.getInitializer();
+                    if (wrappedExp.equals(initializer)) {
+                        return declaredElement.getType();
+                    }
+                }
+            }
+        }else if (context instanceof PsiField) {
+            final PsiField field = (PsiField) context;
+            final PsiExpression initializer = field.getInitializer();
+            if (wrappedExp.equals(initializer)) {
+                return field.getType();
             }
         } else if (context instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) context;
             final PsiJavaToken sign = binaryExp.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
             final PsiType type = binaryExp.getType();
             if (TypeUtils.isJavaLangString(type)) {
                 return null;
             }
-            if (isArithmeticOperation(sign)) {
+            if (isArithmeticOperation(tokenType)) {
                 return type;
+            } else if (isEqualityOperation(tokenType)) {
+                final PsiExpression lhs = binaryExp.getLOperand();
+                if (lhs == null) {
+                    return null;
+                }
+                final PsiType lhsType = lhs.getType();
+                if (ClassUtils.isPrimitive(lhsType)) {
+                    return lhsType;
+                }
+                final PsiExpression rhs = binaryExp.getROperand();
+                if (rhs == null) {
+                    return null;
+                }
+                final PsiType rhsType = rhs.getType();
+                if (ClassUtils.isPrimitive(rhsType)) {
+                    return rhsType;
+                }
+                return null;
             } else {
                 return null;
             }
@@ -85,15 +136,15 @@ public class ExpectedTypeUtils {
             return conditional.getType();
         } else if (context instanceof PsiExpressionList) {
             final PsiExpressionList expList = (PsiExpressionList) context;
-            final PsiMethod method = findCalledMethod(expList);
+            final PsiMethod method = ExpectedTypeUtils.findCalledMethod(expList);
             if (method == null) {
                 return null;
             }
-            final int parameterPosition = getParameterPosition(expList, wrappedExp);
-            return getTypeOfParemeter(method, parameterPosition);
+            final int parameterPosition = ExpectedTypeUtils.getParameterPosition(expList, wrappedExp);
+            return ExpectedTypeUtils.getTypeOfParemeter(method, parameterPosition);
         } else if (context instanceof PsiReturnStatement) {
             final PsiReturnStatement psiReturnStatement = (PsiReturnStatement) context;
-            final PsiMethod method = findEnclosingPsiMethod(psiReturnStatement);
+            final PsiMethod method = ExpectedTypeUtils.findEnclosingPsiMethod(psiReturnStatement);
             if (method == null) {
                 return null;
             }
@@ -114,13 +165,18 @@ public class ExpectedTypeUtils {
         return null;
     }
 
-    private static boolean isArithmeticOperation(PsiJavaToken javaToken) {
-      IElementType sign = javaToken.getTokenType();
-      return JavaTokenType.PLUS.equals(sign)
-                || JavaTokenType.MINUS.equals(sign)
-                || JavaTokenType.ASTERISK.equals(sign)
-                || JavaTokenType.DIV.equals(sign) ||
-             JavaTokenType.PERC.equals(sign);
+    private static boolean isArithmeticOperation(IElementType sign) {
+        return sign.equals(JavaTokenType.PLUS)
+                || sign.equals(JavaTokenType.MINUS)
+                || sign.equals(JavaTokenType.ASTERISK)
+                || sign.equals(JavaTokenType.DIV) ||
+                sign.equals(JavaTokenType.PERC);
+    }
+
+
+    private static boolean isEqualityOperation(IElementType sign) {
+        return sign.equals(JavaTokenType.EQEQ)
+                || sign.equals(JavaTokenType.NE);
     }
 
     private static int getParameterPosition(PsiExpressionList expressionList, PsiExpression exp) {
@@ -136,11 +192,25 @@ public class ExpectedTypeUtils {
     private static PsiType getTypeOfParemeter(PsiMethod psiMethod, int parameterPosition) {
         final PsiParameterList paramList = psiMethod.getParameterList();
         final PsiParameter[] parameters = paramList.getParameters();
-        if (parameterPosition >= parameters.length || parameterPosition < 0) {
+        if(parameterPosition < 0) {
             return null;
+        }
+        if (parameterPosition >= parameters.length) {
+            final int lastParamPosition = parameters.length - 1;
+            if(lastParamPosition<0)
+            return null;
+            final PsiParameter lastParameter = parameters[lastParamPosition];
+            if(lastParameter.isVarArgs())
+            {
+                return ((PsiArrayType)lastParameter.getType()).getComponentType();
+            }
         }
 
         final PsiParameter param = parameters[parameterPosition];
+        if(param.isVarArgs())
+        {
+            return ((PsiArrayType) param.getType()).getComponentType();
+        }
         return param.getType();
     }
 
@@ -159,8 +229,7 @@ public class ExpectedTypeUtils {
         final PsiElement parent = expList.getParent();
         if (parent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
-            final PsiMethod method = methodCall.resolveMethod();
-            return method;
+            return methodCall.resolveMethod();
         } else if (parent instanceof PsiNewExpression) {
             final PsiNewExpression psiNewExpression = (PsiNewExpression) parent;
             return psiNewExpression.resolveMethod();

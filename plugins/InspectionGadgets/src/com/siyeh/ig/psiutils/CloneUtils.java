@@ -1,6 +1,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +9,6 @@ import java.util.Set;
 public class CloneUtils {
     private CloneUtils() {
         super();
-
     }
 
     public static boolean isCloneable(PsiClass aClass) {
@@ -55,9 +55,14 @@ public class CloneUtils {
         if (parameters.length != 0) {
             return false;
         }
-        final PsiType returnType = method.getReturnType();
-        if (!TypeUtils.isJavaLangObject(returnType)) {
-            return false;
+        final PsiManager manager = method.getManager();
+        final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+        if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                languageLevel.equals(LanguageLevel.JDK_1_4)) {    //for 1.5 and after, clone may be covariant
+            final PsiType returnType = method.getReturnType();
+            if (!TypeUtils.isJavaLangObject(returnType)) {
+                return false;
+            }
         }
         return true;
     }
