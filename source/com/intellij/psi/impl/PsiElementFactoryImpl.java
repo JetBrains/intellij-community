@@ -145,11 +145,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
     }
-    final CompositeElement treeElement = (CompositeElement)ChangeUtil.copyToElement(createTypeElement(type));
-    new DummyHolder(myManager, treeElement, null);
-    final ASTNode referenceChild = treeElement.getFirstChildNode();
-    LOG.assertTrue(referenceChild.getElementType() == ElementType.JAVA_CODE_REFERENCE);
-    return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(referenceChild);
+
+    return new LightClassReference(myManager, type.getPresentableText(), type.resolve());
   }
 
   public PsiField createField(String name, PsiType type) throws IncorrectOperationException {
