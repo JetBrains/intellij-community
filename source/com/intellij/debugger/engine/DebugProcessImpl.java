@@ -16,12 +16,19 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.AutoRendererNode;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.DescriptorHistoryManager;
-import com.intellij.debugger.ui.impl.watch.render.NodeRendererManagerImpl;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -46,6 +53,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.InternalIterator;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -105,7 +113,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
                                 : EventRequest.SUSPEND_EVENT_THREAD;
 
   private final DescriptorHistoryManager myDescriptorHistoryManager;
-  private final NodeRendererManagerImpl myNodeRendererManager = new NodeRendererManagerImpl(this);
+
+  private final List<AutoRendererNode> myRenderers = new ArrayList<AutoRendererNode>();
+  private final Map<Type, NodeRenderer>  myNodeRederersMap = new com.intellij.util.containers.HashMap<Type, NodeRenderer>();
+  private final NodeRendererSettingsListener  mySettingsListener = new NodeRendererSettingsListener() {
+      public void renderersChanged() {
+        myNodeRederersMap.clear();
+        myRenderers.clear();
+        loadRenderers();
+      }
+    };
+
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   DebuggerManagerThreadImpl myDebuggerManagerThread;
@@ -120,7 +138,69 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myRequestManager = new RequestManagerImpl(this);
     myDescriptorHistoryManager = new DescriptorHistoryManagerImpl(project);
     setSuspendPolicy(DebuggerSettings.getInstance().isSuspendAllThreads());
+    NodeRendererSettings.getInstance().addListener(mySettingsListener);
+    loadRenderers();
   }
+
+  private void loadRenderers() {
+    getManagerThread().invoke(new DebuggerCommandImpl() {
+      protected void action() throws Exception {
+        if(ViewsGeneralSettings.getInstance().USE_ALTERNATIVE_RENDERERS) {
+          final NodeRendererSettings settings = ((NodeRendererSettings) NodeRendererSettings.getInstance());
+          settings.iterateRenderers(new InternalIterator<AutoRendererNode>() {
+            public boolean visit(AutoRendererNode rendererNode) {
+              if(rendererNode.getRenderer() instanceof ValueLabelRenderer) {
+                myRenderers.add(rendererNode);
+              }
+              return true;
+            }
+          });
+        }
+      }
+    });
+  }
+
+  public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final Value value = descriptor.getValue();
+    Type type = value != null ? value.type() : null;
+
+    NodeRenderer renderer = myNodeRederersMap.get(type);
+    if(renderer == null) {
+      for (Iterator<AutoRendererNode> iterator = myRenderers.iterator(); iterator.hasNext();) {
+        final AutoRendererNode nodeAutoRenderer = iterator.next();
+        if(nodeAutoRenderer.isApplicable(type, false)) {
+          renderer = nodeAutoRenderer.getRenderer();
+          break;
+        }
+      }
+      if (renderer == null) {
+        renderer = getDefaultRenderer(type);
+      }
+      myNodeRederersMap.put(type, renderer);
+    }
+
+    return renderer;
+  }
+
+  public NodeRenderer getDefaultRenderer(Type type) {
+    final NodeRendererSettings settings = NodeRendererSettings.getInstance();
+
+    final PrimitiveRenderer primitiveRenderer = (PrimitiveRenderer)settings.getPrimitiveRenderer();
+    if(primitiveRenderer.isApplicable(type)) {
+      return primitiveRenderer;
+    }
+
+    final ArrayRenderer arrayRenderer = (ArrayRenderer)settings.getArrayRenderer();
+    if(arrayRenderer.isApplicable(type)) {
+      return arrayRenderer;
+    }
+
+    final ClassRenderer classRenderer = (ClassRenderer)settings.getClassRenderer();
+    LOG.assertTrue(classRenderer.isApplicable(type), type.name());
+    return classRenderer;
+  }
+
 
   protected void commitVM(VirtualMachine vm) {
     LOG.assertTrue(myState == STATE_INITIAL, "State is invalid " + myState);
@@ -647,14 +727,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     }
     else if (e instanceof CantRunException) {
-      message = "Error Launching Debuggee.\n" + ((CantRunException)e).getMessage();
+      message = "Error Launching Debuggee.\n" + e.getMessage();
     }
     else if (e instanceof VMDisconnectedException) {
       message = "VM Disconnected.\n" + "Target virtual machine closed connection.";
     }
     else if (e instanceof UnknownHostException) {
       message = "Cannot Connect to Remote Process.\n" +
-                "Host unknown: " + ((UnknownHostException)e).getMessage();
+                "Host unknown: " + e.getMessage();
     }
     else if (e instanceof IOException) {
       IOException e1 = (IOException)e;
@@ -671,22 +751,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
       message = buf.toString();
     }
     else if (e instanceof ExecutionException) {
-      message = ((ExecutionException)e).getMessage();
+      message = e.getMessage();
     }
     else  {
-      Exception e1 = (Exception)e;
       message = "Error Connecting to Remote Process.\n" +
-                "Exception occured: " + e1.getClass().getName() + "\n" +
-                "Exception message: " + e1.getMessage();
+                "Exception occured: " + e.getClass().getName() + "\n" +
+                "Exception message: " + e.getMessage();
       if (LOG.isDebugEnabled()) {
-        LOG.debug(e1);
+        LOG.debug(e);
       }
     }
     return message;
-  }
-
-  public NodeRendererManagerImpl getNodeRendererManager() {
-    return myNodeRendererManager;
   }
 
   public DescriptorHistoryManager getDescriptorHistoryManager() {
@@ -715,7 +790,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     LOG.assertTrue(!isAttached());
-    myNodeRendererManager.dispose();
+    NodeRendererSettings.getInstance().addListener(mySettingsListener);
     myDescriptorHistoryManager.dispose();
   }
 

@@ -4,7 +4,8 @@
  */
 package com.intellij.debugger.ui.impl.nodes;
 
-import com.intellij.debugger.ui.impl.watch.render.ArrayRenderer;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ArrayReference;
 

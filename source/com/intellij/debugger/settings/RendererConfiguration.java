@@ -1,15 +1,11 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.impl.watch.render.ArrayRenderer;
-import com.intellij.debugger.ui.impl.watch.render.ClassRenderer;
-import com.intellij.debugger.ui.impl.watch.render.DefaultRendererProvider;
-import com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
 
@@ -17,42 +13,27 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 8:00:25 PM
- */
-public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cloneable, NamedJDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettingsImpl");
+public class RendererConfiguration implements Cloneable, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
   private static final String AUTO_NODE = "node";
 
-  private static final int VERSION = 3;
+  private static final int VERSION = 5;
 
-  private EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private List<AutoRendererNode> myRepresentationNodes = new ArrayList<AutoRendererNode>();
+  private final NodeRendererSettings myRendererSettings;
 
-  public String getComponentName() {
-    return "NodeRendererSettings";
+  protected RendererConfiguration(NodeRendererSettings rendererSettings) {
+    myRendererSettings = rendererSettings;
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public String getExternalFileName() {
-    return "debugger.renderers";
-  }
-
-  public NodeRendererSettingsImpl clone() {
-    NodeRendererSettingsImpl result = null;
+  public RendererConfiguration clone() {
+    RendererConfiguration result = null;
     try {
-      result = (NodeRendererSettingsImpl)super.clone();
+      result = (RendererConfiguration)super.clone();
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
-    result.myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
     result.myRepresentationNodes = new ArrayList<AutoRendererNode>();
     for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
       AutoRendererNode autoRendererNode = iterator.next();
@@ -63,17 +44,9 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
   }
 
   public boolean equals(Object o) {
-    if(!(o instanceof NodeRendererSettingsImpl)) return false;
+    if(!(o instanceof RendererConfiguration)) return false;
 
-    return DebuggerUtilsEx.externalizableEqual(this, (NodeRendererSettingsImpl)o);
-  }
-
-  public void addListener(NodeRendererSettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeListener(NodeRendererSettingsListener listener) {
-    myDispatcher.removeListener(listener);
+    return DebuggerUtilsEx.externalizableEqual(this, (RendererConfiguration)o);
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -107,13 +80,11 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
     for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
       Element nodeRepresentation = iterator.next();
       try {
-        addNode(AutoRendererNode.read(nodeRepresentation));
+        addNode(AutoRendererNode.read(nodeRepresentation, myRendererSettings));
       } catch (Exception e) {
         LOG.debug(e);
       }
     }
-
-    myDispatcher.getMulticaster().renderersChanged();
   }
 
   private void addNode(AutoRendererNode nodeRepresentation) {
@@ -129,26 +100,15 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
     myRepresentationNodes.remove(renderer);
   }
 
-  public List<NodeRenderer> getAllRenderers() {
+  public List<NodeRenderer> getRenderers() {
     List<NodeRenderer> result = new ArrayList<NodeRenderer>();
 
     for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
       AutoRendererNode autoRendererNode = iterator.next();
       result.add(autoRendererNode.getRenderer());
     }
-    final DefaultRendererProvider defaultRendererProvider = DefaultRendererProvider.getInstance();
-    result.add(defaultRendererProvider.getArrayRenderer());
-    result.add(defaultRendererProvider.getClassRenderer());
-    result.add(defaultRendererProvider.getPrimitiveRenderer());
 
     return result;
-  }
-
-  public boolean isDefault(Renderer renderer) {
-    final DefaultRendererProvider defaultRendererProvider = DefaultRendererProvider.getInstance();
-    return renderer == defaultRendererProvider.getArrayRenderer() ||
-           renderer == defaultRendererProvider.getClassRenderer() ||
-           renderer == defaultRendererProvider.getPrimitiveRenderer();
   }
 
   public List<AutoRendererNode> getAutoNodes() {
@@ -164,17 +124,6 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
 
   public void setAutoNodes(List<AutoRendererNode> nodes) {
     myRepresentationNodes = nodes;
-    fireRenderersChanged();
-  }  
-
-  public List<NodeRenderer> getRenderersByProvider(RendererProvider rendererProvider) {
-    List<NodeRenderer> result = new ArrayList<NodeRenderer>();
-
-    for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      AutoRendererNode autoRendererNode = iterator.next();
-      if(autoRendererNode.getRenderer().getRendererProvider() == rendererProvider) result.add(autoRendererNode.getRenderer());
-    }
-    return result;
   }
 
   public void iterateRenderers(InternalIterator<AutoRendererNode> iterator) {
@@ -182,25 +131,5 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
       AutoRendererNode autoRendererNode = it.next();
       iterator.visit(autoRendererNode);
     }
-  }
-
-  public PrimitiveRenderer getPrimitiveRenderer() {
-    return DefaultRendererProvider.getInstance().getPrimitiveRenderer();
-  }
-
-  public ArrayRenderer getArrayRenderer() {
-    return DefaultRendererProvider.getInstance().getArrayRenderer();
-  }
-
-  public ClassRenderer getClassRenderer() {
-    return DefaultRendererProvider.getInstance().getClassRenderer();
-  }
-
-  public void fireRenderersChanged() {
-    myDispatcher.getMulticaster().renderersChanged();
-  }
-
-  public static NodeRendererSettingsImpl getInstanceEx() {
-    return (NodeRendererSettingsImpl)getInstance();
   }
 }

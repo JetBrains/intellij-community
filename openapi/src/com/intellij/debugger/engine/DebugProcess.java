@@ -4,15 +4,12 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.DebugProcessListener;
-import com.intellij.debugger.engine.SuspendContext;
+import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.requests.RequestManager;
-import com.intellij.debugger.ui.tree.render.NodeRendererManager;
-import com.intellij.debugger.PositionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,8 +29,6 @@ public interface DebugProcess {
   <T> void putUserData(Key<T> key, T value);
 
   Project getProject();
-
-  NodeRendererManager getNodeRendererManager();
 
   RequestManager getRequestsManager();
 
@@ -78,4 +73,5 @@ public interface DebugProcess {
                               List paramList) throws EvaluateException;
 
   boolean isAttached();
+
 }

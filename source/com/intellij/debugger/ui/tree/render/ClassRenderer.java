@@ -1,4 +1,4 @@
-package com.intellij.debugger.ui.impl.watch.render;
+package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -9,7 +9,6 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -31,8 +30,8 @@ import java.util.List;
  * Date: Sep 17, 2003
  * Time: 2:04:00 PM
  */
-public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassRenderer");
+public class ClassRenderer extends NodeRendererImpl{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
   
   public static final String UNIQUE_ID = "ClassRenderer";
 
@@ -42,16 +41,27 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
   public boolean SHOW_STATIC_FINAL            = false;
   public boolean CHILDREN_PHYSICAL            = true;
 
-  public ClassRenderer(RendererProvider provider) {
-    super(provider, UNIQUE_ID);
+  public ClassRenderer() {
+    myProperties.setEnabled(true);
+  }
+
+  public String getUniqueId() {
+    return UNIQUE_ID;
+  }
+
+  public boolean isEnabled() {
+    return myProperties.isEnabled();
+  }
+
+  public void setEnabled(boolean enabled) {
+    myProperties.setEnabled(enabled);
   }
 
   public ClassRenderer clone() {
     return (ClassRenderer) super.clone();
   }
 
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
-    throws EvaluateException {
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)  throws EvaluateException {
     return calcLabel(descriptor);
   }
 
@@ -181,14 +191,11 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
   }
 
   public boolean isApplicable(Type type) {
-    if(!(type instanceof ReferenceType) || type instanceof ArrayType) {
-      return false;
-    }
-    return super.isApplicable(type);
+    return type instanceof ReferenceType && !(type instanceof ArrayType);
   }
 
   public String getName() {
-    return "Default";
+    return "Object";
   }
 
   public void setName(String text) {

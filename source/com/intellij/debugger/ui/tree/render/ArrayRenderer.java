@@ -1,4 +1,4 @@
-package com.intellij.debugger.ui.impl.watch.render;
+package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -13,7 +13,6 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -37,8 +36,8 @@ import java.util.ListIterator;
  * Date: Sep 18, 2003
  * Time: 3:07:19 PM
  */
-public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ArrayRenderer");
+public class ArrayRenderer extends NodeRendererImpl{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
   
   public static final String UNIQUE_ID = "ArrayRenderer";
 
@@ -47,12 +46,24 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer{
   public int ENTRIES_LIMIT = 100;
   private final static String MORE_ELEMENTS = "...";
 
-  public ArrayRenderer(RendererProvider provider) {
-    super(provider, UNIQUE_ID);
+  public ArrayRenderer() {
+    myProperties.setEnabled(true);
+  }
+
+  public String getUniqueId() {
+    return UNIQUE_ID;
+  }
+
+  public boolean isEnabled() {
+    return myProperties.isEnabled();
+  }
+
+  public void setEnabled(boolean enabled) {
+    myProperties.setEnabled(enabled);
   }
 
   public String getName() {
-    return "Default";
+    return "Array";
   }
 
   public void setName(String text) {
@@ -181,14 +192,6 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer{
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null || !(type instanceof ArrayType)) {
-      return false;
-    }
-
-    if("[]".equals(getClassName())) {
-      return true;
-    }
-
-    return super.isApplicable(type);
+    return (type instanceof ArrayType);
   }
 }

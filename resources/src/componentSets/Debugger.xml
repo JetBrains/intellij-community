@@ -1,19 +1,11 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.debugger.ui.impl.watch.render.DefaultRendererProvider</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.debugger.engine.DebuggerUtils</interface-class>
       <implementation-class>com.intellij.debugger.impl.DebuggerUtilsImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.debugger.ui.tree.render.NodeRendererSettings</interface-class>
-      <implementation-class>com.intellij.debugger.settings.NodeRendererSettingsImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.debugger.ui.tree.render.NodeProviderManager</interface-class>
-      <implementation-class>com.intellij.debugger.settings.NodeProviderManagerImpl</implementation-class>
+      <implementation-class>com.intellij.debugger.settings.NodeRendererSettings</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.debugger.settings.ThreadsViewSettings</implementation-class>
@@ -58,4 +50,12 @@
       <implementation-class>com.intellij.debugger.ui.ValueLookupManager</implementation-class>
     </component>
   </project-components>
+
+  <actions>
+    <group id="CommonViews">
+      <add-to-group group-id="Debugger.Representation" anchor="after" relative-to-action="Debugger.AutoRenderer"/>
+      <action id="Debugger.ShowAllAsHex"     class="com.intellij.debugger.ui.tree.actions.ShowAllAsHex"     text="Hex Array"/>
+      <action id="Debugger.ShowAllAsDecimal" class="com.intellij.debugger.ui.tree.actions.ShowAllAsDecimal" text="Decimal Array"/>
+    </group>
+  </actions>
 </components>

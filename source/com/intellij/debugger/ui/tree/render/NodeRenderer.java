@@ -9,4 +9,8 @@ public interface NodeRenderer extends ChildrenRenderer, ValueLabelRenderer {
   String getName();
 
   void setName(String text);
+
+  boolean isEnabled();
+
+  void setEnabled(boolean enabled);
 }

@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -25,18 +26,23 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
 
   protected ValueLabelRenderer myLabelRenderer;
   protected ChildrenRenderer myChildrenRenderer;
+  private final NodeRendererSettings myRendererSettings;
 
-  public CompoundNodeRenderer(RendererProvider provider, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
-    super(provider, UNIQUE_ID);
+  public CompoundNodeRenderer(NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
+    myRendererSettings = rendererSettings;
     setName(name);
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
   }
 
-  public Renderer clone() {
+  public String getUniqueId() {
+    return UNIQUE_ID;
+  }
+
+  public CompoundNodeRenderer clone() {
     CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
-    renderer.myLabelRenderer    = myLabelRenderer    != null ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
-    renderer.myChildrenRenderer = myChildrenRenderer != null ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
+    renderer.myLabelRenderer    = (myLabelRenderer    != null) ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
+    renderer.myChildrenRenderer = (myChildrenRenderer != null) ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
     return renderer;
   }
 
@@ -78,19 +84,16 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    if(getName() == null) {
-      setName("<unknown>");
-    }
-    List<Element> children = element.getChildren(NodeRendererExternalizer.RENDERER_TAG);
-    myLabelRenderer = (ValueLabelRenderer) NodeRendererExternalizer.readRenderer(children.get(0));
-    myChildrenRenderer = (ChildrenRenderer)   NodeRendererExternalizer.readRenderer(children.get(1));
+    final List<Element> children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
+    myLabelRenderer = (ValueLabelRenderer) myRendererSettings.readRenderer(children.get(0));
+    myChildrenRenderer = (ChildrenRenderer)   myRendererSettings.readRenderer(children.get(1));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Element labelRendererElement = NodeRendererExternalizer.writeRenderer(myLabelRenderer);
+    final Element labelRendererElement = myRendererSettings.writeRenderer(myLabelRenderer);
     element.addContent(labelRendererElement);
-    final Element childrenRendererElement = NodeRendererExternalizer.writeRenderer(myChildrenRenderer);
+    final Element childrenRendererElement = myRendererSettings.writeRenderer(myChildrenRenderer);
     element.addContent(childrenRendererElement);
   }
 }

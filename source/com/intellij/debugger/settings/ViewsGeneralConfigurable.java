@@ -1,9 +1,7 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.ui.impl.watch.render.ClassRenderer;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.StateRestoringCheckBox;
 
 import javax.swing.*;
@@ -15,7 +13,6 @@ import java.awt.*;
  * @author Eugene Belyaev
  */
 public class ViewsGeneralConfigurable implements Configurable {
-  private ViewsGeneralSettings myGeneralSettings;
   private JPanel myPanel;
   private JCheckBox myAutoscrollCheckBox;
   private JCheckBox myShowSyntheticsCheckBox;
@@ -29,7 +26,6 @@ public class ViewsGeneralConfigurable implements Configurable {
   private JCheckBox myAlternativeViews;
 
   public ViewsGeneralConfigurable() {
-    myGeneralSettings = ViewsGeneralSettings.getInstance();
     myShowStaticCheckBox.addChangeListener(new ChangeListener(){
       public void stateChanged(ChangeEvent e) {
         if(myShowStaticCheckBox.isSelected()) {
@@ -40,7 +36,7 @@ public class ViewsGeneralConfigurable implements Configurable {
       }
     });
 
-    myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettingsImpl.getInstanceEx().getArrayRenderer());
+    myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
     myArrayConfigurablePlace.setLayout(new BorderLayout());
     myArrayConfigurablePlace.add(myArrayRendererConfigurable.createComponent());
   }
@@ -63,27 +59,25 @@ public class ViewsGeneralConfigurable implements Configurable {
 
   public void apply() {
     if (myPanel != null) {
-      ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
+      final boolean renderersWereModified = areDefaultRenderersModified();
+      
+      final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
+      generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myAutoscrollCheckBox.isSelected();
+      generalSettings.USE_ALTERNATIVE_RENDERERS = myAlternativeViews.isSelected();
+      generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myHideNullElementsCheckBox.isSelected();
 
-      applyTo(generalSettings);
+      final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+      classRenderer.SORT_ASCENDING = mySortCheckBox.isSelected();
+      classRenderer.SHOW_STATIC = myShowStaticCheckBox.isSelected();
+      classRenderer.SHOW_STATIC_FINAL = myShowStaticFinalCheckBox.isSelectedWhenSelectable();
+      classRenderer.SHOW_SYNTHETICS = myShowSyntheticsCheckBox.isSelected();
 
       myArrayRendererConfigurable.apply();
 
-      generalSettings.fireRendererSettingsChanged();
-     }
-  }
-
-  private void applyTo(ViewsGeneralSettings generalSettings) {
-    generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myAutoscrollCheckBox.isSelected();
-    generalSettings.USE_ALTERNATIVE_RENDERERS = myAlternativeViews.isSelected();
-    generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myHideNullElementsCheckBox.isSelected();
-
-    ClassRenderer classRenderer = (ClassRenderer)NodeRendererSettingsImpl.getInstance().getClassRenderer();
-
-    classRenderer.SORT_ASCENDING           = mySortCheckBox.isSelected();
-    classRenderer.SHOW_STATIC              = myShowStaticCheckBox.isSelected();
-    classRenderer.SHOW_STATIC_FINAL        = myShowStaticFinalCheckBox.isSelectedWhenSelectable();
-    classRenderer.SHOW_SYNTHETICS          = myShowSyntheticsCheckBox.isSelected();
+      if (renderersWereModified) {
+        NodeRendererSettings.getInstance().fireRenderersChanged();
+      }
+    }
   }
 
   public void reset() {
@@ -93,7 +87,7 @@ public class ViewsGeneralConfigurable implements Configurable {
     myHideNullElementsCheckBox.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myAlternativeViews.setSelected(generalSettings.USE_ALTERNATIVE_RENDERERS);
 
-    ClassRenderer classRenderer = (ClassRenderer)NodeRendererSettingsImpl.getInstance().getClassRenderer();
+    ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
 
     myShowSyntheticsCheckBox.setSelected(classRenderer.SHOW_SYNTHETICS);
     mySortCheckBox.setSelected(classRenderer.SORT_ASCENDING);
@@ -107,10 +101,27 @@ public class ViewsGeneralConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    ViewsGeneralSettings settings = ((ViewsGeneralSettings)ViewsGeneralSettings.getInstance()).clone();
-    applyTo(settings);
+  return areGeneralSettingsModified() || areDefaultRenderersModified();
+  }
 
-    return !DebuggerUtilsEx.externalizableEqual(settings, ViewsGeneralSettings.getInstance()) || myArrayRendererConfigurable.isModified();
+  private boolean areGeneralSettingsModified() {
+    ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
+    return
+    (generalSettings.AUTOSCROLL_TO_NEW_LOCALS  != myAutoscrollCheckBox.isSelected()) ||
+    (generalSettings.USE_ALTERNATIVE_RENDERERS != myAlternativeViews.isSelected()) ||
+    (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myHideNullElementsCheckBox.isSelected());
+  }
+
+  private boolean areDefaultRenderersModified() {
+    if (myArrayRendererConfigurable.isModified()) {
+      return true;
+    }
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    return
+    (classRenderer.SORT_ASCENDING != mySortCheckBox.isSelected()) ||
+    (classRenderer.SHOW_STATIC != myShowStaticCheckBox.isSelected()) ||
+    (classRenderer.SHOW_STATIC_FINAL != myShowStaticFinalCheckBox.isSelectedWhenSelectable()) ||
+    (classRenderer.SHOW_SYNTHETICS != myShowSyntheticsCheckBox.isSelected());
   }
 
   public String getHelpTopic() {

@@ -1,0 +1,172 @@
+package com.intellij.debugger.ui.tree.render.configurables;
+
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.ui.CompletitionEditor;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
+import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.Table;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+
+public class NamedChildrenConfigurable implements UnnamedConfigurable{
+  private Table myTable;
+  private final Project myProject;
+  private final EnumerationChildrenRenderer myRenderer;
+  private JPanel myPanel;
+  private JLabel myTableLabel;
+  private JButton myButtonAdd;
+  private JButton myButtonRemove;
+  private JButton myButtonUp;
+  private JButton myButtonDown;
+
+  public NamedChildrenConfigurable(Project project, EnumerationChildrenRenderer renderer) {
+    myProject = project;
+    myRenderer = renderer;
+
+    myTableLabel.setLabelFor(myTable);
+
+    getModel().addColumn("Name", (Object[])null);
+    getModel().addColumn("Expression", (Object[])null);
+
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
+    final CompletitionEditor editor = DebuggerUtils.getInstance().createEditor(myProject, psiClass, "NamedChildrenConfigurable");
+
+    myTable.setDragEnabled(false);
+    myTable.setIntercellSpacing(new Dimension(0, 0));
+
+    myTable.getColumn("Expression").setCellEditor(new AbstractTableCellEditor() {
+      public Object getCellEditorValue() {
+        return editor.getText();
+      }
+
+      public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        editor.setText((TextWithImports)value);
+        return editor;
+      }
+    });
+
+    myButtonAdd.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        getModel().addRow(new Object[] {"", DebuggerUtils.getInstance().createExpressionWithImports("") });
+      }
+    });
+
+    myButtonRemove.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        int selectedRow = myTable.getSelectedRow();
+        if(selectedRow >= 0 && selectedRow < myTable.getRowCount()) {
+          getModel().removeRow(selectedRow);
+        }
+      }
+    });
+
+    myButtonDown.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        TableUtil.moveSelectedItemsDown(myTable);
+      }
+    });
+
+    myButtonUp.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        TableUtil.moveSelectedItemsUp(myTable);
+      }
+    });
+
+    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
+    updateButtons();
+  }
+
+  private void updateButtons() {
+    int selectedRow = myTable.getSelectedRow();
+    myButtonRemove.setEnabled(selectedRow != -1);
+    myButtonUp.setEnabled(selectedRow > 0);
+    myButtonDown.setEnabled(selectedRow < myTable.getRowCount() - 1);
+  }
+
+  private DefaultTableModel getModel() {
+    return ((DefaultTableModel)myTable.getModel());
+  }
+
+  public JComponent createComponent() {
+    return myPanel;
+  }
+
+  public boolean isModified() {
+    return false;
+  }
+
+  public void apply() throws ConfigurationException {
+    DefaultTableModel model = getModel();
+
+    final int size = model.getRowCount();
+    java.util.List<Pair<String, TextWithImports>> result = new ArrayList<Pair<String, TextWithImports>>();
+
+    for (int idx = 0; idx < size; idx++) {
+      result.add(new Pair<String, TextWithImports>((String)model.getValueAt(idx, 0), (TextWithImports)model.getValueAt(idx, 1)));
+    }
+    myRenderer.setChildren(result);
+  }
+
+  public void reset() {
+    while(myTable.getModel().getRowCount() > 0) {
+      getModel().removeRow(0);
+    }
+
+    for (Iterator<Pair<String, TextWithImports>> iterator = myRenderer.getChildren().iterator(); iterator.hasNext();) {
+      Pair<String, TextWithImports> pair = iterator.next();
+      getModel().addRow(new Object[] { pair.getFirst(), pair.getSecond()});
+    }
+  }
+
+  public void disposeUIResources() {
+  }
+
+
+  /*
+  private class TextWithImportsTableRenderer implements TableCellRenderer{
+    private final CompletitionEditor myEditor;
+
+    private TextWithImportsTableRenderer () {
+      PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
+      myEditor = DebuggerUtils.getInstance().createEditor(myProject, psiClass, "NamedChildrenConfigurable");
+    }
+
+
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if(hasFocus) {
+        myEditor.setText((TextWithImports)value);
+        return myEditor;
+      }
+      else {
+        TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
+        return defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      }
+    }
+  }
+  */
+
+}

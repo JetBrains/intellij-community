@@ -1,22 +1,15 @@
-package com.intellij.debugger.ui.impl.watch.render;
+package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
-import org.jdom.Element;
 
 /**
  * User: lex
@@ -25,29 +18,34 @@ import org.jdom.Element;
  */
 public class PrimitiveRenderer extends NodeRendererImpl {
   public static final String UNIQUE_ID = "PrimitiveRenderer";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer");
-
-  public PrimitiveRenderer(final RendererProvider provider) {
-    super(provider, UNIQUE_ID);
-    setName("Default");
+  public PrimitiveRenderer() {
+    myProperties.setName("Primitive");
   }
 
-  /*
+  public String getUniqueId() {
+    return UNIQUE_ID;
+  }
+
+  public String getName() {
+    return "Primitive";
+  }
+
   public void setName(String text) {
-    LOG.assertTrue(false, "Cannot set name for primitive renderer");
+    // prohibit name change
   }
-  */
 
-  public PrimitiveRenderer clone(){
-    return (PrimitiveRenderer)super.clone();
+  public final boolean isEnabled() {
+    return true;
+  }
+
+  public void setEnabled(boolean enabled) {
+    // prohibit change
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null) {
-      return true;
-    }
-    return type instanceof PrimitiveType || type instanceof VoidType;
+    return (type == null) || (type instanceof PrimitiveType) || (type instanceof VoidType);
   }
 
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {

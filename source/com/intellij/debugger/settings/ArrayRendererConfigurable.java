@@ -1,8 +1,6 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.impl.watch.render.ArrayRenderer;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -31,19 +29,24 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   public ArrayRendererConfigurable(ArrayRenderer renderer) {
     myRenderer = renderer;
 
-    myFirstIndexLabel  .setLabelFor(myFirstIndex);
-    myLastIndexLabel   .setLabelFor(myLastIndexLabel);
+    myFirstIndexLabel.setLabelFor(myFirstIndex);
+    myLastIndexLabel.setLabelFor(myLastIndexLabel);
     myEntriesLimitLabel.setLabelFor(myEntriesLimit);
 
-    DocumentListener listener = new DocumentListener() {
-            private void updateEntriesLimit() {
-              myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myFirstIndex) + 1));
-            }
-
-            public void changedUpdate(DocumentEvent e) { updateEntriesLimit(); }
-            public void insertUpdate (DocumentEvent e) { updateEntriesLimit(); }
-            public void removeUpdate (DocumentEvent e) { updateEntriesLimit(); }
-          };
+    final DocumentListener listener = new DocumentListener() {
+      private void updateEntriesLimit() {
+        myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myFirstIndex) + 1));
+      }
+      public void changedUpdate(DocumentEvent e) {
+        updateEntriesLimit();
+      }
+      public void insertUpdate (DocumentEvent e) {
+        updateEntriesLimit();
+      }
+      public void removeUpdate (DocumentEvent e) {
+        updateEntriesLimit();
+      }
+    };
     myFirstIndex.getDocument().addDocumentListener(listener);
     myEndIndex.getDocument().addDocumentListener(listener);
   }
@@ -53,8 +56,8 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void reset() {
-    myFirstIndex  .setText(String.valueOf(myRenderer.START_INDEX));
-    myEndIndex    .setText(String.valueOf(myRenderer.END_INDEX));
+    myFirstIndex.setText(String.valueOf(myRenderer.START_INDEX));
+    myEndIndex.setText(String.valueOf(myRenderer.END_INDEX));
     myEntriesLimit.setText(String.valueOf(myRenderer.ENTRIES_LIMIT));
   }
 
@@ -64,8 +67,8 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
   private void applyTo(ArrayRenderer renderer) {
     int newStartIndex = getInt(myFirstIndex);
-    int newEndIndex   = getInt(myEndIndex);
-    int newLimit      = getInt(myEntriesLimit);
+    int newEndIndex = getInt(myEndIndex);
+    int newLimit = getInt(myEntriesLimit);
 
     if (newStartIndex >= 0 && newEndIndex >= 0) {
       if (newStartIndex >= newEndIndex) {
@@ -103,7 +106,11 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
     applyTo(cloneRenderer);
-    return !DebuggerUtilsEx.externalizableEqual(myRenderer, cloneRenderer);
+    final boolean valuesEqual =
+      (myRenderer.END_INDEX == cloneRenderer.END_INDEX) &&
+      (myRenderer.START_INDEX == cloneRenderer.START_INDEX) &&
+      (myRenderer.ENTRIES_LIMIT == cloneRenderer.ENTRIES_LIMIT);
+    return !valuesEqual;
   }
 
   public void disposeUIResources() {

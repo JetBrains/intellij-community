@@ -1,4 +1,4 @@
-package com.intellij.debugger.tree.actions;
+package com.intellij.debugger.ui.tree.actions;
 
 import com.intellij.debugger.ui.tree.render.NodeRendererSettings;
 

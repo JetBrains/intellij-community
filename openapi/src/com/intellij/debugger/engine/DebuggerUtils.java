@@ -200,7 +200,9 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public static Type getSuperType(Type subType, String superType) {
     if("java.lang.Object".equals(superType)) {
       List list = subType.virtualMachine().classesByName("java.lang.Object");
-      if(list.size() > 0) return (ReferenceType)list.get(0);
+      if(list.size() > 0) {
+        return (ReferenceType)list.get(0);
+      }
       return null;
     }
 
@@ -253,7 +255,9 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     //only for interfaces and arrays
     if("java.lang.Object".equals(superType)) {
       List list = subType.virtualMachine().classesByName("java.lang.Object");
-      if(list.size() > 0) return (ReferenceType)list.get(0);
+      if(list.size() > 0) {
+        return (ReferenceType)list.get(0);
+      }
     }
     return null;
   }

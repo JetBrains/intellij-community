@@ -192,7 +192,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       return myRenderer;
     }
 
-    myAutoRenderer = debugProcess.getNodeRendererManager().getAutoRenderer(this);
+    myAutoRenderer = debugProcess.getAutoRenderer(this);
     return myAutoRenderer;
   }
 

@@ -1,6 +1,5 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.ui.tree.render.NodeRendererSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +9,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class ViewsGeneralSettings implements NamedJDOMExternalizable, ApplicationComponent, Cloneable {
+public class ViewsGeneralSettings implements NamedJDOMExternalizable, ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.ViewsSettings");
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
@@ -37,7 +36,6 @@ public class ViewsGeneralSettings implements NamedJDOMExternalizable, Applicatio
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    fireRendererSettingsChanged();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -49,7 +47,7 @@ public class ViewsGeneralSettings implements NamedJDOMExternalizable, Applicatio
   }
 
   void fireRendererSettingsChanged() {
-    ((NodeRendererSettingsImpl) myNodeRendererSettings).fireRenderersChanged();
+    myNodeRendererSettings.fireRenderersChanged();
   }
 
   public boolean equals(Object object) {
@@ -58,23 +56,6 @@ public class ViewsGeneralSettings implements NamedJDOMExternalizable, Applicatio
     return SHOW_OBJECTID == generalSettings.SHOW_OBJECTID &&
            HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
            AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS;
-  }
-
-  protected ViewsGeneralSettings clone() {
-    try {
-      Element root = new Element("root");
-      writeExternal(root);
-      ViewsGeneralSettings settings = new ViewsGeneralSettings(((NodeRendererSettingsImpl)myNodeRendererSettings).clone());
-      settings.readExternal(root);
-      return settings;
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-    return this;
   }
 
 }
