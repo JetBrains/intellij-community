@@ -477,14 +477,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private XmlAttribute getAttribute(String qname){
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(this);
-    final XmlAttributeImpl[] attributes = (XmlAttributeImpl[])getAttributes();
+    final XmlAttribute[] attributes = (XmlAttribute[])getAttributes();
 
     final int charTableIndex = charTableByTree.checkId(qname);
     if(charTableIndex <= 0) return null;
 
     for (int i = 0; i < attributes.length; i++) {
-      final XmlAttributeImpl attribute = attributes[i];
-      final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute);
+      final XmlAttribute attribute = attributes[i];
+      final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
       if(attrNameElement.getCharTabIndex() == charTableIndex) return attribute;
     }
     return null;
