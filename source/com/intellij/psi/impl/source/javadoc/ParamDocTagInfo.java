@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -13,9 +13,8 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author mike
@@ -52,7 +51,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(value.getFirstChild()));
-        ASTNode newLeaf = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, null);
+        ASTNode newLeaf = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, value.getManager());
         return value.getFirstChild().replace(SourceTreeToPsiMap.treeElementToPsi(newLeaf));
       }
 

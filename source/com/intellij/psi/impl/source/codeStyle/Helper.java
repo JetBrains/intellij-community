@@ -74,8 +74,8 @@ public class Helper {
   public static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
     LOG.assertTrue(space.getElementType() == ElementType.WHITE_SPACE);
     char[] chars = space.textToCharArray();
-    LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, null);
-    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length, charTable, null);
+    LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
+    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length, charTable, SharedImplUtil.getManagerByTree(space));
     ASTNode parent = space.getTreeParent();
     parent.replaceChild(space, space1);
     parent.addChild(space2, space1.getTreeNext());
@@ -441,7 +441,7 @@ public class Helper {
     if (space == null) {
       if (text.length() == 0) return child2;
       LeafElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
-                                                             charTableByTree, null);
+                                                             charTableByTree, SharedImplUtil.getManagerByTree(parent));
       final ASTNode anchorBefore = (child1 != null ? child1.getTreeNext() : parent.getFirstChildNode());
       parent.addChild(newSpace, anchorBefore);
       indentShift = getIndent(newSpace.getText(), true);
@@ -467,7 +467,7 @@ public class Helper {
           if (i == text.length()) return child2;
         }
         ASTNode newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
-                                                               charTableByTree, null);
+                                                               charTableByTree, SharedImplUtil.getManagerByTree(space));
         space.getTreeParent().replaceChild(space, newSpace);
         indentShift = getIndent(newSpace.getText(), true) - getIndent(oldSpace, true);
       }
@@ -541,7 +541,7 @@ public class Helper {
         if( !ws.equals(newIndentString) ) {
           ASTNode newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                   newIndentString.toCharArray(),
-                                                                  0, newIndentString.length(), table, null);
+                                                                  0, newIndentString.length(), table, SharedImplUtil.getManagerByTree(tree));
           tree.replaceChild(son, newWSElem);
           son = newWSElem;
         }
@@ -613,7 +613,7 @@ public class Helper {
           else {
             if (newSpace.length() > 0) {
               LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, newSpace.toCharArray(), 0,
-                                                                    newSpace.length(), charTableByTree, null);
+                                                                    newSpace.length(), charTableByTree, SharedImplUtil.getManagerByTree(next));
               next.getTreeParent().addChild(newLeaf, next);
             }
             text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);
@@ -630,7 +630,7 @@ public class Helper {
         String newLeafText = leafText.substring(0, startOffset) + newSpace + leafText.substring(endOffset);
         if (newLeafText.length() > 0) {
           LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText.toCharArray(), 0,
-                                                                newLeafText.length(), charTableByTree, null);
+                                                                newLeafText.length(), charTableByTree, SharedImplUtil.getManagerByTree(leaf));
           if (leaf.getTreeParent() != null) {
             leaf.getTreeParent().replaceChild(leaf, newLeaf);
           }

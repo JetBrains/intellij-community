@@ -207,4 +207,9 @@ public class SharedImplUtil {
     element.setTreePrev(null);
     element.setTreeParent(null);
   }
+
+  public static PsiManager getManagerByTree(final ASTNode node) {
+    if(node instanceof FileElement) return node.getPsi().getManager();
+    return node.getTreeParent().getPsi().getManager();
+  }
 }

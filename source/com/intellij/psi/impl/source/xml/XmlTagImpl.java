@@ -748,7 +748,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           final ASTNode treePrev = treeElement.getTreePrev();
           if(treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
             final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, new char[]{' '}, 0, 1,
-                                                                                  SharedImplUtil.findCharTableByTree(XmlTagImpl.this), null);
+                                                                                  SharedImplUtil.findCharTableByTree(XmlTagImpl.this), getManager());
             addChild(singleLeafElement, treeElement);
             treeElement = singleLeafElement;
           }
@@ -801,7 +801,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                     ParseUtil.nextLeaf(leafElementAt, null),
                     getLanguage());
                   final LeafElement newWhitespace =
-                    Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, wsText.toCharArray(), 0, wsText.length(), null, null);
+                    Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, wsText.toCharArray(), 0, wsText.length(), null, getManager());
                   xmlText.replaceChild(leafElementAt, newWhitespace);
                 }
               }

@@ -304,7 +304,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, end - spaceStart, charTable);
         ASTNode tempElement = Factory.createSingleLeafElement(
           TokenTypeEx.NEW_LINE_INDENT, "xxx".toCharArray(), 0,
-          "xxx".length(), charTable, null);
+          "xxx".length(), charTable, file.getManager());
         parent.addChild(tempElement, space1.getTreeNext());
         tempElement = new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
         offset = tempElement.getTextRange().getStartOffset();
@@ -404,7 +404,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
+    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -124,12 +123,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(tag);
-    final ASTNode newLine = Factory.createSingleLeafElement(/*DOC_COMMENT_DATA*/WHITE_SPACE, new char[]{'\n'}, 0, 1, treeCharTab, null);
+    final ASTNode newLine = Factory.createSingleLeafElement(/*DOC_COMMENT_DATA*/WHITE_SPACE, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addChild(newLine, null);
     final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
-                                                                        null);
+                                                                        SharedImplUtil.getManagerByTree(tag));
     tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
-    final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, treeCharTab, null);
+    final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addInternal(commentData, commentData, null, Boolean.TRUE);
   }
 
@@ -151,12 +150,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       }
       if (!(anchor.getElementType() == DOC_TAG)) {
         final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
-        final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, null);
+        final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, getManager());
         firstAdded = super.addInternal(newLine, newLine, anchor, before);
         final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1,
-                                                                            charTable, null);
+                                                                            charTable, getManager());
         super.addInternal(leadingAsterisk, leadingAsterisk, newLine, Boolean.FALSE);
-        final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, null);
+        final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
         super.addInternal(commentData, commentData, leadingAsterisk, Boolean.FALSE);
         anchor = commentData;
         before = Boolean.FALSE;

@@ -123,7 +123,7 @@ public class FormatterUtil {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
-                                                                    charTable, null);
+                                                                    charTable, SharedImplUtil.getManagerByTree(leafElement));
 
     ASTNode treePrev = getWsCandidate(leafElement);
     if (treePrev == null) {

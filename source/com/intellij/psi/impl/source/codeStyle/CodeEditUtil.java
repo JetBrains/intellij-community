@@ -388,7 +388,7 @@ public class CodeEditUtil {
 
     if (count > 1) {
       LeafElement newSpace =
-        Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, buffer.toString().toCharArray(), 0, buffer.length(), table, null);
+        Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, buffer.toString().toCharArray(), 0, buffer.length(), table, SharedImplUtil.getManagerByTree(parent));
       count = 0;
       ASTNode next;
       for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = next) {

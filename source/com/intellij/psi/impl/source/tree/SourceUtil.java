@@ -114,7 +114,7 @@ public class SourceUtil implements Constants {
         }
         if (qualifier != null) {
           final CharTable systemCharTab = SharedImplUtil.findCharTableByTree(qualifier);
-          final LeafElement dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, systemCharTab, null);
+          final LeafElement dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
           TreeUtil.insertAfter(qualifier, dot);
           reference.addInternal(qualifier, dot, null, Boolean.FALSE);
         }
