@@ -107,10 +107,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
             if (value == null) {
                 return false;
             }
-            if (value.length() != 0) {
-                return false;
-            }
-            return true;
+            return value.length() == 0;
         }
 
     }

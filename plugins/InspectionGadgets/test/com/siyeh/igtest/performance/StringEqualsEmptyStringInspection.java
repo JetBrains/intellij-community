@@ -12,5 +12,8 @@ public class StringEqualsEmptyStringInspection {
         if ("foo".equals("")) {
             System.out.println("");
         }
+        if (!"foo".equals("")) {
+            System.out.println("");
+        }
     }
 }

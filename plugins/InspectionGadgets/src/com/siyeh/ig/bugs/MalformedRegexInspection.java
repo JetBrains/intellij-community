@@ -94,30 +94,24 @@ public class MalformedRegexInspection extends ExpressionInspection{
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if(methodExpression == null)
             {
-                System.out.println("1");
                 return false;
             }
             final String name = methodExpression.getReferenceName();
-            System.out.println("methodName = " + name);
             if(!regexMethodNames.contains(name))
             {
-                System.out.println("2");
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
             if(method == null)
             {
-                System.out.println("3");
                 return false;
             }
             final PsiClass containingClass = method.getContainingClass();
             if(containingClass == null)
             {
-                System.out.println("4");
                 return false;
             }
             final String className = containingClass.getQualifiedName();
-            System.out.println("className = " + className);
             return "java.lang.String".equals(className) ||
                            "java.util.regex.Pattern".equals(className);
         }
