@@ -283,6 +283,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void restoreUsageExpandState(final Collection<UsageState> states) {
+    //always expand the last level group
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
+    for (int i = root.getChildCount() - 1; i >= 0; i--) {
+      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
+      if (child instanceof GroupNode){
+        final TreePath treePath = new TreePath(child.getPath());
+        myTree.expandPath(treePath);
+      }
+    }
     myTree.getSelectionModel().clearSelection();
     for (Iterator<UsageState> it = states.iterator(); it.hasNext();) {
       final UsageState usageState = it.next();
