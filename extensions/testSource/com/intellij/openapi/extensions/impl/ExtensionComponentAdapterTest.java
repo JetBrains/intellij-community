@@ -27,6 +27,13 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
     assertEquals(LoadingOrder.after("test"), createAdapter("<extension order=\"AFTER:test\"/>").getOrder());
   }
 
+  public void testUnknownAttributes() {
+    final DefaultPicoContainer container = new DefaultPicoContainer();
+    final ExtensionComponentAdapter extensionComponentAdapter =
+          new ExtensionComponentAdapter(TestExtensionClassOne.class, readElement("<bean implementation=\"123\"/>"), container, "test");
+    extensionComponentAdapter.getComponentInstance(container);
+  }
+
   private ExtensionComponentAdapter createAdapter(String text) {
     Element extensionElement = readElement(text);
 
