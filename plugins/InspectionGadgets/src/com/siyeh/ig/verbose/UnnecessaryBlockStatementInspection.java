@@ -71,9 +71,6 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
         public void visitBlockStatement(PsiBlockStatement blockStatement) {
             super.visitBlockStatement(blockStatement);
             final PsiElement parent = blockStatement.getParent();
-            if (parent == null) {
-                return;
-            }
             if (!(parent instanceof PsiCodeBlock)) {
                 return;
             }
@@ -85,7 +82,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
             if (brace == null) {
                 return;
             }
-            if (containsDeclarations(blockStatement)) {
+            if (((PsiCodeBlock)parent).getStatements().length > 1 && containsDeclarations(codeBlock)) {
                 return;
             }
             registerError(brace);
@@ -95,9 +92,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
             }
         }
 
-        private static boolean containsDeclarations(PsiBlockStatement blockStatement) {
-            final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            final PsiStatement[] statements = codeBlock.getStatements();
+        private static boolean containsDeclarations(PsiCodeBlock block) {
+          final PsiStatement[] statements = block.getStatements();
             if (statements == null) {
                 return false;
             }
