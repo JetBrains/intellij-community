@@ -62,19 +62,23 @@ public abstract class PsiType {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", resolveScope);
   }
 
-  public static PsiType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Class", resolveScope);
   }
 
-  public static PsiType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
+    return manager.getElementFactory().createTypeByFQClassName("java.lang.Throwable", resolveScope);
+  }
+
+  public static PsiClassType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.String", resolveScope);
   }
 
-  public static PsiType getJavaLangError(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangError(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Error", resolveScope);
   }
 
-  public static PsiType getJavaLangRuntimeException(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangRuntimeException(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", resolveScope);
   }
 

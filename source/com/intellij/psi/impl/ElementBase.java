@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
@@ -64,34 +65,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = createLockableIcon(symbolIcon, showReadStatus && !elementWritable);
     }
     else if (element instanceof PsiClass) {
-      Icon symbolIcon;
       final PsiClass aClass = (PsiClass)element;
-      final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
-      if (role != null) {
-        symbolIcon = role.getIcon();
-      }
-      else  {
-        if (aClass instanceof PsiAspect) {
-          symbolIcon = Icons.ASPECT_ICON;
-        } else  if (aClass.isAnnotationType()) {
-          symbolIcon = Icons.ANNOTATION_TYPE_ICON;
-        }  else  if (aClass.isEnum()) {
-          symbolIcon = Icons.ENUM_ICON;
-        }
-        else if (aClass.isInterface()) {
-          symbolIcon = aClass.hasModifierProperty(PsiModifier.STATIC)
-          ? Icons.STATIC_INTERFACE_ICON
-          : Icons.INTERFACE_ICON;
-        }
-        else if (aClass instanceof JspClass) {
-          symbolIcon = Icons.JSP_ICON;
-        }
-        else {
-          symbolIcon = aClass.hasModifierProperty(PsiModifier.STATIC)
-          ? Icons.STATIC_CLASS_ICON
-          : Icons.CLASS_ICON;
-        }
-      }
+      Icon symbolIcon = getClassIcon(aClass);
       boolean isExcluded = false;
       final PsiFile containingFile = aClass.getContainingFile();
       if (containingFile != null) {
@@ -155,6 +130,50 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       IconUtilEx.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
+  }
+
+  private static Icon getClassIcon(final PsiClass aClass) {
+    final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
+    if (role != null) return role.getIcon();
+    if (aClass instanceof PsiAspect) {
+      return Icons.ASPECT_ICON;
+    }
+    if (aClass.isAnnotationType()) {
+      return Icons.ANNOTATION_TYPE_ICON;
+    }
+    if (aClass.isEnum()) {
+      return Icons.ENUM_ICON;
+    }
+    if (aClass.isInterface()) {
+      return aClass.hasModifierProperty(PsiModifier.STATIC)
+      ? Icons.STATIC_INTERFACE_ICON
+      : Icons.INTERFACE_ICON;
+    }
+    if (aClass instanceof JspClass) {
+      return Icons.JSP_ICON;
+    }
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return Icons.STATIC_CLASS_ICON;
+    }
+
+    if (aClass instanceof PsiAnonymousClass) {
+      return Icons.ANONYMOUS_CLASS_ICON;
+    }
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return Icons.ABSTRACT_CLASS_ICON;
+    }
+
+    final PsiManager manager = aClass.getManager();
+    final PsiClass javaLangTrowable = manager.findClass("java.lang.Throwable", aClass.getResolveScope());
+    final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
+    if (isException) {
+      return Icons.EXCEPTION_CLASS_ICON;
+    }
+
+    final PsiClass testClass = manager.findClass("junit.framework.TestCase", aClass.getResolveScope());
+    if (testClass != null && InheritanceUtil.isInheritorOrSelf(aClass, testClass, true)) return Icons.JUNIT_TEST_CLASS_ICON;
+
+    return Icons.CLASS_ICON;
   }
 
   private static RowIcon createLockableIcon(Icon icon, boolean isLocked) {

@@ -46,6 +46,10 @@ public interface Icons {
   Icon DIRECTORY_CLOSED_ICON = IconLoader.getIcon("/nodes/TreeClosed.png");
   Icon DIRECTORY_OPEN_ICON = IconLoader.getIcon("/nodes/TreeOpen.png");
   Icon CLASS_ICON = IconLoader.getIcon("/nodes/class.png");
+  Icon EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/exceptionClass.png");
+  Icon ANONYMOUS_CLASS_ICON = IconLoader.getIcon("/nodes/anonymousClass.png");
+  Icon ABSTRACT_CLASS_ICON = IconLoader.getIcon("/nodes/abstractClass.png");
+  Icon JUNIT_TEST_CLASS_ICON = IconLoader.getIcon("/nodes/junitTestClass.png");
   Icon ANNOTATION_TYPE_ICON = IconLoader.getIcon("/nodes/annotationType.png");
   Icon ENUM_ICON = IconLoader.getIcon("/nodes/enum.png");
   Icon INTERFACE_ICON = IconLoader.getIcon("/nodes/interface.png");
