@@ -24,7 +24,7 @@ public class PluginBuildUtil {
 
   public static String getPluginExPath(Module module){
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-    if (! (jdk.getSdkType() instanceof IdeaJdk)){
+    if (jdk == null || ! (jdk.getSdkType() instanceof IdeaJdk)){
       return null;
     }
     return ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome() + "/plugins/" + module.getName();
