@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.TextRange;
@@ -437,7 +438,26 @@ public class CodeEditUtil {
   public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
                                                         final Language language,
                                                         TextRange textRange) {
-    return getWhiteSpaceBeforeToken(tokenNode, language, textRange);
+    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language), textRange);
+  }
+
+  private static Language chooseLanguage(final ASTNode tokenNode, final Language language) {
+    if (tokenNode == null) return language;
+    final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
+    if (secondAsPsiElement == null) return language;
+    final PsiFile file = secondAsPsiElement.getContainingFile();
+    if (file == null) return language;
+    final FileType fileType = file.getFileType();
+    if (!(fileType instanceof LanguageFileType)) {
+      return language;
+    }
+
+    if (((LanguageFileType)fileType).getLanguage().getFormatter() == null) {
+      return language;
+    } else {
+      return ((LanguageFileType)fileType).getLanguage();
+    }
+
   }
 
   public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
