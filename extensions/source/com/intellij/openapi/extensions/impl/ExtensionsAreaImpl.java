@@ -54,8 +54,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     //if (areaInstance != null) {
     //  myPicoContainer.registerComponentInstance(areaInstance);
     //}
-    initialize();
     myLogger = logger;
+    initialize();
   }
 
   public ExtensionsAreaImpl(MutablePicoContainer picoContainer, LogProvider logger) {

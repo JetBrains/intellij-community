@@ -6,6 +6,8 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.util.List;
 
+import com.intellij.openapi.extensions.Extensions;
+
 /**
  * @author mike
  */
@@ -16,7 +18,7 @@ public class ExtensionsAreaTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myExtensionsArea = new ExtensionsAreaImpl("foo", null, new DefaultPicoContainer(), null);
+    myExtensionsArea = new ExtensionsAreaImpl("foo", null, new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
     myPicoContainer = myExtensionsArea.getPicoContainer();
   }
 
