@@ -592,10 +592,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       XmlFile file = null;
 
       while(tokenizer.hasMoreElements()) {
-        tokenizer.nextToken(); // skip namespace
+        String namespace = tokenizer.nextToken(); // skip namespace
         if (!tokenizer.hasMoreElements()) return;
         String url = tokenizer.nextToken();
 
+        if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(namespace)) continue;
         if (file == null) {
           file = (XmlFile)attribute.getContainingFile();
         }
