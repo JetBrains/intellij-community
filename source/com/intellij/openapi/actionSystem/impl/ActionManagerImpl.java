@@ -31,24 +31,24 @@ import java.util.*;
 public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private final Object myLock = new Object();
-  private THashMap myId2Action;
-  private THashMap myId2Index;
-  private THashMap myAction2Id;
-  private ArrayList myNotRegisteredInternalActionIds;
+  private THashMap<String,Object> myId2Action;
+  private THashMap<String,Integer> myId2Index;
+  private THashMap<Object,String> myAction2Id;
+  private ArrayList<String> myNotRegisteredInternalActionIds;
   private final Map<TimerListener, Timer> myRunnable2Timer = new HashMap<TimerListener, Timer>();
   private int myRegisteredActionsCount;
-  private ArrayList myActionListeners;
+  private ArrayList<AnActionListener> myActionListeners;
   private AnActionListener[] myCachedActionListeners;
   private String myLastPreformedActionId;
   private KeymapManager myKeymapManager;
   private DataManager myDataManager;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
-    myId2Action = new THashMap();
-    myId2Index = new THashMap();
-    myAction2Id = new THashMap();
-    myNotRegisteredInternalActionIds = new ArrayList();
-    myActionListeners = new ArrayList();
+    myId2Action = new THashMap<String, Object>();
+    myId2Index = new THashMap<String, Integer>();
+    myAction2Id = new THashMap<Object, String>();
+    myNotRegisteredInternalActionIds = new ArrayList<String>();
+    myActionListeners = new ArrayList<AnActionListener>();
     myCachedActionListeners = null;
     myKeymapManager = keymapManager;
     myDataManager = dataManager;
@@ -99,7 +99,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
 
   public void readExternal(Element element) {
-    final ClassLoader classLoader = this.getClass().getClassLoader();
+    final ClassLoader classLoader = getClass().getClassLoader();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element children = (Element)i.next();
       if ("actions".equals(children.getName())) {
@@ -124,7 +124,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   private AnAction getActionImpl(String id, boolean canReturnStub) {
     AnAction action = (AnAction)myId2Action.get(id);
-    if (!canReturnStub && (action instanceof ActionStub)) {
+    if (!canReturnStub && action instanceof ActionStub) {
       action = convert((ActionStub)action);
     }
     return action;
@@ -180,7 +180,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     LOG.assertTrue(!(action instanceof ActionStub));
     synchronized (myLock) {
-      return (String)myAction2Id.get(action);
+      return myAction2Id.get(action);
     }
   }
 
@@ -193,14 +193,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return null;
     }
     synchronized (myLock) {
-      ArrayList idList = new ArrayList();
-      for (Iterator i = myId2Action.keySet().iterator(); i.hasNext();) {
-        String id = (String)i.next();
+      ArrayList<String> idList = new ArrayList<String>();
+      for (Iterator<String> i = myId2Action.keySet().iterator(); i.hasNext();) {
+        String id = i.next();
         if (id.startsWith(idPrefix)) {
           idList.add(id);
         }
       }
-      return (String[])idList.toArray(new String[idList.size()]);
+      return idList.toArray(new String[idList.size()]);
     }
   }
 
@@ -342,7 +342,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         if ("action".equals(name)) {
           AnAction action = processActionElement(child, loader);
           if (action != null) {
-            LOG.assertTrue((action instanceof ActionGroup) || (action instanceof ActionStub));
+            assertActionIsGroupOrStub(action);
             ((DefaultActionGroup)group).add(action);
           }
         }
@@ -390,7 +390,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
 
     // Real subclasses of AnAction should not be here
-    LOG.assertTrue((action instanceof ActionGroup) || (action instanceof ActionStub) || (action instanceof Separator));
+    if (!(action instanceof Separator)) {
+      assertActionIsGroupOrStub(action);
+    }
 
     if (!"add-to-group".equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
@@ -503,7 +505,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     keymap.addShortcut(actionId, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
   }
 
-  private void processMouseShortcutNode(Element element, String actionId) {
+  private static void processMouseShortcutNode(Element element, String actionId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processMouseShortcutNode(" + element.getName() + ")");
     }
@@ -567,7 +569,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       return null;
     }
-    LOG.assertTrue((action instanceof ActionGroup) || (action instanceof ActionStub));
+    assertActionIsGroupOrStub(action);
     return action;
   }
 
@@ -586,7 +588,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         if ("action".equals(name)) {
           AnAction action = processActionElement(child, loader);
           if (action != null) {
-            LOG.assertTrue((action instanceof ActionGroup) || (action instanceof ActionStub));
+            assertActionIsGroupOrStub(action);
           }
         }
         else if ("group".equals(name)) {
@@ -600,6 +602,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         }
       }
     }
+  }
+
+  private void assertActionIsGroupOrStub(final AnAction action) {
+    LOG.assertTrue(action instanceof ActionGroup || action instanceof ActionStub, "Action : "+action + "; class: "+action.getClass());
   }
 
   public void registerAction(String actionId, AnAction action) {
@@ -662,10 +668,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         String id1 = (String)o1;
         String id2 = (String)o2;
 
-        Integer index1Obj = (Integer)myId2Index.get(id1);
+        Integer index1Obj = myId2Index.get(id1);
         int index1 = index1Obj != null ? index1Obj.intValue() : -1;
 
-        Integer index2Obj = (Integer)myId2Index.get(id2);
+        Integer index2Obj = myId2Index.get(id2);
         int index2 = index2Obj != null ? index2Obj.intValue() : -1;
 
         return index1 - index2;
@@ -679,7 +685,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   private AnActionListener[] getActionListeners() {
     if (myCachedActionListeners == null) {
-      myCachedActionListeners = (AnActionListener[])myActionListeners.toArray(new AnActionListener[myActionListeners.size()]);
+      myCachedActionListeners = myActionListeners.toArray(new AnActionListener[myActionListeners.size()]);
     }
 
     return myCachedActionListeners;
