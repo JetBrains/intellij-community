@@ -252,30 +252,8 @@ class JavaCompletionData extends CompletionData{
 
     {
       final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ","))));
-      variant.includeScopeClass(PsiTypeParameterList.class, true);
-      variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
-      variant.addCompletionFilter(new FalseFilter());
-      this.registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ","))));
       variant.includeScopeClass(PsiClass.class, true);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
-      this.registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS)));
-      variant.includeScopeClass(PsiTypeParameterList.class, true);
-      variant.addCompletionFilterOnElement(new ClassFilter(PsiClass.class));
-      this.registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter("&")));
-      variant.includeScopeClass(PsiTypeParameterList.class, true);
-      variant.addCompletionFilterOnElement(new InterfaceFilter());
       this.registerVariant(variant);
     }
   }
