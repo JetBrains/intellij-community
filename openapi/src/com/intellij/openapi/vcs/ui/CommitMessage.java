@@ -78,6 +78,10 @@ public class CommitMessage extends JPanel{
     }
   }
 
+  public JComponent getTextField() {
+    return myCommentArea;
+  }
+  
   private String createPresentation(final String s) {
     String converted = s.replaceAll("\n", " ");
     if (converted.length() < 20) {
