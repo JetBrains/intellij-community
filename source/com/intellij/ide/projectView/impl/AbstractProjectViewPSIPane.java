@@ -101,6 +101,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
 
+          final DefaultMutableTreeNode selectedNode = myTree.getSelectedNode();
+          if (selectedNode != null && !selectedNode.isLeaf()) {
+            return;
+          }
+
           DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
           Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
           if (navigatable != null && navigatable.canNavigate()) {
