@@ -26,7 +26,9 @@ public class GenericsUtil {
   }
 
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
-    if (type1 instanceof PsiPrimitiveType || type2 instanceof PsiPrimitiveType) return null;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
+    if (TypeConversionUtil.isNullType(type1)) return type2;
+    if (TypeConversionUtil.isNullType(type2)) return type1;
     return getLeastUpperBound(type1, type2, new LinkedHashSet<Pair<PsiType, PsiType>>(), manager);
   }
 

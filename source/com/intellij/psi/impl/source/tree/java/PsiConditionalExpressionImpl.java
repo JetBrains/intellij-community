@@ -62,9 +62,9 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
       return null;
     }
     else {
-      if (type1 instanceof PsiPrimitiveType) type1 = ((PsiPrimitiveType)type1).getBoxedType(getManager(), getResolveScope());
+      if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(getManager(), getResolveScope());
       if (type1 == null) return null;
-      if (type2 instanceof PsiPrimitiveType) type2 = ((PsiPrimitiveType)type2).getBoxedType(getManager(), getResolveScope());
+      if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(getManager(), getResolveScope());
       if (type2 == null) return null;
 
       return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
