@@ -30,7 +30,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         final String declaringClass = containingClass.getName();
         final PsiElement qualifier = methodExpression.getQualifier();
         final String referencedClass = qualifier.getText();
-        return "Static method '#ref' declared on class " + declaringClass + " but referenced via class" + referencedClass + "    #loc";
+        return "Static method '#ref' declared on class " + declaringClass + " but referenced via class " + referencedClass + "    #loc";
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
