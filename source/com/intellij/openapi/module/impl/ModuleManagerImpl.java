@@ -130,7 +130,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void loadModules() {
-    if (myModulePaths.length > 0) {
+    if (myModulePaths != null && myModulePaths.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           for (int idx = 0; idx < myModulePaths.length; idx++) {
