@@ -9,8 +9,8 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
+import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.JspAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
@@ -23,16 +23,17 @@ import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.JspAttributeValue;
 import com.intellij.psi.jsp.JspDirective;
 import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.xml.*;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
-import electric.util.directory.filters.NameFilter;
 
 /**
  * Created by IntelliJ IDEA.
@@ -71,7 +72,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class,
+      JspAttributeValue.class,
       new JavaClassReferenceProvider()
     );
     RegisterInPsi.referenceProviders(this);
