@@ -183,7 +183,9 @@ public class HtmlUtil {
         ind = text.lastIndexOf('?');
         if (ind!=-1) text = text.substring(0,ind);
 
-        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:")) {
+        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
+            !text.startsWith("javascript:")
+           ) {
           refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
         } else {
           refs = PsiReference.EMPTY_ARRAY;
