@@ -134,6 +134,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return convertPathsToValues(getTree().getSelectionPaths());
   }
 
+  private Object[] getSelectedTreeElements() {
+    return convertPathsToTreeElements(getTree().getSelectionPaths());
+  }
+
+
   private Object[] convertPathsToValues(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
       Object[] result = new Object[selectionPaths.length];
@@ -145,6 +150,20 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
           value = ((StructureViewTreeElement)value).getValue();
         }
         result[i] = value;
+      }
+      return result;
+    }
+    else {
+      return null;
+    }
+  }
+
+  private Object[] convertPathsToTreeElements(TreePath[] selectionPaths) {
+    if (selectionPaths != null) {
+      Object[] result = new Object[selectionPaths.length];
+
+      for (int i = 0; i < selectionPaths.length; i++) {
+        result[i] = ((AbstractTreeNode)((DefaultMutableTreeNode)selectionPaths[i].getLastPathComponent()).getUserObject()).getValue();
       }
       return result;
     }
@@ -619,7 +638,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return myCopyPasteDelegator.getPasteProvider();
     }
     else if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
-      Object[] selectedElements = getSelectedElements();
+      Object[] selectedElements = getSelectedTreeElements();
       if (selectedElements == null || selectedElements.length == 0)
       {
         return null;

@@ -534,8 +534,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     if (toShow) {
       VirtualFile[] files = FileEditorManager.getInstance(myProject).getSelectedFiles();
-      PsiFile psiFile = files.length != 0 ? PsiManager.getInstance(myProject).findFile(files[0]) : null;
-      myStructureViewWrapper.setFileEditor(null);
+      if (files.length != 0) {
+        myStructureViewWrapper.setFileEditor(FileEditorManager.getInstance(myProject).getSelectedEditor(files[0]));
+      } else {
+        myStructureViewWrapper.setFileEditor(null);
+      }
     }
   }
 
