@@ -62,6 +62,10 @@ public abstract class Language {
     return null;
   }
 
+  public PairedBraceMatcher getPairedBraceMatcher() {
+    return null;
+  }
+
   public String toString() {
     return "Language: " + myID;
   }

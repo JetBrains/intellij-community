@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
@@ -118,9 +120,18 @@ public class ReformatCodeAction extends AnAction {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || (!(file instanceof PsiJavaFile) && !(file instanceof XmlFile))){
+      if (file == null) {
         presentation.setEnabled(false);
         return;
+      }
+
+      final Language lang = file.getLanguage();
+      if (lang != null) {
+        final PseudoTextBuilder formatter = lang.getFormatter();
+        if (formatter == null) {
+          presentation.setEnabled(false);
+          return;
+        }
       }
     }
     else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&

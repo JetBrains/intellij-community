@@ -5,9 +5,9 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -22,6 +22,8 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
  *
  */
 public class CodeFormatterFacade implements Constants {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
+
   private CodeStyleSettings mySettings;
   private Helper myHelper;
   private IndentAdjusterFacade myIndentAdjuster;
@@ -122,7 +124,7 @@ public class CodeFormatterFacade implements Constants {
           GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset).format();
         }
         catch (Exception e) {
-
+          LOG.error(e);
         }
         //System.out.println("Time to reformat: " + (System.currentTimeMillis() - start));
         formatComments(element, startOffset, endOffset);
@@ -136,10 +138,7 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useNewFormatter(FileType fileType) {
-    return (fileType == StdFileTypes.JAVA
-               || fileType == StdFileTypes.XML
-               || fileType == StdFileTypes.JSPX
-               || fileType == StdFileTypes.HTML);
+    return true;
   }
 
   private ASTNode processRange(ASTNode element, int[] bounds) {

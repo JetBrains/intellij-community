@@ -63,7 +63,7 @@ public class Enumerator<T> {
     final int res = myNumbers.get(object);
 
     if (res == 0)
-      LOG.error( "Object must be already added to enumerator!" );
+      LOG.error( "Object "+ object + " must be already added to enumerator!" );
 
     return res;
   }

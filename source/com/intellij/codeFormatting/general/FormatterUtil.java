@@ -31,12 +31,13 @@
  */
 package com.intellij.codeFormatting.general;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 public class FormatterUtil {
 
@@ -105,8 +106,8 @@ public class FormatterUtil {
     return text.length() > 0 && text.trim().length() == 0;
   }
 
-  public static String replaceWhiteSpace(final String whiteSpace, final ASTNode leafElement) {
-    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
+  public static String replaceWhiteSpace(final String whiteSpace, final ASTNode leafElement, final IElementType whiteSpaceToken) {
+    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(leafElement), null);
 
