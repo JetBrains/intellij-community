@@ -11,7 +11,7 @@ import javax.swing.*;
  * @author max
  */
 public class InspectionRootNode extends InspectionTreeNode {
-  private static final Icon INFO = IconLoader.getIcon("/compiler/info.png");
+  private static final Icon INFO = IconLoader.getIcon("/general/ijLogo.png");
   private Project myProject;
 
   public InspectionRootNode(Project project) {
