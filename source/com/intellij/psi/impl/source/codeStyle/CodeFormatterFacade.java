@@ -15,7 +15,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractXmlBlock;
+import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
+import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractXmlBlock;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
@@ -129,12 +130,17 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useBlockFormatter(final FileType fileType) {
-    if (!"lesya".equals(System.getProperty("user.name"))) return false;
-    return ApplicationManager.getApplication().isUnitTestMode() && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML);
+    //if (!"lesya".equals(System.getProperty("user.name"))) return false;
+    return ApplicationManager.getApplication().isUnitTestMode()
+           && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML /*|| fileType == StdFileTypes.JAVA*/);
   }
 
   private Block createBlock(final PsiFile element) {
-    return AbstractXmlBlock.creareRoot(element, mySettings);
+    if (element.getFileType() == StdFileTypes.XML || element.getFileType()== StdFileTypes.HTML) {
+      return AbstractXmlBlock.creareRoot(element, mySettings);
+    } else {
+      return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), null, mySettings);
+    }
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
