@@ -3,18 +3,18 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiClass;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author ven
@@ -78,7 +78,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected void doAction() {
 
-    Map<PsiClass, String> parameterNames = new HashMap<PsiClass, String>();
+    Map<PsiClass, String> parameterNames = new LinkedHashMap<PsiClass, String>();
     final Iterator<EditorTextField> fieldsIterator = myOldClassParameterNameFields.iterator();
     final Iterator<PsiClass>       classesIterator = myRefThisClasses.iterator();
     for (; fieldsIterator.hasNext();) {
