@@ -156,6 +156,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   protected final void dispose() {
+    if (myGroupTabs != null) {
+      myGroupTabs.uninstallKeyboardNavigation();
+    }
     rememberLastUsedPage();
 
     for (int i = 0; i < myGroups.length; i++) {

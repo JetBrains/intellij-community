@@ -183,6 +183,7 @@ public class ModuleEditor {
       myEditors.clear();
 
       if (myTabbedPane != null) {
+        myTabbedPane.uninstallKeyboardNavigation();
         mySelectedTabName = getSelectedTabName();
         myTabbedPane = null;
       }

@@ -158,6 +158,9 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void disposeUIResources() {
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+    }
     for (int i = 0; i < myTabs.length; i++) {
       final ConfigurationTab tab = myTabs[i];
       tab.disposeUIResources();

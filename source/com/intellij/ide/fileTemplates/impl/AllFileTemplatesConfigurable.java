@@ -710,6 +710,9 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
       myEditor = null;
       myEditorComponent = null;
     }
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+    }
     myMainPanel = null;
   }
 

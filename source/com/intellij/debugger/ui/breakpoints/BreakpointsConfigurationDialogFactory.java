@@ -252,6 +252,7 @@ public class BreakpointsConfigurationDialogFactory {
     protected void dispose() {
       apply();
       if (myPanel != null) {
+        myTabbedPane.uninstallKeyboardNavigation();
         myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
         myPanel.removeAll();
         myPanel = null;

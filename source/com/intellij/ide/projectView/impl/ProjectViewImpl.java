@@ -431,6 +431,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myProject = null;
     myStructureViewWrapper.dispose();
     myStructureViewWrapper = null;
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+    }
   }
 
   private JComponent getComponent() {

@@ -343,6 +343,9 @@ public class TreeClassChooserDialog extends DialogWrapper {
       myBuilder.dispose();
       myBuilder = null;
     }
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+    }
     super.dispose();
   }
 

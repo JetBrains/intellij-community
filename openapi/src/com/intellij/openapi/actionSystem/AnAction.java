@@ -123,6 +123,15 @@ public abstract class AnAction {
     }
   }
 
+  public final void unregisterCustomShortcutSet(JComponent component){
+    if (component != null){
+      ArrayList actionList = (ArrayList)component.getClientProperty(ourClientProperty);
+      if (actionList != null){
+        actionList.remove(this);
+      }
+    }
+  }
+
   /**
    * Copies template presentation and shortcuts set from <code>sourceAction</code>.
    *

@@ -44,7 +44,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
 
   }
 
-  protected JComponent createTabbedPaneHolder() {
+  protected TabbedPaneHolder createTabbedPaneHolder() {
     return new MyTabbedPaneHolder();
   }
 

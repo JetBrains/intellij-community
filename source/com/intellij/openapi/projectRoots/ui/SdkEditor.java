@@ -227,6 +227,9 @@ public class SdkEditor implements Configurable{
   }
 
   public void disposeUIResources(){
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+    }
     myMainPanel = null;
     for (Iterator it = myAdditionalDataConfigurables.keySet().iterator(); it.hasNext();) {
       final SdkType sdkType = (SdkType)it.next();

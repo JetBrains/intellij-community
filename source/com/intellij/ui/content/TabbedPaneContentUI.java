@@ -236,7 +236,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       return new MyTabbedPane(tabPlacement);
     }
 
-    protected JComponent createTabbedPaneHolder() {
+    protected TabbedPaneHolder createTabbedPaneHolder() {
       return new MyTabbedPaneHolder();
     }
 

@@ -18,6 +18,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Anton Katilin
@@ -26,6 +28,7 @@ import java.lang.reflect.Method;
 public class TabbedPaneWrapper {
   protected final TabbedPane myTabbedPane;
   protected final JComponent myTabbedPaneHolder;
+  private final java.util.List<UnregisterCommand> myRegistrars = new ArrayList<UnregisterCommand>();
 
   public TabbedPaneWrapper(){
     this(SwingConstants.TOP);
@@ -65,7 +68,7 @@ public class TabbedPaneWrapper {
     myTabbedPane.removeChangeListener(listener);
   }
 
-  protected JComponent createTabbedPaneHolder() {
+  protected TabbedPaneHolder createTabbedPaneHolder() {
     return new TabbedPaneHolder();
   }
 
@@ -240,9 +243,10 @@ public class TabbedPaneWrapper {
 
   /**
    * Installs tab navigation via IdeActions.ACTION_NEXT_TAB and IdeActions.ACTION_PREVIOUS_TAB shortcuts.
+   * In order to avoid memory leaks, the uninstallKeyboardNavigation() method should be called when the TabbedPane is not needed anymore
    */
   public final void installKeyboardNavigation(){
-    final AnAction nextTabAction=new AnAction() {
+    final AnAction nextTabAction = new AnAction() {
       {
         setEnabledInModalContext(true);
       }
@@ -254,22 +258,26 @@ public class TabbedPaneWrapper {
         setSelectedIndex(index);
       }
     };
+    final JComponent component = getComponent();
     nextTabAction.registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(),
-      getComponent()
+      component
     );
+    myRegistrars.add(new UnregisterCommand(nextTabAction, component));
     // make action work in modal dialog box
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        JRootPane rootPane = SwingUtilities.getRootPane(getComponent());
+        JRootPane rootPane = SwingUtilities.getRootPane(component);
         if (rootPane != null) {
           nextTabAction.registerCustomShortcutSet(
-            ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(),
-            rootPane);
+            ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(), rootPane
+          );
+          myRegistrars.add(new UnregisterCommand(nextTabAction, rootPane));
         }
       }
     });
-    final AnAction previousTabAction=new AnAction() {
+
+    final AnAction previousTabAction = new AnAction() {
       {
         setEnabledInModalContext(true);
       }
@@ -283,20 +291,28 @@ public class TabbedPaneWrapper {
     };
     previousTabAction.registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(),
-      getComponent()
+      component
     );
+    myRegistrars.add(new UnregisterCommand(previousTabAction, component));
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        JRootPane rootPane = SwingUtilities.getRootPane(getComponent());
+        JRootPane rootPane = SwingUtilities.getRootPane(component);
         if (rootPane != null) {
           previousTabAction.registerCustomShortcutSet(
-            ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(),
-            rootPane
+            ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(), rootPane
           );
+          myRegistrars.add(new UnregisterCommand(previousTabAction, rootPane));
         }
       }
     });
+  }
+
+  public final void uninstallKeyboardNavigation(){
+    for (Iterator<UnregisterCommand> it = myRegistrars.iterator(); it.hasNext();) {
+      it.next().unregister();
+    }
+    myRegistrars.clear();
   }
 
   public final String getTitleAt(final int i) {
@@ -553,6 +569,20 @@ public class TabbedPaneWrapper {
 
     public final boolean requestFocusInWindow() {
       return requestDefaultFocus();
+    }
+  }
+
+  private static class UnregisterCommand {
+    private final AnAction myAction;
+    private final JComponent myComponent;
+
+    public UnregisterCommand(AnAction action, JComponent component) {
+      myAction = action;
+      myComponent = component;
+    }
+
+    public void unregister() {
+      myAction.unregisterCustomShortcutSet(myComponent);
     }
   }
 }
