@@ -5,12 +5,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.EditorTextField;
@@ -114,8 +112,18 @@ public abstract class CallerChooser extends DialogWrapper {
     };
     Tree tree = new CheckboxTree(cellRenderer, root) {
       protected void checkNode(CheckedTreeNode node, boolean checked) {
-        super.checkNode(node, checked);
-        updateChildren(node, !checked);
+        node.setChecked(checked);
+        if (checked) {
+          CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
+          while(parent != null) {
+            parent.setChecked(true);
+            parent = (CheckedTreeNode)parent.getParent();
+          }
+        }
+        else {
+          uncheckChildren(node);
+        }
+        repaint();
       }
     };
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -123,12 +131,12 @@ public abstract class CallerChooser extends DialogWrapper {
     return tree;
   }
 
-  private void updateChildren(final CheckedTreeNode node, boolean toEnable) {
+  private void uncheckChildren(final CheckedTreeNode node) {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
       MethodNode child = (MethodNode)children.nextElement();
-      child.setEnabled(toEnable);
-      updateChildren(child, toEnable);
+      child.setChecked(false);
+      uncheckChildren(child);
     }
   }
 
@@ -139,8 +147,8 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   private void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
-    allMethods.add(node.getMethod());
-    if (!node.isChecked()) {
+    if (node.isChecked()) {
+      allMethods.add(node.getMethod());
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         getSelectedMethodsInner((MethodNode)children.nextElement(), allMethods);
@@ -149,26 +157,10 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    if (!verifyPaths(myRoot)) {
-      Messages.showErrorDialog(myProject, "Not all paths to refactored method are covered", ChangeSignatureHandler.REFACTORING_NAME);
-      return;
-    }
-
     final Set<PsiMethod> selectedMethods = new HashSet<PsiMethod>();
     getSelectedMethods(selectedMethods);
     callersChosen(selectedMethods);
     super.doOKAction();
-  }
-
-  private boolean verifyPaths(final MethodNode node) {
-    if (node.isChecked()) return true;
-    final Enumeration children = node.children();
-    if (!children.hasMoreElements()) return false;
-
-    while (children.hasMoreElements()) {
-      if (!verifyPaths((MethodNode)children.nextElement())) return false;
-    }
-    return true;
   }
 
   abstract protected void callersChosen(Set<PsiMethod> allCallers);

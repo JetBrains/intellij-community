@@ -43,7 +43,9 @@ public class MethodNode extends CheckedTreeNode {
       children = new Vector(callers.length);
       for (int i = 0; i < callers.length; i++) {
         PsiMethod caller = callers[i];
-        children.add(new MethodNode(caller));
+        final MethodNode child = new MethodNode(caller);
+        children.add(child);
+        child.parent = this;
       }
     }
   }
