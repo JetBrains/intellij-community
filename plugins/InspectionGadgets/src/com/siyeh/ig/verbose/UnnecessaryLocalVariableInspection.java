@@ -8,6 +8,7 @@ import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.fixes.InlineVariableFix;
 
 public class UnnecessaryLocalVariableInspection extends StatementInspection {
+    private final InlineVariableFix fix = new InlineVariableFix();
 
     public String getDisplayName() {
         return "Redundant local variable";
@@ -26,7 +27,11 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new InlineVariableFix();
+        return fix;
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
     }
 
     private static class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
