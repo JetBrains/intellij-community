@@ -1497,25 +1497,6 @@ public final class EditorImpl implements EditorEx {
     }
   }
 
-  private Font getFont(int type) {
-    if (type == Font.BOLD) {
-      return myScheme.getFont(EditorFontType.BOLD);
-    }
-    else {
-      if (type == Font.ITALIC) {
-        return myScheme.getFont(EditorFontType.ITALIC);
-      }
-      else {
-        if (type == Font.ITALIC + Font.BOLD) {
-          return myScheme.getFont(EditorFontType.BOLD_ITALIC);
-        }
-        else {
-          return myScheme.getFont(EditorFontType.PLAIN);
-        }
-      }
-    }
-  }
-
   private int drawString(Graphics g, int start, int end, Point position, Rectangle clip, Color effectColor,
                          EffectType effectType, int fontType, Color fontColor) {
     if (start >= end) return position.x;
