@@ -20,6 +20,8 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 
 import java.util.Collections;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class PsiEventWrapperAspect implements PomModelAspect{
   private final PomModel myModel;
@@ -50,6 +52,11 @@ public class PsiEventWrapperAspect implements PomModelAspect{
 
     if(file.isPhysical()){
       final ASTNode[] changedElements = changeSet.getChangedElements();
+      Arrays.sort(changedElements, new Comparator<ASTNode>() {
+        public int compare(final ASTNode o1, final ASTNode o2) {
+          return o1.getStartOffset() - o2.getStartOffset();
+        }
+      });
       for (int i = 0; i < changedElements.length; i++) {
         ASTNode changedElement = changedElements[i];
         TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
@@ -65,6 +72,11 @@ public class PsiEventWrapperAspect implements PomModelAspect{
         if(changedElement == null) continue;
 
         final ASTNode[] affectedChildren = changesByElement.getAffectedChildren();
+        Arrays.sort(affectedChildren, new Comparator<ASTNode>() {
+          public int compare(final ASTNode o1, final ASTNode o2) {
+            return o1.getStartOffset() - o2.getStartOffset();
+          }
+        });
         boolean contentsChange = false;
         for (int j = 0; j < affectedChildren.length; j++) {
           if(changesByElement.getChangeByChild(affectedChildren[j]).getChangeType() == ChangeInfo.REMOVED){

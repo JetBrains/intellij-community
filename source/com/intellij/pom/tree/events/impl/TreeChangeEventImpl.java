@@ -59,7 +59,12 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         final TreeChange changesByElement = getChangesByElement(currentParent);
         final boolean currentParentHasChange = changesByElement.getChangeByChild(prevParent) != null;
         if(currentParentHasChange && prevParent != element) return;
-        if(prevParent != element) change = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
+        if(prevParent != element){
+          final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
+          if(change.getChangeType() != ChangeInfo.REMOVED)
+            ((ChangeInfoImpl)newChange).processElementaryChange(currentParent, change, element);
+          change = newChange;
+        }
         processElementaryChange(currentParent, prevParent, change, -1);
         return;
       }
@@ -91,8 +96,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       Set<ASTNode> treeElements = index < myOfEqualDepth.size() ? myOfEqualDepth.get(index) : null;
       if(treeElements == null){
         treeElements = new HashSet<ASTNode>();
-        while(index > myOfEqualDepth.size())
+        while (index > myOfEqualDepth.size()) {
           myOfEqualDepth.add(new HashSet<ASTNode>());
+        }
         myOfEqualDepth.add(index, treeElements);
       }
       treeElements.add(parent);
@@ -130,16 +136,18 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
           myChangedElements.remove(treeElement);
           final CompositeElement treeParent = treeElement.getTreeParent();
           final TreeChange changesByElement = getChangesByElement(treeParent);
-          if(changesByElement != null){
+          if (changesByElement != null) {
             final ChangeInfoImpl changeByChild = (ChangeInfoImpl)changesByElement.getChangeByChild(treeElement);
-            if(changeByChild != null){
+            if (changeByChild != null) {
               changeByChild.setOldLength(compactedChange.getOldLength());
             }
-            else{
+            else {
               changesByElement.addChange(treeElement, compactedChange);
             }
           }
-          else processElementaryChange(treeParent, treeElement, compactedChange, currentDepth - 1);
+          else {
+            processElementaryChange(treeParent, treeElement, compactedChange, currentDepth - 1);
+          }
         }
       }
     }
@@ -148,8 +156,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   private void removeAssociatedChanges(ASTNode treeElement, int depth) {
     if(myChangedElements.remove(treeElement) != null){
       if(depth < 0) depth = getDepth(treeElement);
-      if(depth < myOfEqualDepth.size())
+      if (depth < myOfEqualDepth.size()) {
         myOfEqualDepth.get(depth < 0 ? getDepth(treeElement) : depth).remove(treeElement);
+      }
     }
   }
 
