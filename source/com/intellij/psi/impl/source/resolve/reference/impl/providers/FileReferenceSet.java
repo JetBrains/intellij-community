@@ -172,7 +172,7 @@ public class FileReferenceSet {
     }
 
     public boolean isReferenceTo(PsiElement element) {
-      if (element instanceof WebDirectoryElement || element instanceof PsiFile) {
+      if (element instanceof WebDirectoryElement || element instanceof PsiFile || element instanceof PsiDirectory) {
         return super.isReferenceTo(element);
       }
       return false;
