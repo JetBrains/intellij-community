@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -69,7 +70,13 @@ public class IconUtil {
           if (psiFile instanceof PsiJavaFile) {
             PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
             if (classes.length != 0) {
-              icon = classes[0].getIcon(flags);
+              // prefer icon of the class named after file
+              final String fileName = file.getNameWithoutExtension();
+              for (int i = 0; i < classes.length; i++) {
+                PsiClass aClass = classes[i];
+                icon = aClass.getIcon(flags);
+                if (Comparing.strEqual(aClass.getName(), fileName)) break;
+              }
             }
           }
         }
