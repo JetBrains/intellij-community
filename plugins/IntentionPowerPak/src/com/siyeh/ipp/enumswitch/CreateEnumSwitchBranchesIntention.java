@@ -40,9 +40,8 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         final Set missingEnumElements = new HashSet(fields.length);
         for(int i = 0; i < fields.length; i++){
             final PsiField field = fields[i];
-            if(field.getType().equals(switchType)){
-                final String fieldName = field.getName();
-                missingEnumElements.add(fieldName);
+            if(field instanceof PsiEnumConstant){
+                missingEnumElements.add(field.getName());
             }
         }
         final PsiStatement[] statements = body.getStatements();
@@ -52,9 +51,11 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
                 final PsiSwitchLabelStatement labelStatement =
                         (PsiSwitchLabelStatement) statement;
                 final PsiExpression value = labelStatement.getCaseValue();
-                if(value != null){
-                    final String label = value.getText();
-                    missingEnumElements.remove(label);
+                if(value instanceof PsiReferenceExpression){
+                  final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+                  if (resolved instanceof PsiEnumConstant) {
+                    missingEnumElements.remove(((PsiEnumConstant)resolved).getName());
+                  }
                 }
             }
         }
