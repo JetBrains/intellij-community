@@ -244,8 +244,11 @@ public class PathManager {
 
   public static void loadProperties() {
     String propFilePath = System.getProperty(PROPERTIES_FILE);
-    if (propFilePath == null || !new File(propFilePath).exists()) {
-      propFilePath = getBinPath() + File.separator + "idea.properties";
+    if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
+      propFilePath = System.getProperty("user.home") + File.separator + "idea.properties";
+      if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
+        propFilePath = getBinPath() + File.separator + "idea.properties";
+      }
     }
 
     File propFile = new File(propFilePath);
