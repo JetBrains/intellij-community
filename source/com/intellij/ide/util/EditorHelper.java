@@ -19,7 +19,7 @@ public class EditorHelper {
       file = element.getContainingFile();
       offset = element.getTextOffset();
     }
-
+    if (file == null) return null;//SCR44414
     OpenFileDescriptor descriptor = new OpenFileDescriptor(element.getProject(), file.getVirtualFile(), offset);
     Project project = element.getProject();
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
