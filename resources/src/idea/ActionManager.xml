@@ -812,6 +812,7 @@
       <reference ref="RunContextPopupGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" text="Synchronize selected file"/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <separator/>
