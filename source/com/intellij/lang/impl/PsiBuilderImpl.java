@@ -23,7 +23,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   private List<Token> myLexems = new ArrayList<Token>();
-  private List<ProductionMarker> myProduction = new ArrayList<ProductionMarker>();
+  private MyList myProduction = new MyList();
 
   private Lexer myLexer;
   private boolean myFileLevelParsing;
@@ -67,7 +67,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   }
 
   private Marker preceed(final StartMarker marker) {
-    int idx = myProduction.indexOf(marker);
+    int idx = myProduction.lastIndexOf(marker);
     LOG.assertTrue(idx >= 0, "Cannot preceed dropped or rolled-back marker");
     StartMarker pre = new StartMarker(marker.myLexemIndex);
     myProduction.add(idx, pre);
@@ -179,13 +179,11 @@ public class PsiBuilderImpl implements PsiBuilder {
     int idx = myProduction.lastIndexOf(marker);
 
     LOG.assertTrue(idx >= 0, "The marker must be added before rolled back to.");
-    for (int i = myProduction.size() - 1; i >= idx; i--) {
-      myProduction.remove(i);
-    }
+    myProduction.removeRange(idx, myProduction.size());
   }
 
   public void drop(Marker marker) {
-    final boolean removed = myProduction.remove(marker);
+    final boolean removed = myProduction.remove(myProduction.lastIndexOf(marker)) == marker;
     LOG.assertTrue(removed, "The marker must be added before it is dropped.");
   }
 
@@ -229,8 +227,10 @@ public class PsiBuilderImpl implements PsiBuilder {
     ASTNode curNode = rootNode;
     int curToken = 0;
     for (int i = 1; i < myProduction.size(); i++) {
-      LOG.assertTrue(curNode != null, "Unexpected end of the production");
       ProductionMarker item = myProduction.get(i);
+      if (item == null) continue;
+
+      LOG.assertTrue(curNode != null, "Unexpected end of the production");
       int lexIndex = item.myLexemIndex;
       if (item instanceof StartMarker) {
         StartMarker marker = (StartMarker)item;
@@ -271,5 +271,11 @@ public class PsiBuilderImpl implements PsiBuilder {
       TreeUtil.addChildren((CompositeElement)curNode, childNode);
     }
     return curToken;
+  }
+
+  private static class MyList extends ArrayList<ProductionMarker> {
+    public void removeRange(final int fromIndex, final int toIndex) {
+      super.removeRange(fromIndex, toIndex);
+    }
   }
 }
