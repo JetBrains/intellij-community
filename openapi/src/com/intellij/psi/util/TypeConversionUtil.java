@@ -615,43 +615,14 @@ public class TypeConversionUtil {
   }
 
   private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType) {
-    if (left instanceof PsiWildcardType) {
-      PsiWildcardType leftWildcardType = (PsiWildcardType)left;
-      if (leftWildcardType.isExtends()) {
-        if (rightWildcardType.isExtends()) {
-          return isAssignableFromExtendsWildcard(leftWildcardType.getBound(), rightWildcardType);
-        }
-        else {
-          return false;
-        }
-      }
-      else if (leftWildcardType.isSuper()) {
-        if (rightWildcardType.isSuper()) {
-          return isAssignable(rightWildcardType.getBound(), leftWildcardType.getBound(), false);
-        }
-        else {
-          return false;
-        }
-      }
-
-      return true; // unbounded wildcard
-    }
-    return isAssignableFromExtendsWildcard(left, rightWildcardType);
-  }
-
-  private static boolean isAssignableFromExtendsWildcard(PsiType left, PsiWildcardType rightWildcardType) {
-    PsiType[] supers = rightWildcardType.getSuperTypes();
-    for (int i = 0; i < supers.length; i++) {
-      if (isAssignable(left, supers[i], false)) return true;
-    }
-    return false;
+    return isAssignable(left, rightWildcardType.getExtendsBound());
   }
 
   private static boolean isAssignableToWildcard(PsiWildcardType wildcardType, PsiType right) {
-    if (right instanceof PsiWildcardType) {
-      return isAssignableFromWildcard(wildcardType, (PsiWildcardType)right);
+    if (wildcardType.isSuper()) {
+      return isAssignable(right, wildcardType.getSuperBound());
     }
-    return isAssignable(wildcardType.getSuperBound(), right, false);
+    return isAssignable(wildcardType.getExtendsBound(), right);
   }
 
   private static boolean isUnboxable(final PsiPrimitiveType left, final PsiClassType right) {
