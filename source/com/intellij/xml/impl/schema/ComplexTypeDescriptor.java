@@ -9,6 +9,8 @@ import com.intellij.xml.impl.XmlLangAttributeDescriptor;
 
 import java.util.*;
 
+import gnu.trove.THashSet;
+
 /**
  * @author Mike
  */
@@ -320,10 +322,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public boolean canContainAttribute(String attributeName, String namespace) {
-    return _canContainAttribute(attributeName, namespace, myTag);
+    return _canContainAttribute(attributeName, namespace, myTag, new THashSet<String>());
   }
 
-  private boolean _canContainAttribute(String name, String namespace, XmlTag tag) {
+  private boolean _canContainAttribute(String name, String namespace, XmlTag tag, Set<String> visited) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "anyAttribute")) {
       String ns = tag.getAttributeValue("namespace");
       if ("##other".equals(ns)) {
@@ -334,11 +336,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "attributeGroup")) {
       String ref = tag.getAttributeValue("ref");
 
-      if (ref != null) {
+      if (ref != null && !visited.contains(ref)) {
+        visited.add(ref);
         XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
 
         if (groupTag != null) {
-          if (_canContainAttribute(name, namespace, groupTag)) return true;
+          if (_canContainAttribute(name, namespace, groupTag,visited)) return true;
         }
       }
     }
@@ -346,14 +349,15 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
       String base = tag.getAttributeValue("base");
 
-      if (base != null) {
+      if (base != null && !visited.contains(base)) {
+        visited.add(base);
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
           myDocumentDescriptor.myFile.getDocument().getRootTag(),
           base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          if (complexTypeDescriptor.canContainAttribute(name, namespace)) return true;
+          if (complexTypeDescriptor._canContainAttribute(name, namespace,complexTypeDescriptor.getDeclaration(), visited)) return true;
         }
       }
     }
@@ -361,7 +365,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     XmlTag[] subTags = tag.getSubTags();
     for (int i = 0; i < subTags.length; i++) {
       XmlTag subTag = subTags[i];
-      if (_canContainAttribute(name, namespace, subTag)) return true;
+      if (_canContainAttribute(name, namespace, subTag,visited)) return true;
     }
 
     return false;
