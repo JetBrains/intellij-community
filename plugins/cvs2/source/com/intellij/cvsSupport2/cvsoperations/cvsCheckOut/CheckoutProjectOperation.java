@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.javacvsImpl.io.SendTextFilePreprocessor;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.admin.AdminWriter;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
@@ -44,7 +45,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
                                  String alternateCheckoutDirectory,
                                  boolean pruneEmptyDirectories,
                                  KeywordSubstitution keywordSubstitution) {
-    super(new CheckoutAdminReader(), new AdminWriter());
+    super(new CheckoutAdminReader(), new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator()));
     myModuleNames = moduleNames;
     myEnvironment = environment;
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;

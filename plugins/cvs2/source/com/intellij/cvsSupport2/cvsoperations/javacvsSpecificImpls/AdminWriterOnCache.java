@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.admin.AdminWriter;
@@ -27,7 +28,7 @@ public class AdminWriterOnCache implements IAdminWriter {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminWriterOnCache");
 
-  private final IAdminWriter myAdminWriter = new AdminWriter();
+  private final IAdminWriter myAdminWriter;
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();
 
   private final UpdatedFilesManager myUpdatedFilesManager;
@@ -37,6 +38,7 @@ public class AdminWriterOnCache implements IAdminWriter {
                             ProjectContentInfoProvider projectContentInfoProvider) {
     myUpdatedFilesManager = updatedFilesManager;
     myProjectContentInfoProvider = projectContentInfoProvider;
+    myAdminWriter = new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator());    
   }
 
   public void ensureCvsDirectory(DirectoryObject directoryObject,

@@ -96,9 +96,9 @@ public final class Entries {
 		}
 	}
 
-	public void write(File entriesFile) throws IOException {
+	public void write(File entriesFile, String lineSeparator) throws IOException {
 		final File tempFile = new File(entriesFile.getAbsolutePath() + "~");
-		write(new FileWriter(tempFile));
+		write(new FileWriter(tempFile), lineSeparator);
 		if (entriesFile.exists()) {
 			if (!entriesFile.delete()) {
 				throw new IOException("Could not delete file " + entriesFile.getAbsolutePath());
@@ -110,12 +110,12 @@ public final class Entries {
 		}
 	}
 
-	public void write(Writer writer) throws IOException {
+	public void write(Writer writer, String lineSeparator) throws IOException {
 		final BufferedWriter lineWriter = new BufferedWriter(writer);
 		try {
 			if (fileNameToEntryMap.size() == 0) {
 				lineWriter.write("D");
-				lineWriter.newLine();
+                                lineWriter.write(lineSeparator);
 			}
 			else {
 				final Entry[] entryArray = new Entry[fileNameToEntryMap.size()];
@@ -124,7 +124,7 @@ public final class Entries {
 				for (int i = 0; i < entryArray.length; i++) {
 					final Entry entry = entryArray[i];
 					lineWriter.write(entry.toString());
-					lineWriter.newLine();
+                                        lineWriter.write(lineSeparator);
 				}
 			}
 		}

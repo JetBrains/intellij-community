@@ -11,8 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -195,12 +196,16 @@ public class CvsUtil {
     entries.removeEntry(file.getName());
 
     try {
-      handler.write();
+      handler.write(getLineSeparator());
     }
     catch (IOException e) {
       LOG.error(e);
     }
     CvsEntriesManager.getInstance().removeEntryForFile(file.getParentFile(), file.getName());
+  }
+
+  private static String getLineSeparator() {
+    return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
   }
 
   public static boolean fileIsLocallyRemoved(File file) {
@@ -221,7 +226,7 @@ public class CvsUtil {
     EntriesHandler entriesHandler = new EntriesHandler(file.getParentFile());
     entriesHandler.read();
     entriesHandler.getEntries().addEntry(entry);
-    entriesHandler.write();
+    entriesHandler.write(getLineSeparator());
   }
 
   public static String loadRepositoryFrom(File file) {
@@ -427,7 +432,7 @@ public class CvsUtil {
     entry.parseConflictString(Entry.getLastModifiedDateFormatter().format(date));
     entries.addEntry(entry);
     try {
-      handler.write();
+      handler.write(getLineSeparator());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -647,7 +652,7 @@ public class CvsUtil {
       if (!myNameToConflict.containsKey(fileName)) {
         myNameToConflict.put(fileName, new Conflict(fileName, revision, time));
       }
-      ((Conflict)myNameToConflict.get(fileName)).setRevision(revision == null ? new String[0] : revision);
+      (myNameToConflict.get(fileName)).setRevision(revision == null ? new String[0] : revision);
     }
 
     public void addConflictForFile(String name) {
@@ -662,12 +667,12 @@ public class CvsUtil {
 
     public String[] getRevisionsFor(String name) {
       if (!myNameToConflict.containsKey(name)) return new String[0];
-      return ((Conflict)myNameToConflict.get(name)).getRevisions();
+      return (myNameToConflict.get(name)).getRevisions();
     }
 
     public long getPreviousEntryTime(String fileName) {
       if (!myNameToConflict.containsKey(fileName)) return -1;
-      return ((Conflict)myNameToConflict.get(fileName)).getPreviousEntryTime();
+      return (myNameToConflict.get(fileName)).getPreviousEntryTime();
     }
   }
 

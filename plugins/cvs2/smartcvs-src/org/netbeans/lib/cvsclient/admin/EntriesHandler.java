@@ -53,16 +53,16 @@ public final class EntriesHandler {
 
 	}
 
-	public void write() throws IOException {
+	public void write(String lineSeparator) throws IOException {
     synchronized(Entries.class){
-		  entries.write(entriesFile);
+		  entries.write(entriesFile, lineSeparator);
       entriesDotLogFile.delete();
     }
 	}
 
-	public void readAndWrite() throws IOException {
+	public void readAndWrite(final String lineSeparator) throws IOException {
 		if (read()) {
-			write();
+			write(lineSeparator);
 		}
 	}
 }

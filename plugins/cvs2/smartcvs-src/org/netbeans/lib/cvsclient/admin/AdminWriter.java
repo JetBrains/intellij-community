@@ -32,9 +32,12 @@ import java.io.*;
 public final class AdminWriter
         implements IAdminWriter {
 
+         private final String myLineSeparator;
+
 	// Setup ==================================================================
 
-	public AdminWriter() {
+	public AdminWriter(String lineSeparator) {
+          myLineSeparator = lineSeparator;
 	}
 
 	// Implemented ============================================================
@@ -58,7 +61,7 @@ public final class AdminWriter
 		final boolean entriesUpdated = entriesHandler.read();
 		final boolean entryRemoved = entriesHandler.getEntries().removeEntry(file.getName());
 		if (entriesUpdated || entryRemoved) {
-			entriesHandler.write();
+			entriesHandler.write(myLineSeparator);
 		}
 	}
 
@@ -131,7 +134,7 @@ public final class AdminWriter
 		final EntriesHandler entriesHandler = new EntriesHandler(directory);
 		entriesHandler.read();
 		entriesHandler.getEntries().addEntry(entry);
-		entriesHandler.write();
+		entriesHandler.write(myLineSeparator);
 	}
 
 	public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
@@ -155,7 +158,7 @@ public final class AdminWriter
 		// now ensure that the Root and Repository files exist
 		FileUtils.writeLine(new File(cvsDirectory, "Root"), cvsRoot);
 		FileUtils.writeLine(new File(cvsDirectory, "Repository"), repositoryPath);
-		new Entries().write(new File(cvsDirectory, "Entries"));
+		new Entries().write(new File(cvsDirectory, "Entries"), myLineSeparator);
 		setStickyTagForDirectory(directoryObject, stickyTag, cvsFileSystem);
 		addDirectoryToParentEntriesFile(cvsDirectory.getParentFile());
 	}
@@ -224,7 +227,7 @@ public final class AdminWriter
 			return;
 		}
 
-		new Entries().write(entriesFile);
+		new Entries().write(entriesFile, myLineSeparator);
 
 		// need to know if we had to create any directories so that we can
 		// update the CVS/Entries file in the *parent* director
@@ -236,7 +239,7 @@ public final class AdminWriter
 			final EntriesHandler entriesHandler = new EntriesHandler(directory.getParentFile());
 			entriesHandler.read();
 			entriesHandler.getEntries().addEntry(Entry.createDirectoryEntry(directory.getName()));
-			entriesHandler.write();
+			entriesHandler.write(myLineSeparator);
 		}
 		catch (FileNotFoundException ex) {
 			// The Entries file will not exist in the case where this is the top level of the module
