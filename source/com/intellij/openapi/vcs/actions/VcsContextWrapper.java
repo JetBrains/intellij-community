@@ -39,11 +39,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsDataConstants;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -142,7 +147,18 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Refreshable getRefreshableDialog() {
-    return ((Refreshable)myContext.getData(Refreshable.PANEL));
+    final Object dataFromContext = myContext.getData(Refreshable.PANEL);
+    if (dataFromContext != null) {
+      return ((Refreshable)dataFromContext);
+    }
+    final Project project = getProject();
+    if (project == null) return null;
+
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+
+    ToolWindowEx fileViewToolWindow =(ToolWindowEx) toolWindowManager.getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
+    final JComponent component = fileViewToolWindow.getComponent();
+    return ((FileViewPanel) component);
   }
 
   public FilePath[] getSelectedFilePaths() {
