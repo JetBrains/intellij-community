@@ -12,7 +12,7 @@ public class WaitWhileHoldingTwoLocksInspection extends StatementInspection {
     public String getDisplayName() {
         return "'wait()' while holding two locks";
     }
-
+          
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
     }
