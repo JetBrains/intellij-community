@@ -315,7 +315,7 @@ public class XmlUtil {
 
     if (value == null) {
       value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
-        public CachedValueProvider.Result compute() {
+        public CachedValueProvider.Result<PsiElement> compute() {
           final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
           if (res == null) return new Result<PsiElement>(res, new Object[]{targetFile});
           return new CachedValueProvider.Result<PsiElement>(res, new Object[]{res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef});
@@ -548,7 +548,7 @@ public class XmlUtil {
       }
       else {
         final XmlAttribute[] attributes = tag.getAttributes();
-        Collections.sort(list);
+        Collections.sort((List)list);
         Arrays.sort(attributes, new Comparator() {
           public int compare(Object o1, Object o2) {
             return ((XmlAttribute)o1).getName().compareTo(((XmlAttribute)o2).getName());
