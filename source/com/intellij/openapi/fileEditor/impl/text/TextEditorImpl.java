@@ -100,12 +100,11 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
       else {
         state.FOLDING_STATE = null;
       }
+    }
 
-      state.VERTICAL_SCROLL_PROPORTION = EditorUtil.calcVerticalScrollProportion(editor);
-    }
-    else {
-      state.VERTICAL_SCROLL_PROPORTION = -1;
-    }
+    // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
+    // scrolling proportion restored sligtly differs from what have been saved.
+    state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
   }
 
   public void setState(final FileEditorState state) {
