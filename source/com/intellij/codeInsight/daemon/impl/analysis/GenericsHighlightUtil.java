@@ -334,6 +334,7 @@ public abstract class GenericsHighlightUtil {
     if (type instanceof PsiWildcardType) {
       if (typeElement.getParent() instanceof PsiReferenceParameterList) {
         PsiElement refParent = getSuperParent((PsiReferenceParameterList)typeElement.getParent());
+        if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
         if (refParent instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)refParent;
           if (!(newExpression.getType() instanceof PsiArrayType)) {
