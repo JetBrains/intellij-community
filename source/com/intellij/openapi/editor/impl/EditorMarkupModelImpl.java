@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
@@ -445,7 +442,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public boolean doClick(final MouseEvent e, final double width) {
       if (inside(e, width)) {
         RangeHighlighter marker = markers.get(0);
-        myEditor.getCaretModel().moveToOffset(marker.getStartOffset());
+        final int offset = marker.getStartOffset();
+        final Document doc = myEditor.getDocument();
+        if (doc.getLineCount() > 0) {
+          // Necessary to expand folded block even if naviagting just before one
+          // Very useful when navigating to first unused import statement.
+          int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
+          myEditor.getCaretModel().moveToOffset(lineEnd);
+        }
+
+        myEditor.getCaretModel().moveToOffset(offset);
         myEditor.getSelectionModel().removeSelection();
         ScrollingModel scrollingModel = myEditor.getScrollingModel();
         scrollingModel.disableAnimation();
