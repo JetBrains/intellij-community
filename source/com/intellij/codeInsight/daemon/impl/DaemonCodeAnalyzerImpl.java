@@ -137,6 +137,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void disposeComponent() {
     myFileStatusMap.markAllFilesDirty();
+    dispose();
   }
 
   public EditorTracker getEditorTracker() {
@@ -217,6 +218,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private void dispose() {
+    if (myDisposed) return;
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.removeDocumentListener(myDocumentListener);
     eventMulticaster.removeCaretListener(myCaretListener);
