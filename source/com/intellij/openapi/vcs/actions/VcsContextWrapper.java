@@ -155,7 +155,7 @@ public class VcsContextWrapper implements VcsContext {
     if (project == null) return null;
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-
+    if (toolWindowManager == null) return null;
     ToolWindowEx fileViewToolWindow =(ToolWindowEx) toolWindowManager.getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
     final JComponent component = fileViewToolWindow.getComponent();
     return ((FileViewPanel) component);
