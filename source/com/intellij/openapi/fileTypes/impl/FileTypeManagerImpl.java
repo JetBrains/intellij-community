@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
+  private final static int VERSION = 1;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
@@ -310,6 +311,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
+    int savedVersion = getVersion(parentNode);
     for (Iterator iterator = parentNode.getChildren().iterator(); iterator.hasNext();) {
       final Element e = (Element)iterator.next();
       if ("filetypes".equals(e.getName())) {
@@ -335,9 +337,29 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
     }
+
+    if (savedVersion == 0) {
+      if (!myIgnoredFileMasksSet.contains(".svn")) {
+        myIgnorePatterns.add(PatternUtil.fromMask(".svn"));
+        myIgnoredFileMasksSet.add(".svn");
+      }
+    }
+  }
+
+  private int getVersion(final Element node) {
+    final String verString = node.getAttributeValue("version");
+    if (verString == null) return 0;
+    try {
+      return Integer.parseInt(verString);
+    }
+    catch (NumberFormatException e) {
+      return 0;
+    }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
+    parentNode.setAttribute("version", String.valueOf(VERSION));
+
     Element element = new Element("ignoreFiles");
     parentNode.addContent(element);
     element.setAttribute("list", getIgnoredFilesList());
