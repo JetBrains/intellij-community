@@ -42,14 +42,6 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
-  }
-
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
@@ -71,10 +63,6 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
   }
 
   public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
-  }
-
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 

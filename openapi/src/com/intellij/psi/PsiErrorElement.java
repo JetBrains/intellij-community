@@ -6,5 +6,4 @@ package com.intellij.psi;
 
 public interface PsiErrorElement extends PsiElement{
   String getErrorDescription();
-  String getExpectedToken();
 }

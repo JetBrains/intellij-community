@@ -271,14 +271,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     throw new IncorrectOperationException();
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public void delete() throws IncorrectOperationException {
     checkDelete();
     PsiDirectory[] dirs = getDirectories();
@@ -295,10 +287,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

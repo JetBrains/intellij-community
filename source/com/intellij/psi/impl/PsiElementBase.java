@@ -69,20 +69,6 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     throw new IncorrectOperationException();
   }
 
-  public void checkAddRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }

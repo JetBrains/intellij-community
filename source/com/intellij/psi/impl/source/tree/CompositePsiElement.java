@@ -121,14 +121,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CheckUtil.checkWritable(this);
   }
 
-  public final void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
-  public final void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
   public final PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, null, null);
   }
@@ -141,20 +133,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   public final PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
-  }
-
-  public final void checkAddRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
-  public final void checkAddRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
-  public final void checkAddRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
   }
 
   public void delete() throws IncorrectOperationException {
@@ -187,10 +165,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
     SharedImplUtil.invalidate(this);
     return result;
-  }
-
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
   }
 
   public void accept(PsiElementVisitor visitor) { //TODO: remove this method!!

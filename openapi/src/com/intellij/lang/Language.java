@@ -3,6 +3,10 @@ package com.intellij.lang;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.EmptyLexer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,5 +23,10 @@ public abstract class Language {
   public PseudoTextBuilder getFormatter() {
     return null;
   }
+
+  public ParserDefinition getParserDefinition() {
+    return null;
+  }
+
 
 }

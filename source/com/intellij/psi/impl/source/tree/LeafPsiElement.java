@@ -98,14 +98,6 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
     throw new IncorrectOperationException();
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
@@ -116,20 +108,6 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   }
 
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
@@ -159,10 +137,6 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
 
     SharedImplUtil.invalidate(this);
     return result;
-  }
-
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
   }
 
   public String toString() {

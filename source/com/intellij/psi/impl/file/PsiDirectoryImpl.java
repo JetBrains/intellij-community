@@ -539,14 +539,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     throw new IncorrectOperationException();
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public void delete() throws IncorrectOperationException {
     checkDelete();
     //PsiDirectory parent = getParentDirectory();
@@ -585,13 +577,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
     LOG.error("not implemented");
     return null;
-  }
-
-  /**
-   * @not_implemented
-   */
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
-    LOG.error("not implemented");
   }
 
   public void accept(PsiElementVisitor visitor) {

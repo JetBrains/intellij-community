@@ -190,14 +190,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     throw new IncorrectOperationException();
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   public void delete() throws IncorrectOperationException{
     checkDelete();
     PsiFileImplUtil.doDelete(this);
@@ -212,9 +204,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
     return null;
-  }
-
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException {
   }
 
   public boolean isValid() {

@@ -74,21 +74,11 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   void checkAdd(PsiElement element) throws IncorrectOperationException;
 
-  void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException;
-
-  void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException;
-
   PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
   PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
 
   PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
-
-  void checkAddRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
-
-  void checkAddRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
-
-  void checkAddRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
 
   void delete() throws IncorrectOperationException;
 
@@ -97,8 +87,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
   void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
   PsiElement replace(PsiElement newElement) throws IncorrectOperationException;
-
-  void checkReplace(PsiElement newElement) throws IncorrectOperationException;
 
   boolean isValid();
 

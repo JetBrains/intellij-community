@@ -84,14 +84,6 @@ public abstract class LightElement extends PsiElementBase {
     throw new IncorrectOperationException();
   }
 
-  public void checkAddBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException{
-    throw new IncorrectOperationException();
-  }
-
-  public void checkAddAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException{
-    throw new IncorrectOperationException();
-  }
-
   public PsiElement add(PsiElement element) throws IncorrectOperationException{
     throw new IncorrectOperationException();
   }
@@ -116,7 +108,4 @@ public abstract class LightElement extends PsiElementBase {
     throw new IncorrectOperationException();
   }
 
-  public void checkReplace(PsiElement newElement) throws IncorrectOperationException{
-    throw new IncorrectOperationException();
-  }
 }
