@@ -117,12 +117,14 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
         tagText = "<" + tagText +"/>";
 
         XmlTag tagFromText = xmlTag.getManager().getElementFactory().createTagFromText(tagText);
-        elementDescriptor = xmlTag.getDescriptor().getElementDescriptor(tagFromText);
+        XmlElementDescriptor parentDescriptor = xmlTag.getDescriptor();
+        elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
 
         if (elementDescriptor==null) {
           PsiElement parent = xmlTag.getParent();
           if (parent instanceof XmlTag) {
-            elementDescriptor = ((XmlTag)parent).getDescriptor().getElementDescriptor(tagFromText);
+            parentDescriptor = ((XmlTag)parent).getDescriptor();
+            elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
           }
         }
 
@@ -130,7 +132,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
           final XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespaceByPrefix(namespacePrefix), true);
           elementDescriptor = nsDescriptor.getElementDescriptor(tagFromText);
         }
-        
+
         if (elementDescriptor!=null) {
           PsiElement declaration = elementDescriptor.getDeclaration();
           declaration.putUserData(DESCRIPTOR_KEY,elementDescriptor);
