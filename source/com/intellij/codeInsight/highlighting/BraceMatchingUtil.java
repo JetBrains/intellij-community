@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -124,8 +125,8 @@ public class BraceMatchingUtil {
       PAIRING_TOKENS.put(JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER);
       PAIRING_TOKENS.put(JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER);
       PAIRING_TOKENS.put(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
-      PAIRING_TOKENS.put(JspTokenType.JSP_EL_RBRACKET, JspTokenType.JSP_EL_LBRACKET);
-      PAIRING_TOKENS.put(JspTokenType.JSP_EL_RPARENTH, JspTokenType.JSP_EL_LPARENTH);
+      PAIRING_TOKENS.put(ELTokenType.JSP_EL_RBRACKET, ELTokenType.JSP_EL_LBRACKET);
+      PAIRING_TOKENS.put(ELTokenType.JSP_EL_RPARENTH, ELTokenType.JSP_EL_LPARENTH);
     }
 
     public int getTokenGroup(IElementType tokenType) {
@@ -165,8 +166,8 @@ public class BraceMatchingUtil {
              tokenType == JspTokenType.JSP_ACTION_START ||
              tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER ||
              tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER ||
-             tokenType == JspTokenType.JSP_EL_LBRACKET ||
-             tokenType == JspTokenType.JSP_EL_LPARENTH ||
+             tokenType == ELTokenType.JSP_EL_LBRACKET ||
+             tokenType == ELTokenType.JSP_EL_LPARENTH ||
              tokenType == JavaDocTokenType.DOC_INLINE_TAG_START;
     }
 
@@ -185,8 +186,8 @@ public class BraceMatchingUtil {
           tokenType == JspTokenType.JSP_EMPTY_ACTION_END ||
           tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER ||
           tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER ||
-          tokenType == JspTokenType.JSP_EL_RBRACKET ||
-          tokenType == JspTokenType.JSP_EL_RPARENTH ||
+          tokenType == ELTokenType.JSP_EL_RBRACKET ||
+          tokenType == ELTokenType.JSP_EL_RPARENTH ||
           tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
         return true;
       }
@@ -261,10 +262,10 @@ public class BraceMatchingUtil {
         if (ch == ')') return JavaTokenType.RPARENTH;
         if (ch == '(') return JavaTokenType.LPARENTH;
       } else if(tokenType instanceof IJspElementType) {
-        if (ch == ']') return JspTokenType.JSP_EL_RBRACKET;
-        if (ch == '[') return JspTokenType.JSP_EL_LBRACKET;
-        if (ch == ')') return JspTokenType.JSP_EL_RPARENTH;
-        if (ch == '(') return JspTokenType.JSP_EL_LPARENTH;
+        if (ch == ']') return ELTokenType.JSP_EL_RBRACKET;
+        if (ch == '[') return ELTokenType.JSP_EL_LBRACKET;
+        if (ch == ')') return ELTokenType.JSP_EL_RPARENTH;
+        if (ch == '(') return ELTokenType.JSP_EL_LPARENTH;
       }
 
       return null;  //TODO: add more here!

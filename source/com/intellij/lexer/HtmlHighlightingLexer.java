@@ -4,6 +4,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -70,7 +71,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
 
     if (withEl) {
-      registerHandler(JspTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
+      registerHandler(ELTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
     }
   }
 
@@ -106,7 +107,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         }
       }
       newLexer = scriptLexer;
-    } else if (super.getTokenType() == JspTokenType.JSP_EL_CONTENT) {
+    } else if (super.getTokenType() == ELTokenType.JSP_EL_CONTENT) {
       if (elLexer==null) elLexer = new _ELLexer();
       newLexer = elLexer;
     }

@@ -33,9 +33,14 @@ package com.intellij.psi.tree.jsp;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.Language;
 
 public class IJspElementType extends IElementType {
   public IJspElementType(String debugName) {
-    super(debugName, StdFileTypes.JSP.getLanguage());
+    this(debugName, StdFileTypes.JSP.getLanguage());
+  }
+
+  protected IJspElementType(String debugName, Language language) {
+    super(debugName, language);
   }
 }

@@ -27,6 +27,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.*;
+import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -139,7 +141,7 @@ public class TypedHandler implements TypedActionHandler {
       super(_baseHandler);
 
       myElHandler = new SimpleTokenSetQuoteHandler(
-        new IElementType[] {JspTokenType.JSP_EL_STRING_LITERAL}
+        new IElementType[] {ELTokenType.JSP_EL_STRING_LITERAL}
       );
     }
 
@@ -422,6 +424,8 @@ public class TypedHandler implements TypedActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAt = file.findElementAt(offset-1);
+    elementAt = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
+    elementAt = (elementAt!=null)?elementAt.getFirstChild():null;
 
     // TODO: handle it with insertAfterRParen(...)
     if (elementAt!=null && !JspxCompletionData.isJavaContext(elementAt)) {

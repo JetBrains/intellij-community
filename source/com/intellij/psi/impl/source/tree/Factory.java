@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -520,9 +521,6 @@ public class Factory implements Constants {
     }
     else if (type == ANNOTATION_PARAMETER_LIST) {
       element = new PsiAnnotationParameterListImpl();
-    } else if (type == CustomHighlighterTokenType.CUSTOM_CONTENT ||
-               type == JspTokenType.JSP_EL_HOLDER) {
-      element = new XmlAnotherLanguageContent(type) {};
     }
     else {
       if (type instanceof IAspectElementType) {
