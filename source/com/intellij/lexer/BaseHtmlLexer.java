@@ -15,12 +15,12 @@ import java.util.HashMap;
  */
 abstract class BaseHtmlLexer implements Lexer {
   private Lexer baseLexer;
-  protected static final int BASE_STATE_MASK = 0xF;
-  private static final int SEEN_STYLE = 0x10;
-  private static final int SEEN_TAG = 0x20;
-  private static final int SEEN_SCRIPT = 0x40;
-  private static final int SEEN_ATTRIBUTE = 0x80;
-  protected static final int BASE_STATE_SHIFT = 8;
+  protected static final int BASE_STATE_MASK = 0x3F;
+  private static final int SEEN_STYLE = 0x40;
+  private static final int SEEN_TAG = 0x80;
+  private static final int SEEN_SCRIPT = 0x100;
+  private static final int SEEN_ATTRIBUTE = 0x200;
+  protected static final int BASE_STATE_SHIFT = 10;
 
   private boolean seenTag;
   private boolean seenAttribute;
