@@ -9,6 +9,4 @@ public interface XmlTagChildRemoved extends XmlChange {
   XmlTag getTag();
 
   XmlTagChild getChild();
-
-  void accept(XmlChangeVisitor visitor);
 }

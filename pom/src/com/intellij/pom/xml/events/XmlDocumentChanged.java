@@ -1,8 +1,7 @@
 package com.intellij.pom.xml.events;
 
-import com.intellij.pom.xml.XmlChangeVisitor;
-import com.intellij.pom.xml.events.XmlChange;
+import com.intellij.psi.xml.XmlDocument;
 
 public interface XmlDocumentChanged extends XmlChange {
-  void accept(XmlChangeVisitor visitor);
+  XmlDocument getDocument();
 }

@@ -10,7 +10,14 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 
 public class XmlDocumentChangedImpl implements XmlDocumentChanged {
+  private XmlDocument myDocument;
+
   public XmlDocumentChangedImpl(XmlDocument document) {
+    myDocument = document;
+  }
+
+  public XmlDocument getDocument() {
+    return myDocument;
   }
 
   public static PomModelEvent createXmlDocumentChanged(PomModel source, XmlDocument document) {

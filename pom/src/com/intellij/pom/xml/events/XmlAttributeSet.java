@@ -9,6 +9,4 @@ public interface XmlAttributeSet extends XmlChange {
   String getValue();
 
   XmlTag getTag();
-
-  void accept(XmlChangeVisitor visitor);
 }

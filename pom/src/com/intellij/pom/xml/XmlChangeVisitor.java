@@ -13,7 +13,7 @@ import com.intellij.pom.xml.events.*;
 public interface XmlChangeVisitor {
   void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet);
 
-  void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChangedImpl);
+  void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged);
 
   void visitXmlElementChanged(final XmlElementChanged xmlElementChanged);
 
