@@ -66,7 +66,6 @@ public class SourceUtil implements Constants {
     TreeUtil.addChildren(parenthExpr, dummyExpr);
     TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, new char[]{')'}, 0, 1, -1, charTableByTree));
 
-
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
       parenthExpr =
@@ -81,6 +80,8 @@ public class SourceUtil implements Constants {
     TreeUtil.replaceWithList(dummyExpr, newChild);
 
     newChild = parenthExpr;
+    // TODO remove explicit caches drop since this should be ok iff we will use ChangeUtil for the modification 
+    TreeUtil.clearCaches(newChild);
     return newChild;
   }
 
