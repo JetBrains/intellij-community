@@ -4,11 +4,9 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -28,6 +26,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 import org.jdom.Element;
 
@@ -78,6 +77,25 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public void addToolbarActions(DefaultActionGroup actionGroup) {
   }
 
+  private List<AbstractTreeNode> getSelectedNodes(){
+    final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+
+    TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    for (int i = 0; i < paths.length; i++) {
+      TreePath path = paths[i];
+      Object lastPathComponent = path.getLastPathComponent();
+      if (lastPathComponent instanceof DefaultMutableTreeNode) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+        Object userObject = node.getUserObject();
+        if (userObject instanceof AbstractTreeNode) {
+          result.add((AbstractTreeNode)userObject);
+        }
+      }
+    }
+    return result;
+  }
+
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)){
       TreePath[] paths = getSelectionPaths();
@@ -98,6 +116,19 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         return null;
       } else {
         return navigatables.toArray(new Navigatable[navigatables.size()]);
+      }
+    }
+    if (myTreeStructure instanceof AbstractTreeStructureBase){
+      final List<TreeStructureProvider> providers = ((AbstractTreeStructureBase)myTreeStructure).getProviders();
+      if (providers != null) {
+        final List<AbstractTreeNode> selectedNodes = getSelectedNodes();
+        for (Iterator<TreeStructureProvider> iterator = providers.iterator(); iterator.hasNext();) {
+          TreeStructureProvider treeStructureProvider = iterator.next();
+          final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
+          if (fromProvider != null) {
+            return fromProvider;
+          }
+        }
       }
     }
     return null;

@@ -44,6 +44,10 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     return result;
   }
 
+  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
+    return null;
+  }
+
   private Collection<PsiFile> convertToFiles(Collection<AbstractTreeNode> formNodes) {
     ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
     for (Iterator<AbstractTreeNode> iterator = formNodes.iterator(); iterator.hasNext();) {

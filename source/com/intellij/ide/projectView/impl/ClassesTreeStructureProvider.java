@@ -51,6 +51,10 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
     return result;
   }
 
+  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
+    return null;
+  }
+
 
   public void projectOpened() {
   }
