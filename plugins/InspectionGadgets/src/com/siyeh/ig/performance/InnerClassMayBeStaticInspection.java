@@ -2,11 +2,11 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
@@ -40,7 +40,7 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
                 final PsiClass innerClass = (PsiClass) classNameToken.getParent();
                 final PsiManager manager = innerClass.getManager();
                 final PsiSearchHelper searchHelper = manager.getSearchHelper();
-                final GlobalSearchScope useScope = innerClass.getUseScope();
+                final SearchScope useScope = innerClass.getUseScope();
                 final PsiReference[] references = searchHelper.findReferences(innerClass, useScope, false);
                 for (int i = 0; i < references.length; i++) {
                     final PsiReference reference = references[i];
