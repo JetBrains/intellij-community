@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
@@ -468,6 +469,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
           return;
         }
       }
+    }
+
+    if (elementDescriptor instanceof Validator) {
+      final String s = ((Validator)elementDescriptor).validate(tag);
+      myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,tag,s));
     }
   }
 

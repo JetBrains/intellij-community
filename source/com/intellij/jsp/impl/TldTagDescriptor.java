@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
+import com.intellij.codeInsight.daemon.Validator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +21,7 @@ import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
  * Time: 8:55:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TldTagDescriptor implements XmlElementDescriptor {
+public class TldTagDescriptor implements XmlElementDescriptor,Validator {
   private XmlTag myTag;
   private String myName;
   private XmlAttributeDescriptor[] myAttributeDescriptors;
@@ -143,5 +144,9 @@ public class TldTagDescriptor implements XmlElementDescriptor {
 
   public Object[] getDependences() {
     return new Object[]{myTag, ExternalResourceManagerImpl.getInstance()};
+  }
+
+  public String validate(PsiElement context) {
+    return null;
   }
 }
