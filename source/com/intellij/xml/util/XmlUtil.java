@@ -3,28 +3,25 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 
@@ -51,14 +48,6 @@ public class XmlUtil {
   public static final Key<String> TEST_PATH = Key.create("TEST PATH");
   public static final String JSP_NAMESPACE = "http://java.sun.com/JSP/Page";
   public static final String ALL_NAMESPACE = "http://www.intellij.net/ns/all";
-
-  static {
-    PsiSearchScopeUtil.registerAccessScopeHandler(StdFileTypes.DTD, new PsiSearchScopeUtil.AccessScopeHandler() {
-      public SearchScope getAccessScope(PsiElement element) {
-        return GlobalSearchScope.projectScope(element.getProject());
-      }
-    });
-  }
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);

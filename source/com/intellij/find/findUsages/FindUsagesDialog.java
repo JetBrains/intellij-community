@@ -107,7 +107,7 @@ public abstract class FindUsagesDialog extends DialogWrapper{
   }
 
   protected boolean isInFileOnly() {
-    return !myIsShowInNewTabVisible || PsiSearchScopeUtil.getAccessScope(myPsiElement) instanceof LocalSearchScope;
+    return !myIsShowInNewTabVisible || myPsiElement.getManager().getSearchHelper().getUseScope(myPsiElement) instanceof LocalSearchScope;
   }
 
   protected JComponent createNorthPanel() {

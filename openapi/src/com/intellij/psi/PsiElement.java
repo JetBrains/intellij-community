@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 
 public interface PsiElement extends UserDataHolder, Iconable {
@@ -114,5 +115,5 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isPhysical();
 
   GlobalSearchScope getResolveScope();
-  GlobalSearchScope getUseScope();
+  SearchScope getUseScope();
 }

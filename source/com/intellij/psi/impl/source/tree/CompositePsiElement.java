@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
@@ -206,8 +207,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
-  public GlobalSearchScope getUseScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getUseScope(this);
+  public SearchScope getUseScope() {
+    return getManager().getSearchHelper().getUseScope(this);
   }
 
   public ItemPresentation getPresentation() {

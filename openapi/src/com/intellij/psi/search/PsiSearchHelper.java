@@ -9,6 +9,7 @@ import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspDirective;
+import com.intellij.openapi.fileTypes.FileType;
 
 public interface PsiSearchHelper {
   PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
@@ -50,7 +51,7 @@ public interface PsiSearchHelper {
   PsiFile[] findFilesWithPlainTextWords(String word);
   void processUsagesInNonJavaFiles(String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
 
-  SearchScope getAccessScope(PsiElement element);
+  SearchScope getUseScope(PsiElement element);
 
   PsiFile[] findFormsBoundToClass(String className);
 

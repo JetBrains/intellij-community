@@ -133,7 +133,7 @@ public class RefactoringUtil {
                                                    UsageInfoFactory factory) {
     PsiManager manager = element.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
-    SearchScope scope = helper.getAccessScope(element);
+    SearchScope scope = element.getUseScope();
     scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
     int index = stringToSearch.lastIndexOf('.');
     String identifierToSearch = index >= 0 ? stringToSearch.substring(index + 1) : stringToSearch;

@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -178,8 +179,8 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
-  public GlobalSearchScope getUseScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getUseScope(this);
+  public SearchScope getUseScope() {
+    return getManager().getSearchHelper().getUseScope(this);
   }
 
   public Project getProject() {

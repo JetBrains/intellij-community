@@ -108,7 +108,7 @@ public class SystemBuilder {
       keyParameter = parameter;
     }
 
-    final PsiMethod[] overriders = helper.findOverridingMethods(keyMethod, helper.getAccessScope(keyMethod), true);
+    final PsiMethod[] overriders = helper.findOverridingMethods(keyMethod, keyMethod.getUseScope(), true);
     PsiMethod prev = keyMethod;
 
     for (int i = 0; i < overriders.length; i++) {
@@ -694,7 +694,7 @@ public class SystemBuilder {
       addUsage(system, element);
 
       if (!(element instanceof PsiExpression)) {
-        PsiReference[] refs = helper.findReferences(element, helper.getAccessScope(element), true);
+        PsiReference[] refs = helper.findReferences(element, helper.getUseScope(element), true);
 
         for (int k = 0; k < refs.length; k++) {
           final PsiElement ref = refs[k].getElement();

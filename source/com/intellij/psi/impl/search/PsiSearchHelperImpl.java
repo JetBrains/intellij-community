@@ -36,10 +36,7 @@ import com.intellij.psi.jsp.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
@@ -64,6 +61,148 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final short DEFAULT_OCCURENCE_MASK = WordInfo.IN_CODE |
                    WordInfo.JSP_ATTRIBUTE_VALUE |
                    WordInfo.IN_COMMENTS;
+
+  public SearchScope getUseScope(PsiElement element) {
+    final GlobalSearchScope maximalUseScope = myManager.getFileManager().getUseScope(element);
+    if (element instanceof PsiPackage) {
+      return maximalUseScope;
+    }
+    else if (element instanceof PsiClass) {
+      if (element instanceof PsiAnonymousClass) {
+        return new LocalSearchScope(element);
+      }
+      PsiFile file = element.getContainingFile();
+      if (file instanceof JspFile) {
+        return new LocalSearchScope(file);
+      }
+      PsiClass aClass = (PsiClass)element;
+      if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return maximalUseScope;
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return maximalUseScope;
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass topClass = getTopLevelClass(aClass);
+        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(aClass.getContainingFile());
+      }
+      else {
+        PsiPackage aPackage = null;
+        if (file instanceof PsiJavaFile) {
+          aPackage = element.getManager().findPackage(((PsiJavaFile)file).getPackageName());
+        }
+
+        if (aPackage == null) {
+          PsiDirectory dir = file.getContainingDirectory();
+          if (dir != null) {
+            aPackage = dir.getPackage();
+          }
+        }
+
+        if (aPackage != null) {
+          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
+          scope = scope.intersectWith(maximalUseScope);
+          return scope;
+        }
+
+        return new LocalSearchScope(file);
+      }
+    }
+    else if (element instanceof PsiMethod) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof JspFile) {
+        return new LocalSearchScope(file);
+      }
+
+      PsiMethod method = (PsiMethod)element;
+
+      PsiClass aClass = method.getContainingClass();
+      if (aClass instanceof PsiAnonymousClass) {
+        //method from anonymous class can be called from outside the class
+        PsiElement methodCallExpr = PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
+        return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
+      }
+
+      if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return maximalUseScope;
+      }
+      else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return maximalUseScope;
+      }
+      else if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass topClass = getTopLevelClass(method);
+        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(method.getContainingFile());
+      }
+      else {
+        PsiPackage aPackage = file.getContainingDirectory().getPackage();
+        if (aPackage != null) {
+          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
+          scope = scope.intersectWith(maximalUseScope);
+          return scope;
+        }
+        else {
+          return new LocalSearchScope(file);
+        }
+      }
+    }
+    else if (element instanceof PsiField) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof JspFile) {
+        return new LocalSearchScope(file);
+      }
+      PsiField field = (PsiField)element;
+      if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return maximalUseScope;
+      }
+      else if (field.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return maximalUseScope;
+      }
+      else if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass topClass = getTopLevelClass(field);
+        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(field.getContainingFile());
+      }
+      else {
+        final PsiDirectory directory = file.getContainingDirectory();
+        PsiPackage aPackage = directory == null ? null : directory.getPackage();
+        if (aPackage != null) {
+          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
+          scope = scope.intersectWith(maximalUseScope);
+          return scope;
+        }
+        else {
+          return new LocalSearchScope(file);
+        }
+      }
+    }
+    else if (element instanceof ImplicitVariable) {
+      return new LocalSearchScope(((ImplicitVariable)element).getDeclarationScope());
+    }
+    else if (element instanceof PsiLocalVariable) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiDeclarationStatement) {
+        return new LocalSearchScope(parent.getParent());
+      }
+      else {
+        return maximalUseScope;
+      }
+    }
+    else if (element instanceof PsiParameter) {
+      return new LocalSearchScope(((PsiParameter)element).getDeclarationScope());
+    }
+    else if (element instanceof PsiAntElement) {
+      return ((PsiAntElement)element).getSearchScope();
+    }
+    else {
+      return maximalUseScope;
+    }
+  }
+
+  private static PsiClass getTopLevelClass(PsiElement element) {
+    while (!(element.getParent() instanceof PsiFile)) {
+      element = element.getParent();
+    }
+    return element instanceof PsiClass ? (PsiClass)element : null;
+  }
 
   public interface CustomSearchHelper {
     short getOccurenceMask();
@@ -264,7 +403,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     SearchScope searchScope;
     if (!ignoreAccessScope) {
-      SearchScope accessScope = getAccessScope(refElement);
+      SearchScope accessScope = refElement.getUseScope();
       searchScope = originalScope.intersectWith(accessScope);
       if (searchScope == null) return true;
     }
@@ -671,9 +810,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final String text = method.getName();
     final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloadsMayBeOverriden(method);
 
-    SearchScope accessScope = getAccessScope(methods[0]);
+    SearchScope accessScope = methods[0].getUseScope();
     for (int i = 0; i < methods.length; i++) {
-      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, getAccessScope(methods[i]));
+      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, methods[i].getUseScope());
       accessScope = someScope == null ? accessScope : someScope;
     }
 
@@ -822,7 +961,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return true;
     }
 
-    final SearchScope searchScope1 = searchScope.intersectWith(PsiSearchScopeUtil.getAccessScope(aClass));
+    final SearchScope searchScope1 = searchScope.intersectWith(aClass.getUseScope());
 
     RepositoryIndex repositoryIndex = repositoryManager.getIndex();
     VirtualFileFilter rootFilter;
@@ -1509,10 +1648,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.popState();
     }
-  }
-
-  public SearchScope getAccessScope(PsiElement element) {
-    return PsiSearchScopeUtil.getAccessScope(element);
   }
 
   public PsiFile[] findFormsBoundToClass(String className) {

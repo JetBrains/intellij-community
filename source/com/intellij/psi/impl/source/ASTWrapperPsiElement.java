@@ -16,6 +16,7 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -219,7 +220,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     throw new UnsupportedOperationException();
   }
 
-  public GlobalSearchScope getUseScope() {
+  public SearchScope getUseScope() {
     throw new UnsupportedOperationException();
   }
 

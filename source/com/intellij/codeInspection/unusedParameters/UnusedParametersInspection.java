@@ -80,7 +80,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
                                   found[0] = true;
                                   return false;
                                 }
-                              }, psiParameter, helper.getAccessScope(psiParameter), false);
+                              }, psiParameter, helper.getUseScope(psiParameter), false);
                             }
                           }
                         }
