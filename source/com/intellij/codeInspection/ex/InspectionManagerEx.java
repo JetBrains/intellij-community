@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -411,6 +412,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       }
     };
 
+    final ProgressIndicator progress = myProgressIndicator == null ? null : new ProgressWrapper(myProgressIndicator);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         if (myDerivedClassesRequests != null) {
@@ -510,7 +512,19 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           myMethodUsagesRequests = null;
         }
       }
-    }, null);
+    }, progress);
+  }
+  
+  private static class ProgressWrapper extends ProgressIndicatorBase {
+    private ProgressIndicator myOriginal;
+
+    public ProgressWrapper(final ProgressIndicator original) {
+      myOriginal = original;
+    }
+
+    public boolean isCanceled() {
+      return myOriginal.isCanceled();
+    }
   }
 
   private int getRequestCount() {
