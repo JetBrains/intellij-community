@@ -33,7 +33,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
       }
       return result;
     } else {
-      return null;
+      return new ArrayList<AbstractTreeNode>();
     }
   }
 
