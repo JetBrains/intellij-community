@@ -101,6 +101,23 @@ public class SuspendManagerUtil {
     return result;
   }
 
+  /**
+   * @param suspendManager
+   * @param thread
+   * @return true if there are SuspendContexts suspending the thread
+   */
+  public static boolean hasSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    for (Iterator<SuspendContextImpl> iterator = suspendManager.getEventContexts().iterator(); iterator.hasNext();) {
+      final SuspendContextImpl suspendContext = iterator.next();
+      if(suspendContext.suspends(thread)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {
     SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
     ResumeData data = (ResumeData) resumeData;

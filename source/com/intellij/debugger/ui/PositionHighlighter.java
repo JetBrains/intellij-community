@@ -155,9 +155,13 @@ public class PositionHighlighter {
     }
 
   private void showSelection(final PsiFile psiFile, int lineIndex) {
-    if(lineIndex < 0) lineIndex = 0;
+    if(lineIndex < 0) {
+      lineIndex = 0;
+    }
     Editor editor = getEditor(psiFile, lineIndex);
-    if(editor == null) return;
+    if(editor == null) {
+      return;
+    }
     if (mySelectionDescription != null) {
       mySelectionDescription.remove();
     }
@@ -166,9 +170,13 @@ public class PositionHighlighter {
   }
 
   private void showExecutionPoint(final PsiFile psiFile, int lineIndex, List<Pair<Breakpoint, Event>> events) {
-    if(lineIndex < 0) lineIndex = 0;
+    if(lineIndex < 0) {
+      lineIndex = 0;
+    }
     Editor editor = getEditor(psiFile, lineIndex);
-    if(editor == null) return;
+    if(editor == null) {
+      return;
+    }
     if (myExecutionPointDescription != null) {
       myExecutionPointDescription.remove();
     }
@@ -236,25 +244,17 @@ public class PositionHighlighter {
     }
   }
 
-  public Editor getEditor() {
-    SourcePosition position = myContext.getSourcePosition();
-    if (position == null) {
-      return null;
-    }
-
-    int lineIndex = position.getLine();
-    return getEditor(position.getFile(), (lineIndex > 0? lineIndex : 0));
-  }
-
   private Editor getEditor(final PsiFile psiFile, final int lineIndex) {
     Document doc = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     if (!psiFile.isValid()) {
       return null;
     }
-    LOG.assertTrue(lineIndex >= 0 && lineIndex <= doc.getLineCount());
+    if (lineIndex < 0 || lineIndex > doc.getLineCount()) {
+      //LOG.assertTrue(false, "Incorrect lineIndex " + lineIndex + " in file " + psiFile.getName());
+      return null;
+    }
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    Editor editor = editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile(), lineIndex, 0), false);
-    return editor;
+    return editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile(), lineIndex, 0), false);
   }
 
   private void clearSelections() {

@@ -31,9 +31,15 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
 
   public final void contextAction() throws Exception {
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
-    Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(suspendManager, myDebuggerContext.getThreadProxy());
 
-    if(suspendingContexts.isEmpty()) {
+    if (SuspendManagerUtil.hasSuspendingContexts(suspendManager, myDebuggerContext.getThreadProxy())) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Context thread " + getSuspendContext().getThread());
+        LOG.debug("Debug thread" + myDebuggerContext.getThreadProxy());
+      }
+      threadAction();
+    }
+    else {
       // there are no suspend context currently registered
       SuspendContextImpl threadContext = SuspendManagerUtil.findContextByThread(suspendManager, myDebuggerContext.getThreadProxy());
       if(threadContext != null) {
@@ -42,13 +48,6 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
       else {
         notifyCancelled();
       }
-    }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Context thread " + getSuspendContext().getThread());
-        LOG.debug("Debug thread" + myDebuggerContext.getThreadProxy());
-      }
-      threadAction();
     }
   }
 
