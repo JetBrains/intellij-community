@@ -214,6 +214,7 @@ public class ElementsChooser<T> extends JPanel {
       rows[index++] = myTableModel.getElementRow(it.next());
     }
     TableUtil.selectRows(myTable, rows);
+    myTable.requestFocus();
   }
 
   public List<T> getMarkedElements() {

@@ -54,8 +54,13 @@ public class OutputPathsStep extends ModuleWizardStep{
           path = StringUtil.endsWithChar(contentEntryPath, '/') ? contentEntryPath + "classes" : contentEntryPath + "/classes";
         }
         myNamePathComponent.setPath(path.replace('/', File.separatorChar));
+        myNamePathComponent.getPathComponent().selectAll();
       }
     }
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return  myNamePathComponent.getPathComponent();
   }
 
   public boolean isStepVisible() {

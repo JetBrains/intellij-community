@@ -347,6 +347,12 @@ public class SourcePathsStep extends ModuleWizardStep {
             updateFullPathField();
           }
           updateStepUI(progress.isCanceled()? null : myBuilder.getContentEntryPath());
+          if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
+            mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+          }
+          else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
+            myTfSourceDirectoryName.selectAll();
+          }
         }
       }.start();
     }

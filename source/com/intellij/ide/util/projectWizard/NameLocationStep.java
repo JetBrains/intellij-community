@@ -116,7 +116,6 @@ public class NameLocationStep extends ModuleWizardStep {
 
     // initial UI settings
     if (!myFirstTimeInitializationDone) {
-      myFirstTimeInitializationDone = true;
       if (myWizardContext.isCreatingNewProject()) {
         setSyncEnabled(false);
       }
@@ -140,6 +139,11 @@ public class NameLocationStep extends ModuleWizardStep {
         setModuleName(myWizardContext.getProjectName());
       }
     }
+
+    if (!myFirstTimeInitializationDone) {
+      myNamePathComponent.getNameComponent().selectAll();
+    }
+    myFirstTimeInitializationDone = true;
   }
 
   public JComponent getComponent() {

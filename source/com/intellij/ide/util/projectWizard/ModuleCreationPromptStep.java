@@ -41,6 +41,10 @@ public class ModuleCreationPromptStep extends ModuleWizardStep {
 
   }
 
+  public JComponent getPreferredFocusedComponent() {
+    return myRbCreateSingle;
+  }
+
   public String getHelpId() {
     return "project.new.page3";
   }
