@@ -5,13 +5,14 @@ import com.intellij.ide.impl.StructureViewWrapper;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -790,32 +791,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return elements.toArray(new PsiElement[elements.size()]);
       }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
-        /*
-        DefaultMutableTreeNode node = getCurrentProjectViewPane().getSelectedNode();
-        if (node == null) {
-          return null;
-        }
-        if (node.getUserObject() instanceof DirectoryNodeDescriptor) {
-          final PsiDirectory dir = ((DirectoryNodeDescriptor)node.getUserObject()).getDirectory();
-          return dir.getParentDirectory();
-        }
-        node = (DefaultMutableTreeNode)node.getParent();
-        if (node == null) {
-          return null;
-        }
-        Object userObject = node.getUserObject();
-        if (!(userObject instanceof NodeDescriptor)) {
-          return null;
-        }
-        Object element = ((NodeDescriptor)userObject).getElement();
-        if (!(element instanceof PsiElement)) {
-          return null;
-        }
-        PsiElement psiElement = (PsiElement)element;
-        return psiElement.isValid() ? psiElement : null;
-        */
-        // [dsl] in Project View we do not have any specific target psi element
-        // we only guess
         return null;
       }
       if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
@@ -903,7 +878,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }
         final Object userObject = node.getUserObject();
         if (userObject instanceof PsiDirectoryNode ||
-            userObject instanceof ProjectViewModuleNode) {
+            userObject instanceof ProjectViewModuleNode
+            || userObject instanceof PackageElementNode) {
           break;
         }
         node = (DefaultMutableTreeNode)node.getParent();
@@ -932,6 +908,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           }
         }
         return dirs.toArray(new PsiDirectory[dirs.size()]);
+      } else if (userObject instanceof PackageElementNode) {
+        final PsiPackage aPackage = ((PackageElementNode)userObject).getValue().getPackage();
+        if (aPackage == null || !aPackage.isValid()) {
+          return PsiDirectory.EMPTY_ARRAY;
+        }
+        else {
+          return aPackage.getDirectories();
+        }
       }
 
       return PsiDirectory.EMPTY_ARRAY;
