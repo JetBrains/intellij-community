@@ -184,7 +184,8 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   }
 
   public Project getProject() {
-    return getManager().getProject();
+    final PsiManager manager = getManager();
+    return manager != null ? manager.getProject() : null;
   }
 
   public Language getLanguage() {

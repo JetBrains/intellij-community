@@ -237,7 +237,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public Project getProject() {
-    return getManager().getProject();
+    final PsiManager manager = getManager();
+    return manager != null ? manager.getProject() : null;
   }
 
   public Language getLanguage() {
