@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -52,7 +54,7 @@ public class ConfusingElseInspection extends StatementInspection {
                 return;
             }
 
-            final PsiStatement nextStatement = findNextStatement(statement);
+            final PsiStatement nextStatement = (PsiStatement)PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
 
             if (nextStatement == null) {
                 return;
@@ -65,18 +67,5 @@ public class ConfusingElseInspection extends StatementInspection {
             final PsiElement elseToken = statement.getElseElement();
             registerError(elseToken);
         }
-
-        private static PsiStatement findNextStatement(PsiStatement statement) {
-            PsiElement next = statement.getNextSibling();
-            while (next != null) {
-                if (next instanceof PsiStatement) {
-                    return (PsiStatement) next;
-                }
-                next = next.getNextSibling();
-            }
-            return null;
-        }
-
     }
-
 }
