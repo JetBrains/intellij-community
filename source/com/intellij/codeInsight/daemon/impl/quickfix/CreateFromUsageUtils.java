@@ -350,6 +350,9 @@ public class CreateFromUsageUtils {
     for (int i = 0; i < allVars.length; i++) {
       PsiVariable variable = allVars[i];
       PsiType varType = variable.getType();
+      if (!(varType instanceof PsiClassType)) continue;
+      PsiClass aClass = ((PsiClassType)varType).resolve();
+      if (aClass == null) continue;
       boolean matched = infos.length == 0;
       for (int j = 0; j < infos.length; j++) {
         if (ExpectedTypeUtil.matches(varType, infos[j])) {
@@ -361,15 +364,11 @@ public class CreateFromUsageUtils {
       if (matched) {
         for (Iterator<String> iterator = expectedFieldNames.iterator(); iterator.hasNext();) {
           String name = iterator.next();
-          if (!(varType instanceof PsiClassType)) continue nextVar;
-          PsiClass aClass = PsiUtil.resolveClassInType(varType);
           if (aClass.findFieldByName(name, true) == null) continue nextVar;
         }
 
         for (Iterator<String> iterator = expectedMethodNames.iterator(); iterator.hasNext();) {
           String name = iterator.next();
-          if (!(varType instanceof PsiClassType)) continue nextVar;
-          PsiClass aClass = PsiUtil.resolveClassInType(varType);
           PsiMethod[] methods = aClass.findMethodsByName(name, true);
           if (methods == null || methods.length == 0) continue nextVar;
         }
