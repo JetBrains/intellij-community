@@ -29,7 +29,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    if (navigatable.canNavigate()) {
+    if (navigatable.canNavigateToSource()) {
       navigatable.navigate(myFocusEditor);
     }
   }
@@ -38,11 +38,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
   public void update(AnActionEvent event){
     DataContext dataContext = event.getDataContext();
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    event.getPresentation().setEnabled(navigatable != null && navigatable.canNavigate());
-  }
-
-  private static void navigate(DataContext dataContext, OpenFileDescriptor descriptor, boolean focusEditor) {
-    SourceNavigator.fromContext(dataContext).navigate(descriptor, focusEditor);
+    event.getPresentation().setEnabled(navigatable != null && navigatable.canNavigateToSource());
   }
 
   public static abstract class SourceNavigator {

@@ -74,7 +74,7 @@ public abstract class AutoScrollToSourceHandler {
   protected void scrollToSource(JTree tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    if (navigatable != null && navigatable.canNavigate()) {
+    if (navigatable != null && navigatable.canNavigateToSource()) {
       navigatable.navigate(false);
     }
   }

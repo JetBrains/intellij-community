@@ -53,6 +53,10 @@ public class FormNode extends ProjectViewNode<Form>{
     return getValue().canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return getValue().canNavigateToSource();
+  }
+
   public String getToolTip() {
     return "UI Designer Form";
   }

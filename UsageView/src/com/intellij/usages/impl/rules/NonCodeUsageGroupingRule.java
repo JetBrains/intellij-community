@@ -32,6 +32,10 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
     public void navigate(boolean requestFocus) { }
     public boolean canNavigate() { return false; }
+
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
   }
 
   private static class NonCodeUsageGroup implements UsageGroup {
@@ -49,6 +53,10 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
     public void navigate(boolean requestFocus) { }
     public boolean canNavigate() { return false; }
+
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
   }
 
   public UsageGroup groupUsage(Usage usage) {

@@ -171,6 +171,10 @@ public class FindInProjectManager implements ProjectComponent {
       public boolean canNavigate() {
         return false;
       }
+
+      public boolean canNavigateToSource() {
+        return false;
+      }
     }
 
     if (manager!=null) {

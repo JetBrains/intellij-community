@@ -148,6 +148,10 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     return false;
   }
 
+  public boolean canNavigateToSource() {
+    return false;
+  }
+
   protected final Object getParentValue() {
     return getParent() == null ? null : getParent().getValue();
   }

@@ -225,8 +225,7 @@ public class CommanderPanel extends JPanel {
   public boolean navigateSelectedElement() {
     final AbstractTreeNode selectedNode = getSelectedNode();
     if (selectedNode != null) {
-      final Object value = selectedNode.getValue();
-      if (selectedNode.canNavigate()) {
+      if (selectedNode.canNavigateToSource()) {
         selectedNode.navigate(true);
         return true;
       }

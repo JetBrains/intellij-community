@@ -81,6 +81,10 @@ public class PackageGroupingRule implements UsageGroupingRule {
       return myPackage.canNavigate();
     }
 
+    public boolean canNavigateToSource() {
+      return false;
+    }
+
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }
@@ -140,6 +144,10 @@ public class PackageGroupingRule implements UsageGroupingRule {
     public boolean canNavigate() {
       final PsiDirectory directory = getDirectory();
       return directory != null && directory.canNavigate();
+    }
+
+    public boolean canNavigateToSource() {
+      return false;
     }
 
     public int compareTo(UsageGroup usageGroup) {

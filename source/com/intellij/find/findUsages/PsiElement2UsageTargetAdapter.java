@@ -81,6 +81,10 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     return isValid() && getNavigationItem().canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return isValid() && getNavigationItem().canNavigateToSource();
+  }
+
   private NavigationItem getNavigationItem() {
     return (NavigationItem)myPointer.getElement();
   }

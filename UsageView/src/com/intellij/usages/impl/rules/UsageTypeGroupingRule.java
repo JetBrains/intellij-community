@@ -124,6 +124,10 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     public void navigate(boolean focus) { }
     public boolean canNavigate() { return false; }
 
+    public boolean canNavigateToSource() {
+      return false;
+    }
+
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }

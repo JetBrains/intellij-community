@@ -221,6 +221,10 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigateToSource();
+  }
+
   protected void clearChildren() {
     if (myChildren != null) {
       myChildren.clear();

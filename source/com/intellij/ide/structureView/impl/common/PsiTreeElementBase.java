@@ -132,5 +132,9 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     }
   }
 
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
   public abstract StructureViewTreeElement[] getChildrenBase();
 }

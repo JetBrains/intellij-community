@@ -116,6 +116,10 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
     return EditSourceUtil.getDescriptor(getNavigationElement()) != null;
   }
 
+  public boolean canNavigateToSource() {
+    return EditSourceUtil.getDescriptor(getNavigationElement()) != null;
+  }
+
   public FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
   }

@@ -104,6 +104,10 @@ public class MethodGroupingRule implements UsageGroupingRule {
       return isValid();
     }
 
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+
     public int compareTo(UsageGroup usageGroup) {
       if (!(usageGroup instanceof MethodUsageGroup)) {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");

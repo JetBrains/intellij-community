@@ -105,6 +105,10 @@ public class OpenFileDescriptor implements Navigatable {
     return true;
   }
 
+  public boolean canNavigateToSource() {
+    return true;
+  }
+
   public Project getProject() {
     return myProject;
   }

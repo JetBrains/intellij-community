@@ -228,6 +228,10 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return EditSourceUtil.getDescriptor(getNavigationElement()) != null;
   }
 
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
   public FileStatus getFileStatus() {
     if (!isPhysical()) return FileStatus.NOT_CHANGED;
     PsiFile contFile = getContainingFile();

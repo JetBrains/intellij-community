@@ -130,6 +130,10 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     public void navigate(boolean requestFocus) { }
 
     public boolean canNavigate() { return false; }
+
+    public boolean canNavigateToSource() {
+      return false;
+    }
   }
 
   private static class OddEvenGroupingRule implements UsageGroupingRule {
@@ -147,6 +151,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
       public void navigate(boolean focus) throws UnsupportedOperationException { }
       public boolean canNavigate() { return false; }
+
+      public boolean canNavigateToSource() {
+        return false;
+      }
+
       public int compareTo(UsageGroup o) { return o == ODD ? -1 : 0; }
       public String toString() { return getText(null); }
     };
@@ -165,6 +174,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
       public void navigate(boolean focus) throws UnsupportedOperationException { }
       public boolean canNavigate() { return false; }
+
+      public boolean canNavigateToSource() {
+        return false;
+      }
+
       public int compareTo(UsageGroup o) { return o == EVEN ? 1 : 0; }
       public String toString() { return getText(null); }
     };
@@ -226,6 +240,10 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     }
 
     public boolean canNavigate() {
+      return false;
+    }
+
+    public boolean canNavigateToSource() {
       return false;
     }
 

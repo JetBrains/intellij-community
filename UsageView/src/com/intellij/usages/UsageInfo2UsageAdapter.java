@@ -136,6 +136,9 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     return descriptor != null ? descriptor.canNavigate() : false;
   }
 
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
 
   private OpenFileDescriptor getDescriptor() {
     return isValid() ? new OpenFileDescriptor(getProject(), getFile(), myRangeMarkers.get(0).getStartOffset()) : null;

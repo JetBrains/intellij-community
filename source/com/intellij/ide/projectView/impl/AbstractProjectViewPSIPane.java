@@ -103,7 +103,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
           DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
           Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigate()) {
+          if (navigatable != null && navigatable.canNavigateToSource()) {
             navigatable.navigate(false);
           }
         }

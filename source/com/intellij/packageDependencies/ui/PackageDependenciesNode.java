@@ -110,6 +110,10 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return descriptor != null ? descriptor.canNavigate() : false;
   }
 
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
   private Project getProject(){
     if (getPsiElement() == null || getPsiElement().getContainingFile() == null){
       return null;

@@ -166,7 +166,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
             DataContext dataContext = DataManager.getInstance().getDataContext(getTree());
             Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null && navigatable.canNavigate()) {
+            if (navigatable != null && navigatable.canNavigateToSource()) {
               navigatable.navigate(false);
             }
           }
@@ -530,7 +530,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
       Navigatable editSourceDescriptor = (Navigatable)DataManager.getInstance().getDataContext(getTree())
         .getData(DataConstants.NAVIGATABLE);
-      if (myFileEditor != null && editSourceDescriptor != null && editSourceDescriptor.canNavigate()) {
+      if (myFileEditor != null && editSourceDescriptor != null && editSourceDescriptor.canNavigateToSource()) {
         editSourceDescriptor.navigate(false);
       }
     }

@@ -28,7 +28,7 @@ public class EditSourceOnEnterKeyHandler{
             if (project == null) return;
 
             Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null && navigatable.canNavigate()) {
+            if (navigatable != null && navigatable.canNavigateToSource()) {
               navigatable.navigate(false);
             }
           }
@@ -43,7 +43,7 @@ public class EditSourceOnEnterKeyHandler{
       public void actionPerformed(ActionEvent e) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         final Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable == null || !navigatable.canNavigate()) return;
+        if (navigatable == null || !navigatable.canNavigateToSource()) return;
 
         navigatable.navigate(true);
         

@@ -76,6 +76,10 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return false;
     }
 
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+
     public Object getData(String dataId) {
       return null;
     }
@@ -134,6 +138,10 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     public boolean canNavigate() {
+      return false;
+    }
+
+    public boolean canNavigateToSource() {
       return false;
     }
 

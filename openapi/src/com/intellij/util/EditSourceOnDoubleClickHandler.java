@@ -31,7 +31,7 @@ public class EditSourceOnDoubleClickHandler {
         if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf() || !expandOnDoubleClick(((TreeNode)selectionPath.getLastPathComponent()))) {
           //Node expansion for non-leafs has a higher priority
           Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigate()) {
+          if (navigatable != null && navigatable.canNavigateToSource()) {
             navigatable.navigate(true);
           }
         }
@@ -58,7 +58,7 @@ public class EditSourceOnDoubleClickHandler {
         Project project = (Project)dataContext.getData(DataConstants.PROJECT);
         if (project == null) return;
         Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable != null && navigatable.canNavigate()) {
+        if (navigatable != null && navigatable.canNavigateToSource()) {
           navigatable.navigate(true);
         }
       }
@@ -75,7 +75,7 @@ public class EditSourceOnDoubleClickHandler {
         Project project = (Project)dataContext.getData(DataConstants.PROJECT);
         if (project == null) return;
         Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable != null && navigatable.canNavigate()) {
+        if (navigatable != null && navigatable.canNavigateToSource()) {
           navigatable.navigate(true);
         }
       }
@@ -93,7 +93,7 @@ public class EditSourceOnDoubleClickHandler {
         if (!list.getCellBounds(index, index).contains(point)) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(list);
         Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable == null || !navigatable.canNavigate()) { return; }
+        if (navigatable == null || !navigatable.canNavigateToSource()) { return; }
 
         navigatable.navigate(true);
 

@@ -47,6 +47,14 @@ public class Form implements Navigatable{
     }
   }
 
+  public boolean canNavigateToSource() {
+    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
+      PsiFile psiFile = iterator.next();
+      if (psiFile instanceof Navigatable && ((Navigatable)psiFile).canNavigateToSource()) return true;
+    }
+    return false;
+  }
+
   public boolean canNavigate() {
     for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
       PsiFile psiFile = iterator.next();

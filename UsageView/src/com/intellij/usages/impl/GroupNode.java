@@ -191,6 +191,11 @@ class GroupNode extends Node implements Navigatable {
     return myGroup != null && myGroup.canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return myGroup != null && myGroup.canNavigateToSource();
+  }
+
+
   protected boolean isDataExcluded() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {

@@ -90,6 +90,10 @@ public class FileGroupingRule implements UsageGroupingRule {
       return true;
     }
 
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }

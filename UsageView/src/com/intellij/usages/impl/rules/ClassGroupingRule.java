@@ -129,6 +129,10 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return isValid();
     }
 
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }

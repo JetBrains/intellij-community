@@ -49,6 +49,10 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
     return myUsage.isValid() && myUsage.canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return myUsage.isValid() && myUsage.canNavigate();
+  }
+
   protected boolean isDataValid() {
     return myUsage.isValid();
   }

@@ -22,6 +22,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.Navigatable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -256,6 +257,11 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public boolean canNavigate() {
     return true;
+  }
+
+  public boolean canNavigateToSource() {
+    final Navigatable descriptor = EditSourceUtil.getDescriptor(getNavigationElement());
+    return descriptor != null && descriptor.canNavigateToSource();
   }
 
   public FileStatus getFileStatus() {

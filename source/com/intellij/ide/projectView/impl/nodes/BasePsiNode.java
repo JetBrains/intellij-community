@@ -121,6 +121,10 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
     return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigate();
   }
 
+  public boolean canNavigateToSource() {
+    return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigateToSource();
+  }
+
   public static VirtualFile getVirtualFile(PsiElement element) {
     return element instanceof PsiDirectory
       ? ((PsiDirectory)element).getVirtualFile()
