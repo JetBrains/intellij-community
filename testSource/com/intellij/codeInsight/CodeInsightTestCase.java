@@ -94,6 +94,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final RangeMarker[] selEndMarkers = new RangeMarker[vFiles.length];
     final String[] newFileTexts = new String[vFiles.length];
 
+    boolean projectCopied = false;
+
     for (int i = 0; i < vFiles.length; i++) {
       VirtualFile vFile = vFiles[i];
 
@@ -130,7 +132,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         writer.close();
       }
       else {
-        FileUtil.copyDir(projectRoot, dir);
+        if (!projectCopied) {
+          FileUtil.copyDir(projectRoot, dir);
+          projectCopied = true;
+        }
         //vFile.getPath().substring(PathManagerEx.getTestDataPath().length())
         newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length()));
       }
