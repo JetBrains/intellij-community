@@ -123,7 +123,7 @@ public class IdTableBuilding {
     }
 
     protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      Lexer lexer = new XmlPsiLexer();
+      Lexer lexer = new XmlLexer();
       return new XmlFilterLexer(lexer, wordsTable, todoCounts);
     }
   }

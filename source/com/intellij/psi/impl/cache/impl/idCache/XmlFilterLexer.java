@@ -24,7 +24,7 @@ public class XmlFilterLexer extends BaseFilterLexer {
       advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
     }
 
-    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN | tokenType == ElementType.XML_NAME) {
       IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(),
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_ALIEN_LANGUAGES, caseInsensitive);
     } else {
