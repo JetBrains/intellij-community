@@ -119,13 +119,13 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForLabeledStatement(final PsiLabeledStatement labeledStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForLabeledStatement(PsiLabeledStatement labeledStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiStatement statement = labeledStatement.getStatement();
         calculateExceptionsThrownForStatement(statement, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForExpressionListStatement(final PsiExpressionListStatement listStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForExpressionListStatement(PsiExpressionListStatement listStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpressionList expressionList = listStatement.getExpressionList();
         final PsiExpression[] expressions = expressionList.getExpressions();
@@ -135,7 +135,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForDeclarationStatemt(final PsiDeclarationStatement declStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForDeclarationStatemt(PsiDeclarationStatement declStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiElement[] elements = declStatement.getDeclaredElements();
         for(int i = 0; i < elements.length; i++)
@@ -149,7 +149,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForAssertStatement(final PsiAssertStatement assertStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForAssertStatement(PsiAssertStatement assertStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression assertCondition = assertStatement.getAssertCondition();
         calculateExceptionsThrown(assertCondition, exceptionTypes, factory);
@@ -157,7 +157,7 @@ class ExceptionUtils
         calculateExceptionsThrown(assertDescription, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForThrowStatement(final PsiThrowStatement throwStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForThrowStatement(PsiThrowStatement throwStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
@@ -165,7 +165,7 @@ class ExceptionUtils
         calculateExceptionsThrown(exception, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForSwitchStatement(final PsiSwitchStatement switchStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForSwitchStatement(PsiSwitchStatement switchStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression switchExpression = switchStatement.getExpression();
         calculateExceptionsThrown(switchExpression, exceptionTypes, factory);
@@ -173,7 +173,7 @@ class ExceptionUtils
         calculateExceptionsThrownForCodeBlock(body, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForTryStatement(final PsiTryStatement tryStatement, PsiElementFactory factory, Set exceptionTypes)
+    private static void calculateExceptionsThrownForTryStatement(PsiTryStatement tryStatement, PsiElementFactory factory, Set exceptionTypes)
     {
         final Set exceptionThrown = new HashSet(10);
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
@@ -210,7 +210,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForIfStatement(final PsiIfStatement ifStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForIfStatement(PsiIfStatement ifStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression condition = ifStatement.getCondition();
         final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -220,13 +220,13 @@ class ExceptionUtils
         calculateExceptionsThrownForStatement(elseBranch, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForBlockStatement(final PsiBlockStatement block, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForBlockStatement(PsiBlockStatement block, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiCodeBlock codeBlock = block.getCodeBlock();
         calculateExceptionsThrownForCodeBlock(codeBlock, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForSynchronizedStatement(final PsiSynchronizedStatement syncStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForSynchronizedStatement(PsiSynchronizedStatement syncStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression lockExpression = syncStatement.getLockExpression();
         if(lockExpression != null)
@@ -237,7 +237,7 @@ class ExceptionUtils
         calculateExceptionsThrownForCodeBlock(body, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForDoWhileStatement(final PsiDoWhileStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForDoWhileStatement(PsiDoWhileStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression condition = loopStatement.getCondition();
         calculateExceptionsThrown(condition, exceptionTypes, factory);
@@ -245,7 +245,7 @@ class ExceptionUtils
         calculateExceptionsThrownForStatement(body, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForWhileStatement(final PsiWhileStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForWhileStatement(PsiWhileStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression condition = loopStatement.getCondition();
         calculateExceptionsThrown(condition, exceptionTypes, factory);
@@ -253,7 +253,7 @@ class ExceptionUtils
         calculateExceptionsThrownForStatement(body, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForForExpression(final PsiForStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForForExpression(PsiForStatement loopStatement, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiStatement initialization = loopStatement.getInitialization();
         final PsiExpression condition = loopStatement.getCondition();
@@ -334,19 +334,19 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForTypeCast(final PsiTypeCastExpression typeCast, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForTypeCast(PsiTypeCastExpression typeCast, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression operand = typeCast.getOperand();
         calculateExceptionsThrown(operand, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForInstanceOf(final PsiInstanceOfExpression instExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForInstanceOf(PsiInstanceOfExpression instExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression operand = instExp.getOperand();
         calculateExceptionsThrown(operand, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForNewExpression(final PsiNewExpression newExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForNewExpression(PsiNewExpression newExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpressionList argumentList = newExp.getArgumentList();
         if(argumentList != null)
@@ -381,7 +381,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForMethodCall(final PsiMethodCallExpression methExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForMethodCall(PsiMethodCallExpression methExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpressionList argumentList = methExp.getArgumentList();
         if(argumentList != null)
@@ -410,7 +410,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForConditionalExcpression(final PsiConditionalExpression condExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForConditionalExcpression(PsiConditionalExpression condExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression condition = condExp.getCondition();
         final PsiExpression elseExpression = condExp.getElseExpression();
@@ -420,7 +420,7 @@ class ExceptionUtils
         calculateExceptionsThrown(thenExpression, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForBinaryExpression(final PsiBinaryExpression binaryExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForBinaryExpression(PsiBinaryExpression binaryExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression lOperand = binaryExp.getLOperand();
         calculateExceptionsThrown(lOperand, exceptionTypes, factory);
@@ -428,7 +428,7 @@ class ExceptionUtils
         calculateExceptionsThrown(rhs, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForArrayInitializerExpression(final PsiArrayInitializerExpression arrayExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForArrayInitializerExpression(PsiArrayInitializerExpression arrayExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression[] initializers = arrayExp.getInitializers();
         for(int i = 0; i < initializers.length; i++)
@@ -437,7 +437,7 @@ class ExceptionUtils
         }
     }
 
-    private static void calculateExceptionsThrownForArrayAccessExpression(final PsiArrayAccessExpression arrayAccessExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForArrayAccessExpression(PsiArrayAccessExpression arrayAccessExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression arrayExpression = arrayAccessExp.getArrayExpression();
         calculateExceptionsThrown(arrayExpression, exceptionTypes, factory);
@@ -445,13 +445,13 @@ class ExceptionUtils
         calculateExceptionsThrown(indexExpression, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForPrefixException(final PsiPrefixExpression prefixExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForPrefixException(PsiPrefixExpression prefixExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression operand = prefixExp.getOperand();
         calculateExceptionsThrown(operand, exceptionTypes, factory);
     }
 
-    private static void calculateExceptionsThrownForPostixExpression(final PsiPostfixExpression postfixExp, Set exceptionTypes, PsiElementFactory factory)
+    private static void calculateExceptionsThrownForPostixExpression(PsiPostfixExpression postfixExp, Set exceptionTypes, PsiElementFactory factory)
     {
         final PsiExpression operand = postfixExp.getOperand();
         calculateExceptionsThrown(operand, exceptionTypes, factory);

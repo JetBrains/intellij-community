@@ -5,15 +5,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.util.*;
 
 public class DetailExceptionsIntention extends Intention
 {
-    public DetailExceptionsIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {
@@ -27,8 +25,7 @@ public class DetailExceptionsIntention extends Intention
 
     public PsiElementPredicate getElementPredicate()
     {
-        final Project project = getProject();
-        return new DetailExceptionsPredicate(project);
+        return new DetailExceptionsPredicate();
     }
 
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException

@@ -1,20 +1,19 @@
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 class DetailExceptionsPredicate implements PsiElementPredicate
 {
-    private final Project m_project;
 
-    DetailExceptionsPredicate(Project project)
+    DetailExceptionsPredicate()
     {
         super();
-        m_project = project;
     }
 
     public boolean satisfiedBy(PsiElement element)
@@ -24,7 +23,7 @@ class DetailExceptionsPredicate implements PsiElementPredicate
             return false;
         }
         final IElementType tokenType = ((PsiJavaToken)element).getTokenType();
-        if(tokenType!=JavaTokenType.TRY_KEYWORD)
+        if(!JavaTokenType.TRY_KEYWORD.equals(tokenType))
         {
             return false;
         }
@@ -34,7 +33,7 @@ class DetailExceptionsPredicate implements PsiElementPredicate
         }
         final PsiTryStatement tryStatement = (PsiTryStatement) element.getParent();
         final Set exceptionsThrown = new HashSet(10);
-        final PsiManager mgr = PsiManager.getInstance(m_project);
+        final PsiManager mgr = element.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown, factory);
