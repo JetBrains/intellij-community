@@ -269,9 +269,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @return first <code>SmartTodoItemPointer</code> that is the children (in depth) of the specified <code>element</code>.
    *         If <code>element</code> itself is a <code>TodoItem</code> then the method returns the <code>element</code>.
    */
-  SmartTodoItemPointer getFirstPointerForElement(Object element) {
-    if (element instanceof SmartTodoItemPointer) {
-      return (SmartTodoItemPointer)element;
+  public TodoItemNode getFirstPointerForElement(Object element) {
+    if (element instanceof TodoItemNode) {
+      return ((TodoItemNode)element);
     }
     else {
       Object[] children = myTreeStructure.getChildElements(element);
@@ -279,22 +279,22 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         return null;
       }
       Object firstChild = children[0];
-      if (firstChild instanceof SmartTodoItemPointer) {
-        return (SmartTodoItemPointer)firstChild;
+      if (firstChild instanceof TodoItemNode) {
+        return ((TodoItemNode)firstChild);
       }
       else {
         return getFirstPointerForElement(firstChild);
       }
-    }
+    } 
   }
 
   /**
    * @return last <code>SmartTodoItemPointer</code> that is the children (in depth) of the specified <code>element</code>.
    *         If <code>element</code> itself is a <code>TodoItem</code> then the method returns the <code>element</code>.
    */
-  SmartTodoItemPointer getLastPointerForElement(Object element) {
-    if (element instanceof SmartTodoItemPointer) {
-      return (SmartTodoItemPointer)element;
+  public TodoItemNode getLastPointerForElement(Object element) {
+    if (element instanceof TodoItemNode) {
+      return (TodoItemNode)element;
     }
     else {
       Object[] children = myTreeStructure.getChildElements(element);
@@ -302,8 +302,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         return null;
       }
       Object firstChild = children[children.length - 1];
-      if (firstChild instanceof SmartTodoItemPointer) {
-        return (SmartTodoItemPointer)firstChild;
+      if (firstChild instanceof TodoItemNode) {
+        return (TodoItemNode)firstChild;
       }
       else {
         return getLastPointerForElement(firstChild);
@@ -419,13 +419,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @return next <code>TodoItem</code> for the passed <code>pointer</code>. Returns <code>null</code>
    *         if the <code>pointer</code> is the last todo item in the tree.
    */
-  SmartTodoItemPointer getNextPointer(SmartTodoItemPointer pointer) {
+  public TodoItemNode getNextPointer(TodoItemNode pointer) {
     Object sibling = getNextSibling(pointer);
     if (sibling == null) {
       return null;
     }
-    if (sibling instanceof SmartTodoItemPointer) {
-      return (SmartTodoItemPointer)sibling;
+    if (sibling instanceof TodoItemNode) {
+      return (TodoItemNode)sibling;
     }
     else {
       return getFirstPointerForElement(sibling);
@@ -464,13 +464,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @return next <code>SmartTodoItemPointer</code> for the passed <code>pointer</code>. Returns <code>null</code>
    *         if the <code>pointer</code> is the last todo item in the tree.
    */
-  SmartTodoItemPointer getPreviousPointer(SmartTodoItemPointer pointer) {
+  public TodoItemNode getPreviousPointer(TodoItemNode pointer) {
     Object sibling = getPreviousSibling(pointer);
     if (sibling == null) {
       return null;
     }
-    if (sibling instanceof SmartTodoItemPointer) {
-      return (SmartTodoItemPointer)sibling;
+    if (sibling instanceof TodoItemNode) {
+      return (TodoItemNode)sibling;
     }
     else {
       return getLastPointerForElement(sibling);

@@ -274,13 +274,13 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return null;
       }
       Object element = userObject.getElement();
-      if (!((element instanceof SmartTodoItemPointer) || (element instanceof PsiFile))) { // allow user to use F4 only on files an TODOs
+      if (!((element instanceof TodoFileNode) || (element instanceof TodoItemNode))) { // allow user to use F4 only on files an TODOs
         return null;
       }
-      SmartTodoItemPointer pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
+      TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
       if (pointer != null) {
-        return new OpenFileDescriptor(myProject, pointer.getTodoItem().getFile().getVirtualFile(),
-          pointer.getRangeMarker().getStartOffset()
+        return new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
+          pointer.getValue().getRangeMarker().getStartOffset()
         );
       }
       else {
@@ -397,7 +397,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return "Previous TODO";
     }
 
-    private OccurenceNavigator.OccurenceInfo goToPointer(SmartTodoItemPointer pointer) {
+    private OccurenceNavigator.OccurenceInfo goToPointer(TodoItemNode pointer) {
       LOG.assertTrue(pointer != null);
       DefaultMutableTreeNode node = myTodoTreeBuilder.getNodeForElement(pointer);
       if (node == null) {
@@ -411,14 +411,14 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       }
       TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
       return new OccurenceInfo(
-        new OpenFileDescriptor(myProject, pointer.getTodoItem().getFile().getVirtualFile(),
-          pointer.getRangeMarker().getStartOffset()),
+        new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
+          pointer.getValue().getRangeMarker().getStartOffset()),
         -1,
         -1
       );
     }
 
-    private SmartTodoItemPointer getNextPointer() {
+    private TodoItemNode getNextPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -429,9 +429,9 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return null;
       }
       Object element = userObject.getElement();
-      SmartTodoItemPointer pointer;
-      if (element instanceof SmartTodoItemPointer) {
-        pointer = myTodoTreeBuilder.getNextPointer((SmartTodoItemPointer)element);
+      TodoItemNode pointer;
+      if (element instanceof TodoItemNode) {
+        pointer = myTodoTreeBuilder.getNextPointer(((TodoItemNode)element));
       }
       else {
         pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
@@ -439,7 +439,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return pointer;
     }
 
-    private SmartTodoItemPointer getPreviousPointer() {
+    private TodoItemNode getPreviousPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -450,9 +450,9 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return null;
       }
       Object element = userObject.getElement();
-      SmartTodoItemPointer pointer;
-      if (element instanceof SmartTodoItemPointer) {
-        pointer = myTodoTreeBuilder.getPreviousPointer((SmartTodoItemPointer)element);
+      TodoItemNode pointer;
+      if (element instanceof TodoItemNode) {
+        pointer = myTodoTreeBuilder.getPreviousPointer((TodoItemNode)element);
       }
       else {
         Object sibling = myTodoTreeBuilder.getPreviousSibling(element);

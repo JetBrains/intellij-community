@@ -70,8 +70,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     Runnable handleAction = new Runnable() {
       public void run() {
         if (SHOW_DIALOG) {
-          HandleReadOnlyStatusDialog dialog = new HandleReadOnlyStatusDialog(myProject, fileInfos);
-          dialog.show();
+          new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
         } else {
           for (int i = 0; i < fileInfos.length; i++) {
             fileInfos[i].handle();
@@ -115,7 +114,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     List<FileInfo> fileInfos = new ArrayList<FileInfo>();
     for (int i = 0; i < files.length; i++) {
       final VirtualFile file = files[i];
-      if (!file.isWritable()) {
+      if (file != null && !file.isWritable()) {
         fileInfos.add(new FileInfo(file, myProject));
       }
     }

@@ -11,7 +11,9 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -20,11 +22,8 @@ import java.util.Collection;
 public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewNode<Type> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
-  private SmartPsiElementPointer mySmartPointer;
-
   protected BasePsiNode(Project project, Type value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-    mySmartPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(getValue());
   }
 
   public final Collection<AbstractTreeNode> getChildren() {
@@ -74,7 +73,9 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
 
 
   public void update(PresentationData data) {
-    setValue((Type)mySmartPointer.getElement());
+    if (getValue() == null || !getValue().isValid()) {
+      setValue(null);
+    }
     if (getValue() == null) return;
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
