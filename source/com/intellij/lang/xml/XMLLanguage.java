@@ -65,7 +65,7 @@ public class XMLLanguage extends Language {
   public boolean mayHaveReferences(IElementType token, short searchContext) {
     if(token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return true;
     if(token == XmlTokenType.XML_DATA_CHARACTERS) {
-      return (searchContext | UsageSearchContext.IN_PLAIN_TEXT) != 0;
+      return (searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0;
     }
     return false;
   }
