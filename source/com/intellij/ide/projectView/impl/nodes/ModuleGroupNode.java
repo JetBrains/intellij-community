@@ -34,7 +34,7 @@ public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
       ModuleGroup moduleGroup = (ModuleGroup)iterator.next();
       result.add(new ModuleGroupNode(getProject(), moduleGroup, getSettings(), myModuleNodeClass));
     }
-    Module[] modules = getValue().modulesInGroup(getProject());
+    Module[] modules = getValue().modulesInGroup(getProject(), false);
     final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), myModuleNodeClass, getSettings());
     result.addAll(childModules);
     return result;

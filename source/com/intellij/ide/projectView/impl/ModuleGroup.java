@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 
 import java.util.*;
@@ -39,13 +40,14 @@ public class ModuleGroup {
     return myGroupPath;
   }
 
-  public Module[] modulesInGroup(Project project) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
+  public Module[] modulesInGroup(Project project, boolean recursively) {
+    final Module[] allModules = ModuleManager.getInstance(project).getModules();
     List<Module> result = new ArrayList<Module>();
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (int i = 0; i < allModules.length; i++) {
+      final Module module = allModules[i];
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
-      if (Arrays.equals(myGroupPath, group)) {
+      if (group == null) continue;
+      if (Arrays.equals(myGroupPath, group) || (recursively && isChild(myGroupPath, group))) {
         result.add(module);
       }
     }
@@ -69,16 +71,18 @@ public class ModuleGroup {
     return result;
   }
 
-  private static String[] directChild(final String[] parent, final String[] descendant) {
-    if (parent.length >= descendant.length) return null;
-    final String[] path = new String[parent.length + 1];
+  private static boolean isChild(final String[] parent, final String[] descendant) {
+    if (parent.length >= descendant.length) return false;
     for (int i = 0; i < parent.length; i++) {
       String group = parent[i];
-      if (!group.equals(descendant[i])) return null;
-      path[i] = parent[i];
+      if (!group.equals(descendant[i])) return false;
     }
-    path[parent.length] = descendant[parent.length];
-    return path;
+    return true;
+  }
+
+  private static String[] directChild(final String[] parent, final String[] descendant) {
+    if (!isChild(parent, descendant)) return null;
+    return ArrayUtil.append(parent, descendant[parent.length]);
   }
 
   public String presentableText() {

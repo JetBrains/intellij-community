@@ -840,7 +840,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           result.add((Module)element);
         }
         else if (element instanceof ModuleGroup) {
-          Module[] modules = ((ModuleGroup)element).modulesInGroup(myProject);
+          Module[] modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
           result.addAll(Arrays.asList(modules));
         }
       }
@@ -856,11 +856,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final class MyIdeView implements IdeView {
     public void selectElement(PsiElement element) {
       ProjectViewImpl.this.selectPsiElement(element, true);
-      if (element instanceof PsiElement) {
-        final PsiElement psiElement = (PsiElement)element;
-        final boolean isDirectory = psiElement instanceof PsiDirectory;
+      if (element != null) {
+        final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
-          Editor editor = EditorHelper.openInEditor(psiElement);
+          Editor editor = EditorHelper.openInEditor(element);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
           }
@@ -933,7 +932,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
 
-  private void readOption(Element node, Map<String, Boolean> options) {
+  private static void readOption(Element node, Map<String, Boolean> options) {
     if (node == null) return;
     List attributes = node.getAttributes();
     for (Iterator iterator1 = attributes.iterator(); iterator1.hasNext();) {
@@ -942,7 +941,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  private void writeOption(Element parentNode, Map<String, Boolean> optionsForPanes, String optionName) {
+  private static void writeOption(Element parentNode, Map<String, Boolean> optionsForPanes, String optionName) {
     Element e = new Element(optionName);
     for (Iterator<Map.Entry<String, Boolean>> iterator = optionsForPanes.entrySet().iterator(); iterator.hasNext();) {
       Map.Entry<String, Boolean> entry = iterator.next();
@@ -1072,7 +1071,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  private boolean getPaneOptionValue(Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {
+  private static boolean getPaneOptionValue(Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {
     final Boolean value = optionsMap.get(paneId);
     return value == null ? defaultValue : value.booleanValue();
   }
