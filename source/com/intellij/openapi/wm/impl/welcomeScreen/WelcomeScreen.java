@@ -16,6 +16,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.codeInsight.hint.HintManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -434,7 +435,9 @@ public class WelcomeScreen {
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
-    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText(adjustStringBreaksByWidth(name, TEXT_FONT, false, MAX_TOOLTIP_WIDTH, 0));
+    if (shortenedName.endsWith("...</html>")) {
+      logoName.setToolTipText(adjustStringBreaksByWidth(name, UIManager.getFont("ToolTip.font"), false, MAX_TOOLTIP_WIDTH, 0));
+    }
 
     gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                     new Insets(15, 7, 0, 0), 0, 0);
@@ -452,7 +455,9 @@ public class WelcomeScreen {
       String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, 2);
       JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
-      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, TEXT_FONT, false, MAX_TOOLTIP_WIDTH, 0));
+      if (shortenedDcs.endsWith("...</html>")) {
+        pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, UIManager.getFont("ToolTip.font"), false, MAX_TOOLTIP_WIDTH, 0));
+      }
 
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                    new Insets(5, 7, 0, 0), 5, 0);
@@ -503,15 +508,17 @@ public class WelcomeScreen {
   }
 
   /**
-   * This method checks the width of the given string with given font applied, breaks the string into two lines if necessary, and/or cuts it,
-   * so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
+   * This method checks the width of the given string with given font applied, breaks the string into the specified number of lines if necessary,
+   * and/or cuts it, so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
    * Returns the resulting or original string surrounded by html tags.
    * @param string not <code>null</code> {@link String String} value
    * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags
    * @param font not <code>null</code> {@link Font Font} object
    * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not
    * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels
-   * @param maxRows
+   * @param maxRows <code>int</code> value spesifying the number of rows. If the value is positive, the string is modified to not exceed
+   * the specified number, and method adds an ellipsis instead of the exceeding part. If the value is zero or negative, the entire string is broken
+   * into lines until its end.
    */
   private String adjustStringBreaksByWidth(String string,
                                            final Font font,
@@ -529,7 +536,7 @@ public class WelcomeScreen {
       int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
       int lengthLeft = string.length();
       int rows = maxRows;
-      if (rows == 0) {
+      if (rows <= 0) {
         rows = string.length() / maxIdxPerLine + 2;
       }
 
@@ -558,34 +565,6 @@ public class WelcomeScreen {
       modifiedString = prefix + suffix;
     }
     return "<html>" + modifiedString + "</html>";
-/*
-    String shortenedString = string;
-    Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
-
-    if (r.getWidth() > maxWidth) {
-      String substring_1;
-      String substring_2;
-      int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
-      for (int i = maxIdxPerLine; i > 0; i--) {
-        if (string.charAt(i) == ' ') {
-          substring_1 = string.substring(0, i) + "<br>";
-          if ((string.length() - substring_1.length()) <= maxIdxPerLine) {
-            substring_2 = string.substring(i + 1, string.length());
-          }
-          else {
-            maxIdxPerLine = i + maxIdxPerLine - 2;
-            substring_2 = string.substring(i + 1, maxIdxPerLine) + "...";
-          }
-          shortenedString = substring_1 + substring_2;
-          break;
-        }
-      }
-      // In case there were no space characters for breaking the string properly, the string is cut to take only one line with ellipsis at the end
-      if (shortenedString.equals(string) && shortenedString.length() > maxIdxPerLine) {
-        shortenedString = string.substring(0, maxIdxPerLine - 2) + "...";
-      }
-    }
-    return "<html>" + shortenedString + "</html>";*/
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
