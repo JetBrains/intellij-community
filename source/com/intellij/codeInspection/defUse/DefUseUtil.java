@@ -113,7 +113,7 @@ public class DefUseUtil {
       try {
         flow = new ControlFlowAnalyzer(body, ourPolicy).buildControlFlow();
       }
-      catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+      catch (AnalysisCanceledException e) {
         return null;
       }
       Instruction[] instructions = flow.getInstructions();
@@ -266,7 +266,7 @@ public class DefUseUtil {
         }
       }.get(def, ref);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return null;
     }
   }
@@ -302,7 +302,7 @@ public class DefUseUtil {
         }
       }.get(def, ref);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return null;
     }
   }
@@ -317,7 +317,7 @@ public class DefUseUtil {
     final PsiCodeBlock body;
 
 
-    protected RefsDefs(PsiCodeBlock body) throws ControlFlowAnalyzer.AnalysisCanceledException {
+    protected RefsDefs(PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
       flow = new ControlFlowAnalyzer(body, ourPolicy, false, false, true).buildControlFlow();
       instructions = flow.getInstructions();

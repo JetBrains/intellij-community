@@ -14,13 +14,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowFactory;
-import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -103,7 +99,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     try {
       controlFlow = ControlFlowFactory.getControlFlow(outerCodeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return;
     }
     int minOffset = 0;

@@ -58,7 +58,7 @@ public class HighlightControlFlowUtil {
         return highlightInfo;
       }
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       // incomplete code
     }
     return null;
@@ -82,7 +82,7 @@ public class HighlightControlFlowUtil {
             "Unreachable statement");
       }
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       // incomplete code
     }
     return null;
@@ -231,7 +231,7 @@ public class HighlightControlFlowUtil {
       ControlFlow controlFlow = ControlFlowFactory.getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return false;
     }
   }
@@ -241,7 +241,7 @@ public class HighlightControlFlowUtil {
       ControlFlow controlFlow = ControlFlowFactory.getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       return ControlFlowUtil.isVariableDefinitelyNotAssigned(variable, controlFlow);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return false;
     }
   }
@@ -386,7 +386,7 @@ public class HighlightControlFlowUtil {
         final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
-      catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+      catch (AnalysisCanceledException e) {
         codeBlockProblems = new ArrayList<PsiReferenceExpression>();
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
@@ -467,7 +467,7 @@ public class HighlightControlFlowUtil {
                 break;
               }
             }
-            catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+            catch (AnalysisCanceledException e) {
               // incomplete code
               return null;
             }
@@ -515,7 +515,7 @@ public class HighlightControlFlowUtil {
         final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
-      catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+      catch (AnalysisCanceledException e) {
         codeBlockProblems = new ArrayList<PsiElement>();
       }
       finalVarProblems.put(codeBlock, codeBlockProblems);
@@ -664,7 +664,7 @@ public class HighlightControlFlowUtil {
             "Initializer must be able to complete normally");
       }
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       // incomplete code
     }
     return null;

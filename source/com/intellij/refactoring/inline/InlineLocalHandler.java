@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -138,7 +135,7 @@ class InlineLocalHandler {
         }
       }
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -180,7 +177,7 @@ class InlineLocalHandler {
             try {
               controlFlow = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false).buildControlFlow();
             }
-            catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+            catch (AnalysisCanceledException e) {
               controlFlow = ControlFlow.EMPTY;
             }
             PsiElement insertAnchor = firstWriteUsage.getElement();

@@ -199,31 +199,6 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     return myCurrentFlow;
   }
 
-  public static class AnalysisCanceledException extends Exception {
-    private final PsiElement myErrorElement;
-
-    public AnalysisCanceledException(PsiElement errorElement) {
-      myErrorElement = errorElement;
-    }
-
-    public PsiElement getErrorElement() {
-      return myErrorElement;
-    }
-  }
-
-  private static class AnalysisCanceledSoftException extends RuntimeException {
-    private final PsiElement myErrorElement;
-
-    public AnalysisCanceledSoftException(PsiElement errorElement) {
-      myErrorElement = errorElement;
-    }
-
-    public PsiElement getErrorElement() {
-      return myErrorElement;
-    }
-
-  }
-
   private void startElement(PsiElement element) {
     if (PsiUtil.hasErrorElementChild(element)) {
       // do not perform control flow analysis for incomplete code

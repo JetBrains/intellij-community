@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -377,7 +374,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
           return new DoHighlightExitPointsRunnable(project, editor, exitStatements.toArray(new PsiElement[exitStatements.size()]));
         }
-        catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+        catch (AnalysisCanceledException e) {
           return EMPTY_HIGHLIGHT_RUNNABLE;
         }
       }

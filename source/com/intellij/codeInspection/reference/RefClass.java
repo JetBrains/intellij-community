@@ -14,10 +14,7 @@ import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
 import java.util.*;
@@ -245,7 +242,7 @@ public class RefClass extends RefElement {
           try {
             flow = analyzer.buildControlFlow();
           }
-          catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+          catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
           }
           PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
@@ -284,7 +281,7 @@ public class RefClass extends RefElement {
               try {
                 flow = analyzer.buildControlFlow();
               }
-              catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+              catch (AnalysisCanceledException e) {
                 flow = ControlFlow.EMPTY;
               }
 

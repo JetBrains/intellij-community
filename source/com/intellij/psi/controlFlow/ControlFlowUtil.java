@@ -1392,7 +1392,7 @@ public class ControlFlowUtil {
     try {
       flow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return false;
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression.getParent();

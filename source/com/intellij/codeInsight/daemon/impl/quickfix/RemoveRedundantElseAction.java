@@ -7,10 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -43,7 +40,7 @@ public class RemoveRedundantElseAction implements IntentionAction {
           int endOffset = controlFlow.getEndOffset(ifStatement.getThenBranch());
           return !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset,endOffset);
         }
-        catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+        catch (AnalysisCanceledException e) {
           return false;
         }
       }

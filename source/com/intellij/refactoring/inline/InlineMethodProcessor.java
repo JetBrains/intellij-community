@@ -1024,7 +1024,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     try {
       controlFlow = new ControlFlowAnalyzer(body, new LocalsControlFlowPolicy(body), false).buildControlFlow();
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return false;
     }
     if (LOG.isDebugEnabled()) {

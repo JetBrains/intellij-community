@@ -35,11 +35,11 @@ public class ControlFlowFactory {
     }
   }
 
-  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy) throws ControlFlowAnalyzer.AnalysisCanceledException {
+  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy) throws AnalysisCanceledException {
     return getControlFlow(element, policy, true);
   }
 
-  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws ControlFlowAnalyzer.AnalysisCanceledException {
+  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     SoftReference<ControlFlowContext> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlowContext flows = ref == null ? null : ref.get();
     ControlFlowContext currentFlow = flows;

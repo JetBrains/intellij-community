@@ -107,7 +107,7 @@ public class ExceptionUtil {
             addExceptions(array, thrownExceptions);
           }
         }
-        catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+        catch (AnalysisCanceledException e) {
           // incomplete code
         }
       }
@@ -432,7 +432,7 @@ public class ExceptionUtil {
         int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
         if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) return true;
       }
-      catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+      catch (AnalysisCanceledException e) {
         return true;
       }
     }

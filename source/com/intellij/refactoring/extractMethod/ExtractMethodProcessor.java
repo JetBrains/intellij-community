@@ -16,10 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.text.BlockSupport;
@@ -181,7 +178,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     try {
       myControlFlow = analyzer.buildControlFlow();
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       throw new PrepareFailedException("Code contains syntax errors." +
                                        "Cannot perform neccessary analysis.",
                                        e.getErrorElement());

@@ -8,10 +8,7 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
-import com.intellij.psi.controlFlow.ControlFlowPolicy;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -89,7 +86,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         }
       }).buildControlFlow();
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return null;
     }
 

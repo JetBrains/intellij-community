@@ -148,7 +148,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
       ControlFlow controlFlow = new ControlFlowAnalyzer(element, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false, false).buildControlFlow();
       return controlFlow;
     }
-    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+    catch (AnalysisCanceledException e) {
       return ControlFlow.EMPTY;
     }
   }
