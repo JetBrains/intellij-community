@@ -3,8 +3,6 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

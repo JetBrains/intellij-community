@@ -33,7 +33,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             final PsiJavaToken sign = exp.getOperationSign();
             lhs = exp.getLExpression();
             rhs = exp.getRExpression();
-            if (sign.getTokenType() == JavaTokenType.ASTERISKEQ) {
+            if (sign.getTokenType().equals(JavaTokenType.ASTERISKEQ)) {
                 operator = "<<=";
             } else {
                 operator = ">>=";
@@ -43,14 +43,13 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             final PsiJavaToken sign = exp.getOperationSign();
             lhs = exp.getLOperand();
             rhs = exp.getROperand();
-            if (sign.getTokenType() == JavaTokenType.ASTERISK) {
+            if (!(sign.getTokenType() != JavaTokenType.ASTERISK)) {
                 operator = "<<";
             } else {
                 operator = ">>";
             }
         }
-        final String newExpression = lhs.getText() + ' ' + operator + ' ' + ShiftUtils.getLogBaseTwo(rhs);
-        return newExpression;
+        return lhs.getText() + ' ' + operator + ' ' + ShiftUtils.getLogBaseTwo(rhs);
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
@@ -85,8 +84,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.ASTERISK &&
-                    sign.getTokenType() != JavaTokenType.DIV) {
+            if (!sign.getTokenType().equals(JavaTokenType.ASTERISK) &&
+                    !sign.getTokenType().equals(JavaTokenType.DIV)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
@@ -106,8 +105,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign.getTokenType() != JavaTokenType.ASTERISKEQ &&
-                    sign.getTokenType() != JavaTokenType.DIVEQ) {
+            if (!sign.getTokenType().equals(JavaTokenType.ASTERISKEQ) &&
+                    !sign.getTokenType().equals(JavaTokenType.DIVEQ)) {
                 return;
             }
             final PsiExpression rhs = expression.getRExpression();

@@ -51,7 +51,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUS) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return;
             }
             final PsiType type = expression.getType();
@@ -84,7 +84,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUSEQ) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUSEQ)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();

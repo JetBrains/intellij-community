@@ -178,7 +178,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (sign == null) {
                 return false;
             }
-            if (sign.getTokenType() != JavaTokenType.EQ) {
+            if (!(sign.getTokenType() == JavaTokenType.EQ)) {
                 return false;
             }
             final PsiExpression lhs = assignment.getLExpression();
@@ -271,7 +271,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (sign == null) {
                 return false;
             }
-            if (sign.getTokenType() != JavaTokenType.LT) {
+            if (!sign.getTokenType().equals(JavaTokenType.LT)) {
                 return false;
             }
             final PsiExpression lhs = binaryExp.getLOperand();

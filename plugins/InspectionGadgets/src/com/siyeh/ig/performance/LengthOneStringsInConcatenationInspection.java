@@ -88,7 +88,7 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
             if (sign == null) {
                 return false;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUS) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return false;
             }
             final PsiExpression sibling;

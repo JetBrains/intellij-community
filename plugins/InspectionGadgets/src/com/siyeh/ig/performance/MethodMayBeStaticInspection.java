@@ -126,21 +126,19 @@ public class MethodMayBeStaticInspection extends MethodInspection {
                     !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
-                    !method.hasModifierProperty(PsiModifier.FINAL)) {
-                if (m_onlyPrivateOrFinal) {
-                    return;
-                } else {
-                    final PsiMethod[] superMethods = method.findSuperMethods();
-                    if (superMethods.length > 0) {
-                        return;
-                    }
-                    final OverridingMethodChecker overridingMethodChecker =
-                            new OverridingMethodChecker(method);
-                    if (overridingMethodChecker.hasOverridingMethods()) {
-                        return;
-                    }
-                }
+            if (m_onlyPrivateOrFinal &&
+                    !method.hasModifierProperty(PsiModifier.FINAL) &&
+                    !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            if (superMethods.length > 0) {
+                return;
+            }
+            final OverridingMethodChecker overridingMethodChecker =
+                    new OverridingMethodChecker(method);
+            if (overridingMethodChecker.hasOverridingMethods()) {
+                return;
             }
             final MethodReferenceVisitor visitor = new MethodReferenceVisitor(method);
             method.accept(visitor);
