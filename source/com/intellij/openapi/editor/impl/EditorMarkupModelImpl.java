@@ -338,8 +338,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int yStartPosition = visibleLineToYPosition(visStartLine, myScrollBarHeight);
       int yEndPosition = visibleLineToYPosition(visEndLine, myScrollBarHeight);
 
-      //final int height = Math.max(yEndPosition - yStartPosition, 2);
-
       final ErrorMarkPile prevPile = list.size() == 0 ? null : list.get(list.size() - 1);
       int prevPileEnd = prevPile == null ? -100 : prevPile.yEnd;
       if (yStartPosition - prevPileEnd < getMinHeight()) {
@@ -376,15 +374,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private int getMinHeight() {
+  private static int getMinHeight() {
     return DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight();
   }
 
+  // number of error marks glued together
   private class ErrorMarkPile {
     private int yStart;
     private int yEnd;
     private List<RangeHighlighter> markers = new ArrayList<RangeHighlighter>();
-    private static final int MAX_TOOLTIP_LINES = 5;
+    private static final int MAX_TOOLTIP_LINES = 10;
 
     public ErrorMarkPile(final int yStart) {
       this.yStart = yStart;

@@ -105,34 +105,40 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       final Boolean rConstBoolean = getConstBoolean(rOperand);
 
       if (lConstBoolean != null) {
-        if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
-          resultExpression = lConstBoolean.booleanValue() ? rOperand : falseExpression;
-        }
-        else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
-          resultExpression = lConstBoolean.booleanValue() ? trueExpression : rOperand;
-        }
-        else if (JavaTokenType.EQEQ == tokenType) {
-          simplifyEquation(lConstBoolean, rOperand);
-        }
-        else if (JavaTokenType.NE == tokenType) {
-          resultExpression = createNegatedExpression(rOperand);
-          visitPrefixExpression((PsiPrefixExpression)resultExpression);
-          simplifyEquation(lConstBoolean, resultExpression);
-        }
+        simplifyBinary(tokenType, lConstBoolean, rOperand);
       }
       else if (rConstBoolean != null) {
-        if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
-          resultExpression = rConstBoolean.booleanValue() ? lOperand : falseExpression;
-        }
-        else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
-          resultExpression = rConstBoolean.booleanValue() ? trueExpression : lOperand;
-        }
-        else if (JavaTokenType.EQEQ == tokenType) {
-          simplifyEquation(rConstBoolean, lOperand);
-        }
-        else if (JavaTokenType.NE == tokenType) {
-          simplifyEquation(rConstBoolean, createNegatedExpression(lOperand));
-        }
+        simplifyBinary(tokenType, rConstBoolean, lOperand);
+        //if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
+        //  resultExpression = rConstBoolean.booleanValue() ? lOperand : falseExpression;
+        //}
+        //else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
+        //  resultExpression = rConstBoolean.booleanValue() ? trueExpression : lOperand;
+        //}
+        //else if (JavaTokenType.EQEQ == tokenType) {
+        //  simplifyEquation(rConstBoolean, lOperand);
+        //}
+        //else if (JavaTokenType.NE == tokenType) {
+        //  simplifyEquation(rConstBoolean, createNegatedExpression(lOperand));
+        //}
+      }
+    }
+
+    private void simplifyBinary(final IElementType tokenType, final Boolean lConstBoolean, final PsiExpression rOperand) {
+      if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
+        resultExpression = lConstBoolean.booleanValue() ? rOperand : falseExpression;
+      }
+      else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
+        resultExpression = lConstBoolean.booleanValue() ? trueExpression : rOperand;
+      }
+      else if (JavaTokenType.EQEQ == tokenType) {
+        simplifyEquation(lConstBoolean, rOperand);
+      }
+      else if (JavaTokenType.NE == tokenType) {
+        final PsiPrefixExpression negatedExpression = createNegatedExpression(rOperand);
+        resultExpression = negatedExpression;
+        visitPrefixExpression(negatedExpression);
+        simplifyEquation(lConstBoolean, resultExpression);
       }
     }
 
@@ -145,6 +151,12 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         resultExpression = negated;
         visitPrefixExpression(negated);
       }
+    }
+
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
+      final Boolean condition = getConstBoolean(expression.getCondition());
+      if (condition == null) return;
+      resultExpression = condition.booleanValue() ? expression.getThenExpression() : expression.getElseExpression();
     }
 
     private PsiPrefixExpression createNegatedExpression(final PsiExpression otherOperand)  {
