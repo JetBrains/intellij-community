@@ -2,6 +2,7 @@ package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.execution.runners.ProcessProxyFactoryImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
@@ -10,12 +11,14 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -37,6 +40,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.io.File;
 
 public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent {
   private ProcessProxyFactory myProxyFactory = null;
@@ -190,6 +194,18 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
     return new VcsContextFactory() {
       public VcsContext createOn(AnActionEvent event) {
         return VcsContextWrapper.on(event);
+      }
+
+      public FilePath createOn(VirtualFile virtualFile) {
+        return new FilePathImpl(virtualFile);
+      }
+
+      public FilePath createOn(File file) {
+        return FilePathImpl.create(file);
+      }
+
+      public FilePath createOn(VirtualFile parent, String name) {
+        return new FilePathImpl(parent, name);
       }
     };
   }

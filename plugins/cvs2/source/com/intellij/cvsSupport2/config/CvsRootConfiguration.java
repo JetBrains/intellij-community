@@ -143,10 +143,8 @@ public class CvsRootConfiguration
     testConnection(getSettings().createConnection(new ReadWriteStatistics(), new ModalityContext(true)), getSettings());
   }
 
-  public static void testConnection(final IConnection connection, CvsConnectionSettings settings)
+  public static void testConnection(final IConnection connection, final CvsConnectionSettings settings)
     throws AuthenticationException, IOException {
-    final GetModulesListOperation operation =
-      new GetModulesListOperation(settings);
     ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
@@ -156,9 +154,12 @@ public class CvsRootConfiguration
 
     final CvsResult result = new CvsResultEx();
     try {
-      final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
       ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
+          final GetModulesListOperation operation = new GetModulesListOperation(settings);
+
+          final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
+
           try {
             if (connection instanceof SelfTestingConnection) {
               ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());

@@ -32,7 +32,17 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 public interface VcsContextFactory {
   VcsContext createOn(AnActionEvent event);
+
+  FilePath createOn(VirtualFile virtualFile);
+
+  FilePath createOn(File file);
+
+  FilePath createOn(VirtualFile parent, String name);
 }
