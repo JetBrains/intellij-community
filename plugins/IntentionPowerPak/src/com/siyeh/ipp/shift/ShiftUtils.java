@@ -64,7 +64,7 @@ class ShiftUtils
         return exp;
     }
 
-    public static boolean isIntegral(final PsiType lhsType)
+    public static boolean isIntegral(PsiType lhsType)
     {
         return lhsType!=null &&
                 (lhsType.equals(PsiType.INT)
