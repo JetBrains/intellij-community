@@ -52,6 +52,6 @@ public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   }
 
   public String getTestPresentation() {
-    return "Group: " + getValue().getGroupPath();
+    return "Group: " + getValue();
   }
 }

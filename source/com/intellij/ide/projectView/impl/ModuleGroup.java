@@ -89,4 +89,7 @@ public class ModuleGroup {
     return "'" + myGroupPath[myGroupPath.length - 1] + "'";
   }
 
+  public String toString() {
+    return myGroupPath[myGroupPath.length - 1];
+  }
 }
