@@ -26,6 +26,8 @@ public class ChameleonTransforming implements Constants {
       if (file == null) return null;
 
       TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable(), file.createLexer());
+      final TreeElement treeNext = chameleon.getTreeNext();
+      TreeUtil.replace(chameleon, newElement);
       if (DebugUtil.CHECK) {
         if (newElement != null) {
           DebugUtil.checkTreeStructure(newElement);
@@ -34,12 +36,12 @@ public class ChameleonTransforming implements Constants {
         String text1 = chameleon.getText();
 
         int length2 = 0;
-        for (ASTNode element = newElement; element != null; element = element.getTreeNext()) {
+        for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
           length2 += element.getTextLength();
         }
         char[] buffer = new char[length2];
         int offset = 0;
-        for (ASTNode element = newElement; element != null; element = element.getTreeNext()) {
+        for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
           offset = SourceUtil.toBuffer(element, buffer, offset);
         }
         String text2 = new String(buffer);
@@ -48,7 +50,6 @@ public class ChameleonTransforming implements Constants {
           LOG.error("Text changed after chameleon transformation!\nWas:\n" + text1 + "\nbecame:\n" + text2);
         }
       }
-      TreeUtil.replace(chameleon, newElement);
       return newElement;
     }
   }
