@@ -1,12 +1,13 @@
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +18,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ide.DataManager;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -42,6 +42,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private String myLastPreformedActionId;
   private KeymapManager myKeymapManager;
   private DataManager myDataManager;
+  private String myPrevPerformedActionId;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -703,6 +704,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public void fireBeforeActionPerformed(AnAction action, DataContext dataContext) {
     if (action != null) {
+      myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
     }
@@ -721,5 +723,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public String getLastPreformedActionId() {
     return myLastPreformedActionId;
+  }
+
+  public String getPrevPreformedActionId() {
+    return myPrevPerformedActionId;
   }
 }

@@ -35,6 +35,7 @@ public abstract class ActionManagerEx extends ActionManager{
    * For logging purposes
    */
   public abstract String getLastPreformedActionId();
+  public abstract String getPrevPreformedActionId();
 
   /**
    * Comparator compares action ids (String) on order of action registration.

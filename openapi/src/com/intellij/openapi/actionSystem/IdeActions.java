@@ -28,6 +28,9 @@ public interface IdeActions {
   String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
 
+  String ACTION_COMMENT_LINE = "CommentByLineComment";
+  String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
+  
   String ACTION_COPY = "$Copy";
   String ACTION_DELETE = "$Delete";
   String ACTION_PASTE = "$Paste";

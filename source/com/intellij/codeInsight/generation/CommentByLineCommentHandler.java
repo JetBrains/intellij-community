@@ -6,14 +6,14 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -71,16 +71,43 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         (myStartOffset == myDocument.getLineStartOffset(myDocument.getLineNumber(myStartOffset)) &&
         myEndOffset == myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset - 1)) + 1);
 
+    boolean startingNewLineComment = !hasSelection && isLineEmpty(myDocument.getLineNumber(myStartOffset)) &&
+                                     !Comparing.equal(IdeActions.ACTION_COMMENT_LINE, ActionManagerEx.getInstanceEx().getPrevPreformedActionId());
     doComment();
 
-    if (!hasSelection) {
-      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
-    }
-    else {
-      if (wholeLinesSelected) {
-        selectionModel.setSelection(myStartOffset, selectionModel.getSelectionEnd());
+    if (startingNewLineComment) {
+      final Commenter commenter = myCommenters[0];
+      if (commenter != null) {
+        String prefix = commenter.getLineCommentPrefix();
+        if (prefix == null) prefix = commenter.getBlockCommentPrefix();
+        int lineStart = myDocument.getLineStartOffset(myLine1);
+        lineStart = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), lineStart, " \t");
+        lineStart += prefix.length();
+        if (lineStart < myDocument.getTextLength() && myDocument.getCharsSequence().charAt(lineStart) == ' ') lineStart++;
+        editor.getCaretModel().moveToOffset(lineStart);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }
+    else {
+      if (!hasSelection) {
+        editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+      }
+      else {
+        if (wholeLinesSelected) {
+          selectionModel.setSelection(myStartOffset, selectionModel.getSelectionEnd());
+        }
+      }
+    }
+  }
+
+  private boolean isLineEmpty(final int line) {
+    final CharSequence chars = myDocument.getCharsSequence();
+    int start = myDocument.getLineStartOffset(line);
+    int end = Math.min(myDocument.getLineEndOffset(line), myDocument.getTextLength() - 1);
+    for (int i = start; i <= end; i++) {
+      if (!Character.isWhitespace(chars.charAt(i))) return false;
+    }
+    return true;
   }
 
   public boolean startInWriteAction() {
