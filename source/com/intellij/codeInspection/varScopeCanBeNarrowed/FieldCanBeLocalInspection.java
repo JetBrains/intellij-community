@@ -137,7 +137,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         final PsiElementFactory elementFactory = manager.getElementFactory();
         final CodeStyleManager styleManager = manager.getCodeStyleManager();
         final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
-        final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+        String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+        localName = styleManager.suggestUniqueVariableName(localName, anchorBlock.getFirstBodyElement(), true);
         try {
           final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
           final PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
