@@ -729,7 +729,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     TreeElement firstAppended = null;
     boolean before = beforeB != null ? beforeB.booleanValue() : true;
     try{
-      TreeElement next = null;
+      TreeElement next;
       do {
         next = first.getTreeNext();
 
