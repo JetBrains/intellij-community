@@ -493,7 +493,6 @@ public class HighlightMethodUtil {
         CastMethodParametersFix.registerCastActions(candidates, list, methodCall.getMethodExpression(), highlightInfo);
         WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
         ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
-        highlightInfo.navigationShift = +1;
       }
       else if (info != null && !info.isApplicable()) {
         if (info.isTypeArgumentsApplicable()) {
