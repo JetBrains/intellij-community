@@ -83,9 +83,10 @@ public class PsiTypeVariableFactory {
                                final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
                                final PsiClass aClass = result.getElement();
                                final PsiSubstitutor aSubst = result.getSubstitutor();
-                               final PsiManager manager = aClass.getManager();
 
                                if (aClass != null) {
+                                 final PsiManager manager = aClass.getManager();
+                                 
                                  if (aClass instanceof PsiTypeParameter) {
                                    final PsiTypeParameterListOwner owner =
                                    PsiTreeUtil.getParentOfType(myContext, PsiTypeParameterListOwner.class);
