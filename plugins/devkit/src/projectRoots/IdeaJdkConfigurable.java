@@ -33,9 +33,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable{
 
   public JComponent createComponent() {
     JPanel wholePanel = new JPanel(new GridBagLayout());
-    wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0,GridBagConstraints.RELATIVE, 1,1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
-    wholePanel.add(mySandboxHome, new GridBagConstraints(1,GridBagConstraints.RELATIVE, 1,1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
-    mySandboxHome.addBrowseFolderListener("SandBox Home", "Browse folder to put config, system and plugins for target IDEA", null, new FileChooserDescriptor(false, true, false, false, false, false));
+    wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0,GridBagConstraints.RELATIVE, 1,1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
+    wholePanel.add(mySandboxHome, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1,1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,60,0,0),0,0));
+    mySandboxHome.addBrowseFolderListener("Sandbox Home", "Browse folder to put config, system and plugins for target IDEA", null, new FileChooserDescriptor(false, true, false, false, false, false));
     mySandboxHome.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myModified = true;
