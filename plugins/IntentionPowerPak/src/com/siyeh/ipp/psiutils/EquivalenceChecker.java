@@ -585,7 +585,7 @@ public class EquivalenceChecker{
                                                           PsiPrefixExpression prefixExp2){
         final PsiJavaToken sign1 = prefixExp1.getOperationSign();
         final PsiJavaToken sign2 = prefixExp2.getOperationSign();
-        if(sign1.getTokenType() != sign2.getTokenType()){
+        if(!sign1.getTokenType().equals(sign2.getTokenType())){
             return false;
         }
         final PsiExpression operand1 = prefixExp1.getOperand();
@@ -597,7 +597,7 @@ public class EquivalenceChecker{
                                                            PsiPostfixExpression postfixExp2){
         final PsiJavaToken sign1 = postfixExp1.getOperationSign();
         final PsiJavaToken sign2 = postfixExp2.getOperationSign();
-        if(sign1.getTokenType() != sign2.getTokenType()){
+        if(!sign1.getTokenType().equals(sign2.getTokenType())){
             return false;
         }
         final PsiExpression operand1 = postfixExp1.getOperand();
@@ -609,7 +609,7 @@ public class EquivalenceChecker{
                                                           PsiBinaryExpression binaryExp2){
         final PsiJavaToken sign1 = binaryExp1.getOperationSign();
         final PsiJavaToken sign2 = binaryExp2.getOperationSign();
-        if(sign1.getTokenType() != sign2.getTokenType()){
+        if(!sign1.getTokenType().equals(sign2.getTokenType())){
             return false;
         }
         final PsiExpression lhs1 = binaryExp1.getLOperand();
@@ -624,7 +624,7 @@ public class EquivalenceChecker{
                                                               PsiAssignmentExpression assignExp2){
         final PsiJavaToken sign1 = assignExp1.getOperationSign();
         final PsiJavaToken sign2 = assignExp2.getOperationSign();
-        if(sign1.getTokenType() != sign2.getTokenType()){
+        if(!sign1.getTokenType().equals(sign2.getTokenType())){
             return false;
         }
         final PsiExpression lhs1 = assignExp1.getLExpression();

@@ -54,32 +54,31 @@ public class DetailExceptionsIntention extends Intention{
         for(int i = 0; i < catchSections.length; i++){
             final PsiParameter param = catchSections[i].getParameter();
             final PsiCodeBlock block = catchSections[i].getCatchBlock();
-            if(param == null || block == null){
-                continue;
-            }
-
-            final PsiType caughtType = param.getType();
-            final List exceptionsToExpand = new ArrayList(10);
-            for(Iterator iterator = exceptionsThrown.iterator();
-                iterator.hasNext();){
-                final PsiType thrownType = (PsiType) iterator.next();
-                if(caughtType.isAssignableFrom(thrownType)){
-                    exceptionsToExpand.add(thrownType);
+            if(param != null && block != null){
+                final PsiType caughtType = param.getType();
+                final List exceptionsToExpand = new ArrayList(10);
+                for(Iterator iterator = exceptionsThrown.iterator();
+                    iterator.hasNext();){
+                    final PsiType thrownType = (PsiType) iterator.next();
+                    if(caughtType.isAssignableFrom(thrownType)){
+                        exceptionsToExpand.add(thrownType);
+                    }
                 }
-            }
-            Collections.sort(exceptionsToExpand, comparator);
-            for(Iterator iterator = exceptionsToExpand.iterator();
-                iterator.hasNext();){
-                final PsiType thrownType = (PsiType) iterator.next();
-                newTryStatement.append("catch(");
-                final String exceptionType = thrownType.getPresentableText();
-                newTryStatement.append(exceptionType);
-                newTryStatement.append(' ');
-                final String parameterName = param.getName();
-                newTryStatement.append(parameterName);
-                newTryStatement.append(')');
-                final String blockText = block.getText();
-                newTryStatement.append(blockText);
+                Collections.sort(exceptionsToExpand, comparator);
+                for(Iterator iterator = exceptionsToExpand.iterator();
+                    iterator.hasNext();){
+                    final PsiType thrownType = (PsiType) iterator.next();
+                    newTryStatement.append("catch(");
+                    final String exceptionType =
+                            thrownType.getPresentableText();
+                    newTryStatement.append(exceptionType);
+                    newTryStatement.append(' ');
+                    final String parameterName = param.getName();
+                    newTryStatement.append(parameterName);
+                    newTryStatement.append(')');
+                    final String blockText = block.getText();
+                    newTryStatement.append(blockText);
+                }
             }
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();

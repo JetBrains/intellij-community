@@ -44,7 +44,7 @@ class MergeIfOrPredicate implements PsiElementPredicate{
                                                           childThenBranch);
     }
 
-    public static boolean isMergableImplicitIf(PsiElement element){
+    private static boolean isMergableImplicitIf(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }

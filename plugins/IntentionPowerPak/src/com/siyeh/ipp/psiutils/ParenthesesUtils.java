@@ -185,7 +185,7 @@ public class ParenthesesUtils{
                         ((PsiBinaryExpression) parentExp).getLOperand();
 
                 if(lhs.equals(parenthesizedExp) &&
-                           parentOperator == bodyOperator){
+                           parentOperator.equals(bodyOperator)){
                     return removeParentheses(body);
                 } else{
                     return '(' + removeParentheses(body) + ')';
@@ -254,16 +254,16 @@ public class ParenthesesUtils{
         final String text = init.getText();
         final int originalLength = text.length();
         final StringBuffer out = new StringBuffer(originalLength);
-        out.append("{");
+        out.append('{');
         for(int i = 0; i < contents.length; i++){
             final PsiExpression arg = contents[i];
             if(i != 0){
-                out.append(",");
+                out.append(',');
             }
             final String strippedArg = removeParentheses(arg);
             out.append(strippedArg);
         }
-        out.append("}");
+        out.append('}');
         return out.toString();
     }
 
@@ -318,21 +318,21 @@ public class ParenthesesUtils{
         final String classReferenceText = classReference.getText();
         out.append(classReferenceText);
         if(strippedArgs != null){
-            out.append("(");
+            out.append('(');
             for(int i = 0; i < strippedArgs.length; i++){
                 if(i != 0){
-                    out.append(",");
+                    out.append(',');
                 }
                 out.append(strippedArgs[i]);
             }
-            out.append(")");
+            out.append(')');
         }
 
         if(strippedDimensions != null){
             for(int i = 0; i < strippedDimensions.length; i++){
-                out.append("[");
+                out.append('[');
                 out.append(strippedDimensions[i]);
-                out.append("]");
+                out.append(']');
             }
         }
         if(strippedArrayInitializer != null){
@@ -351,16 +351,16 @@ public class ParenthesesUtils{
         final StringBuffer out = new StringBuffer(length);
         final String strippedTarget = removeParentheses(target);
         out.append(strippedTarget);
-        out.append("(");
+        out.append('(');
         for(int i = 0; i < args.length; i++){
             final PsiExpression arg = args[i];
             if(i != 0){
-                out.append(",");
+                out.append(',');
             }
             final String strippedArg = removeParentheses(arg);
             out.append(strippedArg);
         }
-        out.append(")");
+        out.append(')');
         return out.toString();
     }
 }

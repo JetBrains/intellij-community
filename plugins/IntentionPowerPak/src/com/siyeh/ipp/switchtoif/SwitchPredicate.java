@@ -7,11 +7,11 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class SwitchPredicate implements PsiElementPredicate{
-    public boolean satisfiedBy(PsiElement exp){
-        if(!(exp instanceof PsiJavaToken)){
+    public boolean satisfiedBy(PsiElement element){
+        if(!(element instanceof PsiJavaToken)){
             return false;
         }
-        final PsiJavaToken token = (PsiJavaToken) exp;
+        final PsiJavaToken token = (PsiJavaToken) element;
         final IElementType tokenType = token.getTokenType();
         return JavaTokenType.SWITCH_KEYWORD.equals(tokenType);
     }

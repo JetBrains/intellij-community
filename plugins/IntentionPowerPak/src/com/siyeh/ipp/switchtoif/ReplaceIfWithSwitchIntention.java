@@ -3,6 +3,7 @@ package com.siyeh.ipp.switchtoif;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -177,7 +178,8 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         final PsiExpression lhs = binaryCond.getLOperand();
         final PsiExpression rhs = binaryCond.getROperand();
         final PsiJavaToken sign = binaryCond.getOperationSign();
-        if(sign.getTokenType().equals(JavaTokenType.OROR)){
+        final IElementType tokenType = sign.getTokenType();
+        if(JavaTokenType.OROR.equals(tokenType)){
             getValuesFromExpression((PsiBinaryExpression) lhs, caseExpression,
                                     values);
             getValuesFromExpression((PsiBinaryExpression) rhs, caseExpression,

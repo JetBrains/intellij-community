@@ -38,8 +38,8 @@ public class SideEffectChecker{
             }
             final PsiJavaToken sign = prefixExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            return tokenType == JavaTokenType.PLUSPLUS ||
-                           tokenType == JavaTokenType.MINUSMINUS;
+            return tokenType.equals(JavaTokenType.PLUSPLUS) ||
+                           tokenType.equals(JavaTokenType.MINUSMINUS);
         } else if(exp instanceof PsiPostfixExpression){
             final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
             final PsiExpression body = postfixExp.getOperand();
@@ -48,8 +48,8 @@ public class SideEffectChecker{
             }
             final PsiJavaToken sign = postfixExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            return tokenType == JavaTokenType.PLUSPLUS ||
-                           tokenType == JavaTokenType.MINUSMINUS;
+            return tokenType.equals(JavaTokenType.PLUSPLUS) ||
+                           tokenType.equals(JavaTokenType.MINUSMINUS);
         } else if(exp instanceof PsiBinaryExpression){
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) exp;
             final PsiExpression lhs = binaryExp.getLOperand();

@@ -16,7 +16,7 @@ public class BoolUtils{
             final PsiPrefixExpression prefixAncestor =
                     (PsiPrefixExpression) ancestor.getParent();
             final PsiJavaToken sign = prefixAncestor.getOperationSign();
-            if(sign.getTokenType() == JavaTokenType.EXCL){
+            if(sign.getTokenType().equals(JavaTokenType.EXCL)){
                 return true;
             }
         }
@@ -45,7 +45,7 @@ public class BoolUtils{
         }
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiJavaToken sign = prefixExp.getOperationSign();
-        return sign.getTokenType() == JavaTokenType.EXCL;
+        return sign.getTokenType().equals(JavaTokenType.EXCL);
     }
 
     public static PsiExpression getNegated(PsiExpression exp){

@@ -130,7 +130,7 @@ public abstract class Intention implements IntentionAction{
         return true;
     }
 
-    public static boolean isFileReadOnly(Project project, PsiFile file){
+    protected static boolean isFileReadOnly(Project project, PsiFile file){
         return ReadonlyStatusHandler.getInstance(project)
                 .ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()})
                 .hasReadonlyFiles();
