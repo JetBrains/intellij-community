@@ -1,10 +1,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
+import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -59,6 +59,7 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.TooManyListenersException;
 
 public class EditorImpl implements EditorEx {
@@ -88,8 +89,8 @@ public class EditorImpl implements EditorEx {
   private final CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
-  private final Object MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
-  private final THashMap<Object, Object> myUserDataMap = new THashMap<Object, Object>();
+  private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
+  private final Map<Object, Object> myUserDataMap = new THashMap<Object, Object>();
 
   private final DocumentListener myEditorDocumentAdapter;
 
@@ -909,7 +910,7 @@ public class EditorImpl implements EditorEx {
       myScrollPane.getViewport().setViewSize(myPreferredSize);
       int lineNum = Math.max(1, getDocument().getLineCount());
 
-      myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString((lineNum + 2))) + 6);
+      myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNum + 2)) + 6);
       final JViewport rowHeader = myScrollPane.getRowHeader();
       if (rowHeader != null) {
         rowHeader.setViewSize(myGutterComponent.getPreferredSize());

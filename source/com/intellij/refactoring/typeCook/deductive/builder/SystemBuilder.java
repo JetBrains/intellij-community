@@ -1,6 +1,6 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
-import com.intellij.dupLocator.util.PsiAnchor;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;

@@ -31,7 +31,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.dupLocator.util.PsiAnchor;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.*;
 
 public class LazyPointerImpl implements SmartPointerEx {

@@ -109,8 +109,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
-  public CodeInsightSettings(EditorActionManager editorActionManager) {
-    EditorActionManager actionManager = editorActionManager;
+  public CodeInsightSettings(EditorActionManager actionManager) {
     actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
     actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END, new EndHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END)));
     actionManager.setActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, new SelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)));

@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +10,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -26,6 +25,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.ide.PasteProvider;
+import com.intellij.ide.actions.CopyReferenceAction;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -39,6 +40,7 @@ public class PasteHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
 
   private EditorActionHandler myOriginalHandler;
+  private final PasteProvider myPasteReferenceProvider = new CopyReferenceAction.MyPasteProvider();
 
   public PasteHandler(EditorActionHandler originalAction) {
     myOriginalHandler = originalAction;
@@ -53,8 +55,7 @@ public class PasteHandler extends EditorActionHandler {
       }
     }
 
-    final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(
-      DataConstants.PROJECT);
+    final Project project = editor.getProject();
     if (project == null || editor.isColumnMode()) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, dataContext);
@@ -83,7 +84,12 @@ public class PasteHandler extends EditorActionHandler {
 
     document.startGuardedBlockChecking();
     try {
-      doPaste(editor, project, file, fileType, document);
+      if (myPasteReferenceProvider.isPasteEnabled(dataContext)) {
+        myPasteReferenceProvider.performPaste(dataContext);
+      }
+      else {
+        doPaste(editor, project, file, fileType, document);
+      }
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
@@ -252,7 +258,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private String escapeIfStringLiteral(final Project project,
+  private static String escapeIfStringLiteral(final Project project,
                                        final PsiFile file,
                                        final Editor editor,
                                        String text) {
@@ -262,8 +268,8 @@ public class PasteHandler extends EditorActionHandler {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(caretOffset);
     if (elementAtCaret instanceof PsiJavaToken &&
-        (((PsiJavaToken)elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
-        caretOffset > elementAtCaret.getTextOffset()) {
+    ((PsiJavaToken)elementAtCaret).getTokenType() == JavaTokenType.STRING_LITERAL &&
+    caretOffset > elementAtCaret.getTextOffset()) {
       StringBuffer buffer = new StringBuffer(text.length());
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
@@ -278,7 +284,7 @@ public class PasteHandler extends EditorActionHandler {
     return text;
   }
 
-  private PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
+  private static PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
                                                                 RangeMarker bounds,
                                                                 TextBlockTransferable.ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
@@ -318,7 +324,7 @@ public class PasteHandler extends EditorActionHandler {
     return refs;
   }
 
-  private void restoreReferences(TextBlockTransferable.ReferenceData[] referenceData,
+  private static void restoreReferences(TextBlockTransferable.ReferenceData[] referenceData,
                                  PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
@@ -341,7 +347,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private void indentBlock(Project project, Editor editor, int startOffset, int endOffset, int originalCaretCol) {
+  private static void indentBlock(Project project, Editor editor, int startOffset, int endOffset, int originalCaretCol) {
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
 
@@ -375,7 +381,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
+  private static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     endOffset = CharArrayUtil.shiftBackward(chars, endOffset - 1, "\n\r") + 1;
@@ -406,7 +412,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private void reformatBlock(Project project, Editor editor, int startOffset, int endOffset) {
+  private static void reformatBlock(Project project, Editor editor, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
@@ -418,12 +424,12 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private void adjustBlockIndent(Project project, Document document, PsiFile file, int startOffset, int endOffset) {
+  private static void adjustBlockIndent(Project project, Document document, PsiFile file, int startOffset, int endOffset) {
     final FileType fileType = file.getFileType();
     indentJavaBlock(project, document, startOffset, endOffset, file, fileType);
   }
 
-  private void indentPlainTextBlock(Document document, int startOffset, int endOffset, int originalCaretColumn) {
+  private static void indentPlainTextBlock(Document document, int startOffset, int endOffset, int originalCaretColumn) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
     if (spaceEnd > endOffset) return;
@@ -444,7 +450,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private void indentJavaBlock(Project project, Document document,
+  private static void indentJavaBlock(Project project, Document document,
                                int startOffset,
                                int endOffset,
                                PsiFile file,
@@ -573,7 +579,6 @@ public class PasteHandler extends EditorActionHandler {
       PsiJavaCodeReferenceElement ref = refs[i];
       if (ref != null) {
         LOG.assertTrue(ref.isValid());
-        TextBlockTransferable.ReferenceData data = referenceData[i];
         Object refObject = refObjects[i];
         boolean found = false;
         for (int j = 0; j < selectedObjects.length; j++) {
@@ -590,7 +595,7 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
-  private String getFQName(Object element) {
+  private static String getFQName(Object element) {
     return element instanceof PsiClass ? ((PsiClass)element).getQualifiedName() : (String)element;
   }
 }

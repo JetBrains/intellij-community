@@ -1,6 +1,5 @@
-package com.intellij.dupLocator.util;
+package com.intellij.psi;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
 
 /**

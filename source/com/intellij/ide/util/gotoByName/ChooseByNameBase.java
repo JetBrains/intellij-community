@@ -1,13 +1,10 @@
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.ide.actions.PasteReferenceAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -29,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -74,7 +72,6 @@ public abstract class ChooseByNameBase{
   private static final String NOT_FOUND_CARD = "nfound";
   private static final String CHECK_BOX_CARD = "chkbox";
   static final int REBUILD_DELAY = 100;
-  private Editor myEditor;
 
   private static class IgnoreCaseComparator implements Comparator<String> {
     public int compare(String a, String b) {
@@ -216,18 +213,18 @@ public abstract class ChooseByNameBase{
     myTextField = new MyTextField();
     myTextField.setText(myInitialText);
 
-    myEditor = (Editor)DataManager.getInstance().getDataContext(myPreviouslyFocusedComponent).getData(DataConstants.EDITOR);
-    if (myEditor != null) {
-      myTextField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.EMPTY_SET);
-      /* TODO[max, cdr]: to discuss.
-      final JPanel p = new JPanel(new BorderLayout());
-      final JLabel label = new JLabel("<html><body><center>Press <b>TAB</b> to paste the reference into editor.</center></body></html>");
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      p.add(label, BorderLayout.CENTER);
-      myTextFieldPanel.add(p);
-      */
-    }
-    
+    final ActionMap actionMap = new ActionMap();
+    actionMap.setParent(myTextField.getActionMap());
+    actionMap.put(DefaultEditorKit.copyAction, new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        final Object chosenElement = getChosenElement();
+        if (chosenElement instanceof PsiElement) {
+          CopyReferenceAction.doCopy((PsiElement)chosenElement, myProject);
+        }
+      }
+    });
+    myTextField.setActionMap(actionMap);
+
     myTextFieldPanel.add(myTextField);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
@@ -266,9 +263,6 @@ public abstract class ChooseByNameBase{
         }
         final int keyCode = e.getKeyCode();
         switch (keyCode) {
-          case KeyEvent.VK_TAB:
-            insertElement();
-            break;
           case KeyEvent.VK_DOWN:
             ListScrollingUtilEx.moveDown(myList, e.getModifiersEx());
             break;
@@ -347,16 +341,6 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private void insertElement() {
-    final Object chosenElement = getChosenElement();
-    if (!(chosenElement instanceof PsiElement)) return;
-    if (myEditor == null) return;
-    final PsiElement element = (PsiElement)chosenElement;
-    final String fqn = CopyReferenceAction.elementToFqn(element);
-    PasteReferenceAction.doInsert(fqn, element, myEditor);
-    close(false);
-  }
-
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
     int index = checkboxState ? 1 : 0;
     if (myNames[index] != null) return;
@@ -403,7 +387,7 @@ public abstract class ChooseByNameBase{
       (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
     // I'm registering KeyListener to close popup only by KeyTyped event.
-    // If react on KeyPressed then sometime KeyTyped goes into underlying myEditor.
+    // If react on KeyPressed then sometime KeyTyped goes into underlying editor.
     // It causes typing of Enter into it.
     myTextFieldPanel.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
