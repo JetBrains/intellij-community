@@ -379,11 +379,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
       if (!isInside(element, myElements)) {
         PsiElement parent = element.getParent();
-        if (parent instanceof PsiImportStatement) {
-          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(parent, psiClass, true));
-        } else {
-          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, psiClass, false));
-        }
+        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(parent, psiClass, parent instanceof PsiImportStatement));
       }
     }
 
@@ -723,6 +719,4 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public void setSearchNonJava(boolean searchNonJava) {
     mySearchNonJava = searchNonJava;
   }
-
-
 }
