@@ -218,13 +218,14 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private boolean addOrderEntries(OrderRootType orderRootType, ProjectRootType projectRootType, Sdk sdk, SdkModificator toModificator){
+    boolean wasSmthAdded = false;
     final String[] docs = sdk.getRootProvider().getUrls(orderRootType);
     for (int i = 0; i < docs.length; i++) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(docs[i]);
       toModificator.addRoot(virtualFile, projectRootType);
-      return true;
+      wasSmthAdded = true;
     }
-    return false;
+    return wasSmthAdded;
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
