@@ -186,7 +186,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         boolean addingNew;
         if (index != sortedHighlighters.size()) {
           RangeHighlighter mark = sortedHighlighters.get(index);
-          if (!mark.isValid() || mark.getErrorStripeMarkColor() == null) continue;
+          if (!mark.isValid() || mark.getErrorStripeMarkColor() == null) {
+            sortedHighlighters.remove(index);
+            continue;
+          }
           PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(mark);
           if (!endQueue.isEmpty() && endQueue.peek().yEnd <= positioned.yStart) {
             positionedMark = endQueue.peek();
