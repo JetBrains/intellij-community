@@ -212,7 +212,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void startTransaction(Document doc, PsiElement scope) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null)
-      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope.getContainingFile()), new Integer(0));
+      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? scope.getContainingFile() : null), new Integer(0));
     else
       pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), new Integer(pair.getSecond().intValue() + 1));
     myTransactionsMap.put(doc, pair);
