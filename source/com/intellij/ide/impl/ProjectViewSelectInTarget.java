@@ -7,6 +7,8 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,7 +24,7 @@ public abstract class ProjectViewSelectInTarget implements SelectInTarget {
   public void select(PsiElement element, final boolean requestFocus) {
     while (true) {
       if (element instanceof PsiFile) break;
-      if (element instanceof PsiClass && element.getParent() instanceof PsiFile) break;
+      if (isTopLevelClass(element)) break;
       element = element.getParent();
     }
     if (element instanceof PsiAspectFile) {
@@ -54,6 +56,15 @@ public abstract class ProjectViewSelectInTarget implements SelectInTarget {
     else {
       runnable.run();
     }
+  }
+
+  private boolean isTopLevelClass(final PsiElement element) {
+    if (!(element instanceof PsiClass)) return false;
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiFile)) return false;
+    final VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
+    if (virtualFile == null) return false;
+    return virtualFile.getFileType() == StdFileTypes.JAVA;
   }
 
   public String getToolWindowId() {
