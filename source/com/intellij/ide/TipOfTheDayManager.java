@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 
 public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerListener {
   private boolean myDoNotShowThisTime = false;
@@ -31,7 +32,7 @@ public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerL
     ProjectManager.getInstance().removeProjectManagerListener(this);
   }
 
-  public void projectOpened(Project project) {
+  public void projectOpened(final Project project) {
     if (!myVeryFirstProjectOpening || !GeneralSettings.getInstance().showTipsOnStartup()) {
       return;
     }
@@ -41,7 +42,15 @@ public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerL
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
         if (myDoNotShowThisTime) return;
-        new TipDialog().show();
+        ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+          public void run() {
+            ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+              public void run() {
+                new TipDialog().show();
+              }
+            });
+          }
+        });
       }
     });
   }
