@@ -106,6 +106,13 @@ public class ResolveCache {
     myResolveMaps[index].put(ref, new SoftReference<PsiElement>(results));
   }
 
+  //for Visual Fabrique
+  public void clearJavaResolveCaches(PsiReference ref) {
+    final boolean physical = ref.getElement().isPhysical();
+    setCachedJavaResolve(ref, null, physical, false);
+    setCachedJavaResolve(ref, null, physical, true);
+  }
+
   private Reference<PsiElement> getCachedResolve(PsiReference ref, boolean physical, boolean incompleteCode) {
     int index = getIndex(physical, incompleteCode);
     final Reference<PsiElement> reference = (Reference<PsiElement>)myResolveMaps[index].get(ref);
