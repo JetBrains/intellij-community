@@ -115,9 +115,8 @@ public class CodeFormatterFacade implements Constants {
         return element;
       }
       else {
-        PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element),
-                                                        startOffset, endOffset);
-        GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType).format();
+        PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
+        GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset).format();
         formatComments(element, startOffset, endOffset);
         return element;
       }

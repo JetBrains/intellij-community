@@ -419,9 +419,7 @@ public class CodeEditUtil {
 
     final PseudoText pseudoText = pseudoTextBuilder.build(project,
                                                           settings,
-                                                          file,
-                                                          0,
-                                                          file.getTextLength());
+                                                          file);
 
     return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, fileType, startOffset, endOffset);
   }
