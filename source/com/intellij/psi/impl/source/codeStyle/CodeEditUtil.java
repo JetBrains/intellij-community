@@ -93,10 +93,6 @@ public class CodeEditUtil {
     if (elementAfter != null && needSeparateLines(last) && helper.getLineBreakCount(parent, last, elementAfter) == 0) {
       helper.makeVerticalSpace(parent, last, elementAfter, 0);
     }
-    elementAfter = codeLayouter.processSpace(last, elementAfter);// special mode?
-    if (elementAfter != null) {
-      elementAfter = indentAdjuster.adjustFirstLineIndent(elementAfter);
-    }
 
     afterLast = last.getTreeNext();
     for (ASTNode child = first; child != afterLast; child = child.getTreeNext()) {
@@ -113,6 +109,11 @@ public class CodeEditUtil {
       }
     }
 
+    elementAfter = codeLayouter.processSpace(last, elementAfter);// special mode?
+    if (elementAfter != null) {
+      elementAfter = indentAdjuster.adjustFirstLineIndent(elementAfter);
+    }
+    
     return first;
   }
 
