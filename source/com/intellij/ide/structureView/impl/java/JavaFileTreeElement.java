@@ -3,10 +3,9 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.codeInsight.CodeInsightColors;
 
 import java.util.ArrayList;
 

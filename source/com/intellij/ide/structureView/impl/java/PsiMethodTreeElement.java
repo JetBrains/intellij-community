@@ -2,9 +2,10 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+
+import java.util.ArrayList;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
@@ -12,7 +13,15 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
   }
 
   public StructureViewTreeElement[] getChildrenBase() {
-    return new StructureViewTreeElement[0];
+    final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    getElement().accept(new PsiRecursiveElementVisitor(){
+      public void visitClass(PsiClass aClass) {
+        if (!(aClass instanceof PsiAnonymousClass)) {
+          result.add(new JavaClassTreeElement(aClass, isInherited()));
+        }
+      }
+    });
+    return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
   public ItemPresentation getPresentation() {
