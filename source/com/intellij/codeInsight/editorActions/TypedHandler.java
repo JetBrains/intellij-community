@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JspParsingUtil;
+import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -297,8 +298,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     if ('>' == charTyped){
-      if (StdFileTypes.XML == fileType || StdFileTypes.HTML == fileType || StdFileTypes.XHTML == fileType ||
-          StdFileTypes.JSPX == fileType){
+      if (file instanceof XmlFile){
         handleXmlGreater(project, editor, fileType);
       } else if (originalFileType == StdFileTypes.JSP) {
         handleJspGreater(project, editor);
@@ -315,6 +315,8 @@ public class TypedHandler implements TypedActionHandler {
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
+    } else if ('}' == charTyped && originalFileType == StdFileTypes.JSPX) {
+      if (handleELClosingBrace(editor, file,project)) return;
     }
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
@@ -329,6 +331,9 @@ public class TypedHandler implements TypedActionHandler {
       indentClosingBrace(project, editor);
     }
     else if ('{' == charTyped){
+      if (originalFileType == StdFileTypes.JSPX) {
+        if(handleELOpeningBrace(editor, file,project)) return;
+      }
       indentOpenedBrace(project, editor);
     }
     else if ('/' == charTyped){
@@ -342,6 +347,44 @@ public class TypedHandler implements TypedActionHandler {
         handleJspEqual(project, editor);
       }
     }
+  }
+
+  private boolean handleELOpeningBrace(final Editor editor, final PsiFile file, final Project project) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement elementAt = file.findElementAt(offset-1);
+
+    // TODO: handle it with insertAfterLParen(...)
+    if (!JspxCompletionData.isJavaContext(elementAt) &&
+        elementAt.getText().equals("${")
+        ) {
+      editor.getDocument().insertString(offset, "}");
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement elementAt = file.findElementAt(offset-1);
+
+    // TODO: handle it with insertAfterRParen(...)
+    if (!JspxCompletionData.isJavaContext(elementAt)) {
+      while(!elementAt.getText().startsWith("${")) {
+        elementAt = elementAt.getPrevSibling();
+        if (elementAt==null) break;
+      }
+
+      if (elementAt!=null) {
+        editor.getCaretModel().moveToOffset(offset + 1);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private void handleJspEqual(Project project, Editor editor) {
