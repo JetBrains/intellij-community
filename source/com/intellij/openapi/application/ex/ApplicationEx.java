@@ -14,18 +14,16 @@ import java.io.IOException;
 public interface ApplicationEx extends Application {
   /**
    * Loads the application configuration from the specified path
-   * 
+   *
    * @param optionsPath Path to /config folder
-   * @throws IOException          
-   * @throws InvalidDataException 
+   * @throws IOException
+   * @throws InvalidDataException
    */
   void load(String optionsPath) throws IOException, InvalidDataException;
 
   boolean isInternal();
 
   boolean isAspectJSupportEnabled();
-
-  boolean shouldLoadPlugins();
 
   String getComponentsDescriptor();
 
@@ -36,8 +34,6 @@ public interface ApplicationEx extends Application {
   void assertReadAccessToDocumentsAllowed();
 
   void doNotSave();
-
-  boolean shouldLoadPlugin(PluginDescriptor descriptor);
 
   boolean runProcessWithProgressSynchronously(Runnable process,
                                                      String progressTitle,

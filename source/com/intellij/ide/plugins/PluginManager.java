@@ -4,8 +4,10 @@ import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.extensions.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -35,6 +37,7 @@ import java.util.zip.ZipFile;
 public class PluginManager {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
+  public static final String COMPONENT_EXTENSION_POINT = "com.intellij.plugins.component";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -74,30 +77,77 @@ public class PluginManager {
    */
   public static PluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
-      final PluginDescriptor[] pluginDescriptors = loadDescriptors();
+      initializePlugins();
 
-      final Map<String, PluginDescriptor> idToDescriptorMap = new HashMap<String, PluginDescriptor>();
-      for (int idx = 0; idx < pluginDescriptors.length; idx++) {
-        final PluginDescriptor descriptor = pluginDescriptors[idx];
-        idToDescriptorMap.put(descriptor.getId(), descriptor);
-      }
-      // sort descriptors according to plugin dependencies
-      Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap));
-
-      final Class callerClass = Reflection.getCallerClass(1);
-      final ClassLoader parentLoader = callerClass.getClassLoader();
-      for (int idx = 0; idx < pluginDescriptors.length; idx++) {
-        final PluginDescriptor pluginDescriptor = pluginDescriptors[idx];
-        final List classPath = pluginDescriptor.getClassPath();
-        final String[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-        final ClassLoader[] parentLoaders = dependentPluginIds.length > 0? getParentLoaders(idToDescriptorMap, dependentPluginIds): new ClassLoader[] {parentLoader};
-        final PluginClassLoader pluginClassLoader = createPluginClassLoader((File[])classPath.toArray(new File[classPath.size()]), pluginDescriptor.getName(), parentLoaders, pluginDescriptor.getPath());
-        pluginDescriptor.setLoader(pluginClassLoader);
-      }
-      ourPlugins = pluginDescriptors;
     }
     return ourPlugins;
   }
+
+  private static void initializePlugins() {
+    if (!shouldLoadPlugins()) return;
+
+    configureExtensions();
+
+    final PluginDescriptor[] pluginDescriptors = loadDescriptors();
+
+    final Map<String, PluginDescriptor> idToDescriptorMap = new HashMap<String, PluginDescriptor>();
+    for (int idx = 0; idx < pluginDescriptors.length; idx++) {
+      final PluginDescriptor descriptor = pluginDescriptors[idx];
+      idToDescriptorMap.put(descriptor.getId(), descriptor);
+    }
+    // sort descriptors according to plugin dependencies
+    Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap));
+
+    final Class callerClass = Reflection.getCallerClass(1);
+    final ClassLoader parentLoader = callerClass.getClassLoader();
+    for (int idx = 0; idx < pluginDescriptors.length; idx++) {
+      final PluginDescriptor pluginDescriptor = pluginDescriptors[idx];
+      final List classPath = pluginDescriptor.getClassPath();
+      final String[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+      final ClassLoader[] parentLoaders = dependentPluginIds.length > 0? getParentLoaders(idToDescriptorMap, dependentPluginIds): new ClassLoader[] {parentLoader};
+      final PluginClassLoader pluginClassLoader = createPluginClassLoader((File[])classPath.toArray(new File[classPath.size()]), pluginDescriptor.getName(), parentLoaders, pluginDescriptor.getPath());
+      pluginDescriptor.setLoader(pluginClassLoader);
+      pluginDescriptor.registerExtensions();
+    }
+    ourPlugins = pluginDescriptors;
+  }
+
+  private static void configureExtensions() {
+    Extensions.setLogProvider(new IdeaLogProvider());
+    Extensions.registerAreaClass("PROJECT", null);
+    Extensions.registerAreaClass("MODULE", "PROJECT");
+
+    Extensions.getRootArea().registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
+
+    Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
+      public void areaCreated(String areaClass, AreaInstance areaInstance) {
+        if ("PROJECT".equals(areaClass) || "MODULE".equals(areaClass)) {
+          Extensions.getArea(areaInstance).registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
+        }
+      }
+
+      public void areaDisposing(String areaClass, AreaInstance areaInstance) {
+      }
+    }, LoadingOrder.FIRST);
+  }
+
+  public static boolean shouldLoadPlugins() {
+    try {
+      // no plugins during bootstrap
+      Class.forName("com.intellij.openapi.extensions.Extensions");
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+    final String loadPlugins = System.getProperty("idea.load.plugins");
+    return ApplicationManagerEx.getApplicationEx() != null && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() && (loadPlugins == null || "true".equals(loadPlugins));
+  }
+
+  public static boolean shouldLoadPlugin(PluginDescriptor descriptor) {
+    final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
+    return loadPluginCategory == null || loadPluginCategory.equals(descriptor.getCategory());
+  }
+
 
   private static Comparator<PluginDescriptor> getPluginDescriptorComparator(Map<String, PluginDescriptor> idToDescriptorMap) {
     final Graph<String> graph = createPluginIdGraph(idToDescriptorMap);
@@ -258,6 +308,12 @@ public class PluginManager {
     if (message.length() > 0) {
       message.insert(0, "Problems found loading plugins:\n");
       return message.toString();
+    }
+    for (Iterator<PluginDescriptor> iterator = result.iterator(); iterator.hasNext();) {
+      PluginDescriptor descriptor = iterator.next();
+      if (!shouldLoadPlugins() || !shouldLoadPlugin(descriptor)) {
+        iterator.remove();
+      }
     }
     return null;
   }
@@ -585,5 +641,31 @@ public class PluginManager {
 
   public static String getPluginByClassName (String className) {
     return ourPluginClasses != null? ourPluginClasses.get(className) : null;
+  }
+
+  private static class IdeaLogProvider implements LogProvider {
+    public void error(String message) {
+      getLogger().error(message);
+    }
+
+    public void error(String message, Throwable t) {
+      getLogger().error(message, t);
+    }
+
+    public void error(Throwable t) {
+      getLogger().error(t);
+    }
+
+    public void warn(String message) {
+      getLogger().info(message);
+    }
+
+    public void warn(String message, Throwable t) {
+      getLogger().info(message, t);
+    }
+
+    public void warn(Throwable t) {
+      getLogger().info(t);
+    }
   }
 }

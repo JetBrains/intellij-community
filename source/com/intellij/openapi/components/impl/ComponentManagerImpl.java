@@ -1,21 +1,24 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.ComponentDescriptor;
 import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.LoadCancelledException;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.*;
+import com.intellij.util.containers.HashMap;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Document;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
-import com.intellij.util.containers.HashMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -173,7 +176,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         synchronized (this) {
           myInitializingComponents.remove(component);
           myInitializedComponents.put(interfaceClass, component);
-        }        
+        }
       }
       return (T)component;
     }
@@ -363,6 +366,37 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myPicoContainer;
   }
 
+  protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
+    final ComponentDescriptor[] componentDescriptors =
+      (ComponentDescriptor[])extensionsArea.getExtensionPoint(PluginManager.COMPONENT_EXTENSION_POINT).getExtensions();
+    for (int i = 0; i < componentDescriptors.length; i++) {
+      ComponentDescriptor descriptor = componentDescriptors[i];
+      final Map<String, String> options = descriptor.getOptionsMap();
+      if (isComponentSuitable(options)) {
+        ClassLoader loader = findLoader(descriptor.getPluginName());
+        try {
+          registerComponent(Class.forName(descriptor.getInterface(), true, loader), Class.forName(descriptor.getImplementation(), true, loader), options, true,
+                            isTrue(options, "lazy"));
+        }
+        catch (Exception e) {
+          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginName())));
+        }
+        catch (Error e) {
+          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginName())));
+        }
+      }
+    }
+
+  }
+
+  private ClassLoader findLoader(final String pluginName) {
+    ClassLoader loader = PluginManager.getPlugin(pluginName).getLoader();
+    if (loader == null) {
+      loader = getClass().getClassLoader();
+    }
+    return loader;
+  }
+
   protected static class InvalidComponentDataException extends RuntimeException {
     public InvalidComponentDataException(InvalidDataException exception) {
       super(exception);
@@ -524,7 +558,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       throws PicoIntrospectionException,
              AssignabilityRegistrationException,
              NotConcreteRegistrationException {
-      
+
       DecoratingComponentAdapter initializingAdapter = new DecoratingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true)) {
         public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
           Object componentInstance = super.getComponentInstance(picoContainer);

@@ -61,10 +61,6 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return true;
   }
 
-  public boolean shouldLoadPlugins() {
-    return false;
-  }
-
   public BaseComponent getComponent(String name) {
     return null;
   }
@@ -122,10 +118,6 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
   }
 
   public void doNotSave() {
-  }
-
-  public boolean shouldLoadPlugin(PluginDescriptor descriptor) {
-    return false;
   }
 
   public boolean runProcessWithProgressSynchronously(Runnable process,

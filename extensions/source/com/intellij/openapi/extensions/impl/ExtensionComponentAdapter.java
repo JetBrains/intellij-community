@@ -45,7 +45,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
           readerConfigurator.configureReader(xStream);
         }
         xStream.alias(myExtensionElement.getName(), componentInstance.getClass());
-        myComponentInstance = xStream.unmarshal(new JDomReader(myExtensionElement), componentInstance);
+        myComponentInstance = xStream.unmarshal(new JDomExtensionsReader(myExtensionElement), componentInstance);
       }
       else {
         myComponentInstance = myExtensionElement;

@@ -21,6 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
@@ -56,6 +58,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     super(false, pathMacros);
     myProject = project;
     myPomModel =  pomModel;
+    Extensions.instantiateArea("MODULE", this, project);
     init(filePath);
   }
 
@@ -79,12 +82,12 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public void loadModuleComponents() {
     loadComponentsConfiguration(MODULE_LAYER);
 
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (app.shouldLoadPlugins()) {
+    if (PluginManager.shouldLoadPlugins()) {
       final PluginDescriptor[] plugins = PluginManager.getPlugins();
       for (int i = 0; i < plugins.length; i++) {
         PluginDescriptor plugin = plugins[i];
-        if (!app.shouldLoadPlugin(plugin)) continue;
+        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
+
         final Element moduleComponents = plugin.getModuleComponents();
         if (moduleComponents != null) {
           loadComponentsConfiguration(moduleComponents, plugin);

@@ -35,6 +35,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.pom.PomModel;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
@@ -50,7 +52,7 @@ import java.util.*;
 /**
  *
  */
-public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
+public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, AreaInstance {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   private ProjectManagerImpl myManager;
@@ -84,6 +86,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     super(isDefault, pathMacros);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
+
+    Extensions.instantiateArea("PROJECT", this, null);
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
@@ -139,12 +143,11 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   public void loadProjectComponents() {
     loadComponentsConfiguration(PROJECT_LAYER);
 
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (app.shouldLoadPlugins()) {
+    if (PluginManager.shouldLoadPlugins()) {
       final PluginDescriptor[] plugins = PluginManager.getPlugins();
       for (int i = 0; i < plugins.length; i++) {
         PluginDescriptor plugin = plugins[i];
-        if (!app.shouldLoadPlugin(plugin)) continue;
+        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element projectComponents = plugin.getProjectComponents();
         if (projectComponents != null) {
           loadComponentsConfiguration(projectComponents, plugin);

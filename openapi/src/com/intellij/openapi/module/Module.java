@@ -7,9 +7,10 @@ package com.intellij.openapi.module;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.pom.PomModule;
 
-public interface Module extends ComponentManager {
+public interface Module extends ComponentManager, AreaInstance {
   Module[] EMPTY_ARRAY = new Module[0];
 
   VirtualFile getModuleFile();

@@ -28,6 +28,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="tools" level="application" />
+    <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntryProperties />
   </component>
 </module>

@@ -30,6 +30,9 @@ import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -120,14 +123,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myName;
   }
 
+  protected void initComponents() {
+    initComponentsFromExtensions(Extensions.getRootArea());
+    super.initComponents();
+  }
+
   private void loadApplicationComponents() {
     loadComponentsConfiguration(APPLICATION_LAYER);
 
-    if (shouldLoadPlugins()) {
+    if (PluginManager.shouldLoadPlugins()) {
       final PluginDescriptor[] plugins = PluginManager.getPlugins();
       for (int i = 0; i < plugins.length; i++) {
         PluginDescriptor plugin = plugins[i];
-        if (!shouldLoadPlugin(plugin)) continue;
+        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element appComponents = plugin.getAppComponents();
         if (appComponents != null) {
           loadComponentsConfiguration(appComponents, plugin);
@@ -148,16 +156,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myAspectJSupportEnabled || isUnitTestMode();
   }
 
-  public boolean shouldLoadPlugins() {
-    final String loadPlugins = System.getProperty("idea.load.plugins");
-    return !isUnitTestMode() && (loadPlugins == null || "true".equals(loadPlugins));
-  }
-
-  public boolean shouldLoadPlugin(PluginDescriptor descriptor) {
-    final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
-    return loadPluginCategory == null || loadPluginCategory.equals(descriptor.getCategory());
-  }
-
   private static Thread ourDispatchThread = null;
 
   public boolean isDispatchThread() {
@@ -175,7 +173,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     if (ourDispatchThread == currentThread) return true;
-    
+
     if (ourDispatchThread != null && !ourDispatchThread.isAlive()) {
       ourDispatchThread = null;
       return isDispatchThread(currentThread);
@@ -386,18 +384,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       disposeComponents();
     }
   }
-  
+
   public boolean runProcessWithProgressSynchronously(final Runnable process,
                                                      String progressTitle,
                                                      boolean canBeCanceled,
                                                      Project project) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, true);
   }
-  
+
   public boolean runProcessWithProgressSynchronously(final Runnable process,
                                                      String progressTitle,
                                                      boolean canBeCanceled,
-                                                     Project project, 
+                                                     Project project,
                                                      boolean smoothProgress) {
     assertIsDispatchThread();
 
