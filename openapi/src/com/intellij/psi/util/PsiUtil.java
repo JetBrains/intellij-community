@@ -893,13 +893,6 @@ public final class PsiUtil {
     return false;
   }
 
-  public static PsiType getRawType(PsiType type) {
-    if (type instanceof PsiClassType) {
-      return ((PsiClassType)type).rawType();
-    }
-    return type;
-  }
-
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
     PsiElement[] psiRoots = root.getPsiRoots();
     for (int i = 0; i < psiRoots.length; i++) {

@@ -1586,16 +1586,21 @@ public class HighlightUtil {
     final PsiElement rResolved = rRef.resolve();
     if (!manager.areElementsEquivalent(lResolved, rResolved)) return false;
 
-    final PsiExpression lQuialifier = lRef.getQualifierExpression();
-    final PsiExpression rQuialifier = rRef.getQualifierExpression();
-    if (lQuialifier instanceof PsiReferenceExpression && rQuialifier instanceof PsiReferenceExpression) {
-      return sameInstanceReferences((PsiReferenceExpression)lQuialifier, (PsiReferenceExpression)rQuialifier, manager);
+    final PsiExpression lQualifier = lRef.getQualifierExpression();
+    final PsiExpression rQualifier = rRef.getQualifierExpression();
+    if (lQualifier instanceof PsiReferenceExpression && rQualifier instanceof PsiReferenceExpression) {
+      return sameInstanceReferences((PsiReferenceExpression)lQualifier, (PsiReferenceExpression)rQualifier, manager);
     }
-    if (Comparing.equal(lQuialifier, rQuialifier)) return true;
-    final boolean lThis = lQuialifier == null || lQuialifier instanceof PsiThisExpression;
-    final boolean rThis = rQuialifier == null || rQuialifier instanceof PsiThisExpression;
-    if (lThis && rThis) return true;
-    if (lThis != rThis) return false;
+    if (Comparing.equal(lQualifier, rQualifier)) return true;
+    final boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression;
+    final boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression;
+    if (lThis && rThis) {
+      PsiJavaCodeReferenceElement lThisQualifier = ((PsiThisExpression)lQualifier).getQualifier();
+      PsiJavaCodeReferenceElement rThisQualifier = ((PsiThisExpression)rQualifier).getQualifier();
+      if (lThisQualifier == null && rThisQualifier == null) return true;
+      if (lThisQualifier == null || rThisQualifier == null) return false;
+      return Comparing.equal(lThisQualifier.resolve(), rThisQualifier.resolve());
+    }
 
     return false;
   }
@@ -1854,11 +1859,11 @@ public class HighlightUtil {
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null ? true : TypeConversionUtil.isAssignable(lRawType, rRawType);
     toolTip += "<td>Required:</td>" +
-               "<td>" + redIfNotMatch(PsiUtil.getRawType(lType), assignable) + "</td>" +
+               "<td>" + redIfNotMatch(TypeConversionUtil.erasure(lType), assignable) + "</td>" +
                requredRow;
     toolTip += "</tr><tr>";
     toolTip += "<td>Found:</td>" +
-               "<td>" + redIfNotMatch(PsiUtil.getRawType(rType), assignable) + "</td>"
+               "<td>" + redIfNotMatch(TypeConversionUtil.erasure(rType), assignable) + "</td>"
                + foundRow;
 
     toolTip += "</tr></table></body></html>";
