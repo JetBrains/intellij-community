@@ -194,19 +194,16 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
         public void visitExpression(PsiExpression exp) {
             super.visitExpression(exp);
-            final PsiType expressionType = exp.getType();
-            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
-                return;
-            }
             final PsiElement parent = exp.getParent();
             if(parent != null && parent instanceof PsiParenthesizedExpression){
                 return;
             }
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(exp);
-            if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
+            final PsiType expressionType = exp.getType();
+            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
                 return;
             }
-            if (expectedType.equals(expressionType)) {
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(exp);
+            if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
             if (m_ignoreWideningConversions && hasLowerPrecision(expressionType, expectedType)) {

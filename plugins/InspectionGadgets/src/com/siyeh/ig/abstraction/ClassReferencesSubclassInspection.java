@@ -32,6 +32,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
 
     private static class ClassReferencesSubclassVisitor extends BaseInspectionVisitor {
         private boolean m_inClass = false;
+        private PsiClass containingClass = null;
 
         private ClassReferencesSubclassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
@@ -42,7 +43,9 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             if (!m_inClass) {
 
                 m_inClass = true;
+                containingClass = aClass;
                 super.visitClass(aClass);
+                containingClass = null;
             }
             m_inClass = wasInClass;
         }
@@ -59,8 +62,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
 
             final PsiClassType classType = (PsiClassType) componentType;
 
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(variable);
             if (!isSubclass(classType, containingClass)) {
                 return;
             }
@@ -79,7 +80,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
-            final PsiClass containingClass = method.getContainingClass();
             if (!isSubclass(classType, containingClass)) {
                 return;
             }
@@ -105,8 +105,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(exp);
             if (!isSubclass(classType, containingClass)) {
                 return;
             }
@@ -128,8 +126,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(exp);
             if (!isSubclass(classType, containingClass)) {
                 return;
             }
@@ -151,8 +147,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(exp);
             if (!isSubclass(classType, containingClass)) {
                 return;
             }

@@ -8,9 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class CollectionUtils {
+    /** @noinspection StaticCollection*/
     private static final Set s_collectionClassesRequiringCapacity = new HashSet(10);
+    /** @noinspection StaticCollection*/
     private static final Set s_allCollectionClasses = new HashSet(10);
+    /** @noinspection StaticCollection*/
     private static final Set s_allCollectionClassesAndInterfaces = new HashSet(10);
+    /** @noinspection StaticCollection*/
     private static final Map s_interfaceForCollection = new HashMap(10);
 
     static {

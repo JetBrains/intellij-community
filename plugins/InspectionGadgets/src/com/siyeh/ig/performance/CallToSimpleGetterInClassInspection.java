@@ -41,10 +41,21 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
+            final PsiReferenceExpression methodExpression = call.getMethodExpression();
+            if(methodExpression == null)
+            {
+                return;
+            }
+            final String methodName = methodExpression.getReferenceName();
+            if(!methodName.startsWith("get")&& !methodName.startsWith("is"))
+            {
+                return;
+            }
             final PsiExpressionList argList = call.getArgumentList();
             if(argList == null){
                 return;
             }
+
             final PsiExpression[] args = argList.getExpressions();
             if(args == null || args.length != 0){
                 return;

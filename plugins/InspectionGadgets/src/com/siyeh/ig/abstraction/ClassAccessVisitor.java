@@ -28,25 +28,28 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         if (currentClass.equals(calledClass)) {
             return;
         }
-        PsiClass lexicallyEnclosingClass = currentClass;
-        while (lexicallyEnclosingClass != null) {
-            if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
-                return;
-            }
-            lexicallyEnclosingClass = (PsiClass)PsiTreeUtil.getParentOfType(lexicallyEnclosingClass, PsiClass.class);
+        final Set overAccessedClasses = m_overAccessedClasses;
+        if(overAccessedClasses.contains(calledClass)){
+            return;
         }
+
+        if(LibraryUtil.classIsInLibrary(calledClass)){
+            return;
+        }
+
         if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {
             return;
         }
         if (PsiTreeUtil.isAncestor(calledClass, currentClass, true)) {
             return;
         }
-        if (LibraryUtil.classIsInLibrary(calledClass)) {
-            return;
-        }
-        final Set overAccessedClasses = m_overAccessedClasses;
-        if (overAccessedClasses.contains(calledClass)) {
-            return;
+        PsiClass lexicallyEnclosingClass = currentClass;
+        while(lexicallyEnclosingClass != null){
+            if(lexicallyEnclosingClass.isInheritor(calledClass, true)){
+                return;
+            }
+            lexicallyEnclosingClass = (PsiClass) PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
+                                                                             PsiClass.class);
         }
         final Map accessCounts = m_accessCounts;
         final Integer count = (Integer) accessCounts.get(calledClass);

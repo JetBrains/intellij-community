@@ -75,9 +75,6 @@ public class MalformedRegexInspection extends ExpressionInspection{
             {
                 return;
             }
-            if(!callTakesRegex(expression)){
-                return;
-            }
             final String regexTypeText = regexType.getCanonicalText();
             if(!"java.lang.String".equals(regexTypeText)){
                 return;
@@ -89,6 +86,9 @@ public class MalformedRegexInspection extends ExpressionInspection{
                     (String) ConstantExpressionUtil.computeCastTo(regexArg, regexType);
             if(value == null)
             {
+                return;
+            }
+            if(!callTakesRegex(expression)){
                 return;
             }
             //noinspection UnusedCatchParameter

@@ -96,6 +96,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
     }
 
     private static boolean arrayContentsAreWritten(PsiVariable variable, PsiElement context) {
+        if(VariableAccessUtils.arrayContentsAreAssigned(variable, context)){
+            return true;
+        }
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isDefaultArrayInitializer(initializer)) {
             return true;
@@ -106,10 +109,8 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
             return true;
         }
-        if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
-            return true;
-        }
-        return VariableAccessUtils.arrayContentsAreAssigned(variable, context);
+        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                    context);
     }
 
     private static boolean isDefaultArrayInitializer(PsiExpression initializer) {
@@ -121,6 +122,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
     }
 
     private static boolean arrayContentsAreRead(PsiVariable variable, PsiElement context) {
+        if(VariableAccessUtils.arrayContentsAreAccessed(variable, context)){
+            return true;
+        }
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isDefaultArrayInitializer(initializer)) {
             return true;
@@ -134,10 +138,8 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         if (VariableAccessUtils.variableIsReturned(variable, context)) {
             return true;
         }
-        if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
-            return true;
-        }
-        return VariableAccessUtils.arrayContentsAreAccessed(variable, context);
+        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                    context);
     }
 
 

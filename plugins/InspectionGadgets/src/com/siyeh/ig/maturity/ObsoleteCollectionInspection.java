@@ -73,10 +73,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
                 return false;
             }
 
-            String typeName = type.getCanonicalText();
-            if(typeName.indexOf('<') > 0){
-                typeName = typeName.substring(0, typeName.indexOf('<'));
-            }
+            final String typeName = type.getCanonicalText();
             return s_obsoleteCollectionTypes.contains(typeName);
         }
 

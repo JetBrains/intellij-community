@@ -136,16 +136,16 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
         }
 
         private boolean isUnqualifiedStaticAccess(PsiReferenceExpression expression) {
+            final PsiExpression qualifierExpression = expression.getQualifierExpression();
+            if(qualifierExpression != null){
+                return false;
+            }
             final PsiElement element = expression.resolve();
             if (!(element instanceof PsiField) && !(element instanceof PsiMethod)) {
                 return false;
             }
             final PsiMember member = (PsiMember) element;
-            if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-                return false;
-            }
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            return qualifierExpression == null;
+            return member.hasModifierProperty(PsiModifier.STATIC);
         }
     }
 }

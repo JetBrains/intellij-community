@@ -1,5 +1,5 @@
-50 unused import
-19 implicit numeric conversion
+
+13 implicit numeric conversion
 17 method may be static
 15 unnecessary fully qualified name
 11 Accessing a non-public class of another object
@@ -7,19 +7,25 @@
 8 Non-synchronized method overrides synchronized method
 8 Overly coupled class
 7 Overly coupled method
-7 mismatched query and update of collection
 6 Collection declared by class not interface
 6 Field accessed by synchronized and unsynchronized
 6 raw use of parameterized class
 5 use of obsolete collection type
+5 Infinite recursion
 4 casting to incompatible interface
 4 concatenation with empty string
 4 constant string buffer may be string
-4 non-constant string should be stringBuffer
-4 method overrides private method of superclass
+3 non-constant string should be stringBuffer
+3 method overrides private method of superclass
 4 static method accessed via subclass
 4 use of java.lang.reflect
 3 overly strong type cast
+3 Method parameter of concrete class
+3 Local Variable of concrete class
+3 Malformed Regular Expression
+3 Abstract which has no concrete subclass
+3 mismatched query and update of collection
+10Method may be static
 
 Performance TODOs:
 

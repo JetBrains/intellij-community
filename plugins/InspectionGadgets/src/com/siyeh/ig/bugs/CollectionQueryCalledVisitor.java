@@ -32,6 +32,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("copyInto");
         queryNames.add("lastElement");
         queryNames.add("firstElement");
+        queryNames.add("clone");
     }
 
     private boolean queried = false;
@@ -77,6 +78,10 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         if(methodExpression == null){
             return;
         }
+        final String methodName = methodExpression.getReferenceName();
+        if(!queryNames.contains(methodName)){
+            return;
+        }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         if(!(qualifier instanceof PsiReferenceExpression)){
@@ -89,16 +94,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         if(!referent.equals(variable)){
             return;
         }
-        final boolean isStatement =
-                        call.getParent() instanceof PsiExpressionStatement;
-        if(!isStatement){
-            queried = true;
-            return;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(queryNames.contains(methodName)){
-            queried = true;
-        }
+        queried = true;
     }
 
     public boolean isQueried(){

@@ -40,6 +40,15 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            if(methodExpression == null){
+                return;
+            }
+            final String methodName = methodExpression.getReferenceName();
+            if(!methodName.startsWith("set")){
+                return;
+            }
             final PsiExpressionList argList = call.getArgumentList();
             if(argList == null){
                 return;

@@ -145,7 +145,9 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
     }
 
     private static boolean isEmptyString(PsiExpression exp){
-
+        if(!(exp instanceof PsiLiteralExpression)){
+            return false;
+        }
         final String text = exp.getText();
         return "\"\"".equals(text);
     }

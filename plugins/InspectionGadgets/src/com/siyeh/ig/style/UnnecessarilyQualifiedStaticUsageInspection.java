@@ -123,6 +123,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
         }
 
         private boolean isUnnecessarilyQualifiedFieldAccess(PsiReferenceExpression expression) {
+            final PsiExpression qualifierExpression =
+                    expression.getQualifierExpression();
+            if(!(qualifierExpression instanceof PsiJavaCodeReferenceElement)){
+                return false;
+            }
             final PsiElement element = expression.resolve();
             if (!(element instanceof PsiField) && !(element instanceof PsiMethod)) {
                 return false;
@@ -131,10 +136,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
             if (!member.hasModifierProperty(PsiModifier.STATIC)) {
                 return false;
             }
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            if (!(qualifierExpression instanceof PsiJavaCodeReferenceElement)) {
-                return false;
-            }
+
             final PsiElement qualifierElement =
                     ((PsiReference) qualifierExpression).resolve();
             if (!(qualifierElement instanceof PsiClass)) {
@@ -176,6 +178,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
         }
 
         private boolean isUnnecessarilyQualifiedMethodCall(PsiReferenceExpression expression) {
+            final PsiExpression qualifierExpression =
+                    expression.getQualifierExpression();
+            if(!(qualifierExpression instanceof PsiJavaCodeReferenceElement)){
+                return false;
+            }
             final PsiElement element = expression.resolve();
             if (!(element instanceof PsiField) && !(element instanceof PsiMethod)) {
                 return false;
@@ -184,10 +191,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
             if (!member.hasModifierProperty(PsiModifier.STATIC)) {
                 return false;
             }
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            if (!(qualifierExpression instanceof PsiJavaCodeReferenceElement)) {
-                return false;
-            }
+
             final PsiElement qualifierElement = ((PsiReference) qualifierExpression).resolve();
             if (!(qualifierElement instanceof PsiClass)) {
                 return false;

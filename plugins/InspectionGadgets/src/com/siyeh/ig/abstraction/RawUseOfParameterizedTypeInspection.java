@@ -56,6 +56,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             if(classReference == null){
                 return;
             }
+            if(newExpression.getTypeArgumentList() != null){
+                return;
+            }
             final PsiElement referent = classReference.resolve();
             if(!(referent instanceof PsiClass)){
                 return;
@@ -63,9 +66,6 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
             final PsiClass referredClass = (PsiClass) referent;
             if(!referredClass.hasTypeParameters()){
-                return;
-            }
-            if(newExpression.getTypeArgumentList() != null){
                 return;
             }
             registerError(classReference);
@@ -79,15 +79,15 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             if(type == null){
                 return;
             }
-            final PsiType componentType = type.getDeepComponentType();
-            if(!(componentType instanceof PsiClassType)){
+            if(!(type instanceof PsiClassType)){
                 return;
             }
-            final String typeText = componentType.getCanonicalText();
-            if(typeText.indexOf((int) '<') >= 0){
+
+            final PsiClassType classType = (PsiClassType) type;
+            if(classType.hasParameters()){
                 return;
             }
-            final PsiClass aClass = ((PsiClassType) componentType).resolve();
+            final PsiClass aClass = classType.resolve();
 
             if(aClass == null){
                 return;

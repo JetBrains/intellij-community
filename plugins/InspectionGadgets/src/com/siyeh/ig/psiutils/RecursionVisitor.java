@@ -31,13 +31,12 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final String calledMethodName = methodExpression.getReferenceName();
-        if(calledMethodName.equals(methodName)){
-            final PsiMethod calledMethod = call.resolveMethod();
-            if(calledMethod != null){
-                if(calledMethod.equals(method)){
-                    recursive = true;
-                }
-            }
+        if(!calledMethodName.equals(methodName)){
+            return;
+        }
+        final PsiMethod calledMethod = call.resolveMethod();
+        if(method.equals(calledMethod)){
+            recursive = true;
         }
     }
 

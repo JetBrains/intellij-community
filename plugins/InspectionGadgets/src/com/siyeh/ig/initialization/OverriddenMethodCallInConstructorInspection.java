@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.project.Project;
@@ -86,9 +87,9 @@ public class OverriddenMethodCallInConstructorInspection extends MethodInspectio
             final Project project = psiManager.getProject();
             final SearchScope globalScope = GlobalSearchScope.allScope(project);
             final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-            final PsiMethod[] overridingMethods =
-                    searchHelper.findOverridingMethods(method, globalScope, true);
-            return overridingMethods.length!=0;
+            final PsiElementProcessor.FindElement processor = new PsiElementProcessor.FindElement();
+            searchHelper.processOverridingMethods(processor, method, globalScope, true);
+            return processor.getFoundElement()!=null;
         }
 
         private static boolean isOverridable(PsiMethod calledMethod) {

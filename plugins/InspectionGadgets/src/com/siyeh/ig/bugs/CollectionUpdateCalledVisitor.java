@@ -55,6 +55,10 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         if(methodExpression == null){
             return;
         }
+        final String methodName = methodExpression.getReferenceName();
+        if(!updateNames.contains(methodName)){
+            return;
+        }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         if(!(qualifier instanceof PsiReferenceExpression)){
@@ -64,11 +68,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         if(referent == null){
             return;
         }
-        if(!referent.equals(variable)){
-            return;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(updateNames.contains(methodName)){
+        if(referent.equals(variable)){
             updated = true;
         }
     }
