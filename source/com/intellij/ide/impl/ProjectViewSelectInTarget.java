@@ -35,7 +35,7 @@ public abstract class ProjectViewSelectInTarget implements SelectInTarget {
     }
     else if (element instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)element).getClasses();
-      if (classes.length > 0) {
+      if (classes.length > 0 && isTopLevelClass(classes[0])) {
         element = classes[0];
       }
     }
