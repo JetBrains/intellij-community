@@ -18,24 +18,18 @@ public class JavaFilterLexer extends BaseFilterLexer {
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER) {
-      {
-        int start = getTokenStart();
-        int end = getTokenEnd();
-        int hashCode = StringUtil.stringHashCode(getBuffer(), start, end - start);
-        IdCacheUtil.addOccurrence(myTable, hashCode, UsageSearchContext.IN_CODE);
-      }
+      int start = getTokenStart();
+      int end = getTokenEnd();
+      int hashCode = StringUtil.stringHashCode(getBuffer(), start, end - start);
+      IdCacheUtil.addOccurrence(myTable, hashCode, UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      {
-        IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS, false);
-      }
+      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS, false);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
-      {
-        IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS, false);
-        advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
-      }
+      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS, false);
+      advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
     }
 
     myOriginalLexer.advance();

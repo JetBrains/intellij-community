@@ -6,6 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
+
 public interface CacheManager {
   void initialize();
   void dispose();
@@ -32,5 +34,7 @@ public interface CacheManager {
    * @deprecated
    */
   void addOrInvalidateFile(VirtualFile file);
+
+  List<VirtualFile> getVirtualFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope);
 }
 

@@ -1,13 +1,11 @@
 package com.intellij.find.impl;
 
 import com.intellij.Patches;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.usages.impl.UsageViewImplUtil;
-import com.intellij.usages.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindResult;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -30,22 +28,28 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImplUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -161,57 +165,7 @@ public class FindInProjectUtil {
                                 final AsyncFindUsagesProcessListener consumer) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
-    final VirtualFile[] virtualFiles = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        final FileIndex fileIndex = (findModel.getModuleName() == null) ?
-                                    (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
-                                    ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
-
-        if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
-          class EnumContentIterator implements ContentIterator {
-            List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
-            Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
-
-            public boolean processFile(VirtualFile fileOrDir) {
-              if (!fileOrDir.isDirectory() &&
-                  (fileMaskRegExp == null ||
-                   fileMaskRegExp.matcher(fileOrDir.getName()).matches()
-                  )
-              ) {
-                myVirtualFiles.add(fileOrDir);
-              }
-              return true;
-            }
-
-            public VirtualFile[] getVirtualFiles() {
-              return myVirtualFiles.toArray(new VirtualFile[myVirtualFiles.size()]);
-            }
-          }
-          final EnumContentIterator iterator = new EnumContentIterator();
-
-
-          if (psiDirectory == null) {
-            fileIndex.iterateContent(iterator);
-          }
-          else {
-            fileIndex.iterateContentUnderDirectory(psiDirectory.getVirtualFile(), iterator);
-          }
-
-          return iterator.getVirtualFiles();
-        }
-        else {
-          List<VirtualFile> vFileList = new ArrayList<VirtualFile>();
-          VirtualFile virtualFile = psiDirectory.getVirtualFile();
-
-          addVirtualFilesUnderDirectory(virtualFile,
-                                        vFileList,
-                                        findModel.isWithSubdirectories(),
-                                        createFileMaskRegExp(findModel));
-          return vFileList.toArray(new VirtualFile[vFileList.size()]);
-        }
-      }
-    });
-
+    final VirtualFile[] virtualFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
       for (int i = 0; i < virtualFiles.length; i++) {
@@ -249,6 +203,72 @@ public class FindInProjectUtil {
     }
 
     consumer.findUsagesCompleted();
+  }
+
+  private static VirtualFile[] getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+      public VirtualFile[] compute() {
+        return getFilesToSearchInReadAction(findModel, project, psiDirectory);
+      }
+    });
+  }
+  private static VirtualFile[] getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+    final FileIndex fileIndex = findModel.getModuleName() == null ?
+                                (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
+                                ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
+
+    if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
+      if (!findModel.isRegularExpressions() && findModel.isWholeWordsOnly() && findModel.isCaseSensitive()) {
+        // optimization
+        final CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
+
+        final GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
+                                        GlobalSearchScope.projectScope(project) :
+                                        GlobalSearchScope.packageScope(psiDirectory.getPackage(), findModel.isWithSubdirectories());
+        List<VirtualFile> virtualFiles = cacheManager.getVirtualFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope);
+        return virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
+      }
+      class EnumContentIterator implements ContentIterator {
+        List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
+        Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
+
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory() &&
+              (fileMaskRegExp == null ||
+               fileMaskRegExp.matcher(fileOrDir.getName()).matches()
+              )
+          ) {
+            myVirtualFiles.add(fileOrDir);
+          }
+          return true;
+        }
+
+        public VirtualFile[] getVirtualFiles() {
+          return myVirtualFiles.toArray(new VirtualFile[myVirtualFiles.size()]);
+        }
+      }
+      final EnumContentIterator iterator = new EnumContentIterator();
+
+
+      if (psiDirectory == null) {
+        fileIndex.iterateContent(iterator);
+      }
+      else {
+        fileIndex.iterateContentUnderDirectory(psiDirectory.getVirtualFile(), iterator);
+      }
+
+      return iterator.getVirtualFiles();
+    }
+    else {
+      List<VirtualFile> vFileList = new ArrayList<VirtualFile>();
+      VirtualFile virtualFile = psiDirectory.getVirtualFile();
+
+      addVirtualFilesUnderDirectory(virtualFile,
+                                    vFileList,
+                                    findModel.isWithSubdirectories(),
+                                    createFileMaskRegExp(findModel));
+      return vFileList.toArray(new VirtualFile[vFileList.size()]);
+    }
   }
 
   private static void addToUsages(Project project, Document document, AsyncFindUsagesProcessListener consumer, FindModel findModel) {
