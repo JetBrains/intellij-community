@@ -249,7 +249,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
           getTreeParent().getTreeParent().getElementType() == JavaElementType.CODE_BLOCK &&
           getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final PsiFile[] includingFiles = JspUtil.getIncludingFiles((JspFile)file);
+        final PsiFile[] includingFiles = JspUtil.getReferencingFiles((JspFile)file);
         return new LocalSearchScope(includingFiles);
       }
     }
