@@ -7,6 +7,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -16,6 +17,8 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -775,8 +778,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public class UIOptions implements JDOMExternalizable {
       public boolean AUTOSCROLL_TO_SOURCE = false;
       public float SPLITTER_PROPORTION = 0.5f;
+      public boolean GROUP_BY_SEVERITY = false;
       public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-
+      public final GroupBySeverityAction myGroupBySeverityAction;
       public UIOptions() {
         myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
           protected boolean isAutoScrollMode() {
@@ -787,6 +791,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             AUTOSCROLL_TO_SOURCE = state;
           }
         };
+        myGroupBySeverityAction = new GroupBySeverityAction();
       }
 
       public void readExternal(Element element) throws InvalidDataException {
@@ -796,6 +801,25 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       public void writeExternal(Element element) throws WriteExternalException {
         DefaultJDOMExternalizer.writeExternal(this, element);
       }
+  }
+
+  private class GroupBySeverityAction extends ToggleAction {
+    public GroupBySeverityAction() {
+      super("Group by Severity", "Group Inspections By Severity", HighlightDisplayLevel.WARNING.getIcon());
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myUIOptions.GROUP_BY_SEVERITY;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUIOptions.GROUP_BY_SEVERITY = state;
+      myView.update();
+    }
+  }
+
+  public AnAction createGroupBySeverityAction(){
+    return myUIOptions.myGroupBySeverityAction;
   }
 
   public String getComponentName() {

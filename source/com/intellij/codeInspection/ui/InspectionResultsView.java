@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -50,9 +51,8 @@ import com.intellij.ui.ListPopup;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -80,12 +80,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private InspectionTree myTree;
   private Browser myBrowser;
   private Splitter mySplitter;
-  private Map<String, InspectionGroupNode> myGroups = null;
+  private Map<HighlightDisplayLevel, Map<String, InspectionGroupNode>> myGroups = null;
   private OccurenceNavigator myOccurenceNavigator;
   private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
   public static final String HELP_ID = "codeInspection";
-
+  public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new java.util.HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
   public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope) {
     setLayout(new BorderLayout());
 
@@ -197,6 +197,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     group.add(new CloseAction());
     group.add(new RerunAction(this));
     group.add(manager.createToggleAutoscrollAction());
+    group.add(manager.createGroupBySeverityAction());
     group.add(new PreviousOccurenceToolbarAction(getOccurenceNavigator()));
     group.add(new NextOccurenceToolbarAction(getOccurenceNavigator()));
     group.add(new ExportHTMLAction());
@@ -414,11 +415,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     setCursor(currentCursor);
   }
 
-  public void addTool(InspectionTool tool) {
+  public void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     tool.updateContent();
     if (tool.hasReportedProblems()) {
       final InspectionNode toolNode = new InspectionNode(tool);
-      initToolNode(tool, toolNode, getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : "General"));
+      initToolNode(tool, toolNode, getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : "General", errorLevel, groupedBySeverity));
       if (tool instanceof DeadCodeInspection) {
         final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
         entryPoints.updateContent();
@@ -447,15 +448,23 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
+  private void clearTree(){
+    myTree.removeAllNodes();
+    mySeverityGroupNodes.clear();
+  }
+
   public boolean update() {
     InspectionTool[] tools = myInspectionProfile.getInspectionTools(myProject);
-    myTree.removeAllNodes();
+    clearTree();
     boolean resultsFound = false;
-    myGroups = new HashMap<String, InspectionGroupNode>();
+    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
+    final boolean isGroupedBySeverity = manager.getUIOptions().GROUP_BY_SEVERITY;
+    myGroups = new java.util.HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
     for (int i = 0; i < tools.length; i++) {
       InspectionTool tool = tools[i];
-      if (myInspectionProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
-        addTool(tool);
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (myInspectionProfile.isToolEnabled(key)) {
+        addTool(tool, myInspectionProfile.getErrorLevel(key), isGroupedBySeverity);
         resultsFound |= tool.hasReportedProblems();
       }
     }
@@ -464,15 +473,37 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return resultsFound;
   }
 
-  private InspectionTreeNode getToolParentNode(String groupName) {
-    if (groupName == null || groupName.length() == 0) return myTree.getRoot();
-    InspectionGroupNode group = myGroups.get(groupName);
+  private InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+    if ((groupName == null || groupName.length() == 0)){
+      return getRelativeRootNode(groupedBySeverity, errorLevel);
+    }
+    Map<String, InspectionGroupNode> map = myGroups.get(errorLevel);
+    if (map == null){
+      map = new java.util.HashMap<String, InspectionGroupNode>();
+      myGroups.put(errorLevel, map);
+    }
+    InspectionGroupNode group = map.get(groupName);
     if (group == null) {
       group = new InspectionGroupNode(groupName);
-      myGroups.put(groupName, group);
-      myTree.getRoot().add(group);
+      map.put(groupName, group);
+      getRelativeRootNode(groupedBySeverity, errorLevel).add(group);
     }
     return group;
+  }
+
+  private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level){
+    if (isGroupedBySeverity){
+      if (mySeverityGroupNodes.containsKey(level)){
+        return mySeverityGroupNodes.get(level);
+      } else {
+        final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(level);
+        mySeverityGroupNodes.put(level, severityGroupNode);
+        myTree.getRoot().add(severityGroupNode);
+        return severityGroupNode;
+      }
+    } else {
+      return myTree.getRoot();
+    }
   }
 
   public void exportHTML(HTMLExportFrameMaker frameMaker) {
