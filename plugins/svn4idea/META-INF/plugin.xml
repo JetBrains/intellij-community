@@ -26,6 +26,10 @@
       <implementation-class>com.qintsoft.svn4idea.SvnConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>com.qintsoft.svn4idea.history.SvnChangesBrowserSettings</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
   </project-components>
 
   <actions>
@@ -63,6 +67,7 @@
       <action id="Subversion.ShowDiffExented" class="com.qintsoft.svn4idea.actions.ShowDiffExtendedAction" text="Show Diff extented..." description="Show difference with selection of Subversion revision"/>
       -->
       <separator/>
+      <action id="SvnChangesBrowser" class="com.qintsoft.svn4idea.actions.BrowseChangesAction" text="Browse Changes..."/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
   </actions>
