@@ -35,7 +35,10 @@ class FoldingPolicy {
       if (importList != null) {
         PsiImportStatementBase[] statements = importList.getAllImportStatements();
         if (statements.length > 1) {
-          map.put(importList, getRangeToFold(importList));
+          final TextRange rangeToFold = getRangeToFold(importList);
+          if (rangeToFold != null) {
+            map.put(importList, rangeToFold);
+          }
         }
       }
 
@@ -51,7 +54,7 @@ class FoldingPolicy {
       }
     } else if (file instanceof XmlFile) {
       XmlDocument xmlDocument = ((XmlFile) file).getDocument();
-      XmlTag rootTag = (xmlDocument!=null)?xmlDocument.getRootTag():null;
+      XmlTag rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
       if (rootTag != null) {
         addElementsToFold(map, rootTag, document);
       }
@@ -182,14 +185,16 @@ class FoldingPolicy {
       PsiImportList list = (PsiImportList) element;
       PsiImportStatementBase[] statements = list.getAllImportStatements();
       if (statements.length == 0) return null;
-      int startOffset = statements[0].getFirstChild().getTextRange().getEndOffset() + 1;
+      final PsiElement importKeyword = statements[0].getFirstChild();
+      if (importKeyword == null) return null;
+      int startOffset = importKeyword.getTextRange().getEndOffset() + 1;
       int endOffset = statements[statements.length - 1].getTextRange().getEndOffset();
       return new TextRange(startOffset, endOffset);
     } else if (element instanceof PsiDocComment) {
       return element.getTextRange();
     } else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag) element;
-      TreeElement tagNameElement = (XmlChildRole.START_TAG_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag)));
+      TreeElement tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag));
       if (tagNameElement == null) return null;
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();
@@ -268,7 +273,7 @@ class FoldingPolicy {
         return settings.COLLAPSE_ACCESSORS;
       }
       if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName()) ||
-          element instanceof PsiClassInitializer && isGeneratedUIInitializer(((PsiClassInitializer) element))) {
+          element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element)) {
         return true;
       }
       return settings.COLLAPSE_METHODS;
