@@ -36,8 +36,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return mySubExpression.isValid()
-          && mySubExpression.getManager().isInProject(mySubExpression);
+    return mySubExpression.isValid() && mySubExpression.getManager().isInProject(mySubExpression);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -46,7 +45,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       expression = mySubExpression;
     }
     else {
-      PsiExpression constExpression = mySubExpression.getManager().getElementFactory()
+      PsiExpression constExpression = PsiManager.getInstance(project).getElementFactory()
           .createExpressionFromText(mySubExpressionValue.toString(), mySubExpression);
       expression = (PsiExpression)mySubExpression.replace(constExpression);
     }
