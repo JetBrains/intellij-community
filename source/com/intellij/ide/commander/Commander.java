@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -394,7 +395,9 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     } else if (DataConstantsEx.PROJECT.equals(dataId)) {
       return myProject;
     } else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
-      final Object element = getInactivePanel().getBuilder().getParentElement();
+      final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentElement();
+      if (parentElement == null) return null;
+      final Object element = parentElement.getValue();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
     } else if (DataConstantsEx.SECONDARY_PSI_ELEMENT.equals(dataId)) {
       final PsiElement selectedElement = getInactivePanel().getSelectedElement();
