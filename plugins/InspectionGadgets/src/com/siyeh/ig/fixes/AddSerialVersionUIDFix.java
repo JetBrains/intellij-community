@@ -1,7 +1,6 @@
 package com.siyeh.ig.fixes;
 
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.serialization.SerialVersionUIDBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
