@@ -17,6 +17,7 @@ import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 /**
  * User: lex
@@ -30,7 +31,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private RendererConfiguration myRendererConfiguration = new RendererConfiguration(this);
+  private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers
   private final PrimitiveRenderer myPrimitiveRenderer = new PrimitiveRenderer();
@@ -58,6 +59,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     };
   private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
   private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
+  private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
 
   public NodeRendererSettings() {
     // default configuration
@@ -110,11 +112,16 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   public void writeExternal(final Element element) throws WriteExternalException {
     JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
     JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
-    myRendererConfiguration.writeExternal(element);
-
+    element.addContent(writeRenderer(myArrayRenderer));
+    element.addContent(writeRenderer(myToStringRenderer));
+    if (myCustomRenderers.getRendererCount() > 0) {
+      final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
+      element.addContent(custom);
+      myCustomRenderers.writeExternal(custom);
+    }
   }
 
-  public void readExternal(final Element root) {
+  public void readExternal(final Element root) throws InvalidDataException {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
       myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
@@ -125,20 +132,37 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
     }
 
-    myRendererConfiguration.readExternal(root);
+    final List rendererElements = root.getChildren(RENDERER_TAG);
+    for (Iterator it = rendererElements.iterator(); it.hasNext();) {
+      final Element elem = (Element)it.next();
+      final String id = elem.getAttributeValue(RENDERER_ID);
+      if (id == null) {
+        continue;
+      }
+      if (ArrayRenderer.UNIQUE_ID.equals(id)) {
+        myArrayRenderer.readExternal(elem);
+      }
+      else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
+        myToStringRenderer.readExternal(elem);
+      }
+    }
+    final Element custom = root.getChild(CUSTOM_RENDERERS_TAG_NAME);
+    if (custom != null) {
+      myCustomRenderers.readExternal(custom);
+    }
 
     myDispatcher.getMulticaster().renderersChanged();
   }
 
-  public RendererConfiguration getRendererConfiguration() {
-    return myRendererConfiguration;
+  public RendererConfiguration getCustomRenderers() {
+    return myCustomRenderers;
   }
 
-  public void setRendererConfiguration(final RendererConfiguration rendererConfiguration) {
-    LOG.assertTrue(rendererConfiguration != null);
-    RendererConfiguration oldConfig = myRendererConfiguration;
-    myRendererConfiguration = rendererConfiguration;
-    if (oldConfig == null || !oldConfig.equals(rendererConfiguration)) {
+  public void setCustomRenderers(final RendererConfiguration customRenderers) {
+    LOG.assertTrue(customRenderers != null);
+    RendererConfiguration oldConfig = myCustomRenderers;
+    myCustomRenderers = customRenderers;
+    if (oldConfig == null || !oldConfig.equals(customRenderers)) {
       fireRenderersChanged();
     }
   }
@@ -176,9 +200,9 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
     allRenderers.add(myHexRenderer);
     allRenderers.add(myPrimitiveRenderer);
-    myRendererConfiguration.iterateRenderers(new InternalIterator<AutoRendererNode>() {
-      public boolean visit(final AutoRendererNode element) {
-        allRenderers.add(element.getRenderer());
+    myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
+      public boolean visit(final NodeRenderer renderer) {
+        allRenderers.add(renderer);
         return true;
       }
     });

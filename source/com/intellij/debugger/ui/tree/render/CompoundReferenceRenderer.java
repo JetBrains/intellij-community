@@ -19,11 +19,25 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   public void setLabelRenderer(ValueLabelRenderer labelRenderer) {
+    final ValueLabelRenderer prevRenderer = getLabelRenderer();
     super.setLabelRenderer(myRendererSettings.isBase(labelRenderer) ? null : labelRenderer);
+    final ValueLabelRenderer currentRenderer = getLabelRenderer();
+    if (prevRenderer != currentRenderer) {
+      if (currentRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
+      }
+    }
   }
 
   public void setChildrenRenderer(ChildrenRenderer childrenRenderer) {
+    final ChildrenRenderer prevRenderer = getChildrenRenderer();
     super.setChildrenRenderer(myRendererSettings.isBase(childrenRenderer) ? null : childrenRenderer);
+    final ChildrenRenderer currentRenderer = getChildrenRenderer();
+    if (prevRenderer != currentRenderer) {
+      if (currentRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
+      }
+    }
   }
 
   public ChildrenRenderer getChildrenRenderer() {
@@ -52,11 +66,15 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
     LOG.assertTrue(name != null);
     myProperties.setClassName(name);
     if(getRawLabelRenderer() != null) {
-      ((ReferenceRenderer)myLabelRenderer).setClassName(name);
+      if (myLabelRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)myLabelRenderer).setClassName(name);
+      }
     }
 
     if(getRawChildrenRenderer() != null) {
-      ((ReferenceRenderer)myChildrenRenderer).setClassName(name);
+      if (myChildrenRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)myChildrenRenderer).setClassName(name);
+      }
     }
   }
 

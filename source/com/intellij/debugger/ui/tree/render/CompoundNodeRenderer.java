@@ -14,6 +14,7 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 
+import java.util.Iterator;
 import java.util.List;
 
 /*
@@ -84,16 +85,35 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    final List<Element> children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
-    myLabelRenderer = (ValueLabelRenderer) myRendererSettings.readRenderer(children.get(0));
-    myChildrenRenderer = (ChildrenRenderer)   myRendererSettings.readRenderer(children.get(1));
+    final List children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
+    if (children != null) {
+      for (Iterator it = children.iterator(); it.hasNext();) {
+        final Element elem = (Element)it.next();
+        final String role = elem.getAttributeValue("role");
+        if (role == null) {
+          continue;
+        }
+        if ("label".equals(role)) {
+          myLabelRenderer = (ValueLabelRenderer)myRendererSettings.readRenderer(elem);
+        }
+        else if ("children".equals(role)) {
+          myChildrenRenderer = (ChildrenRenderer)myRendererSettings.readRenderer(elem);
+        }
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Element labelRendererElement = myRendererSettings.writeRenderer(myLabelRenderer);
-    element.addContent(labelRendererElement);
-    final Element childrenRendererElement = myRendererSettings.writeRenderer(myChildrenRenderer);
-    element.addContent(childrenRendererElement);
+    if (myLabelRenderer != null) {
+      final Element labelRendererElement = myRendererSettings.writeRenderer(myLabelRenderer);
+      labelRendererElement.setAttribute("role", "label");
+      element.addContent(labelRendererElement);
+    }
+    if (myChildrenRenderer != null) {
+      final Element childrenRendererElement = myRendererSettings.writeRenderer(myChildrenRenderer);
+      childrenRendererElement.setAttribute("role", "children");
+      element.addContent(childrenRendererElement);
+    }
   }
 }

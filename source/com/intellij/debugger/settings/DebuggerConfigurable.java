@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -51,8 +52,12 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Appli
       project = ProjectManager.getInstance().getDefaultProject();
     }
     configurables.add(new DebuggerGeneralConfigurable(project));
-    configurables.add(new NodeRendererConfigurable(project));
-    //configurables.add(new UserRenderersConfigurable(project));
+    configurables.add(new UserRenderersConfigurable(project));
     return configurables;
+  }
+
+  public void apply() throws ConfigurationException {
+    super.apply();
+    NodeRendererSettings.getInstance().fireRenderersChanged();
   }
 }

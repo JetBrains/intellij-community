@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
@@ -111,6 +112,11 @@ public class AdjustArrayRangeAction extends DebuggerAction {
 
     public String getHelpTopic() {
       return null;
+    }
+
+    public void apply() {
+      super.apply();
+      NodeRendererSettings.getInstance().fireRenderersChanged();
     }
   }
 }

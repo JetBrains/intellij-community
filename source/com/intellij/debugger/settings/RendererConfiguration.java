@@ -1,8 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -15,11 +14,10 @@ import java.util.List;
 
 public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
-  private static final String AUTO_NODE = "node";
 
-  private static final int VERSION = 6;
+  private static final int VERSION = 8;
 
-  private List<AutoRendererNode> myRepresentationNodes = new ArrayList<AutoRendererNode>();
+  private List<NodeRenderer> myRepresentationNodes = new ArrayList<NodeRenderer>();
   private final NodeRendererSettings myRendererSettings;
 
   protected RendererConfiguration(NodeRendererSettings rendererSettings) {
@@ -34,10 +32,9 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
-    result.myRepresentationNodes = new ArrayList<AutoRendererNode>();
-    for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      AutoRendererNode autoRendererNode = iterator.next();
-      result.addNode(autoRendererNode.clone());
+    result.myRepresentationNodes = new ArrayList<NodeRenderer>();
+    for (Iterator<NodeRenderer> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
+      result.addRenderer((NodeRenderer)iterator.next().clone());
     }
 
     return result;
@@ -50,11 +47,9 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
-    for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      AutoRendererNode autoRendererNode = iterator.next();
-      Element nodeElement = new Element(AUTO_NODE);
-      autoRendererNode.writeExternal(nodeElement);
-      element.addContent(nodeElement);
+    for (Iterator<NodeRenderer> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
+      NodeRenderer renderer = iterator.next();
+      element.addContent(myRendererSettings.writeRenderer(renderer));
     }
     element.setAttribute("VERSION", String.valueOf(VERSION));
   }
@@ -74,51 +69,36 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
       return;
     }
 
-    List<Element> children = root.getChildren(AUTO_NODE);
+    List<Element> children = root.getChildren(NodeRendererSettings.RENDERER_TAG);
 
     myRepresentationNodes.clear();
     for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-      Element nodeRepresentation = iterator.next();
+      Element nodeElement = iterator.next();
       try {
-        addNode(AutoRendererNode.read(nodeRepresentation, myRendererSettings));
-      } catch (Exception e) {
+        addRenderer((NodeRenderer)myRendererSettings.readRenderer(nodeElement));
+      }
+      catch (Exception e) {
         LOG.debug(e);
       }
     }
   }
 
-  private void addNode(AutoRendererNode nodeRepresentation) {
-    LOG.assertTrue(nodeRepresentation != null);
-    myRepresentationNodes.add(nodeRepresentation);
-  }
-
   public void addRenderer(NodeRenderer renderer) {
-    addNode(new AutoRendererNode(renderer));
+    myRepresentationNodes.add(renderer);
   }
 
   public void removeRenderer(NodeRenderer renderer) {
     myRepresentationNodes.remove(renderer);
   }
 
-  public List<AutoRendererNode> getAutoNodes() {
-    List<AutoRendererNode> result = new ArrayList<AutoRendererNode>();
-
-    for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      AutoRendererNode autoRendererNode = iterator.next();
-      result.add(autoRendererNode);
-    }
-
-    return result;
+  public void removeAllRenderers() {
+    myRepresentationNodes.clear();
   }
 
-  public void setAutoNodes(List<AutoRendererNode> nodes) {
-    myRepresentationNodes = nodes;
-  }
-
-  public void iterateRenderers(InternalIterator<AutoRendererNode> iterator) {
-    for (Iterator<AutoRendererNode> it = myRepresentationNodes.iterator(); it.hasNext();) {
-      AutoRendererNode autoRendererNode = it.next();
-      final boolean shouldContinue = iterator.visit(autoRendererNode);
+  public void iterateRenderers(InternalIterator<NodeRenderer> iterator) {
+    for (Iterator<NodeRenderer> it = myRepresentationNodes.iterator(); it.hasNext();) {
+      final NodeRenderer renderer = it.next();
+      final boolean shouldContinue = iterator.visit(renderer);
       if (!shouldContinue) {
         break;
       }

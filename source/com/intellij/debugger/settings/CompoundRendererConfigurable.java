@@ -6,12 +6,15 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -20,9 +23,14 @@ import com.intellij.util.ui.Table;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,8 +60,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private JButton myRemoveButton;
   private JButton myUpButton;
   private JButton myDownButton;
-  private static final String NAME_TABLE_COLUMN = "Name";
-  private static final String EXPRESSION_TABLE_COLUMN = "Expression";
+  private static final int NAME_TABLE_COLUMN = 0;
+  private static final int EXPRESSION_TABLE_COLUMN = 1;
 
   public CompoundRendererConfigurable(Project project) {
     myProject = project;
@@ -118,25 +126,24 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myRbExpressionLabel.addItemListener(updateListener);
     myRbListChildrenRenderer.addItemListener(updateListener);
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
-    myRbListChildrenRenderer.addItemListener(updateListener);
 
-    panel.add(new JLabel("Apply renderer to objects of type (fully-qualified name):"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
-    panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 6), 0, 0));
+    panel.add(new JLabel("Apply renderer to objects of type (fully-qualified name):"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
     panel.add(new JLabel("When rendering the node"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
     panel.add(myRbDefaultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myRbExpressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 6), 0, 0));
+    panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
 
     panel.add(new JLabel("When expanding the node"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
     panel.add(myRbDefaultChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myRbExpressionChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 6), 0, 0));
+    panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
     myExpandedLabel = new JLabel("Test if the node can be expanded (optional):");
     panel.add(myExpandedLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 30, 0, 0), 0, 0));
-    panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 6), 0, 0));
+    panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
     panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myChildrenListEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(4, 30, 0, 6), 0, 0));
+    panel.add(myChildrenListEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(4, 30, 0, 0), 0, 0));
 
     myMainPanel = new JPanel(new CardLayout());
     myMainPanel.add(new JPanel(), EMPTY_PANEL_ID);
@@ -159,22 +166,16 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myChildrenExpandedEditor.setEnabled(isChildrenExpression);
     myExpandedLabel.setEnabled(isChildrenExpression);
     myChildrenEditor.setEnabled(isChildrenExpression);
-
     myChildrenListEditor.setEnabled(myRbListChildrenRenderer.isSelected());
   }
 
   private JComponent createChildrenListEditor() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    myTable = new Table(new DefaultTableModel());
-    getModel().addColumn(NAME_TABLE_COLUMN, (Object[])null);
-    getModel().addColumn(EXPRESSION_TABLE_COLUMN, (Object[])null);
-
+    final MyTableModel tableModel = new MyTableModel();
+    myTable = new Table(tableModel);
     myListChildrenEditor = new DebuggerExpressionTextField(myProject, null, "NamedChildrenConfigurable");
 
-    myTable.setDragEnabled(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
-
-    myTable.getColumn(EXPRESSION_TABLE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
+    final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
+    exprColumn.setCellEditor(new AbstractTableCellEditor() {
       public Object getCellEditorValue() {
         return myListChildrenEditor.getText();
       }
@@ -182,6 +183,13 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         myListChildrenEditor.setText((TextWithImports)value);
         return myListChildrenEditor;
+      }
+    });
+    exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        final TextWithImports textWithImports = (TextWithImports)value;
+        String text = (textWithImports != null)? textWithImports.toString() : "";
+        return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
       }
     });
 
@@ -196,7 +204,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        getModel().addRow(new Object[] {"", DebuggerUtils.getInstance().createExpressionWithImports("") });
+        tableModel.addRow("", DebuggerUtils.getInstance().createExpressionWithImports(""));
       }
     });
 
@@ -204,7 +212,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       public void actionPerformed(ActionEvent e) {
         int selectedRow = myTable.getSelectedRow();
         if(selectedRow >= 0 && selectedRow < myTable.getRowCount()) {
-          getModel().removeRow(selectedRow);
+          getTableModel().removeRow(selectedRow);
         }
       }
     });
@@ -223,16 +231,29 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
+        int selectedRow = myTable.getSelectedRow();
+        myRemoveButton.setEnabled(selectedRow != -1);
+        myUpButton.setEnabled(selectedRow > 0);
+        myDownButton.setEnabled(selectedRow < myTable.getRowCount() - 1);
       }
     });
 
+    final JPanel panel = new JPanel(new GridBagLayout()) {
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        myTable.setEnabled(enabled);
+        myAddButton.setEnabled(enabled);
+        myRemoveButton.setEnabled(enabled);
+        myUpButton.setEnabled(enabled);
+        myDownButton.setEnabled(enabled);
+      }
+    };
     final JScrollPane scrollPane = new JScrollPane(myTable);
     panel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 4, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myAddButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 4, 0, 0), 0, 0));
-    panel.add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 4, 0, 0), 0, 0));
-    panel.add(myUpButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 4, 0, 0), 0, 0));
-    panel.add(myDownButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 4, 0, 0), 0, 0));
+    panel.add(myAddButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
+    panel.add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
+    panel.add(myUpButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
+    panel.add(myDownButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
 
     return panel;
   }
@@ -241,14 +262,40 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     if (myRenderer == null) {
       return false;
     }
-    return !myOriginalRenderer.equals(myRenderer);
+    final CompoundReferenceRenderer cloned = (CompoundReferenceRenderer)myRenderer.clone();
+    flushDataTo(cloned);
+    return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
 
   public void apply() throws ConfigurationException {
     if (myRenderer == null) {
       return;
     }
+    flushDataTo(myRenderer);
+    // update the renderer to compare with in order to find out whether we've been modified since last apply
+    myOriginalRenderer = (CompoundReferenceRenderer)myRenderer.clone();
+  }
 
+  private void flushDataTo(final CompoundReferenceRenderer renderer) { // label
+    LabelRenderer labelRenderer = null;
+    if (myRbExpressionLabel.isSelected()) {
+      labelRenderer = new LabelRenderer();
+      labelRenderer.setLabelExpression(myLabelEditor.getText());
+    }
+    renderer.setLabelRenderer(labelRenderer);
+    // children
+    ChildrenRenderer childrenRenderer = null;
+    if (myRbExpressionChildrenRenderer.isSelected()) {
+      childrenRenderer = new ExpressionChildrenRenderer();
+      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpression(myChildrenEditor.getText());
+      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpandable(myChildrenExpandedEditor.getText());
+    }
+    else if (myRbListChildrenRenderer.isSelected()) {
+      childrenRenderer = new EnumerationChildrenRenderer(getTableModel().getExpressions());
+    }
+    renderer.setChildrenRenderer(childrenRenderer);
+    // classname
+    renderer.setClassName(myClassNameField.getText());
   }
 
   public void reset() {
@@ -264,6 +311,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     if (rendererSettings.isBase(labelRenderer)) {
       myRbDefaultLabel.setSelected(true);
+      myLabelEditor.setText(TextWithImportsImpl.EMPTY);
     }
     else {
       myRbExpressionLabel.setSelected(true);
@@ -272,17 +320,27 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     if (rendererSettings.isBase(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
+      myChildrenEditor.setText(TextWithImportsImpl.EMPTY);
+      myChildrenExpandedEditor.setText(TextWithImportsImpl.EMPTY);
+      getTableModel().clear();
     }
     else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
       final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setText(exprRenderer.getChildrenExpression());
       myChildrenExpandedEditor.setText(exprRenderer.getChildrenExpandable());
+      getTableModel().clear();
     }
     else {
       myRbListChildrenRenderer.setSelected(true);
-      // todo
-      //myChildrenListEditor.
+      myChildrenEditor.setText(TextWithImportsImpl.EMPTY);
+      myChildrenExpandedEditor.setText(TextWithImportsImpl.EMPTY);
+      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
+        getTableModel().init(((EnumerationChildrenRenderer)childrenRenderer).getChildren());
+      }
+      else {
+        getTableModel().clear();
+      }
     }
 
     updateEnabledState();
@@ -292,15 +350,130 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   public void disposeUIResources() {
   }
 
-  private DefaultTableModel getModel() {
-    return ((DefaultTableModel)myTable.getModel());
+  private MyTableModel getTableModel() {
+    return (MyTableModel)myTable.getModel();
   }
 
-  private void updateButtons() {
-    int selectedRow = myTable.getSelectedRow();
-    myRemoveButton.setEnabled(selectedRow != -1);
-    myUpButton.setEnabled(selectedRow > 0);
-    myDownButton.setEnabled(selectedRow < myTable.getRowCount() - 1);
-  }
+  private final static class MyTableModel extends AbstractTableModel {
+    private final java.util.List<Row> myData = new ArrayList<Row>();
 
+    public MyTableModel(java.util.List<Pair<String, TextWithImports>> data) {
+      init(data);
+    }
+
+    public MyTableModel() {
+    }
+
+    public void init(java.util.List<Pair<String, TextWithImports>> data) {
+      myData.clear();
+      for (Iterator<Pair<String, TextWithImports>> it = data.iterator(); it.hasNext();) {
+        final Pair<String, TextWithImports> pair = it.next();
+        myData.add(new Row(pair.getFirst(), pair.getSecond()));
+      }
+    }
+
+    public int getColumnCount() {
+      return 2;
+    }
+
+    public int getRowCount() {
+      return myData.size();
+    }
+
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+      return true;
+    }
+
+    public Class getColumnClass(int columnIndex) {
+      switch (columnIndex) {
+          case NAME_TABLE_COLUMN: return String.class;
+          case EXPRESSION_TABLE_COLUMN: return TextWithImports.class;
+          default: return super.getColumnClass(columnIndex);
+      }
+    }
+
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      if (rowIndex >= getRowCount()) {
+        return null;
+      }
+      final Row row = myData.get(rowIndex);
+      switch (columnIndex) {
+          case NAME_TABLE_COLUMN: return row.name;
+          case EXPRESSION_TABLE_COLUMN: return row.value;
+          default: return null;
+      }
+    }
+
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+      if (rowIndex >= getRowCount()) {
+        return;
+      }
+      final Row row = myData.get(rowIndex);
+      switch (columnIndex) {
+          case NAME_TABLE_COLUMN:
+            row.name = (String)aValue;
+            break;
+          case EXPRESSION_TABLE_COLUMN:
+            row.value = (TextWithImports)aValue;
+            break;
+      }
+    }
+
+    public String getColumnName(int columnIndex) {
+      switch (columnIndex) {
+          case NAME_TABLE_COLUMN: return "Name";
+          case EXPRESSION_TABLE_COLUMN: return "Expression";
+          default: return "";
+      }
+    }
+
+    public void addRow(final String name, final TextWithImports expressionWithImports) {
+      myData.add(new Row(name, expressionWithImports));
+      final int lastRow = myData.size() - 1;
+      fireTableRowsInserted(lastRow, lastRow);
+    }
+
+    public void removeRow(final int row) {
+      if (row >= 0 && row < myData.size()) {
+        myData.remove(row);
+        fireTableRowsDeleted(row, row);
+      }
+    }
+
+    public String getNameAt(int row) {
+      return (row >= 0 && row < myData.size())? myData.get(row).name : null;
+    }
+
+    public TextWithImports getExpressionAt(int row) {
+      return (row >= 0 && row < myData.size())? myData.get(row).value : null;
+    }
+
+    public void clear() {
+      myData.clear();
+      fireTableDataChanged();
+    }
+
+    public List<Pair<String, TextWithImports>> getExpressions() {
+      final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<Pair<String, TextWithImports>>(myData.size());
+      for (Iterator<Row> it = myData.iterator(); it.hasNext();) {
+        final Row row = it.next();
+        pairs.add(new Pair<String, TextWithImports>(row.name, row.value));
+      }
+      return pairs;
+    }
+
+    private static final class Row {
+      public String name;
+      public TextWithImports value;
+
+      public Row(final String name, final TextWithImports value) {
+        this.name = name;
+        this.value = value;
+      }
+
+      public Row() {
+        this("", TextWithImportsImpl.EMPTY);
+      }
+    }
+  }
 }

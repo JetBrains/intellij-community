@@ -4,6 +4,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,7 @@ public abstract class CachedEvaluator {
     protected PsiExpression       myPsiChildrenExpression;
   };
   SoftReference<Cache> myCache = new SoftReference<Cache>(null);
-  private TextWithImports myReferenceExpression = DebuggerUtils.getInstance().createExpressionWithImports("");
+  private TextWithImports myReferenceExpression = TextWithImportsImpl.EMPTY;
 
   protected abstract String getClassName();
 

@@ -121,8 +121,6 @@ public class BaseRenderersConfigurable implements Configurable {
   }
 
   public void apply() {
-    final boolean renderersWereModified = areDefaultRenderersModified();
-
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
@@ -142,10 +140,6 @@ public class BaseRenderersConfigurable implements Configurable {
     toStringRenderer.setClassFilters(myToStringFilterEditor.getFilters());
 
     myArrayRendererConfigurable.apply();
-
-    if (renderersWereModified) {
-      rendererSettings.fireRenderersChanged();
-    }
   }
 
   public void reset() {
@@ -211,7 +205,7 @@ public class BaseRenderersConfigurable implements Configurable {
     final boolean isToStringRendererModified =
       (toStringRenderer.isEnabled() != myCbEnableToString.isSelected()) ||
       (toStringRenderer.isUseClassFilters() != myRbFromList.isSelected()) ||
-      (DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
+      (!DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
     if (isToStringRendererModified) {
       return true;
     }

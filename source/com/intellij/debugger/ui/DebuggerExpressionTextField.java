@@ -42,7 +42,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   }
 
   public TextWithImportsImpl createText(String text, String importsString) {
-    return new TextWithImportsImpl(TextWithImportsImpl.CODE_BLOCK_FACTORY, text, importsString);
+    return new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, text, importsString);
   }
 
   public void setEnabled(boolean enabled) {

@@ -63,16 +63,16 @@ public class UserRenderersConfigurable implements Configurable{
     final JComponent toolbar = createToolbar();
     final JComponent rendererDataPanel = myRendererDataConfigurable.createComponent();
 
-    panel.add(toolbar, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
-    panel.add(renderersList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(toolbar, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(6, 0, 0, 0), 0, 0));
+    panel.add(renderersList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
     myNameField = new JTextField();
     final JPanel nameFieldPanel = new JPanel(new BorderLayout());
     nameFieldPanel.add(new JLabel("Renderer name:"), BorderLayout.WEST);
     nameFieldPanel.add(myNameField, BorderLayout.CENTER);
-    panel.add(nameFieldPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(nameFieldPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(6, 6, 0, 6), 0, 0));
 
-    panel.add(rendererDataPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(rendererDataPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 6, 10, 6), 0, 0));
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -147,36 +147,39 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   public void apply() throws ConfigurationException {
+    myRendererDataConfigurable.apply();
+    flushTo(NodeRendererSettings.getInstance().getCustomRenderers());
+  }
+
+  private void flushTo(final RendererConfiguration rendererConfiguration) {
+    rendererConfiguration.removeAllRenderers();
+    final int count = myRendererChooser.getElementCount();
+    for (int idx = 0; idx < count; idx++) {
+      rendererConfiguration.addRenderer(myRendererChooser.getElementAt(idx));
+    }
   }
 
   public boolean isModified() {
-    final RendererConfiguration rendererConfiguration = NodeRendererSettings.getInstance().getRendererConfiguration();
-    if (myRendererChooser.getElementCount() != rendererConfiguration.getRendererCount()) {
-      return true;
-    }
     if (myRendererDataConfigurable.isModified()) {
       return true;
     }
-    final boolean[] modified = new boolean[] {false};
-    rendererConfiguration.iterateRenderers(new InternalIterator<AutoRendererNode>() {
-      int rendererIndex = 0;
-      public boolean visit(final AutoRendererNode autoNode) {
-        final NodeRenderer originalRenderer = autoNode.getRenderer();
-        final NodeRenderer editedRenderer = myRendererChooser.getElementAt(rendererIndex++);
-        modified[0] = !originalRenderer.equals(editedRenderer);
-        return !modified[0];
-      }
-    });
-    return modified[0];
+    final NodeRendererSettings settings = NodeRendererSettings.getInstance();
+    final RendererConfiguration rendererConfiguration = settings.getCustomRenderers();
+    if (myRendererChooser.getElementCount() != rendererConfiguration.getRendererCount()) {
+      return true;
+    }
+    final RendererConfiguration uiConfiguration = new RendererConfiguration(settings);
+    flushTo(uiConfiguration);
+    return !uiConfiguration.equals(rendererConfiguration);
   }
 
   public void reset() {
     myRendererChooser.removeAllElements();
-    final RendererConfiguration rendererConfiguration = NodeRendererSettings.getInstance().getRendererConfiguration();
+    final RendererConfiguration rendererConfiguration = NodeRendererSettings.getInstance().getCustomRenderers();
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<NodeRenderer>(1);
-    rendererConfiguration.iterateRenderers(new InternalIterator<AutoRendererNode>() {
-      public boolean visit(final AutoRendererNode autoNode) {
-        final NodeRenderer clonedRenderer = (NodeRenderer)autoNode.getRenderer().clone();
+    rendererConfiguration.iterateRenderers(new InternalIterator<NodeRenderer>() {
+      public boolean visit(final NodeRenderer renderer) {
+        final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
         myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
         if (elementsToSelect.size() == 0) {
           elementsToSelect.add(clonedRenderer);
@@ -201,7 +204,13 @@ public class UserRenderersConfigurable implements Configurable{
 
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
-      myRendererChooser.addElement(renderer, true);
+      renderer.setEnabled(true);
+      myRendererChooser.addElement(renderer, renderer.isEnabled());
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myNameField.requestFocus();
+        }
+      });
     }
   }
 
