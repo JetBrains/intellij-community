@@ -3,8 +3,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -36,16 +34,9 @@ public class CodeFormatterFacade implements Constants {
   private BraceEnforcer myBraceEnforcer;
   private CodeFormatter myCodeFormatter = new JavaCodeFormatter();
 
-  public static int USE_NEW_CODE_FORMATTER = -1;
+  public static int USE_NEW_CODE_FORMATTER = 1;
 
   public CodeFormatterFacade(CodeStyleSettings settings, Helper helper) {
-    if (USE_NEW_CODE_FORMATTER < 0) {
-      ApplicationEx application = ((ApplicationEx)ApplicationManager.getApplication());
-      boolean internal = application.isInternal();
-      boolean unitTestMode = application.isUnitTestMode();
-      USE_NEW_CODE_FORMATTER = (internal || unitTestMode) ? 1 : 0;
-    }
-
     mySettings = settings;
     myHelper = helper;
     myIndentAdjuster = new IndentAdjusterFacade(settings, helper);
@@ -143,7 +134,7 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useNewFormatter(FileType fileType) {
-    return fileType instanceof LanguageFileType;
+    return fileType instanceof LanguageFileType && USE_NEW_CODE_FORMATTER > 0;
   }
 
   private ASTNode processRange(ASTNode element, int[] bounds) {
