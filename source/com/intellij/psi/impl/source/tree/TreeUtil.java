@@ -319,11 +319,11 @@ public class TreeUtil {
     return null;
   }
 
-  public static int getNotCachedLength(TreeElement tree, CharTable table) {
+  public static int getNotCachedLength(ASTNode tree, CharTable table) {
     int length = 0;
 
     if (tree instanceof LeafElement) {
-      length += tree.getTextLength(table);
+      length += ((LeafElement)tree).getTextLength(table);
     }
     else{
       final ASTNode composite = tree;

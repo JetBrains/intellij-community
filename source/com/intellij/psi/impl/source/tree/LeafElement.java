@@ -53,7 +53,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public int getState() {
-    return (myState >> 16) & 0x7FFF - 1;
+    return ((myState >> 16) & 0x7FFF) - 1;
   }
 
   private boolean isLast() {
