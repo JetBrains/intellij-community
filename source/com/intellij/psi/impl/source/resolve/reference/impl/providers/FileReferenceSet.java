@@ -79,7 +79,7 @@ public class FileReferenceSet {
 
   private ReferenceType getType(int index){
     if(index != myReferences.length - 1){
-      return new ReferenceType(myType, ReferenceType.WEB_DIRECTORY_ELEMENT);
+      return new ReferenceType(new int[] {myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});
     }
     return myType;
   }
@@ -110,7 +110,7 @@ public class FileReferenceSet {
     }
 
     public ReferenceType getSoftenType(){
-      return new ReferenceType(ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE);
+      return new ReferenceType(new int[] {ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE, ReferenceType.DIRECTORY});
     }
 
     public boolean needToCheckAccessibility() {
