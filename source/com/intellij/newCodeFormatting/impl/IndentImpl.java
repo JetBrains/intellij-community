@@ -5,10 +5,20 @@ import com.intellij.newCodeFormatting.Indent;
 class IndentImpl implements Indent {
 
   static class Type{
-    public static final Type NONE = new Type();
-    public static final Type LABEL = new Type();
-    public static final Type NORMAL = new Type();
-    public static final Type CONTINUATION = new Type();
+    private final String myName;
+
+    public Type(final String name) {
+      myName = name;
+    }
+
+    public static final Type NONE = new Type("NONE");
+    public static final Type LABEL = new Type("LABEL");
+    public static final Type NORMAL = new Type("NORMAL");
+    public static final Type START_OF_LINE = new Type("START");
+
+    public String toString() {
+      return myName;
+    }
   }
 
   private final Type myType;

@@ -4,6 +4,12 @@ import com.intellij.newCodeFormatting.Alignment;
 
 class AlignmentImpl implements Alignment {
   private int myCurrentOffset = -1;
+  private final long myId;
+  private static long ourId = 0;
+
+  public String getId() {
+    return String.valueOf(myId);
+  }
 
   static class Type{
     public static final Type FULL = new Type();
@@ -14,6 +20,7 @@ class AlignmentImpl implements Alignment {
 
   public AlignmentImpl(final Type type) {
     myType = type;
+    myId = ourId++;
   }
 
   Type getType() {

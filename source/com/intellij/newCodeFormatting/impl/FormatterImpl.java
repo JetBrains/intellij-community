@@ -27,15 +27,15 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
   }
 
   public SpaceProperty createSpaceProperty(int minOffset, int maxOffset, int minLineFeeds, int maxLineFeeds) {
-    return new SpacePropertyImpl(minOffset, maxOffset, minLineFeeds, maxLineFeeds, false);
+    return new SpacePropertyImpl(minOffset, maxOffset, minLineFeeds, maxLineFeeds, false, false);
   }
 
   public SpaceProperty getReadOnlySpace() {
-    return new SpacePropertyImpl(0,0,0,0,true);
+    return new SpacePropertyImpl(0,0,0,0,true, false);
   }
 
   public SpaceProperty getAnySpace() {
-    return new SpacePropertyImpl(0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, false);
+    return new SpacePropertyImpl(0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, false, false);
   }
 
   public void format(FormattingModel model,
@@ -44,6 +44,14 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
                      CodeStyleSettings.IndentOptions indentOptions,
                      TextRange affectedRange) {
     new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).format();
+  }
+
+  public Indent getStartOfLineAlignment() {
+    return new IndentImpl(IndentImpl.Type.START_OF_LINE, 0, 0);
+  }
+
+  public SpaceProperty createSafeSpace() {
+    return new SpacePropertyImpl(0,0,0,0,false,true);
   }
 
   public String getComponentName() {

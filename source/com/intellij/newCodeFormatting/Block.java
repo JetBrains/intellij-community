@@ -11,13 +11,11 @@ public interface Block {
 
   Wrap getWrap();
 
-  Indent getChildIndent();
+  Indent getIndent();
 
   Alignment getAlignment();
 
   SpaceProperty getSpaceProperty(Block child1, Block child2);
 
   Block getParent();
-
-  boolean skipIndent(final Block parent);
 }

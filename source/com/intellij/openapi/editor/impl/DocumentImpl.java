@@ -1,7 +1,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -329,7 +331,10 @@ public class DocumentImpl implements DocumentEx {
       throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    final Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.assertWriteAccessAllowed();
+    }
     assertValidSeparators(s);
 
     if (!isWritable()) {
@@ -452,13 +457,20 @@ public class DocumentImpl implements DocumentEx {
   }
 
   public String getText() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    assertReadAccessToDocumentsAllowed();
     return myText.toString();
   }
 
   public int getTextLength() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    assertReadAccessToDocumentsAllowed();
     return myText.getLength();
+  }
+
+  private void assertReadAccessToDocumentsAllowed() {
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    if (application != null) {
+      application.assertReadAccessToDocumentsAllowed();
+    }
   }
 
 /*
@@ -473,7 +485,7 @@ public class DocumentImpl implements DocumentEx {
   }
 
   public CharSequence getCharsSequence() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    assertReadAccessToDocumentsAllowed();
     return myText.getCharArray();
   }
 
@@ -491,7 +503,7 @@ public class DocumentImpl implements DocumentEx {
   }
 
   public int getLineNumber(int offset) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    assertReadAccessToDocumentsAllowed();
     return myLineSet.findLineIndex(offset);
   }
 
@@ -501,7 +513,7 @@ public class DocumentImpl implements DocumentEx {
   }
 
   public final int getLineStartOffset(int line) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    assertReadAccessToDocumentsAllowed();
     if (line == 0) return 0; // otherwise it crashed for zero-length document
     return myLineSet.getLineStart(line);
   }
