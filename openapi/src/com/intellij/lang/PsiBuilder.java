@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
  */
 public interface PsiBuilder {
   IElementType getTokenType();
+  void advanceLexer();
 
   interface Marker {
     Marker preceed();
@@ -18,8 +19,6 @@ public interface PsiBuilder {
     void rollbackTo();
     void done(IElementType type);
   }
-
-  void advanceLexer();
 
   Marker mark();
 
