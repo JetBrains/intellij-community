@@ -128,10 +128,7 @@ public class MismatchedCollectionQueryUpdateInspection
         if(variableIsAssignedFrom(variable, context)){
             return true;
         }
-        if(variableIsPassedAsMethodArgument(variable, context)){
-            return true;
-        }
-        return false;
+        return variableIsPassedAsMethodArgument(variable, context);
     }
 
     private static boolean collectionContentsAreQueried(PsiVariable variable,
@@ -152,10 +149,7 @@ public class MismatchedCollectionQueryUpdateInspection
         if(variableIsReturned(variable, context)){
             return true;
         }
-        if(variableIsPassedAsMethodArgument(variable, context)){
-            return true;
-        }
-        return false;
+        return variableIsPassedAsMethodArgument(variable, context);
     }
 
     private static boolean variableIsAssignedFrom(PsiVariable variable,

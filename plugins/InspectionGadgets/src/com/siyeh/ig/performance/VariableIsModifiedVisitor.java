@@ -2,7 +2,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 
-public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
+class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
     private boolean modified = false;
     private final PsiVariable variable;
 

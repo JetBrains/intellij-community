@@ -51,11 +51,12 @@ public class DuplicateConditionInspection extends ExpressionInspection{
             }
             final Set conditions = new HashSet();
             collectConditionsForIfStatement(statement, conditions);
-            if(conditions.size() < 2){
+            final int numConditions = conditions.size();
+            if(numConditions < 2){
                 return;
             }
             final PsiExpression[] conditionArray =
-                    (PsiExpression[]) conditions.toArray(new PsiExpression[conditions.size()]);
+                    (PsiExpression[]) conditions.toArray(new PsiExpression[numConditions]);
             final boolean[] matched = new boolean[conditionArray.length];
             Arrays.fill(matched, false);
             for(int i = 0; i < conditionArray.length; i++){

@@ -9,7 +9,7 @@ import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
-    private MakeSerializableFix fix = new MakeSerializableFix();
+    private final MakeSerializableFix fix = new MakeSerializableFix();
 
     public String getID(){
         return "NonSerializableClassWithSerialVersionUID";

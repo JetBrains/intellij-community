@@ -3,9 +3,9 @@ package com.siyeh.ig.telemetry;
 import javax.swing.table.DefaultTableModel;
 import java.text.NumberFormat;
 
-public class TelemetryTableModel extends DefaultTableModel{
+class TelemetryTableModel extends DefaultTableModel{
     private final InspectionGadgetsTelemetry telemetry;
-    private NumberFormat format = NumberFormat.getNumberInstance();
+    private final NumberFormat format = NumberFormat.getNumberInstance();
     {
         format.setMaximumFractionDigits(2);
         format.setMinimumFractionDigits(2);
@@ -39,11 +39,14 @@ public class TelemetryTableModel extends DefaultTableModel{
             case 0:
                 return inspection;
             case 1:
-                return Long.toString(telemetry.getRunTimeForInspection(inspection));
+                final long totalRunTime = telemetry.getRunTimeForInspection(inspection);
+                return Long.toString(totalRunTime);
             case 2:
-                return format.format(telemetry.getAverageRunTimeForInspection(inspection));
+                final double averageRunTime = telemetry.getAverageRunTimeForInspection(inspection);
+                return format.format(averageRunTime);
             case 3:
-                return Integer.toString(telemetry.getRunCountForInspection(inspection));
+                final int runCount = telemetry.getRunCountForInspection(inspection);
+                return Integer.toString(runCount);
             default:
                 return null;
         }

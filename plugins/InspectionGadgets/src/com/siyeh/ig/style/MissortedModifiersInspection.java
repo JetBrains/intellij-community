@@ -14,6 +14,7 @@ public class MissortedModifiersInspection extends ClassInspection {
     private static final Logger s_logger = Logger.getInstance("MissortedModifiersInspection");
 
     private static final int NUM_MODIFIERS = 11;
+    /** @noinspection StaticCollection*/
     private static final Map s_modifierOrder = new HashMap(NUM_MODIFIERS);
     private final SortModifiersFix fix = new SortModifiersFix();
 

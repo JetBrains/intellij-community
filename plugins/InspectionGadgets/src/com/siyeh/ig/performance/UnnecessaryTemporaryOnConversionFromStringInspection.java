@@ -11,7 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UnnecessaryTemporaryOnConversionFromStringInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
     private static final Map s_basicTypeMap = new HashMap(6);
+    /** @noinspection StaticCollection*/
     private static final Map s_conversionMap = new HashMap(6);
 
     static {

@@ -6,11 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class TrivialStringConcatenationInspection extends ExpressionInspection{
+    /** @noinspection StaticCollection*/
     private static final Map s_typeToWrapperMap = new HashMap(6);
 
     static{
@@ -108,17 +110,15 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
+            if(!WellFormednessUtils.isWellFormed(exp))
+            {
+                return;
+            }
             if(!TypeUtils.expressionHasType("java.lang.String", exp)){
                 return;
             }
             final PsiExpression lhs = exp.getLOperand();
-            if(lhs == null){
-                return;
-            }
             final PsiExpression rhs = exp.getROperand();
-            if(rhs == null){
-                return;
-            }
             if(isEmptyString(lhs)){
                 if(isStringLiteral(rhs)){
                     return;
@@ -137,11 +137,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
         if(!(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final PsiType type = expression.getType();
-        if(type == null){
-            return false;
-        }
-        return "java.lang.String".equals(type.getCanonicalText());
+        return TypeUtils.expressionHasType("java.lang.String", expression);
     }
 
     private static boolean isEmptyString(PsiExpression exp){

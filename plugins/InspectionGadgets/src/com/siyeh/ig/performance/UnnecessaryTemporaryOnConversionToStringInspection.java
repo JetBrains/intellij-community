@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UnnecessaryTemporaryOnConversionToStringInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
     private static final Set s_basicTypes = new HashSet(6);
 
     static {

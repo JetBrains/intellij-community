@@ -13,11 +13,7 @@ public class TypeUtils {
             return false;
         }
         final PsiType type = expression.getType();
-        if (type == null) {
-            return false;
-        }
-        final String text = type.getCanonicalText();
-        return typeName.equals(text);
+        return typeEquals(typeName, type);
     }
 
     public static boolean typeEquals(String typeName, PsiType targetType) {

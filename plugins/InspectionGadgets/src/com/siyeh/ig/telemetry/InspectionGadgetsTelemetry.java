@@ -28,7 +28,7 @@ public class InspectionGadgetsTelemetry implements InspectionRunListener{
                 totalRunTime.put(inspectionID, new Long(runTime));
             } else{
                 totalRunTime.put(inspectionID,
-                                 new Long(runTimeSoFar.intValue() + runTime));
+                                 new Long(runTimeSoFar.longValue() + runTime));
             }
         }
     }

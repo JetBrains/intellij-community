@@ -8,10 +8,13 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class SwitchStatementsWithoutDefaultInspection extends StatementInspection {
+
+    /** @noinspection PublicField*/
+    public boolean m_ignoreFullyCoveredEnums = true;
+
     public String getID(){
         return "SwitchStatementWithoutDefaultBranch";
     }
-    public boolean m_ignoreFullyCoveredEnums = true;
 
     public String getDisplayName() {
         return "'switch' statement without 'default' branch";

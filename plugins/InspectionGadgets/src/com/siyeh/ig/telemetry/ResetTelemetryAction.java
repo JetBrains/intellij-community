@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.*;
 
-public class ResetTelemetryAction extends AnAction{
+class ResetTelemetryAction extends AnAction{
     private final InspectionGadgetsTelemetry telemetry;
     private final TelemetryDisplay display;
 

@@ -52,7 +52,6 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
                     } else {
                         final PsiType type = field.getType();
                         if (type != null) {
-                            final String text = type.getCanonicalText();
                             badSerialPersistentFields = field;
                             break;
                         }

@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -90,7 +91,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType().equals(JavaTokenType.NE)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (JavaTokenType.NE.equals(tokenType)) {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();

@@ -13,7 +13,7 @@ import javax.swing.*;
 public class SynchronizedMethodInspection extends MethodInspection {
     /** @noinspection PublicField*/
     public boolean m_includeNativeMethods = true;
-    private SynchronizedMethodFix fix = new SynchronizedMethodFix();
+    private final SynchronizedMethodFix fix = new SynchronizedMethodFix();
 
     public String getDisplayName() {
         return "'synchronized' method";

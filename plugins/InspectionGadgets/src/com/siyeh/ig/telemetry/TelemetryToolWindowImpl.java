@@ -15,10 +15,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TelemetryToolWindowImpl implements TelemetryToolWindow{
-    private TelemetryDisplay telemetryDisplay;
-    private JPanel myContentPanel;
+    private final TelemetryDisplay telemetryDisplay;
+    private final JPanel myContentPanel;
     private ToolWindow myToolWindow = null;
-    private Project project;
+    private final Project project;
 
     public TelemetryToolWindowImpl(Project project){
         super();

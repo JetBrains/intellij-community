@@ -3,7 +3,7 @@ package com.siyeh.ig.telemetry;
 import javax.swing.*;
 import java.net.URL;
 
-public class IconHelper{
+class IconHelper{
     private IconHelper(){
         super();
     }

@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.*;
 
-public class UpdateTelemetryViewAction extends AnAction{
+class UpdateTelemetryViewAction extends AnAction{
     private final TelemetryDisplay telemetryDisplay;
 
     private static final Icon refreshIcon =

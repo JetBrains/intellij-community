@@ -3,7 +3,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
+class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
     private boolean appendedTo = false;
     private final PsiVariable variable;
 

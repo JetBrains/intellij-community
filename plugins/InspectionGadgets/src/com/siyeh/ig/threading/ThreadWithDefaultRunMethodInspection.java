@@ -116,16 +116,15 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
             for(int i = 0; i < methods.length; i++){
                 final PsiMethod method = methods[i];
                 final String methodName = method.getName();
-                if(!"run".equals(methodName)){
-                    continue;
-                }
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if(parameterList != null){
-                    final PsiParameter[] parameters =
-                            parameterList.getParameters();
-                    if(parameters != null && parameters.length == 0){
-                        return true;
+                if("run".equals(methodName)){
+                    final PsiParameterList parameterList =
+                            method.getParameterList();
+                    if(parameterList != null){
+                        final PsiParameter[] parameters =
+                                parameterList.getParameters();
+                        if(parameters != null && parameters.length == 0){
+                            return true;
+                        }
                     }
                 }
             }

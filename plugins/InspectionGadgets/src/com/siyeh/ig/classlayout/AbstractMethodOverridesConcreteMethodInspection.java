@@ -51,8 +51,9 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
             for (int i = 0; i < superMethods.length; i++) {
                 final PsiMethod superMethod = superMethods[i];
                 final PsiClass superClass = superMethod.getContainingClass();
+                final String superClassName = superClass.getQualifiedName();
                 if (!superClass.isInterface() &&
-                        !"java.lang.Object".equals(superClass.getQualifiedName()) &&
+                        !"java.lang.Object".equals(superClassName) &&
                         !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
                     registerMethodError(method);
                     return;
