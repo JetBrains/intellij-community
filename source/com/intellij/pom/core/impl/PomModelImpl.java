@@ -103,12 +103,14 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   public void addModelListener(PomModelListener listener) {
     synchronized(myListeners){
       myListeners.add(listener);
+      myListenersArray = null;
     }
   }
 
   public void removeModelListener(PomModelListener listener) {
     synchronized(myListeners){
       myListeners.remove(listener);
+      myListenersArray = null;
     }
   }
 
@@ -151,8 +153,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         }
       }
       {
-        final Iterator<PomModelListener> listenersIterator = myListeners.iterator();
-        while (listenersIterator.hasNext()) listenersIterator.next().modelChanged(event);
+        final PomModelListener[] listeners = getListeners();
+        for (int i = 0; i < listeners.length; i++) listeners[i].modelChanged(event);
       }
     }
     }
@@ -160,6 +162,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       if(document != null) synchronizer.commitTransaction(document);
       if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
     }
+  }
+
+  private PomModelListener[] myListenersArray = null;
+  private PomModelListener[] getListeners(){
+    if(myListenersArray != null) return myListenersArray;
+    return myListenersArray = myListeners.toArray(new PomModelListener[myListeners.size()]);
   }
   // Project component
 
