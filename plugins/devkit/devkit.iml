@@ -32,8 +32,8 @@
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="&lt;None&gt;" />
-    <option name="USE_PROJECT_VCS" value="true" />
+    <option name="ACTIVE_VCS_NAME" value="svn" />
+    <option name="USE_PROJECT_VCS" value="false" />
   </component>
 </module>
 
