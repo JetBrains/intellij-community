@@ -42,7 +42,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
@@ -68,7 +68,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
 
     IElementType[] javadoc = IElementType.enumerate(new IElementType.Predicate() {
       public boolean matches(IElementType type) {
-        return !(type instanceof IJavaElementType);
+        return type instanceof IJavaDocElementType;
       }
     });
 
@@ -76,6 +76,10 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
       IElementType type = javadoc[i];
       ourMap1.put(type, HighlighterColors.JAVA_DOC_COMMENT);
     }
+
+    ourMap1.put(XmlTokenType.XML_DATA_CHARACTERS, HighlighterColors.JAVA_DOC_COMMENT);
+    ourMap1.put(XmlTokenType.XML_REAL_WHITE_SPACE, HighlighterColors.JAVA_DOC_COMMENT);
+    ourMap1.put(XmlTokenType.TAG_WHITE_SPACE, HighlighterColors.JAVA_DOC_COMMENT);
 
     ourMap1.put(JavaTokenType.INTEGER_LITERAL, HighlighterColors.JAVA_NUMBER);
     ourMap1.put(JavaTokenType.LONG_LITERAL, HighlighterColors.JAVA_NUMBER);
