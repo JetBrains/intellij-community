@@ -552,14 +552,19 @@ public class WelcomeScreen {
             break;
           }
         }
-        if (i == 0 && rows > 2) {
-          prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
-          suffix = suffix.substring(maxIdxPerLine, suffix.length());
-          lengthLeft = suffix.length();
-          rows--;
+        if (i == 0) {
+          if (rows > 2) {
+            prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
+            suffix = suffix.substring(maxIdxPerLine, suffix.length());
+            lengthLeft = suffix.length();
+            rows--;
+          }
+          else {
+            break;
+          }
         }
-        if (prefix.equals("")) break;
       }
+      
       if (suffix.length() > maxIdxPerLine) {
         suffix = suffix.substring(0, maxIdxPerLine - 3) + "...";
       }
