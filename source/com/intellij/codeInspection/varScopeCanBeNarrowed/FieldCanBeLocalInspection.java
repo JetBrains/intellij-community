@@ -5,20 +5,23 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.HashSet;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -104,7 +107,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     return result;
   }
 
-  class MyQuickFix implements LocalQuickFix {
+  private static class MyQuickFix implements LocalQuickFix {
     private PsiField myField;
 
     public MyQuickFix(final PsiField field) {
@@ -123,12 +126,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       for (int i = 0; i < allRefs.length; i++) {
         PsiReference ref = allRefs[i];
         if (ref instanceof PsiReferenceExpression) {
-          final PsiMethod method = PsiTreeUtil.getParentOfType(((PsiReferenceExpression)ref), PsiMethod.class);
+          final PsiMethod method = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiMethod.class);
           LOG.assertTrue(method != null);
           methodSet.add(method);
         }
       }
 
+      PsiElement newCaretPosition = null;
       for (Iterator<PsiMethod> iterator = methodSet.iterator(); iterator.hasNext();) {
         PsiMethod method = iterator.next();
         final PsiReference[] refs = helper.findReferences(myField, new LocalSearchScope(method), true);
@@ -144,7 +148,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
           final PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
           LOG.assertTrue(firstBodyElement != null);
-          anchorBlock.addBefore(decl, firstBodyElement);
+          final PsiElement newVariable = anchorBlock.addBefore(decl, firstBodyElement);
+          if (newCaretPosition == null) {
+            newCaretPosition = newVariable;
+          }
           final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
           for (int j = 0; j < refs.length; j++) {
             PsiReference ref = refs[j];
@@ -158,15 +165,27 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         }
       }
 
+      if (newCaretPosition != null) {
+        final PsiFile psiFile = myField.getContainingFile();
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {
+          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          if (file == psiFile) {
+            editor.getCaretModel().moveToOffset(newCaretPosition.getTextOffset());
+          }
+        }
+      }
+
       try {
         myField.delete();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+
     }
 
-    private PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {
+    private static PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {
       PsiCodeBlock result = null;
       for (int i = 0; i < refs.length; i++) {
         final PsiElement element = refs[i].getElement();
