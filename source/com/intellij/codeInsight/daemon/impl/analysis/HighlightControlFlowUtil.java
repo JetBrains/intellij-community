@@ -630,6 +630,8 @@ public class HighlightControlFlowUtil {
     } else {
       scope = variable.getParent();
     }
+    if (scope.getContainingFile() != context.getContainingFile()) return null;
+
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;
     while (parent != null) {
