@@ -76,7 +76,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     super(project);
     myRoot = new AbstractTreeNode(myProject, "") {
       public Collection<AbstractTreeNode> getChildren() {
-        return null;
+        return myFavorites;
       }
 
       public void update(final PresentationData presentation) {
