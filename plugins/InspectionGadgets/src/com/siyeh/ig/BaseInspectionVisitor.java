@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
+import com.siyeh.ig.dependency.DependencyMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
 public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor {
     private final BaseInspection m_inspection;
     private final InspectionManager m_inspectionManager;
-    private final boolean m_onTheFly;
+    protected final boolean m_onTheFly;
     private List m_errors = null;
 
     protected BaseInspectionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean onTheFly) {
@@ -135,6 +136,16 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor {
             final int numErrors = errors.size();
             return (ProblemDescriptor[]) errors.toArray(new ProblemDescriptor[numErrors]);
         }
+    }
+
+    public DependencyMap fetchDependencyMap()
+    {
+        final DependencyMap dependencyMap = (DependencyMap) m_inspectionManager.getProject().getComponent(DependencyMap.class);
+        if(!m_onTheFly)
+        {
+            dependencyMap.waitForCompletion();
+        }
+        return dependencyMap;
     }
 
 }

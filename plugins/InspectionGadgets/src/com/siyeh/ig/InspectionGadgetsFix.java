@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
+
 public abstract class InspectionGadgetsFix implements LocalQuickFix {
     protected void deleteElement(PsiElement element) {
         try {
