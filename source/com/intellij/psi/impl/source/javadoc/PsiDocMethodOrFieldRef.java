@@ -60,7 +60,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
         return new MyReference(method){
           public Object[] getVariants(){
-            final List lst = new ArrayList();
+            final List<PsiMethod> lst = new ArrayList<PsiMethod>();
             for(int i = 0; i < methods.length; i++){
               final PsiMethod method = methods[i];
               if(name.equals(method.getName())){
@@ -86,15 +86,15 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
-    final List result = new ArrayList();
+    final List<PsiVariable> result = new ArrayList<PsiVariable>();
     PsiScopesUtil.processScope(scope, new FilterScopeProcessor(new ClassFilter(PsiVariable.class), place, result), PsiSubstitutor.UNKNOWN, null, place);
-    return (PsiVariable[]) result.toArray(new PsiVariable[result.size()]);
+    return result.toArray(new PsiVariable[result.size()]);
   }
 
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
-    final List result = new ArrayList();
+    final List<PsiMethod> result = new ArrayList<PsiMethod>();
     PsiScopesUtil.processScope(scope, new FilterScopeProcessor(new ClassFilter(PsiMethod.class), place, result), PsiSubstitutor.UNKNOWN, null, place);
-    return (PsiMethod[]) result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   public int getTextOffset() {
@@ -123,7 +123,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     if (element == null) return null;
 
-    List types = new ArrayList();
+    List<PsiType> types = new ArrayList<PsiType>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == JavaDocElementType.DOC_TYPE_HOLDER) {
         if(child.getFirstChild() != null){
@@ -133,7 +133,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
 
-    return (PsiType[])types.toArray(new PsiType[types.size()]);
+    return types.toArray(new PsiType[types.size()]);
   }
 
   private PsiElement getScope(){
@@ -165,7 +165,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     public Object[] getVariants(){
       final PsiElement scope = getScope();
-      final List vars = new ArrayList();
+      final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
       vars.addAll(Arrays.asList(getAllMethods(scope, PsiDocMethodOrFieldRef.this)));
       vars.addAll(Arrays.asList(getAllVariables(scope, PsiDocMethodOrFieldRef.this)));
       return vars.toArray();
@@ -213,8 +213,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
 
 
-      if (getFirstChild() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) getFirstChild();
+      ChameleonTransforming.transformChildren(getNode());
+      if (getFirstChild().getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) getFirstChild().getFirstChild();
         referenceElement.bindToElement(containingClass);
       }
       else {
