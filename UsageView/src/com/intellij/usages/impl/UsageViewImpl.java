@@ -371,6 +371,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void actionPerformed(AnActionEvent e) {
       refreshUsages();
     }
+
+    public void update(AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(allTargetsAreValid());
+    }
   }
 
   private void refreshUsages() {
@@ -602,18 +608,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         }
 
-        private boolean allTargetsAreValid() {
-          for (int i = 0; i < myTargets.length; i++) {
-            UsageTarget target = myTargets[i];
-            if (!target.isValid()) return false;
-          }
-
-          return true;
-        }
       }, shortDescription, mnemonic);
+  }
 
+  private boolean allTargetsAreValid() {
+    for (int i = 0; i < myTargets.length; i++) {
+      UsageTarget target = myTargets[i];
+      if (!target.isValid()) {
+        return false;
+      }
+    }
 
-
+    return true;
   }
 
   public UsageViewPresentation getPresentation() {
