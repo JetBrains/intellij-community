@@ -89,6 +89,10 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if(expectedType instanceof PsiClassType)
             {
                 final PsiClass aClass = ((PsiClassType) expectedType).resolve();
+                if(aClass == null)
+                {
+                    return;
+                }
                 if(aClass.getContext() instanceof PsiTypeParameterList)
                 {
                     return;

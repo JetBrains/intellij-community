@@ -42,8 +42,8 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         PsiClass lexicallyEnclosingClass = currentClass;
         while (lexicallyEnclosingClass != null) {
             if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
-            return;
-        }
+                return;
+            }
             lexicallyEnclosingClass = (PsiClass)PsiTreeUtil.getParentOfType(lexicallyEnclosingClass, PsiClass.class);
         }
         if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {

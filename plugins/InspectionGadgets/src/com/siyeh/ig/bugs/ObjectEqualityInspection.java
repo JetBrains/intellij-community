@@ -17,8 +17,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
-    public  boolean m_ignoreEnums = false;
-    public  boolean m_ignoreClassObjects = false;
+    public boolean m_ignoreEnums = false;
+    public boolean m_ignoreClassObjects = false;
 
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
@@ -143,9 +143,11 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 return;
             }
             final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            final String methodName = method.getName();
-            if ("equals".equals(methodName)) {
-                return;
+            if (method != null) {
+                final String methodName = method.getName();
+                if ("equals".equals(methodName)) {
+                    return;
+                }
             }
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {

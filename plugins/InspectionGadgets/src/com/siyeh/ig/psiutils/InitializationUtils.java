@@ -115,7 +115,7 @@ public class InitializationUtils {
 
     private static boolean tryStatementMustAssignVariableOrFail(PsiVariable field, PsiTryStatement tryStatement, Set checkedMethods) {
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if (catchBlocks.length == 0) {
+        if (catchBlocks == null || catchBlocks.length == 0) {
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
             if (cachingblockMustAssignVariableOrFail(field, tryBlock, checkedMethods)) {
                 return true;
@@ -400,7 +400,7 @@ public class InitializationUtils {
     }
     private static boolean tryStatementMustThrowException( PsiTryStatement tryStatement) {
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if (catchBlocks.length == 0) {
+        if (catchBlocks == null || catchBlocks.length == 0) {
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
             if (blockMustThrowException( tryBlock)) {
                 return true;

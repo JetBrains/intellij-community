@@ -3,7 +3,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -65,8 +64,7 @@ public class FloatingPointEqualityInspection extends ExpressionInspection {
             {
                 return false;
             }
-            return TypeConversionUtil.isDoubleType(type) ||
-                    TypeConversionUtil.isFloatType(type);
+            return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
 
         }
     }

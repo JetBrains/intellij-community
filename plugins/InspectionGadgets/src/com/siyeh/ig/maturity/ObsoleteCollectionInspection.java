@@ -46,11 +46,10 @@ public class ObsoleteCollectionInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            final PsiType deepComponentType = type.getDeepComponentType();
-            if (deepComponentType == null) {
-                return;
+            String typeName = type.getCanonicalText();
+            if (typeName.indexOf('<') > 0) {
+                typeName = typeName.substring(0, typeName.indexOf('<'));
             }
-            final String typeName = deepComponentType.getCanonicalText();
             if (!s_obsoleteCollectionTypes.contains(typeName)) {
                 return;
             }
@@ -64,7 +63,11 @@ public class ObsoleteCollectionInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            final String typeName = type.getCanonicalText();
+            String typeName = type.getCanonicalText();
+            if(typeName.indexOf('<')>0)
+            {
+                typeName = typeName.substring(0, typeName.indexOf('<'));
+            }
             if (!s_obsoleteCollectionTypes.contains(typeName)) {
                 return;
             }

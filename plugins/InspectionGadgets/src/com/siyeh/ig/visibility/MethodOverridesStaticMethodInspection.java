@@ -73,8 +73,7 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection {
                         if (testParametersList == null) {
                             continue;
                         }
-                        final int numTestParameters = testParametersList.getParameters()
-                                .length;
+                        final int numTestParameters = testParametersList.getParameters().length;
                         if (numParameters != numTestParameters) {
                             continue;
                         }
