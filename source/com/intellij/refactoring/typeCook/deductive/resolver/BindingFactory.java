@@ -121,7 +121,7 @@ public class BindingFactory {
           return theClass.getManager().getElementFactory().createType(theClass, theSubst);
         }
         else {
-          return null;
+          return type;
         }
       }
       else if (type instanceof PsiWildcardType) {
@@ -541,6 +541,19 @@ public class BindingFactory {
       return w;
     }
 
+    public boolean isValid() {
+      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
+        final PsiTypeVariable var = v.next();
+        final PsiType type = substitute(var);
+
+        if (!var.isValidInContext(type)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
     public PsiType substitute(final PsiType t) {
       if (t instanceof PsiWildcardType) {
         final PsiWildcardType wcType = (PsiWildcardType)t;
@@ -677,6 +690,7 @@ public class BindingFactory {
          else {
            return null;
          }
+    break;
 
     case 1:
          return balancer.varType((PsiTypeVariable)x, y);

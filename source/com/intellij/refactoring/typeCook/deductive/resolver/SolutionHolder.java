@@ -47,7 +47,7 @@ public class SolutionHolder {
       final Binding binding = b.next();
       final int w = binding.getWidth();
 
-      if (w > width) {
+      if (w > width && binding.isValid()) {
         width = w;
         best = binding;
       }

@@ -27,6 +27,7 @@ public class TypeCookDialog extends RefactoringDialog {
   private JCheckBox myCbPreserveRawArrays = new JCheckBox("Preserve raw arrays");
   private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox("Leave Object-parameterized types raw");
   private JCheckBox myCbExhaustive = new JCheckBox("Perform exhaustive search");
+  private JCheckBox myCbCookObjects = new JCheckBox("Generify Objects");
 
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
@@ -96,10 +97,16 @@ public class TypeCookDialog extends RefactoringDialog {
         RefactoringSettings.getInstance().TYPE_COOK_EXHAUSTIVE);
     }
 
+    if (myCbCookObjects.isEnabled()) {
+      myCbCookObjects.setSelected(
+        RefactoringSettings.getInstance().TYPE_COOK_COOK_OBJECTS);
+    }
+
     myCbDropCasts.setMnemonic('D');
     myCbPreserveRawArrays.setMnemonic('P');
     myCbLeaveObjectParameterizedTypesRaw.setMnemonic('L');
     myCbExhaustive.setMnemonic('E');
+    myCbCookObjects.setMnemonic('O');
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
 
@@ -129,6 +136,10 @@ public class TypeCookDialog extends RefactoringDialog {
     gbConstraints.gridwidth = 2;
     optionsPanel.add(myCbExhaustive, gbConstraints);
 
+    gbConstraints.gridx = 0;
+    gbConstraints.gridwidth = 2;
+    optionsPanel.add(myCbCookObjects, gbConstraints);
+
     return optionsPanel;
   }
 
@@ -145,7 +156,8 @@ public class TypeCookDialog extends RefactoringDialog {
     final boolean dropCasts = myCbDropCasts.isSelected();
     final boolean preserveRawArrays = true; //myCbPreserveRawArrays.isSelected();
     final boolean leaveObjectParameterizedTypesRaw = myCbLeaveObjectParameterizedTypesRaw.isSelected();
-    final boolean exh = myCbExhaustive.isSelected();
+    final boolean exhaustive = myCbExhaustive.isSelected();
+    final boolean cookObjects = myCbCookObjects.isSelected();
 
     return new Settings() {
       public boolean dropObsoleteCasts() {
@@ -161,7 +173,11 @@ public class TypeCookDialog extends RefactoringDialog {
       }
 
       public boolean exhaustive() {
-        return exh;
+        return exhaustive;
+      }
+
+      public boolean cookObjects() {
+        return cookObjects;
       }
     };
   }

@@ -12,4 +12,5 @@ public interface Settings {
   boolean preserveRawArrays();
   boolean leaveObjectParameterizedTypesRaw();
   boolean exhaustive();
+  boolean cookObjects();
 }

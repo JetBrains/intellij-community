@@ -53,11 +53,19 @@ public class Result {
   }
 
   public PsiType getCookedType(final PsiElement element) {
+    final PsiType originalType = Util.getType(element);
+
     if (myBinding != null) {
-      return myBinding.substitute(myTypes.get(element));
+      final PsiType type = myBinding.substitute(myTypes.get(element));
+
+      if (type == null && originalType.getCanonicalText().equals("java.lang.Object")){
+        return originalType;
+      }
+
+      return type;
     }
 
-    return Util.getType(element);
+    return originalType;
   }
 
   public HashSet<PsiElement> getCookedElements() {

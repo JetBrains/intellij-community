@@ -113,8 +113,9 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
                                             boolean dropObsoleteCasts,
                                             boolean leaveObjectsRaw,
                                             boolean preserveRawArrays,
-                                            boolean exhaustive) {
-    return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive);
+                                            boolean exhaustive,
+                                            boolean cookObjects) {
+    return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects);
   }
 
   public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,

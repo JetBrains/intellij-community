@@ -170,7 +170,7 @@ public class SystemBuilder {
 
     t = Util.getType(e);
 
-    final PsiType parameterizedType = Util.createParameterizedType(t, myTypeVariableFactory);
+    final PsiType parameterizedType = Util.createParameterizedType(t, myTypeVariableFactory, e);
 
     myTypes.put(e, parameterizedType);
 
@@ -810,6 +810,10 @@ public class SystemBuilder {
           }
         }
       }.brrrr(definedType, elemenType);
+
+      if (mySettings.cookObjects() && elemenType.getCanonicalText().equals("java.lang.Object")){
+        system.addSubtypeConstraint(definedType, elemenType);
+      }
     }
   }
 

@@ -1,7 +1,8 @@
 package com.intellij.refactoring.typeCook.deductive;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.HashSet;
@@ -28,8 +29,8 @@ public class PsiTypeVariableFactory {
   public final void registerCluster(final HashSet<PsiTypeVariable> cluster) {
     myClusters.add(cluster);
 
-    for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
-      myVarCluster.put (new Integer(v.next().getIndex()), cluster);
+    for (final Iterator<PsiTypeVariable> v = cluster.iterator(); v.hasNext();) {
+      myVarCluster.put(new Integer(v.next().getIndex()), cluster);
     }
   }
 
@@ -37,13 +38,101 @@ public class PsiTypeVariableFactory {
     return myClusters;
   }
 
-  public final HashSet<PsiTypeVariable> getClusterOf (final int var){
-    return myVarCluster.get(new Integer (var));
+  public final HashSet<PsiTypeVariable> getClusterOf(final int var) {
+    return myVarCluster.get(new Integer(var));
   }
 
   public final PsiTypeVariable create() {
+    return create(null);
+  }
+
+  public final PsiTypeVariable create(final PsiElement context) {
     return new PsiTypeVariable() {
       private int myIndex = myCurrent++;
+      private final PsiElement myContext = context;
+
+      public boolean isValidInContext(final PsiType type) {
+        if (myContext == null) {
+          return true;
+        }
+
+        if (type == null) {
+          return true;
+        }
+
+        return type.accept(new PsiTypeVisitor<Boolean>() {
+                             public Boolean visitType(final PsiType type) {
+                               return Boolean.TRUE;
+                             }
+
+                             public Boolean visitArrayType(final PsiArrayType arrayType) {
+                               return arrayType.getDeepComponentType().accept(this);
+                             }
+
+                             public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+                               final PsiType bound = wildcardType.getBound();
+
+                               if (bound != null) {
+                                 bound.accept(this);
+                               }
+
+                               return Boolean.TRUE;
+                             }
+
+                             public Boolean visitClassType(final PsiClassType classType) {
+                               final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+                               final PsiClass aClass = result.getElement();
+                               final PsiSubstitutor aSubst = result.getSubstitutor();
+                               final PsiManager manager = aClass.getManager();
+
+                               if (aClass != null) {
+                                 if (aClass instanceof PsiTypeParameter) {
+                                   final PsiTypeParameterListOwner owner =
+                                   PsiTreeUtil.getParentOfType(myContext, PsiTypeParameterListOwner.class);
+
+                                   if (owner != null) {
+                                     boolean found = false;
+
+                                     for (final Iterator<PsiTypeParameter> p = PsiUtil.typeParametersIterator(owner);
+                                          p.hasNext() && !found;) {
+                                       final PsiTypeParameter parm = p.next();
+
+                                       found = manager.areElementsEquivalent(parm, aClass);
+                                     }
+
+                                     if (!found) {
+                                       return Boolean.FALSE;
+                                     }
+                                   }
+                                   else {
+                                     return Boolean.FALSE;
+                                   }
+                                 }
+                                 else if (!manager.getResolveHelper().isAccessible(aClass, myContext, null)) {
+                                   return Boolean.FALSE;
+                                 }
+
+                                 for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+                                   final PsiTypeParameter parm = p.next();
+                                   final PsiType type = aSubst.substitute(parm);
+
+                                   if (type != null){
+                                     final Boolean b = type.accept(this);
+
+                                     if (! b.booleanValue()){
+                                       return Boolean.FALSE;
+                                     }
+                                   }
+                                 }
+
+                                 return Boolean.TRUE;
+                               }
+                               else {
+                                 return Boolean.FALSE;
+                               }
+                             }
+                           }).booleanValue();
+      }
 
       public String getPresentableText() {
         return "$" + myIndex;

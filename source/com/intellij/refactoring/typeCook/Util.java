@@ -2,6 +2,7 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -117,7 +118,11 @@ public class Util {
     }
   }
 
-  public static boolean isRaw(PsiType t, boolean arrays) {
+  public static boolean isRaw(PsiType t, final Settings settings) {
+    return isRaw(t, settings, true);
+  }
+
+  private static boolean isRaw(PsiType t, final Settings settings, final boolean upper) {
     if (t instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = resolveType(t);
 
@@ -131,18 +136,24 @@ public class Util {
 
       final PsiSubstitutor subst = resolveResult.getSubstitutor();
       final PsiClass element = resolveResult.getElement();
+      final PsiManager manager = element.getManager();
+
+      if (settings.cookObjects() && upper &&
+          t.equals(PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.getProject())))) {
+        return true;
+      }
 
       final PsiTypeParameter[] parameters = getTypeParametersList(element);
 
       for (int i = 0; i < parameters.length; i++) {
         final PsiType actual = subst.substitute(parameters[i]);
-        if (!(actual instanceof PsiTypeParameter) && isRaw(actual, arrays)) return true;
+        if (!(actual instanceof PsiTypeParameter) && isRaw(actual, settings, false)) return true;
       }
 
       return false;
     }
     else if (t instanceof PsiArrayType) {
-      return arrays ? false : isRaw(((PsiArrayType)t).getComponentType(), arrays);
+      return settings.preserveRawArrays() ? false : isRaw(((PsiArrayType)t).getComponentType(), settings, upper);
     }
 
     return false;
@@ -308,9 +319,20 @@ public class Util {
     return type;
   }
 
+  public static PsiType createParameterizedType(final PsiType t, final PsiTypeVariableFactory factory, final PsiElement context) {
+    return createParameterizedType(t, factory, true, context);
+  }
+
   public static PsiType createParameterizedType(final PsiType t, final PsiTypeVariableFactory factory) {
-    if (t == null) {
-      return factory.create();
+    return createParameterizedType(t, factory, true, null);
+  }
+
+  private static PsiType createParameterizedType(final PsiType t,
+                                                 final PsiTypeVariableFactory factory,
+                                                 final boolean upper,
+                                                 final PsiElement context) {
+    if (t == null || (upper && t.getCanonicalText().equals("java.lang.Object"))) {
+      return factory.create(context);
     }
 
     if (t instanceof PsiClassType) {
@@ -324,7 +346,7 @@ public class Util {
 
       for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
         final PsiTypeParameter parm = i.next();
-        final PsiType type = createParameterizedType(aSubst.substitute(parm), factory);
+        final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);
 
         if (type instanceof PsiTypeVariable) {
           cluster.add((PsiTypeVariable)type);
@@ -340,7 +362,7 @@ public class Util {
       return aClass.getManager().getElementFactory().createType(aClass, theSubst);
     }
     else if (t instanceof PsiArrayType) {
-      return createParameterizedType(((PsiArrayType)t).getComponentType(), factory).createArrayType();
+      return createParameterizedType(((PsiArrayType)t).getComponentType(), factory, upper, context).createArrayType();
     }
 
     return t;
@@ -463,7 +485,7 @@ public class Util {
         final PsiSubstitutor subst = result.getSubstitutor();
         final PsiTypeParameter[] parms = Util.getTypeParametersList(result.getElement());
 
-        if (parms.length >= 0 && subst.substitute(parms[0]) != null) {
+        if (parms.length > 0 && subst.substitute(parms[0]) != null) {
           PsiJavaCodeReferenceElement classReference = newx.getClassReference();
           PsiReferenceParameterList list = null;
 
@@ -488,7 +510,7 @@ public class Util {
           for (int i = 0; i < parms.length; i++) {
             PsiType aType = subst.substitute(parms[i]);
 
-            if (aType instanceof PsiWildcardType){
+            if (aType instanceof PsiWildcardType) {
               aType = ((PsiWildcardType)aType).getBound();
             }
 
@@ -497,7 +519,7 @@ public class Util {
         }
       }
       else {
-        LOG.error ("Unexpected element type " + element.getClass().getName()); 
+        LOG.error("Unexpected element type " + element.getClass().getName());
       }
     }
     catch (IncorrectOperationException e) {

@@ -22,7 +22,8 @@ public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> 
                           final boolean dropObsoleteCasts,
                           final boolean leaveObjectsRaw,
                           final boolean preserveRawArrays,
-                          final boolean exh) {
+                          final boolean exhaustiveSearch,
+                          final boolean cookObjects) {
     super(new TypeCookProcessor(project, elements, new Settings() {
       public boolean dropObsoleteCasts() {
         return dropObsoleteCasts;
@@ -33,7 +34,11 @@ public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> 
       }
 
       public boolean exhaustive() {
-        return exh;
+        return exhaustiveSearch;
+      }
+
+      public boolean cookObjects() {
+        return cookObjects;
       }
 
       public boolean preserveRawArrays() {

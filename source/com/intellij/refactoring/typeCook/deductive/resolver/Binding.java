@@ -40,4 +40,6 @@ public abstract class Binding {
   public abstract HashSet<PsiTypeVariable> getBoundVariables();
 
   public abstract int getWidth();
+
+  public abstract boolean isValid();
 }
