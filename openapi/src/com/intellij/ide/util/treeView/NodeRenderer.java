@@ -40,6 +40,7 @@ import com.intellij.navigation.ItemPresentation;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(JTree tree,
@@ -49,11 +50,13 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
+    Color color = null;
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       Object userObject = node.getUserObject();
       if (userObject instanceof NodeDescriptor) {
         NodeDescriptor descriptor = (NodeDescriptor)userObject;
+        color = descriptor.getColor();
         if (expanded) {
           setIcon(descriptor.getOpenIcon());
         }
@@ -62,13 +65,19 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    String text =
-      tree.convertValueToText(value instanceof AbstractTreeNode
-        ? ((AbstractTreeNode)value).toString()
-                                                                                                                            : value,
-        selected, expanded, leaf, row, hasFocus);
+    final Object valueToGetText = value instanceof AbstractTreeNode ? ((AbstractTreeNode)value).toString() : value;
+    String text = tree.convertValueToText(valueToGetText,selected, expanded, leaf, row, hasFocus);
+
     if (text == null) text = "";
-    append(text, getSimpleTextAttributes(value));
+
+    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(value);
+    if (color != null) {
+      final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      textAttributes.setForegroundColor(color);
+      simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
+    }
+
+    append(text, simpleTextAttributes);
 
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
