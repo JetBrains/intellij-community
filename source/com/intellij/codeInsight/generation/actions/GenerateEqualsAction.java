@@ -16,7 +16,7 @@ public class GenerateEqualsAction extends BaseGenerateAction {
 
   protected PsiClass getTargetClass(Editor editor, PsiFile file) {
     final PsiClass targetClass = super.getTargetClass(editor, file);
-    if (targetClass.isEnum()) return null;
+    if (targetClass == null || targetClass.isEnum()) return null;
     return targetClass;
   }
 }
