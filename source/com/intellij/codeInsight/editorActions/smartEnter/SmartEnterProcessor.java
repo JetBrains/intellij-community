@@ -94,6 +94,7 @@ public class SmartEnterProcessor {
           fixer.apply(myEditor, this, psiElement);
           if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
           if (isUncommited() || !psiElement.isValid()) {
+            moveCaretInsideBracesIfAny();
             process();
             return;
           }
@@ -103,6 +104,18 @@ public class SmartEnterProcessor {
       doEnter(atCaret);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
+    }
+  }
+
+  private void moveCaretInsideBracesIfAny() throws IncorrectOperationException {
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    final CharSequence chars = myEditor.getDocument().getCharsSequence();
+    caretOffset = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
+    if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}")) {
+      commit();
+      PsiElement elt = PsiTreeUtil.getParentOfType(myPsiFile.findElementAt(caretOffset - 1), PsiCodeBlock.class);
+      reformat(elt);
+      myEditor.getCaretModel().moveToOffset(caretOffset - 1);
     }
   }
 
