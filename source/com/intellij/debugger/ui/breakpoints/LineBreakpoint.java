@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -222,34 +223,33 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
     DebuggerUtilsEx.iterateLine(project, document, lineIndex, new DebuggerUtilsEx.ElementVisitor() {
       public boolean acceptElement(PsiElement element) {
-        if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-          PsiElement child = element;
-          while(element != null) {
-            LOG.assertTrue(element.getTextOffset() != -1, element.getContainingFile().getName());
+        if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
+          return false;
+        }
+        PsiElement child = element;
+        while(element != null) {
 
-            if (document.getLineNumber(element.getTextOffset()) != lineIndex) {
-              break;
-            }
-            child = element;
-            element = element.getParent();
+          if (document.getLineNumber(element.getTextOffset()) != lineIndex) {
+            break;
           }
+          child = element;
+          element = element.getParent();
+        }
 
-          if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
-            PsiCodeBlock body = ((PsiMethod)child).getBody();
-            if(body == null) {
-              canAdd[0] = false;
-            }
-            else {
-              PsiStatement[] statements = body.getStatements();
-              canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
-            }
+        if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+          PsiCodeBlock body = ((PsiMethod)child).getBody();
+          if(body == null) {
+            canAdd[0] = false;
           }
           else {
-            canAdd[0] = true;
+            PsiStatement[] statements = body.getStatements();
+            canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
           }
-          return true;
         }
-        return false;
+        else {
+          canAdd[0] = true;
+        }
+        return true;
       }
     });
 
