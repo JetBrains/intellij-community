@@ -59,11 +59,13 @@ public class MalformedRegexInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!callTakesRegex(expression)){
-                return;
-            }
             final PsiExpressionList argList = expression.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();
+            if(args.length == 0)
+            {
+                return;
+            }
+
             final PsiExpression regexArg = args[0];
             if(regexArg == null){
                 return;
@@ -71,6 +73,9 @@ public class MalformedRegexInspection extends ExpressionInspection{
             final PsiType regexType = regexArg.getType();
             if(regexType == null)
             {
+                return;
+            }
+            if(!callTakesRegex(expression)){
                 return;
             }
             final String regexTypeText = regexType.getCanonicalText();
@@ -82,10 +87,16 @@ public class MalformedRegexInspection extends ExpressionInspection{
             }
             final String value =
                     (String) ConstantExpressionUtil.computeCastTo(regexArg, regexType);
+            if(value == null)
+            {
+                return;
+            }
             //noinspection UnusedCatchParameter
             try{
                 Pattern.compile(value);
             } catch(PatternSyntaxException e){
+                registerError(regexArg);
+            } catch(NullPointerException e){
                 registerError(regexArg);
             }
         }
