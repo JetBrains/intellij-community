@@ -31,6 +31,8 @@
  */
 package com.intellij.navigation;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+
 import javax.swing.*;
 
 public interface ItemPresentation {
@@ -48,5 +50,10 @@ public interface ItemPresentation {
    * @param open only meaningful when used in a tree renderers. false is passed when icon for other renderers is required.
    * @return icon
    */
-  Icon getIcon(boolean open);  
+  Icon getIcon(boolean open);
+
+  /**
+   * If return value is null default text attributes will be used
+   */
+  TextAttributesKey getTextAttributesKey();
 }

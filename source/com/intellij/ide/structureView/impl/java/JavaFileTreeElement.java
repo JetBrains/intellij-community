@@ -5,6 +5,8 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.codeInsight.CodeInsightColors;
 
 import java.util.ArrayList;
 
@@ -27,5 +29,9 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> impleme
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);
 
+  }
+
+  public TextAttributesKey getTextAttributesKey() {
+    return null;
   }
 }

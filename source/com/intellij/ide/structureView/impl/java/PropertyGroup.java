@@ -10,6 +10,8 @@ import com.intellij.util.Icons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.codeInsight.CodeInsightColors;
 
 import javax.swing.*;
 
@@ -112,12 +114,15 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public int getAccessLevel() {
     int result = PsiUtil.ACCESS_LEVEL_PRIVATE;
-    if (myGetter != null)
+    if (myGetter != null) {
       result = Math.max(result, PsiUtil.getAccessLevel(myGetter.getModifierList()));
-    if (mySetter != null)
+    }
+    if (mySetter != null) {
       result = Math.max(result, PsiUtil.getAccessLevel(mySetter.getModifierList()));
-    if (myField != null)
+    }
+    if (myField != null) {
       result = Math.max(result, PsiUtil.getAccessLevel(myField.getModifierList()));
+    }
     return result;
   }
 
@@ -166,5 +171,20 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
       return new ImageIcon();
     }
     return icon;
+  }
+
+  public TextAttributesKey getTextAttributesKey() {
+    return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
+  }
+
+  private boolean isDeprecated() {
+    return isDeprecated(getField()) && isDeprecated(getGetter()) && isDeprecated(getSetter());
+  }
+
+  private boolean isDeprecated(final PsiElement element) {
+    if (element == null) return false;
+    if (!element.isValid()) return false;
+    if (!(element instanceof PsiDocCommentOwner)) return false;
+    return ((PsiDocCommentOwner)element).isDeprecated();
   }
 }

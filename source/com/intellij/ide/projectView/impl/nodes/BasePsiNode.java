@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.codeInsight.CodeInsightColors;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -74,22 +76,34 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
 
 
   public void update(PresentationData data) {
-    if (getValue() == null || !getValue().isValid()) {
+    final Type value = getValue();
+    if (value == null || !value.isValid()) {
       setValue(null);
     }
-    if (getValue() == null) return;
+    if (value == null) return;
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
 
-    Icon icon = getValue().getIcon(flags);
+    Icon icon = value.getIcon(flags);
     data.setClosedIcon(icon);
     data.setOpenIcon(icon);
     data.setLocationString(myLocationString);
     data.setPresentableText(myName);
+    if (isDeprecated()) {
+      data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    }
     updateImpl(data);
+  }
+
+  private boolean isDeprecated() {
+    final Type element = getValue();
+    if (element == null || !element.isValid()) return false;
+    if (!(element instanceof PsiDocCommentOwner)) return false;
+    return ((PsiDocCommentOwner)element).isDeprecated();
+
   }
 
   public boolean contains(VirtualFile file) {

@@ -1,6 +1,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 import javax.swing.*;
 
@@ -9,6 +10,7 @@ public class PresentationData implements ItemPresentation{
   private Icon myOpenIcon;
   private String myLocationString;
   private String myPresentableText;
+  private TextAttributesKey myAttributesKey;
 
   public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon) {
     myClosedIcon = closedIcon;
@@ -58,5 +60,14 @@ public class PresentationData implements ItemPresentation{
     setOpenIcon(presentation.getIcon(true));
     setPresentableText(presentation.getPresentableText());
     setLocationString(presentation.getLocationString());
+    setAttributesKey(presentation.getTextAttributesKey());
+  }
+
+  public TextAttributesKey getTextAttributesKey() {
+    return myAttributesKey;
+  }
+
+  public void setAttributesKey(final TextAttributesKey attributesKey) {
+    myAttributesKey = attributesKey;
   }
 }

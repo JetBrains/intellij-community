@@ -6,6 +6,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -45,6 +46,10 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
       }
 
       public String getLocationString() {
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
         return null;
       }
 

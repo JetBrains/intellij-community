@@ -33,6 +33,7 @@ package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 
 import javax.swing.*;
@@ -99,6 +100,10 @@ public class ClassPresentationUtil {
           if (packageName.length() == 0) return null;
           return "(" + packageName + ")";
         }
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
         return null;
       }
 

@@ -33,6 +33,7 @@ package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
@@ -82,6 +83,10 @@ public class SymbolPresentationUtil {
         return getSymbolPresentableText(psiMethod);
       }
 
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+
       public String getLocationString() {
         return getSymbolContainerText(psiMethod);
       }
@@ -96,6 +101,10 @@ public class SymbolPresentationUtil {
     return new ItemPresentation() {
       public String getPresentableText() {
         return getSymbolPresentableText(psiField);
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
       }
 
       public String getLocationString() {
@@ -116,6 +125,10 @@ public class SymbolPresentationUtil {
 
       public String getLocationString() {
         return "";
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
       }
 
       public Icon getIcon(boolean open) {

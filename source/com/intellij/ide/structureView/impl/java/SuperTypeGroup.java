@@ -4,6 +4,7 @@ import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
@@ -89,5 +90,9 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   public int getSubLevel() {
     return 1;
+  }
+
+  public TextAttributesKey getTextAttributesKey() {
+    return null;
   }
 }

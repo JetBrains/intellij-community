@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -116,6 +117,10 @@ public class FindInProjectManager implements ProjectComponent {
 
         public String getLocationString() {
           return myStringToFind + "!!";
+        }
+
+        public TextAttributesKey getTextAttributesKey() {
+          return null;
         }
 
         public Icon getIcon(boolean open) {

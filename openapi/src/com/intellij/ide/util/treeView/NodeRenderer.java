@@ -31,12 +31,15 @@
  */
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.navigation.ItemPresentation;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(JTree tree,
@@ -46,7 +49,6 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-    SimpleTextAttributes textAttributes = null;
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       Object userObject = node.getUserObject();
@@ -58,18 +60,21 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         else {
           setIcon(descriptor.getClosedIcon());
         }
-        textAttributes = getTextAttributes(descriptor);
       }
     }
-    String text = tree.convertValueToText(value instanceof AbstractTreeNode? ((AbstractTreeNode)value).toString() : value, selected, expanded, leaf, row, hasFocus);
+    String text =
+      tree.convertValueToText(value instanceof AbstractTreeNode
+        ? ((AbstractTreeNode)value).toString()
+                                                                                                                            : value,
+        selected, expanded, leaf, row, hasFocus);
     if (text == null) text = "";
-    append(text, textAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : textAttributes);
+    append(text, getSimpleTextAttributes(value));
 
-    if (value instanceof DefaultMutableTreeNode){
+    if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       Object userObject = node.getUserObject();
-      
-      if (userObject instanceof AbstractTreeNode){
+
+      if (userObject instanceof AbstractTreeNode) {
         AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
         String locationString = treeNode.getPresentation().getLocationString();
         if (locationString != null && locationString.length() > 0) {
@@ -81,7 +86,21 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  protected static SimpleTextAttributes getTextAttributes(NodeDescriptor descriptor) {
-    return new SimpleTextAttributes(Font.PLAIN, descriptor.getColor());
+  public static SimpleTextAttributes getSimpleTextAttributes(final Object value) {
+    if (value instanceof DefaultMutableTreeNode) {
+      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (userObject instanceof AbstractTreeNode) {
+        return getSimpleTextAttributes(((AbstractTreeNode)userObject).getPresentation());
+      }
+    }
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
+
+  public static SimpleTextAttributes getSimpleTextAttributes(final ItemPresentation presentation) {
+    final TextAttributesKey textAttributesKey = presentation.getTextAttributesKey();
+    if (textAttributesKey == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
+    return textAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.fromTextAttributes(textAttributes);
+  }
+
 }

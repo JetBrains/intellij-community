@@ -32,8 +32,10 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -60,7 +62,10 @@ public class NavigationItemListCellRenderer extends ColoredListCellRenderer{
         color = status.getColor();
       }
 
-      append(name,new SimpleTextAttributes(Font.PLAIN, color));
+      final SimpleTextAttributes simpleTextAttributes = NodeRenderer.getSimpleTextAttributes(presentation);
+      final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      textAttributes.setForegroundColor(color);
+      append(name,SimpleTextAttributes.fromTextAttributes(textAttributes));
       setIcon(presentation.getIcon(false));
 
       String containerText = presentation.getLocationString();
