@@ -51,6 +51,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final THashSet<String> myIgnoredFiles = new THashSet<String>();
   private final EventDispatcher<FileTypeListener> myDispatcher = EventDispatcher.create(FileTypeListener.class);
   private final THashMap<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
+  private final Map<String, FileType> myInitialAssociations = new HashMap<String, FileType>();
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -335,6 +336,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
             associateExtension(type, ext, false);
           }
         }
+        List removedMappings = e.getChildren("removed_mapping");
+        for (int i = 0; i < removedMappings.size(); i++) {
+          Element mapping = (Element)removedMappings.get(i);
+          String ext = mapping.getAttributeValue("ext");
+          String name = mapping.getAttributeValue("type");
+          FileType type = getFileTypeByName(name);
+          if (type != null) {
+            removeAssociation(type, ext, false);
+          }
+        }
       }
     }
 
@@ -365,15 +376,32 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     element.setAttribute("list", getIgnoredFilesList());
     Element map = new Element("extensionMap");
     parentNode.addContent(map);
+
+    Map<String, FileType> defaultMappings = new HashMap<String, FileType>(myInitialAssociations);
+
     for (Iterator<String> iterator = myExtToFileTypeMap.keySet().iterator(); iterator.hasNext();) {
       String ext = iterator.next();
       FileType type = myExtToFileTypeMap.get(ext);
-      if (type != null && !shouldNotSave(type)) {
-        Element mapping = new Element("mapping");
-        mapping.setAttribute("ext", ext);
-        mapping.setAttribute("type", type.getName());
-        map.addContent(mapping);
+      if (type != null) {
+        if (defaultMappings.get(ext) == type) {
+          defaultMappings.remove(ext);
+        }
+        else if (!shouldNotSave(type)){
+          Element mapping = new Element("mapping");
+          mapping.setAttribute("ext", ext);
+          mapping.setAttribute("type", type.getName());
+          map.addContent(mapping);
+        }
       }
+    }
+
+    for (Iterator<String> i = defaultMappings.keySet().iterator(); i.hasNext();) {
+      String ext = i.next();
+      FileType type = defaultMappings.get(ext);
+      Element mapping = new Element("removed_mapping");
+      mapping.setAttribute("ext", ext);
+      mapping.setAttribute("type", type.getName());
+      map.addContent(mapping);
     }
   }
 
@@ -436,6 +464,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (extensions != null) {
       for (int i = 0; i < extensions.length; i++) {
         myExtToFileTypeMap.put(extensions[i], fileType);
+        myInitialAssociations.put(extensions[i], fileType);
       }
     }
     if (fileType instanceof FakeFileType) {
@@ -797,12 +826,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     //if ("".equals(extension)) {
     //  return; // do not allow empty extensions
     //}
-    final String lowercasedExtension = extension.toLowerCase();
-    if (myExtToFileTypeMap.get(lowercasedExtension) != fileType){
+    if (myExtToFileTypeMap.get(extension) != fileType){
       if (fireChange) {
         fireBeforeFileTypesChanged();
       }
-      myExtToFileTypeMap.put(lowercasedExtension, fileType);
+      myExtToFileTypeMap.put(extension, fileType);
       if (fireChange){
         fireFileTypesChanged();
       }
@@ -810,12 +838,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void removeAssociation(FileType fileType, String extension, boolean fireChange){
-    final String lowercasedExtension = extension.toLowerCase();
-    if (myExtToFileTypeMap.get(lowercasedExtension) == fileType){
+    if (myExtToFileTypeMap.get(extension) == fileType){
       if (fireChange) {
         fireBeforeFileTypesChanged();
       }
-      myExtToFileTypeMap.remove(lowercasedExtension);
+      myExtToFileTypeMap.remove(extension);
       if (fireChange){
         fireFileTypesChanged();
       }
