@@ -74,9 +74,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   private FavoritesTreeViewConfiguration myFavoritesConfiguration = new FavoritesTreeViewConfiguration();
   public FavoritesTreeStructure(Project project) {
     super(project);
-    myRoot = new AbstractTreeNode(myProject, "Root") {
+    myRoot = new AbstractTreeNode(myProject, "") {
       public Collection<AbstractTreeNode> getChildren() {
-        return myFavorites;
+        return null;
       }
 
       public void update(final PresentationData presentation) {
@@ -99,6 +99,19 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     final AbstractTreeNode favoritesTreeElement = (AbstractTreeNode)element;
     try {
       if (element == myRoot) {
+        if (myFavorites.isEmpty()){
+          return new Object [] {new AbstractTreeNode<String>(myProject, "There is nothing to display. Add node to favorites list."){
+                                      public Collection<AbstractTreeNode> getChildren() {
+                                        return null;
+                                      }
+
+                                      public void update(final PresentationData presentation) {
+                                        presentation.setPresentableText(getValue());
+                                      }
+                                    }
+                                };
+
+        }
         return myFavorites.toArray(new Object[myFavorites.size()]);
       }
       return super.getChildElements(favoritesTreeElement);

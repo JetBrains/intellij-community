@@ -1,9 +1,6 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -24,6 +21,21 @@ public class SendToFavoritesGroup extends DefaultActionGroup{
     for (int i = 0; i < allAddActionNamesButThis.length; i++) {
       String addAction = allAddActionNamesButThis[i];
       add(new SendToFavoritesAction(addAction));
+    }
+    addSeparator();
+    add(new SendToNewFavoritesListAction());
+  }
+
+  private class SendToNewFavoritesListAction extends AnAction {
+    public SendToNewFavoritesListAction() {
+      super("Send To New Favorites List");
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final DataContext dataContext = e.getDataContext();
+      final AddNewFavoritesListAction action = (AddNewFavoritesListAction)ActionManager.getInstance().getAction(IdeActions.ADD_NEW_FAVORITES_LIST);
+      final FavoritesTreeViewPanel favoritesTreeViewPanel = action.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
+      new SendToFavoritesAction(favoritesTreeViewPanel.getName()).actionPerformed(e);
     }
   }
 }

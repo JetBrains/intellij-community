@@ -2,17 +2,20 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.DeleteHandler;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
@@ -22,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -67,6 +71,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private String myName;
+  private IdeView myIdeView = new MyIdeView();
   public FavoritesTreeViewPanel(Project project, String helpId, String name) {
     myProject = project;
     myHelpId = helpId;
@@ -150,8 +155,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
      myStructurePanel.add(myStructureViewWrapper.getComponent());
      mySplitter.setSecondComponent(myStructurePanel);
 
-    */ add(scrollPane,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                BorderLayout.CENTER);
+    */
+    add(scrollPane, BorderLayout.CENTER);
     add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
@@ -165,16 +170,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   public void selectElement(final Object selector, final VirtualFile file){
     myBuilder.select(selector, file, true, myBuilder);
   }
-  /*public void selectElement(final AbstractTreeNode element) {
-    myBuilder.updateFromRoot();
-    DefaultMutableTreeNode node = myBuilder.getNodeForElement(element);
-    if (node == null) {
-      myBuilder.buildNodeForElement(element);
-      node = myBuilder.getNodeForElement(element);
-    }
-    TreeNode[] pathToRoot = ((DefaultTreeModel)myTree.getModel()).getPathToRoot(node);
-    TreeUtil.selectPath(myTree, new TreePath(pathToRoot));
-  }*/
 
   public Tree getTree() {
     return myTree;
@@ -254,6 +249,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
+
+    if (DataConstantsEx.IDE_VIEW.equals(dataId) ){
+      return myIdeView;
+    }
+
     if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
       return null;
     }
@@ -411,7 +411,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     group.add(myAutoScrollToSourceHandler.createToggleAction());
     //group.add(new ShowStructureAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
-    group.add(ActionManager.getInstance().getAction(IdeActions.ADD_NEW_FAVORITES_LIST));
+    
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FAVORITES_LIST));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.FAVORITES_VIEW_TOOLBAR, group, true).getComponent();
   }
@@ -580,6 +580,48 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
       return result.toArray(new PsiElement[result.size()]);
     }
+  }
 
+  private final class MyIdeView implements IdeView {
+    public void selectElement(final PsiElement element) {
+      if (element != null) {
+        final boolean isDirectory = element instanceof PsiDirectory;
+        if (!isDirectory) {
+          Editor editor = EditorHelper.openInEditor(element);
+          if (editor != null) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          }
+        }
+      }
+    }
+
+    private PsiDirectory getDirectory() {
+      if (myBuilder == null) return null;
+      final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
+      if (selectedNodeDescriptors == null || selectedNodeDescriptors.length != 1) return null;
+      final FavoritesTreeNodeDescriptor currentDescriptor = selectedNodeDescriptors[0];
+      if (currentDescriptor != null && currentDescriptor.getElement() instanceof AbstractTreeNode){
+        final AbstractTreeNode currentNode = ((AbstractTreeNode)currentDescriptor.getElement());
+        if (currentNode.getValue() instanceof PsiDirectory){
+          return (PsiDirectory)currentNode.getValue();
+        }
+      }
+      final NodeDescriptor parentDescriptor = currentDescriptor.getParentDescriptor();
+      if (parentDescriptor != null) {
+        final Object parentElement = parentDescriptor.getElement();
+        if (parentElement instanceof AbstractTreeNode) {
+          final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
+          if (parentNode.getValue() instanceof PsiDirectory){
+            return (PsiDirectory)parentNode.getValue();
+          }
+        }
+      }
+      return null;
+    }
+
+    public PsiDirectory[] getDirectories() {
+      PsiDirectory directory = getDirectory();
+      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[] {directory};
+    }
   }
 }

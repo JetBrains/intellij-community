@@ -19,7 +19,7 @@
     <group id="AddToFavorites" popup="true" text="_Add To Favorites"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List"/>
     <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.RemoveFavoritesListAction" text="Remove Favorites List" description="REmove Favorites List"/>
-    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send Favorites"/>
+    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send To Favorites"/>
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="com.intellij.execution.actions.CreateAction"/>
     </group>
@@ -408,6 +408,7 @@
 
       <group id="AnalyzeMenu" text="Analy_ze" popup="true">
         <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction" text="_Inspect Code..." description="Inspect code"/>
+        <action id="InspectCodeWithEditorProfile" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction" text="Inspect Code With _Editor Settings..." description="Inspect code with editor settings"/>
         <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction" text="View _Offline Inspection Results..." description="Load offline inspection results"/>
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction" text="Analyze _Dependencies..." description="Browse code choosen analysis item depends on" />
         <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction" text="Analyze _Backward Dependencies..." description="Browse code choosen analysis item used in" />
@@ -848,6 +849,7 @@
     </group>
 
     <group id="FavoritesViewPopupMenu">
+      <reference ref="NewGroup"/>
       <reference ref="OpenCustomEditor"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>

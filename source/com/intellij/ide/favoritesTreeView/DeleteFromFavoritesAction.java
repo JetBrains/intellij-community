@@ -44,10 +44,14 @@ public class DeleteFromFavoritesAction extends AnAction {
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project == null){
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel()
+        .getSelectedNodeDescriptors();
     e.getPresentation()
-      .setEnabled(project != null &&
-                                  FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel()
-                                    .getSelectedNodeDescriptors() != null);
+      .setEnabled(selectedNodeDescriptors != null && selectedNodeDescriptors.length > 0 && !(selectedNodeDescriptors[0].getElement().getValue() instanceof String));
   }
 
 

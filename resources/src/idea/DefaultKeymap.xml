@@ -807,6 +807,9 @@
     <action id="AddToFavoritesPopup">
       <keyboard-shortcut first-keystroke="alt shift F" />
     </action>
+    <action id="InspectCodeWithEditorProfile">
+      <keyboard-shortcut first-keystroke="alt shift I" />
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
