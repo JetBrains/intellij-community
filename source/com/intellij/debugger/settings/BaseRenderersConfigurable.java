@@ -56,7 +56,7 @@ public class BaseRenderersConfigurable implements Configurable {
     myCbShowSyntheticFields.setMnemonic('y');
     myCbSort = new JCheckBox("Sort alphabetically");
     myCbSort.setMnemonic('l');
-    myCbHideNullArrayElements = new JCheckBox("Hile null array elements");
+    myCbHideNullArrayElements = new JCheckBox("Hide null array elements");
     myCbHideNullArrayElements.setMnemonic('n');
     myCbShowStatic = new JCheckBox("Show static fields");
     myCbShowStatic.setMnemonic('s');
