@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,6 +37,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     else{
       toParseTreeText(file);
     }
+    if(file instanceof JspxFileImpl) ((JspxFileImpl)file).checkAllTreesEqual();
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {

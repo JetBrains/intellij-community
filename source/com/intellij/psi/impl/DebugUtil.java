@@ -29,9 +29,15 @@ public class DebugUtil {
 
   public static String treeToString(ASTNode root, boolean skipWhitespaces) {
     StringBuffer buffer = new StringBuffer();
-    treeToBuffer(buffer, root, 0, skipWhitespaces);
+    treeToBuffer(buffer, root, 0, skipWhitespaces, false);
     return buffer.toString();
   }
+  public static String treeToString(ASTNode root, boolean skipWhitespaces, boolean showRanges) {
+    StringBuffer buffer = new StringBuffer();
+    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges);
+    return buffer.toString();
+  }
+
 
   public static String treeToStringWithUserData(TreeElement root, boolean skipWhitespaces) {
     StringBuffer buffer = new StringBuffer();
@@ -63,7 +69,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces, boolean showRanges) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
     for (int i = 0; i < indent; i++) {
@@ -85,6 +91,7 @@ public class DebugUtil {
       text = StringUtil.replace(text, "\t", "\\t");
       buffer.append(root.toString() + "('" + text + "')");
     }
+    if(showRanges) buffer.append(root.getTextRange());
     buffer.append("\n");
     if (root instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(root);
@@ -98,7 +105,7 @@ public class DebugUtil {
       }
       else {
         while (child != null) {
-          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces);
+          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, false);
           child = child.getTreeNext();
         }
       }

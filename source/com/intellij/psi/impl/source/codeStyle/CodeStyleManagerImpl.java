@@ -251,8 +251,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         ASTNode next = element.getTreeNext();
         ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, end - spaceStart, charTable);
         ASTNode tempElement = Factory.createSingleLeafElement(
-          ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
-          "###".length(), charTable, null);
+          ElementType.NEW_LINE_INDENT, "xxx".toCharArray(), 0,
+          "xxx".length(), charTable, null);
         parent.addChild(tempElement, space1.getTreeNext());
         tempElement = new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
         offset = tempElement.getTextRange().getStartOffset();

@@ -508,7 +508,8 @@ public class XmlUtil {
       final FileType fileType = file.getFileType();
 
       if (fileType == StdFileTypes.HTML ||
-          fileType == StdFileTypes.XHTML
+          fileType == StdFileTypes.XHTML ||
+          fileType == StdFileTypes.JSPX
           ) {
         return XHTML_URI;
       }
@@ -811,7 +812,10 @@ public class XmlUtil {
   }
 
   public static String decode(String text){
-    if(text.charAt(0) != '&' || text.length() > 6 || text.length() < 3) return text;
+    if(text.charAt(0) != '&' || text.length() > 6 || text.length() < 3){
+      if(text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
+      return text.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
+    }
 
     if(text.equals("&lt;")) {
       return "<";
