@@ -1,11 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiThisExpressionImpl;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.psi.javadoc.*;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.structuralsearch.impl.matcher.iterators.*;
@@ -1441,21 +1437,16 @@ public class MatchingVisitor extends PsiElementVisitor {
     result = (tag.getName().equals(another.getName()) || isTypedVar) &&
              matchInAnyOrder(tag.getAttributes(),another.getAttributes());
 
-    final XmlTag[] subTags = tag.getSubTags();
-    if (result && subTags!=null && subTags.length > 0) {
-      result = matchSequentially(
-        new ArrayBackedNodeIterator(subTags),
-        new ArrayBackedNodeIterator(another.getSubTags())
-      );
+    if(result && tag.getValue()!=null) {
+      final XmlTagChild[] contentChildren = tag.getValue().getChildren();
+
+      if (contentChildren != null && contentChildren.length > 0) {
+        result = matchSequentially(
+          new ArrayBackedNodeIterator(contentChildren),
+          new ArrayBackedNodeIterator(another.getValue()!=null ? another.getValue().getChildren():XmlTagChild.EMPTY_ARRAY)
+        );
+      }
     }
-    
-    //final XmlText[] textElements = tag.getValue().getTextElements();
-    //if (result && textElements!=null) {
-      //result = matchSequentially(
-      //  new ArrayBackedNodeIterator(textElements),
-      //  new ArrayBackedNodeIterator(another.getValue().getTextElements())
-      //);
-    //}
 
     if (result && isTypedVar) {
       Handler handler = matchContext.getPattern().getHandler( tag.getName() );
@@ -1464,5 +1455,19 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitXmlText(XmlText text) {
+    result = matchSequentially(text.getFirstChild(),element.getFirstChild());
+  }
+
+  public void visitXmlToken(XmlToken token) {
+    if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      String text = token.getText();
+      final boolean isTypedVar = matchContext.getPattern().isTypedVar(text);
+
+      if (isTypedVar) {
+        result = handleTypedElement(token, element);
+      } else {
+        result = text.equals(element.getText());
+      }
+    }
   }
 }

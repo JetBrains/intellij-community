@@ -438,15 +438,11 @@ public class StructuralSearchTest extends IdeaTestCase {
       4
     );
 
-    //options.setEnableAutoIdentifySearchTarget( false );
-
     assertEquals(
       "no smart detection of search target",
       findMatchesCount("processInheritors(1,2,3,4); processInheritors(1,2,3); processInheritors(1,2,3,4,5,6);","'instance?.processInheritors('_param1{1,6});"),
       3
     );
-
-    //options.setEnableAutoIdentifySearchTarget( true );
 
     String arrays = "int[] a = new int[20];\n" +
                     "byte[] b = new byte[30]";

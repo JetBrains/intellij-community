@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,8 @@ public class MatcherImplUtil {
   public static PsiElement[] createTreeFromText(String text, boolean file, FileType fileType, Project project) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
     if (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML) {
-      return elementFactory.createTagFromText("<QQQ>\n"+text+"\n</QQQ>").getSubTags();
+      return ((XmlFile)elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n"+text+"\n</QQQ>"))
+        .getDocument().getRootTag().getSubTags();
     } else {
       PsiElement element = (file)?
         (PsiElement)elementFactory.createFileFromText("__$$__.java",text):
