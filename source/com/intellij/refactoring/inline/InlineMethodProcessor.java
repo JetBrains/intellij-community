@@ -337,7 +337,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final PsiStatement lastStatement = statements[statements.length - 1];
         if (lastStatement instanceof PsiReturnStatement) {
           final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
-          if (returnValue != null) {
+          while(returnValue instanceof PsiReferenceExpression) ((PsiReferenceExpression)returnValue).getQualifierExpression();
+          if (returnValue != null && PsiUtil.isStatement(returnValue)) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement)myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
             anchorParent.addBefore(exprStatement, anchor);
@@ -888,50 +889,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
     else {
-      PsiExpression expr = (PsiExpression)assignment.replace(assignment.getRExpression());
-      resultVar.getParent().delete();
-      if (expr.getParent() instanceof PsiExpressionStatement && isSimpleExpression(expr)) {
-        expr.getParent().delete();
+      PsiExpression rExpression = assignment.getRExpression();
+      while(rExpression instanceof PsiReferenceExpression) rExpression = ((PsiReferenceExpression)rExpression).getQualifierExpression();
+      if (rExpression == null || !PsiUtil.isStatement(rExpression)) {
+        assignment.delete();
+      } else {
+        assignment.replace(rExpression);
       }
-    }
-  }
-
-  private boolean isSimpleExpression(PsiExpression expr) {
-    if (expr instanceof PsiLiteralExpression) {
-      return true;
-    }
-    else if (expr instanceof PsiReferenceExpression) {
-      PsiExpression qualifier = ((PsiReferenceExpression)expr).getQualifierExpression();
-      return qualifier == null || isSimpleExpression(qualifier);
-    }
-    else if (expr instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression accessExpr = (PsiArrayAccessExpression)expr;
-      return isSimpleExpression(accessExpr.getArrayExpression()) &&
-             isSimpleExpression(accessExpr.getIndexExpression());
-    }
-    else if (expr instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binExpr = (PsiBinaryExpression)expr;
-      PsiExpression lOperand = binExpr.getLOperand();
-      PsiExpression rOperand = binExpr.getROperand();
-      if (rOperand == null) return false;
-      return isSimpleExpression(lOperand) && isSimpleExpression(rOperand);
-    }
-    else if (expr instanceof PsiClassObjectAccessExpression) {
-      return true;
-    }
-    else if (expr instanceof PsiThisExpression) {
-      return true;
-    }
-    else if (expr instanceof PsiSuperExpression) {
-      return true;
-    }
-    else if (expr instanceof PsiTypeCastExpression) {
-      PsiExpression operand = ((PsiTypeCastExpression)expr).getOperand();
-      if (operand == null) return false;
-      return isSimpleExpression(operand);
-    }
-    else { //TODO: some other cases
-      return false;
+      resultVar.delete();
     }
   }
 
