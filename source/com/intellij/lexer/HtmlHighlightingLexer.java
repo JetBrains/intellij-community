@@ -38,6 +38,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
           tokenType==XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
           ) {
         setEmbeddedLexer();
+        embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
       }
     }
   }
@@ -62,7 +63,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       int state = initialState >> EMBEDDED_LEXER_STATE_SHIFT;
       LOG.assertTrue(hasSeenStyle() || hasSeenScript());
       setEmbeddedLexer();
-      embeddedLexer.start(buffer,startOffset,endOffset,state);
+      embeddedLexer.start(buffer,startOffset,skipToTheEndOfTheEmbeddment(),state);
     } else {
       embeddedLexer = null;
     }
@@ -91,7 +92,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
     if (newLexer!=null) {
       embeddedLexer = newLexer;
-      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
     }
   }
 
