@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
@@ -43,9 +44,9 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
             final PsiElement containingElement = blockStatement.getParent();
             try {
                 final PsiElement[] children = block.getChildren();
-                for (int i = 1; i < children.length - 1; i++) {
-                    final PsiElement child = children[i];
-                    containingElement.addBefore(child, blockStatement);
+                if (children.length > 2) {
+                  final PsiElement added = containingElement.addRangeBefore(children[1], children[children.length - 2], blockStatement);
+                  CodeStyleManager.getInstance(project).reformat(added);
                 }
                 blockStatement.delete();
             } catch (IncorrectOperationException e) {

@@ -20,7 +20,14 @@ public class ExpectedTypeUtils{
             wrappedExp = (PsiExpression) context;
             context = context.getParent();
         }
-        if(context instanceof PsiVariable){
+        if (context instanceof PsiField) {
+          final PsiField field = (PsiField)context;
+          final PsiExpression initializer = field.getInitializer();
+          if (wrappedExp.equals(initializer)) {
+            return field.getType();
+          }
+        }
+        else if (context instanceof PsiVariable){
             final PsiVariable psiVariable = (PsiVariable) context;
             return psiVariable.getType();
         } else if(context instanceof PsiReferenceExpression){
@@ -53,7 +60,7 @@ public class ExpectedTypeUtils{
             }
         } else if(context instanceof PsiArrayAccessExpression){
             final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression) context;
-            if(accessExpression.getIndexExpression().equals(wrappedExp)){
+            if(wrappedExp.equals(accessExpression.getIndexExpression())){
                 return PsiType.INT;
             }
         } else if(context instanceof PsiAssignmentExpression){
@@ -86,12 +93,6 @@ public class ExpectedTypeUtils{
                         return declaredElement.getType();
                     }
                 }
-            }
-        } else if(context instanceof PsiField){
-            final PsiField field = (PsiField) context;
-            final PsiExpression initializer = field.getInitializer();
-            if(wrappedExp.equals(initializer)){
-                return field.getType();
             }
         } else if(context instanceof PsiBinaryExpression){
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) context;
