@@ -49,32 +49,40 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    boolean isOriginal = true;
-    if(event.getParent() != null){
-      ASTNode element = SourceTreeToPsiMap.psiElementToTree(event.getParent());
+    boolean isOriginal = isOriginal(event.getParent(), psiFile, document);
+
+    if (isOriginal) {
+      myPsiDocumentManager.setProcessDocumentEvents(false);
+      syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
+      myPsiDocumentManager.setProcessDocumentEvents(true);
+
+      if(!myTransactionsMap.containsKey(document)){
+        document.setModificationStamp(psiFile.getModificationStamp());
+        mySmartPointerManager.synchronizePointers(psiFile);
+        if (LOG.isDebugEnabled()) {
+          PsiDocumentManagerImpl.checkConsistency(psiFile, document);
+          if (psiFile instanceof JspxFileImpl) {
+            ( (JspxFileImpl)psiFile).checkAllConsistent();
+          }
+        }
+      }
+    }
+  }
+
+  private boolean isOriginal(final PsiElement changeScope, final PsiFile psiFile, final DocumentEx document) {
+    boolean original = true;
+    if(changeScope != null){
+      ASTNode element = SourceTreeToPsiMap.psiElementToTree(changeScope);
       while(element != null && !(element instanceof FileElement)) {
         element = element.getTreeParent();
       }
       PsiFile fileForDoc = PsiDocumentManager.getInstance(psiFile.getProject()).getPsiFile(document);
 
-      isOriginal = element != null ? fileForDoc == SourceTreeToPsiMap.treeElementToPsi(element) : false;
-      LOG.debug("DOCSync: " + isOriginal + "; document=" + document+"; file="+psiFile.getName() + ":" +
+      original = element != null ? fileForDoc == SourceTreeToPsiMap.treeElementToPsi(element) : false;
+      LOG.debug("DOCSync: " + original + "; document=" + document+"; file="+psiFile.getName() + ":" +
                 psiFile.getClass() +"; file for doc="+fileForDoc.getName()+"; virtualfile="+psiFile.getVirtualFile());
     }
-
-    if (isOriginal) {
-      myPsiDocumentManager.setProcessDocumentEvents(false);
-      syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-      document.setModificationStamp(psiFile.getModificationStamp());
-      myPsiDocumentManager.setProcessDocumentEvents(true);
-      mySmartPointerManager.synchronizePointers(psiFile);
-      if (LOG.isDebugEnabled()) {
-        PsiDocumentManagerImpl.checkConsistency(psiFile, document);
-        if (psiFile instanceof JspxFileImpl) {
-            ( (JspxFileImpl)psiFile).checkAllConsistent();
-        }
-      }
-    }
+    return original;
   }
 
   public void childAdded(final PsiTreeChangeEvent event) {
@@ -215,23 +223,19 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public void commitTransaction(Document document){
     final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
-    try{
-      if(documentChangeTransaction == null) return;
-      if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
+    myTransactionsMap.remove(document);
+    if(documentChangeTransaction == null) return;
+    if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
 
-      final PsiElement changeScope = documentChangeTransaction.getChangeScope();
-      final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
-      fakeEvent.setParent(changeScope);
-      fakeEvent.setFile(changeScope.getContainingFile());
-      doSync(fakeEvent, new DocSyncAction() {
-        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-          doCommitTransaction(document, documentChangeTransaction);
-        }
-      });
-    }
-    finally{
-      myTransactionsMap.remove(document);
-    }
+    final PsiElement changeScope = documentChangeTransaction.getChangeScope();
+    final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
+    fakeEvent.setParent(changeScope);
+    fakeEvent.setFile(changeScope.getContainingFile());
+    doSync(fakeEvent, new DocSyncAction() {
+      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+        doCommitTransaction(document, documentChangeTransaction);
+      }
+    });
   }
 
   public void doCommitTransaction(final Document document){
