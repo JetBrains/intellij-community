@@ -3,9 +3,13 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.newCodeFormatting.Block;
+import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
@@ -15,6 +19,8 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.newXmlFormatter.AbstractXmlBlock;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
@@ -67,6 +73,23 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public ASTNode process(ASTNode element, int parent_indent) {
+
+    final FileType fileType = myHelper.getFileType();
+    if (useBlockFormatter(fileType)) {
+      TextRange range = element.getTextRange();
+      final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile);
+      try {
+        Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+
+      return element;
+
+    }
+
     if (useNewFormatter(myHelper.getFileType())) {
       TextRange range = element.getTextRange();
       int startOffset = range.getStartOffset();
@@ -112,8 +135,33 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
+  private boolean useBlockFormatter(final FileType fileType) {
+    if (!"lesya".equals(System.getProperty("user.name"))) return false;
+    return ApplicationManager.getApplication().isUnitTestMode() && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML);
+  }
+
+  private Block createBlock(final PsiFile element) {
+    return AbstractXmlBlock.creareRoot(element, mySettings);
+  }
+
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
+
+    if (useBlockFormatter(fileType)) {
+      TextRange range = new TextRange(startOffset, endOffset);
+      final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile);
+      try {
+        Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+
+      return element;
+
+    }
+
     if (useNewFormatter(fileType)) {
       PseudoTextBuilder pseudoTextBuilder = ((LanguageFileType)fileType).getLanguage().getFormatter();
       if (pseudoTextBuilder == null) {

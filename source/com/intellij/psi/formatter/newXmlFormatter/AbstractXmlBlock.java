@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -162,4 +163,13 @@ public abstract class AbstractXmlBlock implements Block {
   }
 
   public abstract boolean isTextElement();
+
+  public static Block creareRoot(final PsiFile element, final CodeStyleSettings settings) {
+    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
+    if (rootNode.getElementType() == ElementType.XML_FILE) {
+      return new XmlBlock(rootNode, null, null, null, new XmlPolicy(settings));
+    } else {
+      return new XmlBlock(rootNode, null, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG));
+    }
+  }
 }

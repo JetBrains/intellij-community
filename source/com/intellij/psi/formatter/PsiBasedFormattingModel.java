@@ -4,6 +4,7 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
@@ -28,7 +29,12 @@ public class PsiBasedFormattingModel implements FormattingModel{
   public PsiBasedFormattingModel(final PsiFile file) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    if (document != null) {
+      myDocument = document;
+    } else {
+      myDocument = new DocumentImpl(file.getText());
+    }
   }
 
   public int getLineNumber(int offset) {
