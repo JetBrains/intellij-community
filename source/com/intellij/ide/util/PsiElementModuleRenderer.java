@@ -70,18 +70,18 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
                   break;
                 }
               }
-            } else {
+            } /*else {
               setIcon(IconUtilEx.getEmptyIcon(false));
               setText(value.toString());
-            }
+            }*/
           }
         }
       }
     }
-    else {
+    /*else {
       setIcon(IconUtilEx.getEmptyIcon(false));
       setText(value == null ? "" : value.toString());
-    }
+    }*/
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     setHorizontalTextPosition(SwingConstants.LEFT);
     setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
