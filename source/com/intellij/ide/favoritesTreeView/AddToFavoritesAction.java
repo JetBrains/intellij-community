@@ -7,10 +7,7 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -46,7 +43,9 @@ public class AddToFavoritesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final AbstractTreeNode[] nodes = createNodes(dataContext);
+    final AbstractTreeNode[] nodes = createNodes(dataContext, e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
+                                                              e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
+                                                              e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP) );
     addNodes(project, nodes);
   }
 
@@ -71,11 +70,13 @@ public class AddToFavoritesAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
     else {
-      e.getPresentation().setEnabled(createNodes(dataContext) != null);
+      e.getPresentation().setEnabled(createNodes(dataContext, e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
+                                                              e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
+                                                              e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP) ) != null);
     }
   }
 
-  private AbstractTreeNode[] createNodes(DataContext dataContext) {
+  private AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).getFavoritesTreeStructure().getFavoritesConfiguration();
@@ -88,13 +89,15 @@ public class AddToFavoritesAction extends AnAction {
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiElement != null){
       Module containingModule = null;
-      if (ProjectView.getInstance(project).isShowModules(currentViewId)){
-        AbstractTreeNode abstractTreeNode = ((AbstractTreeNode)pane.getSelectedDescriptor().getElement());
-        while (abstractTreeNode != null && !(abstractTreeNode.getParent() instanceof AbstractModuleNode)){
-          abstractTreeNode = abstractTreeNode.getParent();
-        }
-        if (abstractTreeNode != null){
-          containingModule = (Module)((AbstractModuleNode)abstractTreeNode.getParent()).getValue();
+      if (inProjectView && ProjectView.getInstance(project).isShowModules(currentViewId)){
+        if (pane.getSelectedDescriptor() != null && pane.getSelectedDescriptor().getElement() instanceof AbstractTreeNode) {
+          AbstractTreeNode abstractTreeNode = ((AbstractTreeNode)pane.getSelectedDescriptor().getElement());
+          while (abstractTreeNode != null && !(abstractTreeNode.getParent() instanceof AbstractModuleNode)){
+            abstractTreeNode = abstractTreeNode.getParent();
+          }
+          if (abstractTreeNode != null){
+            containingModule = (Module)((AbstractModuleNode)abstractTreeNode.getParent()).getValue();
+          }
         }
       }
       addPsiElementNode(psiElement, project, result, favoritesConfig, containingModule);

@@ -78,9 +78,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
         final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
-        favoritesActionsGroup.removeAll();
-        favoritesActionsGroup.add(new AddToNewFavoritesListAction());
-        favoritesActionsGroup.addSeparator();                  
+        favoritesActionsGroup.removeAll();        
         if (myName2FavoritesListSet.isEmpty()){
           final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myProject, null, myProject.getName());
           final Content favoritesContent = contentFactory.createContent(panel, myProject.getName(), false);
@@ -106,6 +104,8 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
             }
           }
         }
+        favoritesActionsGroup.addSeparator();
+        favoritesActionsGroup.add(new AddToNewFavoritesListAction());
       }
     });
   }
@@ -158,7 +158,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   public void projectClosed() {
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
     for (Iterator<String> iterator = myName2FavoritesListSet.keySet().iterator(); iterator.hasNext();) {
-      String key = iterator.next();
+      final String key = iterator.next();
       final Content content = myName2FavoritesListSet.get(key);
       final FavoritesTreeViewPanel panel = (FavoritesTreeViewPanel)content.getComponent();
       panel.getBuilder().dispose();
@@ -170,8 +170,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
-    favoritesActionsGroup.addSeparator();
+    myName2FavoritesListSet.clear();
     for (Iterator<Element> iterator = element.getChildren("favorites_list").iterator(); iterator.hasNext();) {
       Element el = iterator.next();
       final String name = el.getAttributeValue("name");
