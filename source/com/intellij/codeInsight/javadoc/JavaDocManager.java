@@ -549,7 +549,7 @@ public class JavaDocManager implements ProjectComponent {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 if (text == null) {
-                  component.setText("No JavaDoc found.", true);
+                  component.setText("No documentation found.", true);
                 }
                 else if (text.length() == 0) {
                   component.setText(component.getText(), true);
