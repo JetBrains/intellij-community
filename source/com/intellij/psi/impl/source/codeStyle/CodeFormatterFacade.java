@@ -131,7 +131,7 @@ public class CodeFormatterFacade implements Constants {
     return (fileType == StdFileTypes.JAVA
             || fileType == StdFileTypes.XML
             || fileType == StdFileTypes.JSPX
-            || fileType == StdFileTypes.HTML) &&
+            /*|| fileType == StdFileTypes.HTML*/) &&
            USE_NEW_CODE_FORMATTER == 1;
   }
 

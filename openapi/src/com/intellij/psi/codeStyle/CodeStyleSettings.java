@@ -758,6 +758,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int XML_KEEP_BLANK_LINES = 2;
 
   public boolean XML_ALIGN_ATTRIBUTES = true;
+  public boolean XML_ALIGN_TEXT = false;
 
   public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
   public boolean XML_SPACE_AROUND_TAG_NAME = false;

@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.openapi.fileTypes.FileType;
@@ -119,8 +120,8 @@ public class HtmlFileType implements FileType {
   }
 
   public PseudoTextBuilder getPseudoTextBuilder() {
-    //return new HtmlPseudoTextBuilder();
-    return null;
+    return new HtmlPseudoTextBuilder();
+    //return null;
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
