@@ -30,6 +30,8 @@ public class ExpressionParsing extends Parsing {
     if (lexer.getTokenType() != null) return null;
 
     ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
+    TreeUtil.addChildren(dummyRoot, expression);
     return expression;
   }
 
