@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
@@ -66,7 +65,7 @@ public class GotoFileModel implements ChooseByNameModel{
       array.add(fileName);
     }
 
-    return (String[])array.toArray(new String[array.size()]);
+    return array.toArray(new String[array.size()]);
   }
 
   public Object[] getElementsByName(final String name, final boolean checkBoxState) {
@@ -78,10 +77,11 @@ public class GotoFileModel implements ChooseByNameModel{
       ArrayList<PsiFile> list = new ArrayList<PsiFile>();
       for(int i = 0; i < psiFiles.length; i++){
         PsiFile file = psiFiles[i];
-        if (file.getFileType() == StdFileTypes.JAVA) continue;
+        if (file.getFileType() == StdFileTypes.JAVA ||
+            file.getFileType() == StdFileTypes.CLASS) continue;
         list.add(file);
       }
-      return (PsiFile[])list.toArray(new PsiFile[list.size()]);
+      return list.toArray(new PsiFile[list.size()]);
     }
   }
 
