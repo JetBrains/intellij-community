@@ -2,7 +2,7 @@ package com.siyeh.ipp.parenthesis;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
