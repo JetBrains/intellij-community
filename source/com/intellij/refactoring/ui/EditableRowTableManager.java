@@ -47,7 +47,7 @@ public class EditableRowTableManager  {
     buttonsPanel.add(myAddButton, gbConstraints);
 
     myRemoveButton = new JButton("Remove");
-    if (addMnemonics) myRemoveButton.setMnemonic('R');
+    if (addMnemonics) myRemoveButton.setMnemonic('E');
     myRemoveButton.setDefaultCapable(false);
     buttonsPanel.add(myRemoveButton, gbConstraints);
 

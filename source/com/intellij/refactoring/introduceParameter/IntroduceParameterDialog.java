@@ -218,7 +218,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myOccurenceNumber > 1 && !myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
       myCbReplaceAllOccurences = new NonFocusableCheckBox("Replace all occurences (" + myOccurenceNumber + " occurences)");
-      myCbReplaceAllOccurences.setMnemonic('R');
+      myCbReplaceAllOccurences.setMnemonic('e');
       panel.add(myCbReplaceAllOccurences, gbConstraints);
       myCbReplaceAllOccurences.setSelected(false);
     }

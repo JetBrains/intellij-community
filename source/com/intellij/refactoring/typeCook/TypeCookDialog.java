@@ -103,7 +103,7 @@ public class TypeCookDialog extends RefactoringDialog {
     }
 
     myCbDropCasts.setMnemonic('D');
-    myCbPreserveRawArrays.setMnemonic('P');
+    myCbPreserveRawArrays.setMnemonic('A');
     myCbLeaveObjectParameterizedTypesRaw.setMnemonic('L');
     myCbExhaustive.setMnemonic('E');
     myCbCookObjects.setMnemonic('O');

@@ -139,7 +139,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   private class RefactorAction extends AbstractAction {
     public RefactorAction() {
-      putValue(Action.NAME, "Refactor");
+      putValue(Action.NAME, "&Refactor");
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -150,7 +150,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   private class PreviewAction extends AbstractAction {
     public PreviewAction() {
-      putValue(Action.NAME, "Preview");
+      putValue(Action.NAME, "&Preview");
     }
 
     public void actionPerformed(ActionEvent e) {

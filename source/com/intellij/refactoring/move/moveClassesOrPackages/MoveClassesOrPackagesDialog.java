@@ -148,7 +148,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.gridwidth = 2;
     myCbPreserveSourceFolders =
     new NonFocusableCheckBox("Preserve source folders");
-    myCbPreserveSourceFolders.setMnemonic('r');
+    myCbPreserveSourceFolders.setMnemonic('f');
     panel.add(myCbPreserveSourceFolders, gbConstraints);
 
 

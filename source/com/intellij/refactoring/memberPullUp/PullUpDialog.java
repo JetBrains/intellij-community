@@ -152,15 +152,6 @@ public class PullUpDialog extends DialogWrapper {
     }*/
   }
 
-  /*protected JComponent createSouthPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(super.createSouthPanel(), BorderLayout.CENTER);
-    myCbPreviewUsages.setSelected(RefactoringSettings.getInstance().PULL_UP_MEMBERS_PREVIEW_USAGES);
-    myCbPreviewUsages.setMnemonic('P');
-    panel.add(myCbPreviewUsages, BorderLayout.WEST);
-    return panel;
-  }*/
-
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     RefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();

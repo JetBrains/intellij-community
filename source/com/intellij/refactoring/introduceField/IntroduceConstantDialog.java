@@ -275,7 +275,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     };
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
-      myCbReplaceAll.setMnemonic('R');
+      myCbReplaceAll.setMnemonic('A');
       myCbReplaceAll.setFocusable(false);
       gbConstraints.gridy++;
       panel.add(myCbReplaceAll, gbConstraints);

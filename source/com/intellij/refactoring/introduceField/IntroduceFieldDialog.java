@@ -300,7 +300,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox(
               "Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
-      myCbReplaceAll.setMnemonic('R');
+      myCbReplaceAll.setMnemonic('A');
       gbConstraints.gridy++;
       panel.add(myCbReplaceAll, gbConstraints);
       myCbReplaceAll.addItemListener(itemListener);

@@ -234,7 +234,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     myCbEncapsulateSet.setMnemonic('S');
     myCbUseAccessorsWhenAccessible.setMnemonic('U');
     myRbFieldPrivate.setMnemonic('i');
-    myRbFieldProtected.setMnemonic('r');
+    myRbFieldProtected.setMnemonic('t');
     myRbFieldPackageLocal.setMnemonic('c');
     myRbFieldAsIs.setMnemonic('A');
     myRbAccessorPublic.setMnemonic('b');

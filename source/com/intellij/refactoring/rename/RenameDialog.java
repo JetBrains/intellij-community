@@ -379,18 +379,6 @@ public class RenameDialog extends RefactoringDialog {
     return panel;
   }
 
-  /*
-  protected JComponent createSouthPanel() {
-    myCbPreviewResults = new NonFocusableCheckBox("Preview usages to be changed");
-    myCbPreviewResults.setSelected(RefactoringSettings.getInstance().RENAME_PREVIEW_USAGES);
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(super.createSouthPanel(), BorderLayout.CENTER);
-    myCbPreviewResults.setMnemonic('P');
-    panel.add(myCbPreviewResults, BorderLayout.WEST);
-    return panel;
-  }
-  */
-
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
