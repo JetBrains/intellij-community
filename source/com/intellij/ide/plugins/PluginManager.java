@@ -18,6 +18,7 @@ import sun.reflect.Reflection;
 import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -409,11 +410,15 @@ public class PluginManager {
     try {
       final List urls = new ArrayList(classPath.length);
       for (int idx = 0; idx < classPath.length; idx++) {
-        urls.add(classPath[idx].toURL());
+        final File file = classPath[idx].getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
+        urls.add(file.toURL());
       }
       return new PluginClassLoader(urls, parentLoaders, pluginName, pluginRoot);
     }
     catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
       e.printStackTrace();
     }
     return null;
