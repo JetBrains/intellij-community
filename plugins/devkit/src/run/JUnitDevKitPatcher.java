@@ -15,7 +15,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
 
   public void patchJavaParameters(JavaParameters javaParameters) {
     final ProjectJdk jdk = javaParameters.getJdk();
-    if (!(jdk.getSdkType() instanceof IdeaJdk)) {
+    if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       return;
     }
     String libPath = jdk.getHomePath() + File.separator + "lib";
