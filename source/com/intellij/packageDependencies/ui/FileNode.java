@@ -60,6 +60,9 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
+    if (isEquals()){
+      return super.equals(o);
+    }
     if (this == o) return true;
     if (!(o instanceof FileNode)) return false;
 

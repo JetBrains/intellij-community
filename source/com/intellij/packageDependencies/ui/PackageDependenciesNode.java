@@ -21,6 +21,15 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   private Set<PsiFile> myRegisteredFiles = new HashSet<PsiFile>();
   private boolean myHasUnmarked = false;
   private boolean myHasMarked = false;
+  private boolean myEquals;
+
+  public void setEquals(final boolean equals) {
+    myEquals = equals;
+  }
+
+  public boolean isEquals() {
+    return myEquals;
+  }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     set.addAll(myRegisteredFiles);
@@ -63,7 +72,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return result;
   }
 
-  protected String getPresentableFilesCount(){
+  public String getPresentableFilesCount(){
     final int filesCount = getContainingFiles();
     return filesCount > 0 ? " (" + filesCount + (filesCount > 1 ? " entries" : " entry") + ")" : "";
   }

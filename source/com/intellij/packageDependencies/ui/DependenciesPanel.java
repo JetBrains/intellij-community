@@ -305,15 +305,16 @@ public class DependenciesPanel extends JPanel {
     return myRightTree;
   }
 
-  private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(
+    JTree tree,
+    Object value,
+    boolean selected,
+    boolean expanded,
+    boolean leaf,
+    int row,
+    boolean hasFocus
+  ){
       PackageDependenciesNode node = (PackageDependenciesNode)value;
       if (expanded) {
         setIcon(node.getOpenIcon());
@@ -322,11 +323,11 @@ public class DependenciesPanel extends JPanel {
         setIcon(node.getClosedIcon());
       }
 
-      if (node.hasMarked() && !sel) {
+      if (node.hasMarked() && !selected) {
         setForeground(Color.red);
       }
-
-      return this;
+      append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(node.getPresentableFilesCount(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 

@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 

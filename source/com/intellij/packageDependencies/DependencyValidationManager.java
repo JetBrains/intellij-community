@@ -42,6 +42,19 @@ public class DependencyValidationManager extends NamedScopesHolder implements Pr
     return null;
   }
 
+  public DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to) {
+    ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
+      for (int i = 0; i < myRules.size(); i++) {
+        DependencyRule dependencyRule = myRules.get(i);
+        if (dependencyRule.isForbiddenToUse(from, to)){
+          result.add(dependencyRule);
+        }
+      }
+      return result.toArray(new DependencyRule[result.size()]);
+
+    }
+
+
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);
   }

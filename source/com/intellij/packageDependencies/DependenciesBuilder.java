@@ -1,10 +1,18 @@
 package com.intellij.packageDependencies;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.RefCountHolder;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 
 import java.util.*;
 
@@ -25,11 +33,11 @@ public abstract class DependenciesBuilder {
     myTotalFileCount = scope.getFileCount();
   }
 
-  protected void setInitialFileCount(final int fileCount) {
+  public void setInitialFileCount(final int fileCount) {
     myFileCount = fileCount;
   }
 
-  protected void setTotalFileCount(final int totalFileCount) {
+  public void setTotalFileCount(final int totalFileCount) {
     myTotalFileCount = totalFileCount;
   }
 
@@ -89,6 +97,7 @@ public abstract class DependenciesBuilder {
     void process(PsiElement place, PsiElement dependency);
   }
 
+
   private static class DependenciesWalker extends PsiRecursiveElementVisitor {
     private final DependencyProcessor myProcessor;
 
@@ -114,6 +123,10 @@ public abstract class DependenciesBuilder {
 
     public void visitDocComment(PsiDocComment comment) {
       //empty
+    }
+
+    public void visitImportStatement(PsiImportStatement statement) {
+      //empty - to exclude imports from dependency analyzing   
     }
 
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {

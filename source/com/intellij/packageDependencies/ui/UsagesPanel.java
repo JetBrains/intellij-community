@@ -29,6 +29,7 @@ public class UsagesPanel extends JPanel {
   private DependenciesBuilder myBuilder;
   private ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
+  private UsageView myCurrentUsageView;
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public UsagesPanel(Project project, DependenciesBuilder builder) {
@@ -107,9 +108,9 @@ public class UsagesPanel extends JPanel {
       Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
-      UsageView usageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],
+      myCurrentUsageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],
                                                                                            usages, presentation);
-      setToComponent(usageView.getComponent());
+      setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {
       setToCanceled();
@@ -124,6 +125,9 @@ public class UsagesPanel extends JPanel {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (myCurrentComponent != null) {
+          if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
+            myCurrentUsageView.dispose();
+          }
           remove(myCurrentComponent);
         }
         myCurrentComponent = cmp;

@@ -34,7 +34,7 @@ public class ModuleNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myModule == null ? "<unknown>" : myModule.getName() + getPresentableFilesCount();
+    return myModule == null ? "<unknown>" : myModule.getName();
   }
 
   public String getModuleName() {
@@ -46,6 +46,9 @@ public class ModuleNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
+    if (isEquals()){
+      return super.equals(o);
+    }
     if (this == o) return true;
     if (!(o instanceof ModuleNode)) return false;
 

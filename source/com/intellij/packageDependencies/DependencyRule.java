@@ -27,11 +27,11 @@ public class DependencyRule {
   public String getDisplayText() {
     StringBuffer buf = new StringBuffer();
     buf.append(myDenyRule ? "Deny " : "Allow ");
-    buf.append("usages of '");
+    buf.append("usages of scope '");
     if (myToScope != null) {
       buf.append(myToScope.getName());
     }
-    buf.append("' " + (myDenyRule ? " " : "only ") + "in '");
+    buf.append("' " + (myDenyRule ? " " : "only ") + "in scope '");
     if (myFromScope != null) {
       buf.append(myFromScope.getName());
     }

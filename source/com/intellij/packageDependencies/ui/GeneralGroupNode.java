@@ -30,7 +30,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myName + getPresentableFilesCount();
+    return myName;
   }
 
   public int getWeight() {
@@ -38,6 +38,9 @@ public class GeneralGroupNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
+    if (isEquals()){
+      return super.equals(o);
+    }
     if (!(o instanceof GeneralGroupNode)) return false;
     return myName.equals(((GeneralGroupNode)o).myName);
   }

@@ -16,6 +16,7 @@ public class PackageNode extends PackageDependenciesNode {
   private String myPackageQName;
   private final PsiPackage myPackage;
 
+
   public PackageNode(PsiPackage aPackage, boolean showFQName) {
     myPackage = aPackage;
     myPackageName = showFQName ? aPackage.getQualifiedName() : aPackage.getName();
@@ -40,7 +41,7 @@ public class PackageNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myPackageName + getPresentableFilesCount();
+    return myPackageName;
   }
 
   public String getPackageQName() {
@@ -56,6 +57,9 @@ public class PackageNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
+    if (isEquals()){
+      return super.equals(o);
+    }
     if (this == o) return true;
     if (!(o instanceof PackageNode)) return false;
 

@@ -30,7 +30,7 @@ public class LibraryNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myLibraryOrJdk.getPresentableName() + getPresentableFilesCount();
+    return myLibraryOrJdk.getPresentableName();
   }
 
   public int getWeight() {
@@ -38,6 +38,9 @@ public class LibraryNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
+    if (isEquals()){
+      return super.equals(o);
+    }
     if (this == o) return true;
     if (!(o instanceof LibraryNode)) return false;
 
