@@ -9,15 +9,10 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.JspAttribute;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -60,12 +55,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return;
     }
 
-    if (element instanceof JspImplicitVariable) {
-      final JspImplicitVariable variable = (JspImplicitVariable) element;
-      element = variable.getDeclaration();
-    }
-    if (element == null) return;
-
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
     PsiElement navElement = element.getNavigationElement();
 
@@ -79,11 +68,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
     }
 
-    PsiFile targetFile = navElement.getContainingFile();
-    // Fix for floating declarations such as array class, jsp taglib etc.
-    if (targetFile == null || targetFile.getVirtualFile() == null) return;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), navElement.getTextOffset());
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    if (navElement instanceof Navigatable) {
+        ((Navigatable)navElement).navigate(true);
+    }
   }
 
 
@@ -150,45 +137,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   protected int getOffset(Editor editor) {
     return editor.getCaretModel().getOffset();
-  }
-
-  private PsiElement findDeclarationAction(PsiElement place, JspImplicitVariable variable) {
-    if (place == null) return null;
-
-    if (place instanceof JspAction) {
-      JspAction action = (JspAction) place;
-
-      final JspAttribute[] attributes = action.getAttributes();
-
-      for (int i = 0; i < attributes.length; i++) {
-        JspAttribute attribute = attributes[i];
-        final PsiElement valueElement = attribute.getValueElement();
-        if (valueElement == null) continue;
-        final PsiReference reference = valueElement.getReference();
-        if (reference != null && reference.resolve() == variable) return attribute.getValueElement();
-      }
-
-      JspImplicitVariable[] variables = action.getDeclaredVariables();
-
-      if (variables != null) {
-        for (int i = 0; i < variables.length; i++) {
-          JspImplicitVariable v = variables[i];
-
-          if (v == variable) {
-            return action;
-          }
-        }
-      }
-    }
-
-    PsiElement[] children = place.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      PsiElement action = findDeclarationAction(child, variable);
-      if (action != null) return action;
-    }
-
-    return null;
   }
 
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
