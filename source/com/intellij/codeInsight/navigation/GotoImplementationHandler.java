@@ -195,7 +195,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
     if (elements.length == 1) {
       Navigatable descriptor = EditSourceUtil.getDescriptor(elements[0]);
-      if (descriptor != null) {
+      if (descriptor != null && descriptor.canNavigate()) {
         descriptor.navigate(true);
       }
     }
@@ -218,7 +218,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
           if (index < 0) return;
           PsiElement element = (PsiElement) list.getSelectedValue();
           Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-          if (descriptor != null) {
+          if (descriptor != null && descriptor.canNavigate()) {
             descriptor.navigate(true);
           }
         }

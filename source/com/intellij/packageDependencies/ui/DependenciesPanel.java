@@ -12,7 +12,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.packageDependencies.*;
+import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyRule;
+import com.intellij.packageDependencies.DependencyUISettings;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.pom.Navigatable;
@@ -20,21 +23,20 @@ import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Icons;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 
 public class DependenciesPanel extends JPanel {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
@@ -217,7 +219,7 @@ public class DependenciesPanel extends JPanel {
       public void mouseClicked(MouseEvent e) {
         if (e.isPopupTrigger() && e.getClickCount() == 2) {
           Navigatable navigatable = (Navigatable)tree.getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null) {
+          if (navigatable != null && navigatable.canNavigate()) {
             navigatable.navigate(true);
           }
         }

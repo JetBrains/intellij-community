@@ -68,7 +68,7 @@ public class HighlightUtil {
 
   static {
     ourClassIncompatibleModifiers = new THashMap<String, Set<String>>(8);
-    THashSet<String> modifiers = new THashSet<String>(1);
+    Set<String> modifiers = new THashSet<String>(1);
     modifiers.add(PsiModifier.FINAL);
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, modifiers);
     modifiers = new THashSet<String>(1);

@@ -29,7 +29,9 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    navigatable.navigate(myFocusEditor);
+    if (navigatable.canNavigate()) {
+      navigatable.navigate(myFocusEditor);
+    }
   }
 
 

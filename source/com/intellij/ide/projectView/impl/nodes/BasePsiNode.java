@@ -14,11 +14,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewNode<Type> {
-  static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
   private SmartPsiElementPointer mySmartPointer;
 
@@ -97,12 +97,12 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
 
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
-        ((NavigationItem)getValue()).navigate(requestFocus);
+      ((NavigationItem)getValue()).navigate(requestFocus);
     }
   }
 
   public boolean canNavigate() {
-    return getValue() instanceof NavigationItem;
+    return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigate();
   }
 
   public static VirtualFile getVirtualFile(PsiElement element) {

@@ -17,9 +17,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 
@@ -399,7 +397,7 @@ public class EditorsSplitters extends JPanel {
 
   //---------------------------------------------------------
 
-  protected final ArrayListSet<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
+  protected final Set<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
 
   public EditorWithProviderComposite[] findEditorComposites(final VirtualFile file) {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
@@ -410,7 +408,7 @@ public class EditorsSplitters extends JPanel {
         res.add(fileComposite);
       }
     }
-    return (res.size() == 0 ? null : res.toArray(new EditorWithProviderComposite[res.size()]));
+    return res.size() == 0 ? null : res.toArray(new EditorWithProviderComposite[res.size()]);
   }
 
   public EditorWindow[] findWindows(final VirtualFile file) {
@@ -421,7 +419,7 @@ public class EditorsSplitters extends JPanel {
         res.add(window);
       }
     }
-    return (res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]));
+    return res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]);
   }
 
   public EditorWindow[] findWindowsWithCurrent(final VirtualFile file) {
@@ -432,7 +430,7 @@ public class EditorsSplitters extends JPanel {
         res.add(window);
       }
     }
-    return (res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]));
+    return res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]);
   }
 
   public EditorWindow [] getWindows() {
@@ -458,17 +456,15 @@ public class EditorsSplitters extends JPanel {
           }
         }
       }
-    };
+    }
 
     // get root component and traverse splitters tree:
-    {
-      if (getComponentCount() != 0) {
-        final Component comp = getComponent(0);
-        LOG.assertTrue(comp instanceof JPanel);
-        final JPanel panel = (JPanel)comp;
-        if (panel.getComponentCount() != 0) {
-          new Inner().collect (panel);
-        }
+    if (getComponentCount() != 0) {
+      final Component comp = getComponent(0);
+      LOG.assertTrue(comp instanceof JPanel);
+      final JPanel panel = (JPanel)comp;
+      if (panel.getComponentCount() != 0) {
+        new Inner().collect (panel);
       }
     }
 
@@ -498,7 +494,7 @@ public class EditorsSplitters extends JPanel {
       if (oldActiveWindow != newActiveWindow) {
         setCurrentWindow(newActiveWindow, false);
         getManager().updateFileName(newActiveWindow.getSelectedFile());
-        getManager().fireSelectionChanged((oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor()), newActiveWindow.getSelectedEditor());
+        getManager().fireSelectionChanged(oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor(), newActiveWindow.getSelectedEditor());
       }
     }
   }

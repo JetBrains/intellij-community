@@ -116,7 +116,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
               return;
             }
             Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null) {
+            if (navigatable != null && navigatable.canNavigate()) {
               navigatable.navigate(false);
             }
           }

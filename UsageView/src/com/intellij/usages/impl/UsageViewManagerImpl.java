@@ -122,7 +122,9 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
           else if (myUsageCount == 1 && !showPanelIfOnlyOneUsage) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                myFirstUsage.navigate(true);
+                if (myFirstUsage.canNavigate()) {
+                  myFirstUsage.navigate(true);
+                }
               }
             });
           }

@@ -35,7 +35,7 @@ public final class NavigationUtil {
         if (index < 0) return;
         PsiElement element = (PsiElement) list.getSelectedValue();
         Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-        if (descriptor != null) {
+        if (descriptor != null && descriptor.canNavigate()) {
           descriptor.navigate(true);
         }
       }

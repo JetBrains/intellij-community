@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
@@ -20,6 +19,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.EventDispatcher;
 import junit.framework.Assert;
+import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -33,8 +33,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
-  private com.intellij.util.containers.HashMap<VirtualFile, DirectoryInfo> myDirToInfoMap = new com.intellij.util.containers.HashMap<VirtualFile, DirectoryInfo>();
-  private com.intellij.util.containers.HashMap<String, VirtualFile[]> myPackageNameToDirsMap = new com.intellij.util.containers.HashMap<String, VirtualFile[]>();
+  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new HashMap<VirtualFile, DirectoryInfo>();
+  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new HashMap<String, VirtualFile[]>();
 
   private VirtualFileListener myVirtualFileListener;
   private FileTypeListener myFileTypeListener;
@@ -88,17 +88,17 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Assert.assertTrue(myInitialized);
     Assert.assertTrue(!myDisposed);
 
-    com.intellij.util.containers.HashMap<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
-    myDirToInfoMap = new com.intellij.util.containers.HashMap<VirtualFile, DirectoryInfo>();
+    Map<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
+    myDirToInfoMap = new HashMap<VirtualFile, DirectoryInfo>();
 
-    com.intellij.util.containers.HashMap<String, VirtualFile[]> oldPackageNameToDirsMap = myPackageNameToDirsMap;
-    myPackageNameToDirsMap = new com.intellij.util.containers.HashMap<String, VirtualFile[]>();
+    Map<String, VirtualFile[]> oldPackageNameToDirsMap = myPackageNameToDirsMap;
+    myPackageNameToDirsMap = new HashMap<String, VirtualFile[]>();
 
     _initialize(reverseAllSets, null);
 
     if (LAZY_MODE) {
-      com.intellij.util.containers.HashMap<VirtualFile, DirectoryInfo> newDirToInfoMap = myDirToInfoMap;
-      com.intellij.util.containers.HashMap<String, VirtualFile[]> newPackageNameToDirsMap = myPackageNameToDirsMap;
+      Map<VirtualFile, DirectoryInfo> newDirToInfoMap = myDirToInfoMap;
+      Map<String, VirtualFile[]> newPackageNameToDirsMap = myPackageNameToDirsMap;
       myDirToInfoMap = oldDirToInfoMap;
       myPackageNameToDirsMap = oldPackageNameToDirsMap;
 
@@ -391,7 +391,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private void putForFileAndAllAncestors(Map<VirtualFile, Set<VirtualFile>> map, VirtualFile file, VirtualFile value) {
+  private static void putForFileAndAllAncestors(Map<VirtualFile, Set<VirtualFile>> map, VirtualFile file, VirtualFile value) {
     while (true) {
       Set<VirtualFile> set = map.get(file);
       if (set == null) {
@@ -792,7 +792,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private class MyVirtualFileListener implements VirtualFileListener {
-    private final Key FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
+    private final Key<List<VirtualFile>> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
 
     public void fileCreated(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
@@ -857,7 +857,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     public void fileDeleted(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
-      ArrayList<VirtualFile> list = (ArrayList<VirtualFile>)file.getUserData(FILES_TO_RELEASE_KEY);
+      List<VirtualFile> list = file.getUserData(FILES_TO_RELEASE_KEY);
       if (list == null) return;
 
       for (int i = 0; i < list.size(); i++) {

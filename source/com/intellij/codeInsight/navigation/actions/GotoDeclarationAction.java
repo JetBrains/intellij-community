@@ -32,12 +32,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    boolean b = file.canContainJavaCode() || file instanceof XmlFile;
-    if (!b) {
+    boolean canNavigate = file.canContainJavaCode() || file instanceof XmlFile;
+    if (!canNavigate) {
       FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
-      b = (supportCapabilities!=null)?supportCapabilities.hasNavigation():false;
+      canNavigate = supportCapabilities == null ? false : supportCapabilities.hasNavigation();
     }
-    return b;
+    return canNavigate;
   }
 
   protected boolean isValidForLookup() {
@@ -51,7 +51,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiElement element = findTargetElement(project, editor, offset);
     if (element == null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-      chooseAmbigousTarget(project, editor, offset);
+      chooseAmbiguousTarget(project, editor, offset);
       return;
     }
 
@@ -68,19 +68,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
     }
 
-    if (navElement instanceof Navigatable) {
+    if (navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate()) {
         ((Navigatable)navElement).navigate(true);
     }
   }
 
-
-  private void chooseAmbigousTarget(final Project project, final Editor editor, int offset) {
+  private void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
     final PsiElement[] candidates = suggestCandidates(project, editor, offset);
     if (candidates.length == 0) {
       return;
     } else if (candidates.length == 1) {
       Navigatable navigatable = EditSourceUtil.getDescriptor(candidates[0]);
-      if (navigatable != null) {
+      if (navigatable != null && navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
     } else {

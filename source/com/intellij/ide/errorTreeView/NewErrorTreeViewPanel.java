@@ -10,7 +10,6 @@ import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +21,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -143,7 +141,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
-      return (selectedMessageElement != null)? selectedMessageElement.getNavigatable() : null;
+      return selectedMessageElement != null? selectedMessageElement.getNavigatable() : null;
     }
     else if (DataConstants.HELP_ID.equals(dataId)) {
       return myHelpId;
@@ -253,10 +251,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (element == null) {
       return;
     }
-    element.getNavigatable().navigate(focusEditor);
+    final Navigatable navigatable = element.getNavigatable();
+    if (navigatable.canNavigate()) {
+      navigatable.navigate(focusEditor);
+    }
   }
 
-  public String getQualifiedName(final VirtualFile file) {
+  public static String getQualifiedName(final VirtualFile file) {
     return file.getPresentableUrl();
   }
 

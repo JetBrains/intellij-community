@@ -33,9 +33,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -142,7 +141,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       public void mouseClicked(MouseEvent e) {
         if (!e.isPopupTrigger() && e.getClickCount() == 2) {
           Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null) {
+          if (navigatable != null && navigatable.canNavigate()) {
             navigatable.navigate(true);
           }
         }
@@ -153,7 +152,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null) {
+          if (navigatable != null && navigatable.canNavigate()) {
             navigatable.navigate(false);
           }
         }
@@ -202,7 +201,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private void syncSource() {
     if (isAutoScrollMode()) {
       Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-      if (navigatable != null) {
+      if (navigatable != null && navigatable.canNavigate()) {
         navigatable.navigate(false);
       }
     }

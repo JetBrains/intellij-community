@@ -30,7 +30,9 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
       return;
     }
     Navigatable descriptor = occurenceInfo.getNavigateable();
-    if (descriptor != null) descriptor.navigate(false);
+    if (descriptor != null && descriptor.canNavigate()) {
+      descriptor.navigate(false);
+    }
     if(occurenceInfo.getOccurenceNumber()==-1||occurenceInfo.getOccurencesCount()==-1){
       return;
     }

@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ArrayListSet;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -20,6 +19,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Author: msk
@@ -67,7 +67,7 @@ public class EditorWindow {
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
-  private ArrayListSet<EditorWindow> getWindows() {
+  private Set<EditorWindow> getWindows() {
     return myOwner.myWindows;
   }
 
@@ -197,7 +197,7 @@ public class EditorWindow {
           closeFile(files[i], false);
         }
         disposeTabs();
-        getManager().openFileImpl2(this, currentFile, focusEditor && (myOwner.getCurrentWindow() == this), null);
+        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, null);
       }
     }
     finally {
@@ -526,13 +526,13 @@ public class EditorWindow {
 
   public boolean inSplitter() {
     check();
-    return (myPanel.getParent() instanceof Splitter);
+    return myPanel.getParent() instanceof Splitter;
   }
 
   public VirtualFile getSelectedFile() {
     check();
     final EditorWithProviderComposite editor = getSelectedEditor();
-    return (editor == null ? null : editor.getFile());
+    return editor == null ? null : editor.getFile();
   }
 
   public EditorWithProviderComposite findFileComposite(final VirtualFile file) {
@@ -595,7 +595,7 @@ public class EditorWindow {
     if(!isFileOpen(file)){
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    getManager().assertThread();
+    FileEditorManagerImpl.assertThread();
     final EditorComposite editorComposite = findFileComposite(file);
     return editorComposite.isPinned();
   }
@@ -604,7 +604,7 @@ public class EditorWindow {
     if(!isFileOpen(file)){
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    getManager().assertThread();
+    FileEditorManagerImpl.assertThread();
     final EditorComposite editorComposite = findFileComposite(file);
     editorComposite.setPinned(pinned);
     updateFileIcon(file);

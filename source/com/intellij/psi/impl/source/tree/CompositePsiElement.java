@@ -222,7 +222,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public boolean canNavigate() {
-    return true;
+    return EditSourceUtil.getDescriptor(getNavigationElement()) != null;
   }
 
   public FileStatus getFileStatus() {

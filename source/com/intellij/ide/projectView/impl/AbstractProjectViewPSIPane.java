@@ -72,51 +72,51 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     TreeUtil.installActions(myTree);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-                                                              public void valueChanged(TreeSelectionEvent e) {
-                                                                fireTreeChangeListener();
-                                                              }
-                                                            });
+      public void valueChanged(TreeSelectionEvent e) {
+        fireTreeChangeListener();
+      }
+    });
     myTree.getModel().addTreeModelListener(new TreeModelListener() {
-                                                 public void treeNodesChanged(TreeModelEvent e) {
-                                                   fireTreeChangeListener();
-                                                 }
+      public void treeNodesChanged(TreeModelEvent e) {
+        fireTreeChangeListener();
+      }
 
-                                                 public void treeNodesInserted(TreeModelEvent e) {
-                                                   fireTreeChangeListener();
-                                                 }
+      public void treeNodesInserted(TreeModelEvent e) {
+        fireTreeChangeListener();
+      }
 
-                                                 public void treeNodesRemoved(TreeModelEvent e) {
-                                                   fireTreeChangeListener();
-                                                 }
+      public void treeNodesRemoved(TreeModelEvent e) {
+        fireTreeChangeListener();
+      }
 
-                                                 public void treeStructureChanged(TreeModelEvent e) {
-                                                   fireTreeChangeListener();
-                                                 }
-                                               });
+      public void treeStructureChanged(TreeModelEvent e) {
+        fireTreeChangeListener();
+      }
+    });
 
     new MySpeedSearch(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
-                                public void keyPressed(KeyEvent e) {
-                                  if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
 
-                                    DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-                                    Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-                                    if (navigatable != null) {
-                                      navigatable.navigate(false);
-                                    }
-                                  }
-                                  else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-                                    if (e.isConsumed()) return;
-                                    CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
-                                    boolean[] isCopied = new boolean[1];
-                                    if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-                                      copyPasteManager.clear();
-                                      e.consume();
-                                    }
-                                  }
-                                }
-                              });
+          DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+          Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+          if (navigatable != null && navigatable.canNavigate()) {
+            navigatable.navigate(false);
+          }
+        }
+        else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
+          if (e.isConsumed()) return;
+          CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+          boolean[] isCopied = new boolean[1];
+          if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
+            copyPasteManager.clear();
+            e.consume();
+          }
+        }
+      }
+    });
 
     myExpandedElements.restoreExpandedElements(this, myProject);
   }

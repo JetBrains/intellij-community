@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class SoftValueHashMap<K,V> implements Map<K,V>{
-  private THashMap myMap;
+  private THashMap<K,MyReference<K,V>> myMap;
   private ReferenceQueue<MyReference<K,V>> myQueue = new ReferenceQueue<MyReference<K,V>>();
 
   private static class MyReference<K,V> extends SoftReference<V> {
@@ -25,7 +25,7 @@ public final class SoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   public SoftValueHashMap() {
-    myMap = new THashMap();
+    myMap = new THashMap<K, MyReference<K,V>>();
   }
 
   private void processQueue() {
@@ -46,20 +46,20 @@ public final class SoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   public V get(Object key) {
-    MyReference<K,V> ref = (MyReference<K,V>)myMap.get(key);
+    MyReference<K,V> ref = myMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
 
   public V put(K key, V value) {
     processQueue();
-    MyReference<K,V> oldRef = (MyReference<K,V>)myMap.put(key, new MyReference<K,V>(key, value, myQueue));
+    MyReference<K,V> oldRef = myMap.put(key, new MyReference<K,V>(key, value, myQueue));
     return oldRef != null ? (V)oldRef.get() : null;
   }
 
   public V remove(Object key) {
     processQueue();
-    MyReference<K,V> ref = (MyReference<K,V>)myMap.remove(key);
+    MyReference<K,V> ref = myMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 

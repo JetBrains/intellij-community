@@ -90,8 +90,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
           if (aClass != null && "junit.framework.TestSuite".equals(aClass.getQualifiedName())) return;
         }
         final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(test, model);
-        if (descriptor == null) return;
-        descriptor.navigate(false);
+        if (descriptor != null && descriptor.canNavigate()) {
+          descriptor.navigate(false);
+        }
       }
     });
   }

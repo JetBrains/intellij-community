@@ -37,6 +37,5 @@ import com.intellij.pom.Navigatable;
 public interface NavigationItem extends Navigatable {
   String getName();
   ItemPresentation getPresentation();
-  void navigate(boolean requestFocus);
   FileStatus getFileStatus();
 }

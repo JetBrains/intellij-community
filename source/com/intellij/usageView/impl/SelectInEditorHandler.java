@@ -28,7 +28,7 @@ public class SelectInEditorHandler {
   public static void selectInEditor(final JComponent component, final Project project) {
     final Navigatable navigatable = (Navigatable)DataManager.getInstance().getDataContext(component).getData(DataConstants.NAVIGATABLE);
 
-    if (navigatable != null) {
+    if (navigatable != null && navigatable.canNavigate()) {
       navigatable.navigate(false);
     }
   }
