@@ -64,6 +64,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private static final Key<StructureViewState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private final Project myProject;
   private final StructureViewModel myTreeModel;
+  private boolean mySortByKind = true;
 
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
@@ -453,7 +454,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public boolean isActionActive(String name) {
-    return KindSorter.ID.equals(name) || StructureViewFactory.getInstance(myProject).isActionActive(name);
+    if (KindSorter.ID.equals(name)) {
+      return mySortByKind;
+    } else {
+      return StructureViewFactory.getInstance(myProject).isActionActive(name);
+    }
   }
 
   public AbstractTreeStructure getTreeStructure() {
@@ -463,6 +468,17 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   public JTree getTree() {
     return myAbstractTreeBuilder.getTree();
   }
+
+  public void setKindSortingIsActive(boolean state) {
+    saveStructureViewState();
+
+    mySortByKind = state;
+
+    ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
+
+    myAbstractTreeBuilder.updateFromRoot();
+    restoreStructureViewState();
+ }
 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
