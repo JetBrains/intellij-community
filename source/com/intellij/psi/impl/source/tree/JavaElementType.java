@@ -161,7 +161,7 @@ public interface JavaElementType {
   IElementType TYPE_TEXT = new IChameleonElementType("TYPE_TEXT", JavaLanguage.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return Parsing.parseTypeText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+      return Parsing.parseTypeText(chameleon.getTreeParent().getPsi().getManager(), null, chars, 0, chars.length, 0, SharedImplUtil.findCharTableByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer) {return false;}
   };
