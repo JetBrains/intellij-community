@@ -52,6 +52,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void dispose() {
+    myUpdateAlarm.cancelAllRequests();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     myStructureModel.removeModelListener(myModelListener);
