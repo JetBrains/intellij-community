@@ -2,6 +2,8 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 
 public class SourceTreeToPsiMap {
   public static PsiElement treeElementToPsi(ASTNode element) {
@@ -15,6 +17,6 @@ public class SourceTreeToPsiMap {
   }
 
   public static boolean hasTreeElement(PsiElement psiElement) {
-    return psiElement != null && psiElement.getNode() != null;
+    return psiElement instanceof TreeElement || psiElement instanceof SrcRepositoryPsiElement || psiElement instanceof ASTWrapperPsiElement;
   }
 }
