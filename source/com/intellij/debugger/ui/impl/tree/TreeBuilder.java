@@ -1,13 +1,12 @@
 package com.intellij.debugger.ui.impl.tree;
 
+import com.intellij.util.EventDispatcher;
+
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * User: lex
@@ -17,7 +16,7 @@ import java.util.List;
 public abstract class TreeBuilder implements TreeModel {
   private Object userObject;
   private TreeBuilderNode myRoot;
-  private List<TreeModelListener> myListeners = new ArrayList<TreeModelListener>();
+  private EventDispatcher<TreeModelListener> myDispatcher = EventDispatcher.create(TreeModelListener.class);
 
   protected TreeBuilder(Object userObject) {
     this.userObject = userObject;
@@ -47,11 +46,11 @@ public abstract class TreeBuilder implements TreeModel {
   }
 
   public void addTreeModelListener(TreeModelListener l) {
-    myListeners.add(l);
+    myDispatcher.addListener(l);
   }
 
   public void removeTreeModelListener(TreeModelListener l) {
-    myListeners.remove(l);
+    myDispatcher.removeListener(l);
   }
 
   public Object getChild(Object parent, int index) {
@@ -79,19 +78,13 @@ public abstract class TreeBuilder implements TreeModel {
       event = new TreeModelEvent(this, getPathToRoot(node, 0), null, null);
     }
     if (event != null) {
-      for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
-        TreeModelListener treeModelListener = (TreeModelListener) iterator.next();
-        treeModelListener.treeNodesChanged(event);
-      }
+      myDispatcher.getMulticaster().treeNodesChanged(event);
     }
   }
 
   public void nodeStructureChanged(TreeNode node) {
     TreeModelEvent event = new TreeModelEvent(this, getPathToRoot(node, 0), null, null);
-    for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
-      TreeModelListener treeModelListener = (TreeModelListener) iterator.next();
-      treeModelListener.treeStructureChanged(event);
-    }
+    myDispatcher.getMulticaster().treeStructureChanged(event);
   }
 
   protected TreeNode[] getPathToRoot(TreeNode aNode, int depth) {

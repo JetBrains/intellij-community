@@ -3,26 +3,21 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.ui.impl.watch.DebuggerTree;
+import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.Alarm;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public abstract class DebuggerPanel extends JPanel implements DataProvider{
@@ -46,10 +41,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
 
     myTree.addMouseListener(new PopupHandler(){
       public void invokePopup(Component comp,int x,int y){
-        TreePath path = myTree.getLeadSelectionPath();
-
-        ActionPopupMenu popupMenu = createPopupMenu(
-        );
+        ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
           popupMenu.getComponent().show(comp, x, y);
         }
@@ -85,17 +77,30 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
 
   protected final void rebuildWhenVisible(int event) {
     myEvent = event;
-    if(!shouldRebuildNow()) {
-      myNeedsRefresh = true;
-    } else {
+    if(shouldRebuildNow()) {
       myNeedsRefresh = false;
-      rebuild(event);
+      scheduleRebuild(event);
     }
+    else {
+      myNeedsRefresh = true;
+    }
+  }
+
+  private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private void scheduleRebuild(final int event) {
+    myRebuildAlarm.cancelAllRequests();
+    myRebuildAlarm.addRequest(new Runnable() {
+      public void run() {
+        rebuild(event);
+      }
+    }, 100);
   }
 
   protected void rebuild(int event) {
     DebuggerSession debuggerSession = getContext().getDebuggerSession();
-    if(debuggerSession == null) return;
+    if(debuggerSession == null) {
+      return;
+    }
 
     getTree().rebuild(getContext());
   }

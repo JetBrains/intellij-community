@@ -1,7 +1,11 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.impl.descriptors.data.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -23,7 +27,7 @@ import java.util.HashMap;
 
 public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.NodeDescriptorFactoryImpl");
-  private DescriptorTree myCurrentDescriptors = new DescriptorTree();
+  private DescriptorTree myCurrentHistoryTree = new DescriptorTree(true);
 
   private DescriptorTreeSearcher myDescriptorSearcher;
   private DescriptorTreeSearcher myDisplayDescriptorSearcher;
@@ -51,7 +55,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       }
     }
 
-    myCurrentDescriptors.addChild(parent, descriptor);
+    myCurrentHistoryTree.addChild(parent, descriptor);
 
     return descriptor;
   }
@@ -64,29 +68,47 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return myDescriptorSearcher.search(parent, descriptor, data);
   }
 
-  public DescriptorTree createHistoryTree() {
-    return myCurrentDescriptors;
+  public DescriptorTree getCurrentHistoryTree() {
+    return myCurrentHistoryTree;
   }
 
-  public void setHistoryTree(DescriptorTree tree) {
-    final MarkedDescriptorTree descriptorTree = new MarkedDescriptorTree();
-    tree.dfst(new DescriptorTree.DFSTWalker() {
-      public void visit(NodeDescriptorImpl parent, NodeDescriptorImpl child) {
-        descriptorTree.addChild(parent, child, DescriptorData.getDescriptorData(child));
-      }
-    });
+  public void deriveHistoryTree(DescriptorTree tree, final StackFrameContext context) {
 
+    final MarkedDescriptorTree descriptorTree = new MarkedDescriptorTree();
     final MarkedDescriptorTree displayDescriptorTree = new MarkedDescriptorTree();
+
     tree.dfst(new DescriptorTree.DFSTWalker() {
       public void visit(NodeDescriptorImpl parent, NodeDescriptorImpl child) {
-        displayDescriptorTree.addChild(parent, child, DescriptorData.getDescriptorData(child).getDisplayKey());
+        final DescriptorData<NodeDescriptorImpl> descriptorData = DescriptorData.getDescriptorData(child);
+        descriptorTree.addChild(parent, child, descriptorData);
+        displayDescriptorTree.addChild(parent, child, descriptorData.getDisplayKey());
       }
     });
 
     myDescriptorSearcher = new DescriptorTreeSearcher(descriptorTree);
     myDisplayDescriptorSearcher = new DisplayDescriptorTreeSearcher(displayDescriptorTree);
 
-    myCurrentDescriptors = new DescriptorTree();
+    myCurrentHistoryTree = createDescriptorTree(context, tree);
+  }
+
+  private DescriptorTree createDescriptorTree(final StackFrameContext context, final DescriptorTree fromTree) {
+    int frameCount = -1;
+    int frameIndex = -1;
+    final StackFrameProxy frameProxy = context.getFrameProxy();
+    if (frameProxy != null) {
+      try {
+        final ThreadReferenceProxy threadReferenceProxy = frameProxy.threadProxy();
+        frameCount = threadReferenceProxy.frameCount();
+        frameIndex = frameProxy.getFrameIndex();
+       }
+       catch (EvaluateException e) {
+         // ignored
+       }
+    }
+    final boolean isInitial = !fromTree.frameIdEquals(frameCount, frameIndex);
+    DescriptorTree descriptorTree = new DescriptorTree(isInitial);
+    descriptorTree.setFrameId(frameCount, frameIndex);
+    return descriptorTree;
   }
 
   public ArrayElementDescriptorImpl getArrayItemDescriptor(NodeDescriptor parent, ArrayReference array, int index) {

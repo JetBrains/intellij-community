@@ -13,4 +13,6 @@ public interface ThreadReferenceProxy extends ObjectReferenceProxy{
   ThreadReference     getThreadReference();
 
   StackFrameProxy frame(int i) throws EvaluateException;
+
+  int frameCount() throws EvaluateException;
 }

@@ -40,7 +40,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   protected ValueDescriptorImpl(Project project) {
     myProject = project;
-    myIsNew = true;
   }
 
   public boolean isArray               () { return getValue() instanceof ArrayReference; }

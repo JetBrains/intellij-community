@@ -15,6 +15,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeModel;
 import java.util.Enumeration;
 
 public class FrameDebuggerTree extends DebuggerTree {
@@ -111,37 +113,42 @@ public class FrameDebuggerTree extends DebuggerTree {
           getMutableModel().setRoot(rootNode1);
           treeChanged();
 
-          getModel().addTreeModelListener(new TreeModelAdapter() {
-            public void treeStructureChanged(TreeModelEvent e) {
-              Object[] path = e.getPath();
-              if(path.length > 0 && path[path.length - 1] == rootNode1) {
-                if(ViewsGeneralSettings.getInstance().AUTOSCROLL_TO_NEW_LOCALS) {
+          if (ViewsGeneralSettings.getInstance().AUTOSCROLL_TO_NEW_LOCALS) {
+            final TreeModel model = getModel();
+            model.addTreeModelListener(new TreeModelAdapter() {
+              public void treeStructureChanged(TreeModelEvent e) {
+                final Object[] path = e.getPath();
+                if(path.length > 0 && path[path.length - 1] == rootNode1) {
+                  // wait until rootNode1 (the root just set) becomes the root 
+                  model.removeTreeModelListener(this);
                   autoscrollToNewLocals(rootNode1);
                 }
               }
-            }
-          });
+            });
+          }
         }
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
+          final DebuggerSession debuggerSession = getDebuggerContext().getDebuggerSession();
+          final boolean isSteppingThrough = debuggerSession.isSteppingThrough(getDebuggerContext().getThreadProxy());
           for (Enumeration e  = frameNode.rawChildren(); e.hasMoreElements();) {
-            DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
-            NodeDescriptorImpl descriptor = child.getDescriptor();
-            if(descriptor != null) {
-              if (descriptor instanceof LocalVariableDescriptorImpl) {
-                if (((LocalVariableDescriptorImpl) descriptor).isNewLocal() && getDebuggerContext().getDebuggerSession().isSteppingThrough(getDebuggerContext().getThreadProxy())) {
-                  TreePath treePath = new TreePath(child.getPath());
-                  addSelectionPath   (treePath);
-                  scrollPathToVisible(treePath);
-                  myAnyNewLocals = true;
-                  descriptor.myIsSelected = true;
-                }
-                else {
-                  removeSelectionPath(new TreePath(child.getPath()));
-                  descriptor.myIsSelected = false;
-                }
-                ((LocalVariableDescriptorImpl) descriptor).setNewLocal(false);
-              }
+            final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
+            final NodeDescriptorImpl descriptor = child.getDescriptor();
+            if(!(descriptor instanceof LocalVariableDescriptorImpl)) {
+              continue;
             }
+            final LocalVariableDescriptorImpl localVariableDescriptor = (LocalVariableDescriptorImpl)descriptor;
+            if (isSteppingThrough && localVariableDescriptor.isNewLocal()) {
+              TreePath treePath = new TreePath(child.getPath());
+              addSelectionPath(treePath);
+              scrollPathToVisible(treePath);
+              myAnyNewLocals = true;
+              descriptor.myIsSelected = true;
+            }
+            else {
+              removeSelectionPath(new TreePath(child.getPath()));
+              descriptor.myIsSelected = false;
+            }
+            localVariableDescriptor.setNewLocal(false);
           }
         }
       });

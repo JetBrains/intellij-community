@@ -3,13 +3,14 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.CollectUtil;
@@ -37,7 +38,9 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     myDebuggerTree = tree;
   }
 
-  public static Comparator getNodeComparator() { return ourNodeComparator; }
+  public static Comparator getNodeComparator() {
+    return ourNodeComparator;
+  }
 
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
@@ -61,11 +64,13 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
     final DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getDescriptorHistoryManager().storeHistory(new DescriptorHistory(createHistoryTree(), myBreakpoints));
+    final DescriptorHistoryManager descriptorHistoryManager = debugProcess.getDescriptorHistoryManager();
+    descriptorHistoryManager.storeHistory(new DescriptorHistory(getCurrentHistoryTree(), myBreakpoints));
 
-    DescriptorHistory history = debugProcess.getDescriptorHistoryManager().restoreHistory(context);
+    final DescriptorHistory history = descriptorHistoryManager.restoreHistory(context);
+    final DescriptorTree descriptorTree = (history != null)? history.getDescriptorTree() : new DescriptorTree(true);
 
-    setHistoryTree(history.getDescriptorTree());
+    deriveHistoryTree(descriptorTree, context);
 
     List<Pair<Breakpoint, Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(context.getSuspendContext());
     myBreakpoints = CollectUtil.COLLECT.toList(eventDescriptors, new Convertor<Pair<Breakpoint, Event>, Breakpoint>() {

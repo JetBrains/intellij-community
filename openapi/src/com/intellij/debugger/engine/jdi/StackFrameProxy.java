@@ -21,4 +21,6 @@ public interface StackFrameProxy extends ObjectReferenceProxy{
   ClassLoaderReference getClassLoader() throws EvaluateException;
 
   LocalVariableProxy visibleVariableByName(String name) throws EvaluateException;
+
+  ThreadReferenceProxy threadProxy();
 }
