@@ -17,6 +17,6 @@ public class XHtmlLexer extends HtmlLexer {
   }
 
   protected boolean isHtmlTagState(int state) {
-    return state == __XmlLexer.TAG;
+    return state == 0;
   }
 }

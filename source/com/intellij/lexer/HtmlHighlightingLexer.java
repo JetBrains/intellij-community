@@ -4,17 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
-
-  private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
-    XmlTokenType.XML_COMMENT_CHARACTERS,
-    XmlTokenType.XML_WHITE_SPACE,
-    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-  });
 
   private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
   private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;
@@ -26,11 +19,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private boolean hasNoEmbeddments;
   private static FileType ourStyleFileType;
   private static FileType ourScriptFileType;
-  private static final int MAX_EMBEDDED_LEXER_STATE = 16;
-  private static final int MAX_EMBEDDED_LEXER_SHIFT = 4;
 
   class XmlEmbeddmentHandler implements TokenHandler {
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, final int state) {
       if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
       final IElementType tokenType = lexer.getTokenType();
 
@@ -47,14 +38,14 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   class ElEmbeddmentHandler implements TokenHandler {
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, final int state) {
       setEmbeddedLexer();
       embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
     }
   }
 
   public HtmlHighlightingLexer() {
-    this(new _HtmlLexer(),true);
+    this(new FlexAdapter(new _HtmlLexer()),true);
   }
 
   protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive) {

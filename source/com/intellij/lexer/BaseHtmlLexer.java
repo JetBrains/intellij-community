@@ -2,6 +2,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
@@ -27,14 +28,20 @@ abstract class BaseHtmlLexer implements Lexer {
   private boolean seenStyle;
   private boolean seenScript;
   private boolean caseInsensitive;
+  static final TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
+    XmlTokenType.XML_COMMENT_CHARACTERS,
+    XmlTokenType.XML_WHITE_SPACE,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
+    XmlTokenType.XML_DATA_CHARACTERS
+  });
 
   interface TokenHandler {
-    void handleElement(Lexer lexer);
+    void handleElement(Lexer lexer, final int state);
   }
 
   class XmlNameHandler implements TokenHandler {
 
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, int state) {
       final char ch = lexer.getBuffer()[lexer.getTokenStart()];
 
       if (ch!='s' && ch!='o' &&
@@ -59,7 +66,7 @@ abstract class BaseHtmlLexer implements Lexer {
         seenStyle = style;
         seenScript = script;
 
-        final int state = getState() & BASE_STATE_MASK;
+        state = state & BASE_STATE_MASK;
 
         if (!isHtmlTagState(state)) {
           seenAttribute=true;
@@ -73,7 +80,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlAttributeValueEndHandler implements TokenHandler {
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, final int state) {
       if (seenAttribute) {
         seenStyle = false;
         seenScript = false;
@@ -82,7 +89,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlTagClosedHandler implements TokenHandler {
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, final int state) {
       if (seenAttribute) {
         seenScript=false;
         seenStyle=false;
@@ -97,7 +104,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlTagEndHandler implements TokenHandler {
-    public void handleElement(Lexer lexer) {
+    public void handleElement(Lexer lexer, final int state) {
       seenStyle=false;
       seenScript=false;
     }
@@ -159,10 +166,11 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   public void advance() {
+    int prevState = baseLexer.getState();
     baseLexer.advance();
     IElementType type = baseLexer.getTokenType();
     TokenHandler tokenHandler = tokenHandlers.get(type);
-    if (tokenHandler!=null) tokenHandler.handleElement(this);
+    if (tokenHandler!=null) tokenHandler.handleElement(this, prevState);
   }
 
   public char[] getBuffer() {
