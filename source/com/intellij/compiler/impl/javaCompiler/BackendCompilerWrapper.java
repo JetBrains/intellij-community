@@ -656,10 +656,6 @@ class BackendCompilerWrapper {
 
   private void updateOutputItemsList(final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) {
     final Set<Pair<String, String>> paths = myFileNameToSourceMap.get(javaFile.getName());
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Checking java file " + javaFile.getPresentableUrl());
-      LOG.debug("myFileNameToSourceMap contains: " + paths);
-    }
     if (paths != null && paths.size() > 0) {
       final String prefix = packagePrefix != null && packagePrefix.length() > 0? packagePrefix.replace('.', '/') + "/" : "";
       final String filePath = "/" + prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/');
@@ -667,7 +663,7 @@ class BackendCompilerWrapper {
       for (Iterator<Pair<String, String>> it = paths.iterator(); it.hasNext();) {
         final Pair<String, String> pair = it.next();
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Checking pair [pathToClass; relPathToSource] = [" + pair.getFirst() + "; " + pair.getSecond() + "]");
+          LOG.debug("Checking pair [pathToClass; relPathToSource] = " + pair);
         }
         if (CompilerUtil.pathsEqual(filePath, pair.getSecond())) {
           final String outputPath = pair.getFirst().replace(File.separatorChar, '/');
