@@ -16,17 +16,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.vssSupport.VssVcs</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelState</interface-class>
       <implementation-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelStateImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <interface-class>com.intellij.vssSupport.VssConfiguration</interface-class>
-      <implementation-class>com.intellij.vssSupport.VssConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>

@@ -183,42 +183,6 @@
     </group>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control" text="Version Control"/>
 
-    <group id="VssGlobalGroup"
-      class="com.intellij.vssSupport.actions.VssGroup"
-      text="SourceSa_fe"
-      test="SourceSafe"
-      popup="true" >
-      <add-to-group group-id="VcsGroups" anchor="last"/>
-      <action id="Vss.RunExplorer" class="com.intellij.vssSupport.actions.RunExplorerAction" text="Open SourceSafe _Explorer" description="Open SourceSafe explorer"/>
-    </group>
-
-    <group id="VssFilePopupGroup"
-      class="com.intellij.vssSupport.actions.VssGroup"
-      text="SourceSa_fe"
-      test="SourceSafe"
-      popup="true" >
-      <add-to-group group-id="VcsGroup" anchor="last"/>
-    </group>
-
-
-    <group id="VssGroup">
-      <add-to-group group-id="VssGlobalGroup" anchor="last"/>
-      <add-to-group group-id="VssFilePopupGroup" anchor="last"/>
-      <action id="Vss.Checkout" class="com.intellij.vssSupport.actions.CheckoutAction" text="Check _Out..." description="Check out the file(s) from SourceSafe database for editing"/>
-      <action id="Vss.Checkin" class="com.intellij.vssSupport.actions.CheckinAction" text="Check _In..." description="Update SourceSafe database with changes made to the checked out file(s)"/>
-      <action id="Vss.Add" class="com.intellij.vssSupport.actions.AddAction" text="_Add File..." description="Add new file to the SourceSafe database"/>
-      <action id="Vss.Undocheckout" class="com.intellij.vssSupport.actions.UndocheckoutAction" text="_Undo Check Out..." description="Cancel a check out, voiding all changes"/>
-      <separator/>
-      <action id="Vss.Diff" class="com.intellij.vssSupport.actions.DiffAction"
-        text="_Compare with SourceSafe Version..."
-        description="Compare SourceSafe and local version of file"/>
-
-      <action id="Vss.Get"
-        class="com.intellij.vssSupport.actions.GetAction"
-        text="_Get Latest Version..."
-        description="Retrieve the most recent version of the file(s)"/>
-    </group>
-
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
       text="Version Control" popup="true">
     </group>

@@ -81,6 +81,7 @@
 <!ELEMENT group (reference* | separator* | action* | add-to-group*)+>
 <!ATTLIST group
     id ID #IMPLIED
+    class CDATA #IMPLIED
     text CDATA #IMPLIED
     description CDATA #IMPLIED
     popup (true | false) #IMPLIED
