@@ -20,12 +20,14 @@
 -->
 <!ELEMENT version (#PCDATA)>
 <!--
-    <vendor> tag now could have an 'url' and 'email' attributes
+    <vendor> tag now could have 'url', 'email' and 'logo' attributes;
+    'logo' should contain path to a 16 x 16 icon that will appear near the plugin name in the IDEA Welcome Screen 
 -->
 <!ELEMENT vendor (#PCDATA)>
 <!ATTLIST vendor
     url CDATA #IMPLIED
-    email CDATA #IMPLIED>
+    email CDATA #IMPLIED
+    logo CDATA #IMPLIED>
 <!--
     <idea-version> tag specified version of IDEA which
     plugin could work with
