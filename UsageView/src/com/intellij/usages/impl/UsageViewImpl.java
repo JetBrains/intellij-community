@@ -151,12 +151,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
             DefaultMutableTreeNode node = ((DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent());
             if (node instanceof UsageNode) {
-              Usage usage = ((UsageNode)node).getUsage();
+              final Usage usage = ((UsageNode)node).getUsage();
               usage.navigate(false);
               usage.highlightInEditor();
             }
-            else {
-              Navigatable navigatable = getNavigateableForNode(node);
+            else if (node.isLeaf()) {
+              Navigatable navigatable = getNavigatableForNode(node);
               if (navigatable != null && navigatable.canNavigate()) {
                 navigatable.navigate(false);
               }
@@ -403,6 +403,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void reset() {
     myUsageNodes = new HashMap<Usage, UsageNode>();
+    myIsFirstVisibleUsageFound = false;
     ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
     TreeUtil.expand(myTree, 2);
   }
@@ -440,9 +441,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  private boolean myIsFirstVisibleUsageFound = false;
+
   public void appendUsage(Usage usage) {
     final UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node);
+    if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
+      showNode(node);
+      myIsFirstVisibleUsageFound = true;
+    }
   }
 
   public void includeUsages(Usage[] usages) {
@@ -517,20 +524,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         flush();
-        showFirstUsage();
+        final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
+        if (firstUsageNode != null) { //first usage;
+          showNode(firstUsageNode);
+        }
       }
     });
 
   }
 
-  private void showFirstUsage() {
-    UsageViewTreeModelBuilder model = (UsageViewTreeModelBuilder)myTree.getModel();
-    final UsageNode firstUsageNode = model.getFirstUsageNode();
-    if (firstUsageNode != null) { //first usage;
-      TreePath usagePath = new TreePath(firstUsageNode.getPath());
-      myTree.expandPath(usagePath.getParentPath());
-      myTree.setSelectionPath(usagePath);
-    }
+  private void showNode(final UsageNode node) {
+    TreePath usagePath = new TreePath(node.getPath());
+    myTree.expandPath(usagePath.getParentPath());
+    myTree.setSelectionPath(usagePath);
   }
 
   public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
@@ -731,8 +737,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return targets.size() > 0 ? targets.toArray(new UsageTarget[targets.size()]) : null;
   }
 
-  public Navigatable getNavigateableForNode(DefaultMutableTreeNode node) {
-    if (node == null) return null;
+  private Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
+    if (node == null) {
+      return null;
+    }
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
@@ -753,7 +761,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (!((Node)node).isValid()) return null;
-          return getNavigateableForNode(node);
+          return getNavigatableForNode(node);
         }
 
         public String getNextOccurenceActionName() {
@@ -798,7 +806,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
 
       if (dataId.equals(DataConstants.NAVIGATABLE)) {
-        return getNavigateableForNode(node);
+        return getNavigatableForNode(node);
       }
 
       if (dataId.equals(DataConstants.EXPORTER_TO_TEXT_FILE)) {

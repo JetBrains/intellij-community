@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -34,18 +35,18 @@ public class FileGroupingRule implements UsageGroupingRule {
 
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof UsageInFile) {
-      UsageInFile usageInFile = (UsageInFile)usage;
-      return new FileUsageGroup(usageInFile.getFile());
+      return new FileUsageGroup(myProject, ((UsageInFile)usage).getFile());
     }
-    
     return null;
   }
 
-  private class FileUsageGroup implements UsageGroup, DataProvider {
-    private VirtualFile myFile;
+  protected static class FileUsageGroup implements UsageGroup, DataProvider {
+    private final Project myProject;
+    private final VirtualFile myFile;
     private String myPresentableName;
 
-    public FileUsageGroup(VirtualFile file) {
+    public FileUsageGroup(Project project, VirtualFile file) {
+      myProject = project;
       myFile = file;
       myPresentableName = myFile.getPresentableName();
     }
@@ -98,9 +99,13 @@ public class FileGroupingRule implements UsageGroupingRule {
         return myFile;
       }
       if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return PsiManager.getInstance(myProject).findFile(myFile);
+        return getPsiFile();
       }
       return null;
+    }
+
+    public PsiFile getPsiFile() {
+      return PsiManager.getInstance(myProject).findFile(myFile);
     }
   }
 }
