@@ -36,6 +36,7 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.jsp.impl.JspXHTMLDescriptor;
 
 import java.lang.ref.WeakReference;
@@ -324,7 +325,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return elementDescriptor;
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME || i == XML_TAG_NAME) {
@@ -341,7 +342,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public String getName() {
     if (myName != null) return myName;
 
-    final TreeElement nameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
+    final ASTNode nameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (nameElement != null){
       myName = nameElement.getText();
     }
@@ -652,7 +653,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     boolean insideBody = false;
     for (int i = 0; i < elements.length; i++) {
       final PsiElement element = elements[i];
-      final TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
       if(insideBody){
         if(treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
         if(!(treeElement instanceof XmlTagChild)) continue;
@@ -729,7 +730,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             else treeElement = addInternalHack(child, child, startTagEnd, Boolean.TRUE, fileType);
           }
           else treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
-          final TreeElement treePrev = treeElement.getTreePrev();
+          final ASTNode treePrev = treeElement.getTreePrev();
           if(treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
             final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, new char[]{' '}, 0, 1,
                                                                                   SharedImplUtil.findCharTableByTree(XmlTagImpl.this), null);
@@ -760,14 +761,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return retHolder[0];
   }
 
-  public void deleteChildInternal(final TreeElement child) {
+  public void deleteChildInternal(final ASTNode child) {
     final PsiFile containingFile = getContainingFile();
     final FileType fileType = containingFile.getFileType();
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try {
-      final TreeElement treePrev = child.getTreePrev();
-      final TreeElement treeNext = child.getTreeNext();
+      final ASTNode treePrev = child.getTreePrev();
+      final ASTNode treeNext = child.getTreeNext();
 
       if (child.getElementType() != XmlElementType.XML_TEXT) {
         if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
@@ -781,8 +782,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
               event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
 
-              ChangeUtil.removeChild(XmlTagImpl.this, treeNext);
-              ChangeUtil.removeChild(XmlTagImpl.this, child);
+              ChangeUtil.removeChild(XmlTagImpl.this, (TreeElement)treeNext);
+              ChangeUtil.removeChild(XmlTagImpl.this, (TreeElement)child);
               return event;
             }
           }, aspect);

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public abstract class AnonymousClassElementBase extends ClassElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnonymousClassElement");
@@ -18,7 +19,7 @@ public abstract class AnonymousClassElementBase extends ClassElement {
     super(type);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -38,7 +39,7 @@ public abstract class AnonymousClassElementBase extends ClassElement {
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {

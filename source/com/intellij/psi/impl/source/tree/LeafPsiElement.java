@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
@@ -62,7 +63,7 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   }
 
   public PsiElement copy() {
-    TreeElement elementCopy = copyElement();
+    ASTNode elementCopy = copyElement();
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 

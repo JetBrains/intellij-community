@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -80,10 +81,10 @@ public class ImportsTextParsing extends Parsing {
 
     CompositeElement refElement = parseJavaCodeReference(lexer, true);
     if (refElement.lastChild.getElementType() == ERROR_ELEMENT){
-      final TreeElement qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
+      final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
       TreeUtil.remove(refElement.lastChild);
-      TreeUtil.addChildren(statement, qualifier);
+      TreeUtil.addChildren(statement, (TreeElement)qualifier);
       if (lexer.getTokenType() == ASTERISK){
         TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();

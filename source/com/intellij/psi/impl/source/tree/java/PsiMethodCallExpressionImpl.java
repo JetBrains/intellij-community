@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.ASTNode;
 
 import java.util.Map;
 
@@ -75,7 +76,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     return (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -89,7 +90,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == EXPRESSION_LIST) {

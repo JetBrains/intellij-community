@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlProlog;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -21,7 +22,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog {
     visitor.visitXmlProlog(this);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_DOCTYPE) {
       return ChildRole.XML_DOCTYPE;

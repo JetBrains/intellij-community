@@ -7,6 +7,7 @@ import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiExpressionStatementImpl extends CompositePsiElement implements PsiExpressionStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionStatementImpl");
@@ -19,7 +20,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(this, EXPRESSION_BIT_SET));
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -33,7 +34,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == SEMICOLON) {

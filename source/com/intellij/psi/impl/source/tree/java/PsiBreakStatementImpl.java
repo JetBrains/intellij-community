@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
@@ -35,8 +36,8 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
       String labelName = label.getText();
       for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
         if (parent.getElementType() == LABELED_STATEMENT){
-          TreeElement statementLabel = parent.findChildByRole(ChildRole.LABEL_NAME);
-          if (statementLabel.textMatches(labelName)){
+          ASTNode statementLabel = parent.findChildByRole(ChildRole.LABEL_NAME);
+          if (statementLabel.getText().equals(labelName)){
             return ((PsiLabeledStatement)SourceTreeToPsiMap.treeElementToPsi(parent)).getStatement();
           }
         }
@@ -47,7 +48,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return null;
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -64,7 +65,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == BREAK_KEYWORD) {

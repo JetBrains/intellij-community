@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.lang.ASTNode;
 
 public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAssertStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssertStatementImpl");
@@ -25,7 +26,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ASSERT_DESCRIPTION);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -42,10 +43,10 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
 
       case ChildRole.ASSERT_DESCRIPTION:
         {
-          TreeElement colon = findChildByRole(ChildRole.COLON);
+          ASTNode colon = findChildByRole(ChildRole.COLON);
           if (colon == null) return null;
           TreeElement child;
-          for(child = colon.getTreeNext(); child != null; child = child.getTreeNext()){
+          for(child = (TreeElement)colon.getTreeNext(); child != null; child = child.getTreeNext()){
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
           }
           return child;
@@ -56,7 +57,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == ASSERT_KEYWORD) {

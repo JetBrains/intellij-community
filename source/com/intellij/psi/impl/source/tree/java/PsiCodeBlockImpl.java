@@ -13,6 +13,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -88,18 +89,18 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     ChameleonTransforming.transformChildren(this);
     if (anchor == null){
       if (before == null || before.booleanValue()){
-        anchor = findChildByRole(ChildRole.RBRACE);
+        anchor = (TreeElement)findChildByRole(ChildRole.RBRACE);
         before = Boolean.TRUE;
       }
       else{
-        anchor = findChildByRole(ChildRole.LBRACE);
+        anchor = (TreeElement)findChildByRole(ChildRole.LBRACE);
         before = Boolean.FALSE;
       }
     }
     return super.addInternal(first, last, anchor, before);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     ChameleonTransforming.transformChildren(this);
     switch(role){
@@ -114,7 +115,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == LBRACE) {

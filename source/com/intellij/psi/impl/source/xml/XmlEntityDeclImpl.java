@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   }
 
   public String getName() {
-    for (TreeElement e = firstChild; e != null; e = e.getTreeNext()) {
+    for (ASTNode e = firstChild; e != null; e = e.getTreeNext()) {
       if (e instanceof XmlTokenImpl) {
         XmlTokenImpl xmlToken = (XmlTokenImpl)e;
 
@@ -177,7 +178,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
   private PsiElement getValueElement(PsiFile baseFile) {
     if (isInternalReference()) {
-      for (TreeElement e = firstChild; e != null; e = e.getTreeNext()) {
+      for (ASTNode e = firstChild; e != null; e = e.getTreeNext()) {
         if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
           XmlAttributeValue value = (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
           return value;
@@ -185,7 +186,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
       }
     }
     else {
-      for (TreeElement e = lastChild; e != null; e = e.getTreePrev()) {
+      for (ASTNode e = lastChild; e != null; e = e.getTreePrev()) {
         if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
           XmlAttributeValue value = (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
           final XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value.getValue());
@@ -202,7 +203,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   }
 
   private boolean isInternalReference() {
-    for (TreeElement e = firstChild; e != null; e = e.getTreeNext()) {
+    for (ASTNode e = firstChild; e != null; e = e.getTreeNext()) {
       if (e.getElementType() instanceof IXmlElementType) {
         XmlToken token = (XmlToken)SourceTreeToPsiMap.treeElementToPsi(e);
         if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC || token.getTokenType() == XmlToken.XML_DOCTYPE_SYSTEM) {

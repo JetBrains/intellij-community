@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class FieldElement extends RepositoryTreeElement{
    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.FieldElement");
@@ -13,12 +14,12 @@ public class FieldElement extends RepositoryTreeElement{
   }
 
   public int getTextOffset() {
-    return findChildByRole(ChildRole.NAME).getTextOffset();
+    return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
-      TreeElement eq = findChildByRole(ChildRole.INITIALIZER_EQ);
+      ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){
         deleteChildInternal(eq);
       }
@@ -26,7 +27,7 @@ public class FieldElement extends RepositoryTreeElement{
     super.deleteChildInternal(child);
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -60,7 +61,7 @@ public class FieldElement extends RepositoryTreeElement{
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.DOC_COMMENT) {

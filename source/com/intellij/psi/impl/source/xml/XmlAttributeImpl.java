@@ -19,6 +19,7 @@ import com.intellij.xml.util.XmlUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     super(XML_ATTRIBUTE);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME) {

@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -691,7 +692,7 @@ public class DeclarationParsing extends Parsing {
     return result;
   }
 
-  protected TreeElement parseClassBodyWithBraces(CompositeElement root, Lexer lexer, boolean annotationInterface, boolean isEnum) {
+  protected ASTNode parseClassBodyWithBraces(CompositeElement root, Lexer lexer, boolean annotationInterface, boolean isEnum) {
     if (lexer.getTokenType() != LBRACE) return null;
     LeafElement lbrace = (LeafElement)ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     TreeUtil.addChildren(root, lbrace);
@@ -935,7 +936,7 @@ public class DeclarationParsing extends Parsing {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
     ParsingContext context = new ParsingContext(charTable);
-    TreeElement first = context.getDeclarationParsing().parseParameter(lexer, true);
+    ASTNode first = context.getDeclarationParsing().parseParameter(lexer, true);
     if (first == null || first.getElementType() != PARAMETER) return null;
     if (lexer.getTokenType() != null) return null;
 

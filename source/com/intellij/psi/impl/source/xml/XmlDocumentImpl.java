@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 import gnu.trove.TObjectIntHashMap;
 
 import java.lang.ref.WeakReference;
@@ -40,7 +41,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     visitor.visitXmlDocument(this);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_PROLOG) {

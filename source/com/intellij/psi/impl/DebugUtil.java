@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -25,7 +26,7 @@ public class DebugUtil {
     return treeToString(SourceTreeToPsiMap.psiElementToTree(element), skipWhitespaces);
   }
 
-  public static String treeToString(TreeElement root, boolean skipWhitespaces) {
+  public static String treeToString(ASTNode root, boolean skipWhitespaces) {
     StringBuffer buffer = new StringBuffer();
     treeToBuffer(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
@@ -43,7 +44,7 @@ public class DebugUtil {
     return buffer.toString();
   }
 
-  private static void treeToBuffer(StringBuffer buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
     for(int i = 0; i < indent; i++){
@@ -62,7 +63,7 @@ public class DebugUtil {
     buffer.append("\n");
     if (root instanceof CompositeElement){
       ChameleonTransforming.transformChildren((CompositeElement)root);
-      TreeElement child = ((CompositeElement)root).firstChild;
+      ASTNode child = ((CompositeElement)root).firstChild;
 
       if (child == null){
         for(int i = 0; i < indent + 2; i++){
@@ -147,8 +148,8 @@ public class DebugUtil {
 
   }
 
-  public static void checkTreeStructure(TreeElement anyElement) {
-    TreeElement root = anyElement;
+  public static void checkTreeStructure(ASTNode anyElement) {
+    ASTNode root = anyElement;
     while(root.getTreeParent() != null){
       root = root.getTreeParent();
     }
@@ -166,7 +167,7 @@ public class DebugUtil {
       }
     }
     else{
-      for(TreeElement child = root.firstChild; child != null; child = child.getTreeNext()){
+      for(ASTNode child = root.firstChild; child != null; child = child.getTreeNext()){
         if (child instanceof CompositeElement){
           checkSubtree((CompositeElement)child);
         }
@@ -195,10 +196,10 @@ public class DebugUtil {
     }
   }
 
-  public static void checkParentChildConsistent(TreeElement element) {
-    CompositeElement treeParent = element.getTreeParent();
+  public static void checkParentChildConsistent(ASTNode element) {
+    ASTNode treeParent = element.getTreeParent();
     if (treeParent == null) return;
-    TreeElement[] elements = treeParent.getChildren(null);
+    ASTNode[] elements = treeParent.getChildren(null);
     if (ArrayUtil.find(elements, element) == -1) {
       throw new IncorrectTreeStructureException(element, "child cannot be found among parents children");
     }
@@ -212,14 +213,14 @@ public class DebugUtil {
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {
-    private final TreeElement myElement;
+    private final ASTNode myElement;
 
-    public IncorrectTreeStructureException(TreeElement element, String message) {
+    public IncorrectTreeStructureException(ASTNode element, String message) {
       super(message);
       myElement = element;
     }
 
-    public TreeElement getElement() {
+    public ASTNode getElement() {
       return myElement;
     }
   }

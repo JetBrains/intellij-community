@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.lang.ASTNode;
 
 public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiPrefixExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPrefixExpressionImpl");
@@ -52,7 +53,7 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -66,7 +67,7 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == firstChild) return ChildRole.OPERATION_SIGN;
     if (child == lastChild && EXPRESSION_BIT_SET.isInSet(child.getElementType())) return ChildRole.OPERAND;

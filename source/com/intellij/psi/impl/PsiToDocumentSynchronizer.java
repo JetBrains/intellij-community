@@ -11,7 +11,7 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.lang.ASTNode;
 
 class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
@@ -42,7 +42,7 @@ class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    TreeElement element = SourceTreeToPsiMap.psiElementToTree(event.getParent());
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(event.getParent());
     while(element != null && !(element instanceof FileElement)) {
       element = element.getTreeParent();
     }

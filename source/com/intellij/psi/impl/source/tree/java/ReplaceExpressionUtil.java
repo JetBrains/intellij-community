@@ -8,11 +8,12 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.lang.ASTNode;
 
 public class ReplaceExpressionUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil");
 
-  public static boolean isNeedParenthesis(TreeElement oldExpr, TreeElement newExpr) {
+  public static boolean isNeedParenthesis(TreeElement oldExpr, ASTNode newExpr) {
     if (!ElementType.EXPRESSION_BIT_SET.isInSet(oldExpr.getTreeParent().getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldExpr.getTreeParent());
@@ -69,7 +70,7 @@ public class ReplaceExpressionUtil implements Constants {
     return false;
   }
 
-  private static int getExpressionPriority(TreeElement expr) {
+  private static int getExpressionPriority(ASTNode expr) {
     IElementType i = expr.getElementType();
     if (i == ASSIGNMENT_EXPRESSION) {
       return 0;

@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
@@ -16,7 +17,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
 
   public PsiType getType(){
     PsiType type = null;
-    for(TreeElement child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
       if (child.getElementType() == JAVA_CODE_REFERENCE){
         LOG.assertTrue(type == null);
         type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child));
@@ -70,9 +71,9 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   }
 
   public ResolveResult resolveMethodGenerics() {
-    TreeElement classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
+    ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     if (classRef != null){
-      TreeElement argumentList = TreeUtil.skipElements(classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode argumentList = TreeUtil.skipElements((TreeElement)classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
         PsiType aClass = getManager().getElementFactory().createType(
           (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
@@ -84,11 +85,11 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       }
     }
     else{
-      TreeElement anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
+      ASTNode anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
       if (anonymousClass != null) {
         PsiType aClass = ((PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass)).getBaseClassType();
         if (aClass != null) {
-          TreeElement argumentList = TreeUtil.findChild((CompositeElement)anonymousClass, EXPRESSION_LIST);
+          ASTNode argumentList = TreeUtil.findChild((CompositeElement)anonymousClass, EXPRESSION_LIST);
           return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                     this);
@@ -120,14 +121,14 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   }
 
   public PsiAnonymousClass getAnonymousClass() {
-    TreeElement anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
+    ASTNode anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
     if (anonymousClass == null) return null;
     return (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER){
-      TreeElement dot = findChildByRole(ChildRole.DOT);
+      ASTNode dot = findChildByRole(ChildRole.DOT);
       super.deleteChildInternal(child);
       deleteChildInternal(dot);
     }
@@ -136,7 +137,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     }
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -182,7 +183,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == REFERENCE_PARAMETER_LIST) {

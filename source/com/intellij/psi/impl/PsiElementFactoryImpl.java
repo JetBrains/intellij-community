@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -142,7 +143,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     final CompositeElement treeElement = (CompositeElement)ChangeUtil.copyToElement(createTypeElement(type));
     new DummyHolder(myManager, treeElement, null);
-    final TreeElement referenceChild = treeElement.firstChild;
+    final ASTNode referenceChild = treeElement.firstChild;
     LOG.assertTrue(referenceChild.getElementType() == ElementType.JAVA_CODE_REFERENCE);
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(referenceChild);
   }
@@ -209,7 +210,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
-    ChangeUtil.replaceChild(treeElement, treeElement.findChildByRole(ChildRole.TYPE), typeElement);
+    ChangeUtil.replaceChild(treeElement, (TreeElement)treeElement.findChildByRole(ChildRole.TYPE), typeElement);
     ChangeUtil.decodeInformation(typeElement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());

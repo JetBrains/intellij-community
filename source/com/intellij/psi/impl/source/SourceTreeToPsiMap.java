@@ -6,11 +6,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.lang.ASTNode;
 
 public class SourceTreeToPsiMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.SourceTreeToPsiMap");
 
-  public static PsiElement treeElementToPsi(TreeElement element){
+  public static PsiElement treeElementToPsi(ASTNode element){
     ProgressManager.getInstance().checkCanceled();
 
     if (element == null) return null;

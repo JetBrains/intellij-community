@@ -23,6 +23,7 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
@@ -43,7 +44,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public int getTextOffset() {
-    final TreeElement refName = findChildByRole(ChildRole.REFERENCE_NAME);
+    final ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     if (refName != null){
       return refName.getStartOffset();
     }
@@ -71,13 +72,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_NAME_KIND;
     }
     else if (i == NEW_EXPRESSION) {
-      final TreeElement qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+      final ASTNode qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
       return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
     }
     else if (i == ANONYMOUS_CLASS) {
       if (getTreeParent().getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
         LOG.assertTrue(getTreeParent().getTreeParent().getElementType() == NEW_EXPRESSION);
-        final TreeElement qualifier = getTreeParent().getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+        final ASTNode qualifier = getTreeParent().getTreeParent().findChildByRole(ChildRole.QUALIFIER);
         return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
       }
       else {
@@ -95,7 +96,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
     else if (i == JSP_IMPORT_VALUE) {
-      final TreeElement nextNonSpace = TreeUtil.skipElements(getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode nextNonSpace = TreeUtil.skipElements(getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       final boolean isOnDemand = nextNonSpace != null && nextNonSpace.getElementType() == DOT;
       return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
@@ -140,9 +141,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public void deleteChildInternal(final TreeElement child) {
+  public void deleteChildInternal(final ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER){
-      final TreeElement dot = findChildByRole(ChildRole.DOT);
+      final ASTNode dot = findChildByRole(ChildRole.DOT);
       super.deleteChildInternal(child);
       deleteChildInternal(dot);
     }
@@ -151,7 +152,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public final TreeElement findChildByRole(final int role) {
+  public final ASTNode findChildByRole(final int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -195,7 +196,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public final int getChildRole(final TreeElement child) {
+  public final int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType i = child.getElementType();
     if (i == REFERENCE_PARAMETER_LIST) {
@@ -558,7 +559,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return true;
     }
 
-    final TreeElement qualifier = findChildByRole(ChildRole.QUALIFIER);
+    final ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
 
     LOG.assertTrue(qualifier.getElementType() == JAVA_CODE_REFERENCE);
@@ -640,7 +641,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return true;
     }
 
-    final TreeElement referenceNameElement = findChildByRole(ChildRole.REFERENCE_NAME);
+    final ASTNode referenceNameElement = findChildByRole(ChildRole.REFERENCE_NAME);
     if (referenceNameElement.getElementType() != IDENTIFIER) return false;
     final String name = ((PsiClass)element).getName();
     if (name == null) return false;
@@ -675,7 +676,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return getChildRole(firstChild) != ChildRole.REFERENCE_NAME;
   }
 
-  public TreeElement getTreeQualifier() {
+  public ASTNode getTreeQualifier() {
     return findChildByRole(ChildRole.QUALIFIER);
   }
 
@@ -850,13 +851,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public String getReferenceName() {
-    final TreeElement childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
+    final ASTNode childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
     if (childByRole == null) return null;
     return childByRole.getText();
   }
 
   public final TextRange getRangeInElement() {
-    final TreeElement nameChild = findChildByRole(ChildRole.REFERENCE_NAME);
+    final TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) return new TextRange(0, getTextLength());
     final int startOffset = nameChild.getStartOffsetInParent();
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());

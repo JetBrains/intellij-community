@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author dsl
@@ -36,7 +37,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
 
     switch(role) {
@@ -66,7 +67,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 
     IElementType i = child.getElementType();

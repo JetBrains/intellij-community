@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.ASTNode;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.Map;
@@ -222,7 +223,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
       if (type == null){ // package local
         throw new IncorrectOperationException("Cannot reset package local modifier."); //?
       }
-      TreeElement child = TreeUtil.findChild(treeElement, type);
+      ASTNode child = TreeUtil.findChild(treeElement, type);
       if (child != null){
         SourceTreeToPsiMap.treeElementToPsi(child).delete();
       }

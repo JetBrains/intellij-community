@@ -15,6 +15,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ class TagNameReference implements PsiReference {
   }
 
   public XmlTag getElement() {
-    TreeElement parent = TreeUtil.findParent(myNameElement, XmlElementType.XML_TAG);
+    ASTNode parent = TreeUtil.findParent(myNameElement, XmlElementType.XML_TAG);
     if(parent == null) parent = TreeUtil.findParent(myNameElement, XmlElementType.HTML_TAG);
     return (XmlTag)SourceTreeToPsiMap.treeElementToPsi(parent);
   }

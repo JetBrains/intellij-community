@@ -7,6 +7,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.ASTNode;
 
 public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement {
   public PsiDeclarationStatementImpl() {
@@ -19,12 +20,12 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
 
   private static final TokenSet DECLARED_ELEMENT_BIT_SET = TokenSet.create(new IElementType[]{LOCAL_VARIABLE, CLASS});
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     if (child.getElementType() == ElementType.COMMA) return ChildRole.COMMA;
     return super.getChildRole(child);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (DECLARED_ELEMENT_BIT_SET.isInSet(child.getElementType())) {
       PsiElement[] declaredElements = getDeclaredElements();
       int length = declaredElements.length;
@@ -34,20 +35,20 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
           return;
         } else {
           if (SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 1]) == child) {
-            removeCommaBefore(child);
+            removeCommaBefore((TreeElement)child);
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 2]), semicolon, null);
           }
           else if (SourceTreeToPsiMap.psiElementToTree(declaredElements[0]) == child) {
             CompositeElement next = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[1]);
-            TreeElement copyChild = child.copyElement();
-            TreeElement nameChild = ((CompositeElement)copyChild).findChildByRole(ChildRole.NAME);
+            ASTNode copyChild = ((TreeElement)child).copyElement();
+            ASTNode nameChild = ((CompositeElement)copyChild).findChildByRole(ChildRole.NAME);
             removeCommaBefore(next);
-            next.addInternal(((CompositeElement)copyChild).firstChild, nameChild.getTreePrev(), null, Boolean.FALSE);
+            next.addInternal(((CompositeElement)copyChild).firstChild, (TreeElement)nameChild.getTreePrev(), null, Boolean.FALSE);
           }
           else {
-            removeCommaBefore (child);
+            removeCommaBefore ((TreeElement)child);
           }
         }
       }

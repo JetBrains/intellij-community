@@ -19,6 +19,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
@@ -64,7 +65,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement findElementAt(int offset) {
-    TreeElement leaf = findLeafElementAt(offset);
+    ASTNode leaf = findLeafElementAt(offset);
     return SourceTreeToPsiMap.treeElementToPsi(leaf);
   }
 
@@ -73,7 +74,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement copy() {
-    TreeElement elementCopy = copyElement();
+    ASTNode elementCopy = copyElement();
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 

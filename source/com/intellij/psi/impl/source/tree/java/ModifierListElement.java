@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 
 public class ModifierListElement extends RepositoryTreeElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ModifierListElement");
@@ -25,7 +26,7 @@ public class ModifierListElement extends RepositoryTreeElement{
     return super.addInternal(first, last, anchor, before);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == JavaElementType.ANNOTATION) return ChildRole.ANNOTATION;
     return ChildRole.NONE;

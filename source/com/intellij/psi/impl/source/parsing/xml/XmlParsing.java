@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class XmlParsing implements ElementType {
     return root;
   }
 
-  public static TreeElement parseTag(Lexer lexer, char[] buffer, int startOffset, int endOffset, CharTable table, TreeElement parent) {
+  public static ASTNode parseTag(Lexer lexer, char[] buffer, int startOffset, int endOffset, CharTable table, ASTNode parent) {
     ParsingContext context = new ParsingContext(table);
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
@@ -72,7 +73,7 @@ public class XmlParsing implements ElementType {
       context.getXmlParsing().addToken(holderElement, filterLexer);
     }
     ParseUtil.insertMissingTokens(holderElement, lexer, startOffset, endOffset, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    TreeElement result = holderElement.firstChild;
+    ASTNode result = holderElement.firstChild;
     return result;
   }
 
@@ -455,7 +456,7 @@ public class XmlParsing implements ElementType {
     return false;
   }
 
-  public TreeElement parseElementContentSpec(CompositeElement parent, Lexer lexer) {
+  public ASTNode parseElementContentSpec(CompositeElement parent, Lexer lexer) {
     CompositeElement spec = Factory.createCompositeElement(XML_ELEMENT_CONTENT_SPEC);
     TreeUtil.addChildren(parent, spec);
 

@@ -9,8 +9,9 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
-public abstract class TreeElement extends ElementBase implements Constants, Cloneable {
+public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
   protected TreeElement next = null; // this var could be not only next element pointer in ChildElements
                                      // use it _VERY_ carefuly!! If you are not sure use apropariate getter (getTreeNext()).
@@ -24,15 +25,15 @@ public abstract class TreeElement extends ElementBase implements Constants, Clon
     return clone;
   }
 
-  public TreeElement copyElement() {
+  public ASTNode copyElement() {
     if (getTreeParent() != null) {
       CompositeElement parentCopy = (CompositeElement)getTreeParent().copyElement();
       synchronized (PsiLock.LOCK) {
         int index = 0;
-        for (TreeElement child = getTreeParent().firstChild; child != this; child = child.getTreeNext()) {
+        for (ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()) {
           index++;
         }
-        TreeElement child;
+        ASTNode child;
         for (child = parentCopy.firstChild; index > 0; child = child.getTreeNext(), index--) {
         }
 //child.putUserData(MANAGER_KEY, getManager()); //?
@@ -98,7 +99,7 @@ public abstract class TreeElement extends ElementBase implements Constants, Clon
   public final int getStartOffsetInParent(){
     if (getTreeParent() == null) return -1;
     int offset = 0;
-    for(TreeElement child = getTreeParent().firstChild; child != this; child = child.getTreeNext()){
+    for(ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()){
       offset += child.getTextLength();
     }
     return offset;
@@ -116,7 +117,7 @@ public abstract class TreeElement extends ElementBase implements Constants, Clon
     return textMatches(this, buffer, startOffset, endOffset);
   }
 
-  private static int textMatches(TreeElement element, CharSequence buffer, int startOffset, int endOffset) {
+  private static int textMatches(ASTNode element, CharSequence buffer, int startOffset, int endOffset) {
     synchronized (PsiLock.LOCK) {
       if (element instanceof LeafElement) {
         final LeafElement leaf = (LeafElement)element;
@@ -124,7 +125,7 @@ public abstract class TreeElement extends ElementBase implements Constants, Clon
       }
       else {
         int curOffset = startOffset;
-        for (TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+        for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
           curOffset = textMatches(child, buffer, curOffset, endOffset);
           if (curOffset == -1) return -1;
         }
@@ -157,17 +158,20 @@ public abstract class TreeElement extends ElementBase implements Constants, Clon
   public abstract TreeElement getTreePrev();
 
   public abstract void setTreePrev(TreeElement prev);
+
   public void setTreeNext(TreeElement next){
     this.next = next;
   }
+
   public abstract void setTreeParent(CompositeElement parent);
+
   public abstract int getTextLength(CharTable charTableByTree);
 
-  public TreeElement getTransformedFirstOrSelf(){
+  public ASTNode getTransformedFirstOrSelf(){
     return this;
   }
 
-  public TreeElement getTransformedLastOrSelf(){
+  public ASTNode getTransformedLastOrSelf(){
     return this;
   }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiReturnStatementImpl extends CompositePsiElement implements PsiReturnStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReturnStatementImpl");
@@ -18,7 +19,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.RETURN_VALUE);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -35,7 +36,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == RETURN_KEYWORD) {

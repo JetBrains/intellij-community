@@ -8,6 +8,7 @@ import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlAttlistDecl;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
     super(XML_ATTLIST_DECL);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_NAME) {
       return ChildRole.XML_NAME;

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements PsiSwitchLabelStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSwitchLabelStatementImpl");
@@ -29,7 +30,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     return null;
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -49,7 +50,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == CASE_KEYWORD) {

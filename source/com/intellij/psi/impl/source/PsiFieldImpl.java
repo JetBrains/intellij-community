@@ -16,6 +16,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -149,12 +150,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
     CompositeElement treeElement = getTreeElement();
     if (treeElement != null){
-      TreeElement modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
+      ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
       if (modifierList != null) {
         return this;
       }
       else{
-        TreeElement prevField = treeElement.getTreePrev();
+        ASTNode prevField = treeElement.getTreePrev();
         while(prevField.getElementType() != JavaElementType.FIELD){
           prevField = prevField.getTreePrev();
         }
@@ -307,7 +308,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       return (PsiDocComment)treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
     }
     else{
-      TreeElement prevField = treeElement.getTreePrev();
+      ASTNode prevField = treeElement.getTreePrev();
       while(prevField.getElementType() != JavaElementType.FIELD){
         prevField = prevField.getTreePrev();
       }
@@ -319,18 +320,18 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     CheckUtil.checkWritable(this);
 
     TreeElement type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
-    TreeElement modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
-    TreeElement field = type.getTreeParent();
+    ASTNode modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
+    ASTNode field = type.getTreeParent();
     while(true){
-      TreeElement comma = TreeUtil.skipElements(field.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode comma = TreeUtil.skipElements(field.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (comma == null || comma.getElementType() != JavaTokenType.COMMA) break;
-      TreeElement nextField = TreeUtil.skipElements(comma.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode nextField = TreeUtil.skipElements(comma.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
 
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, null, getManager());
       CodeEditUtil.addChild((CompositeElement)field, semicolon, null);
 
-      CodeEditUtil.removeChild(comma.getTreeParent(), comma);
+      CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), (TreeElement)comma);
 
       TreeElement typeClone = (TreeElement)type.clone();
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(type);

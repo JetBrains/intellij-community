@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiIfStatementImpl");
@@ -17,9 +18,9 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (child == getElseBranch()) {
-      TreeElement elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
+      ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {
         super.deleteChildInternal(elseKeyword);
       }
@@ -60,7 +61,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -86,17 +87,17 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
       case ChildRole.ELSE_BRANCH:
         {
-          TreeElement elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
+          ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
           if (elseKeyword == null) return null;
-          for(TreeElement child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (STATEMENT_BIT_SET.isInSet(child.getElementType())) return child;
+          for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+            if (STATEMENT_BIT_SET.isInSet(child.getElementType())) return (TreeElement)child;
           }
           return null;
         }
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == IF_KEYWORD) {

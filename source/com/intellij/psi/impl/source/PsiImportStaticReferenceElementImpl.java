@@ -18,6 +18,7 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public int getTextOffset() {
-    TreeElement refName = findChildByRole(ChildRole.REFERENCE_NAME);
+    ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     if (refName != null){
       return refName.getStartOffset();
     }
@@ -48,7 +49,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     myCanonicalText = null;
   }
 
-  public final TreeElement findChildByRole(int role) {
+  public final ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -75,7 +76,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
-  public final int getChildRole(TreeElement child) {
+  public final int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JAVA_CODE_REFERENCE) {
@@ -118,7 +119,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (qualifiedName == null) throw new IncorrectOperationException();
     final CompositeElement newRef = Parsing.parseJavaCodeReferenceText(getManager(), qualifiedName.toCharArray(), SharedImplUtil.findCharTableByTree(this));
     if (getQualifier() != null) {
-      replaceChildInternal(findChildByRole(ChildRole.QUALIFIER), newRef);
+      replaceChildInternal((TreeElement)findChildByRole(ChildRole.QUALIFIER), newRef);
       return (PsiImportStaticStatement)getParent();
     }
     else {
@@ -146,7 +147,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public String getReferenceName() {
-    final TreeElement childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
+    final ASTNode childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
     if (childByRole == null) return "";
     return childByRole.getText();
   }
@@ -156,7 +157,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public TextRange getRangeInElement() {
-    TreeElement nameChild = findChildByRole(ChildRole.REFERENCE_NAME);
+    TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) return new TextRange(0, getTextLength());
     final int startOffset = nameChild.getStartOffsetInParent();
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());

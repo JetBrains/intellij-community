@@ -5,52 +5,53 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class TreeUtil {
-  public static TreeElement findChild(CompositeElement parent, IElementType type) {
+  public static ASTNode findChild(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(TreeElement element = parent.firstChild; element != null; element = element.getTreeNext()){
+    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
       if (element.getElementType() == type) return element;
     }
     return null;
   }
 
-  public static TreeElement findChild(CompositeElement parent, TokenSet types) {
+  public static ASTNode findChild(ASTNode parent, TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(TreeElement element = parent.firstChild; element != null; element = element.getTreeNext()){
+    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
       if (types.isInSet(element.getElementType())) return element;
     }
     return null;
   }
 
-  public static TreeElement findChildBackward(CompositeElement parent, IElementType type) {
+  public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(TreeElement element = parent.lastChild; element != null; element = element.getTreePrev()){
+    for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
       if (element.getElementType() == type) return element;
     }
     return null;
   }
 
-  public static TreeElement findChildBackward(CompositeElement parent, TokenSet types) {
+  public static ASTNode findChildBackward(CompositeElement parent, TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(TreeElement element = parent.lastChild; element != null; element = element.getTreePrev()){
+    for(ASTNode element = parent.lastChild; element != null; element = element.getTreePrev()){
       if (types.isInSet(element.getElementType())) return element;
     }
     return null;
   }
 
-  public static TreeElement skipElements(TreeElement element, TokenSet types) {
+  public static ASTNode skipElements(ASTNode element, TokenSet types) {
     while(true){
       if (element == null) return null;
       if (!types.isInSet(element.getElementType())) break;
@@ -59,7 +60,7 @@ public class TreeUtil {
     return element;
   }
 
-  public static TreeElement skipElementsBack(TreeElement element, TokenSet types) {
+  public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
     while(true){
       if (element == null) return null;
       if (!types.isInSet(element.getElementType())) break;
@@ -68,33 +69,33 @@ public class TreeUtil {
     return element;
   }
 
-  public static TreeElement findParent(TreeElement element, IElementType type) {
-    for(TreeElement parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
+  public static ASTNode findParent(ASTNode element, IElementType type) {
+    for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
       if (parent.getElementType() == type) return parent;
     }
     return null;
   }
 
-  public static TreeElement findParent(TreeElement element, TokenSet types) {
-    for(TreeElement parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
+  public static ASTNode findParent(ASTNode element, TokenSet types) {
+    for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
       if (types.isInSet(parent.getElementType())) return parent;
     }
     return null;
   }
 
-  public static boolean isInRange(TreeElement element, TreeElement start, TreeElement end) {
-    for(TreeElement child = start; child != end; child = child.getTreeNext()){
+  public static boolean isInRange(ASTNode element, ASTNode start, ASTNode end) {
+    for(ASTNode child = start; child != end; child = child.getTreeNext()){
       if (child == element) return true;
     }
     return false;
   }
 
-  public static LeafElement findFirstLeaf(TreeElement element) {
+  public static LeafElement findFirstLeaf(ASTNode element) {
     if (element instanceof LeafElement){
       return (LeafElement)element;
     }
     else{
-      for(TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()){
+      for(ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()){
         LeafElement leaf = findFirstLeaf(child);
         if (leaf != null) return leaf;
       }
@@ -102,12 +103,12 @@ public class TreeUtil {
     }
   }
 
-  public static LeafElement findLastLeaf(TreeElement element) {
+  public static LeafElement findLastLeaf(ASTNode element) {
     if (element instanceof LeafElement){
       return (LeafElement)element;
     }
     else{
-      for(TreeElement child = ((CompositeElement)element).lastChild; child != null; child = child.getTreePrev()){
+      for(ASTNode child = ((CompositeElement)element).lastChild; child != null; child = child.getTreePrev()){
         LeafElement leaf = findLastLeaf(child);
         if (leaf != null) return leaf;
       }
@@ -268,8 +269,8 @@ public class TreeUtil {
     remove(old);
   }
 
-  public static TreeElement findSibling(TreeElement start, IElementType elementType) {
-    TreeElement child = start;
+  public static ASTNode findSibling(ASTNode start, IElementType elementType) {
+    ASTNode child = start;
     while (true) {
       if (child == null) return null;
       if (child.getElementType() == elementType) return child;
@@ -277,8 +278,8 @@ public class TreeUtil {
     }
   }
 
-  public static TreeElement findSibling(TreeElement start, TokenSet types) {
-    TreeElement child = start;
+  public static ASTNode findSibling(ASTNode start, TokenSet types) {
+    ASTNode child = start;
     while (true) {
       if (child == null) return null;
       if (types.isInSet(child.getElementType())) return child;
@@ -286,10 +287,10 @@ public class TreeUtil {
     }
   }
 
-  public static TreeElement findCommonParent(TreeElement one, TreeElement two){
+  public static ASTNode findCommonParent(ASTNode one, ASTNode two){
     // optimization
     if(one == two) return one;
-    final Set<TreeElement> parents = new HashSet<TreeElement>(20);
+    final Set<ASTNode> parents = new HashSet<ASTNode>(20);
     do{
       parents.add(one);
     } while((one = one.getTreeParent()) != null);
@@ -319,7 +320,7 @@ public class TreeUtil {
 
   public static int countLeafs(CompositeElement composite) {
     int count = 0;
-    TreeElement child = composite.firstChild;
+    ASTNode child = composite.firstChild;
     while(child != null){
       if(child instanceof LeafElement) count++;
       else count += countLeafs((CompositeElement)child);

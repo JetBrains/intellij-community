@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ven
@@ -34,7 +35,7 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
     return myCachedMembers;
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     IElementType i = child.getElementType();
     if (i == COMMA) {
       return ChildRole.COMMA;
@@ -55,7 +56,7 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     switch (role) {
       default:
         LOG.assertTrue(false);

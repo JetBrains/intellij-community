@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 
@@ -31,7 +32,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   public PsiCodeBlock[] getCatchBlocks() {
-    TreeElement tryBlock = SourceTreeToPsiMap.psiElementToTree(getTryBlock());
+    ASTNode tryBlock = SourceTreeToPsiMap.psiElementToTree(getTryBlock());
     if (tryBlock != null) {
       PsiCatchSection[] catchSections = getCatchSections();
       if (catchSections.length == 0) return PsiCodeBlock.EMPTY_ARRAY;
@@ -69,7 +70,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.FINALLY_BLOCK);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -86,11 +87,11 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
 
       case ChildRole.FINALLY_BLOCK:
         {
-          TreeElement finallyKeyword = findChildByRole(ChildRole.FINALLY_KEYWORD);
+          ASTNode finallyKeyword = findChildByRole(ChildRole.FINALLY_KEYWORD);
           if (finallyKeyword == null) return null;
-          for(TreeElement child = finallyKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+          for(ASTNode child = finallyKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
             if (child.getElementType() == CODE_BLOCK){
-              return child;
+              return (TreeElement)child;
             }
           }
           return null;
@@ -98,7 +99,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == TRY_KEYWORD) {

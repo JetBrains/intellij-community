@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  *  @author dsl
@@ -29,7 +30,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     return PsiImplUtil.typesByReferenceParameterList(this);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     IElementType i = child.getElementType();
     if (i == TYPE) {
       return ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST;
@@ -48,7 +49,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     ChameleonTransforming.transformChildren(this);
     switch(role){
@@ -82,11 +83,11 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
     if (anchor == null){
       if (before == null || before.booleanValue()){
-        anchor = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
+        anchor = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
         before = Boolean.TRUE;
       }
       else{
-        anchor = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
+        anchor = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
         before = Boolean.FALSE;
       }
     }
@@ -96,7 +97,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
     if (first == last && first.getElementType() == TYPE){
       TreeElement element = first;
-      for(TreeElement child = element.getTreeNext(); child != null; child = child.getTreeNext()){
+      for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE){
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -125,14 +126,14 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     return firstAdded;
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (child.getElementType() == TYPE){
-      TreeElement next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){
         deleteChildInternal(next);
       }
       else{
-        TreeElement prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null && prev.getElementType() == COMMA){
           deleteChildInternal(prev);
         }
@@ -142,12 +143,12 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     super.deleteChildInternal(child);
 
     if (getTypeParameterElements().length == 0){
-      TreeElement lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
+      ASTNode lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
       if (lt != null){
         deleteChildInternal(lt);
       }
 
-      TreeElement gt = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
+      ASTNode gt = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
       if (gt != null){
         deleteChildInternal(gt);
       }

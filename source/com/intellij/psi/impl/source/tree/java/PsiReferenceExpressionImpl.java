@@ -29,6 +29,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
@@ -260,9 +261,9 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     ResolveResult result = advancedResolve(false);
     PsiElement resolve = result.getElement();
     if (resolve == null){
-      TreeElement refName = findChildByRole(ChildRole.REFERENCE_NAME);
-      if (refName != null && refName.textMatches(LENGTH)){
-        TreeElement qualifier = findChildByRole(ChildRole.QUALIFIER);
+      ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
+      if (refName != null && refName.getText().equals(LENGTH)){
+        ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
         if (qualifier != null && ElementType.EXPRESSION_BIT_SET.isInSet(qualifier.getElementType())){
           PsiType type = ((PsiExpression)SourceTreeToPsiMap.treeElementToPsi(qualifier)).getType();
           if (type != null && type instanceof PsiArrayType){
@@ -347,7 +348,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public int getTextOffset() {
-    TreeElement refName = findChildByRole(ChildRole.REFERENCE_NAME);
+    ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     if (refName != null){
       return refName.getStartOffset();
     }
@@ -442,7 +443,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   private static boolean isFullyQualified(CompositeElement classRef) {
-    TreeElement qualifier = classRef.findChildByRole(ChildRole.QUALIFIER);
+    ASTNode qualifier = classRef.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
     if (qualifier.getElementType() != REFERENCE_EXPRESSION) return false;
     PsiElement refElement = ((PsiReference)qualifier).resolve();
@@ -450,9 +451,9 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return isFullyQualified((CompositeElement)qualifier);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER){
-      TreeElement dot = findChildByRole(ChildRole.DOT);
+      ASTNode dot = findChildByRole(ChildRole.DOT);
       super.deleteChildInternal(child);
       deleteChildInternal(dot);
     }
@@ -461,7 +462,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -486,7 +487,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DOT) {
@@ -515,7 +516,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public TextRange getRangeInElement() {
-    TreeElement nameChild = findChildByRole(ChildRole.REFERENCE_NAME);
+    TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     return new TextRange(nameChild != null ? nameChild.getStartOffsetInParent() : 0, getTextLength());
   }
 
@@ -551,7 +552,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return getChildRole(firstChild) == ChildRole.QUALIFIER;
   }
 
-  public TreeElement getTreeQualifier() {
+  public ASTNode getTreeQualifier() {
     return findChildByRole(ChildRole.QUALIFIER);
   }
 

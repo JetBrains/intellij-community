@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ven
@@ -35,7 +36,7 @@ public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifie
     return (PsiAnnotationParameterList)findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 
     IElementType i = child.getElementType();
@@ -50,7 +51,7 @@ public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifie
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
       default:

@@ -12,6 +12,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ven
@@ -63,7 +64,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return myCachedValue;
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;
     } else if (child.getElementType() == IDENTIFIER) {
@@ -75,7 +76,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return ChildRole.NONE;
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     if (role == ChildRole.NAME) {
       return TreeUtil.findChild(this, IDENTIFIER);
     } else if (role == ChildRole.ANNOTATION_VALUE) {
@@ -188,7 +189,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return treeElement;
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     super.deleteChildInternal(child);
     if (child.getElementType() == ElementType.IDENTIFIER) {
       super.deleteChildInternal(findChildByRole(ChildRole.OPERATION_SIGN));

@@ -14,6 +14,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -25,7 +26,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     super(XML_ELEMENT_DECL);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME) {

@@ -15,6 +15,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -104,13 +105,13 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     PsiElement[] variables = ((PsiDeclarationStatement)SourceTreeToPsiMap.treeElementToPsi(statement)).getDeclaredElements();
     if (variables.length > 1){
       //CodeStyleManagerImpl codeStyleManager = (CodeStyleManagerImpl)getManager().getCodeStyleManager();
-      TreeElement type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
-      TreeElement modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
-      TreeElement last = statement;
+      ASTNode type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
+      ASTNode modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
+      ASTNode last = statement;
       for(int i = 1; i < variables.length; i++){
         CompositeElement variable = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i]);
 
-        TreeElement comma = TreeUtil.skipElementsBack(variable.getTreePrev(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        TreeElement comma = (TreeElement)TreeUtil.skipElementsBack(variable.getTreePrev(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (comma != null && comma.getElementType() == JavaTokenType.COMMA){
           CodeEditUtil.removeChildren(statement, comma, variable.getTreePrev());
         }
@@ -141,7 +142,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
         ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i - 1]), semicolon, null);
 
-        CodeEditUtil.addChild(statement.getTreeParent(), statement1, last.getTreeNext());
+        CodeEditUtil.addChild(statement.getTreeParent(), statement1, (TreeElement)last.getTreeNext());
 
         //?
         //codeStyleManager.adjustInsertedCode(statement1);
@@ -152,9 +153,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
-      TreeElement eq = findChildByRole(ChildRole.INITIALIZER_EQ);
+      ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){
         deleteChildInternal(eq);
       }
@@ -162,7 +163,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     super.deleteChildInternal(child);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -188,7 +189,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == MODIFIER_LIST) {

@@ -22,6 +22,8 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,38 +40,38 @@ public class Helper {
     myFileType = fileType;
   }
 
-  public static boolean isNonSpace(TreeElement element) {
+  public static boolean isNonSpace(ASTNode element) {
     IElementType elementType = element.getElementType();
     if(elementType == JavaTokenType.WHITE_SPACE) return false;
     else if(elementType == XmlElementType.XML_TEXT && element.getText().trim().length() == 0) return false;
     return element.getTextLength() > 0;
   }
 
-  public static TreeElement shiftForwardToNonSpace(TreeElement element) {
+  public static ASTNode shiftForwardToNonSpace(ASTNode element) {
     while (element != null && !isNonSpace(element)) {
       element = element.getTreeNext();
     }
     return element;
   }
 
-  public static TreeElement shiftBackwardToNonSpace(TreeElement element) {
+  public static ASTNode shiftBackwardToNonSpace(ASTNode element) {
     while (element != null && !isNonSpace(element)) {
       element = element.getTreePrev();
     }
     return element;
   }
 
-  private int getStartOffset(TreeElement root, TreeElement child) {
+  private int getStartOffset(ASTNode root, ASTNode child) {
     if (child == root) return 0;
-    CompositeElement parent = child.getTreeParent();
+    CompositeElement parent = (CompositeElement)child.getTreeParent();
     int offset = 0;
-    for (TreeElement child1 = parent.firstChild; child1 != child; child1 = child1.getTreeNext()) {
+    for (ASTNode child1 = parent.firstChild; child1 != child; child1 = child1.getTreeNext()) {
       offset += child1.getTextLength();
     }
     return getStartOffset(root, parent) + offset;
   }
 
-  public static TreeElement splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
+  public static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
     LOG.assertTrue(space.getElementType() == ElementType.WHITE_SPACE);
     char[] chars = space.textToCharArray();
     LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, null);
@@ -84,13 +86,13 @@ public class Helper {
 
   public static final int INDENT_FACTOR = 10000; // "indent" is indent_level * INDENT_FACTOR + spaces
 
-  public int getIndent(TreeElement element) {
+  public int getIndent(ASTNode element) {
     return getIndent(element, false);
   }
 
-  public TreeElement getPrevWhitespace(final TreeElement element) {
+  public ASTNode getPrevWhitespace(final ASTNode element) {
     if (element.getTreePrev() != null) {
-      TreeElement prev = element.getTreePrev();
+      ASTNode prev = element.getTreePrev();
       CompositeElement lastCompositePrev;
       while (prev instanceof CompositeElement) {
         lastCompositePrev = (CompositeElement)prev;
@@ -112,9 +114,9 @@ public class Helper {
     }
   }
 
-  public int getIndent(final TreeElement element, boolean includeNonSpace) {
+  public int getIndent(final ASTNode element, boolean includeNonSpace) {
     if (element.getTreePrev() != null) {
-      TreeElement prev = element.getTreePrev();
+      ASTNode prev = element.getTreePrev();
       CompositeElement lastCompositePrev;
       while (prev instanceof CompositeElement && !(prev instanceof XmlText)) {
         lastCompositePrev = (CompositeElement)prev;
@@ -136,7 +138,7 @@ public class Helper {
       }
 
       if (element.getElementType() == ElementType.CODE_BLOCK) {
-        CompositeElement parent = element.getTreeParent();
+        ASTNode parent = element.getTreeParent();
         if (parent.getElementType() == ElementType.BLOCK_STATEMENT) {
           parent = parent.getTreeParent();
         }
@@ -153,8 +155,8 @@ public class Helper {
       }
       //Q: any other cases?
 
-      CompositeElement parent = prev.getTreeParent();
-      TreeElement child = prev;
+      ASTNode parent = prev.getTreeParent();
+      ASTNode child = prev;
       while (parent != null) {
         if (child.getTreePrev() != null) break;
         child = parent;
@@ -270,15 +272,15 @@ public class Helper {
 
 //----------------------------------------------------------------------------------------------------
 
-  public TreeElement makeHorizontalSpace(CompositeElement parent, TreeElement child1, TreeElement child2, int size) {
+  public ASTNode makeHorizontalSpace(CompositeElement parent, ASTNode child1, ASTNode child2, int size) {
     return makeHorizontalSpace(parent, child1, child2, size, true);
   }
 
-  public TreeElement makeHorizontalSpace(CompositeElement parent,
-                                         TreeElement child1,
-                                         TreeElement child2,
-                                         int size,
-                                         boolean soft) {
+  public ASTNode makeHorizontalSpace(CompositeElement parent,
+                                     ASTNode child1,
+                                     ASTNode child2,
+                                     int size,
+                                     boolean soft) {
     if (soft) {
       int lineBreaks = getLineBreakCount(parent, child1, child2);
       if (lineBreaks > 0) {
@@ -293,7 +295,7 @@ public class Helper {
         }
       }
     }
-    TreeElement leaf = child1;
+    ASTNode leaf = child1;
     if (child1 instanceof CompositeElement) {
       ChameleonTransforming.transformChildren((CompositeElement)child1, true);
       leaf = TreeUtil.findLastLeaf(child1);
@@ -320,7 +322,7 @@ public class Helper {
     return makeSpace(parent, child1, child2, text);
   }
 
-  public static int getElementRightSideColumn(TreeElement elem) {
+  public static int getElementRightSideColumn(ASTNode elem) {
     int len = 0;
     do {
       String text = elem.getText();
@@ -331,7 +333,7 @@ public class Helper {
       }
       len += text.length();
       do {
-        TreeElement prev = elem.getTreePrev();
+        ASTNode prev = elem.getTreePrev();
         if (prev != null) {
           elem = prev;
           break;
@@ -345,15 +347,15 @@ public class Helper {
     return len;
   }
 
-  public TreeElement makeVerticalSpace(CompositeElement parent, TreeElement child1, TreeElement child2, int size) {
+  public ASTNode makeVerticalSpace(CompositeElement parent, ASTNode child1, ASTNode child2, int size) {
     return makeVerticalSpace(parent, child1, child2, size, true);
   }
 
-  private TreeElement makeVerticalSpace(CompositeElement parent,
-                                        TreeElement child1,
-                                        TreeElement child2,
-                                        int size,
-                                        boolean soft) {
+  private ASTNode makeVerticalSpace(CompositeElement parent,
+                                    ASTNode child1,
+                                    ASTNode child2,
+                                    int size,
+                                    boolean soft) {
     if (soft) {
       boolean inCode = parent.getElementType() != ElementType.JAVA_FILE && parent.getElementType() != ElementType.CLASS;
       int maxKeep = inCode ? mySettings.KEEP_BLANK_LINES_IN_CODE : mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS;
@@ -367,20 +369,20 @@ public class Helper {
     }
   }
 
-  public TreeElement makeSpace(CompositeElement parent, TreeElement child1, TreeElement child2, String text) {
+  public ASTNode makeSpace(ASTNode parent, ASTNode child1, ASTNode child2, String text) {
     return makeSpace(parent, child1, child2, text, false);
   }
 
 //----------------------------------------------------------------------------------------------------
 
-  public static String getSpaceText(CompositeElement parent, TreeElement child1, TreeElement child2) {
+  public static String getSpaceText(ASTNode parent, ASTNode child1, ASTNode child2) {
     final LeafElement spaceElement = getSpaceElement(parent, child1, child2);
     return spaceElement != null ? spaceElement.getText() : "";
   }
 
-  public static LeafElement getSpaceElement(CompositeElement parent, TreeElement child1, TreeElement child2) {
-    final LeafElement leafElementAt = parent.findLeafElementAt(child1 != null ? child1.getStartOffsetInParent() + child1.getTextLength() : 0);
-    TreeElement check = leafElementAt;
+  public static LeafElement getSpaceElement(ASTNode parent, ASTNode child1, ASTNode child2) {
+    final LeafElement leafElementAt = ((CompositeElement)parent).findLeafElementAt(child1 != null ? ((TreeElement)child1).getStartOffsetInParent() + child1.getTextLength() : 0);
+    ASTNode check = leafElementAt;
     while(check != null){
       if(check == child2) return null;
       check = check.getTreeParent();
@@ -404,11 +406,11 @@ public class Helper {
 
 //----------------------------------------------------------------------------------------------------
 
-  public int getLineBreakCount(CompositeElement parent, TreeElement child1, TreeElement child2) {
+  public int getLineBreakCount(CompositeElement parent, ASTNode child1, ASTNode child2) {
     return StringUtil.getLineBreakCount(getSpaceText(parent, child1, child2));
   }
 
-  public TreeElement makeLineBreaks(CompositeElement parent, TreeElement child1, TreeElement child2, int count) {
+  public ASTNode makeLineBreaks(ASTNode parent, ASTNode child1, ASTNode child2, int count) {
     StringBuffer buffer = new StringBuffer();
     String lineSeparator = "\n";
     if (child1 == null) {
@@ -428,19 +430,19 @@ public class Helper {
 
 //----------------------------------------------------------------------------------------------------
 
-  public TreeElement makeSpace(CompositeElement parent,
-                               TreeElement child1,
-                               TreeElement child2,
-                               String text,
-                               boolean indentMultiline) {
+  public ASTNode makeSpace(ASTNode parent,
+                           ASTNode child1,
+                           ASTNode child2,
+                           String text,
+                           boolean indentMultiline) {
     LeafElement space = getSpaceElement(parent, child1, child2);
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
+    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree((TreeElement)parent);
     int indentShift;
     if (space == null) {
       if (text.length() == 0) return child2;
       LeafElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
                                                              charTableByTree, null);
-      ChangeUtil.addChild(parent, newSpace, child1 != null ? child1.getTreeNext() : parent.firstChild);
+      ChangeUtil.addChild((CompositeElement)parent, newSpace, (TreeElement)(child1 != null ? child1.getTreeNext() : parent.getFirstChildNode()));
       indentShift = getIndent(newSpace.getText(), true);
     }
     else {
@@ -452,7 +454,7 @@ public class Helper {
           }
         }
 
-        ChangeUtil.removeChild(parent, space);
+        ChangeUtil.removeChild((CompositeElement)parent, space);
         indentShift = -getIndent(oldSpace, true);
       }
       else {
@@ -470,12 +472,12 @@ public class Helper {
       }
     }
     if (indentMultiline) {
-      child2 = shiftIndentInside(child2, indentShift);
+      child2 = shiftIndentInside((TreeElement)child2, indentShift);
     }
     return child2;
   }
 
-  public boolean canStickChildrenTogether(TreeElement child1, TreeElement child2) {
+  public boolean canStickChildrenTogether(ASTNode child1, ASTNode child2) {
     LeafElement token1 = TreeUtil.findLastLeaf(child1);
     LeafElement token2 = TreeUtil.findFirstLeaf(child2);
     LOG.assertTrue(token1 != null);
@@ -539,7 +541,7 @@ public class Helper {
           TreeElement newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                   newIndentString.toCharArray(),
                                                                   0, newIndentString.length(), table, null);
-          ChangeUtil.replaceChild((CompositeElement)tree, son, newWSElem);
+          ChangeUtil.replaceChild(tree, son, newWSElem);
           son = newWSElem;
         }
       }
@@ -587,7 +589,7 @@ public class Helper {
         }
 
         if (offset1 < text.length()) {
-          TreeElement next = element.findLeafElementAt(offset1);
+          ASTNode next = element.findLeafElementAt(offset1);
           if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT || next.getElementType() == ElementType.C_STYLE_COMMENT) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
@@ -647,7 +649,7 @@ public class Helper {
     return element;
   }
 
-  public boolean isSpaceAtStartOfLine(CompositeElement parent, TreeElement child1, TreeElement child2) {
+  public boolean isSpaceAtStartOfLine(ASTNode parent, ASTNode child1, ASTNode child2) {
     String space = getSpaceText(parent, child1, child2);
     if (space.indexOf('\n') >= 0 || space.indexOf('\r') >= 0) return true;
     if (child1 != null) {

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 public class MethodElement extends RepositoryTreeElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.MethodElement");
@@ -17,12 +18,12 @@ public class MethodElement extends RepositoryTreeElement{
   }
 
   public int getTextOffset() {
-    return findChildByRole(ChildRole.NAME).getTextOffset();
+    return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
   public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
     if (first == last && first.getElementType() == ElementType.CODE_BLOCK){
-      TreeElement semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
+      ASTNode semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
       if (semicolon != null){
         deleteChildInternal(semicolon);
       }
@@ -30,7 +31,7 @@ public class MethodElement extends RepositoryTreeElement{
     return super.addInternal(first, last, anchor, before);
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     super.deleteChildInternal(child);
     if (child.getElementType() == CODE_BLOCK){
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
@@ -39,7 +40,7 @@ public class MethodElement extends RepositoryTreeElement{
     }
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -79,7 +80,7 @@ public class MethodElement extends RepositoryTreeElement{
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DOC_COMMENT) {

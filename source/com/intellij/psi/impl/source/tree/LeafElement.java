@@ -1,8 +1,10 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.lang.ASTNode;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
@@ -114,4 +116,16 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public abstract int getCharTabIndex();
+
+  public ASTNode getFirstChildNode() {
+    return null;
+  }
+
+  public ASTNode getLastChildNode() {
+    return null;
+  }
+
+  public ASTNode[] getChildren(TokenSet filter) {
+    return TreeElement.EMPTY_ARRAY;
+  }  
 }

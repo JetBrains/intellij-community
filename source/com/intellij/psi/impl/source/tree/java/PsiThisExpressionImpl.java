@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.lang.ASTNode;
 
 public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThisExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThisExpressionImpl");
@@ -52,7 +53,7 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
     return null;
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -74,7 +75,7 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JAVA_CODE_REFERENCE) {

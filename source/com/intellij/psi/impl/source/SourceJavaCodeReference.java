@@ -4,6 +4,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.lang.ASTNode;
 
 /**
  * This interface should be implemented by all PsiJavaCodeReference implementations
@@ -28,7 +29,7 @@ public interface SourceJavaCodeReference {
 
   boolean isQualified();
 
-  TreeElement getTreeQualifier();
+  ASTNode getTreeQualifier();
   PsiElement getQualifier();
 
   void dequalify();

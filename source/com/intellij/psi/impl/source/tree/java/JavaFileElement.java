@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class JavaFileElement extends FileElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.JavaFileElement");
@@ -24,7 +25,7 @@ public class JavaFileElement extends FileElement{
     return super.addInternal(first, last, anchor, before);
   }
 
-  public void deleteChildInternal(TreeElement child){
+  public void deleteChildInternal(ASTNode child){
     if (child.getElementType() == CLASS){
       PsiJavaFile file = (PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(this);
       if (file.getClasses().length == 1){
@@ -40,7 +41,7 @@ public class JavaFileElement extends FileElement{
     super.deleteChildInternal(child);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     ChameleonTransforming.transformChildren(this);
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -55,7 +56,7 @@ public class JavaFileElement extends FileElement{
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == PACKAGE_STATEMENT) {

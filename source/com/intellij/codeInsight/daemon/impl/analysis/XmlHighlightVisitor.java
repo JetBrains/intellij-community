@@ -27,7 +27,6 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -36,6 +35,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 import org.xml.sax.SAXParseException;
 
 import java.text.MessageFormat;
@@ -233,7 +233,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
                                  HighlightInfoType type,
                                  IntentionAction quickFixAction) {
     final CompositeElement tagElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag);
-    TreeElement childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
+    ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
 
     if(childByRole != null) {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);

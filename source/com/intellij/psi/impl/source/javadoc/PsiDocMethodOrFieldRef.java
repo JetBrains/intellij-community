@@ -14,6 +14,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +108,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public PsiElement getNameElement() {
-    final TreeElement sharp = TreeUtil.findChild(this, DOC_TAG_VALUE_SHARP_TOKEN);
+    final ASTNode sharp = TreeUtil.findChild(this, DOC_TAG_VALUE_SHARP_TOKEN);
     if (sharp == null) return null;
     return SourceTreeToPsiMap.treeElementToPsi(sharp).getNextSibling();
   }
@@ -260,7 +261,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     public TextRange getRangeInElement() {
-      final TreeElement sharp = TreeUtil.findChild(PsiDocMethodOrFieldRef.this, DOC_TAG_VALUE_SHARP_TOKEN);
+      final ASTNode sharp = TreeUtil.findChild(PsiDocMethodOrFieldRef.this, DOC_TAG_VALUE_SHARP_TOKEN);
       if (sharp == null) return new TextRange(0, getTextLength());
       final PsiElement nextSibling = SourceTreeToPsiMap.treeElementToPsi(sharp).getNextSibling();
       if(nextSibling != null){

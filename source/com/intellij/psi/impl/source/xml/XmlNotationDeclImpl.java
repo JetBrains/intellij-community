@@ -8,6 +8,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.xml.XmlNotationDecl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -19,7 +20,7 @@ public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDe
     super(XML_NOTATION_DECL);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_ELEMENT_CONTENT_SPEC) {
       return ChildRole.XML_ELEMENT_CONTENT_SPEC;

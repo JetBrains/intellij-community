@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.ASTNode;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -169,7 +170,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     CheckUncompleteCode:
       if (element != null && canTryXXX) {
-        TreeElement space;
+        ASTNode space;
         if (element.getElementType() == ElementType.WHITE_SPACE) {
           space = element;
         }
@@ -186,7 +187,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         }
 
         if (spaceStart > 0) {
-          TreeElement leafBeforeSpace = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(spaceStart - 1));
+          ASTNode leafBeforeSpace = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(spaceStart - 1));
           if (leafBeforeSpace.getTreeNext() != null && leafBeforeSpace.getTreeNext().getElementType() == ElementType.ERROR_ELEMENT) {
             PsiErrorElement errorElement = (PsiErrorElement)SourceTreeToPsiMap.treeElementToPsi(leafBeforeSpace.getTreeNext());
             Project project = file.getProject();
@@ -248,12 +249,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         parent = element.getTreeParent();
         TreeElement prev = element.getTreePrev();
         TreeElement next = element.getTreeNext();
-        TreeElement space1 = Helper.splitSpaceElement(element, end - spaceStart, charTable);
+        ASTNode space1 = Helper.splitSpaceElement(element, end - spaceStart, charTable);
         TreeElement tempElement = Factory.createSingleLeafElement(
           ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
           "###".length(), charTable, null);
-        ChangeUtil.addChild(parent, tempElement, space1.getTreeNext());
-        tempElement = new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
+        ChangeUtil.addChild(parent, tempElement, (TreeElement)space1.getTreeNext());
+        tempElement = (TreeElement)new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
         offset = tempElement.getTextRange().getStartOffset();
         ChangeUtil.removeChild(parent, tempElement);
         CodeEditUtil.normalizeSpace(helper, parent, prev, next, charTable);
@@ -274,7 +275,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       int elementStart = element.getTextRange().getStartOffset();
       if (elementStart == end) {
         while (true) {
-          TreeElement prev = element.getTreePrev();
+          ASTNode prev = element.getTreePrev();
           while (prev != null && prev.getTextLength() == 0) {
             prev = prev.getTreePrev();
           }
@@ -282,7 +283,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           if (element.getTreeParent() == null) break;
           element = element.getTreeParent();
         }
-        element = new IndentAdjusterFacade(getSettings(), helper).adjustFirstLineIndent(element);
+        element = (TreeElement)new IndentAdjusterFacade(getSettings(), helper).adjustFirstLineIndent(element);
         return element.getTextRange().getStartOffset();
       }
       else {
@@ -319,7 +320,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (start > 0 && chars[start] != '\n' && chars[start] != '\r') return false;
     int end = CharArrayUtil.shiftForward(chars, offset, " \t");
     if (end >= chars.length) return false;
-    TreeElement element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(end));
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(end));
     if (element == null) return false;
     if (element.getElementType() == ElementType.WHITE_SPACE) return false;
     if (element.getElementType() == ElementType.PLAIN_TEXT) return false;
@@ -350,9 +351,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return null;
     }
 
-    TreeElement space1 = Helper.splitSpaceElement(element, offset - elementStart, charTable);
+    ASTNode space1 = Helper.splitSpaceElement(element, offset - elementStart, charTable);
     TreeElement marker = Factory.createSingleLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
-    ChangeUtil.addChild(parent, marker, space1.getTreeNext());
+    ChangeUtil.addChild(parent, marker, (TreeElement)space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }
 

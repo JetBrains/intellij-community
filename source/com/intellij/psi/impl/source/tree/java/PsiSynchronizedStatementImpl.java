@@ -7,6 +7,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiSynchronizedStatementImpl extends CompositePsiElement implements PsiSynchronizedStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSynchronizedStatementImpl");
@@ -23,7 +24,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.BLOCK);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -46,7 +47,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == SYNCHRONIZED_KEYWORD) {

@@ -15,6 +15,7 @@ import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
+import com.intellij.lang.ASTNode;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
   public String getValue() {
     if(myDisplayText != null) return myDisplayText;
     StringBuffer buffer = new StringBuffer();
-    TreeElement child = firstChild;
+    ASTNode child = firstChild;
     final List<Integer> gaps = new ArrayList<Integer>();
     while(child != null){
       final int start = buffer.length();
@@ -78,7 +79,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
         gaps.add(new Integer(start));
         gaps.add(new Integer(originalLength - (end - start)));
       }
-      final TreeElement next = child.getTreeNext();
+      final ASTNode next = child.getTreeNext();
       if(next == null && child.getTreeParent().getElementType() == XmlElementType.XML_CDATA)
         child = child.getTreeParent().getTreeNext();
       else child = next;
@@ -173,7 +174,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
     final String oldText = getText();
     final TreeElement second;
     if(elementAt != null){
-      final TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(elementAt);
+      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(elementAt);
       second = split((LeafElement)treeElement, localOffset);
     }
     else second = null;
@@ -347,8 +348,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
               ChangeUtil.replaceChild(XmlTextImpl.this, tokenToChange, newLeaf);
             }
             else{
-              final TreeElement treeNext = tokenToChange.getTreeNext();
-              final TreeElement treePrev = tokenToChange.getTreePrev();
+              final ASTNode treeNext = tokenToChange.getTreeNext();
+              final ASTNode treePrev = tokenToChange.getTreePrev();
               final LeafElement merged = mergeElements((LeafElement)treePrev, (LeafElement)treeNext, table);
               ChangeUtil.removeChild(XmlTextImpl.this, tokenToChange);
               if(merged != null) ChangeUtil.replaceAll(new LeafElement[]{(LeafElement)treePrev, (LeafElement)treeNext}, merged);
@@ -500,7 +501,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
 
   private static TreeElement addChildren(final XmlTextImpl xmlText,
                    final TreeElement firstChild,
-                   final TreeElement lastChild,
+                   final ASTNode lastChild,
                    final TreeElement anchor,
                    final boolean isBefore) {
     if(isBefore){
@@ -515,7 +516,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
   public static final int CDATA_ON_TEXT = 0;
   public static final int ENCODE_SYMS = 1;
 
-  public static TreeElement createElementsByDisplayText(String displayText, int policy){
+  public static ASTNode createElementsByDisplayText(String displayText, int policy){
     if(!toCode(displayText))
       return Factory.createSingleLeafElement(
           XmlTokenType.XML_DATA_CHARACTERS,

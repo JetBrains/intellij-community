@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.lang.ASTNode;
 
 public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
@@ -79,7 +80,7 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
       default:
@@ -96,7 +97,7 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
       if (child == firstChild) return ChildRole.LOPERAND;

@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ven
@@ -44,7 +45,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return "PsiCatchSection";
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     switch(role) {
       default:
         return null;
@@ -66,7 +67,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == PARAMETER) {

@@ -16,6 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -141,7 +142,7 @@ public class ParseUtil implements Constants {
 
   public static final class CommonParentState {
     TreeElement startLeafBranchStart = null;
-    TreeElement nextLeafBranchStart = null;
+    ASTNode nextLeafBranchStart = null;
     CompositeElement strongWhiteSpaceHolder = null;
     boolean isStrongElementOnRisingSlope = true;
   }
@@ -235,7 +236,7 @@ public class ParseUtil implements Constants {
             TreeUtil.insertBefore(unclosedElement.firstChild, firstMissing);
         }
         else {
-          final TreeElement insertBefore = commonParents.nextLeafBranchStart;
+          final ASTNode insertBefore = commonParents.nextLeafBranchStart;
           TreeElement insertAfter = commonParents.startLeafBranchStart;
           TreeElement current = commonParents.startLeafBranchStart;
           while (current != insertBefore) {
@@ -263,7 +264,7 @@ public class ParseUtil implements Constants {
     }
   }
 
-  private static void passTokenOrChameleon(final TreeElement next, Lexer lexer, boolean gtUse) {
+  private static void passTokenOrChameleon(final ASTNode next, Lexer lexer, boolean gtUse) {
     if (next instanceof ChameleonElement) {
       final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
       while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
@@ -335,7 +336,7 @@ public class ParseUtil implements Constants {
         commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       commonParent.startLeafBranchStart = start;
     }
-    TreeElement prevTree = start;
+    ASTNode prevTree = start;
     while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
       prev = TreeUtil.findLastLeaf(prevTree);
     }
@@ -388,7 +389,7 @@ public class ParseUtil implements Constants {
     TreeElement element = docComment.getTreeNext();
     if (element == null) return false;
     TreeElement startSpaces = null;
-    TreeElement endSpaces = null;
+    ASTNode endSpaces = null;
 
     // Bypass meaningless tokens and hold'em in hands
     while (element.getElementType() == WHITE_SPACE ||
@@ -480,7 +481,7 @@ public class ParseUtil implements Constants {
   });
 
   private static boolean bindPrecedingComment(TreeElement comment) {
-    TreeElement element = TreeUtil.skipElements(comment, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
+    ASTNode element = TreeUtil.skipElements(comment, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
     if (element == null) return false;
 
     if (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0) {
@@ -488,7 +489,7 @@ public class ParseUtil implements Constants {
     }
 
     if (element != null && BIND_PRECEDING_COMMENT_BIT_SET.isInSet(element.getElementType())) {
-      for (TreeElement child = comment; child != element; child = child.getTreeNext()) {
+      for (ASTNode child = comment; child != element; child = child.getTreeNext()) {
         if (child.getElementType() == WHITE_SPACE) {
           int count = StringUtil.getLineBreakCount(child.getText());
           if (count > 1) return false;

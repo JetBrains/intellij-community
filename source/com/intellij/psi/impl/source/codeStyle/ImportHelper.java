@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -605,7 +606,7 @@ public class ImportHelper{
     if (scope.getElementType() == ElementType.IMPORT_LIST) return;
 
     ChameleonTransforming.transformChildren(scope);
-    for(TreeElement child = scope.firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = scope.firstChild; child != null; child = child.getTreeNext()){
       if (child instanceof CompositeElement) {
         addNamesToImport(names, (CompositeElement)child, thisPackageName, namesToImportStaticly);
 

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -7,8 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 
@@ -37,7 +36,7 @@ public class CommentFormatter {
     return myParser;
   }
 
-  public TreeElement formatComment(TreeElement child) {
+  public ASTNode formatComment(ASTNode child) {
     if (!getSettings().ENABLE_JAVADOC_FORMATTING) return child;
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(child);
 
@@ -50,7 +49,7 @@ public class CommentFormatter {
     return child;
   }
 
-  public void process(TreeElement element) {
+  public void process(ASTNode element) {
     if (!getSettings().ENABLE_JAVADOC_FORMATTING) return;
 
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);

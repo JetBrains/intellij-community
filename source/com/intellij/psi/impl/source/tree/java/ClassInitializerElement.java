@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 public class ClassInitializerElement extends RepositoryTreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ClassInitializerElement");
@@ -11,7 +12,7 @@ public class ClassInitializerElement extends RepositoryTreeElement {
     super(CLASS_INITIALIZER);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -25,7 +26,7 @@ public class ClassInitializerElement extends RepositoryTreeElement {
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {

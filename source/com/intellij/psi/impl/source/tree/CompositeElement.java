@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public class CompositeElement extends TreeElement implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -63,7 +64,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
       clone.lastChild = null;
       clone.myModificationsCount = 0;
       clone.myParentModifications = -1;
-      for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = firstChild; child != null; child = child.getTreeNext()) {
         TreeUtil.addChildren(clone, (TreeElement)child.clone());
       }
     }
@@ -153,28 +154,27 @@ public class CompositeElement extends TreeElement implements Cloneable{
   }
 
   public final PsiElement findChildByRoleAsPsiElement(int role) {
-    TreeElement element = findChildByRole(role);
+    ASTNode element = findChildByRole(role);
     if (element == null) return null;
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     synchronized (PsiLock.LOCK) {
       for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
         if (getChildRole(child) == role) return child;
       }
-      ;
     }
     return null;
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     return ChildRole.NONE;
   }
 
-  protected final int getChildRole(TreeElement child, int roleCandidate) {
+  protected final int getChildRole(ASTNode child, int roleCandidate) {
     if (findChildByRole(roleCandidate) == child){
       return roleCandidate;
     }
@@ -183,14 +183,14 @@ public class CompositeElement extends TreeElement implements Cloneable{
     }
   }
 
-  public TreeElement[] getChildren(TokenSet filter) {
+  public ASTNode[] getChildren(TokenSet filter) {
     int count = countChildren(filter);
     if (count == 0) {
       return TreeElement.EMPTY_ARRAY;
     }
-    final TreeElement[] result = new TreeElement[count];
+    final ASTNode[] result = new ASTNode[count];
     count = 0;
-    for(TreeElement child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())){
         result[count++] = child;
       }
@@ -210,7 +210,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
 
     PsiElement[] result = constructor.newPsiElementArray(count);
     count = 0;
-    for(TreeElement child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())){
         result[count++] = SourceTreeToPsiMap.treeElementToPsi(child);
       }
@@ -223,7 +223,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
 
     // no lock is needed because all chameleons are expanded already
     int count = 0;
-    for(TreeElement child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())) {
         count++;
       }
@@ -251,8 +251,8 @@ public class CompositeElement extends TreeElement implements Cloneable{
     return CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
 
-  public void deleteChildInternal(TreeElement child) {
-    CodeEditUtil.removeChild(this, child);
+  public void deleteChildInternal(ASTNode child) {
+    CodeEditUtil.removeChild(this, (TreeElement)child);
   }
 
   public void replaceChildInternal(TreeElement child, TreeElement newElement) {
@@ -297,5 +297,13 @@ public class CompositeElement extends TreeElement implements Cloneable{
 
   public void setCachedLength(int length) {
     myCachedLength = length;
+  }
+
+  public ASTNode getFirstChildNode() {
+    return firstChild;
+  }
+
+  public ASTNode getLastChildNode() {
+    return lastChild;
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -535,7 +536,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     if (myCachedIsInterface == null){
       boolean isInterface;
       if (getTreeElement() != null){
-        TreeElement keyword = calcTreeElement().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
+        ASTNode keyword = calcTreeElement().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
         if (keyword.getElementType() == CLASS_KEYWORD) {
           isInterface = false;
         }

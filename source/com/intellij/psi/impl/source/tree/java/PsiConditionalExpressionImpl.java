@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.lang.ASTNode;
 
 public class PsiConditionalExpressionImpl extends CompositePsiElement implements PsiConditionalExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiConditionalExpressionImpl");
@@ -71,7 +72,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -85,14 +86,14 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
 
       case ChildRole.THEN_EXPRESSION:
         {
-          TreeElement quest = findChildByRole(ChildRole.QUEST);
-          TreeElement child = quest.getTreeNext();
+          ASTNode quest = findChildByRole(ChildRole.QUEST);
+          ASTNode child = quest.getTreeNext();
           while(true){
             if (child == null) return null;
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
             child = child.getTreeNext();
           }
-          return child;
+          return (TreeElement)child;
         }
 
       case ChildRole.COLON:
@@ -100,14 +101,14 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
 
       case ChildRole.ELSE_EXPRESSION:
         {
-          TreeElement colon = findChildByRole(ChildRole.COLON);
+          ASTNode colon = findChildByRole(ChildRole.COLON);
           if (colon == null) return null;
           return EXPRESSION_BIT_SET.isInSet(lastChild.getElementType()) ? lastChild : null;
         }
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (EXPRESSION_BIT_SET.isInSet(child.getElementType())){
       int role = getChildRole(child, ChildRole.CONDITION);

@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 
 public class XmlChildRole {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.xml.XmlChildRole");
@@ -14,7 +15,7 @@ public class XmlChildRole {
   public static final RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
     public LeafElement findChild(CompositeElement parent) {
       //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
-      TreeElement current = parent.firstChild;
+      ASTNode current = parent.firstChild;
       IElementType elementType;
       while(current != null
             && (elementType = current.getElementType()) != XmlTokenType.XML_NAME

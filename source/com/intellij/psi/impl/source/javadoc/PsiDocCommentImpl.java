@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -63,7 +64,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     name.getChars(0, name.length(), tagChars, 1);
 
     ChameleonTransforming.transformChildren(this);
-    for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+    for (ASTNode child = firstChild; child != null; child = child.getTreeNext()) {
       if (child.getElementType() == DOC_TAG) {
         PsiDocTag tag = (PsiDocTag)SourceTreeToPsiMap.treeElementToPsi(child);
         if (tag.getNameElement().textMatches(new CharArrayCharSequence(tagChars))) {
@@ -92,7 +93,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     return getElementType();
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     ChameleonTransforming.transformChildren(this);
     switch (role) {
@@ -112,13 +113,13 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
   }
 
-  private static boolean isWhitespaceCommentData(TreeElement docCommentData) {
+  private static boolean isWhitespaceCommentData(ASTNode docCommentData) {
     return WS_PATTERN.matcher(docCommentData.getText()).matches();
   }
 
   private static void addNewLineToTag(CompositeElement tag) {
     LOG.assertTrue(tag != null && tag.getElementType() == DOC_TAG);
-    TreeElement current = tag.lastChild;
+    ASTNode current = tag.lastChild;
     while (current != null && current.getElementType() == DOC_COMMENT_DATA && isWhitespaceCommentData(current)) {
       current = current.getTreePrev();
     }
@@ -139,9 +140,9 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     if (first == last && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
         anchor = lastChild; // this is a '*/'
-        final TreeElement prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), WHITE_SPACE_BIT_SET);
+        final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), WHITE_SPACE_BIT_SET);
         if (prevBeforeWS != null) {
-          anchor = prevBeforeWS;
+          anchor = (TreeElement)prevBeforeWS;
           before = Boolean.FALSE;
         }
         else {
@@ -187,13 +188,13 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   private static void removeEndingAsterisksFromTag(CompositeElement tag) {
-    TreeElement current = tag.lastChild;
+    ASTNode current = tag.lastChild;
     while (current != null && current.getElementType() == DOC_COMMENT_DATA) {
       current = current.getTreePrev();
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
-      final TreeElement prevWhiteSpace = TreeUtil.skipElementsBack(current.getTreePrev(), WHITE_SPACE_BIT_SET);
-      TreeElement toBeDeleted = prevWhiteSpace.getTreeNext();
+      final ASTNode prevWhiteSpace = TreeUtil.skipElementsBack((TreeElement)current.getTreePrev(), WHITE_SPACE_BIT_SET);
+      TreeElement toBeDeleted = (TreeElement)prevWhiteSpace.getTreeNext();
       while (toBeDeleted != null) {
         TreeElement next = toBeDeleted.getTreeNext();
         tag.deleteChildInternal(toBeDeleted);
@@ -202,15 +203,15 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (child.getElementType() == DOC_TAG) {
       if (child.getTreeNext() == null || child.getTreeNext().getElementType() != DOC_TAG) {
-        TreeElement prev = child.getTreePrev();
+        ASTNode prev = child.getTreePrev();
         while (prev != null && prev.getElementType() == DOC_COMMENT_DATA) {
           prev = prev.getTreePrev();
         }
         if (prev != null && prev.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
-          TreeElement leadingAsterisk = prev;
+          ASTNode leadingAsterisk = prev;
           if (leadingAsterisk.getTreePrev() != null) {
             super.deleteChildInternal(leadingAsterisk.getTreePrev());
             super.deleteChildInternal(leadingAsterisk);
@@ -238,7 +239,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     super.deleteChildInternal(child);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DOC_TAG) {

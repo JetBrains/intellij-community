@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.lang.ASTNode;
 
 public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements PsiArrayAccessExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayAccessExpressionImpl");
@@ -29,7 +30,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
     return ((PsiArrayType)arrayType).getComponentType();
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -40,11 +41,11 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
 
       case ChildRole.INDEX:
         {
-          TreeElement lbracket = findChildByRole(ChildRole.LBRACKET);
+          ASTNode lbracket = findChildByRole(ChildRole.LBRACKET);
           if (lbracket == null) return null;
-          for(TreeElement child = lbracket.getTreeNext(); child != null; child = child.getTreeNext()){
+          for(ASTNode child = lbracket.getTreeNext(); child != null; child = child.getTreeNext()){
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())){
-              return child;
+              return (TreeElement)child;
             }
           }
           return null;
@@ -58,7 +59,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == LBRACKET) {

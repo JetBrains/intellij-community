@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.lang.ASTNode;
 
 import java.util.Set;
 
@@ -93,17 +94,17 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  private static boolean processChildren(TreeElement scope,
+  private static boolean processChildren(ASTNode scope,
                                          StringSearcher searcher,
                                          PsiElementProcessorEx processor,
                                          TokenSet elementTypes, ProgressIndicator progress) {
     synchronized (PsiLock.LOCK) {
-      TreeElement child = ((CompositeElement)scope).firstChild;
+      ASTNode child = ((CompositeElement)scope).firstChild;
       while (child != null) {
         if (child instanceof ChameleonElement) {
           LeafElement leaf = (LeafElement)child;
           if (leaf.searchWord(0, searcher) >= 0) {
-            TreeElement next = child.getTreeNext();
+            ASTNode next = child.getTreeNext();
             child = ChameleonTransforming.transform((ChameleonElement)child);
             if (child == null) {
               child = next;
@@ -156,7 +157,7 @@ public class LowLevelSearchUtil {
 
   public static boolean processIdentifiersBySet(
     PsiElementProcessor processor,
-    TreeElement scope,
+    ASTNode scope,
     TokenSet elementTypes,
     Set namesSet,
     ProgressIndicator progress
@@ -174,7 +175,7 @@ public class LowLevelSearchUtil {
       CompositeElement _scope = (CompositeElement)scope;
       ChameleonTransforming.transformChildren(_scope);
 
-      for (TreeElement child = _scope.firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = _scope.firstChild; child != null; child = child.getTreeNext()) {
         if (!processIdentifiersBySet(processor, child, elementTypes, namesSet, progress)) return false;
       }
     }

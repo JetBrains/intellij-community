@@ -11,11 +11,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +65,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
 
   public void testLongLivingClassAfterRename() throws Exception {
     PsiClass psiClass = myPsiManager.findClass("bla.Bla");
-    TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(psiClass);
+    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(psiClass);
     renamePackage();
     //assertTrue(psiClass.isValid());
     SourceTreeToPsiMap.treeElementToPsi(treeElement);

@@ -14,5 +14,5 @@ import com.intellij.psi.tree.IElementType;
 public interface ParserDefinition {
   Lexer createLexer();
   PsiParser createParser();
-  PsiElement createElement(IElementType type, ElementFactoryHelper helper);
+  PsiElement createElement(ASTNode node);
 }

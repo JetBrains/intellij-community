@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -33,7 +34,7 @@ public class ChameleonTransforming implements Constants {
         String text1 = chameleon.getText();
 
         int length2 = 0;
-        for (TreeElement element = newElement; element != null; element = element.getTreeNext()) {
+        for (ASTNode element = newElement; element != null; element = element.getTreeNext()) {
           length2 += element.getTextLength();
         }
         char[] buffer = new char[length2];
@@ -58,10 +59,10 @@ public class ChameleonTransforming implements Constants {
 
   public static void transformChildren(CompositeElement element, boolean recursive) {
     synchronized (PsiLock.LOCK) {
-      TreeElement child = element.firstChild;
+      ASTNode child = element.firstChild;
       while (child != null) {
         if (child instanceof ChameleonElement) {
-          TreeElement next = child.getTreeNext();
+          ASTNode next = child.getTreeNext();
           child = transform((ChameleonElement)child);
           if (child == null) {
             child = next;

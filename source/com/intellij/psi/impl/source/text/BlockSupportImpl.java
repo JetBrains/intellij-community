@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class BlockSupportImpl extends BlockSupport implements Constants, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -76,7 +77,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
     final LeafElement leafAtStart = treeFileElement.findLeafElementAt(startOffset);
     final LeafElement leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
-    TreeElement parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
+    TreeElement parent = leafAtStart != null && leafAtEnd != null ? (TreeElement)TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
 
     int minErrorLevel = Integer.MAX_VALUE;
     Reparseable bestReparseable = null;
@@ -139,7 +140,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     }
   }
 
-  private void makeFullParse(TreeElement parent,
+  private void makeFullParse(ASTNode parent,
                              char[] newFileText,
                              int textLength,
                              final PsiFileImpl fileImpl,

@@ -5,9 +5,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
@@ -72,7 +72,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       if (lastChild.getElementType() == TYPE) {
         PsiTypeElement bound = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(lastChild);
-        TreeElement keyword = firstChild;
+        ASTNode keyword = firstChild;
         while(keyword != null && (keyword.getElementType() != EXTENDS_KEYWORD && keyword.getElementType() != SUPER_KEYWORD)) {
           keyword = keyword.getTreeNext();
         }

@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public class PsiForStatementImpl extends CompositePsiElement implements PsiForStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForStatementImpl");
@@ -40,7 +41,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -53,9 +54,9 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
         return TreeUtil.findChild(this, LPARENTH);
 
       case ChildRole.FOR_INITIALIZATION:
-        final TreeElement initialization = TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        final ASTNode initialization = TreeUtil.findChild(this, STATEMENT_BIT_SET);
         // should be inside parens
-        for(TreeElement child = initialization; child != null; child = child.getTreeNext()){
+        for(ASTNode child = initialization; child != null; child = child.getTreeNext()){
           if (child.getElementType() == RPARENTH) return initialization;
         }
         return null;
@@ -68,8 +69,8 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
 
       case ChildRole.FOR_UPDATE:
       {
-        TreeElement semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
-        for(TreeElement child = semicolon; child != null; child = child.getTreeNext()){
+        ASTNode semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
+        for(ASTNode child = semicolon; child != null; child = child.getTreeNext()){
           if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
             return child;
           }
@@ -83,8 +84,8 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
 
       case ChildRole.LOOP_BODY:
       {
-        TreeElement rparenth = findChildByRole(ChildRole.RPARENTH);
-        for(TreeElement child = rparenth; child != null; child = child.getTreeNext()){
+        ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
+        for(ASTNode child = rparenth; child != null; child = child.getTreeNext()){
           if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
             return child;
           }
@@ -94,7 +95,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == FOR_KEYWORD) {
@@ -134,7 +135,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     return "PsiForStatement";
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     final boolean isForInitialization = getChildRole(child) == ChildRole.FOR_INITIALIZATION;
 
     if (isForInitialization) {
@@ -142,7 +143,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       final LeafElement comma = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1, SharedImplUtil.findCharTableByTree(this), getManager());
       emptyStatement.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(comma));
       TreeUtil.addChildren(emptyStatement, comma);
-      super.replaceChildInternal(child, emptyStatement);
+      super.replaceChildInternal((TreeElement)child, emptyStatement);
     }
     else {
       super.deleteChildInternal(child);

@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class ParameterListElement extends RepositoryTreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterListElement");
@@ -19,11 +20,11 @@ public class ParameterListElement extends RepositoryTreeElement {
     ChameleonTransforming.transformChildren(this);
     if (anchor == null) {
       if (before == null || before.booleanValue()) {
-        anchor = findChildByRole(ChildRole.RPARENTH);
+        anchor = (TreeElement)findChildByRole(ChildRole.RPARENTH);
         before = Boolean.TRUE;
       }
       else {
-        anchor = findChildByRole(ChildRole.LPARENTH);
+        anchor = (TreeElement)findChildByRole(ChildRole.LPARENTH);
         before = Boolean.FALSE;
       }
     }
@@ -31,7 +32,7 @@ public class ParameterListElement extends RepositoryTreeElement {
     if (first == last && first.getElementType() == PARAMETER) {
       TreeElement element = first;
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      for (TreeElement child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
+      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -59,14 +60,14 @@ public class ParameterListElement extends RepositoryTreeElement {
     return firstAdded;
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (child.getElementType() == PARAMETER) {
-      TreeElement next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {
         deleteChildInternal(next);
       }
       else {
-        TreeElement prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null && prev.getElementType() == COMMA) {
           deleteChildInternal(prev);
         }
@@ -83,7 +84,7 @@ public class ParameterListElement extends RepositoryTreeElement {
     }
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     ChameleonTransforming.transformChildren(this);
     switch (role) {
@@ -108,7 +109,7 @@ public class ParameterListElement extends RepositoryTreeElement {
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == PARAMETER) {

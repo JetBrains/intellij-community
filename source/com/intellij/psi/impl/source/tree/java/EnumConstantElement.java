@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author dsl
@@ -15,10 +16,10 @@ public class EnumConstantElement extends RepositoryTreeElement {
   }
 
   public int getTextOffset() {
-    return findChildByRole(ChildRole.NAME).getTextOffset();
+    return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
-  public TreeElement findChildByRole(int role){
+  public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -46,7 +47,7 @@ public class EnumConstantElement extends RepositoryTreeElement {
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.DOC_COMMENT) {

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionListStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiExpressionListStatementImpl extends CompositePsiElement implements PsiExpressionListStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListStatementImpl");
@@ -18,7 +19,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     return (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.EXPRESSION_LIST);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -32,7 +33,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == EXPRESSION_LIST) {

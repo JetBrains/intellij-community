@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.lang.ASTNode;
 
 public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement implements PsiClassObjectAccessExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl");
@@ -27,7 +28,7 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -44,7 +45,7 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == TYPE) {

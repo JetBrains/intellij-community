@@ -12,12 +12,13 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 //TODO: rename/regroup?
 public class SharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SharedImplUtil");
 
-  public static PsiElement getParent(TreeElement thisElement) {
+  public static PsiElement getParent(ASTNode thisElement) {
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeParent());
   }
 
@@ -31,13 +32,13 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(element.lastChild.getTransformedLastOrSelf());
   }
 
-  public static PsiElement getNextSibling(TreeElement thisElement) {
-    final TreeElement treeNext = thisElement.getTreeNext();
+  public static PsiElement getNextSibling(ASTNode thisElement) {
+    final TreeElement treeNext = (TreeElement)thisElement.getTreeNext();
     return treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
   }
 
-  public static PsiElement getPrevSibling(TreeElement thisElement) {
-    final TreeElement treePrev = thisElement.getTreePrev();
+  public static PsiElement getPrevSibling(ASTNode thisElement) {
+    final TreeElement treePrev = (TreeElement)thisElement.getTreePrev();
     return treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
   }
 
@@ -60,7 +61,7 @@ public class SharedImplUtil {
     return file.isValid();
   }
 
-  public static boolean isWritable(TreeElement thisElement) {
+  public static boolean isWritable(ASTNode thisElement) {
     PsiFile file = (SourceTreeToPsiMap.treeElementToPsi(thisElement)).getContainingFile();
     return file != null ? file.isWritable() : true;
   }
@@ -85,7 +86,7 @@ public class SharedImplUtil {
 
     TreeElement copyFirst = null;
     TreeElement copyLast = null;
-    TreeElement next = SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
+    ASTNode next = SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
     CompositeElement parent = null;
     for(TreeElement element = SourceTreeToPsiMap.psiElementToTree(first); element != next; element = element.getTreeNext()){
       TreeElement elementCopy = ChangeUtil.copyElement(element, table);
@@ -115,9 +116,9 @@ public class SharedImplUtil {
   public static PsiType getType(PsiVariable variable){
     PsiTypeElement typeElement = variable.getTypeElement();
     int arrayCount = 0;
-    TreeElement name = SourceTreeToPsiMap.psiElementToTree(variable.getNameIdentifier());
+    ASTNode name = SourceTreeToPsiMap.psiElementToTree(variable.getNameIdentifier());
   Loop:
-    for(TreeElement child = name.getTreeNext(); child != null; child = child.getTreeNext()){
+    for(ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()){
       IElementType i = child.getElementType();
       if (i == ElementType.LBRACKET) {
         arrayCount++;
@@ -150,12 +151,12 @@ public class SharedImplUtil {
     CompositeElement variableElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variable);
     CompositeElement type = (CompositeElement)variableElement.findChildByRole(ChildRole.TYPE);
     LOG.assertTrue(type.getTreeParent() == variableElement);
-    TreeElement name = variableElement.findChildByRole(ChildRole.NAME);
+    ASTNode name = variableElement.findChildByRole(ChildRole.NAME);
 
-    TreeElement firstBracket = null;
-    TreeElement lastBracket = null;
+    ASTNode firstBracket = null;
+    ASTNode lastBracket = null;
     int arrayCount = 0;
-    TreeElement element = name;
+    ASTNode element = name;
     while(true){
       element = TreeUtil.skipElements(element.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (element == null || element.getElementType() != ElementType.LBRACKET) break;
@@ -171,8 +172,8 @@ public class SharedImplUtil {
     if (firstBracket != null){
       element = firstBracket;
       while(true){
-        TreeElement next = element.getTreeNext();
-        ChangeUtil.removeChild(variableElement, element);
+        ASTNode next = element.getTreeNext();
+        ChangeUtil.removeChild(variableElement, (TreeElement)element);
         if (element == lastBracket) break;
         element = next;
       }

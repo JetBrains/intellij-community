@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -17,7 +17,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     super(ElementType.TYPE_PARAMETER_LIST);
   }
 
-  public int getChildRole(final TreeElement child) {
+  public int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType elType = child.getElementType();
     if (elType == TYPE_PARAMETER) {
@@ -39,14 +39,14 @@ public class TypeParameterListElement extends RepositoryTreeElement {
 
   public TreeElement addInternal(final TreeElement first, final TreeElement last, TreeElement anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
-    TreeElement lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
+    TreeElement lt = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (lt == null) {
       lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
       super.addInternal(lt, lt, firstChild, Boolean.TRUE);
     }
 
-    TreeElement gt = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
+    TreeElement gt = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
     if (gt == null) {
       gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
       super.addInternal(gt, gt, lastChild, Boolean.FALSE);
@@ -67,7 +67,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
 
     if (first == last && first.getElementType() == TYPE_PARAMETER) {
       final TreeElement element = first;
-      for(TreeElement child = element.getTreeNext(); child != null; child = child.getTreeNext()){
+      for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE_PARAMETER){
           final TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -87,14 +87,14 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     return firstAdded;
   }
 
-  public void deleteChildInternal(final TreeElement child) {
+  public void deleteChildInternal(final ASTNode child) {
     if (child.getElementType() == TYPE_PARAMETER){
-      final TreeElement next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){
         deleteChildInternal(next);
       }
       else{
-        final TreeElement prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        final ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null && prev.getElementType() == COMMA){
           deleteChildInternal(prev);
         }
@@ -102,8 +102,8 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     }
     super.deleteChildInternal(child);
     if (child.getElementType() == TYPE_PARAMETER) {
-      final TreeElement lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
-      final TreeElement next = TreeUtil.skipElements(lt.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
+      final ASTNode next = TreeUtil.skipElements(lt.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == GT) {
         deleteChildInternal(lt);
         deleteChildInternal(next);

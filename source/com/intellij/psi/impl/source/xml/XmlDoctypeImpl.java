@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -23,7 +24,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     super(XML_DOCTYPE);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_DOCTYPE_PUBLIC) {

@@ -3,8 +3,8 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.psi.impl.source.parsing.jsp.JspParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsing;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +24,7 @@ public class ParsingContext {
   private final JspParsing myJspParsing;
   private final JavadocParsing myJavadocParsing;
   private final XmlParsing myXmlParsing;
-  private TreeElement myCurrentReparseElement = null;
+  private ASTNode myCurrentReparseElement = null;
 
   public StatementParsing getStatementParsing() {
     return myStatementParsing;
@@ -79,11 +79,11 @@ public class ParsingContext {
     return myXmlParsing;
   }
 
-  public TreeElement getCurrentReparseElement(){
+  public ASTNode getCurrentReparseElement(){
     return myCurrentReparseElement;
   }
 
-  public void setCurrentReparseElement(TreeElement element){
+  public void setCurrentReparseElement(ASTNode element){
     myCurrentReparseElement = element;
   }
 

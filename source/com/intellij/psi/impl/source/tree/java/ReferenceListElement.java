@@ -4,6 +4,7 @@ import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public abstract class ReferenceListElement extends RepositoryTreeElement{
   public ReferenceListElement(IElementType type) {
@@ -21,7 +22,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
       TreeElement element = first;
-      for(TreeElement child = element.getTreeNext(); child != null; child = child.getTreeNext()){
+      for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -50,14 +51,14 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     return firstAdded;
   }
 
-  public void deleteChildInternal(TreeElement child) {
+  public void deleteChildInternal(ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
-      TreeElement next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){
         deleteChildInternal(next);
       }
       else{
-        TreeElement prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (prev != null){
           if (prev.getElementType() == COMMA
               || prev.getElementType() == getKeywordType()

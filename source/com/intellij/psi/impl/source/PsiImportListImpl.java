@@ -6,9 +6,9 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.FileView;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 
@@ -130,7 +130,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
     if (myRepositoryImports == null){
       CompositeElement treeElement = getTreeElement();
       if (treeElement != null){
-        final TreeElement[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
+        final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
         int count = imports.length;
         myRepositoryImports = new PsiImportStatementBaseImpl[count];
         for(int i = 0; i < myRepositoryImports.length; i++){

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ven
@@ -21,7 +22,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
                                                                 PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -35,7 +36,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == COMMA) {

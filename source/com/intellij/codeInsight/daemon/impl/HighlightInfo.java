@@ -15,8 +15,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 import java.awt.*;
 import java.util.List;
@@ -177,7 +177,7 @@ public class HighlightInfo {
            ")";
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, TreeElement childByRole, String localizedMessage) {
+  public static HighlightInfo createHighlightInfo(HighlightInfoType type, ASTNode childByRole, String localizedMessage) {
     return createHighlightInfo(type, SourceTreeToPsiMap.treeElementToPsi(childByRole), localizedMessage);
   }
 

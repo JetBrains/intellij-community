@@ -17,6 +17,7 @@ import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 public abstract class XmlElementImpl extends CompositePsiElement implements XmlElement {
   public XmlElementImpl(IElementType type) {
@@ -33,7 +34,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
     processElements(new PsiBaseElementProcessor(){
       public boolean execute(PsiElement element){
-        if(element instanceof TreeElement && ((TreeElement)element).getElementType() == type){
+        if(element instanceof TreeElement && ((ASTNode)element).getElementType() == type){
           result[0] = (XmlElement)element;
           return false;
         }

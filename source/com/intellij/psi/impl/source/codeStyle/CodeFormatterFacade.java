@@ -2,11 +2,12 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.Constants;
@@ -27,8 +28,8 @@ public class CodeFormatterFacade implements Constants {
   private CodeWrapperFacade myWrapper;
   private CommentFormatter myCommentFormatter;
 
-  private TreeElement child1;
-  private TreeElement child2;
+  private ASTNode child1;
+  private ASTNode child2;
   private BraceEnforcer myBraceEnforcer;
   private CodeFormatter myCodeFormatter = new JavaCodeFormatter();
 
@@ -50,7 +51,7 @@ public class CodeFormatterFacade implements Constants {
     myCommentFormatter = new CommentFormatter(helper.getProject());
   }
 
-  private void formatComments(TreeElement element, int startOffset, int endOffset) {
+  private void formatComments(ASTNode element, int startOffset, int endOffset) {
     TextRange range = element.getTextRange();
     if (range.getStartOffset() >= startOffset && range.getEndOffset() <= endOffset) {
       myCommentFormatter.process(element);
@@ -63,7 +64,7 @@ public class CodeFormatterFacade implements Constants {
     }
   }
 
-  public TreeElement process(TreeElement element, int parent_indent) {
+  public ASTNode process(ASTNode element, int parent_indent) {
     if (useNewFormatter(myHelper.getFileType())) {
       TextRange range = element.getTextRange();
       int startOffset = range.getStartOffset();
@@ -99,7 +100,7 @@ public class CodeFormatterFacade implements Constants {
       myCommentFormatter.process(element);
 
       indent = -1;
-      for (TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
         if (indent < 0) indent = myIndentAdjuster.calculateIndent(child, -1);
         child = process(child, indent);
       }
@@ -107,7 +108,7 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  public TreeElement processRange(TreeElement element, int startOffset, int endOffset) {
+  public ASTNode processRange(ASTNode element, int startOffset, int endOffset) {
     FileType fileType = myHelper.getFileType();
     if (useNewFormatter(fileType)) {
       PseudoTextBuilder pseudoTextBuilder = fileType.getPseudoTextBuilder();
@@ -132,7 +133,7 @@ public class CodeFormatterFacade implements Constants {
            USE_NEW_CODE_FORMATTER == 1;
   }
 
-  private TreeElement processRange(TreeElement element, int[] bounds) {
+  private ASTNode processRange(ASTNode element, int[] bounds) {
     if (element instanceof CompositeElement) {
       CompositeElement parent = (CompositeElement)element;
       ChameleonTransforming.transformChildren(parent);
@@ -147,7 +148,7 @@ public class CodeFormatterFacade implements Constants {
         int length1 = child1 != null ? child1.getTextLength() : 0;
         int length2 = child2.getTextLength();
         child2Offset = child1Offset + length1;
-        for (TreeElement child = child1 != null ? child1.getTreeNext() : parent.firstChild;
+        for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.firstChild;
              child != child2;
              child = child.getTreeNext()) {
           child2Offset += child.getTextLength();
@@ -160,7 +161,7 @@ public class CodeFormatterFacade implements Constants {
           if (child1 != null && child2 != null) {
             child2 = myCodeFormatter.format(SourceTreeToPsiMap.treeElementToPsi(parent), child1, child2, mySettings, myHelper);
             child2Offset = child1Offset + length1;
-            for (TreeElement child = child1 != null ? child1.getTreeNext() : parent.firstChild;
+            for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.firstChild;
                  child != child2;
                  child = child.getTreeNext()) {
               child2Offset += child.getTextLength();
@@ -183,7 +184,7 @@ public class CodeFormatterFacade implements Constants {
           SourceTreeToPsiMap.psiElementToTree(myBraceEnforcer.process(SourceTreeToPsiMap.treeElementToPsi(child2)));
           child2 = myCommentFormatter.formatComment(child2);
           child2Offset = child1Offset + length1;
-          for (TreeElement child = child1 != null ? child1.getTreeNext() : parent.firstChild;
+          for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.firstChild;
                child != child2;
                child = child.getTreeNext()) {
             child2Offset += child.getTextLength();
@@ -194,7 +195,7 @@ public class CodeFormatterFacade implements Constants {
       }
 
       int offset = 0;
-      for (TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
         //Diagnostic.assertTrue(offset == child.getStartOffsetInParent());
         int offset1 = offset;
         int offset2 = offset + child.getTextLength();
@@ -212,18 +213,18 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  public TreeElement processSpace(TreeElement child1, TreeElement child2) {
+  public ASTNode processSpace(ASTNode child1, ASTNode child2) {
     this.child1 = child1;
     this.child2 = child2;
-    CompositeElement parent = child1 != null ? child1.getTreeParent() : ((child2 != null) ? child2.getTreeParent() : null);
+    ASTNode parent = child1 != null ? child1.getTreeParent() : ((child2 != null) ? child2.getTreeParent() : null);
     if ((child1 == null || child2 == null) && !(SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile)) {
       if (parent != null) myHelper.makeSpace(parent, child1, child2, "");
       return child2;
     }
     child2 = myCodeFormatter.format(SourceTreeToPsiMap.treeElementToPsi(parent), child1, child2, mySettings, myHelper);
     if (child1 != null && child1.getElementType() == END_OF_LINE_COMMENT) {
-      if (myHelper.getLineBreakCount(parent, child1, child2) == 0) {
-        myHelper.makeVerticalSpace(parent, child1, child2, 0);
+      if (myHelper.getLineBreakCount((CompositeElement)parent, child1, child2) == 0) {
+        myHelper.makeVerticalSpace((CompositeElement)parent, child1, child2, 0);
       }
     }
     return child2;

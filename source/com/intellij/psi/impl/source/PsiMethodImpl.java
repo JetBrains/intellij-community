@@ -18,6 +18,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.List;
 
@@ -174,9 +175,9 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       if (typeElement == null) return null;
 
       int arrayCount = 0;
-      TreeElement parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
+      ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
       Loop:
-        for(TreeElement child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()){
+        for(ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()){
           IElementType i = child.getElementType();
           if (i == LBRACKET) {
             arrayCount++;

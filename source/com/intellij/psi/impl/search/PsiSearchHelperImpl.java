@@ -48,6 +48,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.lang.ASTNode;
 import gnu.trove.TIntArrayList;
 
 import java.util.*;
@@ -1296,7 +1297,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     };
 
-    TreeElement scopeTreeElement = SourceTreeToPsiMap.psiElementToTree(scopeElement);
+    ASTNode scopeTreeElement = SourceTreeToPsiMap.psiElementToTree(scopeElement);
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     return LowLevelSearchUtil.processIdentifiersBySet(processor1,
                                                       scopeTreeElement,

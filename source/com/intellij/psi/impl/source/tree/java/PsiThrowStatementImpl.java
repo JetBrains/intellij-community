@@ -6,6 +6,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThrowStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThrowStatementImpl");
@@ -18,7 +19,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.EXCEPTION);
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -35,7 +36,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == THROW_KEYWORD) {

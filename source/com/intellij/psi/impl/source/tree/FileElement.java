@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public abstract class FileElement extends RepositoryTreeElement{
   private Document myDocument; // only to hold document
@@ -37,7 +38,7 @@ public abstract class FileElement extends RepositoryTreeElement{
     }
   }
 
-  public TreeElement copyElement() {
+  public ASTNode copyElement() {
     SrcRepositoryPsiElement psiElement = getPsiElement();
     SrcRepositoryPsiElement psiElementCopy = (SrcRepositoryPsiElement)psiElement.copy();
     return psiElementCopy.getTreeElement();

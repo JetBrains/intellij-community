@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSuperExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSuperExpressionImpl");
@@ -80,7 +81,7 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
     return superTypes[0];
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -102,7 +103,7 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JAVA_CODE_REFERENCE) {

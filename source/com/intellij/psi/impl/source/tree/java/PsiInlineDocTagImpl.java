@@ -14,6 +14,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl");
@@ -31,7 +32,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
   }
 
   public PsiDocComment getContainingComment() {
-    TreeElement scope = getTreeParent();
+    ASTNode scope = getTreeParent();
     while (scope.getElementType() != DOC_COMMENT) {
       scope = scope.getTreeParent();
     }
@@ -56,7 +57,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return nameElement.getText().substring(1);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {

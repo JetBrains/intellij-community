@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -24,11 +25,11 @@ public class SourceUtil implements Constants {
     return toBuffer(element, buffer, offset, null, SharedImplUtil.findCharTableByTree(element));
   }
 
-  public static int toBuffer(TreeElement element, char[] buffer, int offset, CharTable table) {
+  public static int toBuffer(ASTNode element, char[] buffer, int offset, CharTable table) {
     return toBuffer(element, buffer, offset, null, table);
   }
 
-  private static int toBuffer(TreeElement element, char[] buffer, int offset, TokenSet skipTypes, CharTable table) {
+  private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes, CharTable table) {
     synchronized (PsiLock.LOCK) {
       if (skipTypes != null && skipTypes.isInSet(element.getElementType())) return offset;
       if (element instanceof LeafElement) {
@@ -36,7 +37,7 @@ public class SourceUtil implements Constants {
       }
       else {
         int curOffset = offset;
-        for (TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+        for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
           curOffset = toBuffer(child, buffer, curOffset, skipTypes, table);
         }
         return curOffset;
@@ -87,7 +88,7 @@ public class SourceUtil implements Constants {
     if (((SourceJavaCodeReference)reference).isQualified()) { // qualifed reference
       final PsiClass parentClass = targetClass.getContainingClass();
       if (parentClass == null) return;
-      final TreeElement qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+      final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
       if (qualifier instanceof SourceJavaCodeReference) {
         ((SourceJavaCodeReference)qualifier).fullyQualify(parentClass);
       }
@@ -121,7 +122,7 @@ public class SourceUtil implements Constants {
   }
 
   public static void dequalifyImpl(CompositeElement reference) {
-    final TreeElement qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+    final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return;
     reference.deleteChildInternal(qualifier);
   }

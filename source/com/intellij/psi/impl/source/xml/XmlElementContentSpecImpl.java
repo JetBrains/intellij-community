@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author Mike
@@ -17,7 +18,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
     super(XML_ELEMENT_CONTENT_SPEC);
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_CONTENT_ANY) {

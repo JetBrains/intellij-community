@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class PsiAssignmentExpressionImpl extends CompositePsiElement implements PsiAssignmentExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssignmentExpressionImpl");
@@ -29,7 +30,7 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     return getLExpression().getType();
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
       default:
@@ -46,7 +47,7 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
       if (child == firstChild) return ChildRole.LOPERAND;

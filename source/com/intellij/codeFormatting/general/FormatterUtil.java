@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 public class FormatterUtil {
 
@@ -52,7 +53,7 @@ public class FormatterUtil {
   }
   private static TreeElement getWsCandidate(TreeElement element) {
     if (element == null) return null;
-    TreeElement treePrev = element.getTreePrev();
+    ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
       TreeElement candidate = getLastChildOf(treePrev);
       if (candidate != null && isSpaceTextElement(candidate)) {
@@ -74,7 +75,7 @@ public class FormatterUtil {
     }
   }
 
-  private static TreeElement getLastChildOf(TreeElement element) {
+  private static TreeElement getLastChildOf(ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -84,7 +85,7 @@ public class FormatterUtil {
     else {
       CompositeElement compositeElement = ((CompositeElement)element);
       ChameleonTransforming.transformChildren(compositeElement);
-      final TreeElement lastChild = compositeElement.lastChild;
+      final ASTNode lastChild = compositeElement.lastChild;
       if (lastChild == null) {
         return compositeElement;
       }
@@ -94,11 +95,11 @@ public class FormatterUtil {
     }
   }
 
-  private static boolean isWhiteSpaceElement(TreeElement treePrev) {
+  private static boolean isWhiteSpaceElement(ASTNode treePrev) {
     return treePrev.getElementType() == ElementType.WHITE_SPACE;
   }
 
-  private static boolean isSpaceTextElement(TreeElement treePrev) {
+  private static boolean isSpaceTextElement(ASTNode treePrev) {
     if (isWhiteSpaceElement(treePrev)) return true;
     final String text = treePrev.getText();
     return text.length() > 0 && text.trim().length() == 0;
@@ -125,7 +126,7 @@ public class FormatterUtil {
     return getWhiteSpaceBefore(leafElement);
   }
 
-  public static TreeElement shiftTokenIndent(final Project project,
+  public static ASTNode shiftTokenIndent(final Project project,
                                       final FileType fileType,
                                       final TreeElement leafElement,
                                       final int currentTokenPosShift) {

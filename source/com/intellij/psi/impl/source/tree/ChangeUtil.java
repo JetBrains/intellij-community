@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class ChangeUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
@@ -236,11 +237,11 @@ public class ChangeUtil implements Constants {
         RepositoryManager repositoryManager = manager.getRepositoryManager();
         if (repositoryManager != null){
           ChameleonTransforming.transformChildren(parent);
-          for(TreeElement child = parent.firstChild; child != null; child = child.getTreeNext()){
+          for(ASTNode child = parent.firstChild; child != null; child = child.getTreeNext()){
             repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
           }
 
-          for(TreeElement child = firstChild; child != null; child = child.getTreeNext()){
+          for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
             repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
           }
         }
@@ -279,7 +280,7 @@ public class ChangeUtil implements Constants {
     encodeInformation(element, element);
   }
 
-  private static void encodeInformation(TreeElement element, TreeElement original) {
+  private static void encodeInformation(TreeElement element, ASTNode original) {
     boolean encodeRefTargets = true;
     if (original.getTreeParent() instanceof DummyHolderElement){
       DummyHolder dummyHolder = (DummyHolder)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent());
@@ -290,7 +291,7 @@ public class ChangeUtil implements Constants {
     _encodeInformation(element, original, encodeRefTargets);
   }
 
-  private static void _encodeInformation(TreeElement element, TreeElement original, boolean encodeRefTargets) {
+  private static void _encodeInformation(TreeElement element, ASTNode original, boolean encodeRefTargets) {
     if (original instanceof CompositeElement){
       if (original.getElementType() == ElementType.JAVA_CODE_REFERENCE || original.getElementType() == ElementType.REFERENCE_EXPRESSION){
         if (encodeRefTargets){
@@ -308,7 +309,7 @@ public class ChangeUtil implements Constants {
       ChameleonTransforming.transformChildren((CompositeElement)element);
       ChameleonTransforming.transformChildren((CompositeElement)original);
       TreeElement child = ((CompositeElement)element).firstChild;
-      TreeElement child1 = ((CompositeElement)original).firstChild;
+      ASTNode child1 = ((CompositeElement)original).firstChild;
       while(child != null){
         _encodeInformation(child, child1, encodeRefTargets);
         child = child.getTreeNext();
@@ -317,7 +318,7 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  private static void encodeInformationInRef(TreeElement ref, TreeElement original) {
+  private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
     if (original.getElementType() == REFERENCE_EXPRESSION){
       if (original.getTreeParent().getElementType() != REFERENCE_EXPRESSION) return; // cannot refer to class (optimization)
       PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
@@ -503,7 +504,7 @@ public class ChangeUtil implements Constants {
       if (sourceVersion != original){
         return _copyToElement(sourceVersion, table);
       }
-      TreeElement mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
+      ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
       return _copyToElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table);
     }
     else if (original instanceof PsiTypeElement){
@@ -585,7 +586,7 @@ public class ChangeUtil implements Constants {
     if (type instanceof PsiPrimitiveType) return;
     LOG.assertTrue(typeElement.getElementType() == TYPE);
     if (type instanceof PsiArrayType) {
-      final TreeElement firstChild = typeElement.firstChild;
+      final ASTNode firstChild = typeElement.firstChild;
       LOG.assertTrue(firstChild.getElementType() == TYPE);
       encodeInfoInTypeElement((CompositeElement) firstChild, ((PsiArrayType) type).getComponentType());
       return;
@@ -593,14 +594,14 @@ public class ChangeUtil implements Constants {
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
       if (bound == null) return;
-      final TreeElement lastChild = typeElement.lastChild;
+      final ASTNode lastChild = typeElement.lastChild;
       if (lastChild.getElementType() != TYPE) return;
       encodeInfoInTypeElement((CompositeElement)lastChild, bound);
     }
     else if (type instanceof PsiCapturedWildcardType) {
       final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
       if (bound == null) return;
-      final TreeElement lastChild = typeElement.lastChild;
+      final ASTNode lastChild = typeElement.lastChild;
       if (lastChild.getElementType() != TYPE) return;
       encodeInfoInTypeElement((CompositeElement)lastChild, bound);
     }
@@ -614,7 +615,7 @@ public class ChangeUtil implements Constants {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass referencedClass = resolveResult.getElement();
       if (referencedClass == null) return;
-      final TreeElement reference = typeElement.firstChild;
+      final ASTNode reference = typeElement.firstChild;
       LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
 
       encodeClassTypeInfoInReference((CompositeElement) reference, resolveResult.getElement(), resolveResult.getSubstitutor());
@@ -632,7 +633,7 @@ public class ChangeUtil implements Constants {
 
     final CompositeElement referenceParameterList = (CompositeElement) reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     int index = 0;
-    for (TreeElement child = referenceParameterList.firstChild; child != null; child = child.getTreeNext()) {
+    for (ASTNode child = referenceParameterList.firstChild; child != null; child = child.getTreeNext()) {
       if (child.getElementType() == TYPE) {
         final PsiType substitutedType = substitutor.substitute(typeParameters[index]);
         if (substitutedType != null) {
@@ -642,7 +643,7 @@ public class ChangeUtil implements Constants {
       }
     }
 
-    final TreeElement qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+    final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier != null) {
       if (referencedClass.hasModifierProperty(PsiModifier.STATIC)) return;
       final PsiClass outerClass = referencedClass.getContainingClass();
@@ -657,7 +658,7 @@ public class ChangeUtil implements Constants {
 
   public static void addChildren(final CompositeElement parent,
                                  TreeElement firstChild,
-                                 final TreeElement lastChild,
+                                 final ASTNode lastChild,
                                  final TreeElement anchorBefore) {
     while(firstChild != lastChild){
       final TreeElement next = firstChild.getTreeNext();

@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 
@@ -115,17 +116,17 @@ class ReferenceAdjuster implements Constants {
   }
 
   public void processRange(TreeElement element, int startOffset, int endOffset) {
-    ArrayList<TreeElement> array = new ArrayList<TreeElement>();
+    ArrayList<ASTNode> array = new ArrayList<ASTNode>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for(int i = 0; i < array.size(); i++){
-      TreeElement ref = array.get(i);
+      ASTNode ref = array.get(i);
       if (SourceTreeToPsiMap.treeElementToPsi(ref).isValid()){
-        process(ref, true, true);
+        process((TreeElement)ref, true, true);
       }
     }
   }
 
-  private static void addReferencesInRange(ArrayList<TreeElement> array, TreeElement parent, int startOffset, int endOffset) {
+  private static void addReferencesInRange(ArrayList<ASTNode> array, TreeElement parent, int startOffset, int endOffset) {
     if (parent.getElementType() == ElementType.JAVA_CODE_REFERENCE || parent.getElementType() == ElementType.REFERENCE_EXPRESSION){
       array.add(parent);
       return;
@@ -157,7 +158,7 @@ class ReferenceAdjuster implements Constants {
       PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(reference);
       PsiManager manager = parentClass.getManager();
       if (manager.getResolveHelper().isAccessible(refClass, psiReference, null)) {
-        for(TreeElement parent = reference.getTreeParent(); parent != null; parent = parent.getTreeParent()){
+        for(ASTNode parent = reference.getTreeParent(); parent != null; parent = parent.getTreeParent()){
           PsiElement parentPsi = SourceTreeToPsiMap.treeElementToPsi(parent);
           if (parentPsi instanceof PsiClass){
             PsiClass inner = ((PsiClass)parentPsi).findInnerClassByName(psiReference.getReferenceName(), true);
@@ -173,7 +174,7 @@ class ReferenceAdjuster implements Constants {
       }
 
       if (!mySettings.INSERT_INNER_CLASS_IMPORTS) {
-        final TreeElement qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+        final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
         if (qualifier != null){
 
           makeShortReference((CompositeElement)qualifier, parentClass, addImports, uncompleteCode);

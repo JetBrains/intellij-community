@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 
 public class PsiContinueStatementImpl extends CompositePsiElement implements PsiContinueStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiContinueStatementImpl");
@@ -35,7 +36,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
       String labelName = label.getText();
       for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
         if (parent.getElementType() == LABELED_STATEMENT){
-          TreeElement statementLabel = parent.findChildByRole(ChildRole.LABEL_NAME);
+          TreeElement statementLabel = (TreeElement)parent.findChildByRole(ChildRole.LABEL_NAME);
           if (statementLabel.textMatches(labelName)){
             return ((PsiLabeledStatement)SourceTreeToPsiMap.treeElementToPsi(parent)).getStatement();
           }
@@ -46,7 +47,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     return null;
   }
 
-  public TreeElement findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:
@@ -63,7 +64,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     }
   }
 
-  public int getChildRole(TreeElement child) {
+  public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == CONTINUE_KEYWORD) {
