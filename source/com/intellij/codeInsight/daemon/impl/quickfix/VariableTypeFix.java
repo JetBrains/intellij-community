@@ -23,18 +23,7 @@ public class VariableTypeFix implements IntentionAction {
 
   public VariableTypeFix(PsiVariable variable, PsiType toReturn) {
     myVariable = variable;
-    myReturnType = toReturn;
-  }
-  public VariableTypeFix(PsiVariable variable, String toReturn) {
-    myVariable = variable;
-    PsiType type;
-    try {
-      type = variable.getManager().getElementFactory().createTypeFromText(toReturn, variable);
-    }
-    catch (Exception e) {
-      type = null;
-    }
-    myReturnType = type;
+    myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
   }
 
   public String getText() {
@@ -57,8 +46,7 @@ public class VariableTypeFix implements IntentionAction {
         && myReturnType != null
         && myReturnType.isValid()
         && !TypeConversionUtil.isNullType(myReturnType)
-        && !TypeConversionUtil.isVoidType(myReturnType)
-        && GenericsUtil.isFromExternalTypeLanguage(myReturnType);
+        && !TypeConversionUtil.isVoidType(myReturnType);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
