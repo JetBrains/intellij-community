@@ -33,6 +33,7 @@ public class SystemBuilder {
   private PsiManager myManager;
   private HashMap<PsiElement, Boolean> myMethodCache;
   private HashMap<PsiParameter, PsiParameter> myParameters;
+  private HashMap<PsiMethod, PsiMethod> myMethods;
   private HashMap<PsiMethod, PsiMethod> mySuper;
   private HashMap<PsiElement, PsiType> myTypes;
   private HashSet<PsiAnchor> myVisitedConstructions;
@@ -46,6 +47,7 @@ public class SystemBuilder {
     mySettings = settings;
     myMethodCache = new HashMap<PsiElement, Boolean>();
     myParameters = new HashMap<PsiParameter, PsiParameter>();
+    myMethods = new HashMap<PsiMethod, PsiMethod>();
     mySuper = new HashMap<PsiMethod, PsiMethod>();
     myTypes = new HashMap<PsiElement, PsiType>();
     myVisitedConstructions = new HashSet<PsiAnchor>();
@@ -95,16 +97,25 @@ public class SystemBuilder {
 
       keyMethod = superMethod;
 
+      myMethods.put(method, keyMethod);
+
       if (parameter != null) {
         keyParameter = (PsiParameter)e;
-        myParameters.put(parameter, keyParameter);
       }
     }
     else {
       Boolean good = myMethodCache.get(method);
 
-      if (good != null) {
-        return good.booleanValue();
+      if (good != null && good.booleanValue()) {
+        if (myMethods.get(method) == null) {
+          myMethods.put(method, method);
+        }
+
+        if (parameter != null && myParameters.get(parameter) == null) {
+          myParameters.put(parameter, parameter);
+        }
+
+        return true;
       }
 
       keyMethod = method;
@@ -112,27 +123,33 @@ public class SystemBuilder {
     }
 
     final PsiMethod[] overriders = helper.findOverridingMethods(keyMethod, keyMethod.getUseScope(), true);
-    PsiMethod prev = keyMethod;
 
     for (int i = 0; i < overriders.length; i++) {
-      PsiMethod overrider = overriders[i];
-
-      if (prev != null) {
-        mySuper.put(overrider, prev);
-        prev = overrider;
-      }
-
-      PsiElement e =
-        parameter == null ? (PsiElement)overrider : overrider.getParameterList().getParameters()[index];
+      final PsiMethod overrider = overriders[i];
+      final PsiElement e = parameter == null ? (PsiElement)overrider : overrider.getParameterList().getParameters()[index];
 
       if (!victims.contains(e)) {
         myMethodCache.put(keyMethod, new Boolean(false));
         return false;
       }
+    }
+
+    for (int i = 0; i < overriders.length; i++) {
+      final PsiMethod overrider = overriders[i];
+      final PsiElement e = parameter == null ? (PsiElement)overrider : overrider.getParameterList().getParameters()[index];
+
+      mySuper.put(overrider, keyMethod);
+      myMethods.put(overrider, keyMethod);
 
       if (parameter != null) {
-        myParameters.put(parameter, keyParameter);
+        myParameters.put((PsiParameter)e, keyParameter);
       }
+    }
+
+    myMethods.put(method, keyMethod);
+
+    if (parameter != null) {
+      myParameters.put(parameter, keyParameter);
     }
 
     myMethodCache.put(keyMethod, new Boolean(true));
@@ -279,100 +296,106 @@ public class SystemBuilder {
               }
               else {
                 final PsiType theType =
-                  new Object() {
-                    PsiType introduceAdditionalTypeVariables(final PsiType type,
-                                                             final PsiSubstitutor qualifier,
-                                                             final PsiSubstitutor supertype) {
-                      final PsiClassType.ClassResolveResult result = Util.resolveType(type);
-                      final PsiClass aClass = result.getElement();
+                new Object() {
+                  PsiType introduceAdditionalTypeVariables(final PsiType type,
+                                                           final PsiSubstitutor qualifier,
+                                                           final PsiSubstitutor supertype) {
+                    final PsiClassType.ClassResolveResult result = Util.resolveType(type);
+                    final PsiClass aClass = result.getElement();
 
-                      if (aClass != null) {
-                        if (aClass instanceof PsiTypeParameter) {
-                          final PsiTypeParameter tp = ((PsiTypeParameter)aClass);
+                    if (aClass != null) {
+                      if (aClass instanceof PsiTypeParameter) {
+                        final PsiTypeParameter tp = ((PsiTypeParameter)aClass);
+                        final PsiClassType[] extypes = tp.getExtendsListTypes();
 
-                          PsiType pv = mapping.get(tp);
+                        PsiType pv = mapping.get(tp);
 
-                          if (pv == null) {
-                            pv = myTypeVariableFactory.create();
-                            mapping.put(tp, pv);
-                          }
-
-                          return pv;
+                        if (pv == null) {
+                          pv = myTypeVariableFactory.create();
+                          mapping.put(tp, pv);
                         }
 
-                        final Map<PsiTypeParameter, PsiType> substitutionMap = result.getSubstitutor().getSubstitutionMap();
-
-                        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-                        for (Iterator<PsiTypeParameter> t = substitutionMap.keySet().iterator(); t.hasNext();) {
-                          final PsiTypeParameter p = t.next();
-                          final PsiType pType = substitutionMap.get(p);
-
-                          if (pType instanceof PsiWildcardType) {
-                            final PsiWildcardType wildcard = ((PsiWildcardType)pType);
-                            final PsiType theBound = wildcard.getBound();
-
-                            if (theBound != null) {
-                              final PsiType bound = Util.substituteType(Util.substituteType(theBound, supertype), qualifier);
-
-                              if (Util.bindsTypeVariables(bound)) {
-                                final PsiType var = myTypeVariableFactory.create();
-
-                                if (wildcard.isExtends()) {
-                                  system.addSubtypeConstraint(bound, var);
-                                }
-                                else {
-                                  system.addSubtypeConstraint(var, bound);
-                                }
-
-                                theSubst = theSubst.put(p, var);
-                              }
-                              else if (Util.bindsTypeParameters(bound, typeParameters)) {
-                                final PsiType var = myTypeVariableFactory.create();
-                                PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-
-                                for (int i = 0; i < aTypeParms.length; i++) {
-                                  final PsiTypeParameter aTypeParm = aTypeParms[i];
-
-                                  PsiType parmVar = mapping.get(aTypeParm);
-
-                                  if (parmVar == null) {
-                                    parmVar = myTypeVariableFactory.create();
-                                    mapping.put(aTypeParm, parmVar);
-                                  }
-
-                                  subst = subst.put(aTypeParm, parmVar);
-                                }
-
-                                final PsiType bnd = Util.substituteType(bound, subst);
-
-                                if (wildcard.isExtends()) {
-                                  system.addSubtypeConstraint(bnd, var);
-                                }
-                                else {
-                                  system.addSubtypeConstraint(var, bnd);
-                                }
-
-                                theSubst = theSubst.put(p, var);
-                              }
-                              else {
-                                theSubst = theSubst.put(p, pType);
-                              }
-                            }
-                          }
-                          else {
-                            theSubst = theSubst.put(p, introduceAdditionalTypeVariables(pType, qualifier, supertype));
-                          }
+                        for (int j = 0; j < extypes.length; j++) {
+                          final PsiType extype = Util.substituteType(extypes[j], qualifier);
+                          system.addSubtypeConstraint(pv, extype);
                         }
 
-                        return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+                        return pv;
                       }
 
-                      return type;
+                      final Map<PsiTypeParameter, PsiType> substitutionMap = result.getSubstitutor().getSubstitutionMap();
+
+                      PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+                      for (Iterator<PsiTypeParameter> t = substitutionMap.keySet().iterator(); t.hasNext();) {
+                        final PsiTypeParameter p = t.next();
+                        final PsiType pType = substitutionMap.get(p);
+
+                        if (pType instanceof PsiWildcardType) {
+                          final PsiWildcardType wildcard = ((PsiWildcardType)pType);
+                          final PsiType theBound = wildcard.getBound();
+
+                          if (theBound != null) {
+                            final PsiType bound = Util.substituteType(Util.substituteType(theBound, supertype), qualifier);
+
+                            if (Util.bindsTypeVariables(bound)) {
+                              final PsiType var = myTypeVariableFactory.create();
+
+                              if (wildcard.isExtends()) {
+                                system.addSubtypeConstraint(bound, var);
+                              }
+                              else {
+                                system.addSubtypeConstraint(var, bound);
+                              }
+
+                              theSubst = theSubst.put(p, var);
+                            }
+                            else if (Util.bindsTypeParameters(bound, typeParameters)) {
+                              final PsiType var = myTypeVariableFactory.create();
+                              PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+
+                              for (int i = 0; i < aTypeParms.length; i++) {
+                                final PsiTypeParameter aTypeParm = aTypeParms[i];
+
+                                PsiType parmVar = mapping.get(aTypeParm);
+
+                                if (parmVar == null) {
+                                  parmVar = myTypeVariableFactory.create();
+                                  mapping.put(aTypeParm, parmVar);
+                                }
+
+                                subst = subst.put(aTypeParm, parmVar);
+                              }
+
+                              final PsiType bnd = Util.substituteType(bound, subst);
+
+                              if (wildcard.isExtends()) {
+                                system.addSubtypeConstraint(bnd, var);
+                              }
+                              else {
+                                system.addSubtypeConstraint(var, bnd);
+                              }
+
+                              theSubst = theSubst.put(p, var);
+                            }
+                            else {
+                              theSubst = theSubst.put(p, pType);
+                            }
+                          }
+                        }
+                        else {
+                          theSubst = theSubst.put(p, introduceAdditionalTypeVariables(pType, qualifier, supertype));
+                        }
+                      }
+
+                      return aClass.getManager().getElementFactory().createType(aClass, theSubst);
                     }
-                  }.introduceAdditionalTypeVariables(
-                    Util.substituteType(Util.substituteType(parmType, supertypeSubstitutor), qualifierSubstitutor), qualifierSubstitutor,
-                    supertypeSubstitutor);
+
+                    return type;
+                  }
+                }.introduceAdditionalTypeVariables(
+                  Util.substituteType(Util.substituteType(parmType, supertypeSubstitutor), qualifierSubstitutor), qualifierSubstitutor,
+                  supertypeSubstitutor);
 
                 system.addSubtypeConstraint(argumenType, theType);
               }
@@ -575,6 +598,24 @@ public class SystemBuilder {
       }
       return;
     }
+    else if (element instanceof PsiMethod) {
+      final PsiType reType = getType(element);
+
+      element.accept(new PsiRecursiveElementVisitor() {
+                       public void visitReturnStatement(final PsiReturnStatement statement) {
+                         super.visitReturnStatement(statement);
+
+                         final PsiExpression retExpr = statement.getReturnValue();
+
+                         if (retExpr != null) {
+                           system.addSubtypeConstraint(e.valuateType(retExpr), reType);
+                         }
+                       }
+                     }
+      );
+
+      return;
+    }
 
     final PsiStatement root = (PsiStatement)PsiTreeUtil.getParentOfType(element, PsiStatement.class);
 
@@ -583,63 +624,65 @@ public class SystemBuilder {
 
       if (!myVisitedConstructions.contains(anchor)) {
         root.accept(new PsiRecursiveElementVisitor() {
-          public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
+                      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+                        super.visitAssignmentExpression(expression);
 
-            system.addSubtypeConstraint(e.valuateType(expression.getRExpression()), e.valuateType(expression.getLExpression()));
-          }
+                        system.addSubtypeConstraint(e.valuateType(expression.getRExpression()), e.valuateType(expression.getLExpression()));
+                      }
 
-          public void visitConditionalExpression(final PsiConditionalExpression expression) {
-            super.visitConditionalExpression(expression);
+                      public void visitConditionalExpression(final PsiConditionalExpression expression) {
+                        super.visitConditionalExpression(expression);
 
-            system.addSubtypeConstraint(e.valuateType(expression.getThenExpression()), e.valuateType(expression.getElseExpression()));
-            system.addSubtypeConstraint(e.valuateType(expression.getElseExpression()), e.valuateType(expression.getThenExpression()));
-          }
+                        system.addSubtypeConstraint(e.valuateType(expression.getThenExpression()),
+                                                    e.valuateType(expression.getElseExpression()));
+                        system.addSubtypeConstraint(e.valuateType(expression.getElseExpression()),
+                                                    e.valuateType(expression.getThenExpression()));
+                      }
 
-          public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            e.valuateType(expression);
-          }
+                      public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+                        super.visitMethodCallExpression(expression);
+                        e.valuateType(expression);
+                      }
 
-          public void visitReturnStatement(final PsiReturnStatement statement) {
-            super.visitReturnStatement(statement);
+                      public void visitReturnStatement(final PsiReturnStatement statement) {
+                        super.visitReturnStatement(statement);
 
-            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+                        final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
 
-            if (method != null) {
-              system.addSubtypeConstraint(e.valuateType(statement.getReturnValue()), getType(method));
-            }
-          }
+                        if (method != null) {
+                          system.addSubtypeConstraint(e.valuateType(statement.getReturnValue()), getType(method));
+                        }
+                      }
 
-          public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
-            super.visitTypeCastExpression(expression);
+                      public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+                        super.visitTypeCastExpression(expression);
 
-            system.addSubtypeConstraint(e.valuateType(expression.getOperand()), e.valuateType(expression));
-          }
+                        system.addSubtypeConstraint(e.valuateType(expression.getOperand()), e.valuateType(expression));
+                      }
 
-          public void visitNewExpression(final PsiNewExpression expression) {
-            super.visitNewExpression(expression);
+                      public void visitNewExpression(final PsiNewExpression expression) {
+                        super.visitNewExpression(expression);
 
-            final PsiArrayInitializerExpression init = expression.getArrayInitializer();
+                        final PsiArrayInitializerExpression init = expression.getArrayInitializer();
 
-            if (init != null) {
-              final PsiExpression[] inits = init.getInitializers();
-              final PsiType type = getType(expression);
+                        if (init != null) {
+                          final PsiExpression[] inits = init.getInitializers();
+                          final PsiType type = getType(expression);
 
-              for (int i = 0; i < inits.length; i++) {
-                system.addSubtypeConstraint(e.valuateType(inits[i]).createArrayType(), type);
-              }
-            }
-          }
+                          for (int i = 0; i < inits.length; i++) {
+                            system.addSubtypeConstraint(e.valuateType(inits[i]).createArrayType(), type);
+                          }
+                        }
+                      }
 
-          public void visitReferenceExpression(final PsiReferenceExpression expression) {
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
+                      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+                        final PsiExpression qualifierExpression = expression.getQualifierExpression();
 
-            if (qualifierExpression != null) {
-              qualifierExpression.accept(this);
-            }
-          }
-        });
+                        if (qualifierExpression != null) {
+                          qualifierExpression.accept(this);
+                        }
+                      }
+                    });
 
         myVisitedConstructions.add(anchor);
       }
@@ -673,47 +716,47 @@ public class SystemBuilder {
             if (definedType instanceof PsiTypeVariable) {
               for (int j = 0; j < extendsList.length; j++) {
                 final PsiType extendsType =
-                  new Object() {
-                    PsiType replaceWildCards(final PsiType type) {
-                      if (type instanceof PsiWildcardType) {
-                        final PsiWildcardType wildcard = ((PsiWildcardType)type);
-                        final PsiType var = myTypeVariableFactory.create();
-                        final PsiType bound = wildcard.getBound();
+                new Object() {
+                  PsiType replaceWildCards(final PsiType type) {
+                    if (type instanceof PsiWildcardType) {
+                      final PsiWildcardType wildcard = ((PsiWildcardType)type);
+                      final PsiType var = myTypeVariableFactory.create();
+                      final PsiType bound = wildcard.getBound();
 
-                        if (bound != null) {
-                          if (wildcard.isExtends()) {
-                            system.addSubtypeConstraint(Util.substituteType(replaceWildCards(bound), definedSubst), var);
-                          }
-                          else {
-                            system.addSubtypeConstraint(var, Util.substituteType(replaceWildCards(bound), definedSubst));
-                          }
+                      if (bound != null) {
+                        if (wildcard.isExtends()) {
+                          system.addSubtypeConstraint(Util.banalize(Util.substituteType(replaceWildCards(bound), definedSubst)), var);
                         }
-
-                        return var;
-                      }
-                      else if (type instanceof PsiClassType) {
-                        final PsiClassType.ClassResolveResult result = Util.resolveType(type);
-                        final PsiClass aClass = result.getElement();
-                        final PsiSubstitutor aSubst = result.getSubstitutor();
-
-                        if (aClass != null) {
-                          PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-                          for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
-                            final PsiTypeParameter p = i.next();
-
-                            theSubst = theSubst.put(p, replaceWildCards(aSubst.substitute(p)));
-                          }
-
-                          return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+                        else {
+                          system.addSubtypeConstraint(var, Util.banalize(Util.substituteType(replaceWildCards(bound), definedSubst)));
                         }
                       }
 
-                      return type;
+                      return var;
                     }
-                  }.replaceWildCards(extendsList[j]);
+                    else if (type instanceof PsiClassType) {
+                      final PsiClassType.ClassResolveResult result = Util.resolveType(type);
+                      final PsiClass aClass = result.getElement();
+                      final PsiSubstitutor aSubst = result.getSubstitutor();
 
-                system.addSubtypeConstraint(Util.substituteType(extendsType, definedSubst), definedType);
+                      if (aClass != null) {
+                        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+                        for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
+                          final PsiTypeParameter p = i.next();
+
+                          theSubst = theSubst.put(p, replaceWildCards(aSubst.substitute(p)));
+                        }
+
+                        return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+                      }
+                    }
+
+                    return type;
+                  }
+                }.replaceWildCards(extendsList[j]);
+
+                system.addSubtypeConstraint(definedType, Util.banalize(Util.substituteType(extendsType, definedSubst)));
               }
             }
             else {
@@ -731,21 +774,17 @@ public class SystemBuilder {
     System system = new System(myProject, victims, myTypes, myTypeVariableFactory);
 
     for (Iterator<PsiElement> i = victims.iterator(); i.hasNext();) {
-      PsiElement element = i.next();
+      final PsiElement element = i.next();
 
       if (element instanceof PsiParameter) {
         if (!verifyMethod(element, victims, helper)) {
-          continue;
+        continue;
         }
-
-        element = myParameters.get(element);
       }
       else if (element instanceof PsiMethod) {
         if (!verifyMethod(element, victims, helper)) {
-          continue;
+        continue;
         }
-
-        element = mySuper.get(element);
       }
     }
 
@@ -761,17 +800,17 @@ public class SystemBuilder {
           setType(element, definedType = defineType(p));
         }
         else {
-          definedType = defineType(element);
+        continue;
         }
       }
       else if (element instanceof PsiMethod) {
-        final PsiMethod m = mySuper.get(element);
+        final PsiMethod m = myMethods.get(element);
 
         if (m != null) {
           system.addSubtypeConstraint(defineType(element), definedType = defineType(m));
         }
         else {
-          definedType = defineType(element);
+        continue;
         }
       }
       else {
@@ -783,6 +822,21 @@ public class SystemBuilder {
 
     for (Iterator<PsiElement> i = victims.iterator(); i.hasNext();) {
       final PsiElement element = i.next();
+
+      if (element instanceof PsiParameter) {
+        final PsiParameter p = myParameters.get(element);
+
+        if (p == null) {
+        continue;
+        }
+      }
+      else if (element instanceof PsiMethod) {
+        final PsiMethod m = myMethods.get(element);
+
+        if (m == null) {
+        continue;
+        }
+      }
 
       addUsage(system, element);
 

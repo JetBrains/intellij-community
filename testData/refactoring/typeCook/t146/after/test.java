@@ -5,22 +5,13 @@ class List<T> {
 class Test{
   class Super {
      void f (List x){
+       x = new List<Integer>();
      }
   }
 
   class Middle extends Super {
     void f (List x){
-       g(x);
        x.t = "";
-    }
-
-    void g (List x){
-     x.t = "";
-   }
-  }
-
-  class Sub extends Middle{
-     void g (List x){
     }
   }
 }

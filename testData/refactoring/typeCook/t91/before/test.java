@@ -10,6 +10,7 @@ class Test{
 
   class Middle extends Super {
     void f (List x){
+       g(x);
        x.t = "";
     }
 

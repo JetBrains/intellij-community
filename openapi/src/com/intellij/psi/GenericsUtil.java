@@ -172,32 +172,4 @@ public class GenericsUtil {
     return type.getInternalCanonicalText().equals(type.getCanonicalText());
   }
 
-  public static PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
-    if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) {
-      return new PsiClass[]{aClass};
-    }
-
-    if (InheritanceUtil.isInheritorOrSelf(bClass, aClass, true)) {
-      return new PsiClass[]{bClass};
-    }
-
-    final Set<PsiClass> descendants = new LinkedHashSet<PsiClass>();
-
-    new Object() {
-      public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
-        if (aClass.isInheritor(bClass, true)) {
-          descendants.add(bClass);
-        }
-        else {
-          final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-          final PsiClass[] bSubs = helper.findInheritors(bClass, helper.getUseScope(bClass), true);
-          for (int i = 0; i < bSubs.length; i++) {
-            getLeastUpperClassesInner(bSubs[i], aClass, descendants);
-          }
-        }
-      }
-    }.getGreatestLowerClasses(aClass, bClass, descendants);
-
-    return descendants.toArray(new PsiClass[descendants.size()]);
-  }
 }

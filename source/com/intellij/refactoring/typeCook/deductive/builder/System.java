@@ -78,6 +78,10 @@ public class System {
       final PsiElement element = i.next();
       final PsiType type = myTypes.get(element);
 
+      if (type == null){
+        continue;
+      }
+
       if (element instanceof PsiParameter) {
         final PsiParameter parm = (PsiParameter)element;
         final PsiMethod method = (PsiMethod)parm.getDeclarationScope();
@@ -429,7 +433,11 @@ public class System {
 
     for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
-      data[i++] = binding.substitute(myTypes.get(element)).getCanonicalText() + "\\n" + elementString(element);
+      final PsiType t = myTypes.get(element);
+      if (t != null)
+        data[i++] = binding.substitute(t).getCanonicalText() + "\\n" + elementString(element);
+      else
+        data[i++] = "\\n" + elementString(element);
     }
 
     Arrays.sort(data,
