@@ -3,7 +3,7 @@
   <id>Subversion</id>
   <description>Subversion Integration</description>
   <version>1.0</version>
-  <vendor>JetBrains</vendor>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version min="4.0" max="4.0"/>
 
   <extensions xmlns="com.intellij">
