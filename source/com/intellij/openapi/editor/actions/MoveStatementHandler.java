@@ -32,7 +32,6 @@ class MoveStatementHandler extends EditorWriteActionHandler {
 
     final CaretModel caretModel = editor.getCaretModel();
     final int caretColumn = caretModel.getLogicalPosition().column;
-    final int caretLine = caretModel.getLogicalPosition().line;
     final LineRange lineRange = getRangeToMove(editor,file);
     final int startLine = lineRange.startLine;
     final int endLine = lineRange.endLine;
@@ -87,10 +86,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
-      PsiElement element = file.findElementAt(offset);
-      if (element instanceof PsiWhiteSpace) {
-        element = element.getNextSibling();
-      }
+      PsiElement element = firstNonWhiteElement(offset, file, true);
       while (element != null) {
         if ((element instanceof PsiStatement || element instanceof PsiComment) && element.getParent() instanceof PsiCodeBlock) {
           return offset;
@@ -154,14 +150,36 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (result.startLine <= 1 && !isDown) return null;
     if (result.endLine >= maxLine - 1 && isDown) return null;
 
-    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    if (elementAt == null) return null;
-    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
-    // move operation should not go out of method
-    final int insertOffset = calcInsertOffset(editor, result.startLine, result.endLine);
-    if (guard != null && !guard.getTextRange().shiftRight(1).grown(-1).contains(insertOffset)) return null;
-
+    if (!checkMovingInsideOutside(file, editor, result)) return null;
     return result;
+  }
+
+  private boolean checkMovingInsideOutside(final PsiFile file, final Editor editor, final LineRange result) {
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement elementAt = file.findElementAt(offset);
+    if (elementAt == null) return false;
+
+    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
+    // cannot move in/outside method/class/initializer
+    final int insertOffset = calcInsertOffset(editor, result.startLine, result.endLine);
+    elementAt = file.findElementAt(insertOffset);
+    final PsiElement newGuard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
+    if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
+
+    // moving in/out nested class is OK
+    if (guard instanceof PsiClass && guard.getParent() instanceof PsiClass) return true;
+    if (newGuard instanceof PsiClass && newGuard.getParent() instanceof PsiClass) return true;
+    return false;
+  }
+
+  private static boolean isInside(final int offset, final PsiElement guard) {
+    if (guard == null) return false;
+    TextRange inside = guard instanceof PsiMethod ? ((PsiMethod)guard).getBody().getTextRange() : guard instanceof PsiClassInitializer
+      ? ((PsiClassInitializer)guard).getBody().getTextRange()
+      : guard instanceof PsiClass
+      ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(), ((PsiClass)guard).getRBrace().getTextOffset())
+      : null;
+    return inside != null && inside.contains(offset);
   }
 
   private static LineRange expandLineRangeToStatement(final LineRange range, Editor editor, final PsiFile file) {
@@ -213,6 +231,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 }
 //todo
-   // no move inside/outside class/method/initializer/comment
-   // create codeblock when moving inside statement
-   // moving declarations
+   // + no move inside/outside class(except nested)/method/initializer/comment
+// moving declarations
+// create codeblock when moving inside statement
+
