@@ -18,10 +18,10 @@ import java.util.regex.Pattern;
  * To change this template use Options | File Templates.
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
-  final static Pattern pattern = Pattern.compile("([A-Za-z]\\w*\\s*(\\.\\s*[A-Za-z]\\w*\\s*)+)");
+  private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*(\\.\\s*[A-Za-z]\\w*\\s*)+)");
 
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
-    final List results = new ArrayList();
+    final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
     final Set<String> knownTopLevelPackages = new HashSet<String>();
     final List<PsiElement> defaultPackages = getDefaultPackages(position);
     final Iterator<PsiElement> iterator = defaultPackages.iterator();
@@ -31,7 +31,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
         knownTopLevelPackages.add(((PsiPackage)pack).getName());
     }
 
-    final Matcher matcher = pattern.matcher(str);
+    final Matcher matcher = PATTERN.matcher(str);
 
     while(matcher.find()){
       final String identifier = matcher.group().trim();
@@ -45,6 +45,6 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
         }.getAllReferences()));
       }
     }
-    return (GenericReference[])results.toArray(new GenericReference[results.size()]);
+    return results.toArray(new GenericReference[results.size()]);
   }
 }

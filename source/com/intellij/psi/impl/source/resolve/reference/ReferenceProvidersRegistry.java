@@ -43,92 +43,82 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
   private final List<Object[]> myManipulators = new ArrayList<Object[]>();
 
-  public final static ReferenceProvidersRegistry getInstance(Project project) {
+  public static final ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
   }
 
   private ReferenceProvidersRegistry() {
     // Temp scopes declarations
-    {
-      myTempScopes.add(JspToken.class);
-      myTempScopes.add(PsiIdentifier.class);
-    }
+    myTempScopes.add(JspToken.class);
+    myTempScopes.add(PsiIdentifier.class);
 
     // Manipulators mapping
-    {
-      registerManipulator(JspAttributeValue.class, new JspAttributeValueManipulator());
-      registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
-      registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
-    }
+    registerManipulator(JspAttributeValue.class, new JspAttributeValueManipulator());
+    registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
+    registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     // Binding declarations
-    {
-      registerReferenceProvider(
-        new ScopeFilter(
-          new AndFilter(
-            new ParentElementFilter(
-              new TextFilter(new String[] { "class", "type" })
-            ),
-            new ParentElementFilter(
-              new TextFilter("useBean"), 2
-            )
-          )
-        ),
-        JspAttributeValue.class,
-        new JavaClassReferenceProvider()
-      );
-
-      RegisterInPsi.referenceProviders(this);
-      registerReferenceProvider(
-        new ScopeFilter(
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
           new ParentElementFilter(
-            new AndFilter(
-              new TextFilter("extends"),
-              new ParentElementFilter(
-                new AndFilter(
-                  new ClassFilter(JspDirective.class),
-                  new TextFilter("page")
-                )
+            new TextFilter(new String[]{"class", "type"})
+          ),
+          new ParentElementFilter(
+            new TextFilter("useBean"), 2
+          )
+        )
+      ),
+      JspAttributeValue.class,
+      new JavaClassReferenceProvider()
+    );
+    RegisterInPsi.referenceProviders(this);
+    registerReferenceProvider(
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new TextFilter("extends"),
+            new ParentElementFilter(
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("page")
               )
             )
           )
-        ),
-        JspAttributeValue.class,
-        new JavaClassReferenceProvider()
-      );
+        )
+      ),
+      JspAttributeValue.class,
+      new JavaClassReferenceProvider()
+    );
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new SuperParentFilter(
+            new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+          ),
+          new ParentElementFilter(
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("jsp:directive.include")
 
-      registerReferenceProvider(
-        new ScopeFilter (
-          new AndFilter (
-            new SuperParentFilter(
-              new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
-            ),
-            new ParentElementFilter(
-              new AndFilter(
-                new ClassFilter(XmlTag.class),
-                new TextFilter("jsp:directive.include")
-
-              ), 2
-            )
+            ), 2
           )
-        ),
-        XmlAttributeValue.class,
-        new JspxIncludePathReferenceProvider()
-      );
+        )
+      ),
+      XmlAttributeValue.class,
+      new JspxIncludePathReferenceProvider()
+    );
+    //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
+    //                                                                                new ParentElementFilter(new AndFilter(
+    //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),
+    //                                                                                  new TextFilter("antcall")))))),
+    //                          XmlAttributeValue.class, new AntTargetReferenceProvider());
+    registerReferenceProvider(JspAction.class, new JSPActionReferenceProvider());
+    registerReferenceProvider(new NotFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.ANT_URI), 2)),
+                              XmlAttributeValue.class, new JavaClassListReferenceProvider());
+    registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
+                              new JavaClassListReferenceProvider());
 
-      //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
-      //                                                                                new ParentElementFilter(new AndFilter(
-      //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),
-      //                                                                                  new TextFilter("antcall")))))),
-      //                          XmlAttributeValue.class, new AntTargetReferenceProvider());
-      registerReferenceProvider(JspAction.class, new JSPActionReferenceProvider());
-      registerReferenceProvider(new NotFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.ANT_URI), 2)),
-                                XmlAttributeValue.class, new JavaClassListReferenceProvider());
-      registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class, new JavaClassListReferenceProvider());
-    }
-
-    {
-      registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
-    }
+    registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {
