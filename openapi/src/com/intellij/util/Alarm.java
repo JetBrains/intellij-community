@@ -84,7 +84,7 @@ public class Alarm {
           try {
             request.run();
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.error(e);
           }
         }
@@ -223,7 +223,12 @@ public class Alarm {
                 }
               }
               if (!isCanceled) {
-                request.run();
+                try {
+                  request.run();
+                }
+                catch (Throwable e) {
+                  LOG.error(e);
+                }
               }
             }
           };
