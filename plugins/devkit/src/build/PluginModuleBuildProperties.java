@@ -40,7 +40,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public static PluginModuleBuildProperties getInstance(Module module) {
-    return (PluginModuleBuildProperties)module.getComponent(ModuleBuildProperties.class);
+    return module.getComponent(PluginModuleBuildProperties.class);
   }
 
   public String getArchiveExtension() {
