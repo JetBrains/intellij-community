@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -20,6 +20,8 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final MyCopyPasteListener myCopyPasteListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
   private final ModelListener myModelListener;
+
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public StructureTreeBuilder(Project project,
                               JTree tree,
@@ -80,12 +82,8 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   
   
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    private final PsiModificationTracker myModificationTracker;
-    private long myOutOfCodeBlockModificationCount;
 
     public MyPsiTreeChangeListener() {
-      myModificationTracker = PsiManager.getInstance(myProject).getModificationTracker();
-      myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     }
 
     public void childRemoved(PsiTreeChangeEvent event) {
@@ -119,17 +117,14 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     private void childrenChanged() {
-      /*if (myOutOfCodeBlockModificationCount == myModificationTracker.getOutOfCodeBlockModificationCount()) {
-        return;
-      }*/
-      try {
-        ((SmartTreeStructure)getTreeStructure()).rebuildTree();
-        myUpdater.addSubtreeToUpdate(myRootNode);
-      }
-      finally {
-        myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
-      }
-      return;
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.addRequest(new Runnable() {
+        public void run() {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          ((SmartTreeStructure)getTreeStructure()).rebuildTree();
+          myUpdater.addSubtreeToUpdate(myRootNode);
+        }
+      }, 300);
     }
 
     public void propertyChanged(PsiTreeChangeEvent event) {
