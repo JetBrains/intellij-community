@@ -201,10 +201,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static PsiClass getTopLevelClass(PsiElement element) {
-    while (!(element.getParent() instanceof PsiFile)) {
-      element = element.getParent();
+    LOG.assertTrue(element.isValid());
+    final PsiFile file = element.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      for (int i = 0; i < classes.length; i++) {
+        PsiClass aClass = classes[i];
+        if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
+      }
     }
-    return element instanceof PsiClass ? (PsiClass)element : null;
+    return null;
   }
 
   public interface CustomSearchHelper {
