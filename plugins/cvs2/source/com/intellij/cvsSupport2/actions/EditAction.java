@@ -8,7 +8,7 @@ import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.actions.VcsContext;
 
 /**

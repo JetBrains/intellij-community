@@ -5,8 +5,9 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtu
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.util.Collection;

@@ -31,38 +31,59 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeEventQueue;
+import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements ProjectComponent{
+public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements ProjectComponent, JDOMExternalizable{
   private final Project myProject;
+
+  public boolean SHOW_DIALOG;
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
   }
 
   public OperationStatus ensureFilesWritable(VirtualFile[] files) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (files.length == 0) return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
-
     long[] modificationStamps = new long[files.length];
     for (int i = 0; i < files.length; i++) {
       modificationStamps[i] = files[i].getModificationStamp();
     }
+    final FileInfo[] fileInfos = createFileInfos(files);
+    if (files.length == 0) return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+
+    Runnable handleAction = new Runnable() {
+      public void run() {
+        if (SHOW_DIALOG) {
+          HandleReadOnlyStatusDialog dialog = new HandleReadOnlyStatusDialog(myProject, fileInfos);
+          dialog.show();
+        } else {
+          for (int i = 0; i < fileInfos.length; i++) {
+            fileInfos[i].handle();
+          }
+        }
+      }
+    };
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
 
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
     // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     int savedEventCount = IdeEventQueue.getInstance().getEventCount();
-    HandleReadOnlyStatusDialog dialog = new HandleReadOnlyStatusDialog(myProject, createFileInfos(files));
-    dialog.show();
+    handleAction.run();
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
     List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
@@ -105,5 +126,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   public void disposeComponent() {
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this,  element);
   }
 }

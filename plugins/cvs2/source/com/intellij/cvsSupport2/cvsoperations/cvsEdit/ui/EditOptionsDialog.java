@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.awt.*;

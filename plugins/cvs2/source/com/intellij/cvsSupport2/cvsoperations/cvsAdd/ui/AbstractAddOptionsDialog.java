@@ -6,7 +6,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.util.Collection;

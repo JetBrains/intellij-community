@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.ui;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 

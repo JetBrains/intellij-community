@@ -43,7 +43,7 @@ import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CheckinFileDialog;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;

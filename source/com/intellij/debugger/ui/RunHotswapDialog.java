@@ -3,7 +3,8 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

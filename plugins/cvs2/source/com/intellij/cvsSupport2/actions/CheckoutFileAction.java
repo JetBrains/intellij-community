@@ -10,8 +10,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import java.util.Arrays;
 import java.util.Collection;

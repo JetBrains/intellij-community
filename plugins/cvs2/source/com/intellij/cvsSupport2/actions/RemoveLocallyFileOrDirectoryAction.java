@@ -9,7 +9,8 @@ import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.ui.AbstractDeleteConfirmationDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.OptionsDialog;
 
 import java.io.File;
 import java.util.ArrayList;
