@@ -7,6 +7,8 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 
@@ -29,7 +31,8 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
       if (o instanceof PsiJavaFile) {
         PsiJavaFile psiJavaFile = ((PsiJavaFile)o);
         PsiClass[] classes = psiJavaFile.getClasses();
-        if (classes.length != 0) {
+        final VirtualFile virtualFile = psiJavaFile.getVirtualFile();
+        if (classes.length != 0 && virtualFile.getFileType() == StdFileTypes.JAVA) {
           for (int i = 0; i < classes.length; i++) {
             PsiClass aClass = classes[i];
             result.add(new ClassTreeNode(myProject,aClass, ((ProjectViewNode)parent).getSettings()));
