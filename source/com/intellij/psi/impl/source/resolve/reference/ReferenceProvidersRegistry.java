@@ -25,6 +25,7 @@ import com.intellij.psi.jsp.JspDirective;
 import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.HtmlUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,6 +120,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
                               new JavaClassListReferenceProvider());
 
     registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
+
+    HtmlUtil.HtmlReferenceProvider provider = new HtmlUtil.HtmlReferenceProvider();
+    registerReferenceProvider(provider.getFilter(), XmlAttributeValue.class, provider);
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {

@@ -4,7 +4,17 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
+
 import java.util.*;
 import gnu.trove.THashSet;
 
@@ -113,6 +123,77 @@ public class HtmlUtil {
           }
         }
       }
+    }
+  }
+
+  public static class HtmlReferenceProvider implements PsiReferenceProvider {
+    private static final Key<PsiReference[]> cachedReferencesKey = Key.create("html.cachedReferences");
+
+    public ElementFilter getFilter() {
+      return new ElementFilter() {
+        public boolean isAcceptable(Object _element, PsiElement context) {
+          PsiElement element = (PsiElement) _element;
+          PsiFile file = element.getContainingFile();
+
+          if (file.getFileType() == StdFileTypes.HTML ||
+              file.getFileType() == StdFileTypes.XHTML ||
+              file.getFileType() == StdFileTypes.JSPX ||
+              file.getFileType() == StdFileTypes.JSP
+              ) {
+            final PsiElement parent = ((PsiElement)element).getParent();
+
+            if (parent instanceof XmlAttribute) {
+              XmlAttribute xmlAttribute = (XmlAttribute) parent;
+              final String attrName = xmlAttribute.getName();
+              XmlTag tag = xmlAttribute.getParent();
+              final String tagName = tag.getName();
+
+              return
+               ( attrName.equalsIgnoreCase("src") &&
+                 (tagName.equalsIgnoreCase("img") ||
+                  tagName.equalsIgnoreCase("script")
+                 )
+               ) ||
+               ( attrName.equalsIgnoreCase("href") &&
+                 tagName.equalsIgnoreCase("a")
+               );
+            }
+          }
+          return false;
+        }
+
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      };
+    }
+
+    public PsiReference[] getReferencesByElement(PsiElement element) {
+      PsiReference[] refs = element.getUserData(cachedReferencesKey);
+
+      if (refs == null) {
+        String text = element.getText();
+        int offset = 0;
+        if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
+        text = text.substring(offset,text.length() - offset);
+
+        refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
+        element.putUserData(cachedReferencesKey,refs);
+      }
+
+      return refs;
+    }
+
+    public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
+    public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
+    public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
+
     }
   }
 
