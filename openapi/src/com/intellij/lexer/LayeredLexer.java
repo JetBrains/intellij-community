@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class LayeredLexer implements Lexer, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
-  private static final int IN_LAYER_STATE = Integer.MAX_VALUE;
+  private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
 
   private char[] myBuffer;
   private int myBufferEnd;
