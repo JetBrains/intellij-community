@@ -116,6 +116,8 @@ public class BraceMatchingUtil {
       PAIRING_TOKENS.put(JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER);
       PAIRING_TOKENS.put(JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER);
       PAIRING_TOKENS.put(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
+      PAIRING_TOKENS.put(JspTokenType.JSP_EL_RBRACKET, JspTokenType.JSP_EL_LBRACKET);
+      PAIRING_TOKENS.put(JspTokenType.JSP_EL_RPARENTH, JspTokenType.JSP_EL_LPARENTH);
     }
 
     public int getTokenGroup(IElementType tokenType) {
@@ -155,6 +157,8 @@ public class BraceMatchingUtil {
              tokenType == JspTokenType.JSP_ACTION_START ||
              tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER ||
              tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER ||
+             tokenType == JspTokenType.JSP_EL_LBRACKET ||
+             tokenType == JspTokenType.JSP_EL_LPARENTH ||
              tokenType == JavaDocTokenType.DOC_INLINE_TAG_START;
     }
 
@@ -173,6 +177,8 @@ public class BraceMatchingUtil {
           tokenType == JspTokenType.JSP_EMPTY_ACTION_END ||
           tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER ||
           tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER ||
+          tokenType == JspTokenType.JSP_EL_RBRACKET ||
+          tokenType == JspTokenType.JSP_EL_RPARENTH ||
           tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
         return true;
       }

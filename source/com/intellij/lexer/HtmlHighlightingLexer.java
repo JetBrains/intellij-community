@@ -3,6 +3,7 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -21,13 +22,13 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private Lexer embeddedLexer;
   private Lexer styleLexer;
   private Lexer scriptLexer;
+  private Lexer elLexer;
   private boolean hasNoEmbeddments;
   private static FileType ourStyleFileType;
   private static FileType ourScriptFileType;
   private static final int MAX_EMBEDDED_LEXER_STATE = 16;
   private static final int MAX_EMBEDDED_LEXER_SHIFT = 4;
 
-  // Handles following
   class XmlEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
@@ -45,17 +46,32 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
+  class ElEmbeddmentHandler implements TokenHandler {
+    public void handleElement(Lexer lexer) {
+      setEmbeddedLexer();
+      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
+    }
+  }
+
   public HtmlHighlightingLexer() {
     this(new _HtmlLexer(),true);
   }
 
   protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive) {
+    this(lexer,caseInsensitive,false);
+  }
+
+  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, boolean withEl) {
     super(new MergingLexerAdapter(lexer,TOKENS_TO_MERGE),caseInsensitive);
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,value);
     registerHandler(XmlTokenType.XML_DATA_CHARACTERS,value);
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
+
+    if (withEl) {
+      registerHandler(JspTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
+    }
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -63,8 +79,8 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
     if ((initialState & EMBEDDED_LEXER_ON)!=0) {
       int state = initialState >> EMBEDDED_LEXER_STATE_SHIFT;
-      LOG.assertTrue(hasSeenStyle() || hasSeenScript());
       setEmbeddedLexer();
+      LOG.assertTrue(embeddedLexer!=null);
       embeddedLexer.start(buffer,startOffset,skipToTheEndOfTheEmbeddment(),state);
     } else {
       embeddedLexer = null;
@@ -90,6 +106,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         }
       }
       newLexer = scriptLexer;
+    } else if (super.getTokenType() == JspTokenType.JSP_EL_CONTENT) {
+      if (elLexer==null) elLexer = new _ELLexer();
+      newLexer = elLexer;
     }
 
     if (newLexer!=null) {
