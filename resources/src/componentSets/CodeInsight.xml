@@ -38,6 +38,10 @@
     <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.newCodeFormatting.Formatter</interface-class>
+      <implementation-class>com.intellij.newCodeFormatting.impl.FormatterImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
