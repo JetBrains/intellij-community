@@ -38,7 +38,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
           tokenType==XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
           ) {
         setEmbeddedLexer();
-        embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
+        if (embeddedLexer!=null) {
+          embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
+        }
       }
     }
   }
