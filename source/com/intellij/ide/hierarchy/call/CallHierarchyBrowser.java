@@ -3,7 +3,6 @@ package com.intellij.ide.hierarchy.call;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ToolbarHelpAction;
 import com.intellij.ide.hierarchy.*;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -12,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
@@ -328,15 +328,6 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     }
   }
 
-  private PsiElement getSelectedTargetElement() {
-    final DefaultMutableTreeNode node = getSelectedNode();
-    if (node == null) return null;
-    final Object userObject = node.getUserObject();
-    if (!(userObject instanceof CallHierarchyNodeDescriptor)) return null;
-    final PsiElement element = ((CallHierarchyNodeDescriptor)userObject).getTargetElement();
-    return element;
-  }
-
   private PsiMethod getSelectedMethod() {
     final PsiElement enclosingElement = getSelectedEnclosingElement();
     return enclosingElement instanceof PsiMethod ? (PsiMethod)enclosingElement : null;
@@ -379,16 +370,28 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     return psiMethods.toArray(new PsiMethod[psiMethods.size()]);
   }
 
+  private Object[] getSelectedElements() {
+    JTree tree = getCurrentTree();
+    if (tree == null) return PsiMethod.EMPTY_ARRAY;
+    TreePath[] paths = tree.getSelectionPaths();
+    ArrayList<Object> elements = new ArrayList<Object>();
+    for (int i = 0; i < paths.length; i++) {
+      TreePath path = paths[i];
+      Object node = path.getLastPathComponent();
+      if (!(node instanceof DefaultMutableTreeNode)) continue;
+      Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (!(userObject instanceof CallHierarchyNodeDescriptor)) continue;
+      elements.add(((CallHierarchyNodeDescriptor)userObject).getEnclosingElement());
+    }
+    return elements.toArray(new Object[elements.size()]);
+  }
+
   public final Object getData(final String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       return getSelectedEnclosingElement();
     }
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
-      final PsiElement targetElement = getSelectedTargetElement();
-      if (targetElement == null) {
-        return null;
-      }
-      return EditSourceUtil.getDescriptor(targetElement);
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return getNavigatables();
     }
     else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return null;
@@ -403,6 +406,19 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
       return getSelectedMethods();
     }
     return null;
+  }
+
+  private Navigatable[] getNavigatables() {
+    final Object[] objects = getSelectedElements();
+    if (objects == null || objects.length == 0 ) return null;
+    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
+    for (int i = 0; i < objects.length; i++) {
+      final Object object = objects[i];
+      if (object instanceof Navigatable) {
+        result.add((Navigatable)object);
+      }
+    }
+    return result.toArray(new Navigatable[result.size()]);
   }
 
   public final void dispose() {

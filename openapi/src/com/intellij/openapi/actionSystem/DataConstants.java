@@ -75,6 +75,7 @@ public interface DataConstants {
    * Returns {@link com.intellij.pom.Navigatable}
    */
   String NAVIGATABLE = "Navigatable";
+  String NAVIGATABLE_ARRAY = "NavigatableArray";
   /**
    * Returns ExporterToTextFile
    */

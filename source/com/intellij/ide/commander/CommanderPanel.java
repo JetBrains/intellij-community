@@ -398,8 +398,8 @@ public class CommanderPanel extends JPanel {
       final Object element = myBuilder.getParentElement();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid() ? element : null;
     }
-    else if (DataConstants.NAVIGATABLE.equals(dataId)) {
-      return createEditSourceDescriptor();
+    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return getNavigatables();
     }
     else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCopyProvider() : null;
@@ -417,6 +417,23 @@ public class CommanderPanel extends JPanel {
       return myDeleteElementProvider;
     }
     return null;
+  }
+
+  private Navigatable[] getNavigatables() {
+    if (myBuilder == null) return null;
+    final int[] indices = myList.getSelectedIndices();
+    if (indices == null || indices.length == 0) return null;
+
+    final ArrayList<Navigatable> elements = new ArrayList<Navigatable>();
+    for (int i = 0; i < indices.length; i++) {
+      final Object element = myModel.getElementAt(indices[i]);
+      if (element instanceof AbstractTreeNode) {
+        elements.add((Navigatable)element);
+      }
+    }
+
+    return elements.toArray(new Navigatable[elements.size()]);
+
   }
 
   private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {

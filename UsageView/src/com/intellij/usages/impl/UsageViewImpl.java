@@ -739,6 +739,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return node instanceof Node ? (Node)node : null;
   }
 
+  public Node[] getSelectedNodes() {
+    TreePath[] leadSelectionPath = myTree.getSelectionPaths();
+    if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
+
+    final List<Node> result = new ArrayList<Node>();
+    for (int i = 0; i < leadSelectionPath.length; i++) {
+      final Object lastPathComponent = leadSelectionPath[i].getLastPathComponent();
+      if (lastPathComponent instanceof Node) {
+        result.add((Node)lastPathComponent);
+      }
+    }
+    return result.isEmpty() ? null : result.toArray(new Node[result.size()]);
+  }
+
   public Set<Usage> getSelectedUsages() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
@@ -807,6 +821,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return null;
   }
 
+  private static Navigatable[] getNavigatablesForNodes(DefaultMutableTreeNode[] node) {
+    if (node == null) {
+      return null;
+    }
+    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
+    for (int i = 0; i < node.length; i++) {
+      Object userObject = node[i].getUserObject();
+      if (userObject instanceof Navigatable) {
+        result.add((Navigatable)userObject);
+      }
+    }
+    return result.toArray(new Navigatable[result.size()]);
+  }
+
   public boolean areTargetsValid() {
     return ((UsageViewTreeModelBuilder)myTree.getModel()).areTargetsValid();
   }
@@ -863,8 +891,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         return UsageViewImpl.this;
       }
 
-      if (dataId.equals(DataConstants.NAVIGATABLE)) {
-        return getNavigatableForNode(node);
+      if (dataId.equals(DataConstants.NAVIGATABLE_ARRAY)) {
+        return getNavigatablesForNodes(getSelectedNodes());
       }
 
       if (dataId.equals(DataConstants.EXPORTER_TO_TEXT_FILE)) {

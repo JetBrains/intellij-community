@@ -24,6 +24,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,8 +42,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
 
   private Content myContent;
   private final Project myProject;
-  private final Hashtable<String,HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
-  private final Hashtable<Object,JTree> myTrees = new Hashtable<Object, JTree>();
+  private final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
+  private final Hashtable<Object, JTree> myTrees = new Hashtable<Object, JTree>();
 
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -112,7 +113,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     });
 
     final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
-    baseOnThisTypeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree);
+    baseOnThisTypeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(),
+                                                   tree);
 
     new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
@@ -132,18 +134,18 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
 
   private void restoreCursor() {
     /*int n =*/ myAlarm.cancelAllRequests();
-//    if (n == 0) {
+    //    if (n == 0) {
     setCursor(Cursor.getDefaultCursor());
-//    }
+    //    }
   }
 
   private void setWaitCursor() {
     myAlarm.addRequest(
       new Runnable() {
-        public void run() {
-          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        }
-      },
+      public void run() {
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      }
+    },
       100
     );
   }
@@ -169,7 +171,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
       // create builder
       final JTree tree = myTrees.get(typeName);
       final DefaultTreeModel model = /*(DefaultTreeModel)tree.getModel()*/ new DefaultTreeModel(
-        new DefaultMutableTreeNode(""));
+          new DefaultMutableTreeNode(""));
       tree.setModel(model);
 
       final HierarchyTreeStructure structure;
@@ -217,7 +219,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     actionGroup.add(new ToolbarHelpAction(HELP_ID));
 
     final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR,
-                                                                            actionGroup, true);
+                                                                                  actionGroup, true);
     return toolBar;
   }
 
@@ -234,12 +236,12 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
 
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       if (flag) {
-//        setWaitCursor();
+        //        setWaitCursor();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                changeView(getTypeName());
-              }
-            });
+          public void run() {
+            changeView(getTypeName());
+          }
+        });
       }
     }
 
@@ -309,14 +311,14 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
         name[0] = SubtypesHierarchyTreeStructure.TYPE;
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            changeView(name[0]);
-            if (storedInfo != null) {
-              final HierarchyTreeBuilder builder = myBuilders.get(myCurrentViewName);
-              builder.restoreExpandedAndSelectedInfo(storedInfo[0]);
-            }
+        public void run() {
+          changeView(name[0]);
+          if (storedInfo != null) {
+            final HierarchyTreeBuilder builder = myBuilders.get(myCurrentViewName);
+            builder.restoreExpandedAndSelectedInfo(storedInfo[0]);
           }
-        });
+        }
+      });
     }
 
     public final void update(final AnActionEvent event) {
@@ -386,8 +388,9 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
   public final Object getData(final String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       return getSelectedClass();
-    } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
-      return getSelectedClass();      
+    }
+    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return getNavigatables();
     }
     else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
@@ -402,6 +405,17 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
       return getSelectedClasses();
     }
     return null;
+  }
+
+  private Navigatable[] getNavigatables() {
+    final PsiClass[] objects = getSelectedClasses();
+    if (objects == null || objects.length == 0) return null;
+    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
+    for (int i = 0; i < objects.length; i++) {
+      result.add(objects[i]);
+    }
+    return result.toArray(new Navigatable[result.size()]);
+
   }
 
   public final void dispose() {
@@ -448,7 +462,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     public final void actionPerformed(final AnActionEvent event) {
       final DataContext dataContext = event.getDataContext();
       final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)dataContext.getData(
-        TYPE_HIERARCHY_BROWSER_DATA_CONSTANT);
+          TYPE_HIERARCHY_BROWSER_DATA_CONSTANT);
       if (browser == null) return;
 
       final PsiClass selectedClass = browser.getSelectedClass();
@@ -461,10 +475,10 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
         name[0] = SubtypesHierarchyTreeStructure.TYPE;
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            browser.changeView(name[0]);
-          }
-        });
+        public void run() {
+          browser.changeView(name[0]);
+        }
+      });
     }
 
     public final void update(final AnActionEvent event) {
@@ -502,8 +516,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
       final PsiClass aClass = getSelectedClass();
       if (aClass == null || aClass instanceof PsiAnonymousClass) return;
       final com.intellij.openapi.localVcs.LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-                                                                                                      "Deleting class " +
-                                                                                                      aClass.getQualifiedName());
+                                                                                                            "Deleting class " +
+                                                                                                            aClass.getQualifiedName());
       try {
         final PsiElement[] elements = new PsiElement[]{aClass};
         DeleteHandler.deletePsiElement(elements, myProject);

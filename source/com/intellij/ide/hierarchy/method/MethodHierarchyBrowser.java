@@ -21,6 +21,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -353,6 +354,17 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     return psiElements.toArray(new PsiMethod[psiElements.size()]);
   }
 
+  private Object[] getSelectedElements() {
+    MethodHierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
+    ArrayList<Object> elements = new ArrayList<Object>();
+    for (int i = 0; i < descriptors.length; i++) {
+      MethodHierarchyNodeDescriptor descriptor = descriptors[i];
+      PsiElement element = descriptor.getTargetElement();
+      elements.add(element);
+    }
+    return elements.toArray(new Object[elements.size()]);
+  }
+
   private DefaultMutableTreeNode getSelectedNode() {
     final JTree tree = getCurrentTree();
     if (tree == null) return null;
@@ -378,6 +390,15 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     }
     else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedMethods();
+    } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      final Object[] selectedElements = getSelectedElements();
+      if (selectedElements == null || selectedElements.length == 0) return null;
+      final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
+      for (int i = 0; i < selectedElements.length; i++) {
+        Object selectedElement = selectedElements[i];
+        if (selectedElement instanceof Navigatable) navigatables.add((Navigatable)selectedElement);
+      }
+      return navigatables.toArray(new Navigatable[navigatables.size()]);
     }
     return null;
   }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -78,9 +79,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)){
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)){
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
+      final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
       for (int i = 0; i < paths.length; i++) {
         TreePath path = paths[i];
         Object lastPathComponent = path.getLastPathComponent();
@@ -88,9 +90,14 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
           Object userObject = node.getUserObject();
           if (userObject instanceof AbstractTreeNode) {
-            return userObject;
+            navigatables.add((AbstractTreeNode)userObject);
           }
         }
+      }
+      if (navigatables.isEmpty()) {
+        return null;
+      } else {
+        return navigatables.toArray(new Navigatable[navigatables.size()]);
       }
     }
     return null;
