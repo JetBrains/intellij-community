@@ -1,7 +1,5 @@
 package com.intellij.moduleDependencies;
 
-import com.intellij.compiler.Chunk;
-import com.intellij.cyclicDependencies.CyclicDependenciesUtil;
 import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -96,37 +94,19 @@ public class ModulesDependenciesPanel extends JPanel{
     return toolbar.getComponent();
   }
 
-  private void buildRightTree(){
-    if (myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() != null){
-      final Object userObject = ((DefaultMutableTreeNode)myLeftTree.getSelectionPath().getLastPathComponent()).getUserObject();
-      if (userObject != null && userObject instanceof MyUserObject){
-        buildRightTree(((MyUserObject)userObject).getModule());
-      }
-    }
-  }
-
   private void buildRightTree(Module module){
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTreeModel.getRoot();
     root.removeAllChildren();
-    final List<Chunk<Module>> chunks = CyclicDependenciesUtil.buildChunks(myModulesGraph);
-    for (Iterator<Chunk<Module>> iterator = chunks.iterator(); iterator.hasNext();) {
-      Chunk<Module> chunk = iterator.next();
-      if (!chunk.containsNode(module)){
-        continue;
-      }
-      /*final CyclicDependenciesUtil.GraphTraverser<Module> graphTraverser =
-      new CyclicDependenciesUtil.GraphTraverser<Module>(module, chunk, myMaxShownCyclesInRightTree, myModulesGraph);*/
-      final Set<List<Module>> cycles = CyclicGraphUtil.getNodeCycles(myModulesGraph, module);//graphTraverser.convert(graphTraverser.traverse());
-      int index = 1;
-      for (Iterator<List<Module>> cyclesIterator = cycles.iterator(); cyclesIterator.hasNext();) {
-        List<Module> modules = cyclesIterator.next();
-        final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode("Cycle" + Integer.toString(index++).toUpperCase());
-        root.add(cycle);
-        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
-        for (Iterator<Module> inCycleIterator = modules.iterator(); inCycleIterator.hasNext();) {
-          Module module1 = inCycleIterator.next();
-          cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module1)));
-        }
+    final Set<List<Module>> cycles = CyclicGraphUtil.getNodeCycles(myModulesGraph, module);
+    int index = 1;
+    for (Iterator<List<Module>> cyclesIterator = cycles.iterator(); cyclesIterator.hasNext();) {
+      List<Module> modules = cyclesIterator.next();
+      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode("Cycle" + Integer.toString(index++).toUpperCase());
+      root.add(cycle);
+      cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
+      for (Iterator<Module> inCycleIterator = modules.iterator(); inCycleIterator.hasNext();) {
+        Module module1 = inCycleIterator.next();
+        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module1)));
       }
     }
     ((DefaultTreeModel)myRightTree.getModel()).reload();
@@ -305,17 +285,6 @@ public class ModulesDependenciesPanel extends JPanel{
 
   public void setContent(final Content content) {
     myContent = content;
-  }
-
-  private final class CloseAction extends AnAction {
-
-    public CloseAction() {
-      super("Close", "Close Modules Dependencies Viewer", IconLoader.getIcon("/actions/cancel.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
-    }
   }
 
   private static class MyUserObject{
