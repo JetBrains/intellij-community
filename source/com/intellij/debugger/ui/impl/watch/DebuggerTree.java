@@ -528,7 +528,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       try {
         StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         StackFrameProxyImpl frame = stackDescriptor.getStackFrame();
-        //if(!getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) return;
+        if(!getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) return;
 
         LOG.assertTrue(frame.threadProxy().isSuspended());
 
@@ -571,7 +571,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void threadAction() {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)getNode().getDescriptor());
       ThreadReferenceProxyImpl threadProxy = threadDescriptor.getThreadReference();
-      if (!threadProxy.isCollected() /*&& getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(threadProxy)*/) {
+      if (!threadProxy.isCollected() && getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(threadProxy)) {
         int status = threadProxy.status();
         if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
             !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&

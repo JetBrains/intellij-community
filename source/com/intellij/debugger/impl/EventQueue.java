@@ -40,6 +40,7 @@ public class EventQueue<E> {
   }
 
   public void close(){
+    System.out.println("EVENTS CLOSED!!!");
     if (LOG.isDebugEnabled()) {
       LOG.debug("events closed");
     }

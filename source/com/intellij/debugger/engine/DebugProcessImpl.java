@@ -106,7 +106,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private final DescriptorHistoryManager myDescriptorHistoryManager;
   private final NodeRendererManagerImpl myNodeRendererManager = new NodeRendererManagerImpl(this);
-  private final SuspendManager mySuspendManager = new SuspendManagerImpl(this);
+  private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   DebuggerManagerThreadImpl myDebuggerManagerThread;
   public static final String MSG_FAILD_TO_CONNECT = "Failed to establish connection to the target VM";
@@ -1243,9 +1243,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
       logThreads();
       getVirtualMachineProxy().suspend();
       logThreads();
-      SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
-
-      myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
+      SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
+      mySuspendManager.notifyPaused(suspendContext);
     }
   }
 

@@ -265,7 +265,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  private void notifyPaused(SuspendContextImpl suspendContext) {
+  public void notifyPaused(SuspendContextImpl suspendContext) {
     pushPausedContext(suspendContext);
     myDebugProcess.myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
   }
