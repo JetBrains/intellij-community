@@ -429,21 +429,10 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
     for (int idx = 0; idx < modules.length; idx++) {
       final ModuleImpl module = (ModuleImpl)modules[idx];
-      collectReadonlyFiles(module.getConfigurationFiles(), readonlyFiles);
+      module.collectReadonlyFiles(module.getConfigurationFiles(), readonlyFiles);
     }
 
     return ReadonlyStatusHandler.getInstance(this).ensureFilesWriteable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
-  }
-
-  private static void collectReadonlyFiles(final VirtualFile[] files, final List<VirtualFile> readonlyFiles) {
-    if (files != null) {
-      for (int idx = 0; idx < files.length; idx++) {
-        VirtualFile file = files[idx];
-        if (!file.isWritable()) {
-          readonlyFiles.add(file);
-        }
-      }
-    }
   }
 
   public Element saveToXml(Element targetRoot, VirtualFile configFile) {
