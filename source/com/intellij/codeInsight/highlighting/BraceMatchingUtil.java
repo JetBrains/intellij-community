@@ -243,12 +243,21 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-      if (ch == '}') return JavaTokenType.RBRACE;
-      if (ch == '{') return JavaTokenType.LBRACE;
-      if (ch == ']') return JavaTokenType.RBRACKET;
-      if (ch == '[') return JavaTokenType.LBRACKET;
-      if (ch == ')') return JavaTokenType.RPARENTH;
-      if (ch == '(') return JavaTokenType.LPARENTH;
+      final IElementType tokenType = iterator.getTokenType();
+
+      if(tokenType instanceof IJavaElementType) {
+        if (ch == '}') return JavaTokenType.RBRACE;
+        if (ch == '{') return JavaTokenType.LBRACE;
+        if (ch == ']') return JavaTokenType.RBRACKET;
+        if (ch == '[') return JavaTokenType.LBRACKET;
+        if (ch == ')') return JavaTokenType.RPARENTH;
+        if (ch == '(') return JavaTokenType.LPARENTH;
+      } else if(tokenType instanceof IJspElementType) {
+        if (ch == ']') return JspTokenType.JSP_EL_RBRACKET;
+        if (ch == '[') return JspTokenType.JSP_EL_LBRACKET;
+        if (ch == ')') return JspTokenType.JSP_EL_RPARENTH;
+        if (ch == '(') return JspTokenType.JSP_EL_LPARENTH;
+      }
 
       return null;  //TODO: add more here!
     }

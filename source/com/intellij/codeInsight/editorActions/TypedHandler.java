@@ -28,6 +28,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -70,7 +71,102 @@ public class TypedHandler implements TypedActionHandler {
     registerQuoteHandler(StdFileTypes.HTML, quoteHandler);
     registerQuoteHandler(StdFileTypes.XHTML, quoteHandler);
     registerQuoteHandler(StdFileTypes.JSP, new HtmlQuoteHandler(new JavaQuoteHandler()));
-    registerQuoteHandler(StdFileTypes.JSPX, new HtmlQuoteHandler(new JavaQuoteHandler()));
+    registerQuoteHandler(StdFileTypes.JSPX, new JspxQuoteHandler(new JavaQuoteHandler()));
+  }
+
+  public static class SimpleTokenSetQuoteHandler implements QuoteHandler {
+    private TokenSet myLiteralTokenSet;
+
+    public SimpleTokenSetQuoteHandler(TokenSet _literalTokenSet) {
+      myLiteralTokenSet = _literalTokenSet;
+    }
+
+    public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+      final IElementType tokenType = iterator.getTokenType();
+
+      if (myLiteralTokenSet.isInSet(tokenType)){
+        int start = iterator.getStart();
+        int end = iterator.getEnd();
+        return end - start >= 1 && offset == end - 1;
+      }
+
+      return false;
+    }
+
+    public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+      if (myLiteralTokenSet.isInSet(iterator.getTokenType())){
+        int start = iterator.getStart();
+        return offset == start;
+      }
+
+      return false;
+    }
+
+    public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+      try {
+        Document doc = editor.getDocument();
+        CharSequence chars = doc.getCharsSequence();
+        int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
+
+        while (!iterator.atEnd() && iterator.getStart() < lineEnd) {
+          IElementType tokenType = iterator.getTokenType();
+
+          if (myLiteralTokenSet.isInSet(tokenType)) {
+            if (iterator.getStart() >= iterator.getEnd() - 1 ||
+                chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') {
+              return true;
+            }
+          }
+          iterator.advance();
+        }
+      }
+      finally {
+        while(iterator.atEnd() || iterator.getStart() != offset) iterator.retreat();
+      }
+
+      return false;
+    }
+
+    public boolean isInsideLiteral(HighlighterIterator iterator) {
+      return myLiteralTokenSet.isInSet(iterator.getTokenType());
+    }
+  }
+
+  public static class JspxQuoteHandler extends HtmlQuoteHandler {
+    private SimpleTokenSetQuoteHandler myElHandler;
+
+    public JspxQuoteHandler(QuoteHandler _baseHandler) {
+      super(_baseHandler);
+
+      myElHandler = new SimpleTokenSetQuoteHandler(
+        TokenSet.create(new IElementType[] {JspTokenType.JSP_EL_STRING_LITERAL})
+      );
+    }
+
+    public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+      if (myElHandler.isClosingQuote(iterator, offset)){
+        return true;
+      }
+
+      return super.isClosingQuote(iterator, offset);
+    }
+
+    public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+      if (myElHandler.isOpeningQuote(iterator, offset)) return true;
+
+      return super.isOpeningQuote(iterator, offset);
+    }
+
+    public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+      if (myElHandler.isInsideLiteral(iterator)) return true;
+
+      return super.hasNonClosedLiteral(editor, iterator,offset);
+    }
+
+    public boolean isInsideLiteral(HighlighterIterator iterator) {
+      if (myElHandler.isInsideLiteral(iterator)) return true;
+      return super.isInsideLiteral(iterator);
+    }
   }
 
   public static class HtmlQuoteHandler implements QuoteHandler {
@@ -168,55 +264,9 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  static class JavaQuoteHandler implements QuoteHandler {
-    public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
-      final IElementType tokenType = iterator.getTokenType();
-
-      if (tokenType == JavaTokenType.STRING_LITERAL ||
-          tokenType == JavaTokenType.CHARACTER_LITERAL){
-        int start = iterator.getStart();
-        int end = iterator.getEnd();
-        return end - start >= 1 && offset == end - 1;
-      }
-      return false;
-    }
-
-    public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
-      final IElementType tokenType = iterator.getTokenType();
-
-      if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL){
-        int start = iterator.getStart();
-        return offset == start;
-      }
-      return false;
-    }
-
-    public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
-      try {
-        Document doc = editor.getDocument();
-        CharSequence chars = doc.getCharsSequence();
-        int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
-
-        while (!iterator.atEnd() && iterator.getStart() < lineEnd) {
-          IElementType tokenType = iterator.getTokenType();
-          if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
-            if (iterator.getStart() >= iterator.getEnd() - 1 ||
-                chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') {
-              return true;
-            }
-          }
-          iterator.advance();
-        }
-        return false;
-      }
-      finally {
-        while(iterator.atEnd() || iterator.getStart() != offset) iterator.retreat();
-      }
-    }
-
-    public boolean isInsideLiteral(HighlighterIterator iterator) {
-      IElementType tokenType = iterator.getTokenType();
-      return tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL;
+  static class JavaQuoteHandler extends SimpleTokenSetQuoteHandler {
+    public JavaQuoteHandler() {
+      super(TokenSet.create(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL}));
     }
   }
 
