@@ -1093,7 +1093,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                      "    <reference ref=\"VersionControlsGroup\"/>\n" +
                      "    <separator/>\n" +
                      "    <reference ref=\"ExternalToolsGroup\"/>\n" +
-                     "    </group>";
+                     "</group>";
     assertEquals(
       "Replace tag",
       expectedResult,
