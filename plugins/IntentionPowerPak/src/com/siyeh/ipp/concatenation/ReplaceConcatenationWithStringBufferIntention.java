@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -48,7 +49,16 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
             final String newExpression = expString.toString();
             replaceExpression(project, newExpression, methodCallExpression);
         } else{
-            expString.append("new StringBuffer()");
+            final PsiManager manager = exp.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                       languageLevel.equals(LanguageLevel.JDK_1_4))
+            {
+                expString.append("new StringBuffer()");
+            }else{
+                expString.append("new StringBuilder()");
+            }
             turnExpressionIntoChainedAppends(exp, expString);
             expString.append(".toString()");
             final String newExpression = expString.toString();
