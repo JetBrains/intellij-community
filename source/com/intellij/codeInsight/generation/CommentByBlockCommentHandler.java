@@ -15,10 +15,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -128,11 +125,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
     int caretOffset = myEditor.getCaretModel().getOffset();
-    Language lang = getLanguageAtOffset(caretOffset);
+    Language lang = getLanguageAtOffset(caretOffset, false);
     if (lang == null) return null;
     if (selectionModel.hasSelection()) {
-      Language l1 = getLanguageAtOffset(selectionModel.getSelectionStart());
-      Language l2 = getLanguageAtOffset(selectionModel.getSelectionEnd());
+      Language l1 = getLanguageAtOffset(selectionModel.getSelectionStart(), false);
+      Language l2 = getLanguageAtOffset(selectionModel.getSelectionEnd(), true);
       if (!Comparing.equal(lang, l1) || !Comparing.equal(lang, l2)) {
         // selection covers multiple languages use language of the file to comment
         lang = myFile.getLanguage();
@@ -148,8 +145,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
 
-  private Language getLanguageAtOffset(final int offset) {
+  private Language getLanguageAtOffset(final int offset, boolean backward) {
     PsiElement elt = myFile.findElementAt(offset);
+    if (backward && elt instanceof PsiWhiteSpace) {
+      elt = elt.getPrevSibling();
+    }
     if (elt == null) {
       if (offset > 0) elt = myFile.findElementAt(offset-1);
       if (elt == null) return null;
