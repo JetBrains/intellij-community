@@ -44,14 +44,12 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   }
 
   public FileStatus getFileStatus() {
-    if (getParentValue() instanceof PsiDirectory) {
-      VirtualFile file = getVirtualFileForValue();
-      if (file != null) {
-        return FileStatusManager.getInstance(getProject()).getStatus(file);
-      }
+    VirtualFile file = getVirtualFileForValue();
+    if (file != null) {
+      return FileStatusManager.getInstance(getProject()).getStatus(file);
+    } else {
+      return FileStatus.NOT_CHANGED;
     }
-    return FileStatus.NOT_CHANGED;
-
   }
 
   private VirtualFile getVirtualFileForValue() {

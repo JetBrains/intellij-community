@@ -30,8 +30,6 @@ import java.util.Iterator;
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected AbstractTreeStructure myStructure;
   protected boolean myShowMembers = false;
-  protected AbstractProjectViewPSIPane myPane;
-
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -41,9 +39,10 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return myShowMembers;
       }
     };
+  }
 
-
-    myPane = new AbstractProjectViewPSIPane(myProject) {
+  protected AbstractProjectViewPSIPane createPane() {
+    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject) {
       protected ProjectViewSelectInTarget createSelectInTarget() {
         return null;
       }
@@ -54,7 +53,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
       protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
         return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
-                                      (ProjectAbstractTreeStructureBase)myTreeStructure) {
+        (ProjectAbstractTreeStructureBase)myTreeStructure) {
           protected AbstractTreeUpdater createUpdater() {
             return createTreeUpdater(this);
           }
@@ -91,9 +90,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return null;
       }
     };
-
-    myPane.initTree();
-
+    pane.initTree();
+    return pane;
   }
 
   protected void assertStructureEqual(PsiDirectory packageDirectory, String expected) {
@@ -185,20 +183,16 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     }
   }
 
-  protected boolean isExpanded(DefaultMutableTreeNode nodeForElement) {
+  protected boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
     TreePath path = new TreePath(nodeForElement.getPath());
-    return getTree().isExpanded(path.getParentPath());
+    return pane.getTree().isExpanded(path.getParentPath());
   }
 
-  protected DefaultMutableTreeNode getNodeForElement(PsiElement element) {
-    JTree tree = getTree();
+  protected DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
+    JTree tree = pane.getTree();
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
     return getNodeForElement(root, model, element);
-  }
-
-  private JTree getTree() {
-    return myPane.getTree();
   }
 
   private DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
@@ -216,18 +210,18 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return null;
   }
 
-  protected void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile) {
-    myPane.dispose();
-    myPane.initTree();
-    assertNull(getNodeForElement(element));
-    myPane.select(element, virtualFile, true);
-    assertTrue(isExpanded(element));
+  protected void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
+    pane.dispose();
+    pane.initTree();
+    assertNull(getNodeForElement(element,pane));
+    pane.select(element, virtualFile, true);
+    assertTrue(isExpanded(element, pane));
   }
 
-  protected boolean isExpanded(PsiElement element) {
-    DefaultMutableTreeNode nodeForElement = getNodeForElement(element);
+  protected boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
+    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, createPane());
     if (nodeForElement == null) return false;
-    return isExpanded(nodeForElement);
+    return isExpanded(nodeForElement, pane);
   }
 
   protected void assertListsEqual(DefaultListModel model, String expected) {

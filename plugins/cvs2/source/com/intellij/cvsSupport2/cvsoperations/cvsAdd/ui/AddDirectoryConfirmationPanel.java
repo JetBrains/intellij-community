@@ -10,6 +10,7 @@ import java.awt.*;
 /**
  * author: lesya
  */
+
 public class AddDirectoryConfirmationPanel extends AbstractAddFileConfirmationPanel{
   private FileLabel myFileLabel;
   private JPanel myPanel;

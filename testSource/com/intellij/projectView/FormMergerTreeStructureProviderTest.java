@@ -3,6 +3,7 @@ package com.intellij.projectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.FormMergerTreeStructureProvider;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiJavaFile;
 public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase {
 
   public void testStandardProviders() {
+    final AbstractProjectViewPSIPane pane = createPane();
     getProjectTreeStructure().setProviders(new TreeStructureProvider[]{
       new ClassesTreeStructureProvider(myProject),
       new FormMergerTreeStructureProvider(myProject)
@@ -28,11 +30,11 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
                                                                       " PsiJavaFile:Class4.java\n");
 
     PsiClass psiClass = ((PsiJavaFile)getPackageDirectory().findFile("Form1.java")).getClasses()[0];
-    checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile());
+    checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
 
     PsiFile psiFile = getPackageDirectory().findFile("Form1.form");
     VirtualFile virtualFile = psiFile.getContainingFile().getVirtualFile();
-    checkNavigateFromSourceBehaviour(psiFile, virtualFile);    
+    checkNavigateFromSourceBehaviour(psiFile, virtualFile, pane);    
   }
 
 }
