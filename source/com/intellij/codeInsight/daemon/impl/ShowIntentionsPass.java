@@ -18,6 +18,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -149,7 +150,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
           int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
-          if (info == null || info.getSeverity() == HighlightInfo.ERROR) {
+          if (info == null || info.getSeverity() == HighlightSeverity.ERROR) {
             fixesToShow.addAll(availableActions);
           }
           else {

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -461,7 +462,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (file == null || !codeAnalyzer.isHighlightingAvailable(file)) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
-    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightInfo.ERROR, myProject);
+    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
     if (errors != null && errors.length != 0) return false;
 
     if (fileHasUnchangedStatus()) return false;

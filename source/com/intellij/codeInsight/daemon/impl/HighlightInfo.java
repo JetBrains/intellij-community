@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,12 +25,9 @@ import java.util.List;
 public class HighlightInfo {
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
+  private Boolean myNeedsUpdateOnTyping = null;
 
-  public static final Severity INFORMATION = new Severity("INFORMATION", 0);
-  public static final Severity WARNING = new Severity("WARNING", 100);
-  public static final Severity ERROR = new Severity("ERROR", 200);
-
-  public Severity getSeverity() {
+  public HighlightSeverity getSeverity() {
     return severity;
   }
 
@@ -48,11 +46,11 @@ public class HighlightInfo {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-    Severity severity = getSeverity();
-    if (severity == ERROR) {
+    HighlightSeverity severity = getSeverity();
+    if (severity == HighlightSeverity.ERROR) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
     }
-    if (severity == WARNING) {
+    if (severity == HighlightSeverity.WARNING) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
     return getAttributesByType(type).getErrorStripeColor();
@@ -103,6 +101,8 @@ public class HighlightInfo {
   }
 
   public boolean needUpdateOnTyping() {
+    if (myNeedsUpdateOnTyping != null) return myNeedsUpdateOnTyping.booleanValue();
+    
     if (type == HighlightInfoType.TODO) return false;
     if (type == HighlightInfoType.LOCAL_VAR) return false;
     if (type == HighlightInfoType.INSTANCE_FIELD) return false;
@@ -129,7 +129,7 @@ public class HighlightInfo {
 
   public String description;
   public String toolTip;
-  public Severity severity;
+  public HighlightSeverity severity;
 
   public boolean isAfterEndOfLine = false;
   public int navigationShift = 0;
@@ -140,7 +140,7 @@ public class HighlightInfo {
   public List<Pair<IntentionAction, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionAction, RangeMarker>> quickFixActionMarkers;
 
-  protected HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
+  public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
@@ -151,6 +151,26 @@ public class HighlightInfo {
     this.toolTip = toolTip;
     LOG.assertTrue(startOffset >= 0);
     LOG.assertTrue(startOffset <= endOffset);
+  }
+
+  public HighlightInfo(final TextAttributesKey textAttributes,
+                       final HighlightInfoType type,
+                       final int startOffset,
+                       final int endOffset,
+                       final String description,
+                       final String toolTip,
+                       final HighlightSeverity severity,
+                       final boolean afterEndOfLine,
+                       final boolean needsUpdateOnTyping) {
+    this.forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributes);
+    this.type = type;
+    this.startOffset = startOffset;
+    this.endOffset = endOffset;
+    this.description = description;
+    this.toolTip = toolTip;
+    this.severity = severity;
+    isAfterEndOfLine = afterEndOfLine;
+    myNeedsUpdateOnTyping = Boolean.valueOf(needsUpdateOnTyping);
   }
 
   public boolean equals(Object obj) {
@@ -181,25 +201,4 @@ public class HighlightInfo {
     return createHighlightInfo(type, SourceTreeToPsiMap.treeElementToPsi(childByRole), localizedMessage);
   }
 
-  public static class Severity {
-    private final String myName; // for debug only
-    private final int myVal;
-
-    public Severity(String name, int val) {
-      myName = name;
-      myVal = val;
-    }
-
-    public String toString() {
-      return myName;
-    }
-
-    public boolean isGreaterOrEqual(Severity severity) {
-      return myVal >= severity.myVal;
-    }
-
-    public boolean isLess(Severity severity) {
-      return myVal < severity.myVal;
-    }
-  }
 }

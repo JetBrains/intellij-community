@@ -11,6 +11,7 @@ import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -23,10 +24,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -148,7 +149,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     if (myCompiled) {
       for (Iterator<HighlightInfo> iterator = highlights.iterator(); iterator.hasNext();) {
         final HighlightInfo info = iterator.next();
-        if (info.getSeverity() == HighlightInfo.INFORMATION) {
+        if (info.getSeverity() == HighlightSeverity.INFORMATION) {
           result.add(info);
         }
       }
@@ -233,7 +234,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         if (gotHighlights.contains(info)) continue;
 
         gotHighlights.add(info);
-        if (info.getSeverity() == HighlightInfo.ERROR) {
+        if (info.getSeverity() == HighlightSeverity.ERROR) {
           skipParentsSet.add(element.getParent());
         }
       }

@@ -239,10 +239,27 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
 
-    public void build(char[] chars, int length, final TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+    public void build(char[] chars, int length, final TIntIntHashMap wordsTable, final TodoPattern[] todoPatterns, final int[] todoCounts) {
       myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurence>() {
         public boolean process(final WordOccurence t) {
-          IdCacheUtil.addOccurrence(wordsTable, t.getText().toString().hashCode(), convertToMask(t.getKind()));
+          IdCacheUtil.addOccurrence(wordsTable, StringUtil.stringHashCode(t.getText()), convertToMask(t.getKind()));
+
+          if (t.getKind() == WordOccurence.Kind.COMMENTS) {
+            if (todoCounts != null) {
+              for (int index = 0; index < todoPatterns.length; index++) {
+                Pattern pattern = todoPatterns[index].getPattern();
+                if (pattern != null) {
+                  CharSequence input = t.getText();
+                  Matcher matcher = pattern.matcher(input);
+                  while (matcher.find()) {
+                    if (matcher.start() != matcher.end()) {
+                      todoCounts[index]++;
+                    }
+                  }
+                }
+              }
+            }
+          }
           return true;
         }
 

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -381,7 +382,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
-  public static HighlightInfo[] getHighlights(Document document, HighlightInfo.Severity minSeverity, Project project) {
+  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return null;
@@ -457,14 +458,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (int i = 0; i < highlights.length; i++) {
       HighlightInfo highlight = highlights[i];
-      if (highlight.getSeverity() == HighlightInfo.ERROR) {
+      if (highlight.getSeverity() == HighlightSeverity.ERROR) {
         errors.add(highlight);
       }
     }
 
     for (int i = 0; i < highlights.length; i++) {
       HighlightInfo highlight = highlights[i];
-      if (highlight.getSeverity() == HighlightInfo.WARNING) {
+      if (highlight.getSeverity() == HighlightSeverity.WARNING) {
         for (int j = 0; j < errors.size(); j++) {
           HighlightInfo errorInfo = errors.get(j);
           if (isCoveredBy(highlight, errorInfo)) {

@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
@@ -33,9 +34,9 @@ class ExpectedHighlightingData {
     final boolean enabled;
     Set<HighlightInfo> infos;
     HighlightInfoType defaultErrorType;
-    HighlightInfo.Severity severity;
+    HighlightSeverity severity;
 
-    public ExpectedHighlightingSet(String marker, HighlightInfoType defaultErrorType,HighlightInfo.Severity severity, boolean endOfLine, boolean enabled) {
+    public ExpectedHighlightingSet(String marker, HighlightInfoType defaultErrorType,HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.marker = marker;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
@@ -48,10 +49,10 @@ class ExpectedHighlightingData {
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
     highlightingTypes = new com.intellij.util.containers.HashMap<String,ExpectedHighlightingSet>();
-    highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightInfo.ERROR, false, true));
-    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightInfo.WARNING, false, checkWarnings));
-    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightInfo.INFORMATION, false, checkInfos));
-    highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightInfo.ERROR, true, true));
+    highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
+    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
+    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
+    highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
     extractExpectedHighlightsSet(document);
   }
 

@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -189,7 +190,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(level, psiElement, message, message);
       infos.add(highlightInfo);
-      highlightInfo.severity = isError ? HighlightInfo.ERROR : HighlightInfo.WARNING;
+      highlightInfo.severity = isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
       }

@@ -423,6 +423,15 @@ public class StringUtil {
     return result;
   }
 
+  public static int stringHashCode(CharSequence chars) {
+    int h = 0;
+    int to = chars.length();
+    for( int off = 0; off < to; ) {
+      h = 31*h + chars.charAt(off++);
+    }
+    return h;
+  }
+
   public static int stringHashCode( char chars[], int from, int len ) {
     int h = 0;
     int to = from + len;

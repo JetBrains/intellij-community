@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -76,11 +77,11 @@ public class UpdateHighlightersUtil {
       HighlightInfo info = highlights[i];
       int layer;
       if (info.startOffset < startOffset || info.endOffset > endOffset) continue;
-      HighlightInfo.Severity severity = info.getSeverity();
-      if (severity == HighlightInfo.INFORMATION) {
+      HighlightSeverity severity = info.getSeverity();
+      if (severity == HighlightSeverity.INFORMATION) {
         layer = HighlighterLayer.ADDITIONAL_SYNTAX;
       }
-      else if (severity == HighlightInfo.WARNING) {
+      else if (severity == HighlightSeverity.WARNING) {
         layer = HighlighterLayer.WARNING;
       }
       else {

@@ -4,18 +4,22 @@ import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.RefCountHolder;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.ejb.EjbHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -68,6 +72,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<String, PsiClass> mySingleImportedClasses = new THashMap<String, PsiClass>();
   private final Map<String, PsiElement> mySingleImportedFields = new THashMap<String, PsiElement>();
   private final Map<MethodSignature, PsiElement> mySingleImportedMethods = new THashMap<MethodSignature, PsiElement>();
+  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   public String getComponentName() {
     return "HighlightVisitorImpl";
@@ -142,6 +147,45 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
+  }
+
+  public void visitElement(PsiElement element) {
+    final Language lang = element.getLanguage();
+    if (lang != null) {
+      final Annotator annotator = lang.getAnnotator();
+      if (annotator != null) {
+        annotator.annotate(element, myAnnotationHolder);
+        if (myAnnotationHolder.hasAnnotations()) {
+          final Annotation[] annotations = myAnnotationHolder.getResult();
+          for (int i = 0; i < annotations.length; i++) {
+            Annotation annotation = annotations[i];
+            myHolder.add(convertToHighlightInfo(annotation));
+          }
+        }
+        myAnnotationHolder.clear();
+      }
+    }
+  }
+
+  private HighlightInfo convertToHighlightInfo(final Annotation annotation) {
+    final HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
+                                                 annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
+    final List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
+    if (fixes != null) {
+      for (int i = 0; i < fixes.size(); i++) {
+        Pair<IntentionAction, TextRange> pair = fixes.get(i);
+        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst());
+      }
+    }
+    return info;
+  }
+
+  private HighlightInfoType convertType(Annotation annotation) {
+    final ProblemHighlightType type = annotation.getHighlightType();
+    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
+    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
+    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {

@@ -9,6 +9,9 @@ import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -44,7 +47,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.lang.ASTNode;
 import gnu.trove.TIntArrayList;
 
 import java.util.*;
@@ -1116,18 +1118,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
         final Lexer lexer = ((PsiFileImpl)file).createLexer();
-        TokenSet COMMENT_TOKEN_BIT_SET;
+        TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile || file instanceof JspFile) {
-          COMMENT_TOKEN_BIT_SET = ElementType.COMMENT_BIT_SET;
+          commentTokens = ElementType.COMMENT_BIT_SET;
         }
         else if (file instanceof XmlFile) {
-          COMMENT_TOKEN_BIT_SET = XML_COMMENT_BIT_SET;
+          commentTokens = XML_COMMENT_BIT_SET;
         }
         else {
-          // TODO: ask the lexer about comment types!
-          //LOG.assertTrue(false);
-          return EMPTY_TODO_ITEMS;
+          final Language lang = file.getLanguage();
+          if (lang != null) {
+            final ParserDefinition parserDefinition = lang.getParserDefinition();
+            if (parserDefinition != null) {
+              commentTokens = parserDefinition.getCommentTokens();
+            }
+          }
         }
+
+        if (commentTokens == null) return EMPTY_TODO_ITEMS;
+
         for (lexer.start(chars); ; lexer.advance()) {
           IElementType tokenType = lexer.getTokenType();
           if (tokenType == null) break;
@@ -1137,7 +1146,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             if (lexer.getTokenStart() >= range.getEndOffset()) break;
           }
 
-          if (COMMENT_TOKEN_BIT_SET.isInSet(tokenType)) {
+          if (commentTokens.isInSet(tokenType)) {
             commentStarts.add(lexer.getTokenStart());
             commentEnds.add(lexer.getTokenEnd());
           }

@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 
@@ -37,9 +38,9 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
     if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
-      HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightInfo.WARNING, myProject);
+      HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.WARNING, myProject);
       status.warningErrorCount = infos == null ? 0 : infos.length;
-      infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightInfo.ERROR, myProject);
+      infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
       status.errorCount = infos == null ? 0 : infos.length;
 
       status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);

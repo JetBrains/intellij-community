@@ -5,9 +5,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,14 +31,14 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
   public boolean add(HighlightInfo info) {
     if (info == null || !accepted(info)) return false;
 
-    final HighlightInfo.Severity severity = info.getSeverity();
-    if (severity == HighlightInfo.ERROR) {
+    final HighlightSeverity severity = info.getSeverity();
+    if (severity == HighlightSeverity.ERROR) {
       myErrorCount++;
     }
-    else if (severity == HighlightInfo.WARNING) {
+    else if (severity == HighlightSeverity.WARNING) {
       myWarningCount++;
     }
-    else if (severity == HighlightInfo.INFORMATION) {
+    else if (severity == HighlightSeverity.INFORMATION) {
       myInfoCount++;
     }
 
