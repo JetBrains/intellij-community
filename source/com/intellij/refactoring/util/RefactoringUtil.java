@@ -706,9 +706,7 @@ public class RefactoringUtil {
     else if (parent instanceof PsiAnonymousClass) {
       return element.equals(((PsiAnonymousClass)parent).getBaseClassReference());
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
@@ -720,10 +718,8 @@ public class RefactoringUtil {
     else if (parent instanceof PsiAnonymousClass) {
       return ((PsiNewExpression)parent.getParent()).getArgumentList();
     }
-    else {
-      LOG.assertTrue(false);
-      return null;
-    }
+    LOG.assertTrue(false);
+    return null;
   }
 
   public static PsiCallExpression getCallExpressionByMethodReference(PsiJavaCodeReferenceElement ref) {
