@@ -191,6 +191,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkArrayInitializerApplicable(expression));
+    if (!(expression.getParent() instanceof PsiNewExpression)) {
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
+    }
   }
 
   public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
