@@ -2,14 +2,14 @@ package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.internal.diGraph.analyzer.GlobalAnalyzer;
 import com.intellij.internal.diGraph.analyzer.Mark;
-import com.intellij.internal.diGraph.analyzer.OneEndFunctor;
 import com.intellij.internal.diGraph.analyzer.MarkedNode;
+import com.intellij.internal.diGraph.analyzer.OneEndFunctor;
 import com.intellij.internal.diGraph.impl.EdgeImpl;
 import com.intellij.internal.diGraph.impl.NodeImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -18,16 +18,17 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.rename.AutomaticRenamingDialog;
+import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.Queue;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * @author dsl
@@ -40,10 +41,76 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected PsiSearchHelper mySearchHelper;
   protected HashSet<PsiElement> myMarkedNodes = new HashSet<PsiElement>();
   private Queue<PsiExpression> myExpressionsQueue;
-  protected HashMap<PsiElement,Node> myElementToNode = new HashMap<PsiElement, Node>();
+  protected HashMap<PsiElement, Node> myElementToNode = new HashMap<PsiElement, Node>();
+  private Map<PsiVariable, String> myVariablesRenames = new HashMap<PsiVariable, String>();
+  private final String mySuperClassName;
+  private List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
 
-  public TurnRefsToSuperProcessorBase(Project project, boolean replaceInstanceOf) {
+  protected boolean preprocessUsages(UsageInfo[][] usagesRef) {
+    UsageInfo[] usages = usagesRef[0];
+    List<UsageInfo> filtered = new ArrayList<UsageInfo>();
+    for (int i = 0; i < usages.length; i++) {
+      UsageInfo usage = usages[i];
+      if (usage instanceof TurnToSuperReferenceUsageInfo) {
+        filtered.add(usage);
+      }
+    }
+
+    myVariableRenamer = new AutomaticVariableRenamer(myClass, mySuperClassName, filtered);
+    if (myVariableRenamer.hasAnythingToRename()) {
+      final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, myVariableRenamer);
+      dialog.show();
+      if (!dialog.isOK()) return false;
+
+      final List<? extends PsiVariable> variables = myVariableRenamer.getElements();
+      for (Iterator<? extends PsiVariable> iterator1 = variables.iterator(); iterator1.hasNext();) {
+        final PsiVariable variable = iterator1.next();
+        myVariablesRenames.put(variable, myVariableRenamer.getNewName(variable));
+      }
+
+      Runnable runnable = new Runnable() {
+        public void run() {
+          myVariableRenamer.findUsages(myVariablesUsages, false, false);
+        }
+      };
+
+      if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(
+        runnable, "Searching for variables", true, myProject)) {
+        return false;
+      }
+    }
+
+    prepareSuccessful();
+    return true;
+  }
+
+  private AutomaticVariableRenamer myVariableRenamer;
+
+  protected void performVariablesRenaming() {
+    try {
+      for (Iterator<UsageInfo> iterator = myVariablesUsages.iterator(); iterator.hasNext();) {
+        UsageInfo usage = iterator.next();
+        if (usage instanceof MoveRenameUsageInfo) {
+          final MoveRenameUsageInfo renameUsageInfo = ((MoveRenameUsageInfo)usage);
+          final String newName = myVariablesRenames.get(renameUsageInfo.referencedElement);
+          renameUsageInfo.reference.handleElementRename(newName);
+        }
+      }
+
+      final Iterator<Map.Entry<PsiVariable, String>> iterator = myVariablesRenames.entrySet().iterator();
+      while (iterator.hasNext()) {
+        Map.Entry<PsiVariable, String> entry = iterator.next();
+        entry.getKey().setName(entry.getValue());
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  public TurnRefsToSuperProcessorBase(Project project, boolean replaceInstanceOf, String superClassName) {
     super(project);
+    mySuperClassName = superClassName;
     myManager = PsiManager.getInstance(project);
     mySearchHelper = myManager.getSearchHelper();
     myManager = PsiManager.getInstance(myProject);
@@ -70,14 +137,14 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     HashSet<PsiFile> fileSet = new HashSet<PsiFile>();
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
-      if (usage.getElement() == null || !usage.getElement().isValid()) continue;
-      if (!(usage instanceof TurnToSuperReferenceUsageInfo)) continue;
-      fileSet.add(usage.getElement().getContainingFile());
-      PsiElement newElement = usage.getElement().getReference().bindToElement(aSuper);
+      if (usage instanceof TurnToSuperReferenceUsageInfo && usage.getElement() != null) {
+        fileSet.add(usage.getElement().getContainingFile());
+        PsiElement newElement = usage.getElement().getReference().bindToElement(aSuper);
 
-      if (newElement.getParent() instanceof PsiTypeElement) {
-        if (newElement.getParent().getParent() instanceof PsiTypeCastExpression) {
-          fixPossiblyRedundantCast((PsiTypeCastExpression)newElement.getParent().getParent());
+        if (newElement.getParent() instanceof PsiTypeElement) {
+          if (newElement.getParent().getParent() instanceof PsiTypeCastExpression) {
+            fixPossiblyRedundantCast((PsiTypeCastExpression)newElement.getParent().getParent());
+          }
         }
       }
     }
@@ -292,16 +359,18 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
               addLink(type, superType);
             }
           }
-        };
+        }
+      ;
 
         final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
         new Inner().linkInheritors(superMethods);
-        final PsiClass[] subClasses = mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
+        final PsiClass[] subClasses =
+          mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
         // ??? In the theory this is non-efficient way: too many inheritors can be processed.
         // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
         // ??? should be optimized
-        for (int i1 = 0; i1 != subClasses.length; ++ i1) {
-          final PsiMethod[] mBSs = subClasses [i1].findMethodsBySignature(method, true);
+        for (int i1 = 0; i1 != subClasses.length; ++i1) {
+          final PsiMethod[] mBSs = subClasses[i1].findMethodsBySignature(method, true);
           new Inner().linkInheritors(mBSs);
         }
       }
@@ -340,15 +409,17 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
           addLink(returnType, superType);
         }
       }
-    };
+    }
+  ;
     new Inner().linkInheritors(superMethods);
     // ??? In the theory this is non-efficient way: too many inheritors can be processed (and multiple times).
     // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
     // ??? should be optimized
-    final PsiClass[] subClasses = mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
-    for (int i1 = 0; i1 != subClasses.length; ++ i1) {
-      final PsiMethod[] mBSs = subClasses [i1].findMethodsBySignature(method, true);
-      new Inner ().linkInheritors(mBSs);
+    final PsiClass[] subClasses =
+      mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
+    for (int i1 = 0; i1 != subClasses.length; ++i1) {
+      final PsiMethod[] mBSs = subClasses[i1].findMethodsBySignature(method, true);
+      new Inner().linkInheritors(mBSs);
     }
   }
 

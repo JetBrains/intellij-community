@@ -42,10 +42,6 @@ public class AutomaticVariableRenamer extends AutomaticRenamer<PsiVariable> {
     return "Variable";
   }
 
-  public void findUsages(List<UsageInfo> result, boolean searchInStringsAndComments, boolean searchInNonJavaFiles) {
-    super.findUsages(result, searchInStringsAndComments, searchInNonJavaFiles);
-  }
-
   public String nameToCanonicalName(String name, PsiVariable psiVariable) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiVariable.getManager());
     return codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind(psiVariable));

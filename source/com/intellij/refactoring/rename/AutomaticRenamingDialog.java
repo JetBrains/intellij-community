@@ -55,7 +55,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
        oldNames.add(oldName);
       }
     }
-    myOldNames = (String[])oldNames.toArray(new String[oldNames.size()]);
+    myOldNames = oldNames.toArray(new String[oldNames.size()]);
     myShouldRename = new boolean[myOldNames.length];
     myNewNames = new String[myOldNames.length];
     Arrays.sort(myOldNames);

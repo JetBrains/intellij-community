@@ -25,7 +25,6 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor");
   protected PsiDirectory myTargetDirectory;
   protected final String myNewClassName;
-  protected PsiClass myClass;
   protected MemberInfo[] myMemberInfos;
   protected final JavaDocPolicy myJavaDocPolicy;
 
@@ -35,7 +34,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
                                    PsiDirectory targetDirectory,
                                    String newClassName,
                                    PsiClass aClass, MemberInfo[] memberInfos, JavaDocPolicy javaDocPolicy) {
-    super(project, replaceInstanceOf);
+    super(project, replaceInstanceOf, newClassName);
     myTargetDirectory = targetDirectory;
     myNewClassName = newClassName;
     myClass = aClass;
@@ -99,7 +98,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
         result.add(new BindToOldUsageInfo(element, ref, myClass));
       }
     }
-    UsageInfo[] usageInfos = (UsageInfo[]) result.toArray(new UsageInfo[result.size()]);
+    UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -125,6 +124,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+
+    performVariablesRenaming();
   }
 
   protected abstract PsiClass extractSuper(String superClassName) throws IncorrectOperationException;

@@ -53,7 +53,7 @@ public abstract class AutomaticRenamer <T extends PsiNamedElement> {
     return true;
   }
 
-  public List<? extends PsiNamedElement> getElements() {
+  public List<? extends T> getElements() {
     return Collections.unmodifiableList(myElements);
   }
 

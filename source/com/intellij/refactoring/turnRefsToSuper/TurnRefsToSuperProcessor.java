@@ -23,7 +23,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
                                 PsiClass aClass,
                                 PsiClass aSuper,
                                 boolean replaceInstanceOf) {
-    super(project, replaceInstanceOf);
+    super(project, replaceInstanceOf, aSuper.getName());
     myClass = aClass;
     mySuper = aSuper;
   }
@@ -51,10 +51,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   protected void refreshElements(final PsiElement[] elements) {
-    final boolean condition = elements.length == 2 && elements[0] instanceof PsiClass && elements[1] instanceof PsiClass;
-    LOG.assertTrue(condition);
-    myClass = (PsiClass) elements[0];
-    mySuper = (PsiClass) elements[1];
+    LOG.assertTrue(elements.length == 2 && elements[0] instanceof PsiClass && elements[1] instanceof PsiClass);
+    setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {
@@ -65,8 +63,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
       return false;
     }
 
-    prepareSuccessful();
-    return true;
+    return super.preprocessUsages(usages);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -77,6 +74,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+
+    performVariablesRenaming();
   }
 
   protected boolean isInSuper(PsiElement member) {
