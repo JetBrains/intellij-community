@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -14,20 +15,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.PackageEnt
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
-import gnu.trove.THashSet;
-import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -604,65 +600,68 @@ public class ImportHelper{
     if (file instanceof PsiJavaFile){
       packageName = ((PsiJavaFile)file).getPackageName();
     }
-    addNamesToImport(names, SourceTreeToPsiMap.psiElementToTree(file), packageName, namesToImportStaticly);
+
+    final PsiFile[] roots = file.getPsiRoots();
+    for (int i = 0; i < roots.length; i++) {
+      PsiFile root = roots[i];
+      addNamesToImport(names, root, packageName, namesToImportStaticly);
+    }
     addUnresolvedImportNames(names, file, namesToImportStaticly);
 
     return names.toArray(new String[names.size()]);
   }
 
   private void addNamesToImport(Set<String> names,
-                                   ASTNode scope,
+                                   PsiElement scope,
                                    String thisPackageName,
                                    Set<String> namesToImportStaticly){
-    if (scope.getElementType() == ElementType.IMPORT_LIST) return;
+    if (scope instanceof PsiImportList) return;
 
-    ChameleonTransforming.transformChildren(scope);
-    for(ASTNode child = scope.getFirstChildNode(); child != null; child = child.getTreeNext()){
-      if (child instanceof CompositeElement) {
-        addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
+    final PsiElement[] children = scope.getChildren();
+    for (int i = 0; i < children.length; i++) {
+      PsiElement child = children[i];
+      addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
 
-        if (child.getElementType() == ElementType.JAVA_CODE_REFERENCE || child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
-          final CompositeElement compositeChild = (CompositeElement)child;
-          if (compositeChild.findChildByRole(ChildRole.QUALIFIER) == null) {
+      if (child instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)child;
+        if (referenceElement.getQualifier() != null) {
+          continue;
+        }
+        if (child instanceof PsiJavaCodeReferenceElementImpl
+          && ((PsiJavaCodeReferenceElementImpl)child).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+        continue;
+        }
 
-            if (child.getElementType() == ElementType.JAVA_CODE_REFERENCE
-                && ((PsiJavaCodeReferenceElementImpl)child).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
-              continue;
+        ResolveResult resolveResult = referenceElement.advancedResolve(true);
+        PsiElement refElement = resolveResult.getElement();
+        if (refElement == null) {
+          refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
+        }
+
+        if (refElement != null) {
+          if (refElement instanceof PsiClass) {
+            PsiClass refClass = (PsiClass)refElement;
+            PsiElement parent = refClass.getParent();
+            if (parent instanceof PsiClass) {
+              if (isInnerVisibleByShortName(refClass, referenceElement)) continue;
             }
+            else if (!(parent instanceof PsiFile)) continue;
 
-            PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child);
-            ResolveResult resolveResult = psiReference.advancedResolve(true);
-            PsiElement refElement = resolveResult.getElement();
-            if (refElement == null) {
-              refElement = ResolveClassUtil.resolveClass(psiReference); // might be uncomplete code
-            }
-
-            if (refElement != null) {
-              if (refElement instanceof PsiClass) {
-                PsiClass refClass = (PsiClass)refElement;
-                PsiElement parent = refClass.getParent();
-                if (parent instanceof PsiClass) {
-                  if (isInnerVisibleByShortName(refClass, psiReference)) continue;
-                }
-                else if (!(parent instanceof PsiFile)) continue;
-
-                String qName = refClass.getQualifiedName();
-                if (hasPackage(qName, thisPackageName)) continue;
-                names.add(qName);
+            String qName = refClass.getQualifiedName();
+            if (hasPackage(qName, thisPackageName)) continue;
+            names.add(qName);
+          }
+          else {
+            PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
+            if (currentFileResolveScope instanceof PsiImportStaticStatement) {
+              PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
+              String name = importStaticStatement.getImportReference().getCanonicalText();
+              if (importStaticStatement.isOnDemand()) {
+                String refName = referenceElement.getReferenceName();
+                if (refName != null) name = name + "." + refName;
               }
-              else {
-                PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
-                if (currentFileResolveScope instanceof PsiImportStaticStatement) {
-                  PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
-                  String name = importStaticStatement.getImportReference().getCanonicalText();
-                  if (importStaticStatement.isOnDemand()) {
-                    String refName = psiReference.getReferenceName();
-                    if (refName != null) name = name + "." + refName;
-                  }
-                  names.add(name);
-                  namesToImportStaticly.add(name);
-                }
-              }
+              names.add(name);
+              namesToImportStaticly.add(name);
             }
           }
         }
