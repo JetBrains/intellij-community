@@ -90,10 +90,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     if (key == null) {
       key = find(externalName);
     }
-    else {
-      LOG.assertTrue(key.getDefaultAttributes() == null, "default attributes already assigned");
+    if (key.getDefaultAttributes() == null) {
+      key.myDefaultAttributes = defaultAttributes;
     }
-    key.myDefaultAttributes = defaultAttributes;
     return key;
   }
 
