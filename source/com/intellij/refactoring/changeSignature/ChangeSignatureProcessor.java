@@ -172,7 +172,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             if (!method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
           }
         }
-        result.add(new MethodCallUsageInfo(ref, isToModifyArgs, isToCatchExceptions));
+        if (RefactoringUtil.isMethodUsage(ref)) {
+          result.add(new MethodCallUsageInfo(ref, isToModifyArgs, isToCatchExceptions));
+        } else {
+          result.add(new UsageInfo(ref));
+        }
       }
 
       if (method.isConstructor() && parameterCount == 0) {
