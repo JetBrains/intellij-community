@@ -100,7 +100,7 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   private static boolean isValid(UsageInfo info, UsageView usageView) {
-    return !usageView.isExcluded(info) && info.getElement().isValid();
+    return !usageView.isExcluded(info) && info.getElement()!=null && info.getElement().isValid();
   }
   protected void createUsageView(final SearchContext searchContext, Configuration config) {
     super.createUsageView(searchContext, config);
