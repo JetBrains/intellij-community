@@ -67,7 +67,7 @@
 
     </filetype>
 
-    <filetype binary="false" default_extension="js" extensions="js" description="JavaScript files" name="JavaScript" icon="/fileTypes/javaScript.png">
+    <filetype binary="false" default_extension="cs" extensions="cs" description="C# files" name="C#" icon="/fileTypes/javaScript.png">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//"/>
@@ -81,64 +81,82 @@
         </options>
         <keywords ignore_case="false">
           <keyword name="abstract"/>
-          <keyword name="boolean"/>
+          <keyword name="as"/>
+          <keyword name="base"/>
+          <keyword name="bool"/>
           <keyword name="break"/>
           <keyword name="byte"/>
           <keyword name="case"/>
           <keyword name="catch"/>
           <keyword name="char"/>
+          <keyword name="checked"/>
           <keyword name="class"/>
           <keyword name="const"/>
           <keyword name="continue"/>
-          <keyword name="debugger"/>
+          <keyword name="decimal"/>
           <keyword name="default"/>
-          <keyword name="delete"/>
+          <keyword name="delegate"/>
           <keyword name="do"/>
           <keyword name="double"/>
           <keyword name="else"/>
           <keyword name="enum"/>
-          <keyword name="export"/>
-          <keyword name="extends"/>
+          <keyword name="event"/>
+          <keyword name="explicit"/>
+          <keyword name="extern"/>
           <keyword name="false"/>
-          <keyword name="final"/>
           <keyword name="finally"/>
+          <keyword name="fixed"/>
           <keyword name="float"/>
           <keyword name="for"/>
-          <keyword name="function"/>
+          <keyword name="foreach"/>
           <keyword name="goto"/>
           <keyword name="if"/>
-          <keyword name="implements"/>
-          <keyword name="import"/>
+          <keyword name="implicit"/>
           <keyword name="in"/>
-          <keyword name="instanceof"/>
           <keyword name="int"/>
           <keyword name="interface"/>
+          <keyword name="internal"/>
+          <keyword name="is"/>
+          <keyword name="lock"/>
           <keyword name="long"/>
-          <keyword name="native"/>
+          <keyword name="namespace"/>
           <keyword name="new"/>
           <keyword name="null"/>
-          <keyword name="package"/>
+          <keyword name="object"/>
+          <keyword name="operator"/>
+          <keyword name="out"/>
+          <keyword name="override"/>
+          <keyword name="params"/>
           <keyword name="private"/>
           <keyword name="protected"/>
           <keyword name="public"/>
+          <keyword name="readonly"/>
+          <keyword name="ref"/>
           <keyword name="return"/>
+          <keyword name="sbyte"/>
+          <keyword name="sealed"/>
           <keyword name="short"/>
+          <keyword name="sizeof"/>
+          <keyword name="stackalloc"/>
           <keyword name="static"/>
-          <keyword name="super"/>
+          <keyword name="string"/>
+          <keyword name="struct"/>
           <keyword name="switch"/>
-          <keyword name="synchronized"/>
           <keyword name="this"/>
           <keyword name="throw"/>
-          <keyword name="throws"/>
-          <keyword name="transient"/>
           <keyword name="true"/>
           <keyword name="try"/>
           <keyword name="typeof"/>
-          <keyword name="var"/>
+          <keyword name="uint"/>
+          <keyword name="ulong"/>
+          <keyword name="unchecked"/>
+          <keyword name="unsafe"/>
+          <keyword name="ushort"/>
+          <keyword name="using"/>
+          <keyword name="virtual"/>
           <keyword name="void"/>
           <keyword name="volatile"/>
           <keyword name="while"/>
-          <keyword name="with"/>
         </keywords>
         <keywords2/>
         <keywords3/>
