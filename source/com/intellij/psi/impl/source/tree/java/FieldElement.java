@@ -68,13 +68,11 @@ public class FieldElement extends RepositoryTreeElement{
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {
-      {
-        if (TreeUtil.skipElementsBack(child, ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET) == null) {
-          return ChildRole.PRECEDING_COMMENT;
-        }
-        else {
-          return ChildRole.NONE;
-        }
+      if (TreeUtil.skipElementsBack(child, ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET) == null) {
+        return ChildRole.PRECEDING_COMMENT;
+      }
+      else {
+        return ChildRole.NONE;
       }
     }
     else if (i == JavaElementType.MODIFIER_LIST) {

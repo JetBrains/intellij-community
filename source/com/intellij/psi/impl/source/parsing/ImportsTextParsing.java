@@ -123,7 +123,7 @@ public class ImportsTextParsing extends Parsing {
       }
       else {
         final CompositeElement errorElement = Factory.createErrorElement("Unexpected token");
-        TreeUtil.replace(referenceParameterList, errorElement);
+        TreeUtil.replaceWithList(referenceParameterList, errorElement);
         TreeUtil.addChildren(errorElement, referenceParameterList);
       }
     }

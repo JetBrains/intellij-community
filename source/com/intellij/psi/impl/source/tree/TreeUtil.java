@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -11,6 +12,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TreeUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.TreeUtil");
+
   public static ASTNode findChild(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -136,13 +139,15 @@ public class TreeUtil {
     }
   }
 
-  public static void insertBefore(TreeElement anchor, TreeElement firstNew) {
+  public static void insertBefore(final TreeElement anchor, TreeElement firstNew) {
     final TreeElement anchorPrev = anchor.getTreePrev();
     if(anchorPrev == null){
+      removeRange(firstNew, null);
       final CompositeElement parent = anchor.getTreeParent();
       if(parent != null) parent.firstChild = firstNew;
       while(true){
         final TreeElement treeNext = firstNew.getTreeNext();
+        LOG.assertTrue(treeNext != anchor, "Attempt to create cycle");
         if(firstNew instanceof CompositeElement){
           firstNew.setTreeParent(parent);
         }
@@ -159,13 +164,15 @@ public class TreeUtil {
     }
   }
 
-  public static void insertAfter(TreeElement anchor, TreeElement firstNew) {
+  public static void insertAfter(final TreeElement anchor, TreeElement firstNew) {
+    removeRange(firstNew, null);
     final CompositeElement parent = anchor.getTreeParent();
     final TreeElement treeNext = anchor.getTreeNext();
     firstNew.setTreePrev(anchor);
     anchor.setTreeNext(firstNew);
     while(true){
       final TreeElement next = firstNew.getTreeNext();
+      LOG.assertTrue(next != anchor, "Attempt to create cycle");
       if(firstNew instanceof CompositeElement){
         firstNew.setTreeParent(parent);
       }
@@ -217,11 +224,10 @@ public class TreeUtil {
         DebugUtil.checkTreeStructure(element.getTreeNext());
       }
     }
-    element.setTreePrev(null);
-    element.setTreeParent(null);
-    element.setTreeNext(null);
+    SharedImplUtil.invalidate(element);
   }
 
+  // remove nodes from start[including] to end[excluding] from the parent
   public static void removeRange(TreeElement start, TreeElement end) {
     if (start == null) return;
     if(start == end) return;
@@ -248,7 +254,7 @@ public class TreeUtil {
       endPrev.setTreeNext(null);
     }
     if (parent != null){
-      for(TreeElement element = start; element != null; element = element.getTreeNext()){
+      for(TreeElement element = start; element != end; element = element.getTreeNext()){
         if(element instanceof CompositeElement)
           element.setTreeParent(null);
       }
@@ -262,7 +268,7 @@ public class TreeUtil {
     }
   }
 
-  public static void replace(TreeElement old, TreeElement firstNew) {
+  public static void replaceWithList(TreeElement old, TreeElement firstNew) {
     if (firstNew != null){
       insertAfter(old, firstNew);
     }

@@ -78,7 +78,7 @@ public class SourceUtil implements Constants {
     }
 
     newChild.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(newChild));
-    TreeUtil.replace(dummyExpr, newChild);
+    TreeUtil.replaceWithList(dummyExpr, newChild);
 
     newChild = parenthExpr;
     return newChild;

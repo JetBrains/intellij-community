@@ -62,12 +62,12 @@ public class ChangeUtil implements Constants {
       }
     }
 
-    child.setTreeNext(null);
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
     final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(child);
     if (newCharTab != oldCharTab) {
       registerLeafsInCharTab(newCharTab, child, oldCharTab);
     }
+    TreeUtil.remove(child);
     if (anchorBefore != null) {
       TreeUtil.insertBefore(anchorBefore, child);
     }
@@ -202,7 +202,7 @@ public class ChangeUtil implements Constants {
       registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
     }
     oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTable);
-    if (oldChild != newChild) TreeUtil.replace(oldChild, newChild);
+    if (oldChild != newChild) TreeUtil.replaceWithList(oldChild, newChild);
 
     parent.subtreeChanged();
     //updateCachedLengths(parent, newLength - oldLength);

@@ -137,6 +137,8 @@ public class CodeEditUtil {
     ASTNode nextNonSpace = Helper.shiftForwardToNonSpace(next);
     ASTNode spaceBefore = Helper.getSpaceElement(parent, prevNonSpace, first);
     ASTNode spaceAfter = Helper.getSpaceElement(parent, last, nextNonSpace);
+    final String spaceBeforeText = spaceBefore == null ? null : spaceBefore.getText();
+    final String spaceAfterText = spaceAfter == null ? null : spaceAfter.getText();
 
     ASTNode childNext;
     for(ASTNode child = first; child != next; child = childNext){
@@ -163,8 +165,8 @@ public class CodeEditUtil {
       return;
     }
 
-    int breaksBefore = spaceBefore != null ? StringUtil.getLineBreakCount(spaceBefore.getText()) : 0;
-    int breaksAfter = spaceAfter != null ? StringUtil.getLineBreakCount(spaceAfter.getText()) : 0;
+    int breaksBefore = spaceBefore != null ? StringUtil.getLineBreakCount(spaceBeforeText) : 0;
+    int breaksAfter = spaceAfter != null ? StringUtil.getLineBreakCount(spaceAfterText) : 0;
 
     normalizeSpace(helper, parent, prevNonSpace, nextNonSpace, charTableByTree);
 
@@ -253,7 +255,7 @@ public class CodeEditUtil {
     return importHelper.getDefaultAnchor(list, statement);
   }
 
-  private static final HashMap ourModifierToOrderMap = new HashMap();
+  private static final HashMap<String,Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
 
   static { //TODO : options?
     ourModifierToOrderMap.put(PsiModifier.PUBLIC, new Integer(1));
@@ -270,13 +272,13 @@ public class CodeEditUtil {
   }
 
   public static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
-    Integer order = (Integer)ourModifierToOrderMap.get(modifier.getText());
+    Integer order = ourModifierToOrderMap.get(modifier.getText());
     if (order == null) return null;
     for(ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode();
         child != null;
         child = child.getTreeNext()){
       if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())){
-        Integer order1 = (Integer)ourModifierToOrderMap.get(child.getText());
+        Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;
         if (order1.intValue() > order.intValue()){
           return child;

@@ -74,7 +74,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
 
   public void run(InlineMethodDialog dialog) {
     myDialog = dialog;
-    this.run((Object)null);
+    run((Object)null);
   }
 
   public void testRun(InlineOptions dialog) {
@@ -107,7 +107,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
   protected boolean preprocessUsages(UsageInfo[][] usages) {
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
     myMethod.accept(collector);
-    final HashMap<PsiMember,HashSet<PsiMember>> containersToReferenced;
+    final Map<PsiMember,Set<PsiMember>> containersToReferenced;
     String fromForReference = null;
     if (usages[0] != null) {
       containersToReferenced = getInaccessible(collector.myReferencedMembers, usages[0]);
@@ -121,7 +121,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     final Set<PsiMember> containers = containersToReferenced.keySet();
     for (Iterator<PsiMember> iterator = containers.iterator(); iterator.hasNext();) {
       PsiMember container = iterator.next();
-      HashSet<PsiMember> referencedInaccessible = containersToReferenced.get(container);
+      Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
       for (Iterator<PsiMember> iterator1 = referencedInaccessible.iterator(); iterator1.hasNext();) {
         PsiElement referenced = iterator1.next();
         String message = ConflictsUtil.getDescription(referenced, true) + " that is used in inlined method, " +
@@ -156,13 +156,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
    * @param usages
    * @return
    */
-  private static HashMap<PsiMember,HashSet<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements, UsageInfo[] usages) {
-    HashMap<PsiMember,HashSet<PsiMember>> result = new com.intellij.util.containers.HashMap<PsiMember, HashSet<PsiMember>>();
+  private static Map<PsiMember,Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements, UsageInfo[] usages) {
+    Map<PsiMember,Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
 
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
       final PsiMember container = ConflictsUtil.getContainer(usage.getElement());
-      HashSet<PsiMember> inaccessibleReferenced = result.get(container);
+      Set<PsiMember> inaccessibleReferenced = result.get(container);
       if (inaccessibleReferenced == null) {
         inaccessibleReferenced = new HashSet<PsiMember>();
         result.put(container, inaccessibleReferenced);
@@ -263,7 +263,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     }
   }
 
-  private void inlineConstructorCall(PsiCall constructorCall) {
+  private static void inlineConstructorCall(PsiCall constructorCall) {
     final PsiMethod oldConstructor = constructorCall.resolveMethod();
     if (oldConstructor == null) return;
     final PsiManager manager = oldConstructor.getManager();
@@ -657,7 +657,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     for (int i = 0; i < refs.length; i++) {
       PsiElement refElement = refs[i].getElement();
       if (refElement instanceof PsiExpression) {
-        if (PsiUtil.isAccessedForWriting(((PsiExpression)refElement))) {
+        if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
           isAccessedForWriting = true;
         }
       }
@@ -967,7 +967,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     }
   }
 
-  private static final Key MARK_KEY = Key.create("");
+  private static final Key<String> MARK_KEY = Key.create("");
 
   private PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs)
     throws IncorrectOperationException {
@@ -1037,9 +1037,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
   }
 
-  private void addMarkedElements(ArrayList array, PsiElement scope) {
+  private void addMarkedElements(List<PsiReferenceExpression> array, PsiElement scope) {
     if (scope.getCopyableUserData(MARK_KEY) != null) {
-      array.add(scope);
+      array.add((PsiReferenceExpression)scope);
       scope.putCopyableUserData(MARK_KEY, null);
     }
     for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -1121,7 +1121,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
       while (true) {
         if (offset == instructions.length) break;
         Instruction instruction = instructions[offset];
-        if ((instruction instanceof GoToInstruction)) {
+        if (instruction instanceof GoToInstruction) {
           offset = ((GoToInstruction)instruction).offset;
         }
         else if (instruction instanceof ThrowToInstruction) {
