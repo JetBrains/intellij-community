@@ -2,11 +2,13 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
+import jetbrains.fbq.diagnostic.IdeMessagePanel;
+import jetbrains.fbq.diagnostic.MessagePool;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -23,6 +25,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
   protected final TextPanel myStatusPanel = new TextPanel(new String[]{"Insert", "Overwrite"},false);
   protected final TogglePopupHintsPanel myPopupHintsPanel;
+  protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   protected String myInfo = "";
   private final Icon myLockedIcon = IconLoader.getIcon("/nodes/lockedSingle.png");
   private final Icon myUnlockedIcon = myLockedIcon != null ? EmptyIcon.create(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
@@ -92,8 +95,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myPopupHintsPanel.setOpaque(false);
     rightPanel.add(myPopupHintsPanel, gbConstraints);
 
+    myMessagePanel.setOpaque(false);
+    rightPanel.add(myMessagePanel, gbConstraints);
+
+    //  myMemoryUsagePanel.setOpaque(false);
     myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(4, 3, 2, 3));
-//    myMemoryUsagePanel.setOpaque(false);
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
   }
 

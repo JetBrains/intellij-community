@@ -377,7 +377,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       if (isComponentSuitable(options)) {
         ClassLoader loader = findLoader(descriptor.getPluginName());
         try {
-          registerComponent(Class.forName(descriptor.getInterface(), true, loader), Class.forName(descriptor.getImplementation(), true, loader), options, true,
+          registerComponent(Class.forName(descriptor.getInterface(), true, loader),
+                            Class.forName(descriptor.getImplementation(), true, loader),
+                            options,
+                            true,
                             isTrue(options, "lazy"));
         }
         catch (Exception e) {

@@ -10,69 +10,31 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.SystemInfo;
+import jetbrains.fbq.diagnostic.MessagePool;
 
 import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author kir
  */
 public class DefaultIdeaErrorLogger implements ErrorLogger {
-
   private static boolean ourOomOccured = false;
-  private final List<IdeaLoggingEvent> myEventsCache = Collections.synchronizedList(new ArrayList<IdeaLoggingEvent>());
 
   public boolean canHandle(IdeaLoggingEvent event) {
-    return !DialogAppender.RELEASE_BUILD ||
-          ApplicationManagerEx.getApplicationEx().isInternal() ||
+    return !DialogAppender.RELEASE_BUILD || ApplicationManagerEx.getApplicationEx().isInternal() ||
           event.getThrowable() instanceof OutOfMemoryError;
   }
 
+  /** @noinspection ThrowablePrintStackTrace*/
   public void handle(IdeaLoggingEvent event) {
-    showDialog(event);
-  }
-
-  private void showDialog(IdeaLoggingEvent event) {
     try {
       if (event.getThrowable() instanceof OutOfMemoryError) {
         processOOMError(event);
       }
-      else {
-        if (ourOomOccured) {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            public void run() {
-              JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                            "OutOfMemoryException occured before this problem and " +
-                                            "it can be the reason of current one. So we recommend " +
-                                            "you to restart your IDEA.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-          });
-          return;
-        }
-        myEventsCache.add(event);
-        SwingUtilities.invokeAndWait(new Runnable() {
-          public void run() {
-            while (myEventsCache.size() > 0) {
-              IdeaLoggingEvent event = myEventsCache.get(0);
-              ErrorOccuredDialog errorOccuredDialog = new ErrorOccuredDialog(event);
-              errorOccuredDialog.show();
-
-              if (errorOccuredDialog.isShouldClose()) {
-                try {
-                  ApplicationManager.getApplication().exit();
-                }
-                catch (Throwable e) {
-                  System.exit(0);
-                }
-              }
-              myEventsCache.remove(0);
-            }
-          }
-        });
+      else if (!ourOomOccured) {
+        MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
     catch (Exception e) {

@@ -1,5 +1,7 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.ErrorHandlerExtension;
+import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
@@ -7,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -38,6 +41,7 @@ public class PluginManager {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
   public static final String COMPONENT_EXTENSION_POINT = "com.intellij.component";
+  public static final String ERROR_HANDLER_EXTENSION_POINT = "com.intellij.errorHandler";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -132,6 +136,11 @@ public class PluginManager {
       public void areaDisposing(String areaClass, AreaInstance areaInstance) {
       }
     }, LoadingOrder.FIRST);
+
+    Extensions.getRootArea().registerExtensionPoint(ERROR_HANDLER_EXTENSION_POINT, ErrorHandlerExtension.class.getName());
+    final ErrorHandlerExtension defaultErrorHandler = new ErrorHandlerExtension();
+    defaultErrorHandler.setHandlerClass(ITNReporter.class.getName());
+    Extensions.getRootArea().getExtensionPoint(ERROR_HANDLER_EXTENSION_POINT).registerExtension(defaultErrorHandler);
   }
 
   public static boolean shouldLoadPlugins() {
@@ -624,7 +633,7 @@ public class PluginManager {
     final PluginDescriptor[] plugins = getPlugins();
     for (int i = 0; i < plugins.length; i++) {
       final PluginDescriptor plugin = plugins[i];
-      if (name.equals(plugin.getName())) {
+      if (Comparing.equal(name, plugin.getName())) {
         return plugin;
       }
     }
