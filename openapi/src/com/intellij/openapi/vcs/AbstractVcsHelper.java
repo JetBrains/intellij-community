@@ -7,6 +7,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -54,4 +55,6 @@ public abstract class AbstractVcsHelper {
   public void showError(final VcsException e, final String s) {
     showErrors(Arrays.asList(new VcsException[]{e}), s);
   }
+
+  public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file);
 }

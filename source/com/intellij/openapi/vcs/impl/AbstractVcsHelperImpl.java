@@ -15,6 +15,8 @@ import com.intellij.openapi.localVcs.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.Annotater;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
@@ -373,6 +375,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                                                     boolean requestComments,
                                                                     Collection<String> roots) {
     return new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
+  }
+
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
+    new Annotater(annotation, myProject, file).showAnnotation();
   }
 
   private boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
