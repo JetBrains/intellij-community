@@ -180,9 +180,10 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   private static OrderEntry[] getSortedOrderEntries(Module module) {
-    //return ModuleRootManager.getInstance(module).getOrderEntries();
+    return ModuleRootManager.getInstance(module).getOrderEntries();
     // TODO: this is a patch for SCR 36800, After J2EE Compiler copying mechanizm is fixed,
     // TODO: remove all the code below and uncomment the line above
+    /*
     final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
     final List<OrderEntry> result = new ArrayList<OrderEntry>();
     final List<OrderEntry> moduleOrderEntries = new ArrayList<OrderEntry>();
@@ -203,6 +204,7 @@ public class ModuleChunk extends Chunk<Module> {
       result.addAll(insertIndex, moduleOrderEntries);
     }
     return result.toArray(new OrderEntry[result.size()]);
+    */
   }
 
 
