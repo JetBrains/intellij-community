@@ -77,9 +77,11 @@ public class DeclarationParsing extends Parsing {
       if (context == FILE_CONTEXT) return null;
     }
     else if (tokenType == JSP_HOLDER_TOKEN) {
-      LeafElement element = Factory.createLeafElement(HOLDER_TEMPLATE_DATA, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+      final CompositeElement declaration = Factory.createCompositeElement(JSP_TEMPLATE_DECLARATION);
+      LeafElement leaf = Factory.createLeafElement(HOLDER_TEMPLATE_DATA, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+      TreeUtil.addChildren(declaration, leaf);
       lexer.advance();
-      return element;
+      return declaration;
     }
     else if (!MODIFIER_BIT_SET.isInSet(tokenType) && !CLASS_KEYWORD_BIT_SET.isInSet(tokenType)
              && tokenType != AT && (context == CODE_BLOCK_CONTEXT || tokenType != LT)){
