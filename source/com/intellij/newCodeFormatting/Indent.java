@@ -19,15 +19,15 @@ public class Indent {
     mySpaces = spaces;
   }
 
-  public Type getType() {
+  Type getType() {
     return myType;
   }
 
-  public int getCount() {
+  int getCount() {
     return myCount;
   }
 
-  public int getSpaces() {
+  int getSpaces() {
     return mySpaces;
   }
 }

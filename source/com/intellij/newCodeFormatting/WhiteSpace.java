@@ -3,12 +3,13 @@ package com.intellij.newCodeFormatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 
-public class WhiteSpace{
+class WhiteSpace{
   private TextRange myTextRange;
   private int mySpaces;
   private int myLineFeeds;
   private final boolean myIsFirstWhiteSpace;
   private boolean myIsReadOnly;
+  private CharSequence myInitial;
 
   public WhiteSpace(int startOffset, int endOffset, int spaces, int lineFeeds, boolean isFirst) {
     myTextRange = new TextRange(startOffset, endOffset);
@@ -30,6 +31,8 @@ public class WhiteSpace{
       mySpaces += myTextRange.getEndOffset() - oldEndOffset;
     }
     myLineFeeds += lineIncrement;
+
+    myInitial = model.getText(myTextRange);
   }
 
   public String generateWhiteSpace() {
@@ -95,6 +98,11 @@ public class WhiteSpace{
 
   public void setReadOnly() {
     myIsReadOnly = true;
+  }
+
+  public boolean equals(String ws) {
+    if (myInitial == null) return false;
+    return myInitial.equals(ws);
   }
 }
 

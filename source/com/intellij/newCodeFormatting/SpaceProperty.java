@@ -16,23 +16,27 @@ public class SpaceProperty {
   }
 
 
-  public int getMinSpaces() {
+  int getMinSpaces() {
     return myMinSpaces;
   }
 
-  public int getMaxSpaces() {
+  int getMaxSpaces() {
     return myMaxSpaces;
   }
 
-  public int getMinLineFeeds() {
+  int getMinLineFeeds() {
     return myMinLineFeeds;
   }
 
-  public int getMaxLineFeeds() {
+  int getMaxLineFeeds() {
     return myMaxLineFeeds;
   }
 
-  public boolean isReadOnly(){
+  boolean isReadOnly(){
     return myIsReadOnly;
+  }
+
+  boolean containsLineFeeds() {
+    return myMinLineFeeds > 0;
   }
 }

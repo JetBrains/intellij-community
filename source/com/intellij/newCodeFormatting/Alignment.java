@@ -14,15 +14,15 @@ public class Alignment {
     myType = type;
   }
 
-  public Type getType() {
+  Type getType() {
     return myType;
   }
 
-  public int getCurrentOffset() {
+  int getCurrentOffset() {
     return myCurrentOffset;
   }
 
-  public void setCurrentOffset(final int currentIndent) {
+  void setCurrentOffset(final int currentIndent) {
     myCurrentOffset = currentIndent;
   }
 

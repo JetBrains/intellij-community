@@ -13,18 +13,20 @@ public class InitialInfoBuilder {
 
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingModel myModel;
+  private TextRange myAffectedRange;
   private final Map<Block, BlockWrapper> myResult = new LinkedHashMap<Block, BlockWrapper>();
   private BlockWrapper myPreviousBlock;
   private BlockWrapper myFirstTokenBlock;
   private SpaceProperty myCurrentSpaceProperty;
 
-  private InitialInfoBuilder(final FormattingModel model) {
+  private InitialInfoBuilder(final FormattingModel model, final TextRange affectedRange) {
     myModel = model;
+    myAffectedRange = affectedRange;
     myCurrentWhiteSpace = new WhiteSpace(0, 0, 0, 0, true);
   }
 
-  public static final InitialInfoBuilder buildBlocks(Block root, FormattingModel model) {
-    final InitialInfoBuilder builder = new InitialInfoBuilder(model);
+  public static final InitialInfoBuilder buildBlocks(Block root, FormattingModel model, final TextRange affectedRange) {
+    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange);
     builder.buildFrom(root, 0);
     return builder;
   }
@@ -33,18 +35,19 @@ public class InitialInfoBuilder {
     final TextRange textRange = rootBlock.getTextRange();
     final int blockStartOffset = textRange.getStartOffset();
     myCurrentWhiteSpace.append(blockStartOffset, myModel);
-    final BlockWrapper info = new BlockWrapper(rootBlock, myCurrentWhiteSpace, myModel, myPreviousBlock, index, myResult);
+    boolean isReadOnly = isReadOnly(textRange);
+    final BlockWrapper info = new BlockWrapper(rootBlock, myCurrentWhiteSpace, myModel, myPreviousBlock, index, myResult, isReadOnly, textRange);
     myResult.put(rootBlock, info);
     final List<Block> subBlocks = rootBlock.getSubBlocks();
-    if (subBlocks.isEmpty()) {
-      LOG.assertTrue(rootBlock.getTextRange().getLength() > 0);
+    if (subBlocks.isEmpty() || isReadOnly) {
+      LOG.assertTrue(textRange.getLength() > 0);
       if (myPreviousBlock != null) {
         myPreviousBlock.setNextBlock(info);
       }
       if (myFirstTokenBlock == null) {
         myFirstTokenBlock = info;
       }
-      if (myCurrentSpaceProperty != null && myCurrentSpaceProperty.isReadOnly()) {
+      if (currentWhiteSpaceIsRreadOnly()) {
         myCurrentWhiteSpace.setReadOnly();
       }
       myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), textRange.getEndOffset(), 0, 0, false);
@@ -60,6 +63,21 @@ public class InitialInfoBuilder {
         previous = block;
       }
     }
+  }
+
+  private boolean currentWhiteSpaceIsRreadOnly() {
+    if (myCurrentSpaceProperty != null && myCurrentSpaceProperty.isReadOnly()) {
+      return true;
+    } else {
+      return isReadOnly(myCurrentWhiteSpace.getTextRange());
+    }
+  }
+
+  private boolean isReadOnly(final TextRange textRange) {
+    if (myAffectedRange == null) return false;
+    if (textRange.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
+    if (textRange.getEndOffset() <= myAffectedRange.getStartOffset()) return true;
+    return false;
   }
 
   public Map<Block, BlockWrapper> getBlockToInfoMap() {

@@ -2,7 +2,6 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -10,6 +9,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 
@@ -19,20 +19,21 @@ import java.util.List;
 public class XmlBlock implements Block{
   private final ASTNode myNode;
 
-  private static final Key<Block> KEY = new Key<Block>("BLOCK");
-  private static final Key<Wrap> WRAP_KEY = new Key<Wrap>("WRAP");
-  private static final Key<Alignment> ALIGN_KEY = new Key<Alignment>("ALIGN");
   private List<Block> mySubBlocks;
   private final CodeStyleSettings mySettings;
-  private String myText;
 
-  public XmlBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings) {
+  private final Wrap myWrap;
+  private final Alignment myAlignment;
+  private final XmlBlock myParent;
+  private final SpaceProperty myDefaultProperty;
+
+  public XmlBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings, XmlBlock parent) {
     myNode = node;
-    myNode.putUserData(ALIGN_KEY, alignment);
-    myNode.putUserData(WRAP_KEY, wrap);
-    myNode.putUserData(KEY, this);
+    myWrap = wrap;
+    myAlignment = alignment;
     mySettings = settings;
-    myText = myNode.getText();
+    myParent = parent;
+    myDefaultProperty = new SpaceProperty(0, Integer.MAX_VALUE, 0, getMaxLine(), false);
   }
 
   public TextRange getTextRange() {
@@ -54,21 +55,33 @@ public class XmlBlock implements Block{
     if (myNode instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
-      final Wrap tagWrap = new Wrap(Wrap.Type.WRAP_ALWAYS);
-      final Wrap attrWrap = new Wrap(getWrapType(mySettings.XML_ATTRIBUTE_WRAP));
-      final Wrap textWrap = new Wrap(getWrapType(mySettings.XML_TEXT_WRAP));
+      final Wrap tagWrap = new Wrap(Wrap.Type.WRAP_ALWAYS,true);
+      final Wrap attrWrap = new Wrap(getWrapType(mySettings.XML_ATTRIBUTE_WRAP), false);
+      final Wrap textWrap = new Wrap(getWrapType(mySettings.XML_TEXT_WRAP), true);
       final Alignment attrAlignment = new Alignment(Alignment.Type.NORMAL);
       final Alignment textAlignment = new Alignment(Alignment.Type.NORMAL);
       while (child != null) {
-        if (child.getElementType() != ElementType.WHITE_SPACE && child.getText().trim().length() > 0){
+        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
           Wrap wrap = chooseWrap(child, tagWrap, attrWrap, textWrap);
           Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
-          result.add(new XmlBlock(child, wrap, alignment, mySettings));
+          result.add(new XmlBlock(child, wrap, alignment, mySettings, this));
         }
         child = child.getTreeNext();
       }
     }
     return result;
+  }
+
+  private boolean containsWhiteSpacesOnly(final ASTNode node) {
+    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
+    if (node instanceof LeafElement) return false;
+    ChameleonTransforming.transformChildren(node);
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child)) return false;
+      child = child.getTreeNext();
+    }
+    return true;
   }
 
   private Wrap.Type getWrapType(final int type) {
@@ -104,54 +117,78 @@ public class XmlBlock implements Block{
   }
 
   public Wrap getWrap() {
-    return myNode.getUserData(WRAP_KEY);
+    return myWrap;
   }
 
   public Indent getChildIndent() {
-    return myNode.getElementType() == ElementType.XML_TAG ? new Indent(Indent.Type.NORMAL, 1, 0) : null;
+    final IElementType elementType = myNode.getElementType();
+    if (elementType == ElementType.XML_DOCUMENT || elementType == ElementType.XML_PROLOG) {
+      return new Indent(Indent.Type.NONE, 0,0);
+    } else {
+      return elementType == ElementType.XML_TAG ? new Indent(Indent.Type.NORMAL, 1, 0) : null;
+    }
   }
 
   public Alignment getAlignment() {
-    return myNode.getUserData(ALIGN_KEY);
+    return myAlignment;
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     final IElementType elementType = myNode.getElementType();
     final IElementType type1 = ((XmlBlock)child1).myNode.getElementType();
     final IElementType type2 = ((XmlBlock)child2).myNode.getElementType();
-    if (elementType == ElementType.XML_TAG) {
-      if (isXmlTagName(type1, type2)){
-        final int spaces = mySettings.XML_SPACE_AROUND_TAG_NAME ? 1 : 0;
-        return new SpaceProperty(spaces, spaces, 0, getMaxLine(), false);
-      } else if (type2 == ElementType.XML_ATTRIBUTE) {
-        return new SpaceProperty(1, 1, 0, getMaxLine(), false);
-      }
-    }
+
     if ((type2 == ElementType.XML_TAG || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && mySettings.XML_KEEP_WHITESPACES) {
       return new SpaceProperty(0,0,0,0,true);
     }
+
+    if (elementType == ElementType.XML_TAG) {
+      return getSpacesInsideTag(type1, type2);
+
+    } else if (elementType == ElementType.XML_TEXT) {
+      return getSpacesInsideText(type1, type2);
+
+    } else if (elementType == ElementType.XML_ATTRIBUTE) {
+      return getSpacesInsideAttribute(type1, type2);
+    }
+
+    return myDefaultProperty;
+  }
+
+  private SpaceProperty getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
+    if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
+      int spaces = mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE ? 1 : 0;
+      return new SpaceProperty(spaces, spaces, 0, getMaxLine(), false);
+    } else {
+      return myDefaultProperty;
+    }
+  }
+
+  private SpaceProperty getSpacesInsideText(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
       return new SpaceProperty(1, 1, 0, getMaxLine(), false);
+    } else {
+      return myDefaultProperty;
     }
-    if (type2 == ElementType.XML_TEXT && type1 == ElementType.XML_TAG) {
+  }
+
+  private SpaceProperty getSpacesInsideTag(final IElementType type1, final IElementType type2) {
+    if (isXmlTagName(type1, type2)){
+      final int spaces = mySettings.XML_SPACE_AROUND_TAG_NAME ? 1 : 0;
+      return new SpaceProperty(spaces, spaces, 0, getMaxLine(), false);
+    } else if (type2 == ElementType.XML_ATTRIBUTE) {
+      return new SpaceProperty(1, 1, 0, getMaxLine(), false);
+    } else if (type2 == ElementType.XML_TEXT && type1 == ElementType.XML_TAG) {
       return new SpaceProperty(0, 0, 1, getMaxLine(), false);
-    }
-    if (type1 == ElementType.XML_TEXT && type2 == ElementType.XML_END_TAG_START) {
+    } else if (type1 == ElementType.XML_TEXT && type2 == ElementType.XML_END_TAG_START) {
       return new SpaceProperty(0, 0, 0, getMaxLine(), false);
-    }
-
-    if (type2 == ElementType.XML_TEXT && type1 == ElementType.XML_TAG_END) {
+    } else if (type1 == ElementType.XML_TAG_END && type2 == ElementType.XML_END_TAG_START) {
       return new SpaceProperty(0, 0, 0, getMaxLine(), false);
+    } else if (type2 == ElementType.XML_TEXT && type1 == ElementType.XML_TAG_END) {
+      return new SpaceProperty(0, 0, 0, getMaxLine(), false);
+    } else {
+      return myDefaultProperty;
     }
-
-    if (elementType == ElementType.XML_ATTRIBUTE) {
-      if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
-        int spaces = mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE ? 1 : 0;
-        return new SpaceProperty(spaces, spaces, 0, getMaxLine(), false);
-      }
-    }
-
-    return new SpaceProperty(0, Integer.MAX_VALUE, 0, getMaxLine(), false);
   }
 
   private boolean isXmlTagName(final IElementType type1, final IElementType type2) {
@@ -170,7 +207,10 @@ public class XmlBlock implements Block{
   }
 
   public Block getParent() {
-    final ASTNode treeParent = myNode.getTreeParent();
-    return treeParent == null ? null : treeParent.getUserData(KEY);
+    return myParent;
+  }
+
+  public boolean skipIndent(final Block parent) {
+    return myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n');
   }
 }

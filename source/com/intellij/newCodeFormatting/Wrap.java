@@ -2,15 +2,27 @@ package com.intellij.newCodeFormatting;
 
 public class Wrap {
   private int myFirstEntry = -1;
+  private int myFirstPosition = -1;
   private boolean myIsActive = false;
+  private final boolean myWrapFirstElement;
 
-  public int getFirstEntry() {
+  int getFirstEntry() {
     return myFirstEntry;
   }
 
-  public void markAsUsed() {
+  void markAsUsed() {
     myFirstEntry = -1;
     myIsActive = true;
+  }
+
+  void processNextEntry(final int startOffset) {
+    if (myFirstPosition < 0) {
+      myFirstPosition = startOffset;
+    }
+  }
+
+  int getFirstPosition() {
+    return myFirstPosition;
   }
 
   public static class Type{
@@ -32,22 +44,27 @@ public class Wrap {
 
   private final Type myType;
 
-  public Wrap(final Type type) {
+  public Wrap(final Type type, boolean wrapFirstElement) {
     myType = type;
+    myWrapFirstElement = wrapFirstElement;
 
   }
 
-  public Type getType() {
+  Type getType() {
     return myType;
   }
 
-  public void saveFirstEntry(final int startOffset) {
+  boolean isWrapFirstElement() {
+    return myWrapFirstElement;
+  }
+
+  void saveFirstEntry(final int startOffset) {
     if (myFirstEntry < 0) {
       myFirstEntry = startOffset;
     }
   }
 
-  public boolean isIsActive() {
+  boolean isIsActive() {
     return myIsActive;
   }
 

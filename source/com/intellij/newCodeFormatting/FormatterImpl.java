@@ -18,32 +18,40 @@ public class FormatterImpl {
   private final Collection<Alignment> myAlignedAlignments = new HashSet<Alignment>();
   private final List<BlockWrapper> myWrapCandidates = new ArrayList<BlockWrapper>();
 
-  public FormatterImpl(FormattingModel model, Block rootBlock, CodeStyleSettings settings, CodeStyleSettings.IndentOptions indentOptions) {
+  public FormatterImpl(FormattingModel model,
+                       Block rootBlock,
+                       CodeStyleSettings settings,
+                       CodeStyleSettings.IndentOptions indentOptions,
+                       TextRange affectedRange) {
     myModel = model;
     myIndentOption = indentOptions;
     mySettings = settings;
-    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model);
+    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model, affectedRange);
     myInfos = builder.getBlockToInfoMap();
     myCurrentBlock = builder.getFirstTokenBlock();
   }
 
   public void format() {
-    while (myCurrentBlock != null) {
-      processToken();
-    }
+    formatWithoutRealModifications();
 
     performModifications();
   }
 
-  private void performModifications() {
+  public void formatWithoutRealModifications() {
+    while (myCurrentBlock != null) {
+      processToken();
+    }
+  }
+
+  public void performModifications() {
     int shift = 0;
     WhiteSpace prev = null;
     for (Iterator<Block> iterator = myInfos.keySet().iterator(); iterator.hasNext();) {
       Block block = iterator.next();
       final WhiteSpace whiteSpace = getBlockInfo(block).getWhiteSpace();
+      final String newWhiteSpace = whiteSpace.generateWhiteSpace();
       if (prev == whiteSpace || whiteSpace.isReadOnly()) continue;
       final TextRange textRange = whiteSpace.getTextRange();
-      final String newWhiteSpace = whiteSpace.generateWhiteSpace();
       myModel.replaceWhiteSpace(new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift), newWhiteSpace);
       shift += newWhiteSpace.length() - (textRange.getLength());
       prev = whiteSpace;
@@ -72,11 +80,14 @@ public class FormatterImpl {
       }
     }
 
-    final Block block = myCurrentBlock.getBlock();
-    if (whiteSpace.containsLineFeeds()) {
-      adjustLineIndent();
-    } else {
-      whiteSpace.arrangeSpaces(spaceProperty);
+    final Block block = myCurrentBlock.getBlock();;
+    if (!whiteSpace.isReadOnly()) {
+
+      if (whiteSpace.containsLineFeeds()) {
+        adjustLineIndent();
+      } else {
+        whiteSpace.arrangeSpaces(spaceProperty);
+      }
     }
 
     setAlignOffset(myCurrentBlock.getAlignment(), getOffsetBefore(block));
@@ -89,30 +100,39 @@ public class FormatterImpl {
 
   private boolean processWrap() {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-    final TextRange textRange = myCurrentBlock.getBlock().getTextRange();
+    final TextRange textRange = myCurrentBlock.getTextRange();
+    final Wrap wrap = myCurrentBlock.getWrap();
+
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
-    final Wrap wrap = myCurrentBlock.getWrap();
+    if (wrap != null) {
+      wrap.processNextEntry(textRange.getStartOffset());
+    }
+
     if (shouldUseWrap(wrap) || wrapIsPresent) {
-      whiteSpace.ensureLineFeed();
-      if (wrapCanBeUsedInTheFuture(wrap)) {
-        wrap.markAsUsed();
-      }
       if (wrap != null && wrap.getFirstEntry() >= 0) {
         myReparseFromOffset = wrap.getFirstEntry();
         wrap.markAsUsed();
         shiftToOffset(myReparseFromOffset);
         myReparseFromOffset = -1;
         return true;
+      } else if (wrap != null && wrapCanBeUsedInTheFuture(wrap)) {
+        wrap.markAsUsed();
       }
-    } else if (isCandidateToBeWrapped(wrap)){
-      myWrapCandidates.clear();
-      myWrapCandidates.add(myCurrentBlock);
-    } else if (wrapCanBeUsedInTheFuture(wrap) && !wrapIsPresent) {
-      wrap.saveFirstEntry(textRange.getStartOffset());
+      whiteSpace.ensureLineFeed();
+    } else {
+      if (wrap != null) {
+        if (isCandidateToBeWrapped(wrap)){
+          myWrapCandidates.clear();
+          myWrapCandidates.add(myCurrentBlock);
+        }
+        if (wrapCanBeUsedInTheFuture(wrap)) {
+          wrap.saveFirstEntry(textRange.getStartOffset());
+        }
+      }
     }
 
-    if (!whiteSpace.containsLineFeeds() && lineOver() && !myWrapCandidates.isEmpty()) {
+    if (!whiteSpace.containsLineFeeds() && lineOver() && !myWrapCandidates.isEmpty() && !whiteSpace.isReadOnly()) {
       myCurrentBlock = myWrapCandidates.get(myWrapCandidates.size() - 1);
       return true;
     }
@@ -121,7 +141,7 @@ public class FormatterImpl {
   }
 
   private boolean isCandidateToBeWrapped(final Wrap wrap) {
-    return wrap != null && (wrap.getType() == Wrap.Type.WRAP_AS_NEEDED || wrap.getType() == Wrap.Type.CHOP_IF_NEEDED);
+    return isSuitableInTheCurrentPosition(wrap) && (wrap.getType() == Wrap.Type.WRAP_AS_NEEDED || wrap.getType() == Wrap.Type.CHOP_IF_NEEDED);
   }
 
   private void onCurrentLineChanged() {
@@ -132,14 +152,29 @@ public class FormatterImpl {
   private void adjustLineIndent() {
     int alignOffset = getAlignOffset(myCurrentBlock.getAlignment());
     if (alignOffset == -1) {
-      myCurrentBlock.getWhiteSpace().setSpaces(calculateIndentUnder(getNearestIndentedParent(myCurrentBlock.getBlock().getParent())));
+      final Block block = myCurrentBlock.getBlock();
+      Block current = getParentWithTheSameOffset(block);
+      final Block candidate = getNearestIndentedParent(block.getParent(), current);
+      final int indent = calculateIndentUnder(candidate);
+      myCurrentBlock.getWhiteSpace().setSpaces(indent);
     } else {
       myCurrentBlock.getWhiteSpace().setSpaces(alignOffset);
     }
   }
 
+  private Block getParentWithTheSameOffset(Block block) {
+    while (block != null) {
+      final Block parent = block.getParent();
+      if (parent == null) return block;
+      final BlockWrapper parentInfo = getBlockInfo(parent);
+      if (parentInfo.getTextRange().getStartOffset() != getBlockInfo(block).getTextRange().getStartOffset()) return block;
+      block = parent;
+    }
+    return null;
+  }
+
   private void shiftToOffset(final int marker) {
-    while (myCurrentBlock.getPreviousBlock() != null && myCurrentBlock.getBlock().getTextRange().getStartOffset() > marker) {
+    while (myCurrentBlock.getPreviousBlock() != null && myCurrentBlock.getTextRange().getStartOffset() > marker) {
       if (myCurrentBlock.getWhiteSpace().containsLineFeeds()) {
         onCurrentLineChanged();
       }
@@ -150,20 +185,27 @@ public class FormatterImpl {
     }
   }
 
-  private Block getNearestIndentedParent(Block block) {
+  private Block getNearestIndentedParent(Block block, Block current) {
     if (block == null) return null;
     final Block parent = block.getParent();
-    if (getBlockInfo(block).notIsFirstElement()) return parent;
-    return getNearestIndentedParent(parent);
+    if (parent == null) return null;
+    if (!current.skipIndent(parent) && getBlockInfo(block).notIsFirstElement()) return parent;
+    return getNearestIndentedParent(parent, current);
   }
 
   private boolean wrapCanBeUsedInTheFuture(final Wrap wrap) {
-    return wrap != null && wrap.getType() == Wrap.Type.CHOP_IF_NEEDED;
+    return wrap != null && wrap.getType() == Wrap.Type.CHOP_IF_NEEDED &&
+           (isSuitableInTheCurrentPosition(wrap));
+  }
+
+  private boolean isSuitableInTheCurrentPosition(final Wrap wrap) {
+    return wrap.isWrapFirstElement() || (wrap.getFirstPosition() < myCurrentBlock.getTextRange().getStartOffset());
   }
 
   private boolean shouldUseWrap(final Wrap wrap) {
     if (myWrapCandidates.contains(myCurrentBlock)) return true;
     if (wrap == null) return false;
+    if (!isSuitableInTheCurrentPosition(wrap)) return false;
     if (wrap.isIsActive()) return true;
     final Wrap.Type type = wrap.getType();
     if (type == Wrap.Type.WRAP_ALWAYS) return true;
@@ -211,25 +253,27 @@ public class FormatterImpl {
     if (block == null) return 0;
     final BlockWrapper info = getBlockInfo(block);
     if (info.getWhiteSpace().containsLineFeeds()) {
-      return getOffsetBefore(info) + getIndent(block);
+      final Indent indent = getBlockInfo(block).getChildIndent();
+      final int offsetBeforeBlock = getOffsetBefore(info);
+      return offsetBeforeBlock + getIndent(indent);
     }
     return calculateIndentUnder(block.getParent());
   }
 
+  private int getIndent(final Indent indent) {
+    if (indent == null) return myIndentOption.CONTINUATION_INDENT_SIZE;
+    if (indent.getType() == Indent.Type.NONE) return 0;
+    if (indent.getType() == Indent.Type.NORMAL) return myIndentOption.INDENT_SIZE;
+    return myIndentOption.LABEL_INDENT_SIZE;
+  }
+
   private int getOffsetBefore(final BlockWrapper info) {
-    final List<Block> subBlocks = info.getBlock().getSubBlocks();
+    final List<Block> subBlocks = info.getSubBlocks();
     if (subBlocks.isEmpty()) {
       return getOffsetBefore(info.getBlock());
     } else {
       return getOffsetBefore(getBlockInfo(subBlocks.get(0)));
     }
-  }
-
-  private int getIndent(final Block block) {
-    final Indent indent = getBlockInfo(block).getChildIndent();
-    if (indent == null) return myIndentOption.CONTINUATION_INDENT_SIZE;
-    if (indent.getType() == Indent.Type.NORMAL) return myIndentOption.INDENT_SIZE;
-    return myIndentOption.LABEL_INDENT_SIZE;
   }
 
 }

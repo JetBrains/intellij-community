@@ -8,4 +8,6 @@ public interface FormattingModel {
   int getLineEndOffset(int line);
 
   void replaceWhiteSpace(TextRange textRange, String whiteSpace);
+
+  CharSequence getText(final TextRange textRange);
 }
