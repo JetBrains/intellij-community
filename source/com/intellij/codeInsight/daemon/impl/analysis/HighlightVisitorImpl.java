@@ -533,13 +533,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitMethodCallExpression(PsiMethodCallExpression expr) {
-    PsiExpressionList list = expr.getArgumentList();
-
     final PsiReferenceExpression methodExpression = expr.getMethodExpression();
     methodExpression.accept(this);
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightMethodUtil.checkMethodCall(expr, list, myResolveHelper));
-    }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expr));
     if (!myHolder.hasErrorResults()) visitExpression(expr);
   }
@@ -804,6 +799,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         }
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitalizedInLoop(expression, resolved));
       }
+    }
+    else if (expression.getParent() instanceof PsiMethodCallExpression) {
+      myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)expression.getParent(), myResolveHelper));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExpressionRequired(expression));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {

@@ -27,7 +27,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class HighlightMethodUtil {
-  static final String WRONG_METHOD_ARGUMENTS = "''{0}'' in ''{1}'' cannot be applied to ''{2}''";
+  private static final String WRONG_METHOD_ARGUMENTS = "''{0}'' in ''{1}'' cannot be applied to ''{2}''";
   public static final String EXCEPTION_NEVER_THROWN_IN_METHOD = "Exception ''{0}'' is never thrown in the method";
   private static final String CANNOT_RESOLVE_METHOD = "Cannot resolve method ''{0}''";
   private static final String INCOMPATIBLE_RETURN_TYPE = "attempting to use incompatible return type";
@@ -43,14 +43,13 @@ public class HighlightMethodUtil {
     if (showContainingClasses) {
       pattern += " in ''{3}''";
     }
-    String message = MessageFormat.format(pattern,
-                                          new Object[]{
-                                            HighlightUtil.formatMethod(method1),
-                                            HighlightUtil.formatMethod(method2),
-                                            HighlightUtil.formatClass(method1.getContainingClass()),
-                                            HighlightUtil.formatClass(method2.getContainingClass())
-                                          });
-    return message;
+    return MessageFormat.format(pattern,
+                                new Object[]{
+                                    HighlightUtil.formatMethod(method1),
+                                    HighlightUtil.formatMethod(method2),
+                                    HighlightUtil.formatClass(method1.getContainingClass()),
+                                    HighlightUtil.formatClass(method2.getContainingClass())
+                                  });
   }
 
   //@top
@@ -353,8 +352,8 @@ public class HighlightMethodUtil {
 
   //@top
   public static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall,
-                                              PsiExpressionList list,
                                               PsiResolveHelper resolveHelper) {
+    PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
     final ResolveResult resolveResult = referenceToMethod.advancedResolve(true);
     final PsiElement element = resolveResult.getElement();
@@ -367,10 +366,7 @@ public class HighlightMethodUtil {
       if (!(constructor instanceof PsiMethod)) {
         final String description = MessageFormat.format("Call to ''{0}()'' allowed in constructor only",
                                                         new Object[]{referenceToMethod.getReferenceName()});
-        HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      methodCall,
-                                                                      description);
-        return errorResult;
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, methodCall, description);
       }
       if (list.getExpressions().length == 0) { // implicit ctr call
         final CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
@@ -412,8 +408,6 @@ public class HighlightMethodUtil {
 
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
         // check for ambiguous method call
-        String methodName = referenceToMethod.getReferenceName();
-        methodName += HighlightUtil.buildArgTypesList(list);
 
         final ResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
         MethodCandidateInfo methodCandidate1 = null;
@@ -470,6 +464,7 @@ public class HighlightMethodUtil {
             elementToHighlight = referenceToMethod.getReferenceNameElement();
           }
           else {
+            String methodName = referenceToMethod.getReferenceName() + HighlightUtil.buildArgTypesList(list);
             description = MessageFormat.format(CANNOT_RESOLVE_METHOD, new Object[]{methodName});
             if (candidateList.size() == 0) {
               elementToHighlight = referenceToMethod.getReferenceNameElement();
@@ -568,7 +563,7 @@ public class HighlightMethodUtil {
                                                           HighlightInfo highlightInfo) {
     for (int i = 0; i < methodCandidates.length; i++) {
       ResolveResult methodCandidate = methodCandidates[i];
-      PsiMethod method = ((PsiMethod)methodCandidate.getElement());
+      PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (!methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
         HighlightUtil.registerAccessQuickFixAction(method, methodCall.getMethodExpression(), highlightInfo);
       }
@@ -792,7 +787,6 @@ public class HighlightMethodUtil {
   static HighlightInfo checkConstructorCallMustBeFirstStatement(PsiReferenceExpression expression) {
     final String text = expression.getText();
     if (!PsiKeyword.THIS.equals(text) && !PsiKeyword.SUPER.equals(text)) return null;
-    if (!(expression.getParent() instanceof PsiMethodCallExpression)) return null;
     final PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
     if (new PsiMatcherImpl(expression)
       .parent(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
@@ -1200,10 +1194,7 @@ public class HighlightMethodUtil {
   public static HighlightInfo checkRecursiveConstructorInvocation(PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
       TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            textRange,
-                                                                            "Recursive constructor invocation");
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, "Recursive constructor invocation");
     }
     return null;
   }
