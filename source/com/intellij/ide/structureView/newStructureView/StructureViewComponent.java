@@ -76,8 +76,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper);
     JTree tree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
-                                                    (DefaultTreeModel)tree.getModel(),treeStructure,
-                                                    this);
+                                                    (DefaultTreeModel)tree.getModel(),treeStructure);
     myAbstractTreeBuilder.updateFromRoot();
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
@@ -304,6 +303,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     JTree tree = myAbstractTreeBuilder.getTree();
     DefaultMutableTreeNode currentTreeNode = ((DefaultMutableTreeNode)tree.getModel().getRoot());
     pathToElement.remove(0);
+    DefaultMutableTreeNode result = null;
     while (currentTreeNode != null) {
       AbstractTreeNode topPathElement = null;
       if (!pathToElement.isEmpty()) {
@@ -316,11 +316,12 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       if (!tree.isExpanded(treePath)) tree.expandPath(treePath);
       if (topPathElement != null) {
         currentTreeNode = findInChildren(currentTreeNode, topPathElement);
+        result = currentTreeNode;
       } else {
         currentTreeNode = null;
       }
     }
-    return currentTreeNode;
+    return result;
   }
 
   public boolean select(Object element, boolean requestFocus) {

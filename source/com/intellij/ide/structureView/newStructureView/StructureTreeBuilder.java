@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -15,21 +16,17 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
   private final MyCopyPasteListener myCopyPasteListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
-  private final StructureViewComponent myStructureViewComponent;
-  private boolean myStateIsSaved = false;
 
   public StructureTreeBuilder(Project project,
-                            JTree tree,
-                            DefaultTreeModel treeModel,
-                            AbstractTreeStructure treeStructure,
-                            final StructureViewComponent structureViewComponent) {
+                              JTree tree,
+                              DefaultTreeModel treeModel,
+                              AbstractTreeStructure treeStructure) {
     super(
       tree,
       treeModel,
       treeStructure, null
     );
 
-    myStructureViewComponent = structureViewComponent;
     myProject = project;
 
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
@@ -38,19 +35,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myCopyPasteListener = new MyCopyPasteListener();
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
-
-    myUpdater.runAfterUpdate(new Runnable() {
-      public void run() {
-        if (myStateIsSaved) {
-          try {
-            myStructureViewComponent.restoreStructureViewState();
-          }
-          finally {
-            myStateIsSaved = false;
-          }
-        }
-      }
-    });
   }
 
   public void dispose() {
@@ -82,9 +66,18 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   
   
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+    private final PsiModificationTracker myModificationTracker;
+    private long myOutOfCodeBlockModificationCount;
+
+    public MyPsiTreeChangeListener() {
+      myModificationTracker = PsiManager.getInstance(myProject).getModificationTracker();
+      myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    }
+
     public void childRemoved(PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
+
       childrenChanged();
     }
 
@@ -112,16 +105,16 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     private void childrenChanged() {
-      if (!myStateIsSaved) {
-        try {
-          myStructureViewComponent.saveStructureViewState();
-        }
-        finally {
-          myStateIsSaved = true;
-        }
+      if (myOutOfCodeBlockModificationCount == myModificationTracker.getOutOfCodeBlockModificationCount()) {
+        return;
       }
-      ((SmartTreeStructure)getTreeStructure()).rebuildTree();
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      try {
+        ((SmartTreeStructure)getTreeStructure()).rebuildTree();
+        myUpdater.addSubtreeToUpdate(myRootNode);
+      }
+      finally {
+        myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+      }
       return;
     }
 

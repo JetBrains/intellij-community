@@ -7,6 +7,7 @@ import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
+  private List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
 
   public CachingChildrenTreeNode(Project project, Value value, TreeModel treeModel) {
@@ -164,7 +165,26 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private void rebuildSubtree() {
     initChildren();
     performTreeActions();
+
+    synchronizeChildren();
+
   }
+
+  protected void synchronizeChildren() {
+    if (myOldChildren != null) {
+      for (Iterator<CachingChildrenTreeNode> iterator = myOldChildren.iterator(); iterator.hasNext();) {
+        CachingChildrenTreeNode oldInstance = iterator.next();
+        if (myChildren.contains(oldInstance)) {
+          final int newIndex = myChildren.indexOf(oldInstance);
+          final CachingChildrenTreeNode newInstance = myChildren.get(newIndex);
+          oldInstance.copyFromNew(newInstance);
+          myChildren.set(newIndex, oldInstance);
+        }
+      }
+    }
+  }
+
+  protected abstract void copyFromNew(final CachingChildrenTreeNode newInstance);
 
   protected abstract void performTreeActions();
 
@@ -175,7 +195,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   public void rebuildChildren() {
-    myChildren = null;
+    if (myChildren != null) {
+      myOldChildren = myChildren;
+      for (Iterator<CachingChildrenTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
+        iterator.next().rebuildChildren();
+      }
+      myChildren = null;
+    }
   }
 
 

@@ -9,6 +9,10 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
     super(project, value, treeModel);
   }
 
+  public void copyFromNew(final CachingChildrenTreeNode newInstance) {
+    
+  }
+
   public void initChildren() {
     clearChildren();
     TreeElement[] children = getValue().getChildren();

@@ -35,6 +35,7 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 
@@ -91,4 +92,20 @@ public abstract class PsiTreeElementBase implements StructureViewTreeElement, It
   }
 
   public abstract  StructureViewTreeElement[] getChildrenBase();
+
+  public int hashCode() {
+    if (getElement() == null) {
+      return 0;
+    } else {
+      return getElement().hashCode();
+    }
+  }
+
+  public boolean equals(Object object) {
+    if (object instanceof PsiTreeElementBase) {
+      return Comparing.equal(getElement(), ((PsiTreeElementBase)object).getElement());
+    } else {
+      return false;
+    }
+  }
 }

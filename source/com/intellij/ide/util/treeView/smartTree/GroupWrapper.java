@@ -9,6 +9,11 @@ class GroupWrapper extends CachingChildrenTreeNode<Group> {
     super(project, value, treeModel);
   }
 
+  public void copyFromNew(final CachingChildrenTreeNode newInstance) {
+    setChildren(newInstance.getChildren());
+    synchronizeChildren();
+  }
+
   public boolean contains(VirtualFile file) {
     return false;
   }
