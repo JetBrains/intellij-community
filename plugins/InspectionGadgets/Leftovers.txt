@@ -32,5 +32,4 @@
     Fix damn "Instanceof Incompatible Interface" inspection
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
-    SerialVersionUID calculation
     Fix list table alignment
