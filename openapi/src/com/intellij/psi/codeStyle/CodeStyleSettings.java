@@ -782,7 +782,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
   public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
   public String HTML_DO_NOT_ALIGN_CHILDREN_OF = "html,body";
-  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE = 7000;
+  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 100;
   public String HTML_TEXT_ELEMENTS = "a,b,img,span";
   public String HTML_KEEP_WHITESPACES_INSIDE = "span";
 

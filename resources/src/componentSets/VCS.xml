@@ -58,6 +58,7 @@
     <component>
       <interface-class>com.intellij.openapi.vfs.ReadonlyStatusHandler</interface-class>
       <implementation-class>com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
   </project-components>
 

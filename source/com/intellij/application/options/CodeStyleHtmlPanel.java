@@ -136,7 +136,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = myInsertNewLineTagNames.getText();
     settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = myRemoveNewLineTagNames.getText();
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF = myDoNotAlignChildrenTagNames.getText();
-    settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE = getIntValue(myDoNotAlignChildrenMinSize);
+    settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = getIntValue(myDoNotAlignChildrenMinSize);
     settings.HTML_TEXT_ELEMENTS = myTextElementsTagNames.getText();
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
@@ -165,7 +165,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInsertNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
     myRemoveNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
     myDoNotAlignChildrenTagNames.setText(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF);
-    myDoNotAlignChildrenMinSize.setText(String.valueOf(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE));
+    myDoNotAlignChildrenMinSize.setText(String.valueOf(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
     myTextElementsTagNames.setText(mySettings.HTML_TEXT_ELEMENTS);
     myKeepWhiteSpacesTagNames.setText(mySettings.HTML_KEEP_WHITESPACES_INSIDE);
 
@@ -216,7 +216,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE != getIntValue(myDoNotAlignChildrenMinSize)){
+    if (settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES != getIntValue(myDoNotAlignChildrenMinSize)){
       return true;
     }
 
