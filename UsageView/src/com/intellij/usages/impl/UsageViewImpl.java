@@ -869,7 +869,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       if (dataId.equals(USAGES)) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        return selectedUsages.toArray(new Usage[selectedUsages.size()]);
+        return (selectedUsages != null)? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null;
       }
 
       if (dataId.equals(USAGE_TARGETS)) {
