@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -25,7 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
-
   private final Project myProject;
   private final PsiClass myClass;
 
@@ -34,8 +33,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   private MemberInfo[] myMemberInfos;
 
   private JTextField myInterfaceNameField;
-  private final JTextField myTfPackageName;
-  private final FixedSizeButton myBtnPackageChooser;
+  private final TextFieldWithBrowseButton myPackageNameField;
   private JTextField mySourceClassField;
 
   private JavaDocPanel myJavaDocPanel;
@@ -49,9 +47,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     myProject = project;
     myClass = aClass;
 
-    myTfPackageName = new JTextField();
-    myBtnPackageChooser = new FixedSizeButton(myTfPackageName);
-
+    myPackageNameField = new TextFieldWithBrowseButton();
     init();
   }
 
@@ -61,26 +57,24 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
 
   protected void init() {
     myTargetDirectory = myClass.getContainingFile().getContainingDirectory();
-    myMemberInfos = MemberInfo.extractClassMembers(
-      myClass, new MemberInfo.Filter() {
-        public boolean includeMember(PsiMember element) {
-          if (element instanceof PsiMethod) {
-            return !((PsiMethod)element).isConstructor()
-                   && element.hasModifierProperty(PsiModifier.PUBLIC)
-                   && !element.hasModifierProperty(PsiModifier.STATIC);
-          }
-          else if (element instanceof PsiField) {
-            return element.hasModifierProperty(PsiModifier.FINAL)
-                   && element.hasModifierProperty(PsiModifier.STATIC)
-                   && element.hasModifierProperty(PsiModifier.PUBLIC);
-          }
-          else if (element instanceof PsiClass && ((PsiClass)element).isInterface()) {
-            return true;
-          }
-          return false;
+    myMemberInfos = MemberInfo.extractClassMembers(myClass, new MemberInfo.Filter() {
+      public boolean includeMember(PsiMember element) {
+        if (element instanceof PsiMethod) {
+          return !((PsiMethod)element).isConstructor()
+                 && element.hasModifierProperty(PsiModifier.PUBLIC)
+                 && !element.hasModifierProperty(PsiModifier.STATIC);
         }
+        else if (element instanceof PsiField) {
+          return element.hasModifierProperty(PsiModifier.FINAL)
+                 && element.hasModifierProperty(PsiModifier.STATIC)
+                 && element.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+        else if (element instanceof PsiClass && ((PsiClass)element).isInterface()) {
+          return true;
+        }
+        return false;
       }
-    );
+    });
 
     super.init();
 
@@ -88,7 +82,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
 
     PsiFile file = myClass.getContainingFile();
     if (file instanceof PsiJavaFile) {
-      myTfPackageName.setText(((PsiJavaFile)file).getPackageName());
+      myPackageNameField.setText(((PsiJavaFile)file).getPackageName());
     }
 
     updateDialogForExtractSuperclass();
@@ -97,7 +91,6 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
   }
-
 
 
   public MemberInfo[] getSelectedMembers() {
@@ -110,7 +103,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   }
 
   private String getTargetPackageName() {
-    return myTfPackageName.getText().trim();
+    return myPackageNameField.getText().trim();
   }
 
   public String getInterfaceName() {
@@ -143,24 +136,23 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     box.add(_panel);
     box.add(Box.createVerticalStrut(5));
 
-    myBtnPackageChooser.addActionListener(new ActionListener() {
+    myPackageNameField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
-        chooser.selectPackage(myTfPackageName.getText());
+        chooser.selectPackage(myPackageNameField.getText());
         chooser.show();
         PsiPackage aPackage = chooser.getSelectedPackage();
         if (aPackage != null) {
-          myTfPackageName.setText(aPackage.getQualifiedName());
+          myPackageNameField.setText(aPackage.getQualifiedName());
         }
       }
     });
     _panel = new JPanel(new BorderLayout());
     myPackageLabel = new JLabel("Package for new interface:");
-    myPackageLabel.setLabelFor(myTfPackageName);
+    myPackageLabel.setLabelFor(myPackageNameField);
     myPackageLabel.setDisplayedMnemonic('P');
     _panel.add(myPackageLabel, BorderLayout.NORTH);
-    _panel.add(myTfPackageName, BorderLayout.CENTER);
-    _panel.add(myBtnPackageChooser, BorderLayout.EAST);
+    _panel.add(myPackageNameField, BorderLayout.CENTER);
     box.add(_panel);
     box.add(Box.createVerticalStrut(10));
 
@@ -193,13 +185,11 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     //panel.setBorder(BorderFactory.createLineBorder(Color.gray));
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel("Members to Form Interface",
                                                                                myMemberInfos, null);
-    memberSelectionPanel.getTable().setMemberInfoModel(
-      new DelegatingMemberInfoModel(memberSelectionPanel.getTable().getMemberInfoModel()) {
-        public Boolean isFixedAbstract(MemberInfo member) {
-          return Boolean.TRUE;
-        }
+    memberSelectionPanel.getTable().setMemberInfoModel(new DelegatingMemberInfoModel(memberSelectionPanel.getTable().getMemberInfoModel()) {
+      public Boolean isFixedAbstract(MemberInfo member) {
+        return Boolean.TRUE;
       }
-    );
+    });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
 
     myJavaDocPanel = new JavaDocPanel("JavaDoc");
@@ -262,9 +252,10 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     }
 
     if (!isExtractSuperclass()) {
-      final ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(
-        myProject, false, getTargetDirectory(), interfaceName, myClass,
-        getSelectedMembers(), new JavaDocPolicy(getJavaDocPolicy()));
+      final ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), interfaceName,
+                                                                                myClass,
+                                                                                getSelectedMembers(),
+                                                                                new JavaDocPolicy(getJavaDocPolicy()));
       invokeRefactoring(processor);
     }
 

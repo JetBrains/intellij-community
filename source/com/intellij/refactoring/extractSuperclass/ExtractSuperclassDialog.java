@@ -5,7 +5,7 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -42,14 +42,17 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   private PsiDirectory myTargetDirectory;
   private JTextField mySourceClassField;
   private JTextField myClassNameField;
-  private final JTextField myTfPackageName;
+  private final TextFieldWithBrowseButton myTfPackageName;
   private PsiClass mySourceClass;
-  private final FixedSizeButton myBtnPackageChooser;
 
   private JavaDocPanel myJavaDocPanel;
 
 
-  public ExtractSuperclassDialog(Project project, final PsiClass sourceClass, MemberInfo[] selectedMembers, String targetPackageName, Callback callback) {
+  public ExtractSuperclassDialog(Project project,
+                                 final PsiClass sourceClass,
+                                 MemberInfo[] selectedMembers,
+                                 String targetPackageName,
+                                 Callback callback) {
     super(project, true);
     myProject = project;
     myMemberInfos = selectedMembers;
@@ -57,8 +60,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     setTitle(ExtractSuperclassHandler.REFACTORING_NAME);
     mySourceClass = sourceClass;
 
-    myTfPackageName=new JTextField(targetPackageName);
-    myBtnPackageChooser=new FixedSizeButton(myTfPackageName);
+    myTfPackageName = new TextFieldWithBrowseButton();
 
     init();
     updateDialogForExtractSuperclass();
@@ -73,7 +75,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
         list.add(info);
       }
     }
-    return (MemberInfo[]) list.toArray(new MemberInfo[list.size()]);
+    return (MemberInfo[])list.toArray(new MemberInfo[list.size()]);
   }
 
   InterfaceContainmentVerifier getContainmentVerifier() {
@@ -124,7 +126,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     box.add(_panel);
     box.add(Box.createVerticalStrut(5));
 
-    myBtnPackageChooser.addActionListener(new ActionListener() {
+    myTfPackageName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
         chooser.selectPackage(myTfPackageName.getText());
@@ -141,7 +143,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     myPackageLabel.setDisplayedMnemonic('P');
     _panel.add(myPackageLabel, BorderLayout.NORTH);
     _panel.add(myTfPackageName, BorderLayout.CENTER);
-    _panel.add(myBtnPackageChooser, BorderLayout.EAST);
+    //_panel.add(myBtnPackageChooser, BorderLayout.EAST);
     box.add(_panel);
     box.add(Box.createVerticalStrut(10));
 
@@ -165,7 +167,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel =
-            new MemberSelectionPanel("Members to Form Superclass", myMemberInfos, "Make abstract");
+      new MemberSelectionPanel("Members to Form Superclass", myMemberInfos, "Make abstract");
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     final MemberInfoModel memberInfoModel = new UsesAndInterfacesDependencyMemberInfoModel(mySourceClass, null, false,
                                                                                            myContainmentVerifier) {
@@ -221,7 +223,8 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     }
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {
-        RefactoringMessageUtil.showErrorMessage(ExtractSuperclassHandler.REFACTORING_NAME, errorString[0], HelpID.EXTRACT_SUPERCLASS, myProject);
+        RefactoringMessageUtil.showErrorMessage(ExtractSuperclassHandler.REFACTORING_NAME, errorString[0], HelpID.EXTRACT_SUPERCLASS,
+                                                myProject);
       }
       return;
     }
@@ -232,18 +235,17 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     RefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = getJavaDocPolicy();
     if (!isExtractSuperclass()) {
       final ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(myProject,
-                                           getTargetDirectory(), getSuperclassName(),
-                                           mySourceClass, getSelectedMemberInfos(), false,
-                                           new JavaDocPolicy(getJavaDocPolicy()));
+                                                                                  getTargetDirectory(), getSuperclassName(),
+                                                                                  mySourceClass, getSelectedMemberInfos(), false,
+                                                                                  new JavaDocPolicy(getJavaDocPolicy()));
       invokeRefactoring(processor);
-    } else {
+    }
+    else {
       closeOKAction();
     }
- }
+  }
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_SUPERCLASS);
   }
-
-
 }
