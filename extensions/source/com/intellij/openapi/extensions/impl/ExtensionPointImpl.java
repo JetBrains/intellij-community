@@ -63,8 +63,6 @@ public class ExtensionPointImpl implements ExtensionPoint {
   public void registerExtension(Object extension, LoadingOrder order) {
     assert (extension != null) : "Extension cannot be null";
 
-    myOwner.getMutablePicoContainer().registerComponentInstance(new Object(), extension);
-
     assert myExtensions.size() == myLoadedAdapters.size();
 
     if (LoadingOrder.ANY == order) {
