@@ -38,7 +38,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     FileType fileType = file.getFileType();
     final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(
-      file.canContainJavaCode() && fileType != StdFileTypes.JSP? StdFileTypes.JAVA:
+      file.canContainJavaCode() && fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX? StdFileTypes.JAVA:
       fileType
     );
     if (quoteHandler==null) return false;

@@ -299,6 +299,7 @@ public class BraceMatchingUtil {
     registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
     registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
     registerBraceMatcher(StdFileTypes.JSP, braceMatcher);
+    registerBraceMatcher(StdFileTypes.JSPX, braceMatcher);
   }
 
   public static void registerBraceMatcher(FileType fileType,BraceMatcher braceMatcher) {

@@ -68,6 +68,7 @@ public class TypedHandler implements TypedActionHandler {
     registerQuoteHandler(StdFileTypes.HTML, quoteHandler);
     registerQuoteHandler(StdFileTypes.XHTML, quoteHandler);
     registerQuoteHandler(StdFileTypes.JSP, new HtmlQuoteHandler(new JavaQuoteHandler()));
+    registerQuoteHandler(StdFileTypes.JSPX, new HtmlQuoteHandler(new JavaQuoteHandler()));
   }
 
   public static class HtmlQuoteHandler implements QuoteHandler {

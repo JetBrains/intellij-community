@@ -980,7 +980,8 @@ public class SelectWordUtil {
 
         FileType fileType = (containingFile != null) ? containingFile.getFileType() : null;
         if (fileType == StdFileTypes.HTML ||
-            fileType == StdFileTypes.XHTML) {
+            fileType == StdFileTypes.XHTML ||
+            fileType == StdFileTypes.JSPX) {
           result = true;
         }
       }

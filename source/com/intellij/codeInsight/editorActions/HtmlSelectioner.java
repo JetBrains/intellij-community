@@ -45,7 +45,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
       VirtualFile virtualFile = (file!=null)?file.getVirtualFile():null;
       FileType fType = (virtualFile!=null)?FileTypeManager.getInstance().getFileTypeByFile(virtualFile):null;
 
-      return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML;
+      return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX;
     }
     else {
       return e instanceof JspToken && ((JspToken)e).getTokenType() == JspTokenType.JSP_TEMPLATE_DATA;
