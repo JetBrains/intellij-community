@@ -1,7 +1,7 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ public interface XmlElementType {
   IElementType XML_TEXT = new IXmlElementType("XML_TEXT");
 
 
-  IElementType HTML_FILE = new IChameleonElementType("HTML_FILE", Language.findByID("HTML")){
+  IElementType HTML_FILE = new IChameleonElementType("HTML_FILE", StdLanguages.HTML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
@@ -54,7 +54,7 @@ public interface XmlElementType {
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
-  IElementType XML_FILE = new IChameleonElementType("XML_FILE", Language.findByID("XML")){
+  IElementType XML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
@@ -64,7 +64,7 @@ public interface XmlElementType {
   };
 
 
-  IElementType XHTML_FILE = new IChameleonElementType("XML_FILE", Language.findByID("XML")){
+  IElementType XHTML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XHTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
@@ -74,7 +74,7 @@ public interface XmlElementType {
   };
 
 
-  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", Language.findByID("XML")){
+  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDParser parser = new DTDParser();
@@ -87,7 +87,7 @@ public interface XmlElementType {
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
-  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", Language.findByID("XML")){
+  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDMarkupParser parser = new DTDMarkupParser();

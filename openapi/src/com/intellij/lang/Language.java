@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,21 +28,36 @@ import java.util.Map;
 public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static Map<String, Language> ourRegisteredLanguages = new HashMap<String, Language>();
+  private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   public static final Language ANY = new Language("") {};
 
   protected Language(final String ID) {
     myID = ID;
-    if (ourRegisteredLanguages.containsKey(ID)) {
-      LOG.error("Language '" + ID + "' is already registered");
+    Class<? extends Language> langClass = getClass();
+
+    if (ourRegisteredLanguages.containsKey(langClass)) {
+      LOG.error("Language '" + langClass.getName() + "' is already registered");
       return;
     }
-    ourRegisteredLanguages.put(ID, this);
+    ourRegisteredLanguages.put(langClass, this);
+
+    try {
+      final Field langField = StdLanguages.class.getDeclaredField(ID);
+      LOG.assertTrue(Modifier.isStatic(langField.getModifiers()));
+      LOG.assertTrue(Modifier.isPublic(langField.getModifiers()));
+      langField.set(null, this);
+    }
+    catch (NoSuchFieldException e) {
+      // Do nothing. Not a standard file type
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
   }
 
-  public static Language findByID(String id) {
-    return ourRegisteredLanguages.get(id);
+  public static <T extends Language> T findInstance(Class<T> klass) {
+    return (T)ourRegisteredLanguages.get(klass);
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {

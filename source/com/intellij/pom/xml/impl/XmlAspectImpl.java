@@ -2,7 +2,7 @@ package com.intellij.pom.xml.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.StdLanguages;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -69,7 +69,7 @@ public class XmlAspectImpl implements XmlAspect {
 
         public void visitElement(PsiElement element) {
           final Language language = element.getNode().getElementType().getLanguage();
-          if (language != XMLLanguage.getInstance() && language != Language.ANY) return;
+          if (language != StdLanguages.XML && language != Language.ANY) return;
 
           final ASTNode child = element.getNode();
           final ASTNode treeParent = child.getTreeParent();
