@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.openapi.project.Project;
 
@@ -20,21 +21,10 @@ public class ClassUtils {
     /** @noinspection StaticCollection*/
     private static final Set numericTypes = new HashSet(6);
     /** @noinspection StaticCollection*/
-    private static final Set primitiveTypes = new HashSet(9);
-    /** @noinspection StaticCollection*/
     private static final Set integralTypes = new HashSet(10);
 
     static
     {
-        primitiveTypes.add(PsiType.BOOLEAN);
-        primitiveTypes.add(PsiType.LONG);
-        primitiveTypes.add(PsiType.INT);
-        primitiveTypes.add(PsiType.SHORT);
-        primitiveTypes.add(PsiType.CHAR);
-        primitiveTypes.add(PsiType.BYTE);
-        primitiveTypes.add(PsiType.FLOAT);
-        primitiveTypes.add(PsiType.DOUBLE);
-
         integralTypes.add(PsiType.LONG);
         integralTypes.add(PsiType.INT);
         integralTypes.add(PsiType.SHORT);
@@ -89,7 +79,7 @@ public class ClassUtils {
     }
 
     public static boolean isPrimitive(PsiType type) {
-        return  primitiveTypes.contains(type);
+        return  TypeConversionUtil.isPrimitiveAndNotNull(type);
     }
 
     public static boolean isIntegral(PsiType type) {

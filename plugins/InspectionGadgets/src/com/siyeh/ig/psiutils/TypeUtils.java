@@ -24,8 +24,7 @@ public class TypeUtils {
         if (targetType == null) {
             return false;
         }
-        final String text = targetType.getCanonicalText();
-        return typeName.equals(text);
+        return targetType.equalsToText(typeName);
     }
 
     public static boolean isJavaLangObject(PsiType targetType) {

@@ -114,9 +114,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             if (lhsType == null) {
                 return false;
             }
-            return !ClassUtils.isPrimitive(lhsType)
-                    && !lhsType.equals(PsiType.NULL)
-                    && TypeUtils.isJavaLangString(lhsType);
+            return TypeUtils.isJavaLangString(lhsType);
         }
     }
 

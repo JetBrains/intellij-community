@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -201,8 +204,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (type == null) {
                 return false;
             }
-            return !ClassUtils.isPrimitive(type)
-                    && !type.equals(PsiType.NULL)
+            return !(type instanceof PsiPrimitiveType)
                     && !TypeUtils.isJavaLangString(type);
         }
 
