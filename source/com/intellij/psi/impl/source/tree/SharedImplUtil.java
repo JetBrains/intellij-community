@@ -201,13 +201,6 @@ public class SharedImplUtil {
     }
   }
 
-  public static void invalidate(final TreeElement element) {
-    // invalidate replaced element
-    element.setTreeNext(null);
-    element.setTreePrev(null);
-    element.setTreeParent(null);
-  }
-
   public static PsiManager getManagerByTree(final ASTNode node) {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();

@@ -157,7 +157,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this) {
-      public PomModelEvent run() throws IncorrectOperationException {
+      public PomModelEvent runInner() throws IncorrectOperationException {
         final String oldText = getText();
         replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
         clearCaches();
@@ -199,12 +199,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     else setValue(new StringBuffer(getValue()).replace(displayStart, displayEnd, "").toString());
   }
 
-  public XmlElement getParent() {
-    return (XmlElement)super.getParent();
-  }
-
   public XmlTag getParentTag() {
-    final XmlElement parent = getParent();
+    final PsiElement parent = getParent();
     if (parent instanceof XmlTag) return (XmlTag)parent;
     return null;
   }

@@ -16,7 +16,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -173,11 +172,10 @@ public class CodeFormatterFacade implements Constants {
           final PomModel model = myHelper.getProject().getModel();
           final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
           model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(element)) {
-            public PomModelEvent run() throws IncorrectOperationException {
+            public PomModelEvent runInner() throws IncorrectOperationException {
               final PomModelEvent result = new PomModelEvent(model);
 
               final FileElement fileElement = getFileElement(element);
-              result.registerChangeSet(aspect, new TreeChangeEventImpl(aspect, fileElement));
               GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, result).format();
               TreeUtil.clearCaches(fileElement);
               return result;

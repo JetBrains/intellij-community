@@ -66,4 +66,8 @@ public class XMLLanguage extends Language {
     if(token == XmlTokenType.XML_DATA_CHARACTERS) return true;
     return super.mayHaveReferences(token);
   }
+
+  public static Language getInstance() {
+    return findByID("XML");
+  }
 }

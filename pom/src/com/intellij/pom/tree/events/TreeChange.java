@@ -15,9 +15,14 @@ public interface TreeChange {
 
   ASTNode[] getAffectedChildren();
   ChangeInfo getChangeByChild(ASTNode child);
+  int getChildOffsetInNewTree(ASTNode child);
 
   void composite(TreeChange treeChange);
   boolean isEmpty();
 
   void removeChange(ASTNode beforeEqualDepth);
+
+  void add(final TreeChange value);
+
+  int getOldLength();
 }

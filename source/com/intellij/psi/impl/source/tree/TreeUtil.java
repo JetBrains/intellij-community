@@ -7,7 +7,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharTable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -236,7 +235,7 @@ public class TreeUtil {
         DebugUtil.checkTreeStructure(element.getTreeNext());
       }
     }
-    SharedImplUtil.invalidate(element);
+    invalidate(element);
   }
 
   // remove nodes from start[including] to end[excluding] from the parent
@@ -320,17 +319,17 @@ public class TreeUtil {
     return null;
   }
 
-  public static int getNotCachedLength(ASTNode tree, CharTable table) {
+  public static int getNotCachedLength(ASTNode tree) {
     int length = 0;
 
     if (tree instanceof LeafElement) {
-      length += ((LeafElement)tree).getTextLength(table);
+      length += tree.getTextLength();
     }
     else{
       final ASTNode composite = tree;
       TreeElement firstChild = (TreeElement)composite.getFirstChildNode();
       while(firstChild != null){
-        length += getNotCachedLength(firstChild, table);
+        length += getNotCachedLength(firstChild);
         firstChild = firstChild.getTreeNext();
       }
     }
@@ -362,5 +361,19 @@ public class TreeUtil {
 
   public static ASTNode nextLeaf(final ASTNode node) {
     return ParseUtil.nextLeaf((TreeElement)node, null);
+  }
+
+  public static FileElement getFileElement(TreeElement parent) {
+    while(parent != null && !(parent instanceof FileElement)) {
+      parent = parent.getTreeParent();
+    }
+    return (FileElement)parent;
+  }
+
+  public static void invalidate(final TreeElement element) {
+    // invalidate replaced element
+    element.setTreeNext(null);
+    element.setTreePrev(null);
+    element.setTreeParent(null);
   }
 }

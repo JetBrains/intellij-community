@@ -7,12 +7,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.*;
@@ -29,67 +36,166 @@ public class ChangeUtil implements Constants {
 
   private ChangeUtil() { }
 
-  public static void addChild(final CompositeElement parent, final TreeElement child, TreeElement anchorBefore) {
+  public static void addChild(final CompositeElement parent, TreeElement child, final TreeElement anchorBefore) {
     LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
-
-    int offset = anchorBefore != null
-      ? anchorBefore.getStartOffset()
-      : parent.getStartOffset() + parent.getTextLength();
-
-    PsiTreeChangeEventImpl event = null;
-    PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
-    PsiFile file = parentPsiElement.getContainingFile();
-    checkConsistency(file);
-
-    boolean physical = parentPsiElement.isPhysical();
-    if (physical) {
-      PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null) {
-        manager.invalidateFile(file);
-      }
-      event = new PsiTreeChangeEventImpl(manager);
-      event.setParent(parentPsiElement);
-      event.setFile(file);
-      event.setOffset(offset);
-      event.setOldLength(0);
-      manager.beforeChildAddition(event);
-
-      RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null) {
-        repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
-      }
-    }
+    transformAll((TreeElement)parent.getFirstChildNode());
+    final TreeElement last = child.getTreeNext();
+    final TreeElement first = transformAll(child);
 
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
     final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(child);
-    TreeUtil.remove(child);
-    if (newCharTab != oldCharTab) {
-      registerLeafsInCharTab(newCharTab, child, oldCharTab);
-    }
-    if (anchorBefore != null) {
-      TreeUtil.insertBefore(anchorBefore, child);
-    }
-    else {
-      TreeUtil.addChildren(parent, child);
-    }
 
-    //updateCachedLengths(parent, childLength);
-    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    parent.subtreeChanged();
+    removeChildrenInner(first, last, oldCharTab);
 
-    if (physical) {
-      event.setChild(SourceTreeToPsiMap.treeElementToPsi(child));
-      manager.childAdded(event);
-    }
-    else if (manager != null) {
-      manager.nonPhysicalChange();
-    }
+    if (newCharTab != oldCharTab) registerLeafsInCharTab(newCharTab, child, oldCharTab);
 
-    checkConsistency(file);
+    prepareAndRunChangeAction(new ChangeAction(){
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        if (anchorBefore != null) {
+          insertBefore(destinationTreeChange, newCharTab, anchorBefore, first);
+        }
+        else {
+          add(destinationTreeChange, newCharTab, parent, first);
+        }
+      }
+    }, parent);
+  }
+
+  public static void removeChild(final CompositeElement parent, final TreeElement child) {
+    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
+    removeChildInner(child, charTableByTree);
+  }
+
+  public static void removeChildren(final CompositeElement parent, final TreeElement first, final TreeElement last) {
+    if(first == null) return;
+    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
+    removeChildrenInner(first, last, charTableByTree);
+  }
+
+  public static void replaceChild(final CompositeElement parent, final TreeElement old, final TreeElement newC) {
+    LOG.assertTrue(old.getTreeParent() == parent);
+    final TreeElement oldChild = transformAll(old);
+    final TreeElement newChildNext = newC.getTreeNext();
+    final TreeElement newChild = transformAll(newC);
+
+    if(oldChild == newChild) return;
+    final CharTable newCharTable = SharedImplUtil.findCharTableByTree(parent);
+    final CharTable oldCharTable = SharedImplUtil.findCharTableByTree(newChild);
+
+    removeChildrenInner(newChild, newChildNext, oldCharTable);
+
+    if (oldCharTable != newCharTable) registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
+
+    prepareAndRunChangeAction(new ChangeAction(){
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        replace(destinationTreeChange, newCharTable, oldChild, newChild);
+        repairRemovedElement(parent, newCharTable, oldChild);
+      }
+    }, parent);
+  }
+
+  public static void replaceAllChildren(final CompositeElement parent, final ASTNode newChildrenParent) {
+    transformAll((TreeElement)parent.getFirstChildNode());
+    transformAll((TreeElement)newChildrenParent.getFirstChildNode());
+
+    final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
+    final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
+
+    final ASTNode firstChild = newChildrenParent.getFirstChildNode();
+    removeChildrenInner((TreeElement)newChildrenParent.getFirstChildNode(), null, oldCharTab);
+    if (firstChild != null) {
+      registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
+      prepareAndRunChangeAction(new ChangeAction(){
+        public void makeChange(TreeChangeEvent destinationTreeChange) {
+          if(parent.getTreeParent() != null){
+            final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, parent, newCharTab);
+            changeInfo.setOldLength(parent.getTextLength());
+            destinationTreeChange.addElementaryChange(parent, changeInfo);
+            TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
+            TreeUtil.addChildren(parent, (TreeElement)firstChild);
+          }
+          else{
+            final TreeElement first = (TreeElement)parent.getFirstChildNode();
+            remove(destinationTreeChange, newCharTab, first, null);
+            add(destinationTreeChange, newCharTab, parent, (TreeElement)firstChild);
+            repairRemovedElement(parent, newCharTab, first);
+          }
+        }
+      }, parent);
+    }
+  }
+
+  private static TreeElement transformAll(TreeElement first){
+    ASTNode newFirst = null;
+    ASTNode child = first;
+    while (child != null) {
+      if (child instanceof ChameleonElement) {
+        ASTNode next = child.getTreeNext();
+        child = ChameleonTransforming.transform((ChameleonElement)child);
+        if (child == null) {
+          child = next;
+        }
+        continue;
+      }
+      if(newFirst == null) newFirst = child;
+      child = child.getTreeNext();
+    }
+    return (TreeElement)newFirst;
+  }
+
+  private static void repairRemovedElement(final CompositeElement oldParent, final CharTable newCharTable, final TreeElement oldChild) {
+    final FileElement treeElement = new DummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
+    TreeUtil.addChildren(treeElement, oldChild);
+  }
+
+  private static void add(final TreeChangeEvent destinationTreeChange,
+                          final CharTable newCharTab,
+                          final CompositeElement parent,
+                          final TreeElement first) {
+    TreeUtil.addChildren(parent, first);
+    TreeElement child = first;
+    while(child != null){
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child, newCharTab));
+      child = child.getTreeNext();
+    }
+  }
+
+  private static void remove(final TreeChangeEvent destinationTreeChange,
+                             final CharTable newCharTab,
+                             final TreeElement first,
+                             final TreeElement last) {
+    TreeElement child = first;
+    while(child != last && child != null){
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child, newCharTab));
+      child = child.getTreeNext();
+    }
+    TreeUtil.removeRange(first, last);
+  }
+
+  private static void insertBefore(final TreeChangeEvent destinationTreeChange,
+                                   final CharTable newCharTab,
+                                   final TreeElement anchorBefore,
+                                   final TreeElement first) {
+    TreeUtil.insertBefore(anchorBefore, first);
+    TreeElement child = first;
+    while(child != anchorBefore){
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child, newCharTab));
+      child = child.getTreeNext();
+    }
+  }
+
+  private static void replace(final TreeChangeEvent sourceTreeChange,
+                              final CharTable table,
+                              final TreeElement oldChild,
+                              final TreeElement newChild) {
+    TreeUtil.replaceWithList(oldChild, newChild);
+    final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild, table);
+    sourceTreeChange.addElementaryChange(newChild, change);
+    change.setReplaced(oldChild);
   }
 
   private static void checkConsistency(PsiFile file) {
-    if (LOG.isDebugEnabled() && file != null) {
+    if (file != null) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       if (document != null) {
         PsiDocumentManagerImpl.checkConsistency(file, document);
@@ -104,6 +210,8 @@ public class ChangeUtil implements Constants {
       CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
       if (child instanceof LeafElement) {
           ((LeafElement)child).registerInCharTable(newCharTab);
+          ((LeafElement)child).registerInCharTable(newCharTab);
+        ((LeafElement)child).registerInCharTable(newCharTab);
       }
       else {
         registerLeafsInCharTab(newCharTab, child.getFirstChildNode(), charTable != null ? charTable : oldCharTab);
@@ -115,170 +223,61 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  public static void removeChild(final CompositeElement parent, final TreeElement child) {
-    LOG.assertTrue(child.getTreeParent() == parent);
-
-    int offset = child.getStartOffset();
-    int childLength = child.getTextLength();
-
-    PsiTreeChangeEventImpl event = null;
-    PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
-    PsiFile file = parentPsiElement.getContainingFile();
-    boolean physical = parentPsiElement.isPhysical();
-    if (physical) {
-      PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null) {
-        manager.invalidateFile(file);
-      }
-      event = new PsiTreeChangeEventImpl(manager);
-      event.setParent(parentPsiElement);
-      event.setChild(SourceTreeToPsiMap.treeElementToPsi(child));
-      event.setFile(file);
-      event.setOffset(offset);
-      event.setOldLength(childLength);
-      manager.beforeChildRemoval(event);
-
-      RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null) {
-        repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
-      }
-    }
-
-    child.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(child));
-    TreeUtil.remove(child);
-
-    parent.subtreeChanged();
-    //updateCachedLengths(parent, -childLength);
-
-    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical) {
-      manager.childRemoved(event);
-    }
-    else if (manager != null) {
-      manager.nonPhysicalChange();
-    }
-    checkConsistency(file);
+  private static void removeChildInner(final TreeElement child, final CharTable oldCharTab) {
+    removeChildrenInner(child, child.getTreeNext(), oldCharTab);
   }
 
-  public static void replaceChild(final CompositeElement parent, final TreeElement oldChild, final TreeElement newChild) {
-    LOG.assertTrue(oldChild.getTreeParent() == parent);
+  private static void removeChildrenInner(final TreeElement first, final TreeElement last, final CharTable oldCharTab) {
+    final FileElement fileElement = TreeUtil.getFileElement(first);
+    if (fileElement != null) {
+      prepareAndRunChangeAction(new ChangeAction() {
+        public void makeChange(TreeChangeEvent destinationTreeChange) {
+          remove(destinationTreeChange, oldCharTab, first, last);
+          repairRemovedElement(fileElement, oldCharTab, first);
 
-    int offset = oldChild.getStartOffset();
-    int oldLength = oldChild.getTextLength();
-    final CharTable newCharTable = SharedImplUtil.findCharTableByTree(parent);
-    final CharTable oldCharTable = SharedImplUtil.findCharTableByTree(newChild);
-
-    PsiTreeChangeEventImpl event = null;
-    PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
-    PsiFile file = parentPsiElement.getContainingFile();
-    boolean physical = parentPsiElement.isPhysical();
-    if (physical) {
-      PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      if (file != null) {
-        manager.invalidateFile(file);
-      }
-      event = new PsiTreeChangeEventImpl(manager);
-      event.setParent(parentPsiElement);
-      event.setOldChild(SourceTreeToPsiMap.treeElementToPsi(oldChild));
-      event.setFile(file);
-      event.setOffset(offset);
-      event.setOldLength(oldLength);
-      manager.beforeChildReplacement(event);
-
-      RepositoryManager repositoryManager = manager.getRepositoryManager();
-      if (repositoryManager != null) {
-        repositoryManager.beforeChildAddedOrRemoved(file, parent, oldChild);
-        repositoryManager.beforeChildAddedOrRemoved(file, parent, newChild);
-      }
-    }
-
-    TreeUtil.remove(newChild);
-    if (oldCharTable != newCharTable) {
-      registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
-    }
-
-    oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTable);
-    if (oldChild != newChild) {
-      TreeUtil.replaceWithList(oldChild, newChild);
-      SharedImplUtil.invalidate(oldChild);
-    }
-
-    parent.subtreeChanged();
-
-    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical) {
-      event.setNewChild(SourceTreeToPsiMap.treeElementToPsi(newChild));
-      manager.childReplaced(event);
-    }
-    else if (manager != null) {
-      manager.nonPhysicalChange();
-    }
-    checkConsistency(file);
-  }
-
-  public static void replaceAllChildren(final CompositeElement parent, final ASTNode newChildrenParent) {
-    int offset = parent.getStartOffset();
-    int oldLength = parent.getTextLength();
-    int newLength = newChildrenParent.getTextLength();
-
-    PsiTreeChangeEventImpl event = null;
-    PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
-    boolean physical = parentPsiElement.isPhysical();
-    PsiFile file = parentPsiElement.getContainingFile();
-    ChameleonTransforming.transformChildren(newChildrenParent);
-    final ASTNode firstChild = newChildrenParent.getFirstChildNode();
-    if (physical) {
-      PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-      manager.invalidateFile(file);
-      event = new PsiTreeChangeEventImpl(manager);
-      event.setParent(parentPsiElement);
-      event.setFile(file);
-      event.setOffset(offset);
-      event.setOldLength(oldLength);
-      manager.beforeChildrenChange(event);
-
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile != null) {
-        RepositoryManager repositoryManager = manager.getRepositoryManager();
-        if (repositoryManager != null) {
-          ChameleonTransforming.transformChildren(parent);
-          for (ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-            repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
-          }
-
-          for (ASTNode child = firstChild; child != null; child = child.getTreeNext()) {
-            repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
-          }
+          final FileElement treeElement = new DummyHolder(fileElement.getManager(), oldCharTab, false).getTreeElement();
+          TreeUtil.addChildren(treeElement, first);
         }
-      }
+      }, first.getTreeParent());
     }
-    final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
-    ASTNode oldChild = parent.getFirstChildNode();
-    while (oldChild != null) {
-      oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTab);
-      oldChild = oldChild.getTreeNext();
+    else {
+      TreeUtil.removeRange(first, last);
     }
-    TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
+  }
 
-    if (firstChild != null) {
-      final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
-      registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
-      TreeUtil.addChildren(parent, (TreeElement)firstChild);
-    }
-    parent.setCachedLength(newLength);
-    parent.subtreeChanged();
-    //if (parent.getTreeParent() != null){
-    //  updateCachedLengths(parent.getTreeParent(), newLength - oldLength);
-    //}
+  private static interface ChangeAction{
+    public void makeChange(TreeChangeEvent destinationTreeChange);
+  }
 
-    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
-    if (physical) {
-      manager.childrenChanged(event);
+  private static void prepareAndRunChangeAction(final ChangeAction action, final CompositeElement changedElement){
+    final FileElement changedFile = TreeUtil.getFileElement(changedElement);
+    final PsiManager manager = changedFile.getManager();
+    final PomModel model = manager.getProject().getModel();
+    try{
+      final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
+      model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
+        public PomModelEvent runInner() throws IncorrectOperationException {
+          final PomModelEvent event = new PomModelEvent(model);
+          final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
+          event.registerChangeSet(treeAspect, destinationTreeChange);
+          RepositoryManager repositoryManager = ((PsiManagerImpl)manager).getRepositoryManager();
+          if (repositoryManager != null) {
+            final PsiFile file = (PsiFile)changedFile.getPsi();
+            repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
+            action.makeChange(destinationTreeChange);
+            repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
+          }
+          else {
+            action.makeChange(destinationTreeChange);
+          }
+          changedElement.subtreeChanged();
+          return event;
+        }
+      }, treeAspect);
     }
-    else if (manager != null) {
-      manager.nonPhysicalChange();
+    catch(IncorrectOperationException ioe){
+      LOG.error(ioe);
     }
-    checkConsistency(file);
   }
 
   public static void encodeInformation(TreeElement element) {
@@ -440,6 +439,7 @@ public class ChangeUtil implements Constants {
     final TreeElement treeElement = _copyToElement(original, holderElement.getCharTable());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
     TreeUtil.addChildren(holderElement, treeElement);
+    TreeUtil.clearCaches(holderElement);
     //  treeElement.setTreePrev(treePrev);
     return treeElement;
   }
@@ -676,35 +676,6 @@ public class ChangeUtil implements Constants {
       parent.addChild(firstChild, anchorBefore);
       firstChild = next;
     }
-  }
-
-  public static void replaceAll(LeafElement[] leafElements, LeafElement merged) {
-    if (leafElements.length == 0) return;
-    final CompositeElement parent = leafElements[0].getTreeParent();
-    if (LOG.isDebugEnabled()) {
-      for (int i = 0; i < leafElements.length; i++) {
-        final ASTNode leafElement = leafElements[i];
-        LOG.assertTrue(leafElement.getTreeParent() == parent);
-      }
-    }
-
-    final PsiElement psiParent = SourceTreeToPsiMap.treeElementToPsi(parent);
-    final PsiFile containingFile = psiParent.getContainingFile();
-    final PsiManagerImpl manager = (PsiManagerImpl)containingFile.getManager();
-    final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    if (containingFile.isPhysical()) {
-      event.setParent(psiParent);
-      event.setFile(containingFile);
-      event.setOffset(parent.getStartOffset());
-      event.setOldLength(parent.getTextLength());
-      manager.beforeChildrenChange(event);
-    }
-    TreeUtil.insertAfter(leafElements[0], merged);
-    for (int i = 0; i < leafElements.length; i++) TreeUtil.remove(leafElements[i]);
-
-    parent.subtreeChanged();
-    if (containingFile.isPhysical()) manager.childrenChanged(event);
-    checkConsistency(containingFile);
   }
 
   public static int checkTextRanges(PsiElement root) {

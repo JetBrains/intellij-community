@@ -339,6 +339,10 @@ public class CompositeElement extends TreeElement implements Cloneable {
     ChangeUtil.removeChild(this, (TreeElement)child);
   }
 
+  public void removeRange(ASTNode first, ASTNode firstWhichStayInTree) {
+    ChangeUtil.removeChildren(this, (TreeElement)first, (TreeElement)firstWhichStayInTree);
+  }
+
   public void replaceChild(ASTNode oldChild, ASTNode newChild) {
     ChangeUtil.replaceChild(this, (TreeElement)oldChild, (TreeElement)newChild);
   }

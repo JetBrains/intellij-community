@@ -11,7 +11,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -24,7 +23,6 @@ public class PsiBasedFormattingModel implements FormattingModel{
   private final Document myDocument;
   private final ASTNode myASTNode;
   private final Project myProject;
-  private PomModelEvent myPomEvent;
 
   public PsiBasedFormattingModel(final PsiFile file) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
@@ -50,13 +48,11 @@ public class PsiBasedFormattingModel implements FormattingModel{
     final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
     try {
       model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(myASTNode)) {
-        public PomModelEvent run(){
-          myPomEvent = new PomModelEvent(model);
+        public PomModelEvent runInner(){
           final FileElement fileElement = getFileElement(myASTNode);
-          myPomEvent.registerChangeSet(aspect, new TreeChangeEventImpl(aspect, fileElement));
           action.run();
           TreeUtil.clearCaches(fileElement);
-          return myPomEvent;
+          return null;
         }
 
         private FileElement getFileElement(final ASTNode element) {
@@ -67,14 +63,12 @@ public class PsiBasedFormattingModel implements FormattingModel{
     catch (IncorrectOperationException e) {
       throw e;
     }
-    myPomEvent = null;
-
   }
 
   public void replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     FormatterUtil.replaceWhiteSpace(whiteSpace,
                                     myASTNode.findLeafElementAt(textRange.getEndOffset()),
-                                    ElementType.WHITE_SPACE, myPomEvent);
+                                    ElementType.WHITE_SPACE);
   }
 
   public CharSequence getText(final TextRange textRange) {

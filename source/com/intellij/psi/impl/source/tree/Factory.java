@@ -492,4 +492,13 @@ public class Factory implements Constants {
     ((PsiErrorElementImpl)errorElement).setErrorDescription(description);
     return errorElement;
   }
+
+  public static CompositeElement createCompositeElement(final IElementType type,
+                                                        final CharTable charTableByTree,
+                                                        final PsiManager manager) {
+    final FileElement treeElement = new DummyHolder(manager, null, charTableByTree).getTreeElement();
+    final CompositeElement composite = createCompositeElement(type);
+    TreeUtil.addChildren(treeElement, composite);
+    return composite;
+  }
 }

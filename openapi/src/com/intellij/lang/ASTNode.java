@@ -47,6 +47,8 @@ public interface ASTNode extends UserDataHolder {
 
   void removeChild(ASTNode child);
 
+  void removeRange(ASTNode first, ASTNode firstWhichStayInTree);
+
   void replaceChild(ASTNode oldChild, ASTNode newChild);
 
   void replaceAllChildrenToChildrenOf(ASTNode anotherParent);

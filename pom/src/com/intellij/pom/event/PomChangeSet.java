@@ -35,4 +35,5 @@ import com.intellij.pom.PomModelAspect;
 
 public interface PomChangeSet {
   PomModelAspect getAspect();
+  void merge(PomChangeSet blocked);
 }

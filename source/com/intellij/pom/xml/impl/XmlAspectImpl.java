@@ -1,6 +1,8 @@
 package com.intellij.pom.xml.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -58,7 +60,7 @@ public class XmlAspectImpl implements XmlAspect {
         changesByElement.addChange(changedElement, changeInfo);
         changedElement = parent;
       }
-      if (changedElement == null) continue;
+      if(changedElement == null) continue;
       final TreeChange finalChangedElement = changesByElement;
       psiElement.accept(new PsiElementVisitor() {
         TreeChange myChange = finalChangedElement;
@@ -66,6 +68,9 @@ public class XmlAspectImpl implements XmlAspect {
         public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
         public void visitElement(PsiElement element) {
+          final Language language = element.getNode().getElementType().getLanguage();
+          if (language != XMLLanguage.getInstance() && language != Language.ANY) return;
+
           final ASTNode child = element.getNode();
           final ASTNode treeParent = child.getTreeParent();
           if (treeParent == null) return;

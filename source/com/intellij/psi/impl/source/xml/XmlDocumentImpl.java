@@ -115,7 +115,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final TreeElement[] holder = new TreeElement[1];
     try{
       model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent run() throws IncorrectOperationException {
+        public PomModelEvent runInner() throws IncorrectOperationException {
           holder[0] = XmlDocumentImpl.super.addInternal(first, last, anchor, before);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }
@@ -130,7 +130,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent run() throws IncorrectOperationException {
+        public PomModelEvent runInner() throws IncorrectOperationException {
           XmlDocumentImpl.super.deleteChildInternal(child);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }
@@ -144,7 +144,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent run() throws IncorrectOperationException {
+        public PomModelEvent runInner() throws IncorrectOperationException {
           XmlDocumentImpl.super.replaceChildInternal(child, newElement); 
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }

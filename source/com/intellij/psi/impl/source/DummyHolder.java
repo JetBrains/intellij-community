@@ -25,9 +25,15 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private PsiElement myContext;
   private CharTable myTable = null;
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
+  private Boolean myExplicitlyValid = null;
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
+  }
+
+  public DummyHolder(PsiManager manager, CharTable table, boolean validity) {
+    this(manager, null, null, table);
+    myExplicitlyValid = new Boolean(validity);
   }
 
   public DummyHolder(PsiManager manager, PsiElement context) {
@@ -42,7 +48,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
-    TreeUtil.addChildren(getTreeElement(), contentElement);
+    if(contentElement != null) TreeUtil.addChildren(getTreeElement(), contentElement);
   }
 
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table) {
@@ -56,6 +62,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public boolean isValid() {
+    if(myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
     if (!super.isValid()) return false;
     if (myContext != null && !myContext.isValid()) return false;
     return true;

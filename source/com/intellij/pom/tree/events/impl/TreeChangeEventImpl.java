@@ -1,14 +1,13 @@
 package com.intellij.pom.tree.events.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.pom.PomModelAspect;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.pom.event.PomChangeSet;
+import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -62,8 +61,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         if(currentParentHasChange && prevParent != element) return;
         if(prevParent != element){
           final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
-          if(change.getChangeType() != ChangeInfo.REMOVED)
+          if (change.getChangeType() != ChangeInfo.REMOVED) {
             ((ChangeInfoImpl)newChange).processElementaryChange(currentParent, change, element);
+          }
           change = newChange;
         }
         processElementaryChange(currentParent, prevParent, change, -1);
@@ -96,21 +96,25 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       insertAtList(parent);
 
       final int index = depth >= 0 ? depth : getDepth(parent);
-      Set<ASTNode> treeElements = index < myOfEqualDepth.size() ? myOfEqualDepth.get(index) : null;
-      if(treeElements == null){
-        treeElements = new HashSet<ASTNode>();
-        while (index > myOfEqualDepth.size()) {
-          myOfEqualDepth.add(new HashSet<ASTNode>());
-        }
-        myOfEqualDepth.add(index, treeElements);
-      }
-      treeElements.add(parent);
+      addToEqualsDepthList(index, parent);
     }
     treeChange.addChange(element, change);
     if(change.getChangeType() == ChangeInfo.REMOVED){
       element.putUserData(CharTable.CHAR_TABLE_KEY, myFileElement.getCharTable());
     }
     if(treeChange.isEmpty()) removeAssociatedChanges(parent, depth);
+  }
+
+  private void addToEqualsDepthList(final int depth, final ASTNode parent) {
+    Set<ASTNode> treeElements = depth < myOfEqualDepth.size() ? myOfEqualDepth.get(depth) : null;
+    if(treeElements == null){
+      treeElements = new HashSet<ASTNode>();
+      while (depth > myOfEqualDepth.size()) {
+        myOfEqualDepth.add(new HashSet<ASTNode>());
+      }
+      myOfEqualDepth.add(depth, treeElements);
+    }
+    treeElements.add(parent);
   }
 
   private void compactChanges(ASTNode parent, int depth) {
@@ -218,6 +222,65 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   public PomModelAspect getAspect() {
     return myAspect;
+  }
+
+  public void merge(PomChangeSet blocked) {
+    if(!(blocked instanceof TreeChangeEventImpl)) return;
+    final TreeChangeEventImpl blockedTreeChange = (TreeChangeEventImpl)blocked;
+    final Map<ASTNode, TreeChange> changedElements = new HashMap<ASTNode, TreeChange>(blockedTreeChange.myChangedElements);
+    {// merging conflicting changes
+      final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
+
+      while (iterator.hasNext()) {
+        final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
+        final ASTNode changed = entry.getKey();
+        final TreeChange treeChange = myChangedElements.get(changed);
+        if(treeChange != null){
+          iterator.remove();
+          treeChange.add(entry.getValue());
+        }
+      }
+    }
+    int depth = 0;
+
+    {
+      final CharTable charTable = myFileElement.getCharTable();
+      final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
+
+      while (iterator.hasNext()) {
+        final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
+        final ASTNode changed = entry.getKey();
+        TreeElement prevParent = (TreeElement)changed;
+        CompositeElement currentParent = (CompositeElement)changed.getTreeParent();
+        while(currentParent != null){
+          if(myChangedElements.containsKey(currentParent)){
+            final ChangeInfoImpl newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
+            final int newLength = TreeUtil.getNotCachedLength(changed);
+            final int oldLength = entry.getValue().getOldLength();
+            newChange.setOldLength(TreeUtil.getNotCachedLength(prevParent) - newLength + oldLength);
+            processElementaryChange(currentParent, prevParent, newChange, -1);
+            iterator.remove();
+            break;
+          }
+          depth++;
+          prevParent = currentParent;
+          currentParent = currentParent.getTreeParent();
+        }
+      }
+    }
+
+    {
+      final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
+
+      while (iterator.hasNext()) {
+        final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
+        final ASTNode changed = entry.getKey();
+        myChangedElements.put(changed, entry.getValue());
+        insertAtList(changed);
+        addToEqualsDepthList(depth, changed);
+        compactChanges(changed, depth);
+      }
+    }
   }
 
   public String toString(){

@@ -160,6 +160,10 @@ public abstract class LeafElement extends TreeElement {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  public void removeRange(ASTNode first, ASTNode firstWhichStayInTree) {
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  }
+
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }

@@ -9,10 +9,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 
 import java.util.*;
 
@@ -28,7 +27,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public DocumentChangeTransaction getTransaction(final Document document) {
-    return myTransactionsMap.get(document);
+    final Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
+    return pair != null ? pair.getFirst() : null;
   }
 
   private static interface DocSyncAction {
@@ -49,9 +49,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    if (!isOriginal(event.getParent(), psiFile, document)) {
+    final PsiElement scope = event.getParent();
+    if (scope != null && TreeUtil.getFileElement((TreeElement)scope.getNode()).getPsi() != scope.getContainingFile())
       return;
-    }
 
     myPsiDocumentManager.setProcessDocumentEvents(false);
     syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
@@ -73,15 +73,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private boolean isOriginal(final PsiElement changeScope, final PsiFile psiFile, final DocumentEx document) {
     boolean original = true;
     if(changeScope != null){
-      ASTNode element = SourceTreeToPsiMap.psiElementToTree(changeScope);
-      while(element != null && !(element instanceof FileElement)) {
-        element = element.getTreeParent();
-      }
-      PsiFile fileForDoc = PsiDocumentManager.getInstance(psiFile.getProject()).getPsiFile(document);
-
-      original = element != null ? fileForDoc == SourceTreeToPsiMap.treeElementToPsi(element) : false;
-      LOG.debug("DOCSync: " + original + "; document=" + document+"; file="+psiFile.getName() + ":" +
-                psiFile.getClass() +"; file for doc="+fileForDoc.getName()+"; virtualfile="+psiFile.getVirtualFile());
     }
     return original;
   }
@@ -148,7 +139,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
 
-  private Map<Document, DocumentChangeTransaction> myTransactionsMap = new HashMap<Document, DocumentChangeTransaction>();
+  private Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
 
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
@@ -219,11 +210,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void startTransaction(Document doc, PsiElement scope) {
-    if(!myTransactionsMap.containsKey(doc)){
-      //LOG.assertTrue(doc.getText().equals(scope.getContainingFile().getText()),
-      //               "Document and PSI not synchronized on transaction start (don't send to IK)");
-      myTransactionsMap.put(doc, new DocumentChangeTransaction(doc, scope));
-    }
+    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    if(pair == null)
+      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope.getContainingFile()), new Integer(0));
+    else
+      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), new Integer(pair.getSecond().intValue() + 1));
+    myTransactionsMap.put(doc, pair);
   }
 
   public void commitTransaction(Document document){
@@ -271,8 +263,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         }
       }
       ex.setReadOnly(isReadOnly);
-      if(documentChangeTransaction.getChangeScope() != null && documentChangeTransaction.getChangeScope().getContainingFile() != null)
-        LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getContainingFile().getText()),
+      if(documentChangeTransaction.getChangeScope() != null && documentChangeTransaction.getChangeScope() != null)
+        LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getText()),
                        "Psi to document synchronization failed (send to IK)");
     }
     finally {
@@ -281,7 +273,15 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public DocumentChangeTransaction removeTransaction(Document doc) {
-    return myTransactionsMap.remove(doc);
+     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    if(pair == null) return null;
+    if(pair.getSecond().intValue() > 0){
+      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), new Integer(pair.getSecond().intValue() - 1));
+      myTransactionsMap.put(doc, pair);
+      return null;
+    }
+    myTransactionsMap.remove(doc);
+    return pair.getFirst();
   }
 
   public static class DocumentChangeTransaction{
@@ -292,9 +292,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
     });
     private final Document myDocument;
-    private final PsiElement myChangeScope;
+    private final PsiFile myChangeScope;
 
-    public DocumentChangeTransaction(final Document doc, PsiElement scope) {
+    public DocumentChangeTransaction(final Document doc, PsiFile scope) {
       myDocument = doc;
       myChangeScope = scope;
     }
@@ -303,7 +303,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return myAffectedFragments;
     }
 
-    public PsiElement getChangeScope() {
+    public PsiFile getChangeScope() {
       return myChangeScope;
     }
 
@@ -318,6 +318,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
           final int newStringLength = str.length();
           final String chars = getText(start, end);
+          if(chars.equals(str)) return;
           int newStartInString = 0;
           int newEndInString = newStringLength;
           while (newStartInString < newStringLength &&
@@ -357,39 +358,39 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
 
     private String getText(final int start, final int end) {
-      int documentOffset = 0;
-      int effectiveOffset = 0;
+      int currentOldDocumentOffset = 0;
+      int currentNewDocumentOffset = 0;
       StringBuffer text = new StringBuffer();
       Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-      while (iterator.hasNext() && effectiveOffset < end) {
+      while (iterator.hasNext() && currentNewDocumentOffset < end) {
         final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
         final MutableTextRange range = pair.getFirst();
         final StringBuffer buffer = pair.getSecond();
-        final int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
+        final int fragmentEndInNewDocument = range.getStartOffset() + buffer.length();
 
-        if(range.getStartOffset() <= start && effectiveFragmentEnd >= end){
+        if(range.getStartOffset() <= start && fragmentEndInNewDocument >= end){
           return buffer.substring(start - range.getStartOffset(), end - range.getStartOffset());
         }
 
         if(range.getStartOffset() >= start){
-          final int effectiveStart = Math.max(effectiveOffset, start);
+          final int effectiveStart = Math.max(currentNewDocumentOffset, start);
           text.append(myDocument.getChars(),
-                                effectiveStart - effectiveOffset + documentOffset,
-                                Math.min(range.getStartOffset(), end) - effectiveStart);
+                      effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
+                      Math.min(range.getStartOffset(), end) - effectiveStart);
           if(end > range.getStartOffset()){
             text.append(buffer.substring(0, Math.min(end - range.getStartOffset(), buffer.length())));
           }
         }
 
-        documentOffset += range.getEndOffset() - effectiveOffset;
-        effectiveOffset = range.getStartOffset() + buffer.length();
+        currentOldDocumentOffset += range.getEndOffset() - currentNewDocumentOffset;
+        currentNewDocumentOffset = fragmentEndInNewDocument;
       }
 
-      if(effectiveOffset < end){
-        final int effectiveStart = Math.max(effectiveOffset, start);
+      if(currentNewDocumentOffset < end){
+        final int effectiveStart = Math.max(currentNewDocumentOffset, start);
         text.append(myDocument.getChars(),
-                              effectiveStart - effectiveOffset + documentOffset,
-                              end - effectiveStart);
+                    effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
+                    end - effectiveStart);
       }
 
       return text.toString();
@@ -405,7 +406,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         int effectiveOffset = 0;
 
         Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-        while (iterator.hasNext() && effectiveOffset < end) {
+        while (iterator.hasNext() && effectiveOffset <= end) {
           final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
           final MutableTextRange range = pair.getFirst();
           final StringBuffer buffer = pair.getSecond();

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface PomTransaction{
-  PomModelEvent run() throws IncorrectOperationException;
+  PomModelEvent getAccumulatedEvent();
+  void run() throws IncorrectOperationException;
   PsiElement getChangeScope();
 }

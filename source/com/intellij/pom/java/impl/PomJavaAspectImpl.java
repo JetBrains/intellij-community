@@ -37,15 +37,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomElement;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomScope;
-import com.intellij.pom.PomTransaction;
-import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.java.PomJavaAspect;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.pom.java.PomPackage;
-import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.java.events.JavaTreeChanged;
+import com.intellij.pom.java.events.PomJavaAspectChangeSet;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -58,41 +60,11 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   private PomPackage myRootPackage;
   private Map<String, PomPackageImpl> myPackageMap = new HashMap<String, PomPackageImpl>();
 
-  public PomJavaAspectImpl(Project project, PsiManager psiManager) {
+  public PomJavaAspectImpl(Project project, PsiManager psiManager, TreeAspect treeAspect) {
     myProject = project;
     myPsiManager = psiManager;
     myRootPackage = new PomPackageImpl("", null, this);
-
-    myPsiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      public void childAdded(PsiTreeChangeEvent event) {
-        firePomEvent(event.getChild());
-      }
-
-      public void childRemoved(PsiTreeChangeEvent event) {
-        firePomEvent(event.getParent());
-      }
-
-      public void childReplaced(PsiTreeChangeEvent event) {
-        firePomEvent(event.getParent());
-      }
-
-      public void childrenChanged(PsiTreeChangeEvent event) {
-        firePomEvent(event.getParent());
-      }
-
-      public void childMoved(PsiTreeChangeEvent event) {
-        final PsiFile file1 = event.getOldParent().getContainingFile();
-        final PsiFile file2 = event.getNewParent().getContainingFile();
-        firePomEvent(file1);
-        if (file1 != null && !file1.equals(file2)) {
-          firePomEvent(file2);
-        }
-      }
-
-      public void propertyChanged(PsiTreeChangeEvent event) {
-        firePomEvent(event.getElement());
-      }
-    });
+    project.getModel().registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
   public PomPackage getRootPackage() {
@@ -169,7 +141,14 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public void update(PomModelEvent event) {
-    //TODO
+    final PomModel model = myProject.getModel();
+    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
+    if(changeSet == null) return;
+    final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
+    if(!(containingFile instanceof PsiJavaFile)) return;
+    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, containingFile);
+    set.addChange(new JavaTreeChanged(containingFile));
+    event.registerChangeSet(PomJavaAspectImpl.this, set);
   }
 
   public PomModelEvent getEvent() {
@@ -192,7 +171,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
       final PomModel model = myProject.getModel();
       try {
         myProject.getModel().runTransaction(new PomTransactionBase(file) {
-          public PomModelEvent run() {
+          public PomModelEvent runInner() {
             final PomModelEvent event = new PomModelEvent(model);
             final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, file);
             set.addChange(new JavaTreeChanged(file));

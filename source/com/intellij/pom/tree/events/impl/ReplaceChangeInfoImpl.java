@@ -21,7 +21,7 @@ public class ReplaceChangeInfoImpl extends ChangeInfoImpl implements ReplaceChan
 
   public void setReplaced(ASTNode replaced) {
     CharTable charTableByTree = SharedImplUtil.findCharTableByTree(myChanged);
-    setOldLength(TreeUtil.getNotCachedLength(replaced, charTableByTree));
+    setOldLength(TreeUtil.getNotCachedLength(replaced));
     myReplaced = replaced;
     myReplaced.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
   }

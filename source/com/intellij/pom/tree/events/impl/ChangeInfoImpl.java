@@ -24,7 +24,7 @@ public class ChangeInfoImpl implements ChangeInfo {
 
   protected ChangeInfoImpl(short type, ASTNode changed, CharTable table){
     this.type = type;
-    myOldLength = TreeUtil.getNotCachedLength(changed, table);
+    myOldLength = type != ADD ? TreeUtil.getNotCachedLength(changed) : 0;
   }
 
   public int getChangeType(){
@@ -52,17 +52,17 @@ public class ChangeInfoImpl implements ChangeInfo {
   private void processElementaryChange(final ChangeInfo changeByChild, final ASTNode treeElement, final CharTable charTableByTree) {
     switch(changeByChild.getChangeType()){
       case ADD:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement, charTableByTree);
+        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
         break;
       case REMOVED:
         myOldLength += changeByChild.getOldLength();
         break;
       case REPLACE:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement, charTableByTree);
+        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
         myOldLength += changeByChild.getOldLength();
         break;
       case CONTENTS_CHANGED:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement, charTableByTree);
+        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
         myOldLength += changeByChild.getOldLength();
         break;
     }

@@ -37,6 +37,12 @@ public class PomJavaAspectChangeSet implements PomChangeSet{
     return myModel.getModelAspect(PomJavaAspect.class);
   }
 
+  public void merge(PomChangeSet blocked) {
+    if(!(blocked instanceof PomJavaAspectChangeSet)) return;
+    final PomJavaAspectChangeSet blockedJavaChange = (PomJavaAspectChangeSet)blocked;
+    myChanges.addAll(blockedJavaChange.myChanges);
+  }
+
   public PsiFile getChangedFile() {
     return myChangedFile;
   }

@@ -2,6 +2,7 @@ package com.intellij.pom.xml.impl;
 
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
@@ -27,6 +28,10 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
 
   public PomModelAspect getAspect() {
     return myModel.getModelAspect(XmlAspect.class);
+  }
+
+  public void merge(PomChangeSet blocked) {
+    myChanges.addAll(((XmlAspectChangeSetImpl)blocked).myChanges);
   }
 
   public void add(XmlChange xmlChange) {

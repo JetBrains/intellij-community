@@ -9,6 +9,7 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.CharTable;
 
 import java.util.*;
@@ -59,7 +60,14 @@ public class TreeChangeImpl implements TreeChange {
 
     if(current != null && current.getChangeType() == ChangeInfo.REMOVED){
       if(changeInfo.getChangeType() == ChangeInfo.ADD){
-        removeChangeInternal(child);
+        if (!(child instanceof LeafElement)) {
+          changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child, SharedImplUtil.findCharTableByTree(myParent));
+          ((ChangeInfoImpl)changeInfo).setOldLength(current.getOldLength());
+          myChanges.put(child, changeInfo);
+        }
+        else
+          removeChangeInternal(child);
+
       }
       return;
     }
@@ -92,11 +100,16 @@ public class TreeChangeImpl implements TreeChange {
   private void addChangeInternal(ASTNode child, ChangeInfo info){
     myChanges.put(child, info);
     final int nodeOffset = getNodeOffset(child);
+    addChangeAtOffset(child, nodeOffset);
+  }
+
+  private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
     final int n = myOffsets.size();
     for(int i = 0; i < n; i++){
       final Pair<ASTNode, Integer> pair = myOffsets.get(i);
       if(child == pair.getFirst()) return;
-      if(nodeOffset < pair.getSecond().intValue()){
+      if(nodeOffset < pair.getSecond().intValue() ||
+         (nodeOffset == pair.getSecond().intValue()) && child.getTreeNext() == pair.getFirst()){
         myOffsets.add(i, new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
         return;
       }
@@ -143,6 +156,19 @@ public class TreeChangeImpl implements TreeChange {
     return myChanges.get(child);
   }
 
+  public int getChildOffsetInNewTree(ASTNode child) {
+    return myParent.getStartOffset() + getNewOffset(child);
+  }
+
+  private int getChildOffsetInOldTree(ASTNode child) {
+    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
+    while (iterator.hasNext()) {
+      Pair<ASTNode, Integer> pair = iterator.next();
+      if(child == pair.getFirst()) return pair.getSecond().intValue();
+    }
+    return -1;
+  }
+
   public void composite(TreeChange treeChange) {
     final TreeChangeImpl change = (TreeChangeImpl)treeChange;
     final Set<Map.Entry<ASTNode,ChangeInfo>> entries = change.myChanges.entrySet();
@@ -161,6 +187,64 @@ public class TreeChangeImpl implements TreeChange {
     removeChangeInternal(beforeEqualDepth);
   }
 
+  public void add(final TreeChange value) {
+    final TreeChangeImpl impl = (TreeChangeImpl)value;
+    LOG.assertTrue(impl.myParent == myParent);
+    final Iterator<Pair<ASTNode, Integer>> newChangesIterator = impl.myOffsets.iterator();
+    while (newChangesIterator.hasNext()) {
+      Pair<ASTNode, Integer> pair = newChangesIterator.next();
+      final ASTNode child = pair.getFirst();
+      final ChangeInfo change = impl.getChangeByChild(child);
+
+      if (change.getChangeType() == ChangeInfo.REMOVED) {
+        final ChangeInfo oldChange = getChangeByChild(child);
+        if (oldChange != null) {
+          switch (oldChange.getChangeType()) {
+            case ChangeInfo.ADD:
+              removeChangeInternal(child);
+              break;
+            case ChangeInfo.CONTENTS_CHANGED:
+              ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
+              myChanges.put(child, change);
+              break;
+          }
+        }
+        else {
+          myChanges.put(child, change);
+          addChangeAtOffset(child, getOldOffset(pair.getSecond()));
+        }
+      }
+      else {
+        addChange(child, change);
+      }
+    }
+  }
+
+  public int getOldLength() {
+    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(myParent);
+    int oldLength = TreeUtil.getNotCachedLength(myParent);
+    final Iterator<Map.Entry<ASTNode, ChangeInfo>> iterator = myChanges.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Map.Entry<ASTNode, ChangeInfo> entry = iterator.next();
+      final ASTNode key = entry.getKey();
+      final ChangeInfo change = entry.getValue();
+      final int length = TreeUtil.getNotCachedLength(key);
+      switch(change.getChangeType()){
+        case ChangeInfo.ADD:
+          oldLength -= length;
+          break;
+        case ChangeInfo.REMOVED:
+          oldLength += length;
+          break;
+        case ChangeInfo.REPLACE:
+        case ChangeInfo.CONTENTS_CHANGED:
+          oldLength += change.getOldLength() - length;
+          break;
+      }
+    }
+    return oldLength;
+  }
+
   private int getNodeOffset(ASTNode child){
     LOG.assertTrue(child.getTreeParent() == myParent);
     final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
@@ -170,29 +254,101 @@ public class TreeChangeImpl implements TreeChange {
     int currentOffset = 0;
     do{
       boolean counted = false;
-      while(currentChange != null && currentOffset == currentChange.getSecond().intValue()){
-        if(current == currentChange.getFirst()) counted = true;
+      while(currentChange != null && currentOffset == currentChange.getSecond().intValue()
+            && child.getTreeNext() != currentChange.getFirst()){
+        if(current == currentChange.getFirst()){
+          counted = true;
+          current = current.getTreeNext();
+        }
         final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
         currentOffset += changeInfo.getOldLength();
         currentChange = iterator.hasNext() ? iterator.next() : null;
       }
       if(current == child) break;
-      if(!counted) currentOffset += ((TreeElement)current).getTextLength(table);
-      current = current.getTreeNext();
+      if(current == null) break;
+      if(!counted){
+        currentOffset += ((TreeElement)current).getTextLength(table);
+        current = current.getTreeNext();
+      }
     }
     while(true);
     return currentOffset;
   }
 
+  private int getOldOffset(int offset){
+    final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
+    ASTNode current = myParent.getFirstChildNode();
+    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
+    Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
+    int currentOffset = 0;
+    int currentOldOffset = 0;
+    do{
+      boolean counted = false;
+      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
+        if(current == currentChange.getFirst()){
+          final int textLength = ((TreeElement)current).getTextLength(table);
+          counted = true;
+          current = current.getTreeNext();
+          currentOffset += textLength;
+        }
+        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
+        currentOldOffset += changeInfo.getOldLength();
+        currentChange = iterator.hasNext() ? iterator.next() : null;
+      }
+      if(current == null) break;
+      if(!counted){
+        final int textLength = ((TreeElement)current).getTextLength(table);
+        currentOldOffset += textLength;
+        current = current.getTreeNext();
+        currentOffset += textLength;
+      }
+    }
+    while(currentOffset < offset);
+    return currentOldOffset;
+  }
+
+  private int getNewOffset(ASTNode node){
+    final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
+    ASTNode current = myParent.getFirstChildNode();
+    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
+    Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
+    int currentOffsetInNewTree = 0;
+    int currentOldOffset = 0;
+    while(current != null){
+      boolean counted = false;
+      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
+        if(currentChange.getFirst() == node) return currentOffsetInNewTree;
+        if(current == currentChange.getFirst()){
+          final int textLength = ((TreeElement)current).getTextLength(table);
+          counted = true;
+          current = current.getTreeNext();
+          currentOffsetInNewTree += textLength;
+        }
+        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
+        currentOldOffset += changeInfo.getOldLength();
+        currentChange = iterator.hasNext() ? iterator.next() : null;
+      }
+      if(current == null) break;
+      if(!counted){
+        final int textLength = ((TreeElement)current).getTextLength(table);
+        currentOldOffset += textLength;
+        current = current.getTreeNext();
+        currentOffsetInNewTree += textLength;
+      }
+    }
+    return currentOffsetInNewTree;
+  }
+
   public String toString(){
     final StringBuffer buffer = new StringBuffer();
-    final Iterator<Map.Entry<ASTNode, ChangeInfo>> iterator = myChanges.entrySet().iterator();
+    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     while (iterator.hasNext()) {
-      final Map.Entry<ASTNode, ChangeInfo> entry = iterator.next();
+      final Pair<ASTNode, Integer> pair = iterator.next();
+      final ASTNode node = pair.getFirst();
       buffer.append("(");
-      buffer.append(entry.getKey().getElementType().toString());
-      buffer.append(", ");
-      buffer.append(entry.getValue().toString());
+      buffer.append(node.getElementType().toString());
+      buffer.append(" at " + pair.getSecond() + ", ");
+      buffer.append(getChangeByChild(node).toString());
       buffer.append(")");
       if(iterator.hasNext()) buffer.append(", ");
     }
