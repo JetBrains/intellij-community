@@ -16,6 +16,8 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -419,7 +421,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean canNavigate() {
-    return true;
+    return isValid();
   }
 
   public void navigate(boolean requestFocus) {
@@ -431,6 +433,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
     final PackageElement packageElement = new PackageElement(null, this, isLibraryRoot);
     projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
+    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
   }
 
   public boolean isPhysical() {
