@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
@@ -79,6 +80,22 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
       if (parent == null) return false;
       return isInSourceContent(parent);
     }
+  }
+
+  public OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir) {
+    VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
+    if (dir == null) return null;
+    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    if (info == null) return null;
+    final Set<OrderEntry> orderEntries = info.orderEntries;
+    List<OrderEntry> result = new ArrayList<OrderEntry>();
+    for (Iterator<OrderEntry> iterator = orderEntries.iterator(); iterator.hasNext();) {
+      OrderEntry orderEntry = iterator.next();
+      if (orderEntry.getOwnerModule() == myModule) {
+        result.add(orderEntry);
+      }
+    }
+    return result.size() > 0 ? result.toArray(new OrderEntry[result.size()]) : OrderEntry.EMPTY_ARRAY;
   }
 
   public OrderEntry getOrderEntryForFile(VirtualFile fileOrDir) {

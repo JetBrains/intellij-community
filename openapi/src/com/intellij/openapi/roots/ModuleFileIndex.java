@@ -11,4 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public interface ModuleFileIndex extends FileIndex {
   OrderEntry getOrderEntryForFile(VirtualFile fileOrDir);
+
+  OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir);
 }
