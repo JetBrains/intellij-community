@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -11,20 +10,17 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
-import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.filters.FalseFilter;
 import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.getters.AllClassesGetter;
+import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.jsp.JspToken;
+import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -140,7 +136,7 @@ public class CompletionData
     }
   }
 
-  public void addKeywordVariants(Set set, CompletionContext context, PsiElement position){
+  public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position){
     CompletionVariant[] variants = findVariants(position, context);
     for(int i = 0; i < variants.length; i++){
       if(!set.contains(variants[i]))
