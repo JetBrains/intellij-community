@@ -12,7 +12,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.IdeBorderFactory;

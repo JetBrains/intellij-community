@@ -4,7 +4,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
@@ -40,14 +40,14 @@ public class PushDownDialog extends RefactoringDialog {
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList list = new ArrayList(myMemberInfos.length);
+    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
     for (int idx = 0; idx < myMemberInfos.length; idx++) {
       MemberInfo info = myMemberInfos[idx];
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
       }
     }
-    return (MemberInfo[]) list.toArray(new MemberInfo[list.size()]);
+    return list.toArray(new MemberInfo[list.size()]);
   }
 
   protected void doHelpAction() {

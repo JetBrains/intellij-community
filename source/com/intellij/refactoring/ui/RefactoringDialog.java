@@ -29,10 +29,11 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.refactoring;
+package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

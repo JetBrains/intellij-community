@@ -7,8 +7,8 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;

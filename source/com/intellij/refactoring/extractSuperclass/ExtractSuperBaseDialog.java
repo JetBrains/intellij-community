@@ -2,7 +2,7 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;

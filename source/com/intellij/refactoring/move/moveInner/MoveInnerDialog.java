@@ -12,7 +12,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RefactoringMessageUtil;

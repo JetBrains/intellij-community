@@ -8,7 +8,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.ui.ScrollPaneFactory;
