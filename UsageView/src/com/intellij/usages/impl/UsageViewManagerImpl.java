@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -114,8 +115,8 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
   static String getProgressTitle(UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
-    if (scopeText == null) return "Searching for " + presentation.getUsagesString() + "...";
-    return "Searching for " + presentation.getUsagesString() + " in " + scopeText + "...";
+    if (scopeText == null) return "Searching for " + StringUtil.capitalize(presentation.getUsagesString()) + "...";
+    return "Searching for " + StringUtil.capitalize(presentation.getUsagesString()) + " in " + scopeText + "...";
   }
 
   private void showToolWindow(boolean activateWindow) {
@@ -234,7 +235,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
-            final String message = "No " + myPresentation.getUsagesString() + " found in " + myPresentation.getScopeText();
+            final String message = "No " + StringUtil.decapitalize(myPresentation.getUsagesString()) + " found in " + myPresentation.getScopeText();
 
             if (notFoundActions == null || notFoundActions.size() == 0) {
               Messages.showMessageDialog(myProject, message, "Information",
