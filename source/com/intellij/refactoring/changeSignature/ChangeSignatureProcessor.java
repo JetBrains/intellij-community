@@ -591,13 +591,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiParameter createNewParameter(ParameterInfo newParm,
-                                          PsiSubstitutor substitutor,
-                                          PsiMethod methodToInsertTo) throws IncorrectOperationException {
+                                          PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    final PsiParameter newParameter = factory.createParameterFromText("X " + newParm.getName(), methodToInsertTo);
     final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList()));
-    newParameter.getTypeElement().replace(factory.createTypeElement(type));
-    return newParameter;
+    return factory.createParameter(newParm.getName(), type);
   }
 
   protected String getCommandName() {
@@ -891,7 +888,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final ParameterInfo[] primaryNewParms = myChangeInfo.newParms;
       PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(caller, baseMethod);
       for (int i = 0; i < primaryNewParms.length; i++) {
-        if (primaryNewParms[i].oldParameterIndex < 0) newParameters.add(createNewParameter(primaryNewParms[i], substitutor, caller));
+        if (primaryNewParms[i].oldParameterIndex < 0) newParameters.add(createNewParameter(primaryNewParms[i], substitutor));
       }
       PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
       boolean[] toRemoveParm = new boolean[arrayed.length];
@@ -988,7 +985,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           parameter.getTypeElement().replace(factory.createTypeElement(newType));
         }
       } else {
-        newParms[i] = createNewParameter(info, substitutor, method);
+        newParms[i] = createNewParameter(info, substitutor);
       }
     }
 
