@@ -16,20 +16,29 @@ import java.text.MessageFormat;
  * @author ven
  */
 public class CreateGetterOrSetterAction implements IntentionAction{
-  private boolean myToCreateGetter;
-  private PsiField myField;
-  private String myPropertyName;
+  private final boolean myCreateGetter;
+  private final boolean myCreateSetter;
+  private final PsiField myField;
+  private final String myPropertyName;
 
-  public CreateGetterOrSetterAction(boolean toCreateGetter, PsiField field) {
-    myToCreateGetter = toCreateGetter;
+  public CreateGetterOrSetterAction(boolean createGetter, boolean createSetter, PsiField field) {
+    myCreateGetter = createGetter;
+    myCreateSetter = createSetter;
     myField = field;
     Project project = field.getProject();
     myPropertyName = PropertyUtil.suggestPropertyName(project, field);
   }
 
   public String getText() {
-    return MessageFormat.format("Create " + (myToCreateGetter ? "getter" : "setter") + " for ''{0}''",
-                                             new Object[]{myField.getName()});
+    String what = "";
+    if (myCreateGetter) {
+      what += "getter";
+    }
+    if (myCreateSetter) {
+      if (myCreateGetter) what += " and ";
+      what += "setter";
+    }
+    return MessageFormat.format("Create {0} for ''{1}''", new Object[]{what, myField.getName()});
   }
 
   public String getFamilyName() {
@@ -39,24 +48,26 @@ public class CreateGetterOrSetterAction implements IntentionAction{
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!myField.isValid()) return false;
     PsiClass aClass = myField.getContainingClass();
-    if (aClass != null) {
-      if (myToCreateGetter) {
-        return PropertyUtil.findPropertyGetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) == null;
-      } else {
-        return PropertyUtil.findPropertySetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) == null;
-      }
+    if (aClass == null) {
+      return false;
     }
-
-    return false;
+    if (myCreateGetter && PropertyUtil.findPropertyGetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) != null) {
+      return false;
+    }
+    if (myCreateSetter && PropertyUtil.findPropertySetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) != null) {
+      return false;
+    }
+    return true;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClass aClass = myField.getContainingClass();
-    if (myToCreateGetter) {
-        aClass.add(PropertyUtil.generateGetterPrototype(myField));
-      } else {
-        aClass.add(PropertyUtil.generateSetterPrototype(myField));
-      }
+    if (myCreateGetter) {
+      aClass.add(PropertyUtil.generateGetterPrototype(myField));
+    }
+    if (myCreateSetter) {
+      aClass.add(PropertyUtil.generateSetterPrototype(myField));
+    }
   }
 
   public boolean startInWriteAction() {

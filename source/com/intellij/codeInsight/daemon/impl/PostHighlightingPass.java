@@ -276,8 +276,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, new Object[]{identifier.getText()});
         final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, field));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, field));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field));
         return highlightInfo;
       }
 
@@ -286,7 +287,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, new Object[]{identifier.getText()});
         final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, field));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field));
         return highlightInfo;
       }
 
@@ -296,7 +297,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           if (!assignedByUIForm(field)) {
             String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, new Object[]{identifier.getText()});
             HighlightInfo info = createUnusedSymbolInfo(identifier, message);
-            QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, field));
+            QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field));
             return info;
           }
         }
