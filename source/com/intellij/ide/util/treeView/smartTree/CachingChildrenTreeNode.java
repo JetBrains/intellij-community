@@ -179,7 +179,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
         final int newIndex = getIndexOfPointerToTheSameValue(oldInstance);
         if (newIndex >= 0) {
           final CachingChildrenTreeNode newInstance = myChildren.get(newIndex);
-          newInstance.copyFromNewInstance(oldInstance);
+          oldInstance.copyFromNewInstance(newInstance);
           oldInstance.setValue(newInstance.getValue());
           myChildren.set(newIndex, oldInstance);
         }
