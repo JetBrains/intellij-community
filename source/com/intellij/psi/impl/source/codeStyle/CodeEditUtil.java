@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
@@ -412,6 +413,10 @@ public class CodeEditUtil {
     LOG.assertTrue(firstAsPsiElement != null);
     final PsiFile file = firstAsPsiElement.getContainingFile();
     final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
+    if(pseudoTextBuilder == null){
+      final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
+      if(leafElement != second) return leafElement.getText();
+    }
     LOG.assertTrue(pseudoTextBuilder != null);
     final Project project = firstAsPsiElement.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();

@@ -234,9 +234,4 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     myDisplayText = null;
     myGaps = null;
   }
-
-  public Language getLanguage() {
-    final FileType fileType = getContainingFile().getFileType();
-    return ((LanguageFileType)fileType).getLanguage();
-  }
 }
