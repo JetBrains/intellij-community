@@ -243,7 +243,7 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-      final IElementType tokenType = iterator.getTokenType();
+      final IElementType tokenType = (!iterator.atEnd())?iterator.getTokenType():null;
 
       if(tokenType instanceof IJavaElementType) {
         if (ch == '}') return JavaTokenType.RBRACE;
