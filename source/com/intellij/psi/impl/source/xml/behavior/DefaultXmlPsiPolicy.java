@@ -60,7 +60,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
   }
 
   public static final boolean toCode(char ch) {
-    return "<&>".indexOf(ch) >= 0;
+    return "<&>\u00a0".indexOf(ch) >= 0;
   }
 
   public ASTNode encodeXmlTextContents(String displayText) {
