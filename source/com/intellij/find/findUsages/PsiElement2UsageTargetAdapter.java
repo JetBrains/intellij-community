@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageTarget;
 
@@ -110,7 +111,13 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
   }
 
   public VirtualFile[] getFiles() {
-    return isValid() ? new VirtualFile[] {myPointer.getElement().getContainingFile().getVirtualFile()} : null;
+    if (!isValid()) return null;
+
+    final PsiFile psiFile = myPointer.getElement().getContainingFile();
+    if (psiFile == null) return null;
+
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
   public static UsageTarget[] convert(PsiElement[] psiElements) {
