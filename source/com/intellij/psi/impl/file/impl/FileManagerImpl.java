@@ -219,7 +219,8 @@ public class FileManagerImpl implements FileManager {
   }
 
   public PsiFile findFile(VirtualFile vFile) {
-    if (((ProjectEx)myManager.getProject()).isDummy()) return null;
+    final ProjectEx project = (ProjectEx)myManager.getProject();
+    if (project.isDummy() || project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (vFile == null) {
