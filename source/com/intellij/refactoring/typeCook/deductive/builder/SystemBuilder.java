@@ -546,7 +546,7 @@ public class SystemBuilder {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
 
       if (initializer != null) {
-        final PsiExpression core = PsiUtil.deparenthesizeExpression(initializer);
+        final PsiExpression core = deparenthesizeExpression(initializer);
 
         if (core instanceof PsiArrayInitializerExpression) {
           final PsiExpression[] inits = ((PsiArrayInitializerExpression)core).getInitializers();
@@ -718,6 +718,14 @@ public class SystemBuilder {
         myVisitedConstructions.add(anchor);
       }
     }
+  }
+
+  private PsiExpression deparenthesizeExpression(PsiExpression rExpression) {
+    if (rExpression instanceof PsiParenthesizedExpression) {
+      return deparenthesizeExpression(
+        ((PsiParenthesizedExpression)rExpression).getExpression());
+    }
+    return rExpression;
   }
 
   private void addBoundConstraints(final System system, final PsiType definedType, final PsiElement element) {
