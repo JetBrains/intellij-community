@@ -1,13 +1,12 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.JavaTokenType;
 
 /**
  * @author max
@@ -24,7 +23,6 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     if (!(element instanceof PsiJavaToken)) return false;
     if (element instanceof PsiCompiledElement) return false;
     if (!file.getManager().isInProject(file)) return false;
-    if (!file.isWritable()) return false;
 
     PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(
         element,
@@ -87,6 +85,8 @@ public class SplitDeclarationAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
     PsiManager psiManager = PsiManager.getInstance(project);
     int offset = editor.getCaretModel().getOffset();
 
