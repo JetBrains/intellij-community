@@ -16,9 +16,7 @@ import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.ArrayUtil;
 
-import javax.swing.text.html.HTMLDocument;
 import java.util.*;
 
 /**
@@ -36,7 +34,7 @@ public class ResolverTree {
   private Binding myCurrentBinding;
   private SolutionHolder mySolutions;
   private Project myProject;
-  private HashMap<PsiTypeVariable, Integer> myBindingDegree;
+  private HashMap<PsiTypeVariable, Integer> myBindingDegree; //How many times this type variable is bound in the system
   private Settings mySettings;
   private boolean myCookWildcards = false;
 
@@ -48,7 +46,7 @@ public class ResolverTree {
     myCurrentBinding = myBindingFactory.create();
     myConstraints = system.getConstraints();
     myProject = system.getProject();
-    myBindingDegree = calculateDegree(system.getConstraints());
+    myBindingDegree = calculateDegree();
     mySettings = system.getSettings();
 
     reduceCyclicVariables();
@@ -60,7 +58,7 @@ public class ResolverTree {
     mySolutions = parent.mySolutions;
     myConstraints = constraints;
     myProject = parent.myProject;
-    myBindingDegree = calculateDegree(constraints);
+    myBindingDegree = calculateDegree();
     mySettings = parent.mySettings;
     myCookWildcards = parent.myCookWildcards;
   }
@@ -87,6 +85,7 @@ public class ResolverTree {
   }
 
   private boolean canBePruned(final Binding b) {
+    if (mySettings.exhaustive()) return false;
     for (final Iterator<PsiTypeVariable> v = b.getBoundVariables().iterator(); v.hasNext();) {
       final PsiTypeVariable var = v.next();
       final PsiType type = b.apply(var);
@@ -96,13 +95,13 @@ public class ResolverTree {
       }
     }
 
-    return !mySettings.exhaustive();
+    return true;
   }
 
-  private HashMap<PsiTypeVariable, Integer> calculateDegree(final HashSet<Constraint> constraints) {
+  private HashMap<PsiTypeVariable, Integer> calculateDegree() {
     final HashMap<PsiTypeVariable, Integer> result = new HashMap<PsiTypeVariable, Integer>();
 
-    for (final Iterator<Constraint> c = constraints.iterator(); c.hasNext();) {
+    for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
       final Constraint constr = c.next();
 
       final PsiTypeVarCollector collector = new PsiTypeVarCollector();
@@ -113,7 +112,7 @@ public class ResolverTree {
     return result;
   }
 
-  void setDegree(final HashSet<PsiTypeVariable> set, Map<PsiTypeVariable, Integer> result) {
+  private void setDegree(final HashSet<PsiTypeVariable> set, Map<PsiTypeVariable, Integer> result) {
     for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
       final PsiTypeVariable var = v.next();
       final Integer deg = result.get(var);
@@ -127,10 +126,10 @@ public class ResolverTree {
     }
   }
 
-  private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> constraints) {
+  private HashSet<Constraint> apply(final Binding b) {
     final HashSet<Constraint> result = new HashSet<Constraint>();
 
-    for (Iterator<Constraint> c = constraints.iterator(); c.hasNext();) {
+    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
       final Constraint constr = c.next();
       result.add(constr.apply(b));
     }
@@ -138,15 +137,15 @@ public class ResolverTree {
     return result;
   }
 
-  private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> constraints, final HashSet<Constraint> constraints1) {
+  private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> additional) {
     final HashSet<Constraint> result = new HashSet<Constraint>();
 
-    for (Iterator<Constraint> c = constraints.iterator(); c.hasNext();) {
+    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
       final Constraint constr = c.next();
       result.add(constr.apply(b));
     }
 
-    for (Iterator<Constraint> c = constraints1.iterator(); c.hasNext();) {
+    for (Iterator<Constraint> c = additional.iterator(); c.hasNext();) {
       final Constraint constr = c.next();
       result.add(constr.apply(b));
     }
@@ -157,13 +156,13 @@ public class ResolverTree {
   private ResolverTree applyRule(final Binding b) {
     final Binding newBinding = myCurrentBinding.compose(b);
 
-    return newBinding == null ? null : new ResolverTree(this, apply(b, myConstraints), newBinding);
+    return newBinding == null ? null : new ResolverTree(this, apply(b), newBinding);
   }
 
-  private ResolverTree applyRule(final Binding b, final HashSet<Constraint> constraints) {
+  private ResolverTree applyRule(final Binding b, final HashSet<Constraint> additional) {
     final Binding newBinding = myCurrentBinding.compose(b);
 
-    return newBinding == null ? null : new ResolverTree(this, apply(b, myConstraints, constraints), newBinding);
+    return newBinding == null ? null : new ResolverTree(this, apply(b, additional), newBinding);
   }
 
   private void reduceCyclicVariables() {
@@ -279,7 +278,7 @@ public class ResolverTree {
 
     if (binding != null && binding.nonEmpty()) {
       myCurrentBinding = myCurrentBinding.compose(binding);
-      myConstraints = apply(binding, myConstraints);
+      myConstraints = apply(binding);
     }
   }
 
@@ -288,29 +287,29 @@ public class ResolverTree {
     final PsiType right = constr.getRight();
     final HashSet<Constraint> addendum = new HashSet<Constraint>();
 
+    int numSons = 0;
     Binding riseBinding = myBindingFactory.rise(left, right, null);
+    if (riseBinding != null) numSons++;
     Binding sinkBinding = myBindingFactory.sink(left, right, null);
+    if (sinkBinding != null) numSons++;
     Binding wcrdBinding = myCookWildcards ? myBindingFactory.riseWithWildcard(left, right, addendum) : null;
+    if (wcrdBinding != null) numSons++;
 
-    int indicator = (riseBinding == null ? 0 : 1) + (sinkBinding == null ? 0 : 1) + (wcrdBinding == null ? 0 : 1);
-
-    if (indicator == 0) {
-      return;
-    }
+    if (numSons == 0) return;
 
     if ((riseBinding != null && sinkBinding != null && riseBinding.equals(sinkBinding)) || canBePruned(riseBinding)) {
-      indicator--;
+      numSons--;
       sinkBinding = null;
     }
 
     if (riseBinding != null && wcrdBinding != null && riseBinding.equals(wcrdBinding)){
-      indicator--;
+      numSons--;
       wcrdBinding = null;
     }
 
     myConstraints.remove(constr);
 
-    mySons = new ResolverTree[indicator];
+    mySons = new ResolverTree[numSons];
 
     int n = 0;
 
@@ -327,14 +326,9 @@ public class ResolverTree {
     }
   }
 
-  private interface Mapper {
-    PsiType map(PsiType t);
-  }
-
   private void fillTypeRange(final PsiType lowerBound,
                              final PsiType upperBound,
-                             final HashSet<PsiType> holder,
-                             final Mapper mapper) {
+                             final HashSet<PsiType> holder) {
     if (lowerBound instanceof PsiClassType && upperBound instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resultLower = ((PsiClassType)lowerBound).resolveGenerics();
       final PsiClassType.ClassResolveResult resultUpper = ((PsiClassType)upperBound).resolveGenerics();
@@ -353,18 +347,14 @@ public class ResolverTree {
           if (InheritanceUtil.isCorrectDescendant(parent, lowerClass, true)) {
             final PsiClassType type = factory.createType(parent,
                                                          TypeConversionUtil.getSuperClassSubstitutor(parent, upperClass, upperSubst));
-            holder.add(mapper.map(type));
-            fillTypeRange(lowerBound, type, holder, mapper);
+            holder.add(type);
+            fillTypeRange(lowerBound, type, holder);
           }
         }
       }
     }
     else if (lowerBound instanceof PsiArrayType && upperBound instanceof PsiArrayType) {
-      fillTypeRange(((PsiArrayType)lowerBound).getComponentType(), ((PsiArrayType)upperBound).getComponentType(), holder, new Mapper() {
-                                                public PsiType map(PsiType t) {
-                                                  return mapper.map(t.createArrayType());
-                                                }
-                                              });
+      fillTypeRange(((PsiArrayType)lowerBound).getComponentType(), ((PsiArrayType)upperBound).getComponentType(), holder);
     }
   }
 
@@ -374,11 +364,7 @@ public class ResolverTree {
     range.add(lowerBound);
     range.add(upperBound);
 
-    fillTypeRange(lowerBound, upperBound, range, new Mapper() {
-                    public PsiType map(PsiType t) {
-                      return t;
-                    }
-                  });
+    fillTypeRange(lowerBound, upperBound, range);
 
     return range.toArray(new PsiType[]{});
   }
@@ -412,8 +398,8 @@ public class ResolverTree {
       sinkBinding = null;
     }
 
-    PsiType[] riseRange = new PsiType[]{};
-    PsiType[] sinkRange = new PsiType[]{};
+    PsiType[] riseRange = PsiType.EMPTY_ARRAY;
+    PsiType[] sinkRange = PsiType.EMPTY_ARRAY;
 
     if (riseBinding != null) {
       riseRange = getTypeRange(riseBinding.apply(rightType), riseBinding.apply(leftType));
@@ -513,8 +499,8 @@ public class ResolverTree {
       }
     }
 
-    if (myCookWildcards)
-    {
+    //T1 < a < b ... < T2
+    if (myCookWildcards) {
       final HashSet<PsiTypeVariable> haveRightBound = new HashSet<PsiTypeVariable>();
 
       Constraint target = null;
@@ -553,8 +539,7 @@ public class ResolverTree {
 
         return;
       }
-    }
-    else {
+    } else {
       for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
         final Constraint constr = c.next();
         final PsiType left = constr.getLeft();
@@ -590,6 +575,7 @@ public class ResolverTree {
       }
     }
 
+    //T1 < a < b < ...
     {
       final HashSet<PsiTypeVariable> haveLeftBound = new HashSet<PsiTypeVariable>();
 
