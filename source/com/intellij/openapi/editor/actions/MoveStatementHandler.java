@@ -118,9 +118,9 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (result.startLine <= 1 && !isDown) return null;
     if (result.endLine >= maxLine - 1 && isDown) return null;
 
-    final PsiElement guard =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), new Class[]{PsiMethod.class, PsiClassInitializer.class,
-                                      PsiClass.class});
+    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    if (elementAt == null) return null;
+    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
     // move operation should not go out of method
     final int insertOffset = editor.logicalPositionToOffset(new LogicalPosition(isDown ? result.endLine + 2 : result.startLine - 1, 0));
     if (guard != null && !guard.getTextRange().contains(insertOffset)) return null;
