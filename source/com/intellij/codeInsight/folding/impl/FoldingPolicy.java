@@ -1,5 +1,9 @@
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,7 +14,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
-import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -28,6 +31,18 @@ class FoldingPolicy {
                element1.getTextRange().getEndOffset() - element.getTextRange().getEndOffset();
       }
     });
+    final Language lang = file.getLanguage();
+    if (lang != null) {
+      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+      if (foldingBuilder != null) {
+        final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file, document);
+        for (int i = 0; i < foldingDescriptors.length; i++) {
+          FoldingDescriptor descriptor = foldingDescriptors[i];
+          map.put(descriptor.getElement(), descriptor.getRange());
+        }
+        return map;
+      }
+    }
 
     if (file instanceof PsiJavaFile) {
       PsiImportList importList = ((PsiJavaFile) file).getImportList();
@@ -242,6 +257,14 @@ class FoldingPolicy {
   }
 
   public static String getFoldingText(PsiElement element) {
+    final Language lang = element.getLanguage();
+    if (lang != null) {
+      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+      if (foldingBuilder != null) {
+        return foldingBuilder.getPlaceholderText(element);
+      }
+    }
+
     if (element instanceof PsiImportList) {
       return "...";
     } else if ( element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName()) ||
@@ -264,6 +287,14 @@ class FoldingPolicy {
 
 
   public static boolean isCollapseByDefault(PsiElement element) {
+    final Language lang = element.getLanguage();
+    if (lang != null) {
+      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+      if (foldingBuilder != null) {
+        return foldingBuilder.isCollapsedByDefault(element);
+      }
+    }
+
     CodeFoldingSettings settings = CodeFoldingSettings.getInstance();
     if (element instanceof PsiImportList) {
       return settings.COLLAPSE_IMPORTS;

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -9,11 +10,9 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.lang.ASTNode;
 
 import java.util.Set;
 
@@ -33,8 +32,8 @@ public class LowLevelSearchUtil {
                                                                 TokenSet elementTypes,
                                                                 ProgressIndicator progress) {
     ProgressManager.getInstance().checkCanceled();
-
-    if (elementTypes.isInSet(scope.getElementType())) {
+    final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
+    if (elementTypes.isInSet(scope.getElementType()) || scopePsi.getLanguage() != null && scopePsi.getLanguage().mayHaveReferences(scope.getElementType())) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {
@@ -44,7 +43,7 @@ public class LowLevelSearchUtil {
         do {
           int i = leaf.searchWord(startOffset, searcher);
           if (i >= 0) {
-            if (!processor.execute(SourceTreeToPsiMap.treeElementToPsi(scope), i)) return false;
+            if (!processor.execute(scopePsi, i)) return false;
             startOffset = i + 1;
           }
           else {
@@ -76,7 +75,7 @@ public class LowLevelSearchUtil {
         do {
           int i = searchWord(buffer, startOffset, endOffset, searcher);
           if (i >= 0) {
-            if (!processor.execute(SourceTreeToPsiMap.treeElementToPsi(scope), i - originalStartOffset)) return false;
+            if (!processor.execute(scopePsi, i - originalStartOffset)) return false;
             startOffset = i + 1;
           }
           else {
@@ -99,40 +98,39 @@ public class LowLevelSearchUtil {
                                          PsiElementProcessorEx processor,
                                          TokenSet elementTypes,
                                          ProgressIndicator progress) {
-  synchronized (PsiLock.LOCK) {
-    ASTNode child = scope.getFirstChildNode();
-    while (child != null) {
-      if (child instanceof ChameleonElement) {
-        LeafElement leaf = (LeafElement)child;
-        if (leaf.searchWord(0, searcher) >= 0) {
-          ASTNode next = child.getTreeNext();
-          child = ChameleonTransforming.transform((ChameleonElement)child);
-          if (child == null) {
-            child = next;
+    synchronized (PsiLock.LOCK) {
+      ASTNode child = scope.getFirstChildNode();
+      while (child != null) {
+        if (child instanceof ChameleonElement) {
+          LeafElement leaf = (LeafElement)child;
+          if (leaf.searchWord(0, searcher) >= 0) {
+            ASTNode next = child.getTreeNext();
+            child = ChameleonTransforming.transform((ChameleonElement)child);
+            if (child == null) {
+              child = next;
+            }
+          continue;
           }
-        continue;
         }
+        child = child.getTreeNext();
       }
-      child = child.getTreeNext();
     }
-  }
 
-               ASTNode child = null;
-               while (true) {
-               synchronized (PsiLock.LOCK) {
-                 child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
-                 while (child instanceof ChameleonElement) {
-                   child = child.getTreeNext();
-                 }
-                 if (child == null) break;
-               }
+    ASTNode child = null;
+    while (true) {
+      synchronized (PsiLock.LOCK) {
+        child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
+        while (child instanceof ChameleonElement) {
+          child = child.getTreeNext();
+        }
+        if (child == null) break;
+      }
 
-             if (!processElementsContainingWordInElement(processor, (TreeElement)child, searcher, elementTypes,
-                                                         progress)) {
-               return false;
-             }
-               }
-               return true;
+      if (!processElementsContainingWordInElement(processor, child, searcher, elementTypes, progress)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static int searchWord(char[] text, int startOffset, int endOffset, StringSearcher searcher) {
@@ -164,8 +162,7 @@ public class LowLevelSearchUtil {
     ASTNode scope,
     TokenSet elementTypes,
     Set namesSet,
-    ProgressIndicator progress
-    ) {
+    ProgressIndicator progress) {
     ProgressManager.getInstance().checkCanceled();
 
     if (elementTypes.isInSet(scope.getElementType())) {

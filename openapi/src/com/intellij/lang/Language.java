@@ -1,10 +1,13 @@
 package com.intellij.lang;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.tree.IElementType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +47,18 @@ public abstract class Language {
   }
 
   public ParserDefinition getParserDefinition() {
+    return null;
+  }
+
+  public WordsScanner getWordsScanner() {
+    return null;
+  }
+
+  public boolean mayHaveReferences(IElementType token) {
+    return false;
+  }
+
+  public FoldingBuilder getFoldingBuilder() {
     return null;
   }
 

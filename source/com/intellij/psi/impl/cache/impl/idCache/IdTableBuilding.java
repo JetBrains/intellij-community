@@ -4,6 +4,9 @@ import com.intellij.aspects.lexer._AspectjLexer;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.lang.Language;
+import com.intellij.lang.cacheBuilder.WordOccurence;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -11,7 +14,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
@@ -21,16 +23,18 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.HashMap;
 
 public class IdTableBuilding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
@@ -217,7 +221,39 @@ public class IdTableBuilding {
       return cacheBuilders.get(StdFileTypes.XML);
     }
 
+    final Language lang = psiFile.getLanguage();
+    if (lang != null) {
+      final WordsScanner scanner = lang.getWordsScanner();
+      if (scanner != null) {
+        return new WordsScannerIdCacheBuilderAdapter(scanner);
+      }
+    }
+
     return null;
+  }
+
+  private static class WordsScannerIdCacheBuilderAdapter implements IdCacheBuilder {
+    private WordsScanner myScanner;
+
+    public WordsScannerIdCacheBuilderAdapter(final WordsScanner scanner) {
+      myScanner = scanner;
+    }
+
+    public void build(char[] chars, int length, final TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+      myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurence>() {
+        public boolean process(final WordOccurence t) {
+          IdCacheUtil.addOccurrence(wordsTable, t.getText().toString().hashCode(), convertToMask(t.getKind()));
+          return true;
+        }
+
+        private int convertToMask(final WordOccurence.Kind kind) {
+          if (kind == WordOccurence.Kind.CODE) return WordInfo.IN_CODE;
+          if (kind == WordOccurence.Kind.COMMENTS) return WordInfo.IN_COMMENTS;
+          if (kind == WordOccurence.Kind.LITERALS) return WordInfo.IN_STRING_LITERALS;
+          return 0;
+        }
+      });
+    }
   }
 
   public static Result getBuildingRunnable(PsiManagerImpl manager, FileContent fileContent, final boolean buildTodos) {

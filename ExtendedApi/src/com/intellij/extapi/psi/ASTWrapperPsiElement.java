@@ -45,7 +45,8 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public PsiManager getManager() {
-    return getParent().getManager();
+    final PsiElement parent = getParent();
+    return parent != null ? parent.getManager() : null;
   }
 
   public PsiElement[] getChildren() {
@@ -235,7 +236,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public SearchScope getUseScope() {
-    throw new UnsupportedOperationException();
+    return getManager().getSearchHelper().getUseScope(this);
   }
 
   public ItemPresentation getPresentation() {
