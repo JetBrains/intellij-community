@@ -1,5 +1,9 @@
 package com.intellij.usages;
 
+import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -19,8 +23,7 @@ public class UsageViewPresentation {
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
 
-  public UsageViewPresentation() {
-  }
+  private List<Action> myNotFoundActions;
 
   public String getTabText() {
     return myTabText;
@@ -100,6 +103,15 @@ public class UsageViewPresentation {
 
   public void setCodeUsages(final boolean codeUsages) {
     myCodeUsages = codeUsages;
+  }
+
+  public void addNotFoundAction(Action _action) {
+    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
+    myNotFoundActions.add(_action);
+  }
+
+  public List<Action> getNotFoundActions() {
+    return myNotFoundActions;
   }
 }
 

@@ -99,7 +99,7 @@ class GroupNode extends Node implements Navigatable {
 
   private void doUpdate() {
     --myRecursiveUsageCount;
-    myTreeModel.reload(this);
+    myTreeModel.nodeChanged(this);
   }
 
   public UsageNode addUsage(Usage usage) {

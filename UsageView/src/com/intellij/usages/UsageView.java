@@ -42,4 +42,6 @@ public interface UsageView extends Disposeable {
   Set<Usage> getUsages();
 
   JComponent getComponent();
+
+  int getUsagesCount();
 }

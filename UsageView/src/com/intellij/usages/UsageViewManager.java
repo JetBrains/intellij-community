@@ -2,7 +2,6 @@ package com.intellij.usages;
 
 
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.progress.ProgressIndicator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,9 +27,7 @@ public interface UsageViewManager {
 
   void searchAndShowUsages(UsageTarget[] searchFor,
                            Factory<UsageSearcher> searcherFactory,
-                           boolean showPanelIfOnlyOneUsage,
-                           boolean showNotFoundMessage,
+                           FindUsagesProcessPresentation processPresentation,
                            UsageViewPresentation presentation,
-                           Factory<ProgressIndicator> progressIndicatorFactory,
                            UsageViewStateListener listener);
 }

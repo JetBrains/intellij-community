@@ -17,6 +17,9 @@ import com.intellij.usages.*;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.awt.event.ActionEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,9 +68,13 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
 
+    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    processPresentation.setShowNotFoundMessage(showNotFoundMessage);
+    processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
+
     final Application application = ApplicationManager.getApplication();
     application.runProcessWithProgressSynchronously(
-      createSearchRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, null),
+      new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, null),
       getProgressTitle(presentation),
       true,
       myProject
@@ -76,35 +83,25 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     return usageView[0];
   }
 
-  private Runnable createSearchRunnable(final UsageViewImpl[] usageView,
-                                        final UsageViewPresentation presentation,
-                                        final UsageTarget[] searchFor,
-                                        final Factory<UsageSearcher> searcherFactory,
-                                        final boolean showNotFoundMessage,
-                                        final boolean showPanelIfOnlyOneUsage,
-                                        final UsageViewManager.UsageViewStateListener listener) {
-    return new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, listener);
-  }
-
   public void searchAndShowUsages(UsageTarget[] searchFor,
                                        Factory<UsageSearcher> searcherFactory,
-                                       boolean showPanelIfOnlyOneUsage,
-                                       boolean showNotFoundMessage,
+                                       FindUsagesProcessPresentation processPresentation,
                                        UsageViewPresentation presentation,
-                                       final Factory<ProgressIndicator> progressIndicatorFactory,
                                        UsageViewManager.UsageViewStateListener listener
                                        ) {
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
-    final SearchForUsagesRunnable runnable = (SearchForUsagesRunnable)createSearchRunnable(
-      usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, listener
-    );
+    final SearchForUsagesRunnable runnable = (SearchForUsagesRunnable)new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
+
+    final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
     UsageViewImplUtil.runProcessWithProgress(
       progressIndicatorFactory.create(),
       new Runnable() {
         public void run() {
           runnable.searchUsages();
-          if (usageView[0] != null) usageView[0].setProgressIndicatorFactory(progressIndicatorFactory);
+          if (usageView[0] != null) {
+            usageView[0].setProgressIndicatorFactory(progressIndicatorFactory);
+          }
         }
       },
       new Runnable() {
@@ -153,23 +150,20 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     private final UsageViewPresentation myPresentation;
     private final UsageTarget[] mySearchFor;
     private final Factory<UsageSearcher> mySearcherFactory;
-    private final boolean myShowNotFoundMessage;
-    private final boolean myShowPanelIfOnlyOneUsage;
+    private final FindUsagesProcessPresentation myProcessPresentation;
     private UsageViewManager.UsageViewStateListener myListener;
 
     public SearchForUsagesRunnable(final UsageViewImpl[] usageView,
                    final UsageViewPresentation presentation,
                    final UsageTarget[] searchFor,
                    final Factory<UsageSearcher> searcherFactory,
-                   final boolean showNotFoundMessage,
-                   final boolean showPanelIfOnlyOneUsage,
+                   FindUsagesProcessPresentation processPresentation,
                    final UsageViewManager.UsageViewStateListener listener) {
       myUsageView = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;
       mySearcherFactory = searcherFactory;
-      myShowNotFoundMessage = showNotFoundMessage;
-      myShowPanelIfOnlyOneUsage = showPanelIfOnlyOneUsage;
+      myProcessPresentation = processPresentation;
       myListener = listener;
     }
 
@@ -193,16 +187,16 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     }
 
     private void searchUsages() {
-      if (!myShowNotFoundMessage) activateView();
+      if (!myProcessPresentation.isShowNotFoundMessage()) activateView();
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
           myUsageCount++;
-          if (myUsageCount == 1 && !myShowPanelIfOnlyOneUsage) {
+          if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage = usage;
           }
           if (myUsageCount == 2 ||
-              (myShowPanelIfOnlyOneUsage && myUsageCount == 1)) {
+              (myProcessPresentation.isShowPanelIfOnlyOneUsage() && myUsageCount == 1)) {
             activateView();
             if (myFirstUsage != null) {
               myUsageView[0].appendUsageLater(myFirstUsage);
@@ -223,15 +217,41 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     }
 
     private void endSearchForUsages() {
-      if (myUsageCount == 0 && myShowNotFoundMessage) {
+      if (myUsageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showMessageDialog(myProject, "No " + myPresentation.getUsagesString() + " found in " + myPresentation.getScopeText(), "Information",
-                                   Messages.getInformationIcon());
+            final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
+            final String message = "No " + myPresentation.getUsagesString() + " found in " + myPresentation.getScopeText();
+
+            if (notFoundActions == null || notFoundActions.size() == 0) {
+              Messages.showMessageDialog(myProject, message, "Information",
+                                     Messages.getInformationIcon());
+            } else {
+              List<String> titles = new ArrayList<String>(notFoundActions.size()+1);
+              titles.add("OK");
+              for (int i = 0; i < notFoundActions.size(); i++) {
+                Action action = notFoundActions.get(i);
+                Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
+                if (value == null) value = action.getValue(Action.NAME);
+
+                titles.add((String)value);
+              }
+
+              int option = Messages.showDialog(myProject,
+                                       message,
+                                       "Information",
+                                       titles.toArray(new String[titles.size()]),
+                                       0,
+                                       Messages.getInformationIcon());
+
+              if (option > 0) {
+                notFoundActions.get(option-1).actionPerformed(new ActionEvent(this,0,titles.get(option)));
+              }
+            }
           }
         }, ModalityState.NON_MMODAL);
       }
-      else if (myUsageCount == 1 && !myShowPanelIfOnlyOneUsage) {
+      else if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myFirstUsage.canNavigate()) {

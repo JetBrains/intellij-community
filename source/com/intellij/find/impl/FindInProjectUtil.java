@@ -3,12 +3,11 @@ package com.intellij.find.impl;
 import com.intellij.Patches;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.usages.impl.UsageViewImplUtil;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewPresentation;
-import com.intellij.usages.Usage;
+import com.intellij.usages.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.find.FindProgressIndicator;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -30,6 +29,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.io.File;
@@ -326,6 +327,22 @@ public class FindInProjectUtil {
     return false;
   }
 
+  public static FindUsagesProcessPresentation setupProcessPresentation(final Project project,
+                                                                 final boolean showPanelIfOnlyOneUsage,
+                                                                 final UsageViewPresentation presentation) {
+    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    processPresentation.setShowNotFoundMessage(true);
+    processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
+    processPresentation.setProgressIndicatorFactory(
+      new Factory<ProgressIndicator>() {
+        public ProgressIndicator create() {
+          return new FindProgressIndicator(project, presentation.getScopeText());
+        }
+      }
+    );
+    return processPresentation;
+  }
+
   public static class StringUsageTarget implements UsageTarget {
     private String myStringToFind;
 
@@ -393,6 +410,27 @@ public class FindInProjectUtil {
 
     public boolean canNavigateToSource() {
       return false;
+    }
+  }
+
+  public static class AsyncFindUsagesProcessListener2ProcessorAdapter implements AsyncFindUsagesProcessListener {
+    private final Processor<Usage> processor;
+    private int count;
+
+    public AsyncFindUsagesProcessListener2ProcessorAdapter(Processor<Usage> _processor) {
+      processor = _processor;
+    }
+
+    public void foundUsage(UsageInfo info) {
+      ++count;
+      processor.process(new UsageInfo2UsageAdapter(info));
+    }
+
+    public void findUsagesCompleted() {
+    }
+
+    public int getCount() {
+      return count;
     }
   }
 }

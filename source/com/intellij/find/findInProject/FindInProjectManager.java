@@ -2,7 +2,6 @@ package com.intellij.find.findInProject;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -10,12 +9,10 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.*;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
@@ -108,6 +105,9 @@ public class FindInProjectManager implements ProjectComponent {
       findManager.getFindInProjectModel().copyFrom(findModel);
       final FindModel findModelCopy = (FindModel)findModel.clone();
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
+      final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
+
+       FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
       manager.searchAndShowUsages(
         new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) },
@@ -118,34 +118,20 @@ public class FindInProjectManager implements ProjectComponent {
             public void generate(final Processor<Usage> processor) {
               myIsFindInProgress = true;
 
-              FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, new AsyncFindUsagesProcessListener() {
-                int count;
-
-                public void foundUsage(UsageInfo info) {
-                  ++count;
-                  processor.process(new UsageInfo2UsageAdapter(info));
-                }
-
-                public void findUsagesCompleted() {
-                }
-
-                public int getCount() {
-                  return count;
-                }
-              });
+              FindInProjectUtil.findUsages(
+                findModelCopy,
+                psiDirectory,
+                myProject,
+                new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
+              );
+              
               myIsFindInProgress = false;
             }
           };
           }
         },
-        !FindSettings.getInstance().isSkipResultsWithOneUsage(),
-        true,
+        processPresentation,
         presentation,
-        new Factory<ProgressIndicator>() {
-          public ProgressIndicator create() {
-            return new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(findModelCopy));
-          }
-        },
         null
       );
     }

@@ -522,6 +522,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myRootPanel;
   }
 
+  public int getUsagesCount() {
+    return myUsageNodes.size();
+  }
+
   public void setContent(Content content) {
     myContent = content;
     content.setDisposer(this);

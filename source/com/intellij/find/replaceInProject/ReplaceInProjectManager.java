@@ -12,7 +12,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -105,6 +104,9 @@ public class ReplaceInProjectManager implements ProjectComponent {
 
     if (manager!=null) {
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModel);
+      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(
+        myProject, true, presentation
+      );
 
       final ReplaceContext context[] = new ReplaceContext[1];
 
@@ -117,34 +119,19 @@ public class ReplaceInProjectManager implements ProjectComponent {
             public void generate(final Processor<Usage> processor) {
               myIsFindInProgress = true;
 
-              FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, new AsyncFindUsagesProcessListener() {
-                int count;
-
-                public void foundUsage(UsageInfo info) {
-                  ++count;
-                  processor.process(new UsageInfo2UsageAdapter(info));
-                }
-
-                public void findUsagesCompleted() {
-                }
-
-                public int getCount() {
-                  return count;
-                }
-              });
+              FindInProjectUtil.findUsages(
+                findModel,
+                psiDirectory,
+                myProject,
+                new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
+              );
               myIsFindInProgress = false;
             }
           };
           }
         },
-        true,
-        true,
+        processPresentation,
         presentation,
-        new Factory<ProgressIndicator>() {
-          public ProgressIndicator create() {
-            return new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(findModel));
-          }
-        },
         new UsageViewManager.UsageViewStateListener() {
           public void usageViewCreated(UsageView usageView) {
             context[0] = new ReplaceContext(usageView,findModel);
@@ -383,4 +370,5 @@ public class ReplaceInProjectManager implements ProjectComponent {
   public boolean isEnabled () {
     return !myIsFindInProgress && !FindInProjectManager.getInstance(myProject).isWorkInProgress();
   }
+
 }
