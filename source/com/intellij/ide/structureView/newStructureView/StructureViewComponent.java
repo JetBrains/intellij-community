@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
 
@@ -185,10 +186,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         public void keyPressed(KeyEvent e) {
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
             DataContext dataContext = DataManager.getInstance().getDataContext(getTree());
-            Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null && navigatable.canNavigateToSource()) {
-              navigatable.navigate(false);
-            }
+            OpenSourceUtil.openSourcesFrom(dataContext, false);
           }
           else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
             if (e.isConsumed())
@@ -526,7 +524,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     private boolean myShouldAutoScroll = true;
 
     public MyAutoScrollToSourceHandler(Project project) {
-      super(project);
+      super();
     }
 
     public void setShouldAutoScroll(boolean shouldAutoScroll) {

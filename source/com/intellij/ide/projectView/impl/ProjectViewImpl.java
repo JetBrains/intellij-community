@@ -139,7 +139,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     };
 
     myPanel = new MyPanel();
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return isAutoscrollToSource(myCurrentViewId);
       }

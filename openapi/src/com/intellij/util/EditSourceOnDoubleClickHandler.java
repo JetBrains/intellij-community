@@ -5,14 +5,13 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,10 +29,7 @@ public class EditSourceOnDoubleClickHandler {
         final TreePath selectionPath = tree.getSelectionPath();
         if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf() || !expandOnDoubleClick(((TreeNode)selectionPath.getLastPathComponent()))) {
           //Node expansion for non-leafs has a higher priority
-          Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigateToSource()) {
-            navigatable.navigate(true);
-          }
+          OpenSourceUtil.openSourcesFrom(dataContext, true);
         }
       }
 
@@ -57,10 +53,7 @@ public class EditSourceOnDoubleClickHandler {
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
         Project project = (Project)dataContext.getData(DataConstants.PROJECT);
         if (project == null) return;
-        Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable != null && navigatable.canNavigateToSource()) {
-          navigatable.navigate(true);
-        }
+        OpenSourceUtil.openSourcesFrom(dataContext, true);
       }
     });
   }
@@ -74,10 +67,7 @@ public class EditSourceOnDoubleClickHandler {
         DataContext dataContext = DataManager.getInstance().getDataContext(table);
         Project project = (Project)dataContext.getData(DataConstants.PROJECT);
         if (project == null) return;
-        Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable != null && navigatable.canNavigateToSource()) {
-          navigatable.navigate(true);
-        }
+        OpenSourceUtil.openSourcesFrom(dataContext, true);
       }
     });
   }
@@ -92,11 +82,7 @@ public class EditSourceOnDoubleClickHandler {
         if (index == -1) return;
         if (!list.getCellBounds(index, index).contains(point)) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(list);
-        Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable == null || !navigatable.canNavigateToSource()) { return; }
-
-        navigatable.navigate(true);
-
+        OpenSourceUtil.openSourcesFrom(dataContext, true);
         whenPerformed.run();
       }
     });

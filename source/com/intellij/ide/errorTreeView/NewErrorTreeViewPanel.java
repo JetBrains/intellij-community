@@ -77,7 +77,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myCreateExitAction = createExitAction;
     setLayout(new BorderLayout());
 
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return ErrorTreeViewConfiguration.getInstance(myProject).isAutoscrollToSource();
       }

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,6 +30,7 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -115,10 +115,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
             if (!(desciptor instanceof TodoItemNode)) {
               return;
             }
-            Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null && navigatable.canNavigateToSource()) {
-              navigatable.navigate(false);
-            }
+            OpenSourceUtil.openSourcesFrom(TodoPanel.this, false);
           }
         }
       }
@@ -355,7 +352,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
    */
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     public MyAutoScrollToSourceHandler() {
-      super(myProject);
+      super();
     }
 
     protected boolean isAutoScrollMode() {

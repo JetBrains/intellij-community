@@ -57,7 +57,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
 
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return HierarchyBrowserManager.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE;
       }

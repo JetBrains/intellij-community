@@ -52,6 +52,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.OpenSourceUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -153,10 +154,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isPopupTrigger() && e.getClickCount() == 2) {
-          Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigate()) {
-            navigatable.navigate(true);
-          }
+          OpenSourceUtil.openSourcesFrom(InspectionResultsView.this, true);
         }
       }
     });
@@ -164,10 +162,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigate()) {
-            navigatable.navigate(false);
-          }
+          OpenSourceUtil.openSourcesFrom(InspectionResultsView.this, false);
         }
       }
     });
@@ -220,10 +215,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private void syncSource() {
     if (isAutoScrollMode()) {
-      Navigatable navigatable = (Navigatable)getData(DataConstants.NAVIGATABLE);
-      if (navigatable != null && navigatable.canNavigate()) {
-        navigatable.navigate(false);
-      }
+      OpenSourceUtil.openSourcesFrom(this, false);
     }
   }
 

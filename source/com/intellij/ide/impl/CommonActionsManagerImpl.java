@@ -41,7 +41,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager implements Ap
   }
 
   public AnAction installAutoscrollToSourceHandler(Project project, JTree tree, final AutoScrollToSourceOptionProvider optionProvider) {
-    AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler(project) {
+    AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
       public boolean isAutoScrollMode() {
         return optionProvider.isAutoScrollMode();
       }

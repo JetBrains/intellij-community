@@ -2,14 +2,12 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
+import com.intellij.util.OpenSourceUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -19,11 +17,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public abstract class AutoScrollToSourceHandler {
-  private final Project myProject;
   private Alarm myAutoScrollAlarm;
 
-  protected AutoScrollToSourceHandler(Project project) {
-    myProject = project;
+  protected AutoScrollToSourceHandler() {
   }
 
   public void install(final JTree tree) {
@@ -73,10 +69,7 @@ public abstract class AutoScrollToSourceHandler {
 
   protected void scrollToSource(JTree tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    if (navigatable != null && navigatable.canNavigateToSource()) {
-      navigatable.navigate(false);
-    }
+    OpenSourceUtil.openSourcesFrom(dataContext, false);
   }
 
   public ToggleAction createToggleAction() {

@@ -4,7 +4,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,10 +26,7 @@ public class EditSourceOnEnterKeyHandler{
             Project project = (Project)dataContext.getData(DataConstants.PROJECT);
             if (project == null) return;
 
-            Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-            if (navigatable != null && navigatable.canNavigateToSource()) {
-              navigatable.navigate(false);
-            }
+            OpenSourceUtil.openSourcesFrom(dataContext, false);
           }
         }
       }
@@ -42,11 +38,7 @@ public class EditSourceOnEnterKeyHandler{
     component.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
-        final Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable == null || !navigatable.canNavigateToSource()) return;
-
-        navigatable.navigate(true);
-        
+        OpenSourceUtil.openSourcesFrom(dataContext, true);
         if (whenPerformed != null) whenPerformed.run();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);

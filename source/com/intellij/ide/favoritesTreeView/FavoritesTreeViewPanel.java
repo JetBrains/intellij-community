@@ -78,7 +78,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myName = name;
     setLayout(new BorderLayout());
 
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return myFavoritesConfiguration.IS_AUTOSCROLL_TO_SOURCE;
       }

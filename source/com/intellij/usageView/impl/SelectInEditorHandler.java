@@ -5,9 +5,7 @@
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
+import com.intellij.util.OpenSourceUtil;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -17,20 +15,16 @@ import java.awt.event.KeyEvent;
  * @author dyoma
  */
 public class SelectInEditorHandler {
-  public static void installKeyListener(final JComponent component, final Project project) {
+  public static void installKeyListener(final JComponent component) {
     component.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) selectInEditor(component, project);
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) selectInEditor(component);
       }
     });
   }
 
-  public static void selectInEditor(final JComponent component, final Project project) {
-    final Navigatable navigatable = (Navigatable)DataManager.getInstance().getDataContext(component).getData(DataConstants.NAVIGATABLE);
-
-    if (navigatable != null && navigatable.canNavigate()) {
-      navigatable.navigate(false);
-    }
+  public static void selectInEditor(final JComponent component) {
+    OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(component), false);
   }
 
 }

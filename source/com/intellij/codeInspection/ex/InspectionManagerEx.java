@@ -778,7 +778,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
       public UIOptions() {
-        myAutoScrollToSourceHandler = new AutoScrollToSourceHandler(myProject) {
+        myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
           protected boolean isAutoScrollMode() {
             return AUTOSCROLL_TO_SOURCE;
           }
