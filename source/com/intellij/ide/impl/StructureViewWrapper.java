@@ -115,13 +115,13 @@ public class StructureViewWrapper implements StructureView {
     rebuild();
   }
 
-  public boolean select(Object element, FileEditor fileEditor, boolean requestFocus) {
+  public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
     if (myStructureView != null) {
       if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)){
         setFileEditor(fileEditor);
         rebuild();
       }
-      return myStructureView.select(element, requestFocus);
+      return myStructureView.select(myStructureView.getTreeModel().getCurrentEditorElement(), requestFocus);
     } else {
       return false;
     }

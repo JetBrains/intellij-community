@@ -4,12 +4,11 @@
  */
 package com.intellij.ide.commander;
 
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -72,10 +71,10 @@ public class CommanderHistory {
         }
         else {
           if (shouldOpenInLeftPanel) {
-            myCommander.selectElementInLeftPanel(element);
+            myCommander.selectElementInLeftPanel(element,BasePsiNode.getVirtualFile(element));
           }
           else {
-            myCommander.selectElementInRightPanel(element);
+            myCommander.selectElementInRightPanel(element, BasePsiNode.getVirtualFile(element));
           }
         }
         return true;

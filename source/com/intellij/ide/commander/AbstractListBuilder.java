@@ -1,6 +1,5 @@
 package com.intellij.ide.commander;
 
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -8,7 +7,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 
@@ -108,13 +106,13 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  public final void selectElement(final PsiElement element) {
+  public final void selectElement(final Object element, VirtualFile virtualFile) {
     if (element == null) {
       return;
     }
 
     try {
-      AbstractTreeNode node = goDownToElement(element, BasePsiNode.getVirtualFile(element));
+      AbstractTreeNode node = goDownToElement(element, virtualFile);
       if (node == null) return;
       AbstractTreeNode parentElement = node.getParent();
       if (parentElement == null) return;

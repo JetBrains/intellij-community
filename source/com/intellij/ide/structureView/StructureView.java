@@ -8,6 +8,6 @@ public interface StructureView {
   int SORT_ALPHA_VISIBILITY = 2;
   int SORT_VISIBILITY = 3;
 
-  boolean select(Object element, FileEditor fileEditor, boolean requestFocus);
+  boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus);
   FileEditor getFileEditor();
 }

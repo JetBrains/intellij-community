@@ -5,6 +5,7 @@ import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -63,7 +64,7 @@ public class FileStructureDialog extends DialogWrapper {
         myCommanderPanel.getBuilder().enterElement(elementAtCursor, elementAtCursor.getContainingFile().getVirtualFile());
       }
       else {
-        myCommanderPanel.getBuilder().selectElement(elementAtCursor);
+        myCommanderPanel.getBuilder().selectElement(elementAtCursor,BasePsiNode.getVirtualFile(elementAtCursor));
       }
     }
   }

@@ -9,6 +9,8 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -1189,14 +1191,23 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
 
       public Project getProject() {
-        return getPsiFile().getProject();
+        return myProject;
       }
 
-      public PsiFile getPsiFile() {
+      private PsiFile getPsiFile() {
         return myPsiFile;
       }
 
-      public PsiElement getPsiElement() {
+      public StructureViewBuilder getStructureViewBuilder() {
+        if (myPsiFile == null) return null;
+        return new StructureViewBuilder() {
+          public StructureViewModel getStructureViewModel() {
+            return myPsiFile.getFileType().getStructureViewModel(getVirtualFile(), getProject());
+          }
+        };
+      }
+
+      private PsiElement getPsiElement() {
         final int offset = myEditor.getCaretModel().getOffset();
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         PsiElement e = getPsiFile().findElementAt(offset);

@@ -4,10 +4,9 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 
 /**
  * @author kir
@@ -18,11 +17,9 @@ public interface SelectInContext {
 
   Project getProject();
 
-  /** @deprecated */
-  PsiFile getPsiFile();
-  /** @deprecated */
-  PsiElement getPsiElement();
-
   VirtualFile getVirtualFile();
+
   Object getSelectorInFile();
+
+  StructureViewBuilder getStructureViewBuilder();
 }

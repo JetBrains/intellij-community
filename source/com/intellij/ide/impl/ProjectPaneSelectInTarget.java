@@ -1,7 +1,6 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -31,14 +30,6 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget {
     }
 
     return false;
-  }
-
-  public void selectIn(SelectInContext context, final boolean requestFocus) {
-    select(context.getPsiElement(), requestFocus);
-  }
-
-  public boolean canSelect(SelectInContext context) {
-    return canSelect(context.getPsiFile());
   }
 
   public String getMinorViewId() {

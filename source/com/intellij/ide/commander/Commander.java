@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -327,15 +327,15 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     return panel.getList() == myFocusWatcher.getFocusedComponent();
   }
 
-  public void selectElementInLeftPanel(final PsiElement element) {
-    myLeftPanel.getBuilder().selectElement(element);
+  public void selectElementInLeftPanel(final Object element, VirtualFile virtualFile) {
+    myLeftPanel.getBuilder().selectElement(element, virtualFile);
     if (!isPanelActive(myLeftPanel)) {
       switchActivePanel();
     }
   }
 
-  public void selectElementInRightPanel(final PsiElement element) {
-    myRightPanel.getBuilder().selectElement(element);
+  public void selectElementInRightPanel(final Object element, VirtualFile virtualFile) {
+    myRightPanel.getBuilder().selectElement(element, virtualFile);
     if (!isPanelActive(myRightPanel)) {
       switchActivePanel();
     }

@@ -2,6 +2,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.Location;
 import com.intellij.ide.SelectInContext;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,7 +29,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 abstract class SelectInContextImpl implements SelectInContext {
-  private final PsiFile myPsiFile;
+  protected final PsiFile myPsiFile;
 
   protected SelectInContextImpl(PsiFile psiFile) {
     myPsiFile = psiFile;
@@ -35,21 +37,26 @@ abstract class SelectInContextImpl implements SelectInContext {
 
   public Project getProject() { return myPsiFile.getProject(); }
 
-  public PsiFile getPsiFile() { return myPsiFile; }
   public VirtualFile getVirtualFile() { return myPsiFile.getVirtualFile(); }
 
   public Object getSelectorInFile() {
-    return getPsiElement();
+    return myPsiFile;
   }
 
   public static SelectInContextProvider createContext(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
 
     SelectInContextProvider result = createEditorContext(dataContext);
-    if (result != null) return result;
+    if (result != null)
+    {
+      return result;
+    }
 
     JComponent sourceComponent = getEventComponent(event);
-    if (sourceComponent == null) return null;
+    if (sourceComponent == null)
+    {
+      return null;
+    }
     ComponentCenterLocation popupLocation = new ComponentCenterLocation(sourceComponent);
 
     SelectInContext selectInContext = ((SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID));
@@ -58,7 +65,10 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
     if (selectInContext == null) {
       Navigatable descriptor = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-      if (!(descriptor instanceof OpenFileDescriptor)) return null;
+      if (!(descriptor instanceof OpenFileDescriptor))
+      {
+        return null;
+      }
 
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       selectInContext = OpenFileDescriptorContext.create(project, (OpenFileDescriptor)descriptor);
@@ -70,11 +80,20 @@ abstract class SelectInContextImpl implements SelectInContext {
   private static SelectInContextProvider createEditorContext(DataContext dataContext) {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
-    if (project == null || editor == null) return null;
+    if (project == null || editor == null)
+    {
+      return null;
+    }
     VirtualFile file = FileEditorManagerEx.getInstanceEx(project).getFile(editor);
-    if (file == null) return null;
+    if (file == null)
+    {
+      return null;
+    }
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile == null) return null;
+    if (psiFile == null)
+    {
+      return null;
+    }
 
     if (editor instanceof TextEditor) {
       return new SelectInContextProvider(
@@ -168,7 +187,10 @@ abstract class SelectInContextImpl implements SelectInContext {
       Point p;
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       p = editor.logicalPositionToXY(editor.getCaretModel().getLogicalPosition());
-      if (!visibleArea.contains(p)) p = visibleArea.getLocation();
+      if (!visibleArea.contains(p))
+      {
+        p = visibleArea.getLocation();
+      }
       SwingUtilities.convertPointToScreen(p, editor.getContentComponent());
       return p;
     }
@@ -182,16 +204,12 @@ abstract class SelectInContextImpl implements SelectInContext {
       myEditor = editor;
     }
 
-    public PsiElement getPsiElement() {
-      PsiElement element = getPsiFile();
-      Editor editor = myEditor.getEditor();
-      final int offset = editor.getCaretModel().getOffset();
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      PsiElement e = getPsiFile().findElementAt(offset);
-      if (e != null) {
-        element = e;
-      }
-      return element;
+    public StructureViewBuilder getStructureViewBuilder() {
+      return new StructureViewBuilder() {
+        public StructureViewModel getStructureViewModel() {
+          return myEditor.getStructureViewModel();
+        }
+      };
     }
   }
 
@@ -203,27 +221,29 @@ abstract class SelectInContextImpl implements SelectInContext {
       myDescriptor = descriptor;
     }
 
-    public PsiElement getPsiElement() {
-      PsiElement psiElement;
-      if (myDescriptor.getOffset() >= 0) psiElement = findElementAt(myDescriptor.getOffset());
-      else {
-        String text = LoadTextUtil.loadText(myDescriptor.getFile(), new String[1]).toString();
-        psiElement = findElementAt(StringUtil.lineColToOffset(text, myDescriptor.getLine(), myDescriptor.getColumn()));
-      }
-      return psiElement;
-    }
-
-    private PsiElement findElementAt(int offset) {
-      PsiElement psiElement = getPsiFile().findElementAt(offset);
-      return psiElement != null ? psiElement : getPsiFile();
+    public StructureViewBuilder getStructureViewBuilder() {
+      return new StructureViewBuilder() {
+        public StructureViewModel getStructureViewModel() {
+          return myPsiFile.getContainingFile().getFileType().getStructureViewModel(getVirtualFile(), getProject());
+        }
+      };
     }
 
     public static SelectInContext create(Project project, OpenFileDescriptor descriptor) {
-      if (descriptor == null) return null;
+      if (descriptor == null)
+      {
+        return null;
+      }
       VirtualFile file = descriptor.getFile();
-      if (file == null || !file.isValid()) return null;
+      if (file == null || !file.isValid())
+      {
+        return null;
+      }
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile == null) return null;
+      if (psiFile == null)
+      {
+        return null;
+      }
       return new OpenFileDescriptorContext(psiFile, descriptor);
     }
   }
@@ -235,13 +255,18 @@ abstract class SelectInContextImpl implements SelectInContext {
       this(psiFile, psiFile);
     }
 
+    public StructureViewBuilder getStructureViewBuilder() {
+      return new StructureViewBuilder() {
+        public StructureViewModel getStructureViewModel() {
+          return myElementToSelect.getContainingFile().getFileType().getStructureViewModel(getVirtualFile(), getProject());
+        }
+      };
+    }
+
     public SimpleSelectInContext(PsiFile psiFile, PsiElement elementToSelect) {
       super(psiFile);
       myElementToSelect = elementToSelect;
     }
 
-    public PsiElement getPsiElement() {
-      return myElementToSelect;
-    }
   }
 }

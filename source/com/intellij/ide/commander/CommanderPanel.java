@@ -3,6 +3,7 @@ package com.intellij.ide.commander;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditSourceUtil;
@@ -473,14 +474,14 @@ public class CommanderPanel extends JPanel {
 
   private final class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
-      final PsiElement psiElement = (PsiElement)element;
+      final PsiElement psiElement = element;
       final boolean isDirectory = psiElement instanceof PsiDirectory;
       if (!isDirectory) {
         EditorHelper.openInEditor(psiElement);
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myBuilder.selectElement(psiElement);
+            myBuilder.selectElement(psiElement, BasePsiNode.getVirtualFile(psiElement));
             if (!isDirectory) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {

@@ -2,29 +2,52 @@ package com.intellij.ide.impl;
 
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
-import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 
-public abstract class ProjectViewSelectInTarget implements SelectInTarget {
-  protected Project myProject;
-
+public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
   public ProjectViewSelectInTarget(Project project) {
-    myProject = project;
+    super(project);
+  }
+
+  protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
+    final ProjectView projectView = ProjectView.getInstance(myProject);
+    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        if (requestFocus) {
+          projectView.changeView(getMinorViewId());
+        }
+        projectView.select(selector, virtualFile, requestFocus);
+      }
+    };
+    if (requestFocus) {
+      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
+    }
+    else {
+      runnable.run();
+    }
+
   }
 
   public void select(PsiElement element, final boolean requestFocus) {
     while (true) {
-      if (element instanceof PsiFile) break;
-      if (isTopLevelClass(element)) break;
+      if (element instanceof PsiFile)
+      {
+        break;
+      }
+      if (isTopLevelClass(element))
+      {
+        break;
+      }
       element = element.getParent();
     }
     if (element instanceof PsiAspectFile) {
@@ -59,15 +82,28 @@ public abstract class ProjectViewSelectInTarget implements SelectInTarget {
   }
 
   private boolean isTopLevelClass(final PsiElement element) {
-    if (!(element instanceof PsiClass)) return false;
+    if (!(element instanceof PsiClass))
+    {
+      return false;
+    }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiFile)) return false;
+    if (!(parent instanceof PsiFile))
+    {
+      return false;
+    }
     final VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-    if (virtualFile == null) return false;
+    if (virtualFile == null)
+    {
+      return false;
+    }
     return virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS;
   }
 
   public String getToolWindowId() {
     return ToolWindowId.PROJECT_VIEW;
+  }
+
+  protected boolean canWorkWithCustomObjects() {
+    return true;
   }
 }

@@ -2,9 +2,10 @@ package com.intellij.ide.commander;
 
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
-import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.SelectInContext;
+import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
@@ -12,22 +13,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 
-final class CommanderSelectInTarget implements SelectInTarget {
-  private final Project myProject;
+final class CommanderSelectInTarget extends SelectInTargetPsiWrapper{
+
 
   public CommanderSelectInTarget(final Project project) {
-    myProject = project;
+    super(project);
   }
 
   public String toString() {
     return "Commander";
   }
 
-  private boolean canSelect(final PsiFile file) {
+  protected boolean canSelect(final PsiFile file) {
     return file.getManager().isInProject(file);
   }
 
-  private void select(PsiElement element, boolean requestFocus) {
+  protected void select(PsiElement element, boolean requestFocus) {
     while (true) {
       if (element instanceof PsiFile) {
         break;
@@ -55,7 +56,7 @@ final class CommanderSelectInTarget implements SelectInTarget {
     final ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
     final Runnable runnable = new Runnable() {
       public void run() {
-        commander.selectElementInLeftPanel(_element);
+        commander.selectElementInLeftPanel(_element, BasePsiNode.getVirtualFile(_element));
       }
     };
     if (requestFocus) {
@@ -66,12 +67,13 @@ final class CommanderSelectInTarget implements SelectInTarget {
     }
   }
 
-  public boolean canSelect(SelectInContext context) {
-    return canSelect(context.getPsiFile());
+  protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
+    final Commander commander = Commander.getInstance(myProject);
+    commander.selectElementInLeftPanel(selector, virtualFile);
   }
 
-  public void selectIn(SelectInContext context, final boolean requestFocus) {
-    select(context.getPsiElement(), requestFocus);
+  protected boolean canWorkWithCustomObjects() {
+    return true;
   }
 
   public String getToolWindowId() {

@@ -5,8 +5,8 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.ide.structureView.StructureViewBuilder;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -15,7 +15,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public interface FileEditor extends UserDataHolder {
+public interface FileEditor extends UserDataHolder, StructureViewBuilder {
   /**
    * @see #isModified() 
    */ 
@@ -104,5 +104,4 @@ public interface FileEditor extends UserDataHolder {
    */
   FileEditorLocation getCurrentLocation();
 
-  StructureViewModel getStructureViewModel();
 }
