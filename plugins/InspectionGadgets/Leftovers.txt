@@ -14,13 +14,10 @@
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
     Encapsulatable use of field
-    Interface never implemented
-    Abstract class never implemented
 
-    Static inheritance fix
-    Static import fix
-    Vararg fix
-    Non non-static initializer fix
-    Fix damn "Instanceof Incompatible Interface" inspection
+    Static inheritance quickfix
+    Static import quickfix
+    Vararg quickfix
+    Non non-static initializer quickfix
     Fix the "variable accessed in synchronized and unsynchronized contexts"
        to deal with unsynchronized private methods called only from synchronized contexts
