@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -55,6 +56,13 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (method.isConstructor()) {
       String message = "Cannot perform the refactoring.\n" +
                        "Move method is not supported for constructors";
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+      return;
+    }
+
+    if (PsiUtil.typeParametersIterator(method.getContainingClass()).hasNext()) {
+      String message = "Cannot perform the refactoring.\n" +
+                       "Move method is not supported for generic classes";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
       return;
     }

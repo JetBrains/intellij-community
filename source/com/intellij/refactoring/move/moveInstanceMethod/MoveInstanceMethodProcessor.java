@@ -17,6 +17,7 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.ChangeContextUtil;
 
 import java.util.*;
 
@@ -227,7 +228,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private void addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
     try {
-      aClass.add(patternMethod);
+      final PsiElement method = aClass.add(patternMethod);
+      ChangeContextUtil.decodeContextInfo(method, null, null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -235,6 +237,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   private PsiMethod createPatternMethod () {
+    ChangeContextUtil.encodeContextInfo(myMethod, true);
     final PsiMethod methodCopy = (PsiMethod)myMethod.copy();
     final PsiElement elementAt = methodCopy.getContainingFile().findElementAt(myTargetVariable.getTextRange().getStartOffset());
     final PsiVariable variableCopy = PsiTreeUtil.getParentOfType(elementAt, PsiVariable.class);

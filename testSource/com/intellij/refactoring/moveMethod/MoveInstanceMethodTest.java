@@ -19,6 +19,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testInterface() throws Exception { doTestForTargetParameter(true, 0); }
 
+  public void testWithInner() throws Exception { doTestForTargetParameter(true, 0); }
+
 
 
   private void doTestForTargetParameter(boolean isTargetParameter, final int targetIndex) throws Exception {
