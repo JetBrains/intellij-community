@@ -104,9 +104,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     final PsiType type = parameters[0].getType();
     if (!(type instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    final PsiElementFactory factory = method.getManager().getElementFactory();
-    final PsiClassType stringType = factory.createType(factory.createReferenceElementByFQClassName("java.lang.String", method.getResolveScope()));
-    return stringType.equals(componentType);
+    return componentType.equalsToText("java.lang.String");
   }
 
 
