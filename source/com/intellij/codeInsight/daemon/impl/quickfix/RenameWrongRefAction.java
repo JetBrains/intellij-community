@@ -52,14 +52,18 @@ public class RenameWrongRefAction implements IntentionAction {
     int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (offset < refName.getTextRange().getStartOffset() ||
-        offset > refName.getTextRange().getEndOffset()) return false;
-    return !(myRefExpr.multiResolve(true).length > 0);
+        offset > refName.getTextRange().getEndOffset()) {
+      return false;
+    }
+
+    return !CreateFromUsageUtils.isValidReference(myRefExpr, false);
   }
 
   private class ReferenceNameExpression implements Expression {
     class HammingComparator implements Comparator<LookupItem> {
       public int compare(LookupItem lookupItem1, LookupItem lookupItem2) {
-        String s1 = lookupItem1.getLookupString(), s2 = lookupItem2.getLookupString();
+        String s1 = lookupItem1.getLookupString();
+        String s2 = lookupItem2.getLookupString();
         int diff1 = 0;
         for (int i = 0; i < Math.min(s1.length(), myOldReferenceName.length()); i++) {
           if (s1.charAt(i) != myOldReferenceName.charAt(i)) diff1++;
@@ -155,7 +159,7 @@ public class RenameWrongRefAction implements IntentionAction {
   public void invoke(Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     Class[] scopes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class, PsiFile.class};
-    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, scopes);
+    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, scopes, true);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, scopes);
       LookupItem[] items = collectItems();

@@ -37,7 +37,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression)) {
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
       return;
     }
 

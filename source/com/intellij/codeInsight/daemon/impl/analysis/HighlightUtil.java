@@ -1985,6 +1985,9 @@ public class HighlightUtil {
                                                                        description);
           if (result.isStaticsScopeCorrect()) {
             registerAccessQuickFixAction((PsiMember)resolved, ref, info);
+            if (ref instanceof PsiReferenceExpression) {
+              QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
+            }
           }
           return info;
         }
@@ -1994,6 +1997,9 @@ public class HighlightUtil {
           final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(),
                                                                        description);
           registerStaticProblemQuickFixAction(resolved, info, ref);
+          if (ref instanceof PsiReferenceExpression) {
+            QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
+          }
           return info;
         }
       }

@@ -37,7 +37,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression)) {
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
       return;
     }
 
@@ -100,7 +100,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
 
   private PsiStatement getAnchor(PsiExpression expression) {
     Class[] scopes = new Class[] {PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class, PsiFile.class};
-    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(expression, scopes);
+    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(expression, scopes, false);
     PsiElement parent = expressions[0];
     int minOffset = expressions[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressions.length; i++) {

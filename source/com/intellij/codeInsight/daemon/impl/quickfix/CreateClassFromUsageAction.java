@@ -34,7 +34,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myRefElement)) {
+    if (CreateFromUsageUtils.isValidReference(myRefElement, true)) {
       return;
     }
     String superClassName = null;
@@ -65,13 +65,13 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isValidElement(PsiElement element) {
-    return CreateFromUsageUtils.isValidReference((PsiReference)element);
+    return CreateFromUsageUtils.isValidReference((PsiReference)element, true);
   }
 
   protected PsiElement getElement() {
     if (!myRefElement.isValid() || !myRefElement.getManager().isInProject(myRefElement)) return null;
     CodeStyleManager codeStyleManager = myRefElement.getManager().getCodeStyleManager();
-    if (!CreateFromUsageUtils.isValidReference(myRefElement) &&
+    if (!CreateFromUsageUtils.isValidReference(myRefElement, true) &&
         myRefElement.getReferenceNameElement() != null &&
         codeStyleManager.checkIdentifierRole(myRefElement.getReferenceName(), IdentifierRole.CLASS_NAME)) {
       PsiElement parent = myRefElement.getParent();
@@ -118,7 +118,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
 
       if (referenceExpression.getReferenceNameElement() != null &&
           codeStyleManager.checkIdentifierRole(referenceExpression.getReferenceName(), IdentifierRole.CLASS_NAME) &&
-          !CreateFromUsageUtils.isValidReference(referenceExpression)) {
+          !CreateFromUsageUtils.isValidReference(referenceExpression, true)) {
         return referenceExpression;
       }
     }

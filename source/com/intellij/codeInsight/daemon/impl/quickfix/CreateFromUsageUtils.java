@@ -42,9 +42,19 @@ public class CreateFromUsageUtils {
     return refExpr.getQualifierExpression() == null;
   }
 
-  public static boolean isValidReference(PsiReference reference) {
+  public static boolean isValidReference(PsiReference reference, final boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
-    return ((PsiJavaReference) reference).multiResolve(true).length > 0;
+    final ResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
+    if (unresolvedOnly) {
+      return results.length > 0;
+    }
+    else {
+      for (int i = 0; i < results.length; i++) {
+        ResolveResult result = results[i];
+        if (!result.isValidResult()) return false;
+      }
+      return true;
+    }
   }
 
   public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
@@ -289,7 +299,9 @@ public class CreateFromUsageUtils {
       });
   }
 
-  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class[] scopes) {
+  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression,
+                                                            Class[] scopes,
+                                                            final boolean includeInvalidResolved) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
@@ -300,7 +312,7 @@ public class CreateFromUsageUtils {
 
       public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
-          if (!isValidReference(expr) && expr.textMatches(expression)) {
+          if (!isValidReference(expr, !includeInvalidResolved) && expr.textMatches(expression)) {
             result.add(expr);
           }
         }
@@ -387,7 +399,7 @@ public class CreateFromUsageUtils {
                                               List<String> expectedFieldNames) {
     Class[] scopes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class,
                                  PsiFile.class};
-    PsiExpression[] expressions = collectExpressions(expression, scopes);
+    PsiExpression[] expressions = collectExpressions(expression, scopes, false);
 
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expr = expressions[i];
