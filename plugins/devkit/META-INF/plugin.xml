@@ -9,6 +9,7 @@
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
   </extensions>
 
   <application-components>
