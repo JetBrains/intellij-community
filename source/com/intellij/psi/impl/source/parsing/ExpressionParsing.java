@@ -33,6 +33,28 @@ public class ExpressionParsing extends Parsing {
     return expression;
   }
 
+  public static TreeElement parseExpressionText(final Lexer originalLexer,
+                                                      final char[] buffer,
+                                                      final int startOffset,
+                                                      final int endOffset,
+                                                      final CharTable table) {
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(buffer, startOffset, endOffset);
+    final FileElement dummyRoot = new DummyHolder(null, null, table).getTreeElement();
+    ParsingContext context = new ParsingContext(table);
+    CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
+    if (expression != null)
+      TreeUtil.addChildren(dummyRoot, expression);
+
+    while(lexer.getTokenType() != null){
+      TreeUtil.addChildren(dummyRoot, Factory.createLeafElement(lexer.getTokenType(), lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table));
+      lexer.advance();
+    }
+
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    return (TreeElement)dummyRoot.getFirstChildNode();
+  }
+
   public TreeElement parseExpressionTextFragment(PsiManager manager, char[] buffer, int startOffset, int endOffset, int state) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));

@@ -4,16 +4,14 @@ import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
@@ -401,12 +399,6 @@ public class Factory implements Constants {
     }
     else if (type == JSP_ACTION_ATTRIBUTE_VALUE) {
       element = new JspAttributeValueImpl();
-    }
-    else if (type == JSP_TEMPLATE_STATEMENT) {
-      element = new JspTemplateStatement();
-    }
-    else if (type == JSP_TEMPLATE_DECLARATION) {
-      element = new JspTemplateDeclaration();
     }
     else if (type == JSP_FILE_REFERENCE) {
       element = new JspFileReferenceImpl();

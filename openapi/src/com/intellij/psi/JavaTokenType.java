@@ -159,8 +159,11 @@ public interface JavaTokenType extends TokenType{
     SYNCHRONIZED_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD
   });
 
-  TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, END_OF_LINE_COMMENT, C_STYLE_COMMENT,
-                                                                               DOC_COMMENT});
+  TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
+    WHITE_SPACE, END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
+  });
 
-  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT});
+  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
+    END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
+  });
 }
