@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -124,6 +121,9 @@ public class ObjectEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }
@@ -150,9 +150,6 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 }
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             registerError(sign);
         }
 
