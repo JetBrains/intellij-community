@@ -8,14 +8,14 @@ import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -35,8 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.pom.PomModel;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
@@ -484,6 +482,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     }
 
     disposeComponents();
+    Extensions.disposeArea(this);
     myDisposed = true;
   }
 

@@ -1,28 +1,30 @@
 package com.intellij.openapi.module.impl;
 
-import com.intellij.application.options.PathMacros;
 import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacroMap;
+import com.intellij.application.options.PathMacros;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.BaseFileConfigurable;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
@@ -180,6 +182,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     disposeComponents();
     myIsDisposed = true;
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
+    Extensions.disposeArea(this);
   }
 
   public VirtualFile[] getConfigurationFiles() {
