@@ -142,7 +142,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       finally{
         myBlockedAspects.pop();
       }
-
+      if(myBlockedAspects.contains(aspect)) return;
       final List<PomModelAspect> dependants = getAllDependants(aspect);
       { // update
         final Iterator<PomModelAspect> depsIter = dependants.iterator();
