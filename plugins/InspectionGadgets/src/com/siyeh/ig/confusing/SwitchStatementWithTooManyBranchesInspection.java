@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -33,17 +34,9 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
     }
 
     protected String buildErrorString(PsiElement location) {
-        int branches = 0;
         final PsiSwitchStatement statement = (PsiSwitchStatement) location.getParent();
-        final PsiCodeBlock body = statement.getBody();
-        final PsiStatement[] statements = body.getStatements();
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement child = statements[i];
-            if (child instanceof PsiSwitchLabelStatement) {
-                branches++;
-            }
-        }
-        return "'#ref' has too many branches (" + branches + ") #loc";
+        final int numBranches = SwitchUtils.calculateBranchCount(statement);
+        return "'#ref' has too many branches (" + numBranches + ") #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
@@ -56,19 +49,12 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
         }
 
         public void visitSwitchStatement(PsiSwitchStatement statement) {
-            int branches = 0;
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;
             }
-            final PsiStatement[] statements = body.getStatements();
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
-                    branches++;
-                }
-            }
-            if (branches <= getLimit()) {
+            final int numBranches = SwitchUtils.calculateBranchCount(statement);
+            if (numBranches <= getLimit()) {
                 return;
             }
             registerStatementError(statement);

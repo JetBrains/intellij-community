@@ -3,7 +3,6 @@ package com.siyeh.ig.serialization;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -22,17 +21,9 @@ public class NonSerializableWithSerializationMethodsInspection extends ClassInsp
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
-        final PsiMethod[] methods = aClass.getMethods();
-        boolean hasReadObject = false;
-        boolean hasWriteObject = false;
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (SerializationUtils.isReadObject(method)) {
-                hasReadObject = true;
-            } else if (SerializationUtils.isWriteObject(method)) {
-                hasWriteObject = true;
-            }
-        }
+        final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+        final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
+
         if (hasReadObject && hasWriteObject) {
             return "Non-serializable class #ref defines readObject() and writeObject() #loc";
         } else if (hasWriteObject) {
@@ -59,17 +50,8 @@ public class NonSerializableWithSerializationMethodsInspection extends ClassInsp
             if (SerializationUtils.isSerializable(aClass)) {
                 return;
             }
-            final PsiMethod[] methods = aClass.getMethods();
-            boolean hasReadObject = false;
-            boolean hasWriteObject = false;
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
-                if (SerializationUtils.isReadObject(method)) {
-                    hasReadObject = true;
-                } else if (SerializationUtils.isWriteObject(method)) {
-                    hasWriteObject = true;
-                }
-            }
+            final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+            final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
             if (!hasWriteObject && !hasReadObject) {
                 return;
             }

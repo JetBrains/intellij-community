@@ -4,8 +4,10 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection {
     private final MultiplyByPowerOfTwoFix fix = new MultiplyByPowerOfTwoFix();
@@ -33,7 +35,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             final PsiJavaToken sign = exp.getOperationSign();
             lhs = exp.getLExpression();
             rhs = exp.getRExpression();
-            if (sign.getTokenType().equals(JavaTokenType.ASTERISKEQ)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
                 operator = "<<=";
             } else {
                 operator = ">>=";
@@ -43,7 +46,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             final PsiJavaToken sign = exp.getOperationSign();
             lhs = exp.getLOperand();
             rhs = exp.getROperand();
-            if (!(sign.getTokenType() != JavaTokenType.ASTERISK)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.ASTERISK)) {
                 operator = "<<";
             } else {
                 operator = ">>";
@@ -80,12 +84,15 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression))
+            {
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.ASTERISK) &&
-                    !sign.getTokenType().equals(JavaTokenType.DIV)) {
+            final PsiJavaToken sign = expression.getOperationSign();
+
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.ASTERISK) &&
+                    !tokenType.equals(JavaTokenType.DIV)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
@@ -104,9 +111,13 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (!sign.getTokenType().equals(JavaTokenType.ASTERISKEQ) &&
-                    !sign.getTokenType().equals(JavaTokenType.DIVEQ)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
+                    !tokenType.equals(JavaTokenType.DIVEQ)) {
                 return;
             }
             final PsiExpression rhs = expression.getRExpression();

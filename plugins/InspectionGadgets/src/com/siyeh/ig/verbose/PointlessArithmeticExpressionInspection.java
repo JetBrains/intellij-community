@@ -9,6 +9,7 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.IsConstantExpressionVisitor;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class PointlessArithmeticExpressionInspection extends ExpressionInspection {
     private final PointlessArithmeticFix fix = new PointlessArithmeticFix();
@@ -89,6 +90,9 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             if (TypeUtils.expressionHasType("java.lang.String", expression)) {
                 return;
             }
@@ -135,9 +139,6 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     private static boolean isZero(PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
         final IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
         expression.accept(visitor);
         if (!visitor.isConstant()) {
@@ -148,9 +149,6 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     private static boolean isOne(PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
         final IsConstantExpressionVisitor visitor =
                 new IsConstantExpressionVisitor();
         expression.accept(visitor);

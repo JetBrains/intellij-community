@@ -1,17 +1,18 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
 public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspection {
+
     public boolean m_ignoreSerializableDueToInheritance = true;
     private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
@@ -29,26 +30,6 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class AddSerialVersionUIDFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Add serialVersionUIDField";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
-            final PsiElement classIdentifier = problemDescriptor.getPsiElement();
-            final PsiElement aClass = classIdentifier.getParent();
-            try {
-                final PsiManager psiManager = aClass.getManager();
-                final PsiElementFactory elementFactory = psiManager.getElementFactory();
-                final long serialVersionUID = 1;
-                final PsiField field = elementFactory.createFieldFromText("private static final long serialVersionUID = "+ serialVersionUID+"L;", aClass);
-                aClass.add(field);
-            } catch (IncorrectOperationException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public JComponent createOptionsPanel() {

@@ -12,7 +12,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.text.NumberFormat;
 
 public class ClassWithoutLoggerInspection extends ClassInspection {
 
@@ -33,11 +32,6 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
 
         final JLabel classNameLabel = new JLabel("Logger class name:");
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-
-        final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
-        numberFormat.setParseIntegerOnly(true);
-        numberFormat.setMinimumIntegerDigits(1);
-        numberFormat.setMaximumIntegerDigits(2);
 
         final JTextField loggerClassNameField = new JTextField();
         final Font panelFont = panel.getFont();

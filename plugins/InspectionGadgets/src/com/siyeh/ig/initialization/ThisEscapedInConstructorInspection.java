@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ThisEscapedInConstructorInspection extends ClassInspection {
 
@@ -79,14 +80,14 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
         }
 
         public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
-
             super.visitAssignmentExpression(assignment);
-
+            if(!WellFormednessUtils.isWellFormed(assignment)){
+                return;
+            }
             final boolean isInInitialization = checkForInitialization(assignment);
             if (!isInInitialization) {
                 return;
             }
-
             final PsiExpression psiExpression = getLastRightExpression(assignment);
 
             if (psiExpression == null ||

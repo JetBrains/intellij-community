@@ -23,9 +23,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         if (!aClass.isPhysical()) {
             return super.checkClass(aClass, mgr, isOnTheFly);
         }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkClass(aClass, mgr, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);
 
@@ -36,9 +33,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         if (!method.isPhysical()) {
             return super.checkMethod(method, mgr, isOnTheFly);
         }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkMethod(method, mgr, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
@@ -46,9 +40,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     public ProblemDescriptor[] checkField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
         if (!field.isPhysical()) {
-            return super.checkField(field, mgr, isOnTheFly);
-        }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
             return super.checkField(field, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);

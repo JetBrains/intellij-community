@@ -2,11 +2,13 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentToForLoopParameterInspection extends ExpressionInspection {
 
@@ -33,10 +35,10 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-            final PsiExpression lhs = expression.getLExpression();
-            if (lhs == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
+            final PsiExpression lhs = expression.getLExpression();
             checkForForLoopParam(lhs);
             checkForForeachLoopParam(lhs);
         }
@@ -47,8 +49,9 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (sign == null) {
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.PLUSPLUS) &&
-                    !sign.getTokenType().equals(JavaTokenType.MINUSMINUS)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();
@@ -64,8 +67,9 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (sign == null) {
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.PLUSPLUS) &&
-                    !sign.getTokenType().equals(JavaTokenType.MINUSMINUS)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();

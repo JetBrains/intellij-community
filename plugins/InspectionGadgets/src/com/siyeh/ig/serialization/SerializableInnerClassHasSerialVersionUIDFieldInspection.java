@@ -5,10 +5,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
@@ -16,6 +14,7 @@ import javax.swing.*;
 
 public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends ClassInspection {
     public boolean m_ignoreSerializableDueToInheritance = true;
+    private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
     public String getDisplayName() {
         return "Serializable non-static inner class without serialVersionUID";
@@ -27,6 +26,10 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
 
     public String buildErrorString(PsiElement location) {
         return "Inner class #ref doesn't define a serialVersionUID field #loc";
+    }
+    
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
     }
 
     public JComponent createOptionsPanel() {

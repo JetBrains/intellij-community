@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -62,19 +63,12 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     }
 
     private static double calculateDensity(PsiSwitchStatement statement) {
-        int branches = 0;
         final PsiCodeBlock body = statement.getBody();
-        final PsiStatement[] statements = body.getStatements();
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement child = statements[i];
-            if (child instanceof PsiSwitchLabelStatement) {
-                branches++;
-            }
-        }
+        final int numBranches = SwitchUtils.calculateBranchCount(statement);
         final StatementCountVisitor visitor = new StatementCountVisitor();
         body.accept(visitor);
         final int numStatements = visitor.getNumStatements();
-        return (double) branches / (double) numStatements;
+        return (double) numBranches / (double) numStatements;
     }
 
     private static class StatementCountVisitor extends PsiRecursiveElementVisitor {

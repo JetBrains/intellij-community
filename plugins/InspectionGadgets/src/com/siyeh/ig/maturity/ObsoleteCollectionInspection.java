@@ -10,69 +10,73 @@ import com.siyeh.ig.VariableInspection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ObsoleteCollectionInspection extends VariableInspection {
+public class ObsoleteCollectionInspection extends VariableInspection{
 
     private static final Set s_obsoleteCollectionTypes = new HashSet(2);
 
-    static {
+    static{
         s_obsoleteCollectionTypes.add("java.util.Vector");
         s_obsoleteCollectionTypes.add("java.util.Hashtable");
     }
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Use of obsolete collection type";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.MATURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Obsolete collection type #ref used #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(
+            InspectionManager inspectionManager, boolean onTheFly){
         return new ObsoleteCollectionVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-        private ObsoleteCollectionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ObsoleteCollectionVisitor
+            extends BaseInspectionVisitor{
+        private ObsoleteCollectionVisitor(BaseInspection inspection,
+                                          InspectionManager inspectionManager,
+                                          boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(PsiVariable variable){
             super.visitVariable(variable);
             final PsiType type = variable.getType();
-            if (type == null) {
-                return;
-            }
-            String typeName = type.getCanonicalText();
-            if (typeName.indexOf('<') > 0) {
-                typeName = typeName.substring(0, typeName.indexOf('<'));
-            }
-            if (!s_obsoleteCollectionTypes.contains(typeName)) {
+            if(!isObsoleteCollectionType(type)){
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression) {
+        public void visitNewExpression(PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
-            if (type == null) {
-                return;
-            }
-            String typeName = type.getCanonicalText();
-            if(typeName.indexOf('<')>0)
-            {
-                typeName = typeName.substring(0, typeName.indexOf('<'));
-            }
-            if (!s_obsoleteCollectionTypes.contains(typeName)) {
+            if(!isObsoleteCollectionType(type)){
                 return;
             }
             final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();
             registerError(classNameElement);
+        }
+
+        private static boolean isObsoleteCollectionType(PsiType type){
+            if(type == null){
+                return false;
+            }
+
+            String typeName = type.getCanonicalText();
+            if(typeName.indexOf('<') > 0){
+                typeName = typeName.substring(0, typeName.indexOf('<'));
+            }
+            if(!s_obsoleteCollectionTypes.contains(typeName)){
+                return false;
+            }
+            return true;
         }
 
     }

@@ -26,9 +26,6 @@ public class DollarSignInNameInspection extends BaseInspection {
     }
 
     public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkClass(aClass, mgr, isOnTheFly);
-        }
         if (aClass instanceof PsiAnonymousClass) {
             return super.checkClass(aClass, mgr, isOnTheFly);
         }
@@ -45,10 +42,6 @@ public class DollarSignInNameInspection extends BaseInspection {
         if (!containingClass.isPhysical()) {
             return super.checkMethod(method, mgr, isOnTheFly);
         }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkMethod(method, mgr, isOnTheFly);
-        }
-
         if (containingClass instanceof PsiAnonymousClass) {
             return super.checkClass(containingClass, mgr, isOnTheFly);
         }
@@ -67,9 +60,6 @@ public class DollarSignInNameInspection extends BaseInspection {
         }
         if (containingClass instanceof PsiAnonymousClass) {
             return super.checkClass(containingClass, mgr, isOnTheFly);
-        }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkField(field, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         field.accept(visitor);

@@ -1,16 +1,15 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MakePrivateFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection {
-    private static final Logger s_logger = Logger.getInstance("ReadObjectAndWriteObjectPrivateInspection");
     private final MakePrivateFix fix = new MakePrivateFix();
 
     public String getDisplayName() {
@@ -31,25 +30,6 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class MakePrivateFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Make 'private'";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            try {
-                final PsiElement methodNameToken = descriptor.getPsiElement();
-                final PsiMethod method = (PsiMethod) methodNameToken.getParent();
-                final PsiModifierList modifiers = method.getModifierList();
-                modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
-                modifiers.setModifierProperty(PsiModifier.PRIVATE, true);
-            } catch (IncorrectOperationException e) {
-                s_logger.error(e);
-            }
-        }
     }
 
     private static class ReadObjectWriteObjectPrivateVisitor extends BaseInspectionVisitor {

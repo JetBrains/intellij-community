@@ -1,29 +1,18 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class CharacterComparisonInspection extends ExpressionInspection {
-
-    private static final Set s_comparisonOperators = new HashSet(4);
-
-    static {
-        s_comparisonOperators.add(">");
-        s_comparisonOperators.add("<");
-        s_comparisonOperators.add(">=");
-        s_comparisonOperators.add("<=");
-    }
-
-    private static boolean isComparison(String operator) {
-        return s_comparisonOperators.contains(operator);
-    }
 
     public String getDisplayName() {
         return "Character comparison";
@@ -48,22 +37,22 @@ public class CharacterComparisonInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
-            final String operand = sign.getText();
-            if (!isComparison(operand)) {
+            if(!ComparisonUtils.isComparison(expression)){
                 return;
             }
+            if(ComparisonUtils.isEqualityComparison(expression)){
+                return;
+            }
+
             final PsiExpression lhs = expression.getLOperand();
             if (!isCharacter(lhs)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
+
             final PsiType rhsType = rhs.getType();
             if (rhsType == null) {
                 return;

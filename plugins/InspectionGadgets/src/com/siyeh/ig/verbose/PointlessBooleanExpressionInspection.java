@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.IsConstantExpressionVisitor;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class PointlessBooleanExpressionInspection extends ExpressionInspection {
     private final BooleanLiteralComparisonFix fix = new BooleanLiteralComparisonFix();
@@ -116,13 +117,13 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
         public void visitClass(PsiClass aClass) {
             //to avoid drilldown
         }
-        
+
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
+            final PsiJavaToken sign = expression.getOperationSign();
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
                 return;
@@ -137,9 +138,6 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiType lhsType = lhs.getType();
             if (lhsType == null) {
                 return;

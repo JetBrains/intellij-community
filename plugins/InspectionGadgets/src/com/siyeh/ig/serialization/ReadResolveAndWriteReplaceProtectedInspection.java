@@ -1,17 +1,15 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MakeProtectedFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspection {
-    private static final Logger s_logger =
-            Logger.getInstance("ReadResolveAndWriteReplaceProtectedInspection ");
     private final MakeProtectedFix fix = new MakeProtectedFix();
 
     public String getDisplayName() {
@@ -33,26 +31,6 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
-    }
-
-    private static class MakeProtectedFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Make 'protected'";
-        }
-
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            try {
-                final PsiElement methodNameToken = descriptor.getPsiElement();
-                final PsiMethod method =
-                        (PsiMethod) methodNameToken.getParent();
-                final PsiModifierList modifiers = method.getModifierList();
-                modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-                modifiers.setModifierProperty(PsiModifier.PROTECTED, true);
-            } catch (IncorrectOperationException e) {
-                s_logger.error(e);
-            }
-        }
     }
 
     private static class ReadResolveWriteReplaceProtectedVisitor extends BaseInspectionVisitor {

@@ -2,12 +2,14 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
@@ -47,11 +49,14 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression))
+            {
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
+            final PsiJavaToken sign = expression.getOperationSign();
+
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUS)) {
                 return;
             }
             final PsiType type = expression.getType();
@@ -79,18 +84,17 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.PLUSEQ)) {
+            final PsiJavaToken sign = expression.getOperationSign();
+
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSEQ)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
-            if (lhs == null) {
-                return;
-            }
+
             final PsiType type = lhs.getType();
             if (type == null) {
                 return;

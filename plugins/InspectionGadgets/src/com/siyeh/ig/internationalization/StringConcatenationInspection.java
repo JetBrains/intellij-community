@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class StringConcatenationInspection extends ExpressionInspection {
 
@@ -33,17 +34,17 @@ public class StringConcatenationInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression))
+            {
                 return;
             }
-            if (!(sign.getTokenType() == JavaTokenType.PLUS)) {
+            final PsiJavaToken sign = expression.getOperationSign();
+
+            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
+
             final PsiType lhsType = lhs.getType();
             if (TypeUtils.isJavaLangString(lhsType)) {
                 registerError(sign);
@@ -51,9 +52,7 @@ public class StringConcatenationInspection extends ExpressionInspection {
             }
 
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
+
             final PsiType rhsType = rhs.getType();
             if (TypeUtils.isJavaLangString(rhsType)) {
                 registerError(sign);

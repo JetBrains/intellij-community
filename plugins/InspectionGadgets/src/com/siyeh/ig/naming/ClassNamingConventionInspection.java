@@ -59,10 +59,6 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         if (!aClass.isPhysical()) {
             return super.checkClass(aClass, mgr, isOnTheFly);
         }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkClass(aClass, mgr, isOnTheFly);
-        }
-
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);
         return visitor.getErrors();

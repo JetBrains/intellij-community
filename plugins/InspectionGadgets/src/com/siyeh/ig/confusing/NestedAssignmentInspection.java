@@ -3,7 +3,6 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,8 +34,7 @@ public class NestedAssignmentInspection extends ExpressionInspection {
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-            if (expression.getParent() instanceof PsiExpressionStatement ||
-                    expression.getParent() instanceof PsiExpressionList) {
+            if (expression.getParent() instanceof PsiExpressionStatement) {
                 return;
             }
             registerError(expression);

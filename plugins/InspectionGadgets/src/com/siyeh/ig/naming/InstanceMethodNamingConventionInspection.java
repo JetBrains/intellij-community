@@ -64,9 +64,6 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
         if (!containingClass.isPhysical()) {
             return super.checkMethod(method, mgr, isOnTheFly);
         }
-        if (isOnTheFly && !InspectionGadgetsPlugin.isEnabled()) {
-            return super.checkMethod(method, mgr, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();

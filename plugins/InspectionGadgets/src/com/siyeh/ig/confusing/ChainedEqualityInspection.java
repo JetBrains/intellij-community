@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ChainedEqualityInspection extends ExpressionInspection {
 
@@ -33,11 +34,14 @@ public class ChainedEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             if (!isEqualityComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null || !(lhs instanceof PsiBinaryExpression)) {
+            if (!(lhs instanceof PsiBinaryExpression)) {
                 return;
             }
             if (!isEqualityComparison((PsiBinaryExpression) lhs)) {

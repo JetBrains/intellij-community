@@ -7,7 +7,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 
-public class PackageVisibleFieldInspection extends ClassInspection {
+public class PackageVisibleFieldInspection extends FieldInspection {
     private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {

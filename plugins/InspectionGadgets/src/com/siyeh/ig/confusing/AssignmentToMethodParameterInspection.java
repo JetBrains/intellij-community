@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentToMethodParameterInspection extends ExpressionInspection {
 
@@ -33,10 +34,10 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection 
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-            final PsiExpression lhs = expression.getLExpression();
-            if (lhs == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
+            final PsiExpression lhs = expression.getLExpression();
             checkForMethodParam(lhs);
         }
 

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
     private final SwapComparisonFix fix = new SwapComparisonFix();
@@ -62,28 +63,20 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression))
+            {
                 return;
             }
-            final String operator = sign.getText();
-            if (!ComparisonUtils.isComparison(operator)) {
+            if (!ComparisonUtils.isComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
             if (!PsiUtil.isConstantExpression(lhs)
                     || PsiUtil.isConstantExpression(rhs)) {
                 return;
             }
             registerError(expression);
-
         }
     }
 

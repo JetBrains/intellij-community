@@ -1,6 +1,7 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 
 class NegationCountVisitor extends PsiRecursiveElementVisitor {
     private int m_count = 0;
@@ -22,7 +23,8 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
         if (sign == null) {
             return;
         }
-        if (!(sign.getTokenType() != JavaTokenType.NE)) {
+        final IElementType tokenType = sign.getTokenType();
+        if (tokenType.equals(JavaTokenType.NE)) {
             m_count++;
         }
     }

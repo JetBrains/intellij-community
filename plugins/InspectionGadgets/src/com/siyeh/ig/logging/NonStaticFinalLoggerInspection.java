@@ -31,11 +31,6 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
         final JLabel classNameLabel = new JLabel("Logger class name:");
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
-        final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
-        numberFormat.setParseIntegerOnly(true);
-        numberFormat.setMinimumIntegerDigits(1);
-        numberFormat.setMaximumIntegerDigits(2);
-
         final JTextField loggerClassNameField = new JTextField();
         final Font panelFont = panel.getFont();
         loggerClassNameField.setFont(panelFont);
