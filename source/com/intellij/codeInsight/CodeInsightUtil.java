@@ -124,9 +124,10 @@ public class CodeInsightUtil {
     for (int i = 0; i < array.size(); i++) {
       PsiElement element = array.get(i);
       if (!(element instanceof PsiStatement
-          || element instanceof PsiWhiteSpace
-          || element instanceof PsiComment))
+             || element instanceof PsiWhiteSpace
+             || element instanceof PsiComment)) {
         return null;
+      }
     }
 
     return array.toArray(new PsiElement[array.size()]);
@@ -346,28 +347,29 @@ public class CodeInsightUtil {
   }
 
   public static boolean prepareFileForWrite(final PsiFile file) {
-    if (file == null) {
-      return false;
-    }
-    else if (!file.isWritable()) {
+    if (file == null) return false;
+
+    if (!file.isWritable()) {
       final Project project = file.getProject();
 
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(
-                  new OpenFileDescriptor(project, file.getVirtualFile()), true);
+          new OpenFileDescriptor(project, file.getVirtualFile()), true);
 
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
+          public void run() {
 
-                if (editor != null && editor.getComponent().isDisplayable()){
-                  HintManager.getInstance().showErrorHint(
-                    editor,
-                    "File " + file.getVirtualFile().getPresentableUrl() + " is read-only");
-                }
-              }
+            if (editor != null && editor.getComponent().isDisplayable()) {
+              HintManager.getInstance().showErrorHint(
+                editor,
+                "File " + file.getVirtualFile().getPresentableUrl() + " is read-only");
+            }
+          }
         });
-    }
+
+        return false;
+      }
     }
 
     return true;
