@@ -10,7 +10,17 @@ import org.jdom.Element;
 
 public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizable{
   public float MAIN_SPLITTER_PROPORTION = 0.3f;
-  public float MESSAGES_SPLITTER_PROPORTION = 0.8f;  
+  public float MESSAGES_SPLITTER_PROPORTION = 0.8f;
+  public boolean USE_DATE_BEFORE_FILTER = false;
+  public boolean USE_DATE_AFTER_FILTER = false;
+  public boolean USE_CHANGE_BEFORE_FILTER = false;
+  public boolean USE_CHANGE_AFTER_FILTER = false;
+
+  public String DATE_BEFORE = "";
+  public String DATE_AFTER = "";
+  public String CHANGE_BEFORE = "";
+  public String CHANGE_AFTER = "";
+
 
   public static final ChangeBrowserSettings getSettings(Project project){
     return project.getComponent(ChangeBrowserSettings.class);

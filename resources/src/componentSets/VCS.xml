@@ -53,6 +53,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
   </project-components>
 
