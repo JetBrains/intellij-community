@@ -49,10 +49,12 @@ public class UsageFilteringRuleProviderImpl extends UsageFilteringRuleProvider i
     final ShowImportsAction showImportsAction = new ShowImportsAction(view);
     showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(view);
+    final ReadWriteState readWriteSharedState = new ReadWriteState();
+
+    final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(view, readWriteSharedState);
     showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(view);
+    final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(view, readWriteSharedState);
     showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
     return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
@@ -72,31 +74,77 @@ public class UsageFilteringRuleProviderImpl extends UsageFilteringRuleProvider i
     }
   }
 
-  private class ShowReadAccessUsagesAction extends RuleAction {
-    public ShowReadAccessUsagesAction(UsageViewImpl view) {
-      super(view, "Show read access", IconLoader.getIcon("/actions/showReadAccess.png"));
+  private final class ReadWriteState {
+    private boolean myShowReadAccess = SHOW_READ_ACCESS;
+    private boolean myShowWriteAccess = SHOW_WRITE_ACCESS;
+
+    public boolean isShowReadAccess() {
+      return myShowReadAccess;
     }
 
-    protected boolean getOptionValue() {
-      return SHOW_READ_ACCESS;
+    public void setShowReadAccess(final boolean showReadAccess) {
+      myShowReadAccess = showReadAccess;
+      if (!showReadAccess) {
+        myShowWriteAccess = true;
+      }
+      flushStateToGlobalSettongs();
     }
 
-    protected void setOptionValue(boolean value) {
-      SHOW_READ_ACCESS = value;
+    public boolean isShowWriteAccess() {
+      return myShowWriteAccess;
+    }
+
+    public void setShowWriteAccess(final boolean showWriteAccess) {
+      myShowWriteAccess = showWriteAccess;
+      if (!showWriteAccess) {
+        myShowReadAccess = true;
+      }
+      flushStateToGlobalSettongs();
+    }
+
+    private void flushStateToGlobalSettongs() {
+      SHOW_READ_ACCESS = myShowReadAccess;
+      SHOW_WRITE_ACCESS = myShowWriteAccess;
     }
   }
 
-  private class ShowWriteAccessUsagesAction extends RuleAction {
-    public ShowWriteAccessUsagesAction(UsageViewImpl view) {
-      super(view, "Show write access", IconLoader.getIcon("/actions/showWriteAccess.png"));
+  private class ShowReadAccessUsagesAction extends ToggleAction {
+    private final UsageViewImpl myView;
+    private final ReadWriteState myState;
+
+    public ShowReadAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
+      super("Show read access", null, IconLoader.getIcon("/actions/showReadAccess.png"));
+      myView = view;
+      myState = state;
     }
 
-    protected boolean getOptionValue() {
-      return SHOW_WRITE_ACCESS;
+    public boolean isSelected(AnActionEvent e) {
+      return myState.isShowReadAccess();
     }
 
-    protected void setOptionValue(boolean value) {
-      SHOW_WRITE_ACCESS = value;
+    public void setSelected(AnActionEvent e, boolean state) {
+      myState.setShowReadAccess(state);
+      myView.rulesChanged();
+    }
+  }
+
+  private class ShowWriteAccessUsagesAction extends ToggleAction {
+    private final UsageViewImpl myView;
+    private final ReadWriteState myState;
+
+    public ShowWriteAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
+      super("Show write access", null, IconLoader.getIcon("/actions/showWriteAccess.png"));
+      myView = view;
+      myState = state;
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myState.isShowWriteAccess();
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      myState.setShowWriteAccess(state);
+      myView.rulesChanged();
     }
   }
 
