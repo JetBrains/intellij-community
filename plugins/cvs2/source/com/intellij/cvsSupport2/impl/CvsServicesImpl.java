@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.impl;
 
-import com.intellij.cvsSupport2.actions.DiffWithCvsVersionAction;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
@@ -27,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -79,10 +79,10 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
   }
 
   public void showDifferencesForFiles(CvsModule first, CvsModule second, Project project) throws Exception {
-    DiffWithCvsVersionAction.showDifferences(createCvsVersionOn(first, project),
-                                             createCvsVersionOn(second, project),
-                                             project,
-                                             new File(first.getPathInCvs()));
+    AbstractVcsHelper.getInstance(project).showDifferences(
+      createCvsVersionOn(first, project),
+      createCvsVersionOn(second, project),
+      new File(first.getPathInCvs()));
   }
 
   public String getScrambledPasswordForPServerCvsRoot(String cvsRoot) {

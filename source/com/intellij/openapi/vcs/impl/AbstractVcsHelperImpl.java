@@ -9,19 +9,27 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
+import com.intellij.openapi.vcs.history.CurrentRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -39,6 +47,7 @@ import com.intellij.util.ui.MessageCategory;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectComponent {
@@ -379,6 +388,58 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
     new Annotater(annotation, myProject, file).showAnnotation();
+  }
+
+  public void showDifferences(final VcsFileRevision version1,
+                              final VcsFileRevision version2,
+                              final File file) {
+    try {
+      version1.loadContent();
+      version2.loadContent();
+
+      if (Comparing.equal(version1.getContent(), version2.getContent())) {
+        Messages.showInfoMessage("Versions are identical", "Diff");
+      }
+
+      final SimpleDiffRequest request =
+        new SimpleDiffRequest(myProject, file.getAbsolutePath());
+
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+      if (fileType.isBinary()) {
+        Messages.showInfoMessage("Binary versions differ", "Diff");
+
+        return;
+      }
+
+      final DiffContent content1 = getContentForVersion(version1, file);
+      final DiffContent content2 = getContentForVersion(version2, file);
+
+      if (version2.getRevisionNumber().compareTo(version1.getRevisionNumber()) > 0) {
+        request.setContents(content2, content1);
+        request.setContentTitles(version2.getRevisionNumber().asString(), version1.getRevisionNumber().asString());
+      } else {
+        request.setContents(content1, content2);
+        request.setContentTitles(version1.getRevisionNumber().asString(), version2.getRevisionNumber().asString());
+      }
+
+      DiffManager.getInstance().getDiffTool().show(request);
+    }
+    catch (VcsException e) {
+      showError(e, "Diff");
+    }
+    catch (IOException e) {
+      showError(new VcsException(e), "Diff");
+    }
+
+  }
+
+  private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
+      return new DocumentContent(FileDocumentManager.getInstance().getDocument(vFile), vFile.getFileType());
+    } else {
+      return new SimpleContent(new String(version.getContent()), FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
+    }
   }
 
   private boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {

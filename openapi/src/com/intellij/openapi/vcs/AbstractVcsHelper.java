@@ -8,11 +8,13 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Arrays;
+import java.io.File;
 
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
@@ -20,9 +22,11 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showErrors(List abstractVcsExceptions, String tabDisplayName);
+
   public abstract void markFileAsUpToDate(VirtualFile file);
 
   public abstract LvcsAction startVcsAction(String actionName);
+
   public abstract void finishVcsAction(com.intellij.openapi.localVcs.LvcsAction action);
 
   /**
@@ -38,9 +42,11 @@ public abstract class AbstractVcsHelper {
   public abstract String getUpToDateFilePath(VirtualFile file);
 
   public abstract Refreshable createCheckinProjectPanel(Project project);
+
   public abstract List<VcsException> doCheckinProject(CheckinProjectPanel checkinProjectPanel,
-                                        Object checkinParameters,
-                                        AbstractVcs abstractVcs);
+                                                      Object checkinParameters,
+                                                      AbstractVcs abstractVcs);
+
   public abstract void doCheckinFiles(VirtualFile[] files, Object checkinParameters);
 
   public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
@@ -57,4 +63,8 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file);
+
+  public abstract void showDifferences(final VcsFileRevision cvsVersionOn,
+                                       final VcsFileRevision cvsVersionOn1,
+                                       final File file);
 }

@@ -89,7 +89,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       fileRevision.loadContent();
 
       final SimpleDiffRequest request =
-      new SimpleDiffRequest(project, "Compare local and " + revisionNumber.asString() + " versions");
+      new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
       final SimpleContent content1 = new SimpleContent(new String(fileRevision.getContent(), selectedFile.getCharset().name()), selectedFile.getFileType());
       final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
 
