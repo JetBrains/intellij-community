@@ -17,13 +17,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
   private final Set<Module> myScopeModules;
+  private final Module[] myModules;
 
   public ModuleCompileScope(final Module module, boolean includeDependentModules) {
     myProject = module.getProject();
@@ -34,6 +33,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     else {
       myScopeModules.add(module);
     }
+    myModules = ModuleManager.getInstance(myProject).getModules();
   }
 
   public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules) {
@@ -48,6 +48,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
         myScopeModules.add(module);
       }
     }
+    myModules = ModuleManager.getInstance(myProject).getModules();
   }
 
   private void buildScopeModulesSet(Module module) {
@@ -76,19 +77,18 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   public boolean belongs(String url) {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     Module candidateModule = null;
     int maxUrlLength = 0;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (int idx = 0; idx < modules.length; idx++) {
-      final Module module = modules[idx];
-      final String[] contentRootUrls = ModuleRootManager.getInstance(module).getContentRootUrls();
+    for (int idx = 0; idx < myModules.length; idx++) {
+      final Module module = myModules[idx];
+      final String[] contentRootUrls = getModuleContentUrls(module);
       for (int i = 0; i < contentRootUrls.length; i++) {
         final String contentRootUrl = contentRootUrls[i];
         if (contentRootUrl.length() < maxUrlLength) {
           continue;
         }
-        if (!CompilerUtil.startsWith(url, contentRootUrl + "/")) {
+        if (!isUrlUnderRoot(url, contentRootUrl)) {
           continue;
         }
         if (contentRootUrl.length() == maxUrlLength) {
@@ -121,19 +121,34 @@ public class ModuleCompileScope extends FileIndexCompileScope {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(candidateModule);
       final String[] excludeRootUrls = moduleRootManager.getExcludeRootUrls();
       for (int i = 0; i < excludeRootUrls.length; i++) {
-        if (CompilerUtil.startsWith(url, excludeRootUrls[i] + "/")) {
+        if (isUrlUnderRoot(url, excludeRootUrls[i])) {
           return false;
         }
       }
       final String[] sourceRootUrls = moduleRootManager.getSourceRootUrls();
       for (int i = 0; i < sourceRootUrls.length; i++) {
-        if (CompilerUtil.startsWith(url, sourceRootUrls[i] + "/")) {
+        if (isUrlUnderRoot(url, excludeRootUrls[i])) {
           return true;
         }
       }
     }
 
     return false;
+  }
+
+  private static boolean isUrlUnderRoot(final String url, final String root) {
+    return (url.length() > root.length()) && url.charAt(root.length()) == '/' && CompilerUtil.startsWith(url, root);
+  }
+
+  private Map<Module, String[]> myContentUrlsCache = new HashMap<Module, String[]>();
+
+  private String[] getModuleContentUrls(final Module module) {
+    String[] contentRootUrls = myContentUrlsCache.get(module);
+    if (contentRootUrls == null) {
+      contentRootUrls = ModuleRootManager.getInstance(module).getContentRootUrls();
+      myContentUrlsCache.put(module, contentRootUrls);
+    }
+    return contentRootUrls;
   }
 
 }

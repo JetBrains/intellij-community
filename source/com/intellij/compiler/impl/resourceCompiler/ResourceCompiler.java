@@ -47,18 +47,8 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    if (!myConfiguration.isResourceFile(file.getName())) {
-      return false;
-    }
-
-    final VirtualFile[] outputDirectories = context.getAllOutputDirectories();
-    if (isUnderOutputDirectory(outputDirectories, file)) {
-      return false;
-    }
-
-    return true;
+    return myConfiguration.isResourceFile(file.getName());
   }
-
 
   public TranslatingCompiler.ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
     context.getProgressIndicator().pushState();
@@ -100,6 +90,9 @@ public class ResourceCompiler implements TranslatingCompiler {
           if (!sourcePath.equals(targetPath)) {
             copyCommands.add(new CopyCommand(outputPath, sourcePath, targetPath, file));
           }
+          else {
+            processed.add(new MyOutputItem(outputPath, targetPath, file));
+          }
         }
       }
     });
@@ -129,15 +122,6 @@ public class ResourceCompiler implements TranslatingCompiler {
     final OutputItem[] itemsArray = processed.toArray(new OutputItem[processed.size()]);
 
     return new MyExitStatus(itemsArray);
-  }
-
-  private boolean isUnderOutputDirectory(VirtualFile[] outputDirectories, VirtualFile file) {
-    for (int idx = 0; idx < outputDirectories.length; idx++) {
-      if (VfsUtil.isAncestor(outputDirectories[idx], file, false)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static class CopyCommand {

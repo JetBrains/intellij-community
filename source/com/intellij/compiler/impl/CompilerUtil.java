@@ -9,11 +9,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +19,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
-import java.util.Collections;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -44,19 +40,14 @@ public class CompilerUtil {
   }
 
   public static boolean startsWith(String path1, String path2) {
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path1 = path1.toLowerCase();
-      path2 = path2.toLowerCase();
+    if (path2.length() > path1.length()) {
+      return false;
     }
-    return path1.startsWith(path2);
+    return path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, path2.length());
   }
 
   public static boolean pathsEqual(String path1, String path2) {
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path1 = path1.toLowerCase();
-      path2 = path2.toLowerCase();
-    }
-    return path1.equals(path2);
+    return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
   public static final FileFilter CLASS_FILES_FILTER = new FileFilter() {

@@ -11,6 +11,7 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
+import com.intellij.j2ee.make.impl.MakeUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -42,13 +43,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
-import com.intellij.j2ee.make.impl.MakeUtilImpl;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectProcedure;
 
 import java.io.*;
 import java.util.*;
@@ -1008,10 +1010,9 @@ public class CompileDriver {
                                   CompileContext context) {
 
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-    VirtualFile[] compilableFiles = getCompilableFiles(compiler, snapshot, context);
-
-    for (int idx = 0; idx < compilableFiles.length; idx++) {
-      final VirtualFile file = compilableFiles[idx];
+    final List<VirtualFile> compilableFiles = getCompilableFiles(compiler, snapshot, context);
+    for (Iterator<VirtualFile> it = compilableFiles.iterator(); it.hasNext();) {
+      final VirtualFile file = it.next();
       if (!forceCompile) {
         if (compilerConfiguration.isExcludedFromCompilation(file)) {
           continue;
@@ -1057,18 +1058,20 @@ public class CompileDriver {
     }
   }
 
-  private VirtualFile[] getCompilableFiles(final TranslatingCompiler compiler, VfsSnapshot snapshot, CompileContext context) {
-    final Set<VirtualFile> result = new HashSet<VirtualFile>();
+  private List<VirtualFile> getCompilableFiles(final TranslatingCompiler compiler, final VfsSnapshot snapshot, final CompileContext context) {
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(snapshot.size());
 
-    for (Iterator<String> iterator = snapshot.getUrlsIterator(); iterator.hasNext();) {
-      final String url = iterator.next();
-      final VirtualFile file = snapshot.getFileByUrl(url);
-      if (compiler.isCompilableFile(file, context)) {
-        result.add(file);
+    snapshot.forEachUrl(new TObjectProcedure<String>() {
+      public boolean execute(final String url) {
+        final VirtualFile file = snapshot.getFileByUrl(url);
+        if (compiler.isCompilableFile(file, context)) {
+          result.add(file);
+        }
+        return true;
       }
-    }
+    });
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return result;
   }
 
   private String getModuleOutputDirForFile(CompileContext context, VirtualFile file) {
@@ -1542,13 +1545,14 @@ public class CompileDriver {
   }
 
   private static class VfsSnapshot {
-    private Map<String, VirtualFile> myUrlToFile = new HashMap<String, VirtualFile>();
-    private Map<VirtualFile, String> myFileToUrl = new HashMap<VirtualFile, String>();
+    private THashMap<String, VirtualFile> myUrlToFile;
+    private THashMap<VirtualFile, String> myFileToUrl;
 
     public VfsSnapshot(final VirtualFile[] files) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          myUrlToFile = new HashMap<String, VirtualFile>(files.length);
+          myUrlToFile = new THashMap<String, VirtualFile>(files.length);
+          myFileToUrl = new THashMap<VirtualFile, String>(files.length);
           for (int i = 0; i < files.length; i++) {
             final VirtualFile file = files[i];
             final String url = file.getUrl();
@@ -1567,8 +1571,12 @@ public class CompileDriver {
       return myFileToUrl.get(file);
     }
 
-    public Iterator<String> getUrlsIterator() {
-      return myUrlToFile.keySet().iterator();
+    public void forEachUrl(TObjectProcedure<String> p) {
+      myUrlToFile.forEachKey(p);
+    }
+
+    public int size() {
+      return myUrlToFile.size();
     }
   }
 }
