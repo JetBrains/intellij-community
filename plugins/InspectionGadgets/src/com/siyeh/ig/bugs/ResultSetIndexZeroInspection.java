@@ -2,8 +2,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.IsConstantExpressionVisitor;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -59,7 +59,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
             if (!TypeUtils.expressionHasType("int", arg)) {
                 return;
             }
-            if(!isConstant(arg))
+            if(!PsiUtil.isConstantExpression(arg))
             {
                 return;
             }
@@ -74,17 +74,6 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
             }
             registerError(arg);
         }
-
-        private static boolean isConstant(PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-            final IsConstantExpressionVisitor visitor =
-                    new IsConstantExpressionVisitor();
-            expression.accept(visitor);
-            return visitor.isConstant();
-        }
-
     }
 
 }

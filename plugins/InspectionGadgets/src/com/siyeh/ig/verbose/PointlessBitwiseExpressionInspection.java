@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.IsConstantExpressionVisitor;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
 
@@ -167,14 +166,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
     }
 
     private static boolean isZero(PsiExpression expression, PsiType expressionType) {
-        final IsConstantExpressionVisitor visitor =
-                new IsConstantExpressionVisitor();
-        expression.accept(visitor);
-        if (!visitor.isConstant()) {
-            return false;
-        }
-        final Object value =
-                ConstantExpressionUtil.computeCastTo(expression, expressionType);
+        final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if (value == null) {
             return false;
         }
@@ -197,14 +189,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
     }
 
     private static boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
-        final IsConstantExpressionVisitor visitor =
-                new IsConstantExpressionVisitor();
-        expression.accept(visitor);
-        if (!visitor.isConstant()) {
-            return false;
-        }
-        final Object value =
-                ConstantExpressionUtil.computeCastTo(expression, expressionType);
+        final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if (value == null) {
             return false;
         }

@@ -4,13 +4,13 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.IsConstantExpressionVisitor;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class IncompatibleMaskInspection extends ExpressionInspection {
 
@@ -66,15 +66,15 @@ public class IncompatibleMaskInspection extends ExpressionInspection {
             if (strippedLhs == null) {
                 return;
             }
-            if (isConstantMask(strippedLhs) && isConstant(strippedRhs)) {
+          if (isConstantMask(strippedLhs) && PsiUtil.isConstantExpression(strippedRhs)) {
                 if (isIncompatibleMask((PsiBinaryExpression) strippedLhs, strippedRhs)) {
                     registerError(expression);
                 }
-            } else if (isConstantMask(strippedRhs) && isConstant(strippedLhs)) {
-                if (isIncompatibleMask((PsiBinaryExpression) strippedRhs, strippedLhs)) {
-                    registerError(expression);
-                }
-            }
+            } else if (isConstantMask(strippedRhs) && PsiUtil.isConstantExpression(strippedLhs)) {
+                  if (isIncompatibleMask((PsiBinaryExpression) strippedRhs, strippedLhs)) {
+                      registerError(expression);
+                  }
+              }
         }
 
     }
@@ -104,7 +104,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection {
         final long constantMaskValue;
         final PsiExpression maskRhs = maskExpression.getROperand();
         final PsiExpression maskLhs = maskExpression.getLOperand();
-        if (isConstant(maskRhs)) {
+      if (PsiUtil.isConstantExpression(maskRhs)) {
             final Object rhsValue =
                     ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
             constantMaskValue = ((Long) rhsValue).longValue();
@@ -127,20 +127,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection {
         return false;
     }
 
-    private static boolean isConstant(PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        final IsConstantExpressionVisitor visitor =
-                new IsConstantExpressionVisitor();
-        expression.accept(visitor);
-        if (!visitor.isConstant()) {
-            return false;
-        }
-        return true;
-    }
-
-    private static boolean isConstantMask(PsiExpression expression) {
+  private static boolean isConstantMask(PsiExpression expression) {
         if (expression == null) {
             return false;
         }
@@ -158,11 +145,11 @@ public class IncompatibleMaskInspection extends ExpressionInspection {
             return false;
         }
         final PsiExpression rhs = binaryExpression.getROperand();
-        if (isConstant(rhs)) {
+    if (PsiUtil.isConstantExpression(rhs)) {
             return true;
         }
         final PsiExpression lhs = binaryExpression.getLOperand();
-        if (isConstant(lhs)) {
+    if (PsiUtil.isConstantExpression(lhs)) {
             return true;
         }
         return false;

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.IsConstantExpressionVisitor;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
@@ -139,22 +138,11 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     private static boolean isZero(PsiExpression expression) {
-        final IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
-        expression.accept(visitor);
-        if (!visitor.isConstant()) {
-            return false;
-        }
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value.doubleValue() == 0.0;
     }
 
     private static boolean isOne(PsiExpression expression) {
-        final IsConstantExpressionVisitor visitor =
-                new IsConstantExpressionVisitor();
-        expression.accept(visitor);
-        if (!visitor.isConstant()) {
-            return false;
-        }
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value.doubleValue() == 1.0;
     }
