@@ -46,33 +46,26 @@ public class RecentProjectsAction extends QuickSwitchSchemeAction {
 
     final ListPopup popup = ActionListPopup.createListPopup(e.getPresentation().getText(), group, e.getDataContext(), true, true);
 
-    Rectangle r;
-    final int x;
-    final int y;
-
     Component focusedComponent = e.getInputEvent().getComponent();
+    Rectangle r;
+    int x;
+    int y;
 
     if (focusedComponent != null) {
       r = focusedComponent.getBounds();
-
-      r = SwingUtilities.convertRectangle(focusedComponent.getParent(), r, null);
-
-      popup.getWindow().pack();
-      x = r.x ;
+      x = r.x;
       y = r.y + r.height;
-    }
-    else {
+    } else {
       focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent((Project)null);
-      if (focusedComponent != null) {
-        r = focusedComponent.getBounds();
-      } else {
-        r = WindowManagerEx.getInstanceEx().getScreenBounds();
-      }
+      r = WindowManagerEx.getInstanceEx().getScreenBounds();
       x = r.x + r.width / 2;
       y = r.y + r.height / 2;
     }
 
-    popup.show(x, y);
+    Point point = new Point(x, y);
+    SwingUtilities.convertPointToScreen(point, focusedComponent.getParent());
+    popup.getWindow().pack();
+    popup.show(point.x, point.y);
   }
 
   protected boolean isEnabled() {
