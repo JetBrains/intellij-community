@@ -20,6 +20,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
+  protected boolean shouldBeAvailableAfterExecution() {
+    return false;
+  }
   protected void doTestFor(final String testName) throws Exception {
     final String relativePath = getBasePath() + "/before" + testName;
     final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
@@ -58,9 +61,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
       action.invoke(getProject(), getEditor(), getFile());
-      final IntentionAction afterAction = findActionWithText(text);
-      if (afterAction != null) {
-        fail("Action '" + text + "' is still available after it's invocation in test " + testFullPath);
+      if (!shouldBeAvailableAfterExecution()) {
+        final IntentionAction afterAction = findActionWithText(text);
+        if (afterAction != null) {
+          fail("Action '" + text + "' is still available after it's invocation in test " + testFullPath);
+        }
       }
       final String expectedFilePath = getBasePath() + "/after" + testName;
       checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
@@ -94,8 +99,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       File file = files[i];
       final String testName = file.getName().substring("before".length());
       doTestFor(testName);
-      System.out.print((i + 1) % 10);
+      System.out.print(testName + " ");
     }
+    assertTrue("Test files not found in "+testDirPath,files.length != 0);
   }
 
   protected List<IntentionAction> getAvailableActions() {

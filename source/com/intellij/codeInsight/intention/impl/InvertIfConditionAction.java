@@ -12,6 +12,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -33,21 +34,26 @@ public class InvertIfConditionAction extends BaseIntentionAction {
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
+    if (element == null) return false;
+    final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
+    if (ifStatement == null) return false;
+    final PsiExpression condition = ifStatement.getCondition();
+    if (condition == null) return false;
+    if (ifStatement.getThenBranch() == null) return false;
     if (element instanceof PsiKeyword) {
       PsiKeyword keyword = (PsiKeyword) element;
       if ((keyword.getTokenType() == JavaTokenType.IF_KEYWORD || keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD)
-          && keyword.getParent() instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(keyword, PsiIfStatement.class);
-        if (ifStatement == null) return false;
-        PsiElement block = findCodeBlock(ifStatement);
-        if (block == null) return false;
-        if (ifStatement.getCondition() == null) return false;
-        if (ifStatement.getThenBranch() == null) return false;
+          && keyword.getParent() == ifStatement) {
         return true;
       }
     }
+    final TextRange condTextRange = condition.getTextRange();
+    if (condTextRange == null) return false;
+    if (!condTextRange.contains(offset)) return false;
+    PsiElement block = findCodeBlock(ifStatement);
+    if (block == null) return false;
 
-    return false;
+    return true;
   }
 
   public String getText() {
