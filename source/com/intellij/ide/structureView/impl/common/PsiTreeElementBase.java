@@ -53,7 +53,7 @@ public abstract class PsiTreeElementBase implements StructureViewTreeElement, It
 
   public Icon getIcon(boolean open) {
     final PsiElement element = getElement();
-    if (element == null) {
+    if (element != null) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     } else {
       return null;
