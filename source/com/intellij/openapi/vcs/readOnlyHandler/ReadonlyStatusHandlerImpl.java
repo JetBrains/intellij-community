@@ -63,6 +63,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     final FileInfo[] fileInfos = createFileInfos(files);
     if (files.length == 0) return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return createResultStatus(files, modificationStamps);
+    }
+
     Runnable handleAction = new Runnable() {
       public void run() {
         if (SHOW_DIALOG) {
@@ -86,6 +90,11 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     handleAction.run();
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
+    return createResultStatus(files, modificationStamps);
+
+  }
+
+  private OperationStatus createResultStatus(final VirtualFile[] files, final long[] modificationStamps) {
     List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     List<VirtualFile> updatedFiles = new ArrayList<VirtualFile>();
     for (int i = 0; i < files.length; i++) {
