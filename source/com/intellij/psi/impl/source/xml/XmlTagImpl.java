@@ -9,12 +9,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.PomModel;
-import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.*;
-import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
-import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiBaseElementProcessor;
@@ -499,7 +498,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return myNamespace = (namespace != null ? namespace : XmlUtil.EMPTY_NAMESPACE);
   }
 
-  private String getNamespacePrefix() {
+  public String getNamespacePrefix() {
     final String name = getName();
     final int index = name.indexOf(':');
     if(index >= 0){

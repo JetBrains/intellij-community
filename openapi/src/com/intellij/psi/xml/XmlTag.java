@@ -38,6 +38,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlTag[] findSubTags(String localName, String namespace);
   XmlTag findFirstSubTag(String qname);
 
+  String getNamespacePrefix();
   String getNamespaceByPrefix(String prefix);
   String getPrefixByNamespace(String prefix);
   String[] knownNamespaces();
