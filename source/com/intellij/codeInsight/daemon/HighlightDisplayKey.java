@@ -22,7 +22,7 @@ public class HighlightDisplayKey {
   public static final HighlightDisplayKey EJB_ERROR = register("EJB_ERROR", "EJB errors");
   public static final HighlightDisplayKey EJB_WARNING = register("EJB_WARNING", "EJB warnings");
   public static final HighlightDisplayKey ILLEGAL_DEPENDENCY = register("ILLEGAL_DEPENDENCY", "Illegal package dependencies");
-  public static final HighlightDisplayKey UNCHECKED_ASSIGNMENT = register("UNCHECKED_ASSIGNMENT", "Unchecked assignment");
+  public static final HighlightDisplayKey UNCHECKED_ASSIGNMENT = register("UNCHECKED_ASSIGNMENT", "Unchecked warning");
 
 
   private final String myName;
