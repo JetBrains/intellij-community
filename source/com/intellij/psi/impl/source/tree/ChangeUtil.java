@@ -74,9 +74,9 @@ public class ChangeUtil implements Constants {
     }
 
     //updateCachedLengths(parent, childLength);
+    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
     parent.subtreeChanged();
 
-    PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
     if (physical) {
       event.setChild(SourceTreeToPsiMap.treeElementToPsi(child));
       manager.childAdded(event);
