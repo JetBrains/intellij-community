@@ -356,11 +356,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public PsiElement getPsi() {
-    if (myWrapper != null) return myWrapper;
-    final Language lang = getElementType().getLanguage();
-    if (lang != null) {
-      myWrapper = lang.createElement(this);
+    synchronized (PsiLock.LOCK) {
+      if (myWrapper != null) return myWrapper;
+      final Language lang = getElementType().getLanguage();
+      if (lang != null) {
+        myWrapper = lang.createElement(this);
+      }
+      return myWrapper;
     }
-    return myWrapper;
   }
 }
