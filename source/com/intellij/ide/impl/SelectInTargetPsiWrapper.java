@@ -43,7 +43,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   public final void selectIn(SelectInContext context, final boolean requestFocus) {
     final Object selector = context.getSelectorInFile();
     if (selector instanceof PsiElement) {
-      select((PsiElement)selector, requestFocus);
+      select(((PsiElement)selector).getOriginalElement(), requestFocus);
     } else {
       select(selector, context.getVirtualFile(), requestFocus);
     }
@@ -52,10 +52,6 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected abstract void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus);
 
   protected abstract boolean canWorkWithCustomObjects();
-
-  public abstract String getToolWindowId();
-
-  public abstract String getMinorViewId();
 
   protected abstract void select(PsiElement element, boolean requestFocus);
 }
