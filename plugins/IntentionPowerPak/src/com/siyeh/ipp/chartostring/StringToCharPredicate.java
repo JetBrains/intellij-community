@@ -17,7 +17,7 @@ class StringToCharPredicate implements PsiElementPredicate{
             return false;
         }
         final String value = (String) expression.getValue();
-        if(value.length() != 1){
+        if(value == null || value.length() != 1){
             return false;
         }
         return isInConcatenationContext(element);
