@@ -174,15 +174,21 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor {
   private boolean checkSchemaNamespace(String name, XmlTag context){
     final String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(name));
     if(namespace != null && namespace.length() > 0){
-      return XmlUtil.XML_SCHEMA_URI.equals(namespace);
+      return checkSchemaNamespace(namespace);
     }
     return "xsd".equals(XmlUtil.findPrefixByQualifiedName(name));
+  }
+
+  private static boolean checkSchemaNamespace(String namespace) {
+    return XmlUtil.XML_SCHEMA_URI.equals(namespace) ||
+           XmlUtil.XML_SCHEMA_URI2.equals(namespace) ||
+           XmlUtil.XML_SCHEMA_URI3.equals(namespace);
   }
 
   private static boolean checkSchemaNamespace(XmlTag context){
     final String namespace = context.getNamespace();
     if(namespace != null && namespace.length() > 0){
-      return XmlUtil.XML_SCHEMA_URI.equals(namespace);
+      return checkSchemaNamespace(namespace);
     }
     return context.getName().startsWith("xsd:");
   }
