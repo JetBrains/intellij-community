@@ -44,7 +44,7 @@ public class Patches {
   public static final boolean SUN_BUG_ID_4503845 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
-   * See sun bug parage.
+   * See sun bug parage [http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4620537].
    * MouseListener on JTabbedPane with SCROLL_TAB_LAYOUT policy doesn't get events. In the related bug
    * #4499556 Sun advices to reimplement or hack JTabbedPane as workaround :)
    */
