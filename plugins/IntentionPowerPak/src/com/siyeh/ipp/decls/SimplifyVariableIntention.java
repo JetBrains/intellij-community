@@ -6,13 +6,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class SimplifyVariableIntention extends Intention
 {
-    public SimplifyVariableIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {
