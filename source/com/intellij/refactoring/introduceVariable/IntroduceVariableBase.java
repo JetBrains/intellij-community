@@ -75,8 +75,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (expr != null && expr.getParent() instanceof PsiExpressionStatement) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.introduceVariable.incompleteStatement");
     }
-    if (IntroduceVariableBase.LOG.isDebugEnabled()) {
-      IntroduceVariableBase.LOG.debug("expression:" + expr);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("expression:" + expr);
     }
 
     if (expr == null) {
