@@ -2,7 +2,7 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.refactoring.ui.BaseRefactoringDialog;
+import com.intellij.refactoring.RefactoringDialog;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -11,7 +11,7 @@ import java.awt.event.ItemListener;
 /**
  * @author dsl
  */
-public abstract class ExtractSuperBaseDialog extends BaseRefactoringDialog {
+public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected JRadioButton myRbExtractSuperclass;
   private JRadioButton myRbExtractSubclass;
 

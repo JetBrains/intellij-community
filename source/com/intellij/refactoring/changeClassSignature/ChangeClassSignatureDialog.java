@@ -5,6 +5,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class ChangeClassSignatureDialog extends BaseRefactoringDialog {
+public class ChangeClassSignatureDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog");
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
@@ -123,7 +124,7 @@ public class ChangeClassSignatureDialog extends BaseRefactoringDialog {
       final PsiTypeCodeFragment codeFragment = myTypeCodeFragments.get(i);
       TypeParameterInfo info = myTypeParameterInfos.get(i);
       if (info.getOldParameterIndex() >= 0) continue;
-      PsiType type = null;
+      PsiType type;
       try {
         type = codeFragment.getType();
       }
@@ -206,16 +207,13 @@ public class ChangeClassSignatureDialog extends BaseRefactoringDialog {
       TableUtil.stopEditing(myTable);
       myTypeParameterInfos.add(new TypeParameterInfo("", null));
       myTypeCodeFragments.add(createValueCodeFragment());
-      int index = myTypeParameterInfos.size() - 1;
       fireTableDataChanged();
-      //fireTableRowsInserted(index, index);
     }
 
     public void removeRow(int index) {
       myTypeParameterInfos.remove(index);
       myTypeCodeFragments.remove(index);
       fireTableDataChanged();
-      //fireTableRowsDeleted(index, index);
     }
 
     public void exchangeRows(int index1, int index2) {
@@ -240,7 +238,7 @@ public class ChangeClassSignatureDialog extends BaseRefactoringDialog {
   private class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
 
     public MyCodeFragmentTableCellRenderer() {
-      super(myProject);
+      super(getProject());
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

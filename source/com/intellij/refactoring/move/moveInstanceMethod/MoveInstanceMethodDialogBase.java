@@ -1,13 +1,14 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.ui.BaseRefactoringDialog;
+import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -21,7 +22,7 @@ import java.awt.*;
 /**
  * @author dsl
  */
-public abstract class MoveInstanceMethodDialogBase extends BaseRefactoringDialog {
+public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected final PsiMethod myMethod;
   protected final PsiVariable[] myVariables;
   protected JList myList;
@@ -83,18 +84,19 @@ public abstract class MoveInstanceMethodDialogBase extends BaseRefactoringDialog
 
   protected boolean verifyTargetClass (PsiClass targetClass) {
     if (targetClass.isInterface()) {
-      if (targetClass.getManager().getSearchHelper().findInheritors(targetClass, GlobalSearchScope.allScope(myProject), false).length == 0) {
+      final Project project = getProject();
+      if (targetClass.getManager().getSearchHelper().findInheritors(targetClass, GlobalSearchScope.allScope(project), false).length == 0) {
         final String message = UsageViewUtil.getDescriptiveName(targetClass) + " is an interface. \n" +
                        "that has no implementing classes.";
 
-        Messages.showErrorDialog(myProject, message, myRefactoringName);
+        Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
       final String message = UsageViewUtil.getDescriptiveName(targetClass) + " is an interface. \n" +
                        "Method implementation will be added to all directly implementing classes.\n Proceed?";
 
-      final int result = Messages.showYesNoDialog(myProject, message, myRefactoringName,
+      final int result = Messages.showYesNoDialog(project, message, myRefactoringName,
                                      Messages.getQuestionIcon());
       if (result != 0) return false;
     }
