@@ -1,0 +1,6 @@
+public class X {
+  int i;
+  {
+     i = 65535;
+  }
+}
