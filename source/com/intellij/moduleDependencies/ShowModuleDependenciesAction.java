@@ -34,4 +34,10 @@ public class ShowModuleDependenciesAction extends AnAction{
     panel.setContent(content);
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }
+
+  public void update(AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    e.getPresentation().setEnabled(project != null);
+  }
 }
