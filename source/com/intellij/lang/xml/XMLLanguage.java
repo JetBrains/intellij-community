@@ -4,12 +4,11 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
+import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
+import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,8 +18,16 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
  * To change this template use File | Settings | File Templates.
  */
 public class XMLLanguage extends Language {
+  protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
+  protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
+
+
   public XMLLanguage() {
     super("XML");
+  }
+
+  protected XMLLanguage(String str) {
+    super(str);
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
@@ -28,15 +35,10 @@ public class XMLLanguage extends Language {
   }
 
   public PseudoTextBuilder getFormatter() {
-    if (CodeFormatterFacade.USE_NEW_CODE_FORMATTER <= 0) {
-      return new JavaAdapter() {
-        protected FileType getFileType() {
-          return StdFileTypes.XML;
-        }
-      };
-    }
-    else {
-      return new XmlPseudoTextBuilder();
-    }
+    return new XmlPseudoTextBuilder();
+  }
+
+  public XmlPsiPolicy getPsiPolicy(){
+    return CDATA_ON_ANY_ENCODED_POLICY;
   }
 }

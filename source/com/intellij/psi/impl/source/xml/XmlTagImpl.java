@@ -16,6 +16,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -773,38 +775,35 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
       if (child.getElementType() != XmlElementType.XML_TEXT) {
         if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
-          final XmlText xmlText = ((XmlText)SourceTreeToPsiMap.treeElementToPsi(treePrev));
-          xmlText.add(SourceTreeToPsiMap.treeElementToPsi(treeNext));
+          final XmlTextImpl xmlText = (XmlTextImpl)SourceTreeToPsiMap.treeElementToPsi(treePrev);
           model.runTransaction(new PomTransactionBase(this) {
-            public PomModelEvent run() {
-              final PomModelEvent event = new PomModelEvent(model);
-              final XmlAspectChangeSet xmlAspectChangeSet = new XmlAspectChangeSet(model, (XmlFile)getContainingFile());
-              xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)treeNext));
-              xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
-              event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-
+            public PomModelEvent run() throws IncorrectOperationException{
+              final int displayOffset = xmlText.getValue().length();
+              xmlText.insertText(((XmlText)treeNext).getValue(), displayOffset);
               removeChild(treeNext);
               removeChild(child);
+              { // Handling whitespaces
+                final LeafElement leafElementAt = xmlText.findLeafElementAt(displayOffset);
+                if(leafElementAt != null && leafElementAt.getElementType() == XmlTokenType.XML_WHITE_SPACE){
+                  final String wsText = CodeEditUtil.getWhiteSpaceBetweenTokens(
+                    ParseUtil.prevLeaf(leafElementAt, null),
+                    ParseUtil.nextLeaf(leafElementAt, null),
+                    getLanguage());
+                  final LeafElement newWhitespace =
+                    Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, wsText.toCharArray(), 0, wsText.length(), null, null);
+                  xmlText.replaceChild(leafElementAt, newWhitespace);
+                }
+              }
+              final PomModelEvent event = new PomModelEvent(model);
+              { // event construction
+                final XmlAspectChangeSet xmlAspectChangeSet = new XmlAspectChangeSet(model, (XmlFile)getContainingFile());
+                xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)treeNext));
+                xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
+                event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
+              }
               return event;
             }
           }, aspect);
-
-          // TODO[ik]: remove this hack
-          if(fileType != StdFileTypes.XHTML){
-            model.runTransaction(new PomTransactionBase(this) {
-              public PomModelEvent run() throws IncorrectOperationException{
-                final Project project = getProject();
-                CodeStyleManager instance = CodeStyleManager.getInstance(project);
-                instance.reformat(XmlTagImpl.this);
-
-                XmlElement parent = getParent();
-                if(parent instanceof XmlTag)
-                  return XmlTagChildChanged.createXmlTagChildChanged(model, (XmlTag)parent, XmlTagImpl.this);
-                else
-                  return XmlDocumentChanged.createXmlDocumentChanged(model, (XmlDocument)parent);
-              }
-            }, aspect);
-          }
           return;
         }
       }
@@ -885,6 +884,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     public PomModelEvent run() throws IncorrectOperationException {
       ASTNode treeElement;
       if(myChild.getElementType() == XmlElementType.XML_TEXT){
+        final XmlText xmlChildAsText = (XmlText)myChild;
         ASTNode left;
         ASTNode right;
         if(myBeforeFlag){
@@ -895,13 +895,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           left = myAnchor != null ? myAnchor : getLastChildNode();
           right = myAnchor != null ? myAnchor.getTreeNext() : null;
         }
-        if(left.getElementType() == XmlElementType.XML_TEXT){
-          ((XmlText)left).add((PsiElement)myChild);
+        if(left != null && left.getElementType() == XmlElementType.XML_TEXT){
+          final XmlText xmlText = (XmlText)left;
+          xmlText.insertText(xmlChildAsText.getValue(), xmlText.getValue().length());
           myNewElement = left;
           return null;
         }
         if(right != null && right.getElementType() == XmlElementType.XML_TEXT){
-          ((XmlText)right).addBefore((PsiElement)myChild, (PsiElement)right.getFirstChildNode());
+          final XmlText xmlText = (XmlText)right;
+          xmlText.insertText(xmlChildAsText.getValue(), 0);
           myNewElement = right;
           return null;
         }
@@ -987,5 +989,51 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public XmlElement getParent() {
     return (XmlElement)super.getParent();
+  }
+
+  protected XmlText splitText(final XmlTextImpl childText, final int displayOffset) throws IncorrectOperationException{
+    if(displayOffset == 0) return childText;
+    if(displayOffset >= childText.getValue().length()) return null;
+
+    final PomModel model = getProject().getModel();
+    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+
+    class MyTransaction extends PomTransactionBase {
+      private XmlTextImpl myRight;
+
+      public MyTransaction() {
+        super(XmlTagImpl.this);
+      }
+
+      public PomModelEvent run() throws IncorrectOperationException{
+        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+        final PsiFile containingFile = getContainingFile();
+
+        addChild(rightText, childText.getTreeNext());
+
+        final String value = childText.getValue();
+        final String text = childText.getText();
+
+        childText.setValue(value.substring(0, displayOffset));
+        rightText.setValue(value.substring(displayOffset));
+
+        final PomModelEvent event = new PomModelEvent(model);
+        {// event construction
+          final XmlAspectChangeSet change = new XmlAspectChangeSet(model, (XmlFile)(containingFile instanceof XmlFile ? containingFile : null));
+          change.add(new XmlTextChanged(childText, text));
+          change.add(new XmlTagChildAdd(XmlTagImpl.this, rightText));
+          event.registerChangeSet(aspect, change);
+        }
+        myRight = rightText;
+        return event;
+      }
+
+      public XmlText getResult() {
+        return myRight;
+      }
+    }
+    final MyTransaction transaction = new MyTransaction();
+    model.runTransaction(transaction, aspect);
+    return transaction.getResult();
   }
 }

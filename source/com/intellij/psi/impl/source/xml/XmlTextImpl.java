@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.CharTable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +18,7 @@ import com.intellij.pom.PomTransaction;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -35,21 +37,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   }
 
   public XmlText split(int displayIndex) {
-    final int phyIndex = displayToPhysical(displayIndex);
-    final String text = getText();
-    final int phyTextLength = text.length();
-    if (phyIndex == 0 || phyIndex == phyTextLength) {
-      return this;
-    }
     try {
-      setValue(text.substring(0, phyIndex));
-      final XmlText element = getManager().getElementFactory().createDisplayText(text.substring(phyIndex));
-      getParent().addAfter(element, this);
-      return element;
+      return ((XmlTagImpl)getParentTag()).splitText(this, displayIndex);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    catch (IncorrectOperationException e) {}
     return null;
   }
 
@@ -163,224 +154,46 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   }
 
   public void setValue(String s) throws IncorrectOperationException {
-    final XmlTextImpl element = (XmlTextImpl)getManager().getElementFactory().createDisplayText(s);
-    replace(element);
+    final ASTNode firstEncodedElement = getPolicy().encodeXmlTextContents(s);
+    if(firstEncodedElement == null){
+      delete();
+      return;
+    }
+    replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
+    clearCaches();
   }
 
-  public XmlElement insertAtOffset(final XmlElement element, int physicalOffset) throws IncorrectOperationException {
-    final PsiElement elementAt = findElementAt(physicalOffset);
-    final int localOffset;
-    if (elementAt != null) {
-      localOffset = physicalOffset - elementAt.getStartOffsetInParent();
+  public XmlElement insertAtOffset(final XmlElement element, int physicalOffset) throws IncorrectOperationException{
+    if(element instanceof XmlText){
+      insertText(((XmlText)element).getValue(), displayToPhysical(physicalOffset));
     }
     else {
-      localOffset = element.getTextLength();
-    }
-    final PomModel model = getManager().getProject().getModel();
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final ASTNode[] retHolder = new ASTNode[1];
-    final ASTNode insertedElement = SourceTreeToPsiMap.psiElementToTree(element);
-    final String oldText = getText();
-    final ASTNode second;
-    if (elementAt != null) {
-      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(elementAt);
-      second = split((LeafElement)treeElement, localOffset);
-    }
-    else {
-      second = null;
-    }
-
-
-    if (element instanceof XmlTagChild) {
-      final XmlElement parent = getParent();
-      if (second != null) {
-        final XmlText xmlText = getManager().getElementFactory().createTagFromText("<tag> </tag>").getValue().getTextElements()[0];
-        final ASTNode compositeElement = SourceTreeToPsiMap.psiElementToTree(xmlText);
-        TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
-        model.runTransaction(new PomTransactionBase(this) {
-          public PomModelEvent run() {
-            ASTNode current = second;
-            while (current != null) {
-              final ASTNode next = current.getTreeNext();
-              removeChild(current);
-              compositeElement.addChild(current, null);
-              current = next;
-            }
-            return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-          }
-        }, aspect);
-
-        XmlElement xmlElement = (XmlElement)parent.addAfter(element, this);
-        parent.addAfter(xmlText, xmlElement);
-        return xmlElement;
+      final XmlTagImpl tag = (XmlTagImpl)getParentTag();
+      final XmlText rightPart = tag.splitText(this, physicalOffset);
+      if(rightPart != null) {
+        tag.addBefore(element, rightPart);
       }
       else {
-        return (XmlElement)parent.addAfter(element, this);
+        tag.addAfter(element, this);
       }
     }
-    else {
-      model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent run() {
-          retHolder[0] = addInternal((TreeElement)insertedElement, insertedElement, retHolder[0], Boolean.TRUE);
-          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-        }
-      }, aspect);
-    }
-    return (XmlElement)SourceTreeToPsiMap.treeElementToPsi(retHolder[0]);
+
+    return this;
   }
 
-  //  public XmlElement insertAtOffset(final XmlElement element, int physicalOffset) throws IncorrectOperationException{
-  //    final PomModel model = getManager().getProject().getModel();
-  //    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-  //    final int displayOffset = physicalToDisplay(physicalOffset);
-  //    final String value = getValue();
-  //    final String part1, part2;
-  //    if(element instanceof XmlText){
-  //      part1 = value.substring(0, displayOffset) + ((XmlText) element).getValue() + value.substring(displayOffset);
-  //      part2 = null;
-  //    }
-  //    else{
-  //      part1 = value.substring(0, displayOffset);
-  //      part2 = value.substring(displayOffset);
-  //    }
-  //    if(part2 != null){
-  //      if(part1.length() > 0){
-  //        setValue(part1);
-  //        final PsiElement elementCopy = getParent().addAfter(element, this);
-  //        if(part2.length() > 0){
-  //          final FileElement treeElement = new DummyHolder(null, null, SharedImplUtil.findCharTableByTree(this)).getTreeElement();
-  //          final XmlTextImpl newText = new XmlTextImpl();
-  //          TreeUtil.addChildren(treeElement, newText);
-  //          TreeUtil.addChildren(newText, createElementsByDisplayText(part2, getPolicy()));
-  //          getParent().addAfter(newText, elementCopy);
-  //        }
-  //      }
-  //      else {
-  //        getParent().addBefore(element, this);
-  //      }
-  //    }
-  //    else{
-  //      setValue(part1);
-  //    }
-  //      return this;
-  //  }
-
-  private int getPolicy() {
-    return CDATA_ON_TEXT;
-  }
-
-  private static LeafElement split(LeafElement element, int offset) throws IncorrectOperationException {
-    final CharTable table = SharedImplUtil.findCharTableByTree(element);
-    int textLength = element.getTextLength(table);
-    if (textLength < offset) throw new ArrayIndexOutOfBoundsException(offset);
-    if (offset == 0 || textLength == offset) return element;
-    if (element.getElementType() != XmlTokenType.XML_DATA_CHARACTERS
-      && element.getElementType() != XmlTokenType.XML_WHITE_SPACE) {
-      throw new IncorrectOperationException("Element " + element.getElementType() + " can not be split!");
-    }
-    final char[] buffer = new char[textLength];
-    element.copyTo(buffer, 0);
-    final LeafElement firstPart = Factory.createSingleLeafElement(element.getElementType(), buffer, 0, offset, table, null);
-    final LeafElement secondPart = Factory.createSingleLeafElement(element.getElementType(), buffer, offset, buffer.length, table, null);
-    final ASTNode parent = element.getTreeParent();
-    parent.replaceChild(element, firstPart);
-    parent.addChild(secondPart, firstPart.getTreeNext());
-    return secondPart;
+  private XmlPsiPolicy getPolicy() {
+    return ((XMLLanguage)getLanguage()).getPsiPolicy();
   }
 
   public void insertText(String text, int displayOffset) throws IncorrectOperationException {
-    final XmlText displayText = getManager().getElementFactory().createDisplayText(text);
-    final int phyOffset = displayToPhysical(displayOffset);
-    insertAtOffset(displayText, phyOffset);
+    if(text == null || text.length() == 0) return;
+    setValue(new StringBuffer(getValue()).insert(displayOffset, text).toString());
   }
 
-  public void removeText(int displayStart, int displayEnd) {
-    final int start = displayToPhysical(displayStart);
-    final int end = displayToPhysical(displayEnd);
-    final PomModel model = getProject().getModel();
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final CharTable table = SharedImplUtil.findCharTableByTree(this);
-    if (start == end) return;
-
-    try {
-      model.runTransaction(new PomTransactionBase(getParent()) {
-        public PomModelEvent run() throws IncorrectOperationException {
-          final String oldText = getText();
-
-          final LeafElement firstAffectedLeaf = findLeafElementAt(start);
-          final LeafElement lastAffectedLeaf;
-          final int lastAffectedLeafOffset;
-          final int startOffsetInStartToken = start - firstAffectedLeaf.getStartOffsetInParent();
-          {
-            // remove elements inside the affected area
-            LeafElement current = firstAffectedLeaf;
-            int endOffset = current.getStartOffsetInParent();
-
-            while (current != null && (endOffset += current.getTextLength(table)) <= end) {
-              final LeafElement toDelete = current;
-              current = (LeafElement)current.getTreeNext();
-              if (toDelete != firstAffectedLeaf) removeChild(toDelete);
-            }
-            lastAffectedLeaf = current;
-            lastAffectedLeafOffset = endOffset - (current != null ? current.getTextLength(table) : 0);
-          }
-
-          LeafElement tokenToChange;
-          int deletedAreaStartOffset = 0;
-          int deletedAreaEndOffset = 0;
-          if (lastAffectedLeafOffset < end && lastAffectedLeaf != firstAffectedLeaf) {
-            // merging tokens
-            final LeafElement merged = mergeElements(firstAffectedLeaf, lastAffectedLeaf, table);
-            if (merged == null) {
-              removeChild(split(firstAffectedLeaf, startOffsetInStartToken));
-              removeChild(split(lastAffectedLeaf, end - lastAffectedLeafOffset).getTreePrev());
-            }
-            else {
-              ChangeUtil.replaceAll(new LeafElement[]{firstAffectedLeaf, lastAffectedLeaf}, merged);
-              deletedAreaStartOffset = startOffsetInStartToken;
-              deletedAreaEndOffset = end - lastAffectedLeafOffset + firstAffectedLeaf.getTextLength(table) -
-                                                                                                           startOffsetInStartToken;
-            }
-            tokenToChange = merged;
-          }
-          else {
-            // replacing first token
-            tokenToChange = firstAffectedLeaf;
-            final int textLength = firstAffectedLeaf.getTextLength(table);
-            deletedAreaStartOffset = startOffsetInStartToken;
-            deletedAreaEndOffset = Math.min(end - firstAffectedLeaf.getStartOffsetInParent(), textLength);
-          }
-
-          if (tokenToChange != null) {
-            final int textLength = tokenToChange.getTextLength(table);
-            if (deletedAreaStartOffset > 0 || deletedAreaEndOffset < textLength) {
-              String text = tokenToChange.getText(table);
-              text = text.substring(0, deletedAreaStartOffset) + text.substring(deletedAreaEndOffset);
-              final LeafElement newLeaf = Factory.createSingleLeafElement(firstAffectedLeaf.getElementType(),
-                                                                          text.toCharArray(), 0, text.length(), table,
-                                                                          null);
-              replaceChild(tokenToChange, newLeaf);
-            }
-            else {
-              final ASTNode treeNext = tokenToChange.getTreeNext();
-              final ASTNode treePrev = tokenToChange.getTreePrev();
-              final LeafElement merged = mergeElements((LeafElement)treePrev, (LeafElement)treeNext, table);
-              removeChild(tokenToChange);
-              if (merged != null) {
-                ChangeUtil.replaceAll(new LeafElement[]{(LeafElement)treePrev,
-                                          (LeafElement)treeNext},
-                                      merged);
-              }
-            }
-          }
-
-          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-        }
-      }, aspect);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+  public void removeText(int displayStart, int displayEnd) throws IncorrectOperationException {
+    final String value = getValue();
+    if(displayStart == 0 && displayEnd == value.length()) delete();
+    else setValue(new StringBuffer(getValue()).replace(displayStart, displayEnd, "").toString());
   }
 
   public XmlElement getParent() {
@@ -414,110 +227,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return null;
   }
 
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {
-    //ChameleonTransforming.transformChildren(this);
-    TreeElement firstAppended = null;
-    boolean before = beforeB != null ? beforeB.booleanValue() : true;
-    try {
-      do {
-        if (firstAppended == null) {
-          firstAppended = addInternal(first, anchor, before);
-          anchor = firstAppended;
-        }
-        else {
-          anchor = addInternal(first, anchor, false);
-        }
-      }
-      while (first != last && (first = first.getTreeNext()) != null);
-    }
-    catch (IncorrectOperationException ioe) {
-    }
-    return firstAppended;
-  }
-
-  public TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException {
-    final PomModel model = getProject().getModel();
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final TreeElement[] retHolder = new TreeElement[1];
-    if (child.getElementType() == XmlElementType.XML_TEXT) {
-      if (child.getTextLength() == 0) return this;
-      final XmlTextImpl text = (XmlTextImpl)child;
-      model.runTransaction(new PomTransactionBase(getParent()) {
-        public PomModelEvent run() {
-          final String oldText = getText();
-          ASTNode childBefore = (anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
-          if (childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()) {
-            final LeafElement newText =
-            mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(),
-                          SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
-            if (newText != null) {
-              replaceChildInternal(childBefore, newText);
-              if (text.getLastChildNode() != text.getFirstChildNode()) {
-                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
-                            before);
-              }
-            }
-            else {
-              addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-            }
-          }
-          else {
-            ASTNode childAfter = (anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
-            if (childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()) {
-              final LeafElement newText =
-              mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter,
-                            SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
-              if (newText != null) {
-                replaceChildInternal(childAfter, newText);
-                if (text.getLastChildNode() != text.getFirstChildNode()) {
-                  addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
-                              before);
-                }
-              }
-              else {
-                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-              }
-            }
-
-            addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-          }
-
-          retHolder[0] = XmlTextImpl.this;
-          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-        }
-      }, aspect);
-    }
-    else {
-      model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent run() {
-          final String oldText = getText();
-          final TreeElement treeElement = addChildren(XmlTextImpl.this, child, child.getTreeNext(), anchor, before);
-          retHolder[0] = treeElement;
-          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-        }
-      }, aspect);
-    }
-    return retHolder[0];
-  }
-
-  private LeafElement mergeElements(final LeafElement one, LeafElement two, CharTable table) {
-    if (one == null || two == null || one.getElementType() != two.getElementType()) return null;
-    if (one.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      final char[] buffer = new char[one.getTextLength() + two.getTextLength()];
-      two.copyTo(buffer, one.copyTo(buffer, 0));
-      return Factory.createSingleLeafElement(one.getElementType(), buffer, 0, buffer.length, table, null);
-    }
-    else if (one.getElementType() == XmlTokenType.XML_WHITE_SPACE) {
-      return (LeafElement)ChangeUtil.copyElement(two, SharedImplUtil.findCharTableByTree(this));
-      //final LeafElement prevLeaf = ParseUtil.prevLeaf(one, null);
-      //final LeafElement nextLeaf = ParseUtil.nextLeaf(two, null);
-      //final PsiFile file = getContainingFile();
-      //final FileType fileType = file.getFileType();
-      //
-      //final Helper helper = new Helper(fileType, getManager().getProject());
-      //helper.getPrevWhitespace(nextLeaf);
-    }
-    return null;
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    throw new RuntimeException("Clients must not use operations with direct children of XmlText!");
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -528,119 +239,5 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     super.clearCaches();
     myDisplayText = null;
     myGaps = null;
-  }
-
-  private static TreeElement addChildren(final XmlTextImpl xmlText,
-                                         final TreeElement firstChild,
-                                         final ASTNode lastChild,
-                                         final ASTNode anchor,
-                                         final boolean isBefore) {
-    if (isBefore) {
-      xmlText.addChildren(firstChild, lastChild, anchor);
-    }
-    else {
-      xmlText.addChildren(firstChild, lastChild, anchor.getTreeNext());
-    }
-    return firstChild;
-  }
-
-  public static final int CDATA_ON_TEXT = 0;
-  public static final int ENCODE_SYMS = 1;
-
-  public static ASTNode createElementsByDisplayText(String displayText, int policy) {
-    if (!toCode(displayText)) {
-      return Factory.createSingleLeafElement(
-        XmlTokenType.XML_DATA_CHARACTERS,
-        displayText.toCharArray(),
-        0,
-        displayText.length(),
-        null, null);
-    }
-    final FileElement dummyParent = new DummyHolder(null, null).getTreeElement();
-    if (policy == CDATA_ON_TEXT) {
-      TreeUtil.addChildren(
-        dummyParent,
-        Factory.createLeafElement(
-          XmlTokenType.XML_CDATA_START,
-          "<![CDATA[".toCharArray(),
-          0, 9, -1,
-          dummyParent.getCharTable()));
-      TreeUtil.addChildren(
-        dummyParent,
-        Factory.createLeafElement(
-          XmlTokenType.XML_DATA_CHARACTERS,
-          displayText.toCharArray(),
-          0, displayText.length(), -1,
-          dummyParent.getCharTable()));
-      TreeUtil.addChildren(
-        dummyParent,
-        Factory.createLeafElement(
-          XmlTokenType.XML_CDATA_END,
-          "]]>".toCharArray(),
-          0, 3, -1,
-          dummyParent.getCharTable()));
-    }
-    else if (policy == ENCODE_SYMS) {
-      int sectionStartOffset = 0;
-      int offset = 0;
-      while (offset < displayText.length()) {
-        if (toCode(displayText.charAt(offset))) {
-          final String plainSection = displayText.substring(sectionStartOffset, offset);
-          if (plainSection.length() > 0) {
-            TreeUtil.addChildren(
-              dummyParent,
-              Factory.createLeafElement(
-                XmlTokenType.XML_DATA_CHARACTERS,
-                plainSection.toCharArray(),
-                0, plainSection.length(), -1,
-                dummyParent.getCharTable()));
-          }
-          TreeUtil.addChildren(dummyParent, createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
-        }
-      }
-    }
-
-    return dummyParent.getFirstChildNode();
-  }
-
-  private static TreeElement createCharEntity(char ch, CharTable charTable) {
-    switch (ch) {
-    case '<':
-           return Factory.createLeafElement(
-             XmlTokenType.XML_CHAR_ENTITY_REF,
-             "&lt;".toCharArray(),
-             0, 4, -1,
-             charTable);
-    case '>':
-           return Factory.createLeafElement(
-             XmlTokenType.XML_CHAR_ENTITY_REF,
-             "&gt;".toCharArray(),
-             0, 4, -1,
-             charTable);
-    case '&':
-           return Factory.createLeafElement(
-             XmlTokenType.XML_CHAR_ENTITY_REF,
-             "&amp;".toCharArray(),
-             0, 5, -1,
-             charTable);
-    default:
-           final String charEncoding = "&#" + (int)ch + ";";
-           return Factory.createLeafElement(
-             XmlTokenType.XML_CHAR_ENTITY_REF,
-             charEncoding.toCharArray(),
-             0, charEncoding.length(), -1,
-             charTable);
-    }
-  }
-
-  public static final boolean toCode(String str) {
-    for (int i = 0; i < str.length(); i++) {
-      if (toCode(str.charAt(i))) return true;
-    }
-    return false;
-  }
-
-  public static final boolean toCode(char ch) {
-    return "<&>".indexOf(ch) >= 0;
   }
 }

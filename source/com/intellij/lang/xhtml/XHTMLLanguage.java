@@ -2,8 +2,11 @@ package com.intellij.lang.xhtml;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,12 +15,19 @@ import com.intellij.openapi.project.Project;
  * Time: 11:01:05 AM
  * To change this template use File | Settings | File Templates.
  */
-public class XHTMLLanguage extends Language {
+public class XHTMLLanguage extends XMLLanguage {
   public XHTMLLanguage() {
     super("XHTML");
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new XmlFileHighlighter(false,true);
+  }
+
+  public PseudoTextBuilder getFormatter() {
+    return null;
+  }
+  public XmlPsiPolicy getPsiPolicy() {
+    return ENCODE_EACH_SYMBOL_POLICY;
   }
 }

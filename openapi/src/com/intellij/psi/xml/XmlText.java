@@ -13,7 +13,7 @@ public interface XmlText extends XmlElement, XmlTagChild{
   XmlElement insertAtOffset(XmlElement element, int physicalOffset) throws IncorrectOperationException;
 
   void insertText(String text, int displayOffset) throws IncorrectOperationException;
-  void removeText(int displayStart, int displayEnd);
+  void removeText(int displayStart, int displayEnd) throws IncorrectOperationException;
 
   int physicalToDisplay(int offset);
   int displayToPhysical(int offset);                                             

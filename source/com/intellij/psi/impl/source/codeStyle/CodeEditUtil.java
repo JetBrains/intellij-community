@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -406,12 +407,11 @@ public class CodeEditUtil {
     }
   }
 
-  public static String getWhiteSpaceBetweenTokens(ASTNode first, ASTNode second) {
+  public static String getWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
     final PsiElement firstAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(first);
     LOG.assertTrue(firstAsPsiElement != null);
     final PsiFile file = firstAsPsiElement.getContainingFile();
-    final FileType fileType = file.getVirtualFile().getFileType();
-    final PseudoTextBuilder pseudoTextBuilder = fileType.getLanguage().getFormatter();
+    final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
     LOG.assertTrue(pseudoTextBuilder != null);
     final Project project = firstAsPsiElement.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
@@ -426,7 +426,7 @@ public class CodeEditUtil {
                                                             settings,
                                                             file);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, fileType, startOffset, endOffset);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), startOffset, endOffset);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
