@@ -13,24 +13,24 @@
 <H2>News Portal: Another Tag File Example</H2>
     <TABLE border="0">
       <jsp:scriptlet>
-      for (Iterator each = myData.iterator(); each.hasNext();){	
+      for (Iterator each = myData.iterator(); each.hasNext();){
       Element eachElem = each.next();
       </jsp:scriptlet>
       <TR valign="top">
         <TD>
-	<jsp:scriptlet>
-	  output.write(eachElem.getName());
-	</jsp:scriptlet>
+  <jsp:scriptlet>
+    output.write(eachElem.getName());
+  </jsp:scriptlet>
         </TD>
         <TD>
-	<jsp:scriptlet>
-	  output.write(eachElem.getPrice());
-	</jsp:scriptlet>
+  <jsp:scriptlet>
+    output.write(eachElem.getPrice());
+  </jsp:scriptlet>
         </TD>
         <TD>
-	<jsp:scriptlet>
-	  output.write(eachElem.getDiscount());
-	</jsp:scritplet>        </TD>
+  <jsp:scriptlet>
+    output.write(eachElem.getDiscount());
+  </jsp:scriptlet>        </TD>
 
       </TR>
     <jsp:scriptlet>
@@ -40,4 +40,4 @@
   </BODY>
 </HTML>
 
-</jsp:root>
+</jsp:declaration>
