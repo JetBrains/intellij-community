@@ -59,6 +59,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     final CvsOperationExecutor executor1 = new CvsOperationExecutor(false, project,
                                                                     ModalityState.stateForComponent(
                                                                       parent.getTree()));
+    executor1.setIsQuietOperation(true);
 
     executor1.performActionSync(
       new CommandCvsHandler("Browse Repository", (CvsOperation)command, false),
