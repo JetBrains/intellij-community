@@ -10,7 +10,8 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 
 public class OverlyStrongTypeCastInspection extends ExpressionInspection {
-    private final OverlyStringCastFix fix = new OverlyStringCastFix();
+
+    private final OverlyStrongCastFix fix = new OverlyStrongCastFix();
 
     public String getDisplayName() {
         return "Overly-strong type cast";
@@ -28,7 +29,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         return fix;
     }
 
-    private static class OverlyStringCastFix extends InspectionGadgetsFix {
+    private static class OverlyStrongCastFix extends InspectionGadgetsFix {
         public String getName() {
             return "Weaken overly-strong cast";
         }
@@ -79,10 +80,20 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.equals(type)) {
                 return;
             }
+            if (expectedType.getCanonicalText().equals("_Dummy_.__Array__")) {
+                return;
+            }
             if (expectedType.isAssignableFrom(operandType)) {
                 return;     //then it's redundant, and caught by the built-in exception
             }
-
+            if(expectedType instanceof PsiClassType)
+            {
+                final PsiClass aClass = ((PsiClassType) expectedType).resolve();
+                if(aClass.getContext() instanceof PsiTypeParameterList)
+                {
+                    return;
+                }
+            }
             if (ClassUtils.isPrimitiveNumericType(type) ||
                     ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;

@@ -19,9 +19,9 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement classRef) {
+    public String buildErrorString(PsiElement location) {
         final PsiClass containingClass =
-                ClassUtils.getContainingClass(classRef);
+                ClassUtils.getContainingClass(location);
         final String containingClassName = containingClass.getName();
         return "Class " + containingClassName + " references subclass #ref #loc";
     }
