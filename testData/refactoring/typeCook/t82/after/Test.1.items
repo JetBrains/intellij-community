@@ -1,6 +1,6 @@
-List<java.lang.Object>[]\nPsiLocalVariable:x
-List<java.lang.Object>[]\nnew
-List<java.lang.Object>\nPsiLocalVariable:y
-List<java.lang.Object>\nPsiLocalVariable:z
-List<java.lang.Object>\nnew
-List<java.lang.Object>\nnew
+List<java.io.Serializable>[]\nPsiLocalVariable:x
+List<java.io.Serializable>[]\nnew
+List<java.io.Serializable>\nPsiLocalVariable:y
+List<java.io.Serializable>\nPsiLocalVariable:z
+List<java.io.Serializable>\nnew
+List<java.io.Serializable>\nnew

@@ -1,2 +1,2 @@
-List<int[]>\nPsiLocalVariable:x
-List<int[]>\nnew
+List<? extends int[]>\nPsiLocalVariable:x
+List<? extends int[]>\nnew

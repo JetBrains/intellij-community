@@ -54,7 +54,7 @@ public class SystemBuilder {
     myTypeVariableFactory = new PsiTypeVariableFactory();
   }
 
-  public HashSet<PsiElement> collect(final PsiElement[] scopes) {
+  private HashSet<PsiElement> collect(final PsiElement[] scopes) {
     return new VictimCollector(scopes, mySettings).getVictims();
   }
 
@@ -846,6 +846,10 @@ public class SystemBuilder {
         }
       }.brrrr(definedType, elemenType);
     }
+  }
+
+  public System build (final PsiElement[] scopes) {
+    return build(collect(scopes));
   }
 
   public System build(final HashSet<PsiElement> victims) {

@@ -649,7 +649,7 @@ public class TypeCookTest extends MultiFileTestCase {
                                           }
                                         });
 
-    final com.intellij.refactoring.typeCook.deductive.builder.System commonSystem = b.build(b.collect(new PsiElement[]{aClass}));
+    final com.intellij.refactoring.typeCook.deductive.builder.System commonSystem = b.build(new PsiElement[]{aClass});
 
     System.out.println("System built:\n" + commonSystem);
 

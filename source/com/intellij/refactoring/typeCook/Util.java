@@ -778,5 +778,71 @@ public class Util {
 
     return false;
   }
+
+  public static void changeType(final PsiElement element, final PsiType type) {
+    try {
+      if (element instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
+
+        cast.getCastType().replace(cast.getManager().getElementFactory().createTypeElement(type));
+      }
+      else if (element instanceof PsiVariable) {
+        final PsiVariable field = ((PsiVariable)element);
+
+        field.normalizeDeclaration();
+        field.getTypeElement().replace(field.getManager().getElementFactory().createTypeElement(type));
+      }
+      else if (element instanceof PsiMethod) {
+        final PsiMethod method = ((PsiMethod)element);
+
+        method.getReturnTypeElement().replace(method.getManager().getElementFactory().createTypeElement(type));
+      }
+      else if (element instanceof PsiNewExpression) {
+        final PsiNewExpression newx = (PsiNewExpression)element;
+        final PsiClassType.ClassResolveResult result = Util.resolveType(type);
+
+        if (result == null) {
+          return;
+        }
+
+        final PsiSubstitutor subst = result.getSubstitutor();
+        final PsiTypeParameter[] parms = Util.getTypeParametersList(result.getElement());
+
+        if (parms.length >= 0 && subst.substitute(parms[0]) != null) {
+          PsiJavaCodeReferenceElement classReference = newx.getClassReference();
+          PsiReferenceParameterList list = null;
+
+          if (classReference == null) {
+            list = newx.getAnonymousClass().getBaseClassReference().getParameterList();
+          }
+          else {
+            list = classReference.getParameterList();
+          }
+
+          if (list == null) {
+            return;
+          }
+
+          final PsiElementFactory factory = newx.getManager().getElementFactory();
+
+          PsiTypeElement[] elements = list.getTypeParameterElements();
+          for (int i = 0; i < elements.length; i++) {
+            elements[i].delete();
+          }
+
+          for (int i = 0; i < parms.length; i++) {
+            PsiType aType = subst.substitute(parms[i]);
+            list.add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager()) : aType));
+          }
+        }
+      }
+      else {
+        LOG.error ("Unexpected element type " + element.getClass().getName()); 
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error("Incorrect Operation Exception thrown in CastRole.\n");
+    }
+  }
 }
 

@@ -4,6 +4,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 
+import java.util.HashSet;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -30,4 +32,8 @@ public abstract class Binding {
   public abstract Binding reduceRecursive();
 
   public abstract boolean binds(final PsiTypeVariable var);
+
+  public abstract void merge (Binding b);
+
+  public abstract HashSet<PsiTypeVariable> getBoundVariables ();
 }

@@ -1,1 +1,1 @@
-LinkedList<Simple>\nPsiField:x
+LinkedList<? extends Simple>\nPsiField:x

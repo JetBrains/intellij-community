@@ -1,4 +1,4 @@
-List<List<java.lang.Object>>\nPsiLocalVariable:x
-List<List<java.lang.Object>>\nPsiLocalVariable:y
-List<List<java.lang.Object>>\nnew
-List<List<java.lang.Object>>\nnew
+List<List<java.io.Serializable>>\nPsiLocalVariable:x
+List<List<java.io.Serializable>>\nPsiLocalVariable:y
+List<List<java.io.Serializable>>\nnew
+List<List<java.io.Serializable>>\nnew

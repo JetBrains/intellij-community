@@ -450,6 +450,24 @@ public class BindingFactory {
     public boolean binds(final PsiTypeVariable var) {
       return myBindings[var.getIndex()] != null;
     }
+
+    public void merge(Binding b) {
+      for (final Iterator<PsiTypeVariable> v=b.getBoundVariables().iterator(); v.hasNext();){
+        final PsiTypeVariable var = v.next();
+        final int index = var.getIndex();
+
+        if (myBindings[index] != null){
+          LOG.error ("Oops... Binding conflict...");
+        }
+        else {
+          myBindings[index] = b.apply(var);
+        }
+      }
+    }
+
+    public HashSet<PsiTypeVariable> getBoundVariables() {
+      return myBoundVariables;
+    }
   }
 
   interface Balancer {

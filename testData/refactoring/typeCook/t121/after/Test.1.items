@@ -1,2 +1,2 @@
 A\nPsiLocalVariable:a
-List\nPsiLocalVariable:y
+List<java.lang.String>\nPsiLocalVariable:y
