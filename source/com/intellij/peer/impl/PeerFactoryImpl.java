@@ -219,7 +219,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
     };
   }
 
-  public StructureViewFactory getStructureVeiwFactory() {
+  public StructureViewFactory getStructureViewFactory() {
     return new StructureViewFactory() {
 
       public StructureView createStructureView(final FileEditor editor, StructureViewModel treeModel, Project project) {

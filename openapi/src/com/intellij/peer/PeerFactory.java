@@ -41,5 +41,5 @@ public abstract class PeerFactory {
 
   public abstract VcsContextFactory getVcsContextFactory();
 
-  public abstract StructureViewFactory getStructureVeiwFactory();
+  public abstract StructureViewFactory getStructureViewFactory();
 }

@@ -9,6 +9,6 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
   public abstract StructureViewModel createStructureViewModel();
 
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
-    return PeerFactory.getInstance().getStructureVeiwFactory().createStructureView(fileEditor, createStructureViewModel(), project);
+    return PeerFactory.getInstance().getStructureViewFactory().createStructureView(fileEditor, createStructureViewModel(), project);
   }
 }
