@@ -131,6 +131,11 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection {
                 return;
             }
 
+            final PsiType retType = method.getReturnType();
+            if (retType == PsiType.VOID) {
+                return;
+            }
+
             for (Iterator iterator = callsToCheck.iterator(); iterator.hasNext();) {
                 final ReturnCheckSpecification spec = (ReturnCheckSpecification) iterator.next();
                 final Pattern methodNamePattern = spec.getMethodNamePattern();
