@@ -221,9 +221,16 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
       expression.getArgumentList().add(qualifier);
       if (newQualifier != null) {
-        final PsiReferenceExpression refExpr = (PsiReferenceExpression)manager.getElementFactory().createExpressionFromText("q." + myMethod.getName(), null);
-        refExpr.getQualifierExpression().replace(newQualifier);
-        expression.getMethodExpression().replace(refExpr);
+        if ((newQualifier instanceof PsiThisExpression && ((PsiThisExpression)newQualifier).getQualifier() == null)) {
+          //Remove redundant 'this' qualifier
+          final PsiExpression oldQualifier = expression.getMethodExpression().getQualifierExpression();
+          if (oldQualifier != null) oldQualifier.delete();
+        }
+        else {
+          final PsiReferenceExpression refExpr = (PsiReferenceExpression)manager.getElementFactory().createExpressionFromText("q." + myMethod.getName(), null);
+          refExpr.getQualifierExpression().replace(newQualifier);
+          expression.getMethodExpression().replace(refExpr);
+        }
       }
     }
     catch (IncorrectOperationException e) {
