@@ -61,7 +61,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
     new ColorDescriptor("Background", EditorColors.BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor("Background in readonly files", EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor("Readonly fragment background", EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Annotation editor gutter background", EditorColors.LEFT_GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor("Gutter background", EditorColors.LEFT_GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
 
     new ColorDescriptor("Selection Background", EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor("Selection Foreground", EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
