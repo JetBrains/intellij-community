@@ -83,7 +83,7 @@ public abstract class ChooseByNameBase{
     public int compare(final String a, final String b) {
       if (a.startsWith(myOriginalPattern) && b.startsWith(myOriginalPattern)) return a.compareToIgnoreCase(b);
       if (a.startsWith(myOriginalPattern) && !b.startsWith(myOriginalPattern)) return -1;
-      if (b.startsWith(myOriginalPattern) && a.startsWith(myOriginalPattern)) return 1;
+      if (b.startsWith(myOriginalPattern) && !a.startsWith(myOriginalPattern)) return 1;
       return a.compareToIgnoreCase(b);
     }
   }
