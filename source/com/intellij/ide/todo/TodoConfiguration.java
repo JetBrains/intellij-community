@@ -101,8 +101,8 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    ArrayList patternsList = new ArrayList();
-    ArrayList filtersList = new ArrayList();
+    ArrayList<TodoPattern> patternsList = new ArrayList<TodoPattern>();
+    ArrayList<TodoFilter> filtersList = new ArrayList<TodoFilter>();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element child = (Element)i.next();
       if ("pattern".equals(child.getName())) {
@@ -111,14 +111,14 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
         patternsList.add(pattern);
       }
       else if ("filter".equals(child.getName())) {
-        TodoPattern[] patterns = (TodoPattern[])patternsList.toArray(new TodoPattern[patternsList.size()]);
+        TodoPattern[] patterns = patternsList.toArray(new TodoPattern[patternsList.size()]);
         TodoFilter filter = new TodoFilter();
         filter.readExternal(child, patterns);
         filtersList.add(filter);
       }
     }
-    setTodoPatterns((TodoPattern[])patternsList.toArray(new TodoPattern[patternsList.size()]));
-    setTodoFilters((TodoFilter[])filtersList.toArray(new TodoFilter[filtersList.size()]));
+    setTodoPatterns(patternsList.toArray(new TodoPattern[patternsList.size()]));
+    setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
