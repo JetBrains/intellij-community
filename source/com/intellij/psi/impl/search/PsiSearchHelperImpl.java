@@ -62,6 +62,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final JoinPointSearchHelper myJoinPointSearchHelper;
   private static final TokenSet XML_ATTRIBUTE_VALUE_TOKEN_BIT_SET = TokenSet.create(new IElementType[]{ElementType.XML_ATTRIBUTE_VALUE_TOKEN});
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
+  private static final short DEFAULT_OCCURENCE_MASK = WordInfo.IN_CODE |
+                   WordInfo.JSP_ATTRIBUTE_VALUE |
+                   WordInfo.IN_COMMENTS;
 
   public interface CustomSearchHelper {
     short getOccurenceMask();
@@ -114,12 +117,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  static class JspxCustomSearchHelper extends XHtmlCustomSearchHelper {
+    public TokenSet getElementTokenSet() {
+      return TokenSet.orSet(super.getElementTokenSet(), IDENTIFIER_OR_DOC_VALUE_OR_JSP_ATTRIBUTE_VALUE_BIT_SET);
+    }
+
+    public short getOccurenceMask() {
+      return (short)(super.getOccurenceMask() | DEFAULT_OCCURENCE_MASK);
+    }
+  }
+
   private static final HashMap<FileType,CustomSearchHelper> CUSTOM_SEARCH_HELPERS = new HashMap<FileType, CustomSearchHelper>();
 
   static {
     registerCustomSearchHelper(StdFileTypes.HTML,new HtmlCustomSearchHelper());
     registerCustomSearchHelper(StdFileTypes.XHTML,new XHtmlCustomSearchHelper());
-    registerCustomSearchHelper(StdFileTypes.JSPX,new XHtmlCustomSearchHelper());
+    registerCustomSearchHelper(StdFileTypes.JSPX,new JspxCustomSearchHelper());
 
     XmlCustomSearchHelper searchHelper = new XmlCustomSearchHelper();
     registerCustomSearchHelper(StdFileTypes.XML,searchHelper);
@@ -288,9 +301,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       occurrenceMask = WordInfo.PLAIN_TEXT;
     }
     else {
-      occurrenceMask = WordInfo.IN_CODE |
-                       WordInfo.JSP_ATTRIBUTE_VALUE |
-                       WordInfo.IN_COMMENTS;
+      occurrenceMask = DEFAULT_OCCURENCE_MASK;
     }
 
     final TokenSet elementTypes;
