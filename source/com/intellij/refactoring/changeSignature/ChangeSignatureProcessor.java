@@ -230,6 +230,17 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                               final ArrayList<UsageInfo> result,
                                               boolean isOriginal) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final Set<PsiParameter> deletedParameters = new HashSet<PsiParameter>();
+    if (isOriginal) {
+      deletedParameters.addAll(Arrays.asList(parameters));
+      for (int i = 0; i < myChangeInfo.newParms.length; i++) {
+        ParameterInfo parameterInfo = myChangeInfo.newParms[i];
+        if (parameterInfo.oldParameterIndex >= 0) {
+          deletedParameters.remove(parameters[parameterInfo.oldParameterIndex]);
+        }
+      }
+    }
+
     for (int i = 0; i < myChangeInfo.newParms.length; i++) {
       ParameterInfo parameterInfo = myChangeInfo.newParms[i];
       final int oldParameterIndex = parameterInfo.oldParameterIndex;
@@ -240,7 +251,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           if (!newName.equals(parameter.getName())) {
             RenameUtil.visitLocalsCollisions(parameter, newName, method.getBody(), null, new RenameUtil.CollidingVariableVisitor() {
               public void visitCollidingElement(final PsiVariable collidingVariable) {
-                if (!(collidingVariable instanceof PsiField)) {
+                if (!(collidingVariable instanceof PsiField) && !deletedParameters.contains(collidingVariable)) {
                   result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
                 }
               }
@@ -250,7 +261,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       } else {
         RenameUtil.visitLocalsCollisions(method, newName, method.getBody(), null, new RenameUtil.CollidingVariableVisitor() {
           public void visitCollidingElement(PsiVariable collidingVariable) {
-            if (!(collidingVariable instanceof PsiField)) {
+            if (!(collidingVariable instanceof PsiField) &&!deletedParameters.contains(collidingVariable)) {
               result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
             }
           }
