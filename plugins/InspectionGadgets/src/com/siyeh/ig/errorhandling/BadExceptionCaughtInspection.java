@@ -66,10 +66,10 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     }
 
     public String getID(){
-        return "ProhibittedExceptionCaught";
+        return "ProhibitedExceptionCaught";
     }
     public String getDisplayName() {
-        return "Prohibitted exception caught";
+        return "Prohibited exception caught";
     }
 
     public String getGroupDisplayName() {
@@ -82,7 +82,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Prohibitted exception '#ref' caught. #loc ";
+        return "Prohibited exception '#ref' caught. #loc ";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

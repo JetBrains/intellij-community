@@ -69,10 +69,10 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     }
 
     public String getID(){
-        return "ProhibittedExceptionDeclared";
+        return "ProhibitedExceptionDeclared";
     }
     public String getDisplayName() {
-        return "Prohibitted exception declared";
+        return "Prohibited exception declared";
     }
 
     public String getGroupDisplayName() {
@@ -89,7 +89,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         final PsiClass referredClass = (PsiClass) reference.resolve();
 
         final String exceptionName = referredClass.getName();
-        return "Prohibitted exception '" + exceptionName + "' declared. #loc ";
+        return "Prohibited exception '" + exceptionName + "' declared. #loc ";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
