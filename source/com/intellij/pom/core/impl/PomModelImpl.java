@@ -118,11 +118,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
                                           PomModelAspect aspect) throws IncorrectOperationException{
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
+    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
+    final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
+    Document document = null;
+
     try{
     synchronized(PsiLock.LOCK){
-      final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
-      final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
-      Document document = null;
       if(transaction.getChangeScope().getContainingFile() != null) {
         document = manager.getDocument(transaction.getChangeScope().getContainingFile());
       }
@@ -137,7 +138,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         return;
       }
       finally{
-        if(document != null) synchronizer.commitTransaction(document);
         myBlockedAspects.pop();
       }
 
@@ -157,6 +157,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
     }
     finally{
+      if(document != null) synchronizer.commitTransaction(document);
       if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
     }
   }

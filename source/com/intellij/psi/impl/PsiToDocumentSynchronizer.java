@@ -52,12 +52,14 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     boolean isOriginal = isOriginal(event.getParent(), psiFile, document);
 
     if (isOriginal) {
+      final boolean insideTransaction = myTransactionsMap.containsKey(document);
+
       myPsiDocumentManager.setProcessDocumentEvents(false);
       syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
+      if(!insideTransaction) document.setModificationStamp(psiFile.getModificationStamp());
       myPsiDocumentManager.setProcessDocumentEvents(true);
 
-      if(!myTransactionsMap.containsKey(document)){
-        document.setModificationStamp(psiFile.getModificationStamp());
+      if(!insideTransaction){
         mySmartPointerManager.synchronizePointers(psiFile);
         if (LOG.isDebugEnabled()) {
           PsiDocumentManagerImpl.checkConsistency(psiFile, document);
