@@ -40,7 +40,7 @@ public class RefactoringMessageUtil {
         return false;
       }
       else {
-        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(new VirtualFile[]{vFile});
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{vFile});
         if (status.hasReadonlyFiles()) {
           String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is read-only.";
           showErrorMessage("Read-only Directory", message1, null, project);
@@ -64,7 +64,7 @@ public class RefactoringMessageUtil {
           }
         }
       }
-      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(readOnlyDirs.toArray(new VirtualFile[readOnlyDirs.size()]));
+      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyDirs.toArray(new VirtualFile[readOnlyDirs.size()]));
       failedDirs.addAll(Arrays.asList(status.getReadonlyFiles()));
       if (failedDirs.size() > 0) {
         StringBuffer message = new StringBuffer(messagePrefix);
@@ -112,7 +112,7 @@ public class RefactoringMessageUtil {
         return false;
       }
       else {
-        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(new VirtualFile[]{vFile});
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{vFile});
         if (status.hasReadonlyFiles()) {
           String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is read-only.";
           showErrorMessage("Read-only File", message1, null, project);

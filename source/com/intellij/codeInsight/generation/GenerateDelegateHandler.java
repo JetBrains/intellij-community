@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
@@ -27,8 +28,9 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
   public void invoke(final Project project, final Editor editor, final PsiFile file) {
     if (!file.isWritable()) {
-      (editor.getDocument()).fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

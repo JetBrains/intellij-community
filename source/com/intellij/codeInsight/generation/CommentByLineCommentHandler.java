@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -90,8 +91,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
     myDocument = myEditor.getDocument();
 
     if (!myFile.isWritable()) {
-      myDocument.fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(getDocument(), project)){
+        return;
+      }
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -30,9 +31,10 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
     Document document = editor.getDocument();
     if (!file.isWritable()){
-      document.fireReadOnlyModificationAttempt();
-      return;
-    }
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
+   }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();

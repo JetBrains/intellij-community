@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,8 +60,9 @@ public class MultiplePasteAction extends AnAction {
 
       if (editor != null) {
         if (!editor.getDocument().isWritable()) {
-          editor.getDocument().fireReadOnlyModificationAttempt();
-          return;
+          if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+            return;
+          }
         }
 
         final AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);

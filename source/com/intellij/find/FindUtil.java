@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -317,61 +318,62 @@ public class FindUtil {
     Document document = editor.getDocument();
     int caretOffset = offset;
 
-    if (document.isWritable()) {
-      document.startGuardedBlockChecking();
-      try {
-        FindManager findManager = FindManager.getInstance(project);
-        boolean toPrompt = model.isPromptOnReplace();
-        model = (FindModel)model.clone();
-        while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
-        caretOffset = offset;
-          FindResult result = doSearch(project, editor, offset, !isReplaced, model, toPrompt);
-          if (result == null) {
-            break;
-          }
-          int startResultOffset = result.getStartOffset();
-          model.setFromCursor(true);
-          if (toPrompt) {
-            int promptResult = findManager.showPromptDialog(model, "Replace");
-            if (promptResult == PromptResult.SKIP) {
-              offset = model.isForward() ? result.getEndOffset() : startResultOffset;
-              continue;
-            }
-            if (promptResult == PromptResult.CANCEL) {
-              break;
-            }
-            if (promptResult == PromptResult.ALL) {
-              toPrompt = false;
-            }
-          }
-
-          int startOffset = result.getStartOffset(), endOffset = result.getEndOffset();
-          String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
-          String toReplace = findManager.getStringToReplace(foundString, model);
-          if (model.isForward()) {
-            offset = doReplace(document, model, result, toReplace).getEndOffset();
-          }
-          else {
-            offset = doReplace(document, model, result, toReplace).getStartOffset();
-          }
-
-          //[SCR 7258]
-          if (!isReplaced) {
-            editor.getCaretModel().moveToOffset(0);
-          }
-
-          isReplaced = true;
-        }
-      }
-      catch (ReadOnlyFragmentModificationException e) {
-        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
-      }
-      finally {
-        document.stopGuardedBlockChecking();
+    if (!document.isWritable()) {
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)){
+        return false;
       }
     }
-    else {
-      editor.getDocument().fireReadOnlyModificationAttempt();
+
+    document.startGuardedBlockChecking();
+    try {
+      FindManager findManager = FindManager.getInstance(project);
+      boolean toPrompt = model.isPromptOnReplace();
+      model = (FindModel)model.clone();
+      while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
+      caretOffset = offset;
+        FindResult result = doSearch(project, editor, offset, !isReplaced, model, toPrompt);
+        if (result == null) {
+          break;
+        }
+        int startResultOffset = result.getStartOffset();
+        model.setFromCursor(true);
+        if (toPrompt) {
+          int promptResult = findManager.showPromptDialog(model, "Replace");
+          if (promptResult == PromptResult.SKIP) {
+            offset = model.isForward() ? result.getEndOffset() : startResultOffset;
+            continue;
+          }
+          if (promptResult == PromptResult.CANCEL) {
+            break;
+          }
+          if (promptResult == PromptResult.ALL) {
+            toPrompt = false;
+          }
+        }
+
+        int startOffset = result.getStartOffset(), endOffset = result.getEndOffset();
+        String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
+        String toReplace = findManager.getStringToReplace(foundString, model);
+        if (model.isForward()) {
+          offset = doReplace(document, model, result, toReplace).getEndOffset();
+        }
+        else {
+          offset = doReplace(document, model, result, toReplace).getStartOffset();
+        }
+
+        //[SCR 7258]
+        if (!isReplaced) {
+          editor.getCaretModel().moveToOffset(0);
+        }
+
+        isReplaced = true;
+      }
+    }
+    catch (ReadOnlyFragmentModificationException e) {
+      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+    }
+    finally {
+      document.stopGuardedBlockChecking();
     }
 
     if (isReplaced) {

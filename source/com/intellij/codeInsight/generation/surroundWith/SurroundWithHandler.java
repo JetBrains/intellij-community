@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -87,8 +88,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
   public void invoke(final Project project, final Editor editor, PsiFile file, Object handler){
     if (!file.isWritable()){
-      (editor.getDocument()).fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
     }
 
     if (!editor.getSelectionModel().hasSelection()) {

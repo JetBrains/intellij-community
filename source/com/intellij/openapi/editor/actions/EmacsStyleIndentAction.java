@@ -1,21 +1,20 @@
 
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.generation.AutoIndentLinesHandler;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.util.JavaUtil;
 
 public class EmacsStyleIndentAction extends BaseCodeInsightAction{
 
@@ -40,8 +39,9 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction{
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       if (!file.isWritable()){
-        (editor.getDocument()).fireReadOnlyModificationAttempt();
-        return;
+        if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+          return;
+        }
       }
 
       final Document document = editor.getDocument();

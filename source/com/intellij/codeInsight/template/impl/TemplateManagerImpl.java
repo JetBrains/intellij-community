@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -175,8 +176,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       return false;
     }
     if (!editor.getDocument().isWritable()) {
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      return false;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), myProject)){
+        return false;
+      }
     }
     final int wordStart0 = wordStart;
     final TemplateImpl template0 = template;

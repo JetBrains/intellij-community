@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -281,8 +282,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
     myDocument = editor.getDocument();
 
     if (!myFile.isWritable()) {
-      myDocument.fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(getDocument(), project)){
+        return;
+      }
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final SelectionModel selectionModel = myEditor.getSelectionModel();

@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -104,9 +105,10 @@ public class ImplementAbstractMethodHandler {
   private void implementInClass(final PsiClass psiClass) {
     if (!psiClass.isValid()) return;
     if (!psiClass.isWritable()) {
-      MessagesEx.fileIsReadOnly(myProject, psiClass.getContainingFile().getVirtualFile()).showNow();
-      PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile()).fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile()), myProject)){
+        MessagesEx.fileIsReadOnly(myProject, psiClass.getContainingFile().getVirtualFile()).showNow();        
+        return;
+      }
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -16,8 +17,9 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (!file.isWritable()){
-      (editor.getDocument()).fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
     }
 
     Document document = editor.getDocument();
