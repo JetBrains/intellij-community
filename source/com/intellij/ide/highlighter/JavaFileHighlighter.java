@@ -119,6 +119,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
                                         XmlTokenType.XML_EMPTY_ELEMENT_END,
                                         XmlTokenType.TAG_WHITE_SPACE,
                                         XmlTokenType.XML_TAG_NAME,
+                                        XmlTokenType.XML_NAME,
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
