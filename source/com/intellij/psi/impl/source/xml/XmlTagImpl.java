@@ -36,6 +36,7 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.JspXHTMLDescriptor;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -164,6 +165,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             final PsiFile containingFile = getContainingFile();
             if (containingFile!=null && containingFile.getFileType() == StdFileTypes.JSPX) {
               initializeSchema(XmlUtil.XHTML_URI,XmlUtil.XHTML_URI);
+              final XmlNSDescriptor xhtmlDescriptor = myNSDescriptorsMap.get(XmlUtil.XHTML_URI).getValue();
+
+              myNSDescriptorsMap.put(XmlUtil.XHTML_URI, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
+                public Result<XmlNSDescriptor> compute() {
+                  final XmlNSDescriptor jspxNSDescriptor = new JspXHTMLDescriptor(xhtmlDescriptor);
+                  return new Result<XmlNSDescriptor>(jspxNSDescriptor, jspxNSDescriptor.getDependences());
+                }
+              }, false));
             }
           }
         }
