@@ -153,6 +153,9 @@ public class JDBCResourceInspection extends ExpressionInspection {
                 return;
             }
             final PsiElement referent = ((PsiReferenceExpression) qualifier).resolve();
+            if(referent ==null){
+                return;
+            }
             if (referent.equals(streamToClose)) {
                 containsResourceClose = true;
             }
