@@ -622,7 +622,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
   }
 
   public PsiElement setName(String newName) throws IncorrectOperationException{

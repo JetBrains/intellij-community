@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *  @author dsl
@@ -188,7 +189,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
   }
 
   public String getName() {

@@ -1040,7 +1040,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
                                      PsiSubstitutor substitutor,
                                      PsiElement lastParent,
                                      PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
   }
 
   public PsiElement getScope() {

@@ -20,6 +20,7 @@ import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -145,7 +146,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
   }
 
   public String getName() {

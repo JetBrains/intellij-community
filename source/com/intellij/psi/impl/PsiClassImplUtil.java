@@ -187,7 +187,7 @@ public class PsiClassImplUtil{
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         list.add(new Pair<T, PsiSubstitutor>((T)element, substitutor));
       }
-    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass);
+    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass, false);
 
 
     synchronized (map) {
@@ -245,7 +245,7 @@ public class PsiClassImplUtil{
           classes.add(new Pair<PsiClass, PsiSubstitutor>((PsiClass)element, substitutor));
         }
       }
-    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass);
+    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass, false);
 
     synchronized (PsiLock.LOCK) {
       //This is quite a critical doubled check. Actually, the first check might be removed
@@ -342,15 +342,16 @@ public class PsiClassImplUtil{
 
   public static boolean processDeclarationsInClass(PsiClass aClass, PsiScopeProcessor processor,
                                                    PsiSubstitutor substitutor, Set<PsiClass> visited, PsiElement last,
-                                                   PsiElement place) {
+                                                   PsiElement place, boolean isRaw) {
     if (visited.contains(aClass)) return true;
+    isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
     if (last instanceof PsiTypeParameterList) return true; //TypeParameterList doesn't see our declarations
     final Object data;
     synchronized (PsiLock.LOCK) {
       data = aClass.getUserData(ALL_MAPS_BUILT_FLAG);
     }
     if (last instanceof PsiReferenceList && data == null || aClass instanceof PsiTypeParameter) {
-      return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place);
+      return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
     }
 
     final NameHint nameHint = processor.getHint(NameHint.class);
@@ -401,12 +402,13 @@ public class PsiClassImplUtil{
               final Iterator<Pair<PsiClass, PsiSubstitutor>> iterator = list.iterator();
               while (iterator.hasNext()) {
                 final Pair<PsiClass, PsiSubstitutor> candidate = iterator.next();
-                final PsiElement psiClass = candidate.getFirst().getParent();
-                if (psiClass instanceof PsiClass) {
-                  PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(((PsiClass)psiClass), candidate.getSecond(), aClass,
+                final PsiClass inner = candidate.getFirst();
+                final PsiClass containingClass = inner.getContainingClass();
+                if (containingClass != null) {
+                  PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                            substitutor);
-                  processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, psiClass);
-                  if (!processor.execute(candidate.getFirst(), finalSubstitutor)) return false;
+                  processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
+                  if (!processor.execute(inner, finalSubstitutor)) return false;
                 }
               }
             }
@@ -432,24 +434,32 @@ public class PsiClassImplUtil{
           while (iterator.hasNext()) {
             final Pair<PsiMethod, PsiSubstitutor> candidate = iterator.next();
             PsiMethod candidateMethod = candidate.getFirst();
-            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateMethod.getContainingClass(), candidate.getSecond(), aClass,
+            final PsiClass containingClass = candidateMethod.getContainingClass();
+            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor);
-            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidate.getFirst().getContainingClass());
-            if (!processor.execute(candidate.getFirst(), finalSubstitutor)) return false;
+            if (isRaw) {
+              final PsiTypeParameterList typeParameterList = candidateMethod.getTypeParameterList();
+              PsiTypeParameter[] methodTypeParameters = typeParameterList != null ? typeParameterList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
+              for (int i = 0; i < methodTypeParameters.length; i++) {
+                finalSubstitutor = ((PsiSubstitutorEx)finalSubstitutor).inplacePut(methodTypeParameters[i], null);
+              }
+            }
+            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
+            if (!processor.execute(candidateMethod, finalSubstitutor)) return false;
           }
         }
       }
       return true;
     }
 
-    return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place);
+    return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
   }
 
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
                                                        PsiSubstitutor substitutor) {
     PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
-      return candidateSubstitutor.merge(elementFactory.createRawSubstitutor(candidateClass));
+      return elementFactory.createRawSubstitutor(candidateClass);
     }
 
     final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor);
@@ -459,9 +469,13 @@ public class PsiClassImplUtil{
     return finalSubstitutor;
   }
 
-  public static boolean processDeclarationsInClassNotCached(PsiClass aClass, PsiScopeProcessor processor,
-                                                   PsiSubstitutor substitutor, Set<PsiClass> visited, PsiElement last,
-                                                   PsiElement place) {
+  public static boolean processDeclarationsInClassNotCached(PsiClass aClass,
+                                                            PsiScopeProcessor processor,
+                                                            PsiSubstitutor substitutor,
+                                                            Set<PsiClass> visited,
+                                                            PsiElement last,
+                                                            PsiElement place,
+                                                            boolean isRaw) {
     if (visited.contains(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
@@ -490,19 +504,19 @@ public class PsiClassImplUtil{
     }
 
     if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
-      if (nameHint != null) {
-        final PsiMethod[] methods = aClass.findMethodsByName(nameHint.getName(), false);
-        for (int i = 0; methods != null && i < methods.length; i++) {
-          final PsiMethod method = methods[i];
-          if (!processor.execute(method, substitutor)) return false;
+      final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(), false) : aClass.getMethods();
+      for (int i = 0; i < methods.length; i++) {
+        final PsiMethod method = methods[i];
+        if (isRaw) {
+          final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+          PsiTypeParameter[] methodTypeParameters = typeParameterList != null
+              ? typeParameterList.getTypeParameters()
+              : PsiTypeParameter.EMPTY_ARRAY;
+          for (int j = 0; j < methodTypeParameters.length; j++) {
+            substitutor = substitutor.put(methodTypeParameters[j], null);
+          }
         }
-      }
-      else {
-        final PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-          final PsiMethod method = methods[i];
-          if (!processor.execute(method, substitutor)) return false;
-        }
+        if (!processor.execute(method, substitutor)) return false;
       }
 
       PsiMethod[] introducedMethods = manager.getAspectManager().getIntroducedMethods(aClass);
@@ -539,24 +553,28 @@ public class PsiClassImplUtil{
     if (!(last instanceof PsiReferenceList)) {
       if (!processSuperTypes(
             aClass.getSuperTypes(),
-            processor, visited, last, place, aClass, substitutor)) {
+            processor, visited, last, place, aClass, substitutor, isRaw)) {
           return false;
       }
     }
     return true;
   }
 
-  private static boolean processSuperTypes(final PsiClassType[] superTypes, PsiScopeProcessor processor,
-                                           Set<PsiClass> visited, PsiElement last, PsiElement place, PsiClass aClass, PsiSubstitutor substitutor) {
-    if (superTypes == null) return true;
+  private static boolean processSuperTypes(final PsiClassType[] superTypes,
+                                           PsiScopeProcessor processor,
+                                           Set<PsiClass> visited,
+                                           PsiElement last,
+                                           PsiElement place,
+                                           PsiClass aClass,
+                                           PsiSubstitutor substitutor,
+                                           boolean isRaw) {
     for (int i = 0; i < superTypes.length; i++) {
       final PsiClassType superType = superTypes[i];
-      if(superType == null) continue;
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
-      if (!processDeclarationsInClass(superClass, processor, finalSubstitutor, visited, last, place)) {
+      if (!processDeclarationsInClass(superClass, processor, finalSubstitutor, visited, last, place, isRaw)) {
         return false;
       }
     }
