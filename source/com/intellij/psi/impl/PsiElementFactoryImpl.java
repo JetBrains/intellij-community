@@ -146,7 +146,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       return ((PsiClassReferenceType)type).getReference();
     }
 
-    return new LightClassReference(myManager, type.getPresentableText(), type.resolve());
+    final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+    return new LightClassReference(myManager, type.getPresentableText(), resolveResult.getElement(), resolveResult.getSubstitutor());
   }
 
   public PsiField createField(String name, PsiType type) throws IncorrectOperationException {

@@ -13,10 +13,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   private final PsiElement myContext;
   private final GlobalSearchScope myResolveScope;
   private final PsiClass myRefClass;
+  private PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 
-  public LightClassReference(PsiManager manager, String text, String className, GlobalSearchScope resolveScope) {
+  private LightClassReference(PsiManager manager, String text, String className, PsiSubstitutor substitutor, GlobalSearchScope resolveScope) {
     super(manager);
     myText = text;
     myClassName = className;
@@ -24,12 +25,18 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
     myContext = null;
     myRefClass = null;
+    mySubstitutor = substitutor;
   }
 
-  public LightClassReference(PsiManager manager, String text, String className, PsiElement context) {
+  public LightClassReference(PsiManager manager, String text, String className, GlobalSearchScope resolveScope) {
+    this (manager, text, className, null, resolveScope);
+  }
+
+  public LightClassReference(PsiManager manager, String text, String className, PsiSubstitutor substitutor, PsiElement context) {
     super(manager);
     myText = text;
     myClassName = className;
+    mySubstitutor = substitutor;
     myContext = context;
 
     myResolveScope = null;
@@ -37,6 +44,10 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   public LightClassReference(PsiManager manager, String text, PsiClass refClass) {
+    this(manager, text, refClass, null);
+  }
+
+  public LightClassReference(PsiManager manager, String text, PsiClass refClass, PsiSubstitutor substitutor) {
     super(manager);
     myText = text;
     myRefClass = refClass;
@@ -44,6 +55,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     myResolveScope = null;
     myClassName = null;
     myContext = null;
+    mySubstitutor = substitutor;
   }
 
   public PsiElement resolve() {
@@ -62,13 +74,15 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   public ResolveResult advancedResolve(boolean incompleteCode){
     final PsiElement resolved = resolve();
-    final PsiSubstitutor rawSubstitutor;
-    if (resolved instanceof PsiClass) {
-      rawSubstitutor = myManager.getElementFactory().createRawSubstitutor((PsiClass) resolved);
-    } else {
-      rawSubstitutor = PsiSubstitutor.EMPTY;
+    PsiSubstitutor substitutor = mySubstitutor;
+    if (substitutor == null) {
+      if (resolved instanceof PsiClass) {
+        substitutor = myManager.getElementFactory().createRawSubstitutor((PsiClass) resolved);
+      } else {
+        substitutor = PsiSubstitutor.EMPTY;
+      }
     }
-    return new CandidateInfo(resolved, rawSubstitutor);
+    return new CandidateInfo(resolved, substitutor);
   }
 
   public ResolveResult[] multiResolve(boolean incompleteCode){
@@ -151,14 +165,14 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   public PsiElement copy() {
     if (myClassName != null) {
       if (myContext != null) {
-        return new LightClassReference(myManager, myText, myClassName, myContext);
+        return new LightClassReference(myManager, myText, myClassName, mySubstitutor, myContext);
       }
       else{
-        return new LightClassReference(myManager, myText, myClassName, myResolveScope);
+        return new LightClassReference(myManager, myText, myClassName, mySubstitutor, myResolveScope);
       }
     }
     else {
-      return new LightClassReference(myManager, myText, myRefClass);
+      return new LightClassReference(myManager, myText, myRefClass, mySubstitutor);
     }
   }
 

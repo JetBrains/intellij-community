@@ -14,7 +14,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -556,23 +555,19 @@ public class ChangeUtil implements Constants {
         return DeclarationParsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
       }
       else {
+        PsiClassType classType = (PsiClassType)type;
         final PsiJavaCodeReferenceElement ref;
-        if (type instanceof PsiClassReferenceType) {
-          PsiClassReferenceType refType = (PsiClassReferenceType)type;
-          ref = refType.getReference();
+        if (classType instanceof PsiClassReferenceType) {
+          ref = ((PsiClassReferenceType)type).getReference();
         }
-        else if (type instanceof PsiImmediateClassType) {
-          final PsiImmediateClassType classType = (PsiImmediateClassType)type;
+        else {
           final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table);
           final CompositeElement immediateTypeElement = Factory.createCompositeElement(TYPE);
           TreeUtil.addChildren(immediateTypeElement, reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
-        else {
-          String text = original.getText();
-          ref = new LightClassReference(original.getManager(), text, type.getCanonicalText(), original);
-        }
+
         CompositeElement element = Factory.createCompositeElement(TYPE);
         TreeUtil.addChildren(element, _copyToElement(ref, table));
         return element;
