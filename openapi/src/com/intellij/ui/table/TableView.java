@@ -62,6 +62,15 @@ public class TableView extends BaseTableView implements ItemsProvider, Selection
         column.setMaxWidth(wight);
         column.setMinWidth(wight);
       }
+      else if (columnInfo.getMaxStringValue() != null) {
+        String maxStringValue = columnInfo.getMaxStringValue();
+        TableColumn additionalColumn = getColumnModel().getColumn(i);
+        int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
+        additionalColumn.setPreferredWidth(width);
+        additionalColumn.setMaxWidth(width);
+
+      }
+
     }
   }
 
