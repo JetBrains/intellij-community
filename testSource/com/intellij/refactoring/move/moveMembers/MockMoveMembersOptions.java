@@ -23,9 +23,6 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
     this(targetClassName, memberSet.toArray(new PsiMember[memberSet.size()]));
   }
 
-  public void close(int exitCode) {
-  }
-
   public String getMemberVisibility() {
     return myMemberVisibility;
   }
@@ -42,7 +39,4 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
     return myTargetClassName;
   }
 
-  public boolean isPreviewUsages() {
-    return false;
-  }
 }

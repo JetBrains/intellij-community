@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -40,30 +41,27 @@ import java.util.Set;
 public class MoveMembersDialog extends RefactoringDialog implements MoveMembersOptions {
   private MyMemberInfoModel myMemberInfoModel;
 
-  public static interface Callback {
-    void invoke(MoveMembersDialog dialog);
-  }
-
   private Project myProject;
-  private Callback myCallback;
   private PsiClass mySourceClass;
   private String mySourceClassName;
   private MemberInfo[] myMemberInfos;
   private final TextFieldWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
   private Set<PsiMember> myPreselectMembers;
+  private final MoveCallback myMoveCallback;
 
   VisibilityPanel myVisibilityPanel;
 
-  public MoveMembersDialog(Project project, PsiClass sourceClass, final PsiClass initialTargetClass,
-                           Set<PsiMember> preselectMembers, Callback callback) {
-
-
+  public MoveMembersDialog(Project project,
+                           PsiClass sourceClass,
+                           final PsiClass initialTargetClass,
+                           Set<PsiMember> preselectMembers,
+                           MoveCallback moveCallback) {
     super(project, true);
     myProject = project;
-    myCallback = callback;
     mySourceClass = sourceClass;
     myPreselectMembers = preselectMembers;
+    myMoveCallback = moveCallback;
     setTitle(MoveMembersImpl.REFACTORING_NAME);
 
     mySourceClassName = mySourceClass.getQualifiedName();
@@ -215,7 +213,20 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       return;
     }
 
-    myCallback.invoke(this);
+    invokeRefactoring(new MoveMembersProcessor(getProject(), myMoveCallback, new MoveMembersOptions() {
+      public String getMemberVisibility() {
+        return MoveMembersDialog.this.getMemberVisibility();
+      }
+
+      public PsiMember[] getSelectedMembers() {
+        return MoveMembersDialog.this.getSelectedMembers();
+      }
+
+      public String getTargetClassName() {
+        return MoveMembersDialog.this.getTargetClassName();
+      }
+    }));
+
     RefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 

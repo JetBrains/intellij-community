@@ -89,7 +89,6 @@ public class MoveMembersImpl {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, sourceClass)) return;
     }
 
-    final MoveMembersProcessor callback = new MoveMembersProcessor(project, moveCallback);
     final PsiClass initialTargerClass = targetContainer instanceof PsiClass? (PsiClass) targetContainer : (PsiClass) null;
 
     MoveMembersDialog dialog = new MoveMembersDialog(
@@ -97,8 +96,7 @@ public class MoveMembersImpl {
             sourceClass,
             initialTargerClass,
             preselectMembers,
-            callback
-    );
+            moveCallback);
     dialog.show();
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.refactoring;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 
@@ -82,7 +81,7 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
-    new MoveMembersProcessor(myProject, (MoveCallback)null).testRun(options);
+    new MoveMembersProcessor(myProject, null, options).testRun();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

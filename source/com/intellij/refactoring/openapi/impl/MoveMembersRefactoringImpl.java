@@ -33,12 +33,6 @@ public class MoveMembersRefactoringImpl extends RefactoringImpl<MoveMembersProce
         return newVisibility;
       }
 
-      public boolean isPreviewUsages() {
-        return true;
-      }
-
-      public void close(int exitCode) {
-      }
     }));
   }
 

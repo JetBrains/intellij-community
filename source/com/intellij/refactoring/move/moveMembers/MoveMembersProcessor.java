@@ -7,7 +7,6 @@ package com.intellij.refactoring.move.moveMembers;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,7 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
-public class MoveMembersProcessor extends BaseRefactoringProcessor implements MoveMembersDialog.Callback {
+public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
 
   private PsiClass myTargetClass;
@@ -40,9 +39,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor implements Mo
   private MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
 
-  public MoveMembersProcessor(Project project, MoveCallback moveCallback) {
+  public MoveMembersProcessor(Project project, MoveCallback moveCallback, MoveMembersOptions options) {
     super(project);
     myMoveCallback = moveCallback;
+    setOptions(options);
   }
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -52,21 +52,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor implements Mo
 
   protected String getCommandName() {
     return MoveMembersImpl.REFACTORING_NAME;
-  }
-
-  public void invoke(final MoveMembersDialog dialog) {
-    setOptions(dialog);
-    setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-      public void run() {
-        dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      }
-    });
-    run(null);
-  }
-
-  public void testRun(MoveMembersOptions dialog) {
-    setOptions(dialog);
-    super.testRun();
   }
 
   private void setOptions(MoveMembersOptions dialog) {

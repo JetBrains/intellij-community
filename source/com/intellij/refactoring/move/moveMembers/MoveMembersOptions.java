@@ -11,8 +11,4 @@ public interface MoveMembersOptions {
   String getTargetClassName();
 
   String getMemberVisibility();
-
-  boolean isPreviewUsages();
-
-  void close(int exitCode);
 }
