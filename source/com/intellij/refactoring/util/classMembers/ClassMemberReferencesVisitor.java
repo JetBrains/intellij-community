@@ -30,18 +30,8 @@ public abstract class ClassMemberReferencesVisitor extends PsiRecursiveElementVi
 
     PsiElement referencedElement = expression.resolve();
 
-    if (referencedElement != null) {
-      PsiClass containingClass = null;
-      if (referencedElement instanceof PsiField) {
-        containingClass = ((PsiField) referencedElement).getContainingClass();
-      } else if (referencedElement instanceof PsiMethod) {
-        containingClass = ((PsiMethod) referencedElement).getContainingClass();
-      } else if (referencedElement instanceof PsiClass) {
-        if (PsiTreeUtil.isAncestor(myClass, referencedElement, true)) {
-          visitClassMemberReferenceExpression((PsiMember)referencedElement, expression);
-          return;
-        }
-      }
+    if (referencedElement instanceof PsiMember) {
+      PsiClass containingClass = ((PsiMember)referencedElement).getContainingClass();
       if (isPartOf(myClass, containingClass)) {
         visitClassMemberReferenceExpression((PsiMember)referencedElement, expression);
       }

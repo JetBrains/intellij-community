@@ -1117,13 +1117,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             RefactoringHierarchyUtil.getSuperClasses(resolved, result, true);
           }
         }
-        if (aClass.getExtendsList() != null) {
-          final PsiClassType[] extendsTypes = aClass.getExtendsListTypes();
-          aClass = null;
-          if (extendsTypes.length > 0) {
-            aClass = extendsTypes[0].resolve();
-          }
-        }
+
+        aClass = aClass.getSuperClass();
       }
       return result;
     }

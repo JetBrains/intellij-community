@@ -1,9 +1,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashMap;
 
 import java.util.HashSet;
 
@@ -12,13 +10,11 @@ import java.util.HashSet;
  * @author dsl
  */
 public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVisitor {
-  HashSet myClassSuperClasses;
-  HashMap mySupers;
+  HashSet<PsiClass> myClassSuperClasses;
   public ClassThisReferencesVisitor(PsiClass aClass) {
     super(aClass);
-    myClassSuperClasses = new HashSet();
+    myClassSuperClasses = new HashSet<PsiClass>();
     myClassSuperClasses.add(aClass);
-    mySupers = new HashMap();
   }
 
   public void visitThisExpression(PsiThisExpression expression) {
@@ -54,11 +50,11 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
         if (myClassSuperClasses.contains(aClass)) {
-          visitExplicitSuper(getSuper(aClass), expression);
+          visitExplicitSuper(aClass.getSuperClass(), expression);
         }
         if (aClass.isInheritor(getPsiClass(), true)) {
           myClassSuperClasses.add(aClass);
-          visitExplicitSuper(getSuper(aClass), expression);
+          visitExplicitSuper(aClass.getSuperClass(), expression);
         }
       }
       ref.accept(this);
@@ -67,24 +63,11 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
       PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (containingClass != null) {
         if (getPsiClass().getManager().areElementsEquivalent(getPsiClass(), containingClass)) {
-          visitExplicitSuper(getSuper(getPsiClass()), expression);
+          visitExplicitSuper(getPsiClass().getSuperClass(), expression);
         }
       }
     }
   }
-
-  private PsiClass getSuper(final PsiClass aClass) {
-    PsiClass result = (PsiClass) mySupers.get(aClass);
-    if(result == null) {
-      PsiClass[] supers = aClass.getSupers();
-      if(supers.length > 0) {
-        result = supers[0];
-        mySupers.put(aClass, result);
-      }
-    }
-    return result;
-  }
-
 
   protected abstract void visitExplicitThis(PsiClass referencedClass, PsiThisExpression reference);
   protected abstract void visitExplicitSuper(PsiClass referencedClass, PsiSuperExpression reference);
