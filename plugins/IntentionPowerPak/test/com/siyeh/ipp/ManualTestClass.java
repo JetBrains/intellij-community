@@ -1268,6 +1268,26 @@ public class ManualTestClass
         }
     }
 
+    public void testCharToString()
+    {
+         String foo = "b" + 'c';
+         foo +='d';
+        StringBuffer bar = new StringBuffer();
+        bar.append('c');
+        bar.append('\'');
+        bar.append('"');
+    }
+    
+    public void testStringToChar()
+    {
+         String foo = "b" + "foo";
+         foo +="d";
+        StringBuffer bar = new StringBuffer();
+        bar.append("c");
+        bar.append("\'");
+        bar.append("\"");
+    }
+
     private void assertNull(Object s, String value)
     {
         boolean a = bar();
