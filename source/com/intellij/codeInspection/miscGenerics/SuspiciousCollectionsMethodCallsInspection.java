@@ -20,87 +20,61 @@ import java.text.MessageFormat;
 public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
 
-  private List<PsiMethod> myMethods = new ArrayList<PsiMethod>();
-  private List<Integer> myIndices = new ArrayList<Integer>();
-
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    try {
-      try {
-        setupPatternMethods(aClass.getManager(), aClass.getResolveScope());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-
-      return super.checkClass(aClass, manager, isOnTheFly);
-    }
-    finally {
-      myIndices.clear();
-      myMethods.clear();
-    }
-  }
-
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    try {
-      try {
-        setupPatternMethods(method.getManager(), method.getResolveScope());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-
-      return super.checkMethod(method, manager, isOnTheFly);
-    }
-    finally {
-      myIndices.clear();
-      myMethods.clear();
-    }
-  }
-
-  private void setupPatternMethods(PsiManager manager, GlobalSearchScope searchScope) throws IncorrectOperationException {
+  private void setupPatternMethods(PsiManager manager,
+                                 GlobalSearchScope searchScope,
+                                 List<PsiMethod> patternMethods,
+                                 List<Integer> indices) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = manager.getElementFactory();
     final PsiClass collectionClass = manager.findClass("java.util.Collection", searchScope);
     if (collectionClass != null) {
-      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0);
-      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean contains(Object o);", null), false), 0);
+      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean contains(Object o);", null), false), 0, patternMethods, indices);
     }
 
     final PsiClass listClass = manager.findClass("java.util.List", searchScope);
     if (listClass != null) {
-      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean indexOf(Object o);", null), false), 0);
-      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean lastIndexOf(Object o);", null), false), 0);
+      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean indexOf(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean lastIndexOf(Object o);", null), false), 0, patternMethods, indices);
     }
 
     final PsiClass mapClass = manager.findClass("java.util.Map", searchScope);
     if (mapClass != null) {
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean get(Object o);", null), false), 0);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsKey(Object o);", null), false), 0);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsValue(Object o);", null), false), 1);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean get(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsKey(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsValue(Object o);", null), false), 1, patternMethods, indices);
     }
 
-    myMethods.remove(null);
+    patternMethods.remove(null);
   }
 
-  private void addMethod(final PsiMethod patternMethod, int typeParamIndex) {
+  private void addMethod(final PsiMethod patternMethod, int typeParamIndex, List<PsiMethod> patternMethods, List<Integer> indices) {
     if (patternMethod != null) {
-      myMethods.add(patternMethod);
-      myIndices.add(new Integer(typeParamIndex));
+      patternMethods.add(patternMethod);
+      indices.add(new Integer(typeParamIndex));
     }
   }
 
   public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager) {
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
+    final List<Integer> indices = new ArrayList<Integer>();
+    try {
+      setupPatternMethods(place.getManager(), place.getResolveScope(), patternMethods, indices);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
+
     place.accept(new PsiRecursiveElementVisitor() {
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length != 1 || !(args[0].getType() instanceof PsiClassType)) return;
 
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-        Iterator<Integer> indicesIterator = myIndices.iterator();
-        for (Iterator<PsiMethod> methodsIterator = myMethods.iterator(); methodsIterator.hasNext();) {
+        Iterator<Integer> indicesIterator = indices.iterator();
+        for (Iterator<PsiMethod> methodsIterator = patternMethods.iterator(); methodsIterator.hasNext();) {
           PsiMethod patternMethod = methodsIterator.next();
           Integer index = indicesIterator.next();
           if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
