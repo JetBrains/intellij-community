@@ -4,16 +4,11 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 
 public class InheritanceUtil {
-  private static final Key HASH_PROVIDER_KEY = Key.create("Hash provider for isInheritor");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.InheritanceUtil");
-
-  /** 
+  /**
    * @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead.
    */
   public static boolean isInheritor(PsiClass candidateClass, PsiClass baseClass, boolean checkDeep) {

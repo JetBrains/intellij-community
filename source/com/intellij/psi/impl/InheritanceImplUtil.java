@@ -6,27 +6,16 @@ import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.j2eeDom.J2EEElementsVisitor;
 import com.intellij.j2ee.j2eeDom.ejb.Ejb;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.cache.impl.ClassHashProvider;
 import com.intellij.psi.util.InheritanceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InheritanceImplUtil {
-  private static final Key HASH_PROVIDER_KEY = Key.create("Hash provider for isInheritor");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.InheritanceUtil");
-
-  private static ClassHashProvider getHashProvider(final PsiManagerImpl manager) {
-    final ClassHashProvider data = (ClassHashProvider) manager.getUserData(HASH_PROVIDER_KEY);
-    if (data != null) return data;
-    final ClassHashProvider newProvider = new ClassHashProvider(manager);
-    manager.putUserData(HASH_PROVIDER_KEY, newProvider);
-    return newProvider;
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass) {
