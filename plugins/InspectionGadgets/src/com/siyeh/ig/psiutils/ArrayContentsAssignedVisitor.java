@@ -12,28 +12,23 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(PsiAssignmentExpression assignment){
         super.visitAssignmentExpression(assignment);
         final PsiJavaToken operationSign = assignment.getOperationSign();
         final PsiExpression arg = assignment.getLExpression();
-        if (arg == null) {
+        if(!(arg instanceof PsiArrayAccessExpression)){
             return;
         }
-        if (!(arg instanceof PsiArrayAccessExpression)) {
-            return;
-        }
-        final PsiExpression arrayExpression = ((PsiArrayAccessExpression) arg).getArrayExpression();
-        if (arrayExpression == null) {
-            return;
-        }
-        if (!(arrayExpression instanceof PsiReferenceExpression)) {
+        final PsiExpression arrayExpression =
+                ((PsiArrayAccessExpression) arg).getArrayExpression();
+        if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) arrayExpression).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (referent.equals(variable)) {
+        if(referent.equals(variable)){
             assigned = true;
         }
     }
@@ -47,17 +42,11 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiExpression arg = expression.getOperand();
-        if(arg == null){
-            return;
-        }
         if(!(arg instanceof PsiArrayAccessExpression)){
             return;
         }
         final PsiExpression arrayExpression =
                 ((PsiArrayAccessExpression) arg).getArrayExpression();
-        if(arrayExpression == null){
-            return;
-        }
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
@@ -78,17 +67,11 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiExpression arg = expression.getOperand();
-        if(arg == null){
-            return;
-        }
         if(!(arg instanceof PsiArrayAccessExpression)){
             return;
         }
         final PsiExpression arrayExpression =
                 ((PsiArrayAccessExpression) arg).getArrayExpression();
-        if(arrayExpression == null){
-            return;
-        }
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }

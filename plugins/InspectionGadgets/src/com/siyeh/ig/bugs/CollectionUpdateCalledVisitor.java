@@ -37,28 +37,27 @@ public class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
     }
 
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(PsiMethodCallExpression call){
         super.visitMethodCallExpression(call);
-        final PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression == null) {
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
+        if(methodExpression == null){
             return;
         }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null) {
-            return;
-        }
-        if (!(qualifier instanceof PsiReferenceExpression)) {
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if(!(qualifier instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) qualifier).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (!referent.equals(variable)) {
+        if(!referent.equals(variable)){
             return;
         }
         final String methodName = methodExpression.getReferenceName();
-        if (updateNames.contains(methodName)) {
+        if(updateNames.contains(methodName)){
             updated = true;
         }
     }

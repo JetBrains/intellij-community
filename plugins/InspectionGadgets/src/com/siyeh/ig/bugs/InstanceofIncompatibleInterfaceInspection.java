@@ -48,9 +48,6 @@ public class InstanceofIncompatibleInterfaceInspection extends ExpressionInspect
                 return;
             }
             final PsiType castType = castTypeElement.getType();
-            if(castType == null){
-                return;
-            }
             if(!(castType instanceof PsiClassType)){
                 return;
             }
@@ -66,9 +63,6 @@ public class InstanceofIncompatibleInterfaceInspection extends ExpressionInspect
                 return;
             }
             final PsiType operandType = operand.getType();
-            if(operandType == null){
-                return;
-            }
             if(!(operandType instanceof PsiClassType)){
                 return;
             }

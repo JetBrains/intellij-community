@@ -34,28 +34,22 @@ public class SynchronizeOnNonFinalFieldInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();
-            if (lockExpression == null) {
-                return;
-            }
-            if (!(lockExpression instanceof PsiReferenceExpression)) {
+            if(!(lockExpression instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiReference reference = lockExpression.getReference();
-            if (reference == null) {
+            if(reference == null){
                 return;
             }
             final PsiElement element = reference.resolve();
-            if (element == null) {
-                return;
-            }
-            if (!(element instanceof PsiField)) {
+            if(!(element instanceof PsiField)){
                 return;
             }
             final PsiField field = (PsiField) element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+            if(field.hasModifierProperty(PsiModifier.FINAL)){
                 return;
             }
             registerError(lockExpression);

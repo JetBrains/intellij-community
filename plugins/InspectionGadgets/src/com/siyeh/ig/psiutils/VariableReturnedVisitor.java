@@ -12,20 +12,17 @@ public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
     }
 
 
-    public void visitReturnStatement(PsiReturnStatement returnStatement) {
+    public void visitReturnStatement(PsiReturnStatement returnStatement){
         super.visitReturnStatement(returnStatement);
         final PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null) {
-            return;
-        }
-        if (!(returnValue instanceof PsiReferenceExpression)) {
+        if(!(returnValue instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) returnValue).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (referent.equals(variable)) {
+        if(referent.equals(variable)){
             returned = true;
         }
     }

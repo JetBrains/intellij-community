@@ -33,13 +33,10 @@ public class SynchronizeOnThisInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();
-            if (lockExpression == null) {
-                return;
-            }
-            if (!(lockExpression instanceof PsiThisExpression)) {
+            if(!(lockExpression instanceof PsiThisExpression)){
                 return;
             }
             registerError(lockExpression);

@@ -58,33 +58,28 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"getClass".equals(methodName)) {
+            if(!"getClass".equals(methodName)){
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null)
-            {
+            if(argumentList == null){
                 return;
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            if(args == null || args.length!=0)
-            {
+            if(args == null || args.length != 0){
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if(qualifier == null)
-            {
-                return;
-            }
-            if(!(qualifier instanceof PsiNewExpression))
-            {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(!(qualifier instanceof PsiNewExpression)){
                 return;
             }
             registerError(expression);

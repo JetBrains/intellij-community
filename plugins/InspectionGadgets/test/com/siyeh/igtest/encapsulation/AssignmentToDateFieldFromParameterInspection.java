@@ -23,6 +23,8 @@ public class AssignmentToDateFieldFromParameterInspection
     public AssignmentToDateFieldFromParameterInspection(Date foo)
     {
         m_foo = foo;
+        Date bar;
+        bar = foo;
     }
 
     public AssignmentToDateFieldFromParameterInspection(Calendar bar)

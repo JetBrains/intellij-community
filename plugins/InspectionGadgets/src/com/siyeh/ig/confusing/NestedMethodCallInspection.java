@@ -67,44 +67,41 @@ public class NestedMethodCallInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             PsiExpression outerExpression = expression;
-            while (outerExpression.getParent() instanceof PsiExpression) {
+            while(outerExpression.getParent() instanceof PsiExpression){
                 outerExpression = (PsiExpression) outerExpression.getParent();
             }
             final PsiElement parent = outerExpression.getParent();
-            if (parent == null) {
-                return;
-            }
-            if (!(parent instanceof PsiExpressionList)) {
+            if(!(parent instanceof PsiExpressionList)){
                 return;
             }
             final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiCallExpression)) {
+            if(!(grandParent instanceof PsiCallExpression)){
                 return;
             }
-            if(grandParent instanceof PsiMethodCallExpression)
-            {
+            if(grandParent instanceof PsiMethodCallExpression){
 
                 final PsiMethodCallExpression surroundingCall =
-                        (PsiMethodCallExpression)grandParent;
-                final PsiReferenceExpression methodExpression = surroundingCall.getMethodExpression();
+                        (PsiMethodCallExpression) grandParent;
+                final PsiReferenceExpression methodExpression =
+                        surroundingCall.getMethodExpression();
                 final String callName = methodExpression.getReferenceName();
-                if("this".equals(callName)||"super".equals(callName))
-                {
+                if("this".equals(callName) || "super".equals(callName)){
                     return;     //ignore nested method calls at the start of a constructor,
-                                //where they can't be extracted
+                    //where they can't be extracted
                 }
-
             }
-            final PsiReferenceExpression reference = expression.getMethodExpression();
-            if (reference == null) {
+            final PsiReferenceExpression reference =
+                    expression.getMethodExpression();
+            if(reference == null){
                 return;
             }
-            if (m_ignoreFieldInitializations) {
-                final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-                if (field != null) {
+            if(m_ignoreFieldInitializations){
+                final PsiElement field =
+                        PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                if(field != null){
                     return;
                 }
             }

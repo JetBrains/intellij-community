@@ -33,29 +33,23 @@ public class UseOfAnotherObjectsPrivateFieldInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiExpression qualifier = expression.getQualifierExpression();
-            if(qualifier == null || qualifier instanceof PsiThisExpression)
-            {
+            if(qualifier == null || qualifier instanceof PsiThisExpression){
                 return;
             }
             final PsiElement referent = expression.resolve();
-            if(referent == null)
-            {
+            if(!(referent instanceof PsiField)){
                 return;
             }
-            if(!(referent instanceof PsiField))
-            {
-                return;
-            }
-            final PsiField field = (PsiField)referent;
+            final PsiField field = (PsiField) referent;
             if(!field.hasModifierProperty(PsiModifier.PRIVATE) &&
-                    !field.hasModifierProperty(PsiModifier.PROTECTED))
-            {
+                       !field.hasModifierProperty(PsiModifier.PROTECTED)){
                 return;
             }
-            final PsiElement fieldNameElement = expression.getReferenceNameElement();
+            final PsiElement fieldNameElement =
+                    expression.getReferenceNameElement();
             registerError(fieldNameElement);
         }
     }

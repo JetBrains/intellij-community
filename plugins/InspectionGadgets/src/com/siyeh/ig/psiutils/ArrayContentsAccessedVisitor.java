@@ -11,46 +11,40 @@ public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(PsiForeachStatement statement){
         super.visitForeachStatement(statement);
         final PsiExpression qualifier = statement.getIteratedValue();
-        if (qualifier == null) {
-            return;
-        }
-        if (!(qualifier instanceof PsiReferenceExpression)) {
+        if(!(qualifier instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) qualifier).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (!referent.equals(variable)) {
+        if(!referent.equals(variable)){
             return;
         }
         accessed = true;
     }
 
-    public void visitArrayAccessExpression(PsiArrayAccessExpression arg) {
+    public void visitArrayAccessExpression(PsiArrayAccessExpression arg){
         super.visitArrayAccessExpression(arg);
-        if (arg.getParent() instanceof PsiAssignmentExpression &&
-                ((PsiAssignmentExpression) arg.getParent()).getLExpression().equals(arg)) {
+        if(arg.getParent() instanceof PsiAssignmentExpression &&
+                        ((PsiAssignmentExpression) arg.getParent()).getLExpression()
+                                .equals(arg)){
             return;
         }
         final PsiExpression arrayExpression = arg.getArrayExpression();
-        if (arrayExpression == null) {
-            return;
-        }
-        if (!(arrayExpression instanceof PsiReferenceExpression)) {
+        if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) arrayExpression).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (referent.equals(variable)) {
+        if(referent.equals(variable)){
             accessed = true;
         }
-
     }
 
     public boolean isAccessed() {

@@ -11,38 +11,32 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(PsiAssignmentExpression assignment){
         super.visitAssignmentExpression(assignment);
         final PsiExpression arg = assignment.getRExpression();
-        if (arg == null) {
-            return;
-        }
-        if (!(arg instanceof PsiReferenceExpression)) {
+        if(!(arg instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) arg).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (referent.equals(variable)) {
+        if(referent.equals(variable)){
             assignedFrom = true;
         }
     }
 
-    public void visitVariable(PsiVariable var) {
+    public void visitVariable(PsiVariable var){
         super.visitVariable(var);
         final PsiExpression arg = var.getInitializer();
-        if (arg == null) {
-            return;
-        }
-        if (!(arg instanceof PsiReferenceExpression)) {
+        if(!(arg instanceof PsiReferenceExpression)){
             return;
         }
         final PsiElement referent = ((PsiReference) arg).resolve();
-        if (referent == null) {
+        if(referent == null){
             return;
         }
-        if (referent.equals(variable)) {
+        if(referent.equals(variable)){
             assignedFrom = true;
         }
     }

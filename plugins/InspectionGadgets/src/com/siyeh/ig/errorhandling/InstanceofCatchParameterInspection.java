@@ -31,28 +31,22 @@ public class InstanceofCatchParameterInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitInstanceOfExpression(PsiInstanceOfExpression exp) {
+        public void visitInstanceOfExpression(PsiInstanceOfExpression exp){
             super.visitInstanceOfExpression(exp);
-            if (!ControlFlowUtils.isInCatchBlock(exp)) {
+            if(!ControlFlowUtils.isInCatchBlock(exp)){
                 return;
             }
 
             final PsiExpression operand = exp.getOperand();
-            if (operand == null) {
-                return;
-            }
-            if (!(operand instanceof PsiReferenceExpression)) {
+            if(!(operand instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiReferenceExpression ref = (PsiReferenceExpression) operand;
             final PsiElement referent = ref.resolve();
-            if (referent == null) {
+            if(!(referent instanceof PsiParameter)){
                 return;
             }
-            if (!(referent instanceof PsiParameter)) {
-                return;
-            }
-            if (!(((PsiParameter)referent).getDeclarationScope() instanceof PsiCatchSection)) {
+            if(!(((PsiParameter) referent).getDeclarationScope() instanceof PsiCatchSection)){
                 return;
             }
             registerError(exp);

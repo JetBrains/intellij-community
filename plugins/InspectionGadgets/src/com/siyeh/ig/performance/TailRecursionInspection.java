@@ -195,9 +195,6 @@ public class TailRecursionInspection extends ExpressionInspection{
         public void visitReturnStatement(PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
-            if(returnValue == null){
-                return;
-            }
             if(!(returnValue instanceof PsiMethodCallExpression)){
                 return;
             }

@@ -52,26 +52,23 @@ public class UnnecessaryQualifierForThisInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitThisExpression(PsiThisExpression thisExpression) {
+        public void visitThisExpression(PsiThisExpression thisExpression){
             super.visitThisExpression(thisExpression);
             final PsiJavaCodeReferenceElement qualifier =
                     thisExpression.getQualifier();
-            if (qualifier == null) {
+            if(qualifier == null){
                 return;
             }
             final PsiElement referent = qualifier.resolve();
-            if (referent == null) {
-                return;
-            }
-            if (!(referent instanceof PsiClass)) {
+            if(!(referent instanceof PsiClass)){
                 return;
             }
             final PsiClass containingClass =
                     ClassUtils.getContainingClass(thisExpression);
-            if (containingClass == null) {
+            if(containingClass == null){
                 return;
             }
-            if (!containingClass.equals(referent)) {
+            if(!containingClass.equals(referent)){
                 return;
             }
             registerError(qualifier);

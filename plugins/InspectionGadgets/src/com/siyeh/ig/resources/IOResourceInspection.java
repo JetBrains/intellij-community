@@ -150,9 +150,6 @@ public class IOResourceInspection extends ExpressionInspection{
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier == null){
-                return;
-            }
             if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }

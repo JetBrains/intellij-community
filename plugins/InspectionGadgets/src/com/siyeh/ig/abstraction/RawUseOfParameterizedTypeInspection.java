@@ -48,57 +48,51 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             checkTypeElement(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression) {
+        public void visitNewExpression(PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiJavaCodeReferenceElement classReference =
                     newExpression.getClassReference();
 
-            if (classReference == null) {
+            if(classReference == null){
                 return;
             }
             final PsiElement referent = classReference.resolve();
-            if (referent == null) {
-                return;
-            }
-            if (!(referent instanceof PsiClass)) {
+            if(!(referent instanceof PsiClass)){
                 return;
             }
 
             final PsiClass referredClass = (PsiClass) referent;
-            if (!referredClass.hasTypeParameters()) {
+            if(!referredClass.hasTypeParameters()){
                 return;
             }
-            if (newExpression.getTypeArgumentList() != null) {
+            if(newExpression.getTypeArgumentList() != null){
                 return;
             }
             registerError(classReference);
         }
 
-        private void checkTypeElement(PsiTypeElement typeElement) {
-            if (typeElement == null) {
+        private void checkTypeElement(PsiTypeElement typeElement){
+            if(typeElement == null){
                 return;
             }
             final PsiType type = typeElement.getType();
-            if (type == null) {
+            if(type == null){
                 return;
             }
             final PsiType componentType = type.getDeepComponentType();
-            if (componentType == null) {
-                return;
-            }
-            if (!(componentType instanceof PsiClassType)) {
+            if(!(componentType instanceof PsiClassType)){
                 return;
             }
             final String typeText = componentType.getCanonicalText();
-            if (typeText.indexOf((int) '<') >= 0) {
+            if(typeText.indexOf((int) '<') >= 0){
                 return;
             }
             final PsiClass aClass = ((PsiClassType) componentType).resolve();
 
-            if (aClass == null) {
+            if(aClass == null){
                 return;
             }
-            if (!aClass.hasTypeParameters()) {
+            if(!aClass.hasTypeParameters()){
                 return;
             }
             final PsiElement typeNameElement =

@@ -50,19 +50,26 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
+            if(!(lhs instanceof PsiReferenceExpression)){
+                return;
+            }
             if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Date", lhs)
                     && !TypeUtils.expressionHasTypeOrSubtype("java.util.Calendar", lhs)) {
+                return;
+            }
+            final PsiElement lhsReferent = ((PsiReference) lhs).resolve();
+            if(!(lhsReferent instanceof PsiField)){
                 return;
             }
             final PsiExpression rhs = expression.getRExpression();
             if (!(rhs instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiElement element = ((PsiReference) rhs).resolve();
-            if (!(element instanceof PsiParameter)) {
+            final PsiElement rhsReferent = ((PsiReference) rhs).resolve();
+            if (!(rhsReferent instanceof PsiParameter)) {
                 return;
             }
-            if (!(element.getParent() instanceof PsiParameterList)) {
+            if (!(rhsReferent.getParent() instanceof PsiParameterList)) {
                 return;
             }
             registerError(lhs);

@@ -33,32 +33,30 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspec
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitThrowStatement(PsiThrowStatement statement) {
+        public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);
-            if (!ControlFlowUtils.isInCatchBlock(statement)) {
+            if(!ControlFlowUtils.isInCatchBlock(statement)){
                 return;
             }
             final PsiExpression exception = statement.getException();
-            if (exception == null) {
-                return;
-            }
-            if (!(exception instanceof PsiNewExpression)) {
+            if(!(exception instanceof PsiNewExpression)){
                 return;
             }
             final PsiNewExpression newExpression = (PsiNewExpression) exception;
             final PsiMethod constructor = newExpression.resolveConstructor();
-            if (constructor == null) {
+            if(constructor == null){
                 return;
             }
-            final PsiExpressionList argumentList = newExpression.getArgumentList();
-            if (argumentList == null) {
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if(argumentList == null){
                 return;
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            if (args == null) {
+            if(args == null){
                 return;
             }
-            if (argIsCatchParameter(args)) {
+            if(argIsCatchParameter(args)){
                 return;
             }
             registerStatementError(statement);

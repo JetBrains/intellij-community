@@ -127,28 +127,28 @@ public class JDBCResourceInspection extends ExpressionInspection {
             this.streamToClose = streamToClose;
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"close".equals(methodName)) {
+            if(!"close".equals(methodName)){
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if (qualifier == null) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
-            if (!(qualifier instanceof PsiReferenceExpression)) {
+            final PsiElement referent =
+                    ((PsiReferenceExpression) qualifier).resolve();
+            if(referent == null){
                 return;
             }
-            final PsiElement referent = ((PsiReferenceExpression) qualifier).resolve();
-            if(referent ==null){
-                return;
-            }
-            if (referent.equals(streamToClose)) {
+            if(referent.equals(streamToClose)){
                 containsResourceClose = true;
             }
         }

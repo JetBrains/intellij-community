@@ -50,33 +50,35 @@ public class UnnecessaryThisInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
-            final PsiReferenceParameterList parameterList = expression.getParameterList();
-            if (parameterList != null && parameterList.getTypeArguments().length > 0) {
+            final PsiReferenceParameterList parameterList =
+                    expression.getParameterList();
+            if(parameterList != null &&
+                       parameterList.getTypeArguments().length > 0){
                 return;
             }
 
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            if (qualifierExpression == null) {
+            final PsiExpression qualifierExpression =
+                    expression.getQualifierExpression();
+            if(!(qualifierExpression instanceof PsiThisExpression)){
                 return;
             }
-            if (!(qualifierExpression instanceof PsiThisExpression)) {
+            final PsiThisExpression thisExpression =
+                    (PsiThisExpression) qualifierExpression;
+            if(thisExpression.getQualifier() != null){
                 return;
             }
-            final PsiThisExpression thisExpression = (PsiThisExpression) qualifierExpression;
-            if (thisExpression.getQualifier() != null) {
-                return;
-            }
-            if (expression.getParent() instanceof PsiCallExpression) {
+            if(expression.getParent() instanceof PsiCallExpression){
                 registerError(qualifierExpression);  // method calls are always in error
                 return;
             }
             final String varName = expression.getReferenceName();
-            if (varName == null) {
+            if(varName == null){
                 return;
             }
-            if (!VariableSearchUtils.existsLocalOrParameter(varName, expression)) {
+            if(!VariableSearchUtils.existsLocalOrParameter(varName,
+                                                           expression)){
                 registerError(thisExpression);
             }
         }

@@ -5,21 +5,19 @@ import com.intellij.psi.*;
 class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor {
     private boolean m_callToSuperFinalizeFound = false;
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression){
         super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if (methodExpression == null) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        if(methodExpression == null){
             return;
         }
         final PsiExpression target = methodExpression.getQualifierExpression();
-        if (target == null) {
-            return;
-        }
-        if (!(target instanceof PsiSuperExpression)) {
+        if(!(target instanceof PsiSuperExpression)){
             return;
         }
         final String methodName = methodExpression.getReferenceName();
-        if (!"finalize".equals(methodName)) {
+        if(!"finalize".equals(methodName)){
             return;
         }
         m_callToSuperFinalizeFound = true;

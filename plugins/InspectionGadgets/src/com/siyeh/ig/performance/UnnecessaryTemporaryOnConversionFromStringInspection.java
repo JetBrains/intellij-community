@@ -99,44 +99,43 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
             final Map basicTypeMap = s_basicTypeMap;
-            if (!basicTypeMap.containsValue(methodName)) {
+            if(!basicTypeMap.containsValue(methodName)){
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            if (!(qualifier instanceof PsiNewExpression)) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(!(qualifier instanceof PsiNewExpression)){
                 return;
             }
             final PsiNewExpression newExp = (PsiNewExpression) qualifier;
             final PsiExpressionList argList = newExp.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 1) {
+            if(args.length != 1){
                 return;
             }
             final PsiType argType = args[0].getType();
-            if (!TypeUtils.isJavaLangString(argType)) {
+            if(!TypeUtils.isJavaLangString(argType)){
                 return;
             }
             final PsiType type = qualifier.getType();
-            if (type == null) {
+            if(type == null){
                 return;
             }
             final String typeText = type.getCanonicalText();
-            if (!basicTypeMap.containsKey(typeText)) {
+            if(!basicTypeMap.containsKey(typeText)){
                 return;
             }
             final Object mappingMethod = basicTypeMap.get(typeText);
-            if (!mappingMethod.equals(methodName)) {
+            if(!mappingMethod.equals(methodName)){
                 return;
             }
             registerError(expression);

@@ -89,9 +89,6 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         public void visitBlockStatement(PsiBlockStatement blockStatement){
             super.visitBlockStatement(blockStatement);
             final PsiElement parent = blockStatement.getParent();
-            if(parent == null){
-                return;
-            }
             if(!(parent instanceof PsiCodeBlock)){
                 return;
             }

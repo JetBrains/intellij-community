@@ -33,23 +33,24 @@ public class ReturnOfDateFieldInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement) {
+        public void visitReturnStatement(PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
-            if (returnValue == null) {
+            if(!(returnValue instanceof PsiReferenceExpression)){
                 return;
             }
-            if (!(returnValue instanceof PsiReferenceExpression)) {
-                return ;
-            }
-            final PsiReferenceExpression fieldReference = (PsiReferenceExpression) returnValue;
+            final PsiReferenceExpression fieldReference =
+                    (PsiReferenceExpression) returnValue;
 
             final PsiElement element = fieldReference.resolve();
-            if (!(element instanceof PsiField)) {
+            if(!(element instanceof PsiField)){
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Date", returnValue)
-                    && !TypeUtils.expressionHasTypeOrSubtype("java.util.Calendar", returnValue)) {
+            if(!TypeUtils.expressionHasTypeOrSubtype("java.util.Date",
+                                                     returnValue)
+                                                                        &&
+                                                                        !TypeUtils.expressionHasTypeOrSubtype("java.util.Calendar",
+                                                                                                              returnValue)){
                 return;
             }
             registerError(returnValue);

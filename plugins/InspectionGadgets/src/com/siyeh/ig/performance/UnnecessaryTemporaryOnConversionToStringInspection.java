@@ -82,29 +82,28 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"toString".equals(methodName)) {
+            if(!"toString".equals(methodName)){
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            if (!(qualifier instanceof PsiNewExpression)) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(!(qualifier instanceof PsiNewExpression)){
                 return;
             }
             final PsiType type = qualifier.getType();
-            if (type == null) {
+            if(type == null){
                 return;
             }
             final String typeName = type.getCanonicalText();
-            if (!s_basicTypes.contains(typeName)) {
+            if(!s_basicTypes.contains(typeName)){
                 return;
             }
             registerError(expression);
