@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 
 /**
  * @author ven
@@ -21,15 +23,15 @@ public class InlineLocalTest extends CodeInsightTestCase {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
     configureByFile(fileName);
-    performAction();
+    performInline(myProject, myEditor);
     checkResultByFile(fileName + ".after");
   }
 
-  private void performAction() {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
+  public static void performInline(Project project, Editor editor) {
+    PsiElement element = TargetElementUtil.findTargetElement(editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertTrue(element instanceof PsiLocalVariable);
 
-    new InlineLocalHandler().invoke(myProject, myEditor, (PsiLocalVariable)element);
+    new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable)element);
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 
 import java.util.Iterator;
 import java.util.List;
@@ -106,7 +107,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     assertEquals(shouldSucceed, success);
   }
 
-  private void doTest() throws Exception {
+  void doTest() throws Exception {
     doTest(true);
   }
 
@@ -118,13 +119,13 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private boolean performAction(boolean doRefactor, boolean replaceAllDuplicates) throws Exception {
-    return performExtractMethod(doRefactor, replaceAllDuplicates, getEditor(), getFile());
+    return performExtractMethod(doRefactor, replaceAllDuplicates, getEditor(), getFile(), getProject());
   }
 
   public static boolean performExtractMethod(boolean doRefactor,
-                                     boolean replaceAllDuplicates,
-                                     Editor editor,
-                                     PsiFile file) throws PrepareFailedException, IncorrectOperationException {
+                                             boolean replaceAllDuplicates,
+                                             Editor editor,
+                                             PsiFile file, Project project) throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -137,7 +138,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
     assertTrue(elements != null && elements.length > 0);
 
-    final ExtractMethodProcessor processor = new ExtractMethodProcessor(getProject(), editor, file, elements,
+    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, file, elements,
             null, "Extract Method", "newMethod", null
     );
     processor.setShowErrorDialogs(false);
