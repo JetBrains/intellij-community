@@ -1,8 +1,6 @@
 package com.intellij.featureStatistics.ui;
 
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
+import com.intellij.featureStatistics.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ModalityState;
@@ -144,7 +142,7 @@ public class ProgressTipPanel {
 
     FeatureDescriptor feature = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(id);
     final String tipFileName = feature.getTipFileName();
-    TipUIUtil.openTipInBrowser(tipFileName, myBrowser);
+    TipUIUtil.openTipInBrowser(tipFileName, myBrowser, feature.getProvider());
   }
 
   public JComponent getComponent() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
@@ -22,10 +23,10 @@ import java.text.MessageFormat;
 /**
  * @author dsl
  */
-public class TipUIUtil {
+public class TipUIUtil{
   private static final String SHORTCUT_ENTITY = "&shortcut:";
 
-  public static void openTipInBrowser(String tipPath, JEditorPane browser) {
+  public static void openTipInBrowser(String tipPath, JEditorPane browser, Class<? extends ProductivityFeaturesProvider> provider) {
     String fileURL = "/tips/" + tipPath;
 
     /* TODO: detect that file is not present
@@ -35,7 +36,13 @@ public class TipUIUtil {
     }
     */
     try {
-      URL url = TipUIUtil.class.getResource(fileURL);
+      URL url;
+      if (provider != null){
+        url = provider.getResource(fileURL);
+      } else {
+        url = TipUIUtil.class.getResource(fileURL);
+      }
+
       if (url == null) {
         setCantReadText(browser);
         return;

@@ -19,22 +19,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExternalizable {
+public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.FeatureUsageTracker");
 
   private static final long DAY = 1000 * 60 * 60 * 24;
   private long FIRST_RUN_TIME = 0;
   private boolean HAVE_BEEN_SHOWN = false;
 
-  public boolean SHOW_IN_COMPILATION_PROGRESS = true;
-  public boolean SHOW_IN_OTHER_PROGRESS = true;
+
   private ProductivityFeaturesRegistry myRegistry;
 
-  public static FeatureUsageTracker getInstance() {
-    return ApplicationManager.getApplication().getComponent(FeatureUsageTracker.class);
-  }
-
-  public FeatureUsageTracker(ProgressManager progressManager, ProductivityFeaturesRegistry productivityFeaturesRegistry) {
+  public FeatureUsageTrackerImpl(ProgressManager progressManager, ProductivityFeaturesRegistry productivityFeaturesRegistry) {
     myRegistry = productivityFeaturesRegistry;
     progressManager.registerFunComponentProvider(new ProgressFunProvider());
   }
@@ -105,9 +100,13 @@ public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExter
     List featuresList = element.getChildren("feature");
     for (int i = 0; i < featuresList.size(); i++) {
       Element featureElement = (Element)featuresList.get(i);
-      FeatureDescriptor descriptor = myRegistry.getFeatureDescriptor(featureElement.getAttributeValue("id"));
+      FeatureDescriptor descriptor = ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue("id"));
       if (descriptor != null) {
         descriptor.readStatistics(featureElement);
+      } else {
+        descriptor = new FeatureDescriptor(featureElement.getAttributeValue("id"));
+        descriptor.readStatistics(featureElement);
+        ((ProductivityFeaturesRegistryImpl)myRegistry).addFeatureStatistics(descriptor);
       }
     }
 
@@ -130,7 +129,7 @@ public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExter
       String id = iterator.next();
       Element featureElement = new Element("feature");
       featureElement.setAttribute("id", id);
-      FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+      FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(id);
       descriptor.writeStatistics(featureElement);
       element.addContent(featureElement);
     }
@@ -142,9 +141,8 @@ public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExter
   }
 
   public void triggerFeatureUsed(String featureId) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+    FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(featureId);
     if (descriptor == null) {
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
@@ -154,7 +152,7 @@ public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExter
   }
 
   public void triggerFeatureShown(String featureId) {
-    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
+    FeatureDescriptor descriptor = (FeatureDescriptor)ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
     if (descriptor != null) {
       descriptor.triggerShown();
     }
@@ -174,7 +172,7 @@ public class FeatureUsageTracker implements ApplicationComponent, NamedJDOMExter
         if (!HAVE_BEEN_SHOWN) {
           HAVE_BEEN_SHOWN = true;
           String[] newFeatures = new String[features.length + 1];
-          newFeatures[0] = ProductivityFeaturesRegistry.WELCOME;
+          newFeatures[0] = ProductivityFeaturesRegistryImpl.WELCOME;
           System.arraycopy(features, 0, newFeatures, 1, features.length);
           features = newFeatures;
         }

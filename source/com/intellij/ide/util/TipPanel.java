@@ -1,9 +1,13 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.featureStatistics.ProductivityFeaturesProvider;
+import com.intellij.featureStatistics.FeatureDescriptor;
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -16,6 +20,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashMap;
 
 public class TipPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.TipPanel");
@@ -23,8 +28,8 @@ public class TipPanel extends JPanel {
   private static final int DEFAULT_HEIGHT = 200;
   private JCheckBox myCheckBox;
   private JEditorPane browser;
-  private ArrayList myTipPaths = new ArrayList();
-
+  private ArrayList<String> myTipPaths = new ArrayList<String>();
+  private HashMap<String, Class< ? extends ProductivityFeaturesProvider>> myPathsToProviderMap = new HashMap<String, Class<? extends ProductivityFeaturesProvider>>();
   public TipPanel() {
     setLayout(new BorderLayout());
     JLabel jlabel = new JLabel(IconLoader.getIcon("/general/tip.png"));
@@ -86,18 +91,18 @@ public class TipPanel extends JPanel {
     String path;
     lastTip--;
     if (lastTip <= 0) {
-      path = (String) myTipPaths.get(myTipPaths.size() - 1);
+      path = myTipPaths.get(myTipPaths.size() - 1);
       lastTip = myTipPaths.size();
     }
     else {
-      path = (String) myTipPaths.get(lastTip - 1);
+      path = myTipPaths.get(lastTip - 1);
     }
 
     setTip(path, lastTip, browser, settings);
   }
 
   private void setTip (String path, int lastTip, JEditorPane browser, GeneralSettings settings) {
-    TipUIUtil.openTipInBrowser(path, browser);
+    TipUIUtil.openTipInBrowser(path, browser, myPathsToProviderMap.get(path));
 
     settings.setLastTip(lastTip);
   }
@@ -112,11 +117,11 @@ public class TipPanel extends JPanel {
     String path;
     lastTip++;
     if (lastTip - 1 >= myTipPaths.size()) {
-      path = (String) myTipPaths.get(0);
+      path = myTipPaths.get(0);
       lastTip = 1;
     }
     else {
-      path = (String) myTipPaths.get(lastTip - 1);
+      path = myTipPaths.get(lastTip - 1);
     }
 
     setTip(path, lastTip, browser, settings);
@@ -154,5 +159,27 @@ public class TipPanel extends JPanel {
       Element element = (Element)iterator.next();
       myTipPaths.add(element.getAttributeValue("file"));
     }
+    final ProductivityFeaturesProvider[] providers = ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class);
+    for (int i = 0; i < providers.length; i++) {
+      ProductivityFeaturesProvider provider = providers[i];
+      final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
+      for (int j = 0; featureDescriptors != null && j < featureDescriptors.length; j++) {
+        FeatureDescriptor featureDescriptor = featureDescriptors[j];
+        myPathsToProviderMap.put(featureDescriptor.getTipFileName(), featureDescriptor.getProvider());
+      }
+    }
   }
+
+  public String getComponentName() {
+    return "TipPanel";
+  }
+
+  public void initComponent() {
+
+  }
+
+  public void disposeComponent() {
+
+  }
+
 }

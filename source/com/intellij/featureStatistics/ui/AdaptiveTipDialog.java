@@ -1,8 +1,6 @@
 package com.intellij.featureStatistics.ui;
 
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
+import com.intellij.featureStatistics.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,7 +35,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
     FeatureUsageTracker.getInstance().triggerFeatureShown(id);
 
     FeatureDescriptor feature = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(id);
-    TipUIUtil.openTipInBrowser(feature.getTipFileName(), myBrowser);
+    TipUIUtil.openTipInBrowser(feature.getTipFileName(), myBrowser, feature.getProvider());
   }
 
 
