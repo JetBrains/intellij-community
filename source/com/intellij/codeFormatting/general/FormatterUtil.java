@@ -45,7 +45,7 @@ public class FormatterUtil {
     while (wsCandidate != null && isSpaceTextElement(wsCandidate)) {
       result.append(wsCandidate.getText());
       final TreeElement newValue = getWsCandidate(wsCandidate);
-      if (wsCandidate == newValue) break;
+      if (wsCandidate.getStartOffset() == newValue.getStartOffset()) break;
       wsCandidate = newValue;
     }
     return result.toString();
