@@ -17,6 +17,7 @@ public class PsiAnchor {
   private int myStartOffset;
   private int myEndOffset;
   private PsiFile myFile;
+  private int myRootIndex = -1;
   private PsiElement myElement;
 
   public PsiAnchor(PsiElement element) {
@@ -25,15 +26,16 @@ public class PsiAnchor {
     }
     else {
       myElement = null;
-      final PsiFile[] psiRoots = element.getContainingFile().getPsiRoots();
+      myFile = element.getContainingFile();
+      final PsiFile[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
         PsiFile root = psiRoots[i];
         if (PsiUtil.isUnderPsiRoot(root, element)) {
-          myFile = root;
+          myRootIndex = i;
           break;
         }
       }
-      LOG.assertTrue(myFile != null);
+      LOG.assertTrue(myRootIndex >= 0);
 
       myClass = element.getClass();
 
@@ -49,7 +51,7 @@ public class PsiAnchor {
   public PsiElement retrieve() {
     if (myElement != null) return myElement;
 
-    PsiElement element = myFile.findElementAt(myStartOffset);
+    PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
 
     while  (!element.getClass().equals(myClass) ||
            (element.getTextRange().getStartOffset() != myStartOffset) ||
