@@ -1,14 +1,10 @@
 package com.intellij.debugger.engine.events;
 
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.SuspendManager;
+import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
-
-import java.util.List;
-import java.util.Iterator;
-import java.util.Set;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -33,11 +29,14 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
 
     if (SuspendManagerUtil.hasSuspendingContexts(suspendManager, myDebuggerContext.getThreadProxy())) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Context thread " + getSuspendContext().getThread());
-        LOG.debug("Debug thread" + myDebuggerContext.getThreadProxy());
+      final SuspendContextImpl suspendContext = getSuspendContext();
+      if (!suspendContext.isResumed()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Context thread " + suspendContext.getThread());
+          LOG.debug("Debug thread" + myDebuggerContext.getThreadProxy());
+        }
+        threadAction();
       }
-      threadAction();
     }
     else {
       // there are no suspend context currently registered

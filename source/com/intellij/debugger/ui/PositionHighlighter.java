@@ -170,15 +170,15 @@ public class PositionHighlighter {
   }
 
   private void showExecutionPoint(final PsiFile psiFile, int lineIndex, List<Pair<Breakpoint, Event>> events) {
+    if (myExecutionPointDescription != null) {
+      myExecutionPointDescription.remove();
+    }
     if(lineIndex < 0) {
       lineIndex = 0;
     }
     Editor editor = getEditor(psiFile, lineIndex);
     if(editor == null) {
       return;
-    }
-    if (myExecutionPointDescription != null) {
-      myExecutionPointDescription.remove();
     }
     myExecutionPointDescription = SelectionDescription.createExecutionPoint(editor, lineIndex);
     myExecutionPointDescription.select();

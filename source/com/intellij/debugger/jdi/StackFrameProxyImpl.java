@@ -94,7 +94,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if(myFrameIndex == -1) {
       int count = myThreadProxy.frameCount();
 
-      if(myFrameFromBottomIndex  > count) throw EvaluateExceptionUtil.createEvaluateException(new IncompatibleThreadStateException());
+      if(myFrameFromBottomIndex  > count) {
+        throw EvaluateExceptionUtil.createEvaluateException(new IncompatibleThreadStateException());
+      }
       
       myFrameIndex = count - myFrameFromBottomIndex;
     }
