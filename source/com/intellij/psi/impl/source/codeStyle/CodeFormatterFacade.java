@@ -124,7 +124,7 @@ public class CodeFormatterFacade implements Constants {
         catch (Exception e) {
 
         }
-        System.out.println("Time to reformat: " + (System.currentTimeMillis() - start));
+        //System.out.println("Time to reformat: " + (System.currentTimeMillis() - start));
         formatComments(element, startOffset, endOffset);
         return element;
       }
