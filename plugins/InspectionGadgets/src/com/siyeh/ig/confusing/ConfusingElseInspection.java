@@ -4,7 +4,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -48,8 +47,6 @@ public class ConfusingElseInspection extends StatementInspection {
             if (elseBranch instanceof PsiIfStatement) {
                 return;
             }
-
-
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
                 return;
             }

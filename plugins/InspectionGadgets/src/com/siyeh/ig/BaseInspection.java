@@ -33,10 +33,6 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return false;
     }
 
-    protected boolean buildQuickFixesOnlyForBatchErrors() {
-        return false;
-    }
-
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return null;
     }

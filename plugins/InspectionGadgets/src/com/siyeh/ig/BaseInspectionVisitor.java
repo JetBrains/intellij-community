@@ -92,8 +92,6 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor {
         final LocalQuickFix fix;
         if (!m_onTheFly && m_inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
             fix = null;
-        } else if (m_onTheFly && m_inspection.buildQuickFixesOnlyForBatchErrors()) {
-            fix = null;
         } else {
             fix = m_inspection.buildFix(location);
         }
@@ -114,8 +112,6 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor {
     protected void registerError(PsiElement location, Object arg) {
         final LocalQuickFix fix;
         if (!m_onTheFly && m_inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
-            fix = null;
-        } else if (m_onTheFly && m_inspection.buildQuickFixesOnlyForBatchErrors()) {
             fix = null;
         } else {
             fix = m_inspection.buildFix(location);

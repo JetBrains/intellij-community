@@ -25,6 +25,10 @@ public class DollarSignInNameInspection extends BaseInspection {
         return fix;
     }
 
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
+
     public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
         if (aClass instanceof PsiAnonymousClass) {
             return super.checkClass(aClass, mgr, isOnTheFly);

@@ -23,13 +23,13 @@
     Tail recursion quickfix
     Make "Merge else-if" understand chained returning ifs
     "Extract method" as quickfix to overly complex expression
+    Flag on class without no-arg constructor
     Static inheritance fix
     Fixes for the assignment and return encapsulation inspections
     Static import fix
     Fixes for call to super for JUnit setUp() and tearDown()
     Check IDs for all inspections
     Flag inspections with default on-off and default warning level
-    Check that refactoring quickfixes are only available on-the-fly
     Quick fix for "Constant StringBuffer may be String"
     Quick fix for Non-constant String should be StringBuffer
     Quick fix for "String concatenation in loop"
@@ -37,8 +37,6 @@
     Genericize "StringBuffer.toString() in concatenation"
     Split "Portability Issues" into "Portability Issues" and "JDK issues"
     QuickFix for "Confusing else Branch"
-    QuickFix for "Conditional expression with negated condition"
-    QuickFix for "Method names differing only by case"
     QuickFix for "Integer difision in floating point context"
     Quickfix for "Non-serializable class with..."
     Quickfix for "Unnecessary default"

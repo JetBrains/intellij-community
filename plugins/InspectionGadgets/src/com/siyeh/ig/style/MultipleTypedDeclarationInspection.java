@@ -33,10 +33,6 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
         return fix;
     }
 
-    protected boolean buildQuickFixesOnlyForBatchErrors() {
-        return true;
-    }
-
     private static class MultiplyTypedDeclarationVisitor
             extends BaseInspectionVisitor {
         private MultiplyTypedDeclarationVisitor(BaseInspection inspection,

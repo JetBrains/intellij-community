@@ -24,6 +24,9 @@ public class LimitedScopeInnerClassInspection extends ClassInspection {
         return fix;
     }
 
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new LimitedScopeInnerClassVisitor(this, inspectionManager, onTheFly);
     }

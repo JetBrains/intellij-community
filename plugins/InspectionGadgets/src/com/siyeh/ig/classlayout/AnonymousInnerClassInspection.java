@@ -25,6 +25,9 @@ public class AnonymousInnerClassInspection extends ClassInspection {
         return fix;
     }
 
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new AnonymousInnerClassVisitor(this, inspectionManager, onTheFly);
     }

@@ -24,10 +24,6 @@ public class MultipleDeclarationInspection extends VariableInspection {
         return fix;
     }
 
-    protected boolean buildQuickFixesOnlyForBatchErrors() {
-        return true;
-    }
-
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new MultipleDeclarationVisitor(this, inspectionManager, onTheFly);
     }

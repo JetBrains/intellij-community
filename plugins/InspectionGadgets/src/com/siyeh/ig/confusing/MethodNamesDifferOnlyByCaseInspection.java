@@ -4,12 +4,13 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.MethodInspection;
+import com.intellij.psi.PsiElement;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.RenameFix;
 
 public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
+
+    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
         return "Method names differing only by case";
@@ -25,6 +26,14 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new OverloadedMethodsWithSameNumberOfParametersVisitor(this, inspectionManager, onTheFly);
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
     }
 
     private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {

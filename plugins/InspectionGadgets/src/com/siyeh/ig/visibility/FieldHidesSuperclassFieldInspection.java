@@ -29,6 +29,10 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
         return fix;
     }
 
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Field '#ref' hides field in superclass #loc";
     }

@@ -42,6 +42,9 @@ public class OverlyComplexArithmeticExpressionInspection extends StatementInspec
         return fix;
     }
 
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new SwitchStatementWithTooManyBranchesVisitor(this, inspectionManager, onTheFly);
     }
