@@ -125,7 +125,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                    myProject);
       dialog.show();
       if (!dialog.isOK()) {
-        prepareSuccessful();
         return false;
       }
     }
