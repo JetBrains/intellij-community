@@ -3,8 +3,8 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
@@ -15,6 +15,8 @@ import java.lang.ref.WeakReference;
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
   private final PsiClass mySuperClass;
   private final boolean myOverrides;
+  private static final Icon OVERRIDING_ICON = IconLoader.getIcon("/general/overridingMethod.png");
+  private static final Icon IMLLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
 
   public SuperTypeGroup(PsiClass superClass, boolean overrides) {
     myOverrides = overrides;
@@ -46,7 +48,11 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public Icon getIcon(boolean open) {
-    return mySuperClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+    if (myOverrides) {
+      return OVERRIDING_ICON;
+    } else {
+      return IMLLEMENTING_ICON;
+    }
   }
 
   public String getLocationString() {
