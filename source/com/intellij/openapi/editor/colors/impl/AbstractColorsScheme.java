@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -40,6 +41,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
   protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
+  private Color myDeprecatedBackgroundColor = null;
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     myParentScheme = parentScheme;
@@ -55,6 +57,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   public abstract void setColor(ColorKey key, Color color);
   public abstract Color getColor(ColorKey key);
+
+  public Color getDefaultBackground() {
+    final Color c = getAttributes(HighlighterColors.TEXT).getBackgroundColor();
+    return c != null ? c : Color.white;
+  }
+
+  public Color getDefaultForeground() {
+    final Color c = getAttributes(HighlighterColors.TEXT).getForegroundColor();
+    return c != null ? c : Color.black;
+  }
 
   public String getName() {
     return mySchemeName;
@@ -145,6 +157,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readScheme(Element node) throws InvalidDataException {
+    myDeprecatedBackgroundColor = null;
     if ("scheme".equals(node.getName())) {
       setName(node.getAttributeValue("name"));
       myVersion = Integer.parseInt(node.getAttributeValue("version", "0"));
@@ -165,6 +178,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
           readAttributes(childNode);
         }
       }
+
+      if (myDeprecatedBackgroundColor != null) {
+        final TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
+        textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
+      }
+
       initFonts();
     }
   }
@@ -183,18 +202,28 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private void readColors(Element childNode) {
     for (Iterator iterator = childNode.getChildren("option").iterator(); iterator.hasNext();) {
       Element colorElement = (Element)iterator.next();
+      Color valueColor = readColorValue(colorElement);
+      final String colorName = colorElement.getAttributeValue("name");
+      if ("BACKGROUND".equals(colorName)) {
+        // This setting has been deprecated to usages of HighlighterColors.TEXT attributes.
+        myDeprecatedBackgroundColor = valueColor;
+      }
 
-      ColorKey name = ColorKey.find(colorElement.getAttributeValue("name"));
-      String value = colorElement.getAttributeValue("value");
-      if (value == null || "".equals(value.trim())) {
-        myColorsMap.put(name, null);
-      } else {
-        try {
-          myColorsMap.put(name, new Color(Integer.parseInt(value, 16)));
-        } catch (NumberFormatException e) {
-        }
+      ColorKey name = ColorKey.find(colorName);
+      myColorsMap.put(name, valueColor);
+    }
+  }
+
+  private Color readColorValue(final Element colorElement) {
+    String value = colorElement.getAttributeValue("value");
+    Color valueColor = null;
+    if (value != null && value.trim().length() > 0) {
+      try {
+        valueColor = new Color(Integer.parseInt(value, 16));
+      } catch (NumberFormatException e) {
       }
     }
+    return valueColor;
   }
 
   private void readSettings(Element childNode) {

@@ -219,7 +219,7 @@ public class EditorFragmentComponent extends JPanel {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     if (color == null){
-      color = colorsScheme.getColor(EditorColors.BACKGROUND_COLOR);
+      color = colorsScheme.getDefaultBackground();
     }
     return color;
   }

@@ -42,6 +42,8 @@ public class IterationState {
   private TextAttributes myFoldTextAttributes = null;
   private TextAttributes mySelectionAttributes = null;
   private TextAttributes myCaretRowAttributes = null;
+  private Color myDefaultBackground = null;
+  private Color myDefaultForeground = null;
   private int myCaretRowStart;
   private int myCaretRowEnd;
   private ArrayList<TextAttributes> myCachedAttributesList;
@@ -84,6 +86,8 @@ public class IterationState {
 
     CaretModelImpl caretModel = (CaretModelImpl)editor.getCaretModel();
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
+    myDefaultBackground = editor.getBackroundColor();
+    myDefaultForeground = editor.getForegroundColor();
 
     myCurrentHighlighters = new ArrayList<RangeHighlighterImpl>();
 
@@ -425,11 +429,11 @@ public class IterationState {
       TextAttributes textAttributes = myCachedAttributesList.get(i);
 
       if (fore == null) {
-        fore = textAttributes.getForegroundColor();
+        fore = ifDiffers(textAttributes.getForegroundColor(), myDefaultForeground);
       }
 
       if (back == null) {
-        back = textAttributes.getBackgroundColor();
+        back = ifDiffers(textAttributes.getBackgroundColor(), myDefaultBackground);
       }
 
       if (fontType == 0) {
@@ -449,6 +453,9 @@ public class IterationState {
     myMergedAttributes.setEffectType(effectType);
   }
 
+  private Color ifDiffers(final Color c1, final Color c2) {
+    return c1 == c2 ? null : c1;
+  }
 
   public boolean atEnd() {
     return myStartOffset >= myEnd;

@@ -1033,11 +1033,14 @@ public class EditorImpl implements EditorEx {
     myForcedBackground = null;
   }
 
+  public Color getForegroundColor() {
+    return myScheme.getDefaultForeground();
+  }
+
   public Color getBackroundColor() {
     if (myForcedBackground != null) return myForcedBackground;
 
-    Color color = myScheme.getColor(EditorColors.BACKGROUND_COLOR);
-    if (color == null) color = Color.white;
+    Color color = myScheme.getDefaultBackground();
     if (myDocument.isWritable()) {
       return color;
     }
@@ -3544,6 +3547,14 @@ public class EditorImpl implements EditorEx {
 
     public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
       myOwnAttributes.put(key, attributes);
+    }
+
+    public Color getDefaultBackground() {
+      return getGlobal().getDefaultBackground();
+    }
+
+    public Color getDefaultForeground() {
+      return getGlobal().getDefaultForeground();
     }
 
     public Color getColor(ColorKey key) {

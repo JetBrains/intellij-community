@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
@@ -325,7 +324,7 @@ class HTMLTextPainter {
     writer.write("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=windows-1252\">\r\n");
     writer.write("<META NAME=\"KEYWORDS\" CONTENT=\"IntelliJ_IDEA_Html\">\r\n");
     writer.write("</HEAD>\r\n");
-    Color color = scheme.getColor(EditorColors.BACKGROUND_COLOR);
+    Color color = scheme.getDefaultBackground();
     if (color==null) color = Color.gray;
     writer.write("<BODY BGCOLOR=\"#" + Integer.toString(color.getRGB() & 0xFFFFFF, 16) + "\">\r\n");
     writer.write("<TABLE CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH=\"100%\" BGCOLOR=\"#C0C0C0\" >\r\n");

@@ -380,11 +380,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         editorSettings.setAdditionalPageAtBottom(false);
 
         final EditorColorsScheme scheme = editor.getColorsScheme();
-        scheme.setColor(EditorColors.BACKGROUND_COLOR, BACKGROUND_COLOR);
-        scheme.setColor(EditorColors.READONLY_BACKGROUND_COLOR, BACKGROUND_COLOR);
+        editor.setBackgroundColor(BACKGROUND_COLOR);
         scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
         scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
 
         editor.addEditorMouseListener(new EditorPopupHandler(){
           public void invokePopup(final EditorMouseEvent event) {

@@ -7,7 +7,6 @@ import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
@@ -46,14 +45,7 @@ public class ClickNavigator {
 
     CaretListener listener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        int offset = view.logicalPositionToOffset(e.getNewPosition());
-        CharSequence text = view.getDocument().getCharsSequence();
-        if (isWhiteSpace(offset, text)) {
-          setSelectedItem(EditorColors.BACKGROUND_COLOR.getExternalName(), true);
-        }
-        else {
-          setSelectedItem(HighlighterColors.TEXT.getExternalName(), true);
-        }
+        setSelectedItem(HighlighterColors.TEXT.getExternalName(), true);
       }
     };
     view.getCaretModel().addCaretListener(listener);
