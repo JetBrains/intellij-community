@@ -52,16 +52,4 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return VfsUtil.isAncestor(value.getVirtualFile(), file, false);
     }
   }
-
-  public String getToolTip() {
-    if (getValue().isSourceRoot()) {
-      return "Module Source Root";
-    }
-    else if (PackageUtil.isModuleContentRoot(getValue().getVirtualFile(), getProject())) {
-      return "Module Content Root";
-    }
-    else {
-      return super.getToolTip();
-    }
-  }
 }
