@@ -340,9 +340,6 @@ public class ControlFlowUtils {
             // do nothing, to keep drilling into inner classes
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-        }
-
         public void visitReturnStatement(PsiReturnStatement returnStatement) {
             super.visitReturnStatement(returnStatement);
             m_found = true;
@@ -360,9 +357,6 @@ public class ControlFlowUtils {
 
         public boolean breakFound() {
             return m_found;
-        }
-
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
         }
 
         public void visitBreakStatement(PsiBreakStatement breakStatement) {
@@ -390,9 +384,6 @@ public class ControlFlowUtils {
 
         public boolean continueFound() {
             return m_found;
-        }
-
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
         }
 
         public void visitContinueStatement(PsiContinueStatement statement) {

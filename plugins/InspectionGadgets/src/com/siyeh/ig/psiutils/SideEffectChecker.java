@@ -22,16 +22,6 @@ public class SideEffectChecker {
             return m_mayHaveSideEffects;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = expression.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);

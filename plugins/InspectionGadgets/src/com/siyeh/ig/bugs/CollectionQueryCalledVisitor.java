@@ -39,16 +39,6 @@ public class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression exp) {
-        final PsiExpression qualifier = exp.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = exp.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
 
     public void visitForeachStatement(PsiForeachStatement statement) {
         super.visitForeachStatement(statement);

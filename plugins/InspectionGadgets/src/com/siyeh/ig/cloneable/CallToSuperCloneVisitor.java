@@ -25,17 +25,6 @@ class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor {
         m_callToSuperCloneFound = true;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = expression.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public boolean isCallToSuperCloneFound() {
         return m_callToSuperCloneFound;
     }

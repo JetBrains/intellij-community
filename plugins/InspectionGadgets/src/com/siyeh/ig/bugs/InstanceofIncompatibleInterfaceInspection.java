@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.project.Project;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -94,8 +96,9 @@ public class InstanceofIncompatibleInterfaceInspection extends ExpressionInspect
             return true;
         }
         final PsiManager psiManager = aClass.getManager();
+        final Project project = psiManager.getProject();
         final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-        final SearchScope searchScope = aClass.getUseScope();
+        final SearchScope searchScope = GlobalSearchScope.allScope(project);
         final PsiClass[] inheritors =
                 searchHelper.findInheritors(aClass, searchScope, true);
         for(int i = 0; i < inheritors.length; i++){

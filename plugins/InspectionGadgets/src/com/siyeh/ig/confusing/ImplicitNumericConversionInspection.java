@@ -197,6 +197,15 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
         public void visitExpression(PsiExpression exp) {
             super.visitExpression(exp);
+            checkExpression(exp);
+        }
+
+        public void visitReferenceExpression(PsiReferenceExpression expression){
+            super.visitReferenceExpression(expression);
+            checkExpression(expression);
+        }
+
+        private void checkExpression(PsiExpression exp){
             final PsiElement parent = exp.getParent();
             if(parent!=null && parent instanceof PsiParenthesizedExpression)
             {

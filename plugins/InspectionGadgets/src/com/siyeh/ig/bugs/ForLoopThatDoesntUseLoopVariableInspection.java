@@ -140,14 +140,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection extends StatementInspect
         }
 
         public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
+            super.visitReferenceExpression(ref);
             final PsiElement resolvedElement = ref.resolve();
             if (m_variable.equals(resolvedElement)) {
                 m_used = true;

@@ -25,17 +25,6 @@ class CallToSuperTeardownVisitor extends PsiRecursiveElementVisitor {
         m_callToSuperTeardownFound = true;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public boolean isCallToSuperTeardownFound() {
         return m_callToSuperTeardownFound;
     }

@@ -6,17 +6,6 @@ import com.intellij.psi.tree.IElementType;
 class NegationCountVisitor extends PsiRecursiveElementVisitor {
     private int m_count = 0;
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public void visitBinaryExpression(PsiBinaryExpression expression) {
         super.visitBinaryExpression(expression);
         final PsiJavaToken sign = expression.getOperationSign();

@@ -620,17 +620,6 @@ public class ForCanBeForeachInspection extends StatementInspection {
             this.arrayName = arrayName;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
-
         public void visitAssignmentExpression(PsiAssignmentExpression exp) {
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
@@ -653,18 +642,6 @@ public class ForCanBeForeachInspection extends StatementInspection {
         NumCallsToIteratorNextVisitor(String iteratorName) {
             super();
             this.iteratorName = iteratorName;
-        }
-
-
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
         }
 
         public void visitMethodCallExpression(PsiMethodCallExpression callExpression) {
@@ -704,16 +681,6 @@ public class ForCanBeForeachInspection extends StatementInspection {
             this.iteratorName = iteratorName;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
 
         public void visitAssignmentExpression(PsiAssignmentExpression exp) {
             super.visitAssignmentExpression(exp);
@@ -740,16 +707,6 @@ public class ForCanBeForeachInspection extends StatementInspection {
             this.iteratorName = iteratorName;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -784,14 +741,8 @@ public class ForCanBeForeachInspection extends StatementInspection {
         }
 
         public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
+            super.visitReferenceExpression(ref);
+
             final PsiElement element = ref.resolve();
             if (!indexVariable.equals(element)) {
                 return;

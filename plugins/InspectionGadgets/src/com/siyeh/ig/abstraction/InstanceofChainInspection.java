@@ -18,7 +18,7 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     protected String buildErrorString(PsiElement location) {
-        return "Chain of 'instanceof' checks indicates abstraction faiulre #loc";
+        return "Chain of 'instanceof' checks indicates abstraction failure #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

@@ -5,17 +5,6 @@ import com.intellij.psi.*;
 class ComplexityVisitor extends PsiRecursiveElementVisitor {
     private int m_complexity = 1;
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if(qualifier!=null){
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = expression.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public void visitAnonymousClass(PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down
     }

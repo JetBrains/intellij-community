@@ -25,16 +25,6 @@ class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor {
         m_callToSuperFinalizeFound = true;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = expression.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
 
     public boolean isCallToSuperFinalizeFound() {
         return m_callToSuperFinalizeFound;

@@ -74,17 +74,6 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     private static class StatementCountVisitor extends PsiRecursiveElementVisitor {
         private int numStatements = 0;
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = expression.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
-
         public void visitStatement(PsiStatement psiStatement) {
             super.visitStatement(psiStatement);
             numStatements++;

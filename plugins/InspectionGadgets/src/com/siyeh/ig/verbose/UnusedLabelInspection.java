@@ -78,17 +78,6 @@ public class UnusedLabelInspection extends StatementInspection {
             return m_found;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref) {
-            final PsiExpression qualifier = ref.getQualifierExpression();
-            if (qualifier != null) {
-                qualifier.accept(this);
-            }
-            final PsiReferenceParameterList typeParameters = ref.getParameterList();
-            if (typeParameters != null) {
-                typeParameters.accept(this);
-            }
-        }
-
         public void visitContinueStatement(PsiContinueStatement continueStatement) {
             super.visitContinueStatement(continueStatement);
 

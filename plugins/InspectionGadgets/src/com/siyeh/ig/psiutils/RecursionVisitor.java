@@ -11,17 +11,6 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor {
         m_method = method;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public void visitMethodCallExpression(PsiMethodCallExpression psiMethodCallExpression) {
         super.visitMethodCallExpression(psiMethodCallExpression);
         final PsiMethod method = psiMethodCallExpression.resolveMethod();

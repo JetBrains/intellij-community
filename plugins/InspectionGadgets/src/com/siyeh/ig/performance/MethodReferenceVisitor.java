@@ -37,14 +37,8 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = expression.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
+        super.visitReferenceExpression(expression);
+
         final PsiElement element = expression.resolve();
         if (element instanceof PsiField) {
             m_referencesStaticallyAccessible &= isFieldStaticallyAccessible((PsiField) element);

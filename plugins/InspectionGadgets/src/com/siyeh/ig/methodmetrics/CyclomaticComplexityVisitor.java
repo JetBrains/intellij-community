@@ -5,16 +5,6 @@ import com.intellij.psi.*;
 class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
     private int m_complexity = 1;
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }    }
-
     public void visitAnonymousClass(PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down
     }

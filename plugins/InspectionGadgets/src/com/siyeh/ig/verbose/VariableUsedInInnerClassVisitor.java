@@ -24,11 +24,7 @@ public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
 
     public void visitReferenceExpression(PsiReferenceExpression reference)
     {
-        final PsiExpression qualifier = reference.getQualifierExpression();
-        if(qualifier!=null)
-        {
-            qualifier.accept(this);
-        }
+        super.visitReferenceExpression(reference);
         if(m_inInnerClass)
         {
             final PsiElement element = reference.resolve();

@@ -18,17 +18,6 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         this.currentClass = currentClass;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod method = expression.resolveMethod();

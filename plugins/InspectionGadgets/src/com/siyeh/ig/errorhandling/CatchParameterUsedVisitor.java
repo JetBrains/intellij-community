@@ -12,14 +12,7 @@ public class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitReferenceExpression(PsiReferenceExpression reference) {
-        final PsiExpression qualifier = reference.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = reference.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
+        super.visitReferenceExpression(reference);
         final PsiElement element = reference.resolve();
         if (m_parameter.equals(element)) {
             m_used = true;

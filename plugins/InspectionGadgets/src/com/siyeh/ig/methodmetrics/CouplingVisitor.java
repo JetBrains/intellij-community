@@ -90,17 +90,6 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
-
     public void visitTryStatement(PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();

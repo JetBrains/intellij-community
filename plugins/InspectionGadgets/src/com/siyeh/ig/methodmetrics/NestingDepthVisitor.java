@@ -6,15 +6,6 @@ class NestingDepthVisitor extends PsiRecursiveElementVisitor {
     private int m_maximumDepth = 0;
     private int m_currentDepth = 0;
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }    }
 
     public void visitAnonymousClass(PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down

@@ -50,10 +50,10 @@ public class FloatingPointEqualityInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if(!isFloatingPointType(rhs)){
+            if(isFloatingPointType(rhs)){
+                registerError(expression);
                 return;
             }
-            registerError(expression);
         }
 
         private static boolean isFloatingPointType(PsiExpression expression) {

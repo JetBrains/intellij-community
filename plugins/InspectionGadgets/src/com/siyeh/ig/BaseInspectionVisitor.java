@@ -24,18 +24,6 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         m_onTheFly = onTheFly;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression){
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if(qualifier != null){
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters =
-                expression.getParameterList();
-        if(typeParameters != null){
-            typeParameters.accept(this);
-        }
-    }
-
     protected void registerMethodCallError(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();

@@ -11,16 +11,6 @@ public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
-        final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
-    }
 
     public void visitReturnStatement(PsiReturnStatement returnStatement) {
         super.visitReturnStatement(returnStatement);

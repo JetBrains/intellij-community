@@ -6,10 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +22,7 @@ public class AutoUnboxingInspection extends ExpressionInspection {
     private static final Set s_numberTypes = new HashSet(8);
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
-    static {  
+    static {
         s_unboxingMethods.put("int", "intValue");
         s_unboxingMethods.put("short", "shortValue");
         s_unboxingMethods.put("boolean", "booleanValue");
@@ -66,7 +67,9 @@ public class AutoUnboxingInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType type = expression.getType();
 
@@ -93,28 +96,39 @@ public class AutoUnboxingInspection extends ExpressionInspection {
 
         public void visitExpression(PsiExpression expression) {
             super.visitExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitReferenceExpression(PsiReferenceExpression expression){
+            super.visitReferenceExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void checkExpression(PsiExpression expression) {
 
             final PsiType expressionType = expression.getType();
-            if (expressionType == null) {
+            if(expressionType == null){
                 return;
             }
-            if(expressionType.getArrayDimensions()>0)
-            {
+            if(expressionType.getArrayDimensions() > 0){
                 return; // a horrible hack to get around what happens when you pass an array to a vararg expression
             }
-            if (ClassUtils.isPrimitive(expressionType)) {
+            if(ClassUtils.isPrimitive(expressionType)){
                 return;
             }
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
-            if (expectedType == null) {
-                return;
-            }
+            final PsiType expectedType =
+                    ExpectedTypeUtils.findExpectedType(expression);
 
-            if (!ClassUtils.isPrimitive(expectedType)) {
+            if(expectedType == null){
+                return;
+            }
+            if(!ClassUtils.isPrimitive(expectedType)){
                 return;
             }
             registerError(expression);
+
         }
+
     }
 
 }

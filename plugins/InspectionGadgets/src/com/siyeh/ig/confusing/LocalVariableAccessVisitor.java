@@ -14,15 +14,8 @@ class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitReferenceExpression(PsiReferenceExpression ref) {
+        super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
-        if (qualifier != null) {
-            qualifier.accept(this);
-        }
-
-        final PsiReferenceParameterList typeParameters = ref.getParameterList();
-        if (typeParameters != null) {
-            typeParameters.accept(this);
-        }
         if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
             return;
         }

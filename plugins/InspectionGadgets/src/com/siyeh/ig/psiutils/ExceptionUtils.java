@@ -55,10 +55,6 @@ public class ExceptionUtils {
             m_factory = factory;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-
-        }
-
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiMethod method = expression.resolveMethod();
