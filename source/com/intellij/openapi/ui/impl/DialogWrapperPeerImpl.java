@@ -468,9 +468,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
             moveMousePointerOnButton(getRootPane().getDefaultButton());
             setupSelectionOnPreferredComponent(toFocus);
-            
+
             if (toFocus != null) {
-              toFocus.requestFocus();
+              toFocus.requestFocusInWindow();
             }
           }
         });
