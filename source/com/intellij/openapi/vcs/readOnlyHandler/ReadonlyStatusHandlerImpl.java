@@ -56,41 +56,38 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   public OperationStatus ensureFilesWritable(VirtualFile[] files) {
-    long[] modificationStamps = new long[files.length];
+    if (files.length == 0) {
+      return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+    }
+    final FileInfo[] fileInfos = createFileInfos(files);
+    if (fileInfos.length == 0) { // if all files are already writable
+      return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+    }
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final long[] modificationStamps = new long[files.length];
     for (int i = 0; i < files.length; i++) {
       modificationStamps[i] = files[i].getModificationStamp();
     }
-    final FileInfo[] fileInfos = createFileInfos(files);
-    if (files.length == 0) return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return createResultStatus(files, modificationStamps);
     }
 
-    Runnable handleAction = new Runnable() {
-      public void run() {
-        if (SHOW_DIALOG) {
-          new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
-        } else {
-          for (int i = 0; i < fileInfos.length; i++) {
-            fileInfos[i].handle();
-          }
-        }
-      }
-    };
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
     // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
-    int savedEventCount = IdeEventQueue.getInstance().getEventCount();
-    handleAction.run();
+    final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
+    if (SHOW_DIALOG) {
+      new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
+    }
+    else {
+      for (int i = 0; i < fileInfos.length; i++) {
+        fileInfos[i].handle();
+      }
+    }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
-
     return createResultStatus(files, modificationStamps);
-
   }
 
   private OperationStatus createResultStatus(final VirtualFile[] files, final long[] modificationStamps) {
@@ -106,8 +103,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       }
     }
 
-    return new OperationStatus(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]),
-                               updatedFiles.toArray(new VirtualFile[updatedFiles.size()]));
+    return new OperationStatus(
+      readOnlyFiles.size() > 0? readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]) : VirtualFile.EMPTY_ARRAY,
+      updatedFiles.size() > 0? updatedFiles.toArray(new VirtualFile[updatedFiles.size()]) : VirtualFile.EMPTY_ARRAY
+    );
   }
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
