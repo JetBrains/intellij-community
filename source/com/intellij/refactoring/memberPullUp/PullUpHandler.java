@@ -151,11 +151,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       try {
-        final PsiClass superClass = dialog.getSuperClass();
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, superClass)) return;
-
         PullUpHelper helper = new PullUpHelper(mySubclass,
-                                               superClass,
+                                               dialog.getSuperClass(),
                 dialog.getSelectedMemberInfos(),
                 new JavaDocPolicy(dialog.getJavaDocPolicy())
         );
