@@ -29,10 +29,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -67,8 +64,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     initLeftTree();
 
     mySplitter = new Splitter();
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
-    mySplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
+    mySplitter.setFirstComponent(new MyTreePanel(myLeftTree, myProject));
+    mySplitter.setSecondComponent(new MyTreePanel(myRightTree, myProject));
 
     setSplitterProportion();
     add(mySplitter, BorderLayout.CENTER);
@@ -260,7 +257,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), tree);
     group.add(collapseAllToolbarAction);
-
+    group.add(ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS));
     return group;
   }
 
@@ -346,6 +343,32 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
   }
 
+  private static class MyTreePanel extends JPanel implements DataProvider{
+    private Tree myTree;
+    private Project myProject;
+    public MyTreePanel(final Tree tree, Project project) {
+      super(new BorderLayout());
+      myTree = tree;
+      myProject = project;
+      add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    }
+
+    public Object getData(String dataId) {
+      if (DataConstants.PROJECT.equals(dataId)){
+        return myProject;
+      }
+      if (DataConstants.MODULE_CONTEXT.equals(dataId)){
+        final TreePath selectionPath = myTree.getLeadSelectionPath();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+          if (node.getUserObject() instanceof MyUserObject){
+            return ((MyUserObject)node.getUserObject()).getModule();
+          }
+        }
+      }
+      return null;
+    }
+  }
    private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(
     JTree tree,
