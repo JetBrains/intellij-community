@@ -173,13 +173,6 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     return "Interface";
   }
 
-  protected boolean getInitialPreviewResults() {
-    return false;
-  }
-
-  protected void setInitialPreviewResults(boolean value) {
-  }
-
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     //panel.setBorder(BorderFactory.createLineBorder(Color.gray));
