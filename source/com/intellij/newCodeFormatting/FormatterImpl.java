@@ -9,7 +9,6 @@ public class FormatterImpl {
   private final Stack<BlockInfo> myStack = new Stack<BlockInfo>();
   private FormattingModel myModel;
   private Block myRootBlock;
-  private WhiteSpace myCurrentWhiteSpace;
   private int myCurrentLine = -1;
   private int myCurrentOffset = -1;
 
@@ -25,8 +24,7 @@ public class FormatterImpl {
   }
 
   public void format() {
-    myCurrentWhiteSpace = new WhiteSpace(0, 0, 0, 0, true);
-    calculateWhiteSpaces(myRootBlock);
+    myWhiteSpaceBeforeBlock.putAll(WhiteSpacesBuilder.buildWhiteSpaces(myRootBlock, myModel));
     processBlock(myRootBlock, null);
     myCurrentLine = 0;
     myCurrentOffset  = 0;
@@ -59,21 +57,6 @@ public class FormatterImpl {
     }
     finally {
       myStack.pop();
-    }
-  }
-
-  private void calculateWhiteSpaces(final Block rootBlock) {
-    final TextRange textRange = rootBlock.getTextRange();
-    final int blockStartOffset = textRange.getStartOffset();
-    myCurrentWhiteSpace.append(blockStartOffset, myModel);
-    myWhiteSpaceBeforeBlock.put(rootBlock, myCurrentWhiteSpace);
-    final List<Block> subBlocks = rootBlock.getSubBlocks();
-    if (subBlocks.isEmpty()) {
-      myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), textRange.getEndOffset(), 0, 0, false);
-    } else {
-      for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
-        calculateWhiteSpaces(iterator.next());
-      }
     }
   }
 
