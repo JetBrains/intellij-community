@@ -15,6 +15,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileType;
 import org.jdom.Element;
 
 import java.net.URL;
@@ -29,6 +31,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private Set<String> myIgnoredActions = new LinkedHashSet<String>();
 
   private Map<String,IntentionActionMetaData> myMetaData = new LinkedHashMap<String, IntentionActionMetaData>();
+  static final String EXAMPLE_USAGE_URL_SUFFIX = ".template";
 
   public String getExternalFileName() {
     return "intentionSettings";
@@ -51,8 +54,8 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     try {
       URL dirURL = getIntentionDescriptionDirURL(intentionAction.getClass(), descriptionDirectoryName);
       LOG.assertTrue(dirURL != null, "Intention description directory not found: '"+descriptionDirectoryName+"'");
-      URL[] beforeUrls = retrieveURLs(dirURL, "before", ".java.template");
-      URL[] afterUrls = retrieveURLs(dirURL, "after", ".java.template");
+      URL[] beforeUrls = retrieveURLs(dirURL, "before", EXAMPLE_USAGE_URL_SUFFIX);
+      URL[] afterUrls = retrieveURLs(dirURL, "after", EXAMPLE_USAGE_URL_SUFFIX);
       URL descriptionUrl = new URL(dirURL.toExternalForm() + "/description.html");
       registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), beforeUrls, afterUrls, descriptionUrl, category));
     }
@@ -61,22 +64,29 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  private URL[] retrieveURLs(URL descriptionDirectory, String prefix, String suffix) throws MalformedURLException {
-    int i = 0;
+  private static URL[] retrieveURLs(URL descriptionDirectory, String prefix, String suffix) throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
-    while (true) {
-      URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
-                            prefix + (i==0 ? "" : ""+i) +
+    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    for (int f = 0; f < fileTypes.length; f++) {
+      FileType fileType = fileTypes[f];
+      final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
+      for (int e = 0; e < extensions.length; e++) {
+        String extension = extensions[e];
+
+        for (int i = 0; ; i++) {
+          URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
+                            prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) +
                             suffix);
-      try {
-        InputStream inputStream = url.openStream();
-        inputStream.close();
-        urls.add(url);
+          try {
+            InputStream inputStream = url.openStream();
+            inputStream.close();
+            urls.add(url);
+          }
+          catch (IOException ioe) {
+            break;
+          }
+        }
       }
-      catch (IOException e) {
-        break;
-      }
-      i++;
     }
     return urls.toArray(new URL[urls.size()]);
   }
@@ -100,8 +110,12 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   }
 
   public void setShowLightBulb(IntentionAction action, boolean show) {
-    if (show) myIgnoredActions.remove(action.getFamilyName());
-    else myIgnoredActions.add(action.getFamilyName());
+    if (show) {
+      myIgnoredActions.remove(action.getFamilyName());
+    }
+    else {
+      myIgnoredActions.add(action.getFamilyName());
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {

@@ -6,6 +6,8 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,6 +95,10 @@ public class IntentionDescriptionPanel {
 
     for (int i = 0; i < exampleUsages.length; i++) {
       final URL exampleUsage = exampleUsages[i];
+      final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionManagerSettings.EXAMPLE_USAGE_URL_SUFFIX);
+      final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
+      final String extension = fileTypeManager.getExtension(name);
+      final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
 
       IntentionUsagePanel usagePanel;
       if (reuse) {
@@ -102,7 +108,7 @@ public class IntentionDescriptionPanel {
         usagePanel = new IntentionUsagePanel();
         usagePanels.add(usagePanel);
       }
-      usagePanel.reset(loadText(exampleUsage));
+      usagePanel.reset(loadText(exampleUsage), fileType);
 
       String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), ".template");
       usagePanel.setBorderText(title);
@@ -130,8 +136,7 @@ public class IntentionDescriptionPanel {
     FileUtil.copy(inputStream, dataOutput);
     inputStream.close();
 
-    String text = targetText.toString();
-    return text;
+    return targetText.toString();
   }
 
   public JPanel getComponent() {

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
@@ -26,25 +27,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 class IntentionUsagePanel extends JPanel{
-  private EditorEx myJavaEditor;
+  private EditorEx myEditor;
   private static final String SPOT_MARKER = "spot";
   private final Alarm myBlinkingAlarm = new Alarm();
 
   public IntentionUsagePanel() {
-    myJavaEditor = (EditorEx)createEditor("", 10, 3, -1);
+    myEditor = (EditorEx)createEditor("", 10, 3, -1);
     setLayout(new BorderLayout());
-    add(myJavaEditor.getComponent(), BorderLayout.CENTER);
+    add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
-  public void reset(final String usageText) {
+  public void reset(final String usageText, final FileType fileType) {
+    reinitViews();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                configureByText(usageText);
-                reinitViews();
+                configureByText(usageText, fileType);
               }
             });
           }
@@ -53,11 +54,12 @@ class IntentionUsagePanel extends JPanel{
     });
   }
 
-  private void configureByText(final String usageText) {
-    Document document = myJavaEditor.getDocument();
+  private void configureByText(final String usageText, FileType fileType) {
+    Document document = myEditor.getDocument();
     String text = StringUtil.convertLineSeparators(usageText);
     document.replaceString(0, document.getTextLength(), text);
-
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myEditor.setHighlighter(HighlighterFactory.createHighlighter(fileType, scheme, null));
     setupSpots(document);
   }
 
@@ -86,14 +88,14 @@ class IntentionUsagePanel extends JPanel{
     }
   }
 
-  private void startBlinking(final List<RangeMarker> markers, List<RangeHighlighter> oldHighlighters, final boolean show) {
-    TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
+  private void startBlinking(final List<RangeMarker> spotMarkers, List<RangeHighlighter> oldHighlighters, final boolean show) {
     final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
 
     if (show) {
-      for (int i = 0; i < markers.size(); i++) {
-        final RangeMarker rangeMarker = markers.get(i);
-        RangeHighlighter newRangeHighlighter = myJavaEditor.getMarkupModel().addRangeHighlighter(rangeMarker.getStartOffset(),
+      TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
+      for (int i = 0; i < spotMarkers.size(); i++) {
+        final RangeMarker rangeMarker = spotMarkers.get(i);
+        RangeHighlighter newRangeHighlighter = myEditor.getMarkupModel().addRangeHighlighter(rangeMarker.getStartOffset(),
                                                                                                  rangeMarker.getEndOffset(),
                                                                                                  HighlighterLayer.ADDITIONAL_SYNTAX, attr,
                                                                                                  HighlighterTargetArea.EXACT_RANGE);
@@ -103,13 +105,13 @@ class IntentionUsagePanel extends JPanel{
     else {
       for (int i = 0; i < oldHighlighters.size(); i++) {
         final RangeHighlighter rangeHighlighter = oldHighlighters.get(i);
-        myJavaEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
+        myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
       }
     }
     stopBlinking();
     myBlinkingAlarm.addRequest(new Runnable() {
       public void run() {
-        startBlinking(markers, newHighlighters, !show);
+        startBlinking(spotMarkers, newHighlighters, !show);
       }
     }, 400);
   }
@@ -117,7 +119,7 @@ class IntentionUsagePanel extends JPanel{
   public void dispose() {
     stopBlinking();
     EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.releaseEditor(myJavaEditor);
+    editorFactory.releaseEditor(myEditor);
   }
 
   private void stopBlinking() {
@@ -125,7 +127,8 @@ class IntentionUsagePanel extends JPanel{
   }
 
   private void reinitViews() {
-    myJavaEditor.reinitSettings();
+    myEditor.reinitSettings();
+    myEditor.getMarkupModel().removeAllHighlighters();
   }
 
   private static Editor createEditor(String text, int column, int line, int selectedLine) {
