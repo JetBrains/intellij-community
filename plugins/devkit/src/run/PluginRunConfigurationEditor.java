@@ -31,143 +31,70 @@
  */
 package org.jetbrains.idea.devkit.run;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.sandbox.Sandbox;
-import org.jetbrains.idea.devkit.sandbox.SandboxConfigurable;
-import org.jetbrains.idea.devkit.sandbox.SandboxManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> {
-  private EditorPanel myEditor;
-  private Project myProject;
+
+  private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
+  private JComboBox myModules = new JComboBox(myModulesModel);
+  private JLabel myModuleLabel = new JLabel("Choose classpath and jdk from module:");
+
+
+
+  private PluginRunConfiguration myPRC;
+
+  public PluginRunConfigurationEditor(PluginRunConfiguration prc) {
+    myPRC = prc;
+  }
 
   public void resetEditorFrom(PluginRunConfiguration prc) {
-    myProject = prc.getProject();
-    Sandbox sandbox = prc.getSandbox();
-    myEditor.setSelectedBox(sandbox);
-    updateModules(sandbox);
-    myEditor.setModules(prc.getModules());
+    myModules.setSelectedItem(prc.getModule());
   }
 
-  private void updateModules(Sandbox sandbox) {
-    if (myProject != null && sandbox != null) {
-      myEditor.setModulesList(sandbox.getModules(myProject));
-    }
-    else {
-      myEditor.setModulesList(new Module[0]);
-    }
-  }
 
   public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
-    prc.setSandbox(myEditor.getSelectedBox());
-    prc.setModules(myEditor.getModules());
+    if (myModules.getSelectedItem() == null){
+      throw new ConfigurationException("No module selected.");
+    }
+    myPRC.setModule(((Module)myModules.getSelectedItem()));
   }
 
   public JComponent createEditor() {
-    myEditor = new EditorPanel();
-    return myEditor.getComponent();
+    myModulesModel = new DefaultComboBoxModel(myPRC.getModules());
+    myModules.setModel(myModulesModel);
+    myModules.setRenderer(new DefaultListCellRenderer() {
+      public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value != null) {
+          setText(ApplicationManager.getApplication().runReadAction(new Computable<String >() {
+            public String compute() {
+              return ((Module)value).getName();
+            }
+          }));
+          setIcon(((Module)value).getModuleType().getNodeIcon(true));
+        }
+        return this;
+      }
+    });
+    JPanel wholePanel = new JPanel(new GridBagLayout());
+    wholePanel.add(myModuleLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                                            GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+    wholePanel.add(myModules, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                                            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+    return wholePanel;
   }
 
-  private class EditorPanel {
-    private JPanel myWholePanel;
-    private ComboboxWithBrowseButton mySandboxCombo;
-    private JList myModules;
 
-    public EditorPanel() {
-      mySandboxCombo.getComboBox().setRenderer(new DefaultListCellRenderer() {
-        public Component getListCellRendererComponent(JList jList, Object o, int i, boolean b, boolean b1) {
-          super.getListCellRendererComponent(jList, o, i, b, b1);
-          if (o != null) {
-            setText(((Sandbox)o).getName());
-          }
-          return this;
-        }
-      });
-
-      mySandboxCombo.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          Sandbox selected = getSelectedBox();
-          ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, SandboxConfigurable.getInstance());
-          mySandboxCombo.getComboBox().setModel(new DefaultComboBoxModel(SandboxManager.getInstance().getRegisteredSandboxes()));
-          setSelectedBox(selected);
-        }
-      });
-
-      myModules.setCellRenderer(new DefaultListCellRenderer() {
-        public Component getListCellRendererComponent(JList jList, Object o, int i, boolean b, boolean b1) {
-          super.getListCellRendererComponent(jList, o, i, b, b1);
-          if (o != null) {
-            Module module = (Module)o;
-            setText(module.getName());
-            setIcon(PluginModuleType.getInstance().getNodeIcon(false));
-          }
-          return this;
-        }
-      });
-
-
-      mySandboxCombo.getComboBox().setModel(new DefaultComboBoxModel(SandboxManager.getInstance().getRegisteredSandboxes()));
-      mySandboxCombo.getComboBox().addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          updateModules((Sandbox)mySandboxCombo.getComboBox().getSelectedItem());
-        }
-      });
-    }
-
-    public void setSelectedBox(Sandbox box) {
-      mySandboxCombo.getComboBox().setSelectedItem(box);
-    }
-
-    public Sandbox getSelectedBox() {
-      return (Sandbox)mySandboxCombo.getComboBox().getSelectedItem();
-    }
-
-    public JComponent getComponent() {
-      return myWholePanel;
-    }
-
-    public Module[] getModules() {
-      Object[] values = myModules.getSelectedValues();
-      if (values == null) return new Module[0];
-      Module[] modules = new Module[values.length];
-      for (int i = 0; i < modules.length; i++) {
-        modules[i] = (Module)values[i];
-      }
-      return modules;
-    }
-
-    public void setModules(Module[] modules) {
-      ArrayList<Module> allModules = new ArrayList<Module>();
-      ListModel model = myModules.getModel();
-      for (int i = 0; i < model.getSize(); i++) {
-        allModules.add((Module)model.getElementAt(i));
-      }
-
-      for (int i = 0; i < modules.length; i++) {
-        int idx = allModules.indexOf(modules[i]);
-        myModules.getSelectionModel().addSelectionInterval(idx, idx);
-      }
-    }
-
-    public void setModulesList(Module[] modules) {
-      DefaultListModel model = new DefaultListModel();
-      for (int i = 0; i < modules.length; i++) {
-        model.addElement(modules[i]);
-      }
-      myModules.setModel(model);
-    }
-  }
 
   public void disposeEditor() {
   }

@@ -11,6 +11,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.j2ee.make.ModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginModuleBuildConfEditor;
+import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
 
 public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfigurationEditorProvider{
   public String getComponentName() {
@@ -28,7 +31,7 @@ public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfi
       editorFactory.createDependenciesEditor(state),
       editorFactory.createOrderEntriesEditor(state),
       editorFactory.createJavadocEditor(state),
-      new PluginModuleConfEditor(state.getProject(), module, state.getModulesProvider(), rootModel)
+      new PluginModuleBuildConfEditor((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module), state)
     };
   }
 

@@ -11,13 +11,10 @@
       <implementation-class>org.jetbrains.idea.devkit.DevKitPlugin</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.idea.devkit.projectRoots.IdeaJdk</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.idea.devkit.run.PluginConfigurationType</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.sandbox.SandboxManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.sandbox.SandboxConfigurable</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.devkit.module.PluginTemplatesFactory</implementation-class>
@@ -26,10 +23,6 @@
 
   <module-components>
     <component>
-      <implementation-class>org.jetbrains.idea.devkit.module.ModuleSandboxManager</implementation-class>
-      <option name="type" value="PLUGIN_MODULE"/>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
     </component>
@@ -37,7 +30,7 @@
       <interface-class>com.intellij.j2ee.make.ModuleBuildProperties</interface-class>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildProperties</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
-    </component>
+    </component>    
     <component>
       <interface-class>com.intellij.j2ee.make.ModuleBuildDescriptor</interface-class>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildDescriptor</implementation-class>
@@ -47,5 +40,8 @@
       <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleProperties</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
     </component>
+   <!-- <component>
+      <implementation-class>org.jetbrains.idea.devkit.projectRoots.IdeaProjectJdkPatch</implementation-class>      
+    </component>-->
   </module-components>
 </idea-plugin>

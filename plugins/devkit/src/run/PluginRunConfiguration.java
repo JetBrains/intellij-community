@@ -44,46 +44,26 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.Element;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.sandbox.Sandbox;
-import org.jetbrains.idea.devkit.sandbox.SandboxManager;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 public class PluginRunConfiguration extends RunConfigurationBase {
-  private List<String> myModuleNames = new ArrayList<String>();
-  private String mySandboxName = "";
-
-  private String getSandboxPath() {
-    return getSandbox().getSandboxHome();
-  }
-
-  private String getBasePath() {
-    return getSandbox().getIdeaHome();
-  }
-
-  public Sandbox getSandbox() {
-    return SandboxManager.getInstance().findByName(mySandboxName);
-  }
-
-  public void setSandbox(Sandbox box) {
-    mySandboxName = box == null ? "" : box.getName();
-  }
-
-  public static final String INTERNAL_BUILD_MARK = "__BUILD_NUMBER__";
+  private Module myModule;
 
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PluginRunConfigurationEditor();
+    return new PluginRunConfigurationEditor(this);
   }
 
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
@@ -100,46 +80,38 @@ public class PluginRunConfiguration extends RunConfigurationBase {
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        if (getSandbox() == null){
-          throw new CantRunException("No sandbox specified");
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+        final ProjectJdk jdk = rootManager.getJdk();
+        if (jdk == null) {
+          throw CantRunException.noJdkForModule(myModule);
         }
-
-        Module[] modules = getModules();
-        if (modules.length == 0) {
-          throw new CantRunException("No plugin modules selected");
+        if (!(jdk.getSdkType() instanceof IdeaJdk)){
+          throw new ExecutionException("Wrong jdk type for plugin module");
         }
-
         final JavaParameters params = new JavaParameters();
 
         ParametersList vm = params.getVMParametersList();
 
-        String libPath = getBasePath() + "/lib";
-        vm.add("-Xbootclasspath/p:" + libPath + "/boot.jar");
+        String libPath = jdk.getHomePath() + File.separator + "lib";
+        vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
 
-        vm.defineProperty("idea.config.path", getSandboxPath() + "/config");
-        vm.defineProperty("idea.system.path", getSandboxPath() + "/system");
-        vm.defineProperty("idea.plugins.path", getSandboxPath() + "/plugins");
+        final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+        vm.defineProperty("idea.config.path", sandboxHome + File.separator + "config");
+        vm.defineProperty("idea.system.path", sandboxHome + File.separator + "system");
+        vm.defineProperty("idea.plugins.path", sandboxHome + File.separator + "plugins");
 
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
         }
 
-        params.setWorkingDirectory(getBasePath() + "/bin/");
+        params.setWorkingDirectory(jdk.getHomePath() + File.separator + "bin" + File.separator);
 
-
-
-        //TODO: Should run against same JRE IDEA runs against, right?
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);
-        final ProjectJdk jdk = rootManager.getJdk();
-        if (jdk == null) {
-          throw CantRunException.noJdkForModule(modules[0]);
-        }
         params.setJdk(jdk);
 
-        params.getClassPath().addFirst(libPath + "/log4j.jar");
-        params.getClassPath().addFirst(libPath + "/openapi.jar");
-        params.getClassPath().addFirst(libPath + "/idea.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
 
         params.setMainClass("com.intellij.idea.Main");
 
@@ -148,52 +120,20 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     };
 
     state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(getProject()));
-    state.setModulesToCompile(getModules());
+    state.setModulesToCompile(getModules());    //todo
     return state;
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (getSandbox() == null){
-      throw new RuntimeConfigurationException("No sandbox specified");
-    }
-    /*
-    final Module module = getModule();
-    if (module != null) {
-      if (module.getModuleType() != PluginModuleType.getInstance()) {
-        throw new RuntimeConfigurationError("Module " + module.getName() + " is of wrong type. Should be 'Plugin Module'.");
-      }
-
-      if (ModuleRootManager.getInstance(module).getJdk() == null) {
-        throw new RuntimeConfigurationWarning("No JDK specified for module \"" + module.getName() + "\"");
-      }
-      else {
-        return;
-      }
-    }
-    else {
-      if (MODULE_NAME == null || MODULE_NAME.trim().length() == 0) {
-        throw new RuntimeConfigurationError("Module not specified");
-      }
-      else {
-        throw new RuntimeConfigurationError("Module \"" + MODULE_NAME + "\" doesn't exist in project");
-      }
-    }
-    */
   }
 
-  public void setModules(Module[] modules) {
-    myModuleNames.clear();
-    for (int i = 0; i < modules.length; i++) {
-      myModuleNames.add(modules[i].getName());
-    }
-  }
 
   public Module[] getModules() {
     List<Module> modules = new ArrayList<Module>();
     Module[] allModules = ModuleManager.getInstance(getProject()).getModules();
     for (int i = 0; i < allModules.length; i++) {
       Module module = allModules[i];
-      if (module.getModuleType() == PluginModuleType.getInstance() && myModuleNames.contains(module.getName())) {
+      if (module.getModuleType() == PluginModuleType.getInstance()) {
         modules.add(module);
       }
     }
@@ -201,23 +141,27 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    Element sandbox = element.getChild("sandbox");
-    mySandboxName = sandbox == null ? "" : sandbox.getAttributeValue("name");
-    List children = element.getChildren("module");
-    for (int i = 0; i < children.size(); i++) {
-      Element moduleElement = (Element)children.get(i);
-      myModuleNames.add(moduleElement.getAttributeValue("name"));
+    Element module = element.getChild("module");
+    if (module != null){
+      myModule = ModuleManager.getInstance(getProject()).findModuleByName(module.getAttributeValue("name"));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    Element sandbox = new Element("sandbox");
-    sandbox.setAttribute("name", mySandboxName);
-    element.addContent(sandbox);
-    for (int i = 0; i < myModuleNames.size(); i++) {
-      Element moduleElement = new Element("module");
-      moduleElement.setAttribute("name", myModuleNames.get(i));
-      element.addContent(moduleElement);
-    }
+    Element moduleElement = new Element("module");
+    moduleElement.setAttribute("name", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return myModule != null ? myModule.getName() : "";
+      }
+    }));
+    element.addContent(moduleElement);
+  }
+
+  public Module getModule() {
+    return myModule;
+  }
+
+  public void setModule(Module module) {
+    myModule = module;
   }
 }

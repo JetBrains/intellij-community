@@ -6,29 +6,14 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.options.ConfigurationException;
-import org.jetbrains.idea.devkit.sandbox.Sandbox;
-import org.jetbrains.idea.devkit.sandbox.SandboxManager;
+
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
-  private Sandbox mySandbox;
+
 
   public ModuleType getModuleType() {
     return PluginModuleType.getInstance();
   }
 
-  public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
-    super.setupRootModel(rootModel);
-    ModuleSandboxManager.getInstance(rootModel.getModule()).setSandbox(getSandbox(), rootModel);
-  }
 
-  public void setSandbox(Sandbox sandbox) {
-    mySandbox = sandbox;
-  }
-
-  public Sandbox getSandbox() {
-    return mySandbox;
-  }
 }

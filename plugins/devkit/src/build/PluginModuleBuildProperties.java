@@ -7,11 +7,16 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.j2ee.make.ModuleBuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import org.jetbrains.idea.devkit.module.ModuleSandboxManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent {
   private Module myModule;
-
+  private boolean myJarPlugin = false;
+  
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
   }
@@ -21,15 +26,19 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public String getJarPath() {
-    return getSandboxManager().getSandbox().getSandboxHome() + "/plugins/" + myModule.getName();
+    return PluginBuildUtil.getPluginExPath(myModule) + "/lib/" + myModule.getName() + ".jar";
   }
 
   public String getExplodedPath() {
-    return getSandboxManager().getSandbox().getSandboxHome() + "/plugins/" + myModule.getName();
+    return PluginBuildUtil.getPluginExPath(myModule);
   }
 
-  private ModuleSandboxManager getSandboxManager() {
-    return ModuleSandboxManager.getInstance(myModule);
+  public boolean isJarPlugin() {
+    return myJarPlugin;
+  }
+
+  public void setJarPlugin(boolean jarPlugin) {
+    myJarPlugin = jarPlugin;
   }
 
   public Module getModule() {
@@ -37,25 +46,20 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public boolean isJarEnabled() {
-    return false;
+    return myJarPlugin;
   }
 
   public boolean isExplodedEnabled() {
-    return isBuildActive();
+    return true;//todo synchronize libs for plugin in jar
   }
 
   public boolean isBuildOnFrameDeactivation() {
     //TODO
-    return isBuildActive();
+    return false;
   }
 
   public boolean isSyncExplodedDir() {
-    //TODO
-    return isBuildActive();
-  }
-
-  private boolean isBuildActive() {
-    return !getSandboxManager().isUnderIDEAProject();
+    return true;
   }
 
   public void projectOpened() {}

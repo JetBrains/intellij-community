@@ -64,8 +64,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return new ModuleWizardStep[] {
       nameAndLocationStep,
       stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null),
-      new PluginModuleTypeStep(wizardContext, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null),
-      stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
+      stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)
     };
   }
 
