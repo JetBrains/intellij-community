@@ -6,7 +6,6 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -99,14 +98,11 @@ class LineMarkerNavigator {
     }
   }
 
-  private static void openTargets(MouseEvent e, final PsiElement[] targets, String title, ListCellRenderer listRenderer) {
+  private static void openTargets(MouseEvent e, final PsiMember[] targets, String title, ListCellRenderer listRenderer) {
     if (targets.length == 0) return;
     final Project project = targets[0].getProject();
     if (targets.length == 1){
-      PsiElement target = targets[0].getNavigationElement();
-      PsiFile file = target.getContainingFile();
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), target.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      targets[0].navigate(true);
     }
     else{
       final JList list = new JList(targets);
@@ -119,10 +115,7 @@ class LineMarkerNavigator {
             if (list.getSelectedIndex() < 0) return;
             PsiElement selected = (PsiElement) list.getSelectedValue();
             LOG.assertTrue(selected.isValid());
-            PsiElement element = selected.getNavigationElement();
-            final PsiFile file = element.getContainingFile();
-            OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), element.getTextOffset());
-            FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+            ((PsiMember)selected).navigate(true);
           }
         },
         project
