@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
@@ -125,6 +126,10 @@ public class DependenciesBuilder {
           myProcessor.process(ref.getElement(), resolved);
         }
       }
+    }
+
+    public void visitDocComment(PsiDocComment comment) {
+      //empty
     }
 
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
