@@ -13,9 +13,9 @@ import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Comparator;
 
 public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadReferenceProxyImpl");
@@ -113,19 +113,19 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if (myFrameCount == -1) {
-      while (true) {
-        // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleTharedStateException
-        // so keep trying to get frame count if the thread reports itself as "suspended"
-        try {
-          final ThreadReference threadReference = getThreadReference();
-          myFrameCount = threadReference.frameCount();
-          break;
+      try {
+        final ThreadReference threadReference = getThreadReference();
+        myFrameCount = threadReference.frameCount();
+      }
+      catch (IncompatibleThreadStateException e) {
+        if (!isSuspended()) {
+          // give up because it seems to be really resumed
+          throw EvaluateExceptionUtil.createEvaluateException(e);
         }
-        catch (IncompatibleThreadStateException e) {
-          if (!isSuspended()) {
-            // give up because it seems to be really resumed
-            throw EvaluateExceptionUtil.createEvaluateException(e);
-          }
+        else {
+          // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleTharedStateException
+          // unfortunately, impossible to get this information at the moment, so assume the frame count is null
+          myFrameCount = 0;
         }
       }
     }
