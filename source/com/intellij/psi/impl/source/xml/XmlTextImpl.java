@@ -12,12 +12,14 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.CharTable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 
 import java.util.List;
@@ -239,5 +241,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     super.clearCaches();
     myDisplayText = null;
     myGaps = null;
+  }
+
+  public Language getLanguage() {
+    final FileType fileType = getContainingFile().getFileType();
+    return fileType.getLanguage();
   }
 }

@@ -19,11 +19,18 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
       if (toCode(displayText.charAt(offset))) {
         final String plainSection = displayText.substring(sectionStartOffset, offset);
         if (plainSection.length() > 0) {
-          TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection));
+          TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, dummyParent.getCharTable()));
         }
         TreeUtil.addChildren(dummyParent, createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
+        sectionStartOffset = offset + 1;
       }
+      offset++;
     }
+    final String plainSection = displayText.substring(sectionStartOffset, offset);
+    if (plainSection.length() > 0) {
+      TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, dummyParent.getCharTable()));
+    }
+
 
     return dummyParent.getFirstChildNode();
   }
