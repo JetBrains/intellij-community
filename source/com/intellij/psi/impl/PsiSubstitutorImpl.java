@@ -41,19 +41,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
-    final PsiType substType = substitute(typeParameter);
-    if(substType == null){
-      final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      if(extendsTypes.length > 0){
-        // First bound
-        return substitute(extendsTypes[0]);
-      }
-      else {
-        // Object
-        return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
-      }
-    } else {
-      return substType;
+    final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
+    if (extendsTypes.length > 0) {
+      // First bound
+      return substitute(extendsTypes[0]);
+    }
+    else {
+      // Object
+      return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
     }
   }
 
@@ -65,13 +60,15 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
     public PsiType visitWildcardType(PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
-      if (bound == null) return wildcardType;
-      else
-      {
+      if (bound == null) {
+        return wildcardType;
+      }
+      else {
         final PsiType newBound = bound.accept(this);
         if (newBound == null) {
           return null;
-        } else if (newBound instanceof PsiWildcardType) {
+        }
+        else if (newBound instanceof PsiWildcardType) {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
           if (newBoundBound != null) {
             return PsiWildcardType.changeBound(wildcardType, newBoundBound);
@@ -235,9 +232,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     final PsiTypeParameter[] params = list.getTypeParameters();
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
     for(int i = 0; i < params.length; i++){
-      if(mappings != null && mappings.length > i)
+      if (mappings != null && mappings.length > i) {
         substitutor.mySubstitutionMap.put(params[i], mappings[i]);
-      else substitutor.mySubstitutionMap.put(params[i], null);
+      }
+      else {
+        substitutor.mySubstitutionMap.put(params[i], null);
+      }
     }
 
     return substitutor;
@@ -273,15 +273,19 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       final PsiTypeParameter typeParameter = entry.getKey();
       buffer.append(typeParameter.getName());
       final PsiElement owner = typeParameter.getOwner();
-      if(owner instanceof PsiClass)
-        buffer.append(" of " + ((PsiClass) owner).getQualifiedName());
-      else if(owner instanceof PsiMethod)
-        buffer.append(" of " + ((PsiMethod) owner).getName() + " in " + ((PsiMethod) owner).getContainingClass().getQualifiedName());
+      if (owner instanceof PsiClass) {
+        buffer.append(" of " + ((PsiClass)owner).getQualifiedName());
+      }
+      else if (owner instanceof PsiMethod) {
+        buffer.append(" of " + ((PsiMethod)owner).getName() + " in " + ((PsiMethod)owner).getContainingClass().getQualifiedName());
+      }
       buffer.append(" -> ");
-      if(entry.getValue() != null)
+      if (entry.getValue() != null) {
         buffer.append(entry.getValue().getCanonicalText());
-      else
+      }
+      else {
         buffer.append("null");
+      }
       buffer.append('\n');
     }
     return buffer.toString();
@@ -316,8 +320,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     final PsiTypeParameter[] params = list.getTypeParameters();
 
     for(int i = 0; i < params.length; i++){
-      if(mappings != null && mappings.length > i) mySubstitutionMap.put(params[i], mappings[i]);
-      else mySubstitutionMap.put(params[i], null);
+      if (mappings != null && mappings.length > i) {
+        mySubstitutionMap.put(params[i], mappings[i]);
+      }
+      else {
+        mySubstitutionMap.put(params[i], null);
+      }
     }
 
     return this;
