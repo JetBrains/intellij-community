@@ -75,6 +75,15 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  public void setAncestor(NodeDescriptorImpl oldDescriptor) {
+    super.setAncestor(oldDescriptor);
+    final Boolean isPrimitive = ((FieldDescriptorImpl)oldDescriptor).myIsPrimitive;
+    if (isPrimitive != null) { // was cached
+      // do not loose cached info
+      myIsPrimitive = isPrimitive;
+    }
+  }
+
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
       try {
