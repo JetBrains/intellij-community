@@ -264,9 +264,10 @@ public class ChangeUtil implements Constants {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
-          RepositoryManager repositoryManager = ((PsiManagerImpl)manager).getRepositoryManager();
+          final PsiManagerImpl psiManager = ((PsiManagerImpl)manager);
+          RepositoryManager repositoryManager = psiManager.getRepositoryManager();
+          final PsiFile file = (PsiFile)changedFile.getPsi();
           if (repositoryManager != null) {
-            final PsiFile file = (PsiFile)changedFile.getPsi();
             repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
             action.makeChange(destinationTreeChange);
             repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
@@ -274,6 +275,7 @@ public class ChangeUtil implements Constants {
           else {
             action.makeChange(destinationTreeChange);
           }
+          psiManager.invalidateFile(file);
           changedElement.subtreeChanged();
           return event;
         }
