@@ -77,7 +77,7 @@ class StatementMover extends LineMover {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
       while (element != null && element != file) {
-        if (!element.getTextRange().contains(offset)) {
+        if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
           if ((element instanceof PsiStatement || element instanceof PsiComment) && statementCanBePlacedAlong(element)) {
