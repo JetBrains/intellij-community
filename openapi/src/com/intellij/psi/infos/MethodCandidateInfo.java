@@ -84,7 +84,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
 
     if (method.getSignature(substitutor).isRaw()) {
-      return substitutor; //raw substitution for method type parameters has already been obtained in resolve
+      return createRawSubstitutor(substitutor, typeParameters);
     }
 
     PsiResolveHelper helper = method.getManager().getResolveHelper();
