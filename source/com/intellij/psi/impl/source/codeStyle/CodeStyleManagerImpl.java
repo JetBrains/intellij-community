@@ -404,7 +404,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, file.getManager());
+    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, "xxx".toCharArray(), 0, "xxx".length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }
