@@ -86,7 +86,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public PsiElement reformatRange(PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
-    return reformatRangeImpl(element, startOffset, endOffset, true);
+    return reformatRangeImpl(element, startOffset, endOffset, false);
 
   }
 
