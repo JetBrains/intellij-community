@@ -25,14 +25,8 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaParserDefinition implements ParserDefinition {
-  private Project myProject;
-
-  public JavaParserDefinition(final Project project) {
-    myProject = project;
-  }
-
-  public Lexer createLexer() {
-    return new JavaLexer(PsiManager.getInstance(myProject).getEffectiveLanguageLevel());
+  public Lexer createLexer(Project project) {
+    return new JavaLexer(PsiManager.getInstance(project).getEffectiveLanguageLevel());
   }
 
   public IElementType getFileNodeType() {
@@ -47,7 +41,7 @@ public class JavaParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiParser createParser() {
+  public PsiParser createParser(final Project project) {
     return null;
   }
 
@@ -55,17 +49,17 @@ public class JavaParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiFile createFile(VirtualFile file) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+  public PsiFile createFile(final Project project, VirtualFile file) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInSource(file)) {
-      return new PsiJavaFileImpl(myProject, file);
+      return new PsiJavaFileImpl(project, file);
     }
     else {
-      return new PsiPlainTextFileImpl(myProject, file);
+      return new PsiPlainTextFileImpl(project, file);
     }
   }
 
-  public PsiFile createFile(String name, CharSequence text) {
-    return new PsiJavaFileImpl(myProject, name, text);
+  public PsiFile createFile(final Project project, String name, CharSequence text) {
+    return new PsiJavaFileImpl(project, name, text);
   }
 }

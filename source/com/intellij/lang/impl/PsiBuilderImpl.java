@@ -40,8 +40,8 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public PsiBuilderImpl(Language lang, final Project project, CharTable charTable, CharSequence text) {
     myText = text;
-    ParserDefinition parserDefinition = lang.getParserDefinition(project);
-    myLexer = parserDefinition.createLexer();
+    ParserDefinition parserDefinition = lang.getParserDefinition();
+    myLexer = parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens() != null ? parserDefinition.getWhitespaceTokens() : TokenSet.EMPTY;
     myComments = parserDefinition.getCommentTokens() != null ? parserDefinition.getCommentTokens() : TokenSet.EMPTY;
     myCharTable = charTable;

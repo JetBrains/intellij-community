@@ -360,7 +360,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
       if (myWrapper != null) return myWrapper;
       final Language lang = getElementType().getLanguage();
       if (lang != null) {
-        myWrapper = lang.createElement(this);
+        myWrapper = lang.getParserDefinition().createElement(this);
       }
       return myWrapper;
     }

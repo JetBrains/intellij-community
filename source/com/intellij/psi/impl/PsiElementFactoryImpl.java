@@ -623,7 +623,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final Project project = manager.getProject();
     final CharArrayCharSequence text = new CharArrayCharSequence(chars, startOffset, endOffset);
     if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage().getParserDefinition(project).createFile(name, text);
+      return ((LanguageFileType)fileType).getLanguage().getParserDefinition().createFile(project, name, text);
     }
     return new PsiPlainTextFileImpl(project, name, fileType, text);
   }

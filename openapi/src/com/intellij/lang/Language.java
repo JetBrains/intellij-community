@@ -51,11 +51,7 @@ public abstract class Language {
     return null;
   }
 
-  public ParserDefinition getParserDefinition(Project project) {
-    return null;
-  }
-
-  public PsiElement createElement(ASTNode node) {
+  public ParserDefinition getParserDefinition() {
     return null;
   }
 

@@ -351,7 +351,7 @@ public class FileManagerImpl implements FileManager {
     final Project project = myManager.getProject();
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
-      return language.getParserDefinition(project).createFile(vFile);
+      return language.getParserDefinition().createFile(project, vFile);
     }
 
     if (fileType instanceof JavaClassFileType) {

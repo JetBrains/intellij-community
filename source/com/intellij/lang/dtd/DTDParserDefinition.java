@@ -21,13 +21,7 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class DTDParserDefinition implements ParserDefinition {
-  private Project myProject;
-
-  public DTDParserDefinition(final Project project) {
-    myProject = project;
-  }
-
-  public Lexer createLexer() {
+  public Lexer createLexer(Project project) {
     return null;
   }
 
@@ -43,7 +37,7 @@ public class DTDParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiParser createParser() {
+  public PsiParser createParser(final Project project) {
     return null;
   }
 
@@ -51,11 +45,11 @@ public class DTDParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiFile createFile(VirtualFile file) {
-    return new XmlFileImpl(myProject, file);
+  public PsiFile createFile(final Project project, VirtualFile file) {
+    return new XmlFileImpl(project, file);
   }
 
-  public PsiFile createFile(String name, CharSequence text) {
-    return new XmlFileImpl(myProject, name, text, StdFileTypes.DTD);
+  public PsiFile createFile(final Project project, String name, CharSequence text) {
+    return new XmlFileImpl(project, name, text, StdFileTypes.DTD);
   }
 }

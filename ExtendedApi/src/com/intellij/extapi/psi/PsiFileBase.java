@@ -29,7 +29,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
   protected PsiFileBase(Project project,
                         VirtualFile file,
                         final Language language) {
-    super(project, language.getParserDefinition(project).getFileNodeType(), FILE_TEXT_CHAMELEON, file);
+    super(project, language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, file);
     myLanguage = language;
   }
 
@@ -37,7 +37,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
                         String name,
                         CharSequence text,
                         final Language language) {
-    super(project, _createFileElement(text, language, project), language.getParserDefinition(project).getFileNodeType(), FILE_TEXT_CHAMELEON, name);
+    super(project, _createFileElement(text, language, project), language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, name);
     myLanguage = language;
   }
 
@@ -46,7 +46,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
   }
 
   public final Lexer createLexer() {
-    return myLanguage.getParserDefinition(getProject()).createLexer();
+    return myLanguage.getParserDefinition().createLexer(getProject());
   }
 
   protected final FileElement createFileElement(final CharSequence docText) {
@@ -54,8 +54,8 @@ public abstract class PsiFileBase extends PsiFileImpl {
   }
 
   private static FileElement _createFileElement(final CharSequence docText, final Language language, Project project) {
-    final ParserDefinition parserDefinition = language.getParserDefinition(project);
-    final PsiParser parser = parserDefinition.createParser();
+    final ParserDefinition parserDefinition = language.getParserDefinition();
+    final PsiParser parser = parserDefinition.createParser(project);
     final IElementType root = parserDefinition.getFileNodeType();
     final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, docText);
     final FileElement fileRoot = (FileElement) parser.parse(root, builder);

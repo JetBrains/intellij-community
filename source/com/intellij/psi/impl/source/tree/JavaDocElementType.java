@@ -23,7 +23,7 @@ public interface JavaDocElementType {
   IElementType DOC_REFERENCE_HOLDER = new IChameleonElementType("DOC_REFERENCE_HOLDER", Language.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon, Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition(project).createLexer(),
+      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(project),
                                                   ((LeafElement)chameleon).getState(), false);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -32,7 +32,7 @@ public interface JavaDocElementType {
   IElementType DOC_TYPE_HOLDER = new IChameleonElementType("DOC_TYPE_HOLDER", Language.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon, Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition(project).createLexer(),
+      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(project),
                                                   ((LeafElement)chameleon).getState(), true);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}

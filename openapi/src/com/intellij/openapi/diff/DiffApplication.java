@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ProfilingUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,6 +18,7 @@ public class DiffApplication implements ApplicationStarter {
   }
 
   public void premain(String[] args) {
+    ProfilingUtil.operationStarted("appStart");
     if (args.length != 3) {
       printHelp();
     }
@@ -28,6 +30,8 @@ public class DiffApplication implements ApplicationStarter {
   }
 
   public void main(String[] args) {
+    ProfilingUtil.operationFinished("appStart");
+
     try {
       String path1 = args[1];
       String path2 = args[2];
