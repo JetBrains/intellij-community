@@ -240,6 +240,7 @@ public class MoveClassesOrPackagesUtil {
     throws IncorrectOperationException {
 
     PsiFile file = aClass.getContainingFile();
+    PsiDirectory oldDirectory = file.getContainingDirectory();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
 
     PsiClass newClass;
@@ -262,7 +263,7 @@ public class MoveClassesOrPackagesUtil {
       }
     }
 
-    if (!newDirectory.equals(file.getContainingDirectory())) {
+    if (!newDirectory.equals(oldDirectory)) {
       // rename all references
       for (int i = 0; i < usages.length; i++) {
         MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
