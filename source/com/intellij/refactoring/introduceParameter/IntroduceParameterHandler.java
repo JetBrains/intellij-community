@@ -78,7 +78,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
   private boolean invoke(Editor editor, Project project, final PsiExpression expr,
                          PsiLocalVariable localVar, boolean invokedOnDeclaration) {
-
+    LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
     final PsiMethod method;
     if (expr != null) {
       method = Util.getContainingMethod(expr);
