@@ -5,14 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public class ReplaceEqualityWithSafeEqualsIntention extends Intention
 {
-    public ReplaceEqualityWithSafeEqualsIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {

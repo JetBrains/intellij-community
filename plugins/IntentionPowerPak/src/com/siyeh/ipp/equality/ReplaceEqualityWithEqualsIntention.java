@@ -6,12 +6,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public class ReplaceEqualityWithEqualsIntention extends Intention {
-    public ReplaceEqualityWithEqualsIntention(Project project) {
-        super(project);
-    }
 
     public String getText() {
         return "Replace == with .equals()";

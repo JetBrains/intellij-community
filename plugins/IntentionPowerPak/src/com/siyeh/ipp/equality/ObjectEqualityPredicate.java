@@ -3,7 +3,8 @@ package com.siyeh.ipp.equality;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ObjectEqualityPredicate implements PsiElementPredicate
 {
@@ -39,7 +40,7 @@ class ObjectEqualityPredicate implements PsiElementPredicate
                 !TypeConversionUtil.isPrimitiveAndNotNull(rhsType);
     }
 
-    private static boolean isPrimitive(final PsiType lhsType)
+    private static boolean isPrimitive(PsiType lhsType)
     {
         return lhsType.equals(PsiType.INT)
                 || lhsType.equals(PsiType.SHORT)
