@@ -148,14 +148,6 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   /**
-   * TODO[vova] remove this method as soon as splitting will not be a part of TextEditor
-   * @return array of all existing editors
-   */
-  Editor[] getAllEditors(){
-      return new Editor[]{myEditor};
-  }
-
-  /**
    * @return most recently used editor. This method never returns <code>null</code>.
    */
   Editor getEditor(){

@@ -53,14 +53,6 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     return getActiveEditor().getContentComponent();
   }
 
-  /**
-   * TODO[vova] remove this method as soon as splitting will not be a part of TextEditor
-   * @return always not empty array
-   */
-  public Editor[] getAllEditors(){
-    return myComponent.getAllEditors();
-  }
-
   public Editor getEditor(){
     return getActiveEditor();
   }
