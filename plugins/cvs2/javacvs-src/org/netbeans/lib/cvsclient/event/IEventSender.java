@@ -27,6 +27,8 @@ public interface IEventSender {
 
 	void notifyFileInfoListeners(Object fileInfoContainer);
 
+	void notifyFileInfoListeners(byte[] fileInfoContainer);
+
 	void notifyModuleExpansionListeners(String module);
 
 	void notifyEntryListeners(FileObject fileObject, Entry entry);

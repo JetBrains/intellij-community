@@ -54,8 +54,9 @@ public final class CheckoutCommand extends AbstractCommand
 	private String updateByRevisionOrTag;
 	private String alternativeCheckoutDirectory;
 	private KeywordSubstitution keywordSubstitution;
+        private boolean printToOutput;
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public CheckoutCommand() {
 	}
@@ -91,6 +92,7 @@ public final class CheckoutCommand extends AbstractCommand
 		setUpdateByRevisionOrTag(null);
 		setKeywordSubstitution(null);
 		setPruneDirectories(false);
+                setPrintToOutput(false);
 	}
 
 	/**
@@ -174,7 +176,12 @@ public final class CheckoutCommand extends AbstractCommand
 	public void setKeywordSubstitution(KeywordSubstitution keywordSubstitution) {
 		this.keywordSubstitution = keywordSubstitution;
 	}
-
+        public void setPrintToOutput(final boolean printToOutput) {
+                this.printToOutput = printToOutput;
+        }
+        public boolean isPrintToOutput() {
+                return this.printToOutput;
+        }
 	// Utils ==================================================================
 
 	private boolean expandModules(ExpandedModules expandedModules, ICvsListenerRegistry listenerRegistry, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment) throws CommandException {
@@ -223,6 +230,7 @@ public final class CheckoutCommand extends AbstractCommand
 		requests.addArgumentRequest(getUpdateByDate(), "-D");
 		requests.addArgumentRequest(getUpdateByRevisionOrTag(), "-r");
 		requests.addArgumentRequest(getKeywordSubstitution(), "-k");
+		requests.addArgumentRequest(isPrintToOutput(), "-p");
 		if (cvsFiles != null) {
 			addFileRequests(cvsFiles, requests, clientEnvironment);
 		}
@@ -302,6 +310,10 @@ public final class CheckoutCommand extends AbstractCommand
 		if (isUseHeadIfNotFound()) {
 			cvsArguments.append("-f ");
 		}
+                if (isPrintToOutput()) {
+                        cvsArguments.append("-p ");
+                }
+
 		if (isPruneDirectories()) {
 			cvsArguments.append("-P ");
 		}

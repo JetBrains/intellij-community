@@ -45,7 +45,11 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
         responseServices.getEventSender().notifyMessageListeners(message, false, true);
     }
 
-    public void processCheckedInResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
+    public void processBinaryMessageResponse(final int fileLength, final byte[] binaryContent, IResponseServices responseServices) {
+      responseServices.getEventSender().notifyFileInfoListeners(binaryContent);
+    }
+
+  public void processCheckedInResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
         final FileObject fileObject = clientEnvironment.getCvsFileSystem().getFileObject(relativeLocalDirectory, repositoryFilePath);
         final Entry entry = Entry.createEntryForLine(entryLine);
 
@@ -116,8 +120,6 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     }
 
     public void processNotifiedResponse(String relativeLocalDirectory, String repositoryFilePath, IClientEnvironment clientEnvironment) {
-        final ICvsFileSystem fileSystem = clientEnvironment.getCvsFileSystem();
-        final FileObject fileObject = fileSystem.getFileObject(relativeLocalDirectory, repositoryFilePath);
     }
 
     public void processRemovedResponse(String relativeLocalDirectory, String repositoryFilePath, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {

@@ -438,4 +438,6 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     }
   }
 
+  public void binaryMessageSent(final byte[] bytes) {
+  }
 }

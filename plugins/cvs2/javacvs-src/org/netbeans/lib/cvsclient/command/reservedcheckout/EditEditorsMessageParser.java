@@ -53,7 +53,10 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 		filesEdited = true;
 	}
 
-	public void outputDone() {
+  public void binaryMessageSent(final byte[] bytes) {
+  }
+
+  public void outputDone() {
 	}
 
 	// Accessing ==============================================================

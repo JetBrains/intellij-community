@@ -121,6 +121,9 @@ public class ListModulesCommand extends Command {
       lastModule = module;
     }
 
+    public void binaryMessageSent(final byte[] bytes) {
+    }
+
     public void outputDone() {
     }
   }

@@ -183,4 +183,7 @@ public class CvsMessagesTranslator implements
                                                 myUpdatedFilesManager));
     }
   }
+
+  public void binaryMessageSent(final byte[] bytes) {
+  }
 }

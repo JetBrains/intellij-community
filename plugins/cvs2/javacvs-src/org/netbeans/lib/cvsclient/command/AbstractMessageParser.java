@@ -65,4 +65,7 @@ public abstract class AbstractMessageParser extends AbstractParser
 		}
 		super.commandTerminated(error);
 	}
+
+  public void binaryMessageSent(final byte[] bytes) {
+  }
 }

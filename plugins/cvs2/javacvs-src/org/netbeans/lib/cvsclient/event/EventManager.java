@@ -162,7 +162,25 @@ public final class EventManager
 		}
 	}
 
-	public void notifyEntryListeners(FileObject fileObject, Entry entry) {
+        public void notifyFileInfoListeners(byte[] bytes) {
+          final IMessageListener[] copiedListeners;
+          synchronized (this) {
+                  if (messageListener.size() == 0) {
+                          return;
+                  }
+
+                  copiedListeners = new IMessageListener[messageListener.size()];
+                  messageListener.toArray(copiedListeners);
+          }
+
+          for (int i = 0; i < copiedListeners.length; i++) {
+                  copiedListeners[i].binaryMessageSent(bytes);
+          }
+
+
+        }
+
+  public void notifyEntryListeners(FileObject fileObject, Entry entry) {
 		final IEntryListener[] copiedListeners;
 		synchronized (this) {
 			if (entryListeners.size() == 0) {

@@ -54,4 +54,6 @@ public interface IResponseHandler {
 	void processMergedResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, String mode, int fileLength, IClientEnvironment clientEnvironment, IResponseServices responseServices, IConnectionStreams connectionStreams) throws IOException;
 
 	void processValidRequestsResponse(String validRequests, IResponseServices responseServices);
+
+        void processBinaryMessageResponse(final int fileLength, final byte[] binaryContent, IResponseServices responseServices);
 }

@@ -67,4 +67,7 @@ public final class FileInfoAndMessageResponseProgressHandler extends AbstractRes
 			fileProcessed(fileInfo.getFileObject());
 		}
 	}
+
+        public void binaryMessageSent(final byte[] bytes) {
+        }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileContent;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
@@ -87,6 +89,15 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     try {
       final VcsFileContent fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
       fileRevision.loadContent();
+
+      if (selectedFile.getFileType().isBinary()) {
+        if (Arrays.equals(selectedFile.contentsToByteArray(), fileRevision.getContent())) {
+          Messages.showInfoMessage("Binary versions are identical", "Diff");
+        } else {
+          Messages.showInfoMessage("Binary versions are different", "Diff");
+        }
+        return;
+      }
 
       final SimpleDiffRequest request =
       new SimpleDiffRequest(project, selectedFile.getPresentableUrl());

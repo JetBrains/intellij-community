@@ -5,6 +5,7 @@ import org.netbeans.lib.cvsclient.IConnectionStreams;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.text.ParseException;
@@ -41,6 +42,21 @@ public final class ResponseParser {
 			responseProcessor.processMessageResponse(prepareMessageAccordingToSrc39148(line), responseServices);
 			return null;
 		}
+
+                else if (responseName.equalsIgnoreCase("MBinary")) {
+			final Reader reader = connectionStreams.getLoggedReader();
+			final String fileLengthString = StreamUtilities.readLine(reader);
+                        try {
+                          int fileLength = Integer.parseInt(fileLengthString);
+
+                          responseProcessor.processBinaryMessageResponse(fileLength, readFromStream(connectionStreams, fileLength), responseServices);
+                        }
+                        catch (NumberFormatException e) {
+                          //ignore
+                        }
+                  return null;
+		}
+
 		else if (responseName.equalsIgnoreCase("MT")) {
 			final Reader reader = connectionStreams.getLoggedReader();
 			final String text = StreamUtilities.readLine(reader);
@@ -216,7 +232,19 @@ public final class ResponseParser {
 		}
 	}
 
-    private String prepareMessageAccordingToSrc39148(String line) {
+  private byte[] readFromStream(final IConnectionStreams connectionStreams, final int fileLength) throws IOException {
+    final byte[] buffer = new byte[128 * 1024];
+    int read = 0;
+    final ByteArrayOutputStream bufferStream = new ByteArrayOutputStream();
+    while (read < fileLength) {
+      final int readBytes = connectionStreams.getInputStream().read(buffer);
+      bufferStream.write(buffer, 0, readBytes);
+      read += readBytes;
+    }
+    return bufferStream.toByteArray();
+  }
+
+  private String prepareMessageAccordingToSrc39148(String line) {
         if (line.startsWith("-f ")) {
             line = line.substring(3);
         }

@@ -119,4 +119,7 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 		annotateInformation.addLine(new AnnotateLine(revision, author, date, contents));
 	}
+
+        public void binaryMessageSent(final byte[] bytes) {
+        }
 }

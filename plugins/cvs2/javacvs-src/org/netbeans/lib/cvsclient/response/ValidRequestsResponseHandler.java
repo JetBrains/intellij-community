@@ -86,4 +86,7 @@ public final class ValidRequestsResponseHandler extends AbstractResponseHandler 
 	public void processValidRequestsResponse(String validRequests, IResponseServices responseServices) {
 		responseServices.setValidRequests(validRequests);
 	}
+
+        public void processBinaryMessageResponse(final int fileLength, final byte[] binaryContent, IResponseServices responseServices) {
+        }
 }

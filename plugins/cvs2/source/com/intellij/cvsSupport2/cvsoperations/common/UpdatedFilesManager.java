@@ -138,4 +138,6 @@ public class UpdatedFilesManager implements IMessageListener {
     return myNonUpdatedFiles.contains(file);
   }
 
+  public void binaryMessageSent(final byte[] bytes) {
+  }
 }
