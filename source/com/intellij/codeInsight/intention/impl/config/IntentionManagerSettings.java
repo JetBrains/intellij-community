@@ -83,6 +83,12 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public static URL getIntentionDescriptionDirURL(Class aClass, String prefix) {
     URL pageURL = aClass.getClassLoader().getResource("intentionDescriptions/" + prefix);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Class:"+aClass.getName());
+      LOG.debug("Classloader:"+aClass.getClassLoader());
+      LOG.debug("Path:"+"intentionDescriptions/" + prefix);
+      LOG.debug("URL:"+pageURL);
+    }
     return pageURL;
   }
 
