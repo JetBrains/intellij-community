@@ -92,7 +92,7 @@ public class PackageUtil {
                                        final boolean inLibrary) {
     final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages()
                                       && isPackageEmpty(aPackage, module,
-                                                        false,
+                                                        true,
                                                         inLibrary);
     final Project project = aPackage.getManager().getProject();
     if (!shouldSkipPackage) {
@@ -116,7 +116,6 @@ public class PackageUtil {
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
     for (int idx = 0; idx < dirs.length; idx++) {
       final PsiDirectory dir = dirs[idx];
-      if (dir.getChildren().length == 0) return true;
       if (!TreeViewUtil.isEmptyMiddlePackage(dir, strictlyEmpty)) {
         return false;
       }

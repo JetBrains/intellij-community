@@ -173,7 +173,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   public String getTestPresentation() {
-    return "PsiPackage: " + getValue().getPackage().getQualifiedName();
+    final PresentationData presentation = new PresentationData();
+    update(presentation);
+    return "PsiPackage: " + presentation.getPresentableText();
   }
 
   public boolean isFQNameShown() {
