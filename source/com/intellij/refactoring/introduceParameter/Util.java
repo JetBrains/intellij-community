@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
@@ -56,13 +57,8 @@ public class Util {
   }
 
   public static PsiMethod getContainingMethod(PsiElement expr) {
-    PsiElement p;
-
-    for (p = expr; p != null; p = p.getParent()) {
-      if (p instanceof PsiMethod) return (PsiMethod) p;
-      if (p instanceof PsiFile || p instanceof JspAction || p instanceof JspFile) return null;
-    }
-    return null;
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expr, new Class[]{PsiMethod.class, PsiFile.class, JspAction.class});
+    return parent instanceof PsiMethod ? ((PsiMethod)parent) : null;
   }
 
   public static boolean anyFieldsWithGettersPresent(List classMemberRefs) {
