@@ -30,7 +30,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
-    final JLabel jLabel = new JLabel("Select an instance parameter:");
+    final JLabel jLabel = new JLabel("Select an instance variable:");
     jLabel.setDisplayedMnemonic('i');
     mainPanel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
 

@@ -173,6 +173,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   protected void performRefactoring(UsageInfo[] usages) {
     PsiMethod patternMethod = createPatternMethod();
+    final List<PsiReference> docRefs = new ArrayList<PsiReference>();
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
       if (usage instanceof InheritorUsageInfo) {
@@ -181,15 +182,19 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       } else if (usage instanceof MethodCallUsageInfo) {
         correctMethodCall (((MethodCallUsageInfo)usage).getMethodCallExpression());
       } else if (usage instanceof JavadocUsageInfo) {
-        //TODO:!!!
+        docRefs.add(usage.getElement().getReference());
       }
     }
 
     try {
       if (myTargetClass.isInterface()) patternMethod.getBody().delete();
 
-      addMethodToClass(myTargetClass, patternMethod);
+      final PsiMethod method = addMethodToClass(myTargetClass, patternMethod);
       myMethod.delete();
+      for (Iterator<PsiReference> it = docRefs.iterator(); it.hasNext();) {
+        PsiReference reference = it.next();
+        reference.bindToElement(method);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -226,14 +231,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private void addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
+  private PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
     try {
-      final PsiElement method = aClass.add(patternMethod);
+      final PsiMethod method = (PsiMethod)aClass.add(patternMethod);
       ChangeContextUtil.decodeContextInfo(method, null, null);
+      return method;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+
+    return null;
   }
 
   private PsiMethod createPatternMethod () {
@@ -295,6 +303,9 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiClassType type = factory.createType(myMethod.getContainingClass());
       final PsiParameter parameter = factory.createParameter(myOldClassParameterName, type);
       methodCopy.getParameterList().add(parameter);
+
+      final List<PsiParameter> newParameters = Arrays.asList(methodCopy.getParameterList().getParameters());
+      RefactoringUtil.fixJavadocsForParams(methodCopy, new HashSet<PsiParameter>(newParameters));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
