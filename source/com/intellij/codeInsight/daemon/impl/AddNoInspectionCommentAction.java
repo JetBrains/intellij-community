@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,7 @@ class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Suppress '" + myTool.getID() + "' for statement";
+    return "Suppress '" + myTool.getDisplayName() + "' for statement";
   }
 
   private PsiStatement getContainer() {

@@ -27,7 +27,7 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocCommentOwner container = getContainer();
 
     String subj = container instanceof PsiClass ? "class" : container instanceof PsiMethod ? "method" : "field";
-    return "Suppress '" + myTool.getID() + "' for " + subj;
+    return "Suppress '" + myTool.getDisplayName() + "' for " + subj;
   }
 
   private PsiDocCommentOwner getContainer() {
@@ -53,7 +53,7 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
-      String commentText = "/** @" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myTool.getID() + "*/";
+      String commentText = "/** @" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myTool.getDisplayName() + "*/";
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
       manager.getCodeStyleManager().reformat(docComment);
       PsiElement firstChild = container.getFirstChild();
@@ -67,7 +67,7 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (noInspectionTag != null) {
       String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "
-                           + noInspectionTag.getValueElement().getText() + ","+ myTool.getID();
+                           + noInspectionTag.getValueElement().getText() + ","+ myTool.getDisplayName();
       noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
     } else {
       String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myTool.getID();
