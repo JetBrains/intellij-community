@@ -9,6 +9,10 @@ public  class OverridableMethodCallInConstructorInspection
         fooStatic();
         fooPrivate();
         fooOverridable();
+        fooOverridden();
+    }
+
+    public void fooOverridden() {
     }
 
     public final void fooFinal()

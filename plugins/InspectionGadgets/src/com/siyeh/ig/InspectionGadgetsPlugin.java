@@ -467,6 +467,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(InstanceVariableInitializationInspection.class);
         inspectionClasses.add(AbstractMethodCallInConstructorInspection.class);
         inspectionClasses.add(OverridableMethodCallInConstructorInspection.class);
+        inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
         inspectionClasses.add(ThisEscapedInConstructorInspection.class);
         inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
         inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
