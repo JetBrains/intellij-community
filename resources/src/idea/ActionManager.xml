@@ -397,6 +397,7 @@
         <separator/>
         <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction" text="Comment with _Line Comment" description="Comment/uncomment current line or selected block with line comments"/>
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction" text="Comment with _Block Comment" description="Comment/uncomment code with block comments"/>
+        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction" text="_Reformat Code..." description="Reformat code"/>
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction" text="_Auto-Indent Lines" description="Indent current line or selected block according to the code style settings"/>
         <separator/>
         <action id="MoveStatementDown" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementDownAction" text="Move Statement Do_wn" description="Move selected statements one line down"/>
@@ -494,7 +495,6 @@
 
       <!-- Tools -->
       <group text="_Tools" id="ToolsMenu" configurable="true">
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction" text="_Reformat Code..." description="Reformat code"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction" text="_Optimize Imports..." description="Remove unused imports and reorder/reorganize imports"/>
         <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction" text="Save as L_ive Template..." description="Save the selected text as live template"/>
         <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction" text="Save File as Temp_late..." description="Save current file as template"/>
