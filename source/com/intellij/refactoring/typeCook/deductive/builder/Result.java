@@ -53,7 +53,7 @@ public class Result {
 
       final PsiManager manager = PsiManager.getInstance(myProject);
       final PsiType subst = substitute(bound);
-      return wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
+      return subst instanceof  PsiWildcardType ? subst : wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
     }
     else if (t instanceof PsiTypeVariable) {
       if (myBinding == null) {

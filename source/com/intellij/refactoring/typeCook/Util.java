@@ -324,14 +324,9 @@ public class Util {
       return false;
     }
 
-    PsiClassType.ClassResolveResult result = Util.resolveType(t);
-
-    if (result == null) {
-      return false;
-    }
-
-    PsiClass theClass = result.getElement();
-    PsiSubstitutor theSubst = result.getSubstitutor();
+    final PsiClassType.ClassResolveResult result = Util.resolveType(t);
+    final PsiClass theClass = result.getElement();
+    final PsiSubstitutor theSubst = result.getSubstitutor();
 
     if (theClass == null) {
       return false;
@@ -832,6 +827,11 @@ public class Util {
 
           for (int i = 0; i < parms.length; i++) {
             PsiType aType = subst.substitute(parms[i]);
+
+            if (aType instanceof PsiWildcardType){
+              aType = ((PsiWildcardType)aType).getBound();
+            }
+
             list.add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager()) : aType));
           }
         }

@@ -1,3 +1,3 @@
-LinkedList<? extends java.lang.Integer,java.io.Serializable>\nPsiLocalVariable:y
-ListLinked<java.io.Serializable,? extends java.lang.Integer>\nPsiLocalVariable:x
-ListLinked<java.io.Serializable,? extends java.lang.Integer>\nnew
+LinkedList<java.lang.Integer,java.io.Serializable>\nPsiLocalVariable:y
+ListLinked<java.io.Serializable,java.lang.Integer>\nPsiLocalVariable:x
+ListLinked<java.io.Serializable,java.lang.Integer>\nnew

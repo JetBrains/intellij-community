@@ -323,7 +323,7 @@ public class SystemBuilder {
               else {
                 parmType = Util.substituteType(Util.substituteType(parameters[i].getType(), supertypeSubstitutor), qualifierSubstitutor);
 
-                if (!Util.bindsTypeVariables(parmType)) {
+                if (!Util.bindsTypeVariables(parmType) && !Util.bindsTypeParameters(parmType, typeParameters)) {
                   parmType = Util.banalize(parmType);
                 }
 

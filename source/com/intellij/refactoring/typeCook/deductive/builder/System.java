@@ -53,8 +53,13 @@ public class System {
   }
 
   public void addSubtypeConstraint(final PsiType left, final PsiType right) {
+    if (left == null || right == null) {
+      return;
+    }
+
     if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right)) &&
-        !(left instanceof PsiPrimitiveType || right instanceof PsiPrimitiveType)
+                                                                          !(left instanceof PsiPrimitiveType ||
+                                                                             right instanceof PsiPrimitiveType)
     ) {
       final Subtype c = new Subtype(left, right);
       if (!myConstraints.contains(c)) {
@@ -82,8 +87,8 @@ public class System {
       final PsiElement element = i.next();
       final PsiType type = myTypes.get(element);
 
-      if (type == null){
-        continue;
+      if (type == null) {
+      continue;
       }
 
       if (element instanceof PsiParameter) {
@@ -234,14 +239,14 @@ public class System {
 
     final LinkedList<HashSet<PsiTypeVariable>> clusters = myTypeVariableFactory.getClusters();
 
-    for (final Iterator<HashSet<PsiTypeVariable>> c=clusters.iterator(); c.hasNext();){
+    for (final Iterator<HashSet<PsiTypeVariable>> c = clusters.iterator(); c.hasNext();) {
       final HashSet<PsiTypeVariable> cluster = c.next();
       Node prev = null;
 
-      for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
+      for (final Iterator<PsiTypeVariable> v = cluster.iterator(); v.hasNext();) {
         final Node curr = typeVariableNodes[v.next().getIndex()];
 
-        if (prev != null){
+        if (prev != null) {
           prev.addEdge(curr);
         }
 
@@ -326,10 +331,10 @@ public class System {
     for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
       data[i++] =
-      (element instanceof PsiVariable ? ((PsiVariable)element).getType() :
-       element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : ((PsiExpression)element).getType()).getCanonicalText() +
-      "\\n" +
-      elementString(element);
+        (element instanceof PsiVariable ? ((PsiVariable)element).getType() :
+          element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : ((PsiExpression)element).getType()).getCanonicalText() +
+                                                                                                                   "\\n" +
+                                                                                                                   elementString(element);
     }
 
     Arrays.sort(data,
@@ -351,19 +356,20 @@ public class System {
   }
 
   private String elementString(final PsiElement element) {
-    if (element instanceof PsiNewExpression)
+    if (element instanceof PsiNewExpression) {
       return "new";
+    }
 
-    if (element instanceof PsiParameter){
-      final PsiMethod method = PsiTreeUtil.getParentOfType(element,  PsiMethod.class);
+    if (element instanceof PsiParameter) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
 
-      if (method != null){
+      if (method != null) {
         return "parameter " + (method.getParameterList().getParameterIndex(((PsiParameter)element))) + " of " + method.getName();
       }
     }
 
-    if (element instanceof PsiMethod){
-      return "return of " + ((PsiMethod)element).getName();  
+    if (element instanceof PsiMethod) {
+      return "return of " + ((PsiMethod)element).getName();
     }
 
     return element.toString();
@@ -374,17 +380,19 @@ public class System {
 
     class Substitutor {
       PsiType substitute(final PsiType t) {
-        if (t instanceof PsiWildcardType){
+        if (t instanceof PsiWildcardType) {
           final PsiWildcardType wcType = (PsiWildcardType)t;
           final PsiType bound = wcType.getBound();
 
-          if (bound == null){
+          if (bound == null) {
             return t;
           }
 
           final PsiManager manager = PsiManager.getInstance(myProject);
           final PsiType subst = substitute(bound);
-          return wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
+          return subst == null || subst instanceof PsiWildcardType ? subst : wcType.isExtends()
+                                                                             ? PsiWildcardType.createExtends(manager, subst)
+                                                                             : PsiWildcardType.createSuper(manager, subst);
         }
         else if (t instanceof PsiTypeVariable) {
           if (bindings.length > 0) {
@@ -438,10 +446,12 @@ public class System {
     for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
       final PsiType t = myTypes.get(element);
-      if (t != null)
+      if (t != null) {
         data[i++] = binding.substitute(t).getCanonicalText() + "\\n" + elementString(element);
-      else
+      }
+      else {
         data[i++] = "\\n" + elementString(element);
+      }
     }
 
     Arrays.sort(data,

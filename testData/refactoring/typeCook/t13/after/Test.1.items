@@ -1,3 +1,3 @@
-LinkedList<? extends LinkedList>\nPsiField:y
+LinkedList<LinkedList>\nPsiField:y
 LinkedList\nPsiField:x
 LinkedList\nPsiTypeCastExpression:(LinkedList) y.get()

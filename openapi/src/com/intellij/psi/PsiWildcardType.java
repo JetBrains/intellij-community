@@ -39,7 +39,7 @@ public class PsiWildcardType extends PsiType {
   }
 
   public static PsiWildcardType createExtends(PsiManager manager, PsiType bound) {
-    LOG.assertTrue(bound != null);
+    LOG.assertTrue(bound != null && !(bound instanceof PsiWildcardType));
     return new PsiWildcardType(manager, true, bound);
   }
 

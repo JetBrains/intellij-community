@@ -124,9 +124,30 @@ public class BindingFactory {
           return null;
         }
       }
+      else if (type instanceof PsiWildcardType) {
+        final PsiWildcardType wcType = (PsiWildcardType)type;
+        final PsiType bound = wcType.getBound();
+
+        if (bound != null) {
+          return PsiWildcardType.createExtends(PsiManager.getInstance(myProject), apply(bound));
+        }
+
+        return type;
+      }
       else {
         return type;
       }
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof BindingImpl)) return false;
+
+      final BindingImpl binding = (BindingImpl)o;
+
+      if (!Arrays.equals(myBindings, binding.myBindings)) return false;
+
+      return true;
     }
 
     public Binding compose(final Binding b) {
@@ -669,6 +690,9 @@ public class BindingFactory {
                                         }
 
                                         return create(x, y);
+                                        //== null || y instanceof PsiWildcardType
+                                        //                ? y
+                                        //                : PsiWildcardType.createExtends(PsiManager.getInstance(myProject), y));
                                       }
 
                                       public Binding varVar(PsiTypeVariable x, PsiTypeVariable y) {
@@ -676,10 +700,10 @@ public class BindingFactory {
                                         final int yi = y.getIndex();
 
                                         if (xi < yi) {
-                                          return create(((PsiTypeVariable)x), y);
+                                          return create(x, y);
                                         }
                                         else if (yi < xi) {
-                                          return create(((PsiTypeVariable)y), x);
+                                          return create(y, x);
                                         }
                                         else {
                                           return create();
@@ -687,6 +711,10 @@ public class BindingFactory {
                                       }
 
                                       public Binding typeVar(PsiType x, PsiTypeVariable y) {
+                                        if (x == null){
+                                          return create(y, Bottom.BOTTOM);
+                                        }
+
                                         return create(y, x);
                                       }
                                     });
@@ -701,7 +729,7 @@ public class BindingFactory {
                      }
 
                      public Binding varVar(PsiTypeVariable x, PsiTypeVariable y) {
-                       return create(x, Bottom.BOTTOM);
+                       return create(y, Bottom.BOTTOM);
                      }
 
                      public Binding typeVar(PsiType x, PsiTypeVariable y) {
@@ -775,12 +803,17 @@ public class BindingFactory {
         }
         if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
           if (x instanceof PsiClassType || y instanceof PsiClassType) {
-            final PsiElementFactory f = PsiManager.getInstance(myProject).getElementFactory();
-
             try {
-              list.addFirst(new Pair<PsiType, Binding>(f.createTypeFromText("java.lang.Object", null), create()));
-              list.addFirst(new Pair<PsiType, Binding>(f.createTypeFromText("java.lang.Cloneable", null), create()));
-              list.addFirst(new Pair<PsiType, Binding>(f.createTypeFromText("java.io.Serializable", null), create()));
+              final PsiElementFactory f = PsiManager.getInstance(myProject).getElementFactory();
+              final PsiType keyType = x instanceof PsiClassType ? x : y;
+
+              final PsiType object = f.createTypeFromText("java.lang.Object", null);
+              final PsiType cloneable = f.createTypeFromText("java.lang.Cloneable", null);
+              final PsiType serializable = f.createTypeFromText("java.io.Serializable", null);
+
+              intersect(keyType, object, list);
+              intersect(keyType, cloneable, list);
+              intersect(keyType, serializable, list);
             }
             catch (IncorrectOperationException e) {
               LOG.error("Exception " + e);

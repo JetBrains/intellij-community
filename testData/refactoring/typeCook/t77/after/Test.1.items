@@ -1,5 +1,5 @@
-Iterator<? extends Set<? extends java.lang.String>>\nPsiLocalVariable:i
-OfList<? extends Set<? extends java.lang.String>>\nPsiLocalVariable:x
-OfList<? extends Set<? extends java.lang.String>>\nnew
-Set<? extends java.lang.String>\nPsiLocalVariable:u
-Set<? extends java.lang.String>\nPsiTypeCastExpression:(Set) i.get()
+Iterator<Set<java.lang.String>>\nPsiLocalVariable:i
+OfList<Set<java.lang.String>>\nPsiLocalVariable:x
+OfList<Set<java.lang.String>>\nnew
+Set<java.lang.String>\nPsiLocalVariable:u
+Set<java.lang.String>\nPsiTypeCastExpression:(Set) i.get()

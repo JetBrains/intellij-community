@@ -217,7 +217,7 @@ public class ResolverTree {
     if (indicator == 0) {
       return;
     }
-    else if (indicator == 2) {
+    else if (indicator == 2){// && riseBinding.equals(sinkBinding)) {
       switch (riseBinding.compare(sinkBinding)) {
       case Binding.SAME:
       //case Binding.BETTER:
@@ -231,7 +231,7 @@ public class ResolverTree {
       //break;
       }
     }
-
+    
     myConstraints.remove(constr);
 
     mySons = new ResolverTree[indicator];
@@ -327,7 +327,7 @@ public class ResolverTree {
     if (indicator == 0) {
       return;
     }
-    else if (indicator == 2) {
+    else if (indicator == 2){// && riseBinding.equals(sinkBinding)) {
       switch (riseBinding.compare(sinkBinding)) {
       case Binding.SAME:
            indicator = 1;
@@ -517,7 +517,7 @@ public class ResolverTree {
       final Binding binding =
         haveLeftBound.contains(var)
         ? myBindingFactory.create(var, type)
-        : myBindingFactory.create(var, PsiWildcardType.createExtends(PsiManager.getInstance(myProject), type));
+        : myBindingFactory.create(var, type); //PsiWildcardType.createExtends(PsiManager.getInstance(myProject), type));
 
       myConstraints.remove(target);
 
