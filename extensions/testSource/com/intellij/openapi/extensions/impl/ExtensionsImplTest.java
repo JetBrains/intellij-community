@@ -4,12 +4,12 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import junit.framework.TestCase;
 import com.intellij.openapi.extensions.*;
-import java.util.Arrays;
-
-import org.picocontainer.defaults.DefaultPicoContainer;
+import junit.framework.TestCase;
 import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.DefaultPicoContainer;
+
+import java.util.Arrays;
 
 /**
  * @author AKireyev
@@ -17,11 +17,6 @@ import org.picocontainer.MutablePicoContainer;
 public class ExtensionsImplTest extends TestCase {
   public static final String EXTENSION_POINT_NAME_1 = "ext.point.one";
   public static final String AREA_1 = "the.area.one";
-
-  protected void tearDown() throws Exception {
-    ExtensionsTestUtils.hardReset();
-    super.tearDown();    //To change body of overriden methods use Options | File Templates.
-  }
 
   public void testCreateAndAccess() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
