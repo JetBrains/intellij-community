@@ -960,7 +960,7 @@ public class CompileDriver {
           final String outputPath = item.getOutputPath();
           final VirtualFile sourceFile = item.getSourceFile();
           final String className;
-          if (StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(sourceFile))) {
+          if (outputPath != null && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(sourceFile))) {
             final String outputDir = item.getOutputRootDirectory();
 
             if (!CompilerUtil.startsWith(outputPath, outputDir)) {
@@ -1509,7 +1509,9 @@ public class CompileDriver {
           (modules.size() > 1 ? " modules\n" : " module ") + names.toString() +
           ".\nSpecify " + whatNotSpecified + " in Configure Project.";
 
-    if(ApplicationManager.getApplication().isUnitTestMode()) LOG.assertTrue(false, message);
+    if(ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.assertTrue(false, message);
+    }
     
     Messages.showMessageDialog(
       myProject,

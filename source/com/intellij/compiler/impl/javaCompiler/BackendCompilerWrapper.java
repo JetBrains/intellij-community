@@ -41,19 +41,20 @@ class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
 
   private final BackendCompiler myCompiler;
-  private final Map<String, Set<Pair<String, String>>> myFileNameToSourceMap = new HashMap<String, Set<Pair<String,String>>>();
-  private final List<File> myFilesToRefresh = new ArrayList<File>();
-  private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(); // VirtualFile
-  private final List<TranslatingCompiler.OutputItem> myOutputItems = new ArrayList<TranslatingCompiler.OutputItem>();
+  private final Map<String, Set<Pair<String, String>>> myFileNameToSourceMap;
+  private final List<File> myFilesToRefresh;
+  private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles; // VirtualFile
+  private final List<TranslatingCompiler.OutputItem> myOutputItems;
 
   private final CompileContextEx myCompileContext;
   private final VirtualFile[] myFilesToCompile;
   private final Project myProject;
-  private Set<VirtualFile> myFilesToRecompile = new HashSet<VirtualFile>();
+  private Set<VirtualFile> myFilesToRecompile = Collections.EMPTY_SET;
   private ClassParsingThread myClassParsingThread;
   private int myExitCode;
   private Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
+  private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
 
   public BackendCompilerWrapper(final Project project, VirtualFile[] filesToCompile, CompileContextEx compileContext, BackendCompiler compiler) {
     myProject = project;
@@ -61,6 +62,10 @@ class BackendCompilerWrapper {
     myCompileContext = compileContext;
     myFilesToCompile = filesToCompile;
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(filesToCompile.length);
+    myOutputItems = new ArrayList<TranslatingCompiler.OutputItem>(filesToCompile.length);
+    myFileNameToSourceMap = new HashMap<String, Set<Pair<String,String>>>(filesToCompile.length);
+    myFilesToRefresh = new ArrayList<File>(filesToCompile.length);
   }
 
   public TranslatingCompiler.OutputItem[] compile() throws CompilerException, CacheCorruptedException {
@@ -126,7 +131,36 @@ class BackendCompilerWrapper {
       myFilesToRecompile.addAll(Arrays.asList(dependentFiles));
     }
     myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
+    processPackageInfoFiles();
+
     return myOutputItems.toArray(new TranslatingCompiler.OutputItem[myOutputItems.size()]);
+  }
+
+  // package-info.java hack
+  private void processPackageInfoFiles() {
+    if (myFilesToRecompile.size() > 0) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final List<VirtualFile> packageInfoFiles = new ArrayList<VirtualFile>(myFilesToRecompile.size());
+          for (Iterator<VirtualFile> it = myFilesToRecompile.iterator(); it.hasNext();) {
+            final VirtualFile file = it.next();
+            if (PACKAGE_ANNOTATION_FILE_NAME.equals(file.getName())) {
+              packageInfoFiles.add(file);
+            }
+          }
+          if (packageInfoFiles.size() > 0) {
+            final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
+            for (Iterator it = packageInfoFiles.iterator(); it.hasNext();) {
+              final VirtualFile packageInfoFile = (VirtualFile)it.next();
+              if (!badFiles.contains(packageInfoFile)) {
+                myOutputItems.add(new OutputItemImpl(null, null, packageInfoFile));
+                myFilesToRecompile.remove(packageInfoFile);
+              }
+            }
+          }
+        }
+      });
+    }
   }
 
   private VirtualFile[] getFilesInScope(final VirtualFile[] dependentFiles) {
@@ -567,7 +601,7 @@ class BackendCompilerWrapper {
     CompilerMessage[] messages = myCompileContext.getMessages(CompilerMessageCategory.ERROR);
     Set<VirtualFile> compiledWithErrors = Collections.EMPTY_SET;
     if (messages.length > 0) {
-      compiledWithErrors = new HashSet<VirtualFile>();
+      compiledWithErrors = new HashSet<VirtualFile>(messages.length);
       for (int idx = 0; idx < messages.length; idx++) {
         CompilerMessage message = messages[idx];
         final VirtualFile file = message.getVirtualFile();
