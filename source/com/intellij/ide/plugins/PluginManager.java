@@ -1,15 +1,18 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInspection.InspectionMain;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffApplication;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -139,9 +142,12 @@ public class PluginManager {
       }
     }, LoadingOrder.FIRST);
 
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.APPLICATION_STARTER, ApplicationStarter.class.getName());
     Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.ERROR_HANDLER, ErrorReportSubmitter.class.getName());
     Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
     Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).registerExtension(new ITNReporter());
+    Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER).registerExtension(new InspectionMain());
+    Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER).registerExtension(new DiffApplication());
   }
 
   public static boolean shouldLoadPlugins() {

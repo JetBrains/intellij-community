@@ -45,4 +45,15 @@ public interface ExtensionPoints {
      */
 
   String JUNIT_PATCHER = "com.intellij.junitPatcher";
+
+  /**
+   * This extensions allows to run custom [command-line] application based on IDEA platform
+   * <pre>
+   * &lt;extensions xmlns="com.intellij"&gt;
+   *   &lt;applicationStarter implementation="my.plugin.package.MyAplicationStarter"/&gt;
+   * &lt;/extensions&gt;
+   * </pre>
+   * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
+   */
+  String APPLICATION_STARTER = "com.intellij.appStarter";
 }

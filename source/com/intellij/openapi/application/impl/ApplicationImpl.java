@@ -15,6 +15,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AreaPicoContainer;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,8 +32,6 @@ import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.extensions.AreaPicoContainer;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -157,6 +157,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isUnitTestMode() {
+    return myTestModeFlag;
+  }
+
+  public boolean isHeadlessEnvironment() {
     return myTestModeFlag;
   }
 

@@ -1,5 +1,8 @@
 package com.intellij.idea;
 
+import com.incors.plaf.alloy.AlloyLookAndFeel;
+import com.incors.plaf.alloy.IdeaAlloyLAF;
+import com.intellij.ExtensionPoints;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
@@ -9,34 +12,55 @@ import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
 import org.jdom.Element;
 
+import javax.swing.*;
 import java.io.IOException;
 
 
 public class IdeaApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private Splash mySplash;
   private String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private static IdeaApplication ourInstance;
+  private ApplicationStarter myStarter;
 
-  protected IdeaApplication(Splash splash, String[] args) {
+  protected IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;
-    mySplash = splash;
     myArgs = args;
-
     boolean isInternal = "true".equals(System.getProperty("idea.is.internal"));
     ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");
+
+    myStarter = getStarter();
+    myStarter.premain(args);
+  }
+
+  private ApplicationStarter getStarter() {
+    if (myArgs.length > 0) {
+      PluginManager.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
+      final Object[] starters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER).getExtensions();
+      String key = myArgs[0];
+      for (int i = 0; i < starters.length; i++) {
+        ApplicationStarter starter = (ApplicationStarter)starters[i];
+        if (Comparing.equal(starter.getCommandName(), key)) return starter;
+      }
+    }
+    return new IdeStarter();
   }
 
   public static IdeaApplication getInstance() {
@@ -55,23 +79,54 @@ public class IdeaApplication {
       e.printStackTrace();
     }
 
-    registerActions();
+    myStarter.main(myArgs);
+    myStarter = null; //GC it
+  }
 
-    // Event queue should not be changed during initialization of application components.
-    // It also cannot be changed before initialization of application components because IdeEventQueue uses other
-    // application components. So it is proper to perform replacement only here.
-    app.setupIdeQueue(IdeEventQueue.getInstance());
+  private static void initAlloy() {
+    AlloyLookAndFeel.setProperty("alloy.licenseCode", "4#JetBrains#1ou2uex#6920nk");
+    AlloyLookAndFeel.setProperty("alloy.isToolbarEffectsEnabled", "false");
+    UIManager.installLookAndFeel("Alloy", IdeaAlloyLAF.class.getName());
+  }
 
-    app.invokeLater(new Runnable() {
-      public void run() {
-        mySplash.dispose();
-        mySplash = null; // Allow GC collect the splash window
+  private class IdeStarter implements ApplicationStarter {
+    private Splash mySplash;
+    public String getCommandName() {
+      return null;
+    }
 
-        if (myPerformProjectLoad) {
-          loadProject();
+    public void premain(String[] args) {
+      final Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance().getLogoUrl());
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          splash.show();
         }
-      }
-    }, ModalityState.NON_MMODAL);
+      });
+      mySplash = splash;
+      initAlloy();
+    }
+
+    public void main(String[] args) {
+      registerActions();
+
+      // Event queue should not be changed during initialization of application components.
+      // It also cannot be changed before initialization of application components because IdeEventQueue uses other
+      // application components. So it is proper to perform replacement only here.
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      app.setupIdeQueue(IdeEventQueue.getInstance());
+      ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+
+      app.invokeLater(new Runnable() {
+        public void run() {
+          mySplash.dispose();
+          mySplash = null; // Allow GC collect the splash window
+
+          if (myPerformProjectLoad) {
+            loadProject();
+          }
+        }
+      }, ModalityState.NON_MMODAL);
+    }
   }
 
   private void registerActions() {

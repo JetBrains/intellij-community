@@ -106,6 +106,7 @@ public interface Application extends ComponentManager {
   long getIdleTime();
 
   boolean isUnitTestMode();
+  boolean isHeadlessEnvironment();
 
   boolean isDispatchThread();
 }

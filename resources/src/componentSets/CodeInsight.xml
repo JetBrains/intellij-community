@@ -30,7 +30,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl</implementation-class>
-      <test-implementation-class></test-implementation-class>
+      <headless-implementation-class></headless-implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter</implementation-class>
@@ -68,7 +68,7 @@
     <component>
       <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
       <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
-      <test-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</test-implementation-class>
+      <headless-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</headless-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.intention.IntentionManager</interface-class>

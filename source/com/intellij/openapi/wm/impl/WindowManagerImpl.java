@@ -140,7 +140,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     };
   }
 
-  private void showFrame() {
+  public void showFrame() {
     final IdeFrame frame = new IdeFrame(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager);
     myProject2Frame.put(null, frame);
     if (myFrameBounds != null) {
@@ -232,7 +232,6 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
   public final void disposeComponent() {}
 
   public final void initComponent() {
-    showFrame();
   }
 
   public final void doNotSuggestAsParent(final Window window) {

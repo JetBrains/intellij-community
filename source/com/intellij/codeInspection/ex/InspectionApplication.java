@@ -4,8 +4,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionMain;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.idea.CommandLineApplication;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -15,13 +13,11 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import org.jdom.JDOMException;
 
 import javax.swing.*;
 import java.io.*;
@@ -29,7 +25,7 @@ import java.io.*;
 /**
  * @author max
  */
-public class InspectionApplication extends CommandLineApplication {
+public class InspectionApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionApplication");
 
   public String myProjectPath = null;
@@ -38,10 +34,6 @@ public class InspectionApplication extends CommandLineApplication {
   public String myProfilePath = null;
   private Project myProject;
   private int myVerboseLevel = 0;
-
-  public InspectionApplication() {
-    super(false, false, "componentSets/InspectionComponents");
-  }
 
   public void startup() {
     if (myProjectPath == null || myOutPath == null || myProfilePath == null) {
@@ -161,11 +153,9 @@ public class InspectionApplication extends CommandLineApplication {
       LOG.error(e);
       InspectionMain.printHelp();
     }
-    catch (InvalidDataException e) {
+    catch (Exception e) {
       LOG.error(e);
-    }
-    catch (JDOMException e) {
-      LOG.error(e);
+      System.exit(1);
     }
   }
 
@@ -173,10 +163,12 @@ public class InspectionApplication extends CommandLineApplication {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
 
+  /* TODO
   public Object getData(String dataId) {
     if (DataConstants.PROJECT.equals(dataId)) return myProject;
     return super.getData(dataId);
   }
+  */
 
   public void setVerboseLevel(int verboseLevel) {
     myVerboseLevel = verboseLevel;

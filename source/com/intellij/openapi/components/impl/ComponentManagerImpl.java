@@ -15,6 +15,7 @@ import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -374,8 +375,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
-    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
-    
+    //if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
+    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
+
     final ComponentDescriptor[] componentDescriptors =
       (ComponentDescriptor[])extensionsArea.getExtensionPoint(ExtensionPoints.COMPONENT).getExtensions();
     for (int i = 0; i < componentDescriptors.length; i++) {
@@ -384,11 +386,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       if (isComponentSuitable(options)) {
         ClassLoader loader = findLoader(descriptor.getPluginName());
         try {
-          registerComponent(Class.forName(descriptor.getInterface(), true, loader),
-                            Class.forName(descriptor.getImplementation(), true, loader),
-                            options,
-                            true,
-                            isTrue(options, "lazy"));
+          final String implementation = headless ? descriptor.getHeadlessImplementation() : descriptor.getImplementation();
+          if (!StringUtil.isEmpty(implementation)) {
+            registerComponent(Class.forName(descriptor.getInterface(), true, loader),
+                              Class.forName(implementation, true, loader),
+                              options,
+                              true,
+                              isTrue(options, "lazy"));
+          }
         }
         catch (Exception e) {
           LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginName())));
@@ -492,18 +497,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public void loadComponentsConfiguration(final Element element, PluginDescriptor descriptor) {
     if (element == null) return;
-    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       try {
         Element child = (Element)i.next();
         if ("component".equals(child.getName())) {
           String interfaceClass = child.getChildText("interface-class");
           String implClass = child.getChildText("implementation-class");
-          if (testMode) {
-            String testImplClass = child.getChildText("test-implementation-class");
-            if (testImplClass != null) {
-              if (testImplClass.trim().length() == 0) continue;
-              implClass = testImplClass;
+          if (headless) {
+            String headlessImplClass = child.getChildText("headless-implementation-class");
+            if (headlessImplClass != null) {
+              if (headlessImplClass.trim().length() == 0) continue;
+              implClass = headlessImplClass;
             }
           }
 

@@ -60,6 +60,10 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return true;
   }
 
+  public boolean isHeadlessEnvironment() {
+    return true;
+  }
+
   public boolean isAspectJSupportEnabled() {
     return true;
   }

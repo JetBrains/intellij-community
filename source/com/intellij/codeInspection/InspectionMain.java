@@ -9,65 +9,55 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionApplication;
-import com.intellij.ide.license.AuthorizationAction;
-import com.intellij.ide.license.impl.InspectionLicense;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.licensecommon.license.LicenseData;
+import com.intellij.openapi.application.ApplicationStarter;
 
-public class InspectionMain {
-  public static void main(String[] args) {
-    PluginManager.main(args, InspectionMain.class.getName(), "start");
+public class InspectionMain implements ApplicationStarter {
+  private InspectionApplication myApplication;
+
+  public String getCommandName() {
+    return "inspect";
   }
 
-  protected static void start(final String[] args) {
-    if (!com.intellij.idea.Main.checkStartupPossible()) {
-      System.exit(-1);
+  public void premain(String[] args) {
+    if (args.length < 4) {
+      printHelp();
     }
-    InspectionLicense.getInstance().startUp(new AuthorizationAction() {
-      public void proceed(LicenseData license) {
-        if (args.length < 3) {
+
+    System.setProperty("idea.load.plugins.category", "inspection");
+    myApplication = new InspectionApplication();
+
+    myApplication.myProjectPath = args[1];
+    myApplication.myProfilePath = args[2];
+    myApplication.myOutPath = args[3];
+
+    try {
+      for (int i = 4; i < args.length; i++) {
+        String arg = args[i];
+        if ("-d".equals(arg)) {
+          myApplication.mySourceDirectory = args[++i];
+        }
+        else if ("-v0".equals(arg)) {
+          myApplication.setVerboseLevel(0);
+        }
+        else if ("-v1".equals(arg)) {
+          myApplication.setVerboseLevel(1);
+        }
+        else if ("-v2".equals(arg)) {
+          myApplication.setVerboseLevel(2);
+        }
+        else {
           printHelp();
         }
-
-        System.setProperty("idea.load.plugins.category", "inspection");
-        final InspectionApplication application = new InspectionApplication();
-
-        application.myProjectPath = args[0];
-        application.myProfilePath = args[1];
-        application.myOutPath = args[2];
-
-        try {
-          for (int i = 3; i < args.length; i++) {
-            String arg = args[i];
-            if ("-d".equals(arg)) {
-              application.mySourceDirectory = args[++i];
-            }
-            else if ("-v0".equals(arg)) {
-              application.setVerboseLevel(0);
-            }
-            else if ("-v1".equals(arg)) {
-              application.setVerboseLevel(1);
-            }
-            else if ("-v2".equals(arg)) {
-              application.setVerboseLevel(2);
-            }
-            else {
-              printHelp();
-            }
-          }
-        }
-        catch (ArrayIndexOutOfBoundsException e) {
-          printHelp();
-        }
-
-        application.startup();
       }
-
-      public void cancel() {
-      }
-    });
+    }
+    catch (ArrayIndexOutOfBoundsException e) {
+      printHelp();
+    }
   }
 
+  public void main(String[] args) {
+    myApplication.startup();
+  }
 
   public static void printHelp() {
     System.out.println("Expected parameters: <project_file_path> <inspection_profile_file_path> <output_path> [<options>]\n" +

@@ -66,7 +66,7 @@ public class SimpleDiffRequest extends DiffRequest {
     myWindowTitle = windowTitle;
   }
 
-  public static DiffRequest compareFiles(VirtualFile file1, VirtualFile file2, Project project, String title) {
+  public static SimpleDiffRequest compareFiles(VirtualFile file1, VirtualFile file2, Project project, String title) {
     FileDiffRequest result = new FileDiffRequest(project, title);
     result.myVirtualFiles[0] = file1;
     result.myVirtualFiles[1] = file2;
@@ -75,18 +75,16 @@ public class SimpleDiffRequest extends DiffRequest {
     return result;
   }
 
-  public static DiffRequest comapreFiles(VirtualFile file1, VirtualFile file2, Project project) {
+  public static SimpleDiffRequest comapreFiles(VirtualFile file1, VirtualFile file2, Project project) {
     return compareFiles(file1, file2, project, file1.getPresentableUrl() + " vs " + file2.getPresentableUrl());
   }
 
-  private static class FileDiffRequest extends DiffRequest {
+  private static class FileDiffRequest extends SimpleDiffRequest {
     private final String[] myContentTitles = new String[2];
-    private final String myWindowTitle;
     private final VirtualFile[] myVirtualFiles = new VirtualFile[2];
 
     public FileDiffRequest(Project project, String title) {
-      super(project);
-      myWindowTitle = title;
+      super(project, title);
     }
 
     public DiffContent[] getContents() {
@@ -96,10 +94,6 @@ public class SimpleDiffRequest extends DiffRequest {
 
     public String[] getContentTitles() {
       return myContentTitles;
-    }
-
-    public String getWindowTitle() {
-      return myWindowTitle;
     }
   }
 }

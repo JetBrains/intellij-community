@@ -3,7 +3,7 @@
     <component>
       <interface-class>com.intellij.openapi.wm.WindowManager</interface-class>
       <implementation-class>com.intellij.openapi.wm.impl.WindowManagerImpl</implementation-class>
-      <test-implementation-class>com.intellij.openapi.wm.impl.TestWindowManager</test-implementation-class>
+      <headless-implementation-class>com.intellij.openapi.wm.impl.TestWindowManager</headless-implementation-class>
     </component>
   </application-components>
 
@@ -11,7 +11,7 @@
     <component>
       <interface-class>com.intellij.openapi.wm.ToolWindowManager</interface-class>
       <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
-      <test-implementation-class></test-implementation-class>
+      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
     </component>
   </project-components>
