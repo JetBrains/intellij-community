@@ -36,14 +36,18 @@ public class ImportSettingsAction extends AnAction {
                                                                 "Choose import file path or directory where the file located");
     if (path == null) return;
 
+    final File saveFile = new File(path);
     try {
-      final File saveFile = new File(path);
+      if (!saveFile.exists()) {
+        Messages.showErrorDialog("Cannot find file " + presentableFileName(saveFile), "File Not Found");
+        return;
+      }
       final ZipFile zipFile = new ZipFile(saveFile);
 
       final ZipEntry magicEntry = zipFile.getEntry(ExportSettingsAction.SETTINGS_JAR_MARKER);
       if (magicEntry == null) {
-        Messages.showErrorDialog("This file contains no settings to import.\n" +
-                                 "Please make sure you have generated the file using 'File|Export Settings' feature.", "Invalid File");
+        Messages.showErrorDialog("The file " + presentableFileName(saveFile) +
+                                 " contains no settings to import.\n" + promptLocationMessage(), "Invalid File");
         return;
       }
 
@@ -85,13 +89,21 @@ public class ImportSettingsAction extends AnAction {
       }
     }
     catch (ZipException e1) {
-      Messages.showErrorDialog("Error reading file.\nThere was " +e1.getMessage() +"\n\n" +
-                               "Please make sure you have generated the file using 'File|Export Settings' feature."
-                               , "Invalid File");
+      Messages.showErrorDialog("Error reading file " + presentableFileName(saveFile) + ".\n" +
+                               "There was " +e1.getMessage() +"\n\n" + promptLocationMessage(),
+                               "Invalid File");
     }
     catch (IOException e1) {
-      Messages.showErrorDialog("Error reading file.\n\n"+e1.getMessage(),"Error Reading File");
+      Messages.showErrorDialog("Error reading file " + presentableFileName(saveFile) + ".\n\n"+ e1.getMessage(), "Error Reading File");
     }
+  }
+
+  private static String presentableFileName(final File file) {
+    return "'" + FileUtil.toSystemDependentName(file.getPath()) + "'";
+  }
+
+  private static String promptLocationMessage() {
+    return "Please make sure you have generated the file using 'File|Export Settings' feature.";
   }
 
   private static List<ExportableApplicationComponent> getComponentsStored(File zipFile,
