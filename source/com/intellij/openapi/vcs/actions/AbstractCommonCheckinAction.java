@@ -208,7 +208,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       dialog.analyzeChanges(true, actionAfterDialogWasShown);
     }
     catch (VcsException e) {
-      Messages.showErrorDialog("Cannot analize changes: " + e.getLocalizedMessage(), "Analizing Changes");
+      Messages.showErrorDialog("Cannot analyze changes: " + e.getLocalizedMessage(), "Analizing Changes");
     }
   }
 
