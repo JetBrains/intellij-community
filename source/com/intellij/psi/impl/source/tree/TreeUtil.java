@@ -179,7 +179,7 @@ public class TreeUtil {
       if(next == null) break;
       firstNew = next;
     }
-    
+
     if(treeNext == null){
       if(parent != null){
         firstNew.setTreeParent(parent);
@@ -250,14 +250,13 @@ public class TreeUtil {
     }
 
     start.setTreePrev(null);
-    if (endPrev != null){
-      endPrev.setTreeNext(null);
-    }
     if (parent != null){
       for(TreeElement element = start; element != end; element = element.getTreeNext()){
-        if(element instanceof CompositeElement)
-          element.setTreeParent(null);
+        element.setTreeParent(null);
       }
+    }
+    if (endPrev != null){
+      endPrev.setTreeNext(null);
     }
 
     if (DebugUtil.CHECK){
