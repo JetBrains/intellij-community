@@ -51,8 +51,9 @@ public class HighlightMethodUtil {
                                   });
   }
 
+  //used by Fabrique
   //@top
-  static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
+  public static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
                                                    List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                    boolean includeRealPositionInfo) {
     final PsiMethod method = methodSignature.getMethod();
@@ -94,8 +95,9 @@ public class HighlightMethodUtil {
     return null;
   }
 
+  //used by Fabrique
   //@top
-  static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
+  public static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
                                                          List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                          boolean includeRealPositionInfo) {
     final PsiMethod method = methodSignature.getMethod();
