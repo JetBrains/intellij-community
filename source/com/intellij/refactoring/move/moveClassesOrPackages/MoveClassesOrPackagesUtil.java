@@ -38,7 +38,7 @@ public class MoveClassesOrPackagesUtil {
     if (Comparing.equal(getQualfiedName(element), newQName)) return new UsageInfo[0];
 
     ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
-    Set foundReferences = new HashSet();
+    Set<PsiReference> foundReferences = new HashSet<PsiReference>();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     PsiReference[] references = helper.findReferences(element, projectScope, false);
@@ -54,7 +54,7 @@ public class MoveClassesOrPackagesUtil {
 
     findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
 
-    return (UsageInfo[])results.toArray(new UsageInfo[results.size()]);
+    return results.toArray(new UsageInfo[results.size()]);
   }
 
   private static String getQualfiedName(final PsiElement element) {

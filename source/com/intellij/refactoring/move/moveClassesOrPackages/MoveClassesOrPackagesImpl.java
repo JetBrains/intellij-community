@@ -15,9 +15,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.MoveDestination;
@@ -167,7 +166,7 @@ public class MoveClassesOrPackagesImpl {
 
   private static boolean successfullyCheckedOut(final Project project, final List<VirtualFile> readOnly) {
     final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable((VirtualFile[])readOnly.toArray(new VirtualFile[readOnly.size()]));
+      .ensureFilesWritable(readOnly.toArray(new VirtualFile[readOnly.size()]));
     return !operationStatus.hasReadonlyFiles();
   }
 
@@ -372,7 +371,7 @@ public class MoveClassesOrPackagesImpl {
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
     chooser.setTitle("Select source root");
-    chooser.fillList((PsiDirectory[])sourceRootDirectories.toArray(new PsiDirectory[sourceRootDirectories.size()]), null, project, "");
+    chooser.fillList(sourceRootDirectories.toArray(new PsiDirectory[sourceRootDirectories.size()]), null, project, "");
     chooser.show();
     if (!chooser.isOK()) return;
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();

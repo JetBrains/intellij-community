@@ -178,7 +178,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
 
     // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
-    HashSet names = new HashSet();
+    HashSet<String> names = new HashSet<String>();
     for (int i = 0; i < elements.length; i++) {
       PsiFile file = (PsiFile)elements[i];
       String name = file.getName();

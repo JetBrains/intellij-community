@@ -60,13 +60,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(UsageInfo[][] u) {
     final UsageInfo[] usages = u[0];
-    ArrayList filteredUsages = new ArrayList();
+    ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
       filteredUsages.add(usage);
     }
 
-    u[0] = (UsageInfo[])filteredUsages.toArray(new UsageInfo[filteredUsages.size()]);
+    u[0] = filteredUsages.toArray(new UsageInfo[filteredUsages.size()]);
     prepareSuccessful();
     return true;
   }
@@ -83,7 +83,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    ArrayList arrayList = new ArrayList();
+    ArrayList<UsageInfo> arrayList = new ArrayList<UsageInfo>();
     for (int i = 0; i < usages.length; i++) {
       UsageInfo usage = usages[i];
       arrayList.add(usage);
