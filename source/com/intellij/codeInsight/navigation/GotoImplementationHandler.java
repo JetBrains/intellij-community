@@ -2,7 +2,6 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.highlighting.HighlightDefUseHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.MemberContainerCellRenderer;
@@ -39,8 +38,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    if (new HighlightDefUseHandler ().invoke(false, project, editor, file))
-      return;
     if (!(element instanceof PsiMethod) && !(element instanceof PsiClass))
       return;
 

@@ -2,7 +2,6 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.highlighting.HighlightDefUseHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -34,9 +33,6 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
 
   public void invoke(final Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    if (new HighlightDefUseHandler ().invoke(true, project, editor, file))
-      return;
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement[] superElements = findSuperElements(file, offset);

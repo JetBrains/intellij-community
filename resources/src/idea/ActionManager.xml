@@ -268,8 +268,6 @@
         <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction" text="Find _Usages..." description="Find usages of the symbol at caret"/>
         <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction" text="F_ind Usages in File..." description="Find usages of the symbol at caret in active editor"/>
         <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction" text="_Highlight Usages in File" description="Highlight usages of the symbol at caret in active editor"/>
-        <action id="HighlightValueDefsInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightValueDefsAction" text="_Highlight Definitions of Value in File" description="Highlight value definitions of the symbol at caret in active editor"/>
-        <action id="HighlightValueUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightValueUsagesAction" text="_Highlight Value Usages in File" description="Highlight value usages of the symbol at caret in active editor"/>
         <action id="FindJoinpointsByPointcutAction" class="com.intellij.find.actions.FindJoinpointsByPointcutAction" text="Find _Join Point Identified by Pointcut" description="Find join point identified by pointcut"/>
         <separator/>
         <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction" text="Find in _Path..." description="Find a string in multiple files"/>

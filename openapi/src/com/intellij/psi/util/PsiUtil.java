@@ -748,6 +748,18 @@ public final class PsiUtil {
            || element instanceof PsiForeachStatement;
   }
 
+  public static PsiClass getTopLevelClass(PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      for (int i = 0; i < classes.length; i++) {
+        PsiClass aClass = classes[i];
+        if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
+      }
+    }
+    return null;
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

@@ -86,7 +86,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return maximalUseScope;
       }
       else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-        PsiClass topClass = getTopLevelClass(aClass);
+        PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
         return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(aClass.getContainingFile());
       }
       else {
@@ -133,7 +133,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return maximalUseScope;
       }
       else if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        PsiClass topClass = getTopLevelClass(method);
+        PsiClass topClass = PsiUtil.getTopLevelClass(method);
         return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(method.getContainingFile());
       }
       else {
@@ -161,7 +161,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return maximalUseScope;
       }
       else if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-        PsiClass topClass = getTopLevelClass(field);
+        PsiClass topClass = PsiUtil.getTopLevelClass(field);
         return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(field.getContainingFile());
       }
       else {
@@ -198,19 +198,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else {
       return maximalUseScope;
     }
-  }
-
-  private static PsiClass getTopLevelClass(PsiElement element) {
-    LOG.assertTrue(element.isValid());
-    final PsiFile file = element.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
-      for (int i = 0; i < classes.length; i++) {
-        PsiClass aClass = classes[i];
-        if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
-      }
-    }
-    return null;
   }
 
   public interface CustomSearchHelper {
