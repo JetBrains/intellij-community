@@ -12,6 +12,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -112,11 +113,19 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
     initNSDescriptorsMap();
-    if(myNSDescriptorsMap.isEmpty()) return ((XmlTag)getParent()).getNSDescriptor(namespace, strict);
+
+    final XmlElement parent = getParent();
+
+    if(myNSDescriptorsMap.isEmpty()) {
+      return ((XmlTag)parent).getNSDescriptor(namespace, strict);
+    }
+
     CachedValue<XmlNSDescriptor> descriptor = myNSDescriptorsMap.get(namespace);
     if(descriptor != null) {
       final XmlNSDescriptor value = descriptor.getValue();
       if(value != null) return value;
+    } else if (parent instanceof XmlTag) {
+      return ((XmlTag)parent).getNSDescriptor(namespace, strict);
     }
 
     if(!strict) {
@@ -165,18 +174,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               }
             }
 
-            final PsiFile containingFile = getContainingFile();
-            if (containingFile!=null && containingFile.getFileType() == StdFileTypes.JSPX) {
-              initializeSchema(XmlUtil.XHTML_URI,XmlUtil.XHTML_URI);
-              final XmlNSDescriptor xhtmlDescriptor = myNSDescriptorsMap.get(XmlUtil.XHTML_URI).getValue();
-
-              myNSDescriptorsMap.put(XmlUtil.XHTML_URI, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
-                public Result<XmlNSDescriptor> compute() {
-                  final XmlNSDescriptor jspxNSDescriptor = new JspXHTMLDescriptor(xhtmlDescriptor);
-                  return new Result<XmlNSDescriptor>(jspxNSDescriptor, jspxNSDescriptor.getDependences());
-                }
-              }, false));
-            }
           }
         }
 
@@ -269,7 +266,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return myNSDescriptorsMap;
   }
 
-  private boolean initializeSchema(String namespace, final String fileLocation) {
+  private boolean initializeSchema(final String namespace, final String fileLocation) {
     XmlNSDescriptor descriptor;
     if(myNSDescriptorsMap == null) myNSDescriptorsMap = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
@@ -280,7 +277,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
 
     if (file != null){
-      descriptor = (XmlNSDescriptor)file.getDocument().getMetaData();
+      descriptor = getMetaDataDescriptor(file,namespace);
 
       if(descriptor != null){
         final XmlFile file1 = file;
@@ -288,7 +285,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
           public CachedValueProvider.Result<XmlNSDescriptor> compute() {
             return new Result<XmlNSDescriptor>(
-              (XmlNSDescriptor)file1.getDocument().getMetaData(),
+              getMetaDataDescriptor(file1,namespace),
               new Object[]{file1}
             );
           }
@@ -297,6 +294,19 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
     }
     return true;
+  }
+
+  private XmlNSDescriptor getMetaDataDescriptor(final XmlFile file, String namespace) {
+    XmlNSDescriptor descriptor;
+    descriptor = (XmlNSDescriptor)file.getDocument().getMetaData();
+
+    PsiFile myContainingFile = getContainingFile();
+    if (myContainingFile!=null) {
+      if(myContainingFile.getFileType() == StdFileTypes.JSPX && namespace.equals(XmlUtil.XHTML_URI)) {
+        descriptor = new JspXHTMLDescriptor(descriptor);
+      }
+    }
+    return descriptor;
   }
 
   public PsiReference getReference() {
@@ -545,10 +555,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         }
       }
 
-      final PsiFile containingFile = parent.getContainingFile();
-      if (containingFile!=null && containingFile.getFileType() == StdFileTypes.JSPX) {
-        myNamespaceMap.put("",XmlUtil.XHTML_URI);
-      }
     }
     if(parent instanceof XmlDocument && myNamespaceMap == null){
       myNamespaceMap = new BidirectionalMap<String, String>();

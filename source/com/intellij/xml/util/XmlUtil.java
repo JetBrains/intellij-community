@@ -508,8 +508,7 @@ public class XmlUtil {
       final FileType fileType = file.getFileType();
 
       if (fileType == StdFileTypes.HTML ||
-          fileType == StdFileTypes.XHTML ||
-          fileType == StdFileTypes.JSPX
+          fileType == StdFileTypes.XHTML
           ) {
         return XHTML_URI;
       }
