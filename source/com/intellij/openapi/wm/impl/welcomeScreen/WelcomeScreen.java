@@ -13,13 +13,15 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.font.FontRenderContext;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.io.File;
@@ -50,6 +52,8 @@ public class WelcomeScreen {
   private static final int MAIN_GROUP = 0;
   private static final int PLUGINS_GROUP = 1;
   private static final int COLUMNS_IN_MAIN = 2;
+  private static final int PLUGIN_DSC_MAX_WIDTH = 170;
+  private static final int PLUGIN_NAME_MAX_WIDTH = 170;
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(78, 78);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
@@ -124,10 +128,15 @@ public class WelcomeScreen {
       }
     }
 
-    GridBagConstraints gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(17, 25, 0, 25), 0, 0);
+    GridBagConstraints gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(17, 25, 0, 0), 0, 0);
     topPluginsPanel.add(pluginsCaption, gBC);
 
-    gBC = new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(13, 20, 0, 10), 0, 0);
+    JLabel emptyLabel_1 = new JLabel();
+    emptyLabel_1.setBackground(PLUGINS_PANEL_COLOR);
+    gBC = new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+    topPluginsPanel.add(emptyLabel_1, gBC);
+
+    gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 20), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(null, OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
         new SingleConfigurableEditor(myPluginsPanel, PluginManagerConfigurable.getInstance(), null).show();
@@ -150,11 +159,6 @@ public class WelcomeScreen {
     openPluginManager.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
     myPluginsButtonsCount++;
 
-    JLabel emptyLabel_1 = new JLabel();
-    emptyLabel_1.setBackground(PLUGINS_PANEL_COLOR);
-    gBC = new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    topPluginsPanel.add(emptyLabel_1, gBC);
-
     gBC = new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 25, 0, 0), 0, 0);
     topPluginsPanel.add(installedPluginsCaption, gBC);
 
@@ -172,7 +176,7 @@ public class WelcomeScreen {
     JPanel emptyPanel_1 = new JPanel();
     emptyPanel_1.setBackground(PLUGINS_PANEL_COLOR);
 
-    gBC = new GridBagConstraints(0, myPluginsIdx + 1, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
     myPluginsPanel.add(emptyPanel_1, gBC);
 
     JScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
@@ -291,8 +295,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 15, 0, 0), 0, 0);
     myMainPanel.add(docsPanel, gBC);
 
-    myMainPanel.setPreferredSize(new Dimension(700, 450));
-    myMainPanel.setMinimumSize(new Dimension(700, -1));
+    myMainPanel.setPreferredSize(new Dimension(650, 450));
 
     JScrollPane myMainScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
     myMainScrollPane.setBorder(null);
@@ -326,10 +329,10 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(0, 0, 3, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
     myWelcomePanel.add(topPanel, gBC);
 
-    gBC = new GridBagConstraints(0, 1, 2, 1, 1.5, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 2, 1, 1.4, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
     myWelcomePanel.add(myMainScrollPane, gBC);
 
-    gBC = new GridBagConstraints(2, 1, 1, 1, 0.7, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
+    gBC = new GridBagConstraints(2, 1, 1, 1, 0.6, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
     myWelcomePanel.add(myPluginsScrollPane, gBC);
   }
 
@@ -402,8 +405,7 @@ public class WelcomeScreen {
     JLabel shortDescription = new JLabel(description);
     shortDescription.setFont(TEXT_FONT);
 
-    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30),
-                                 5, 0);
+    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
     panel.add(shortDescription, gBC);
   }
 
@@ -435,19 +437,23 @@ public class WelcomeScreen {
     JLabel shortDescription = new JLabel(description);
     shortDescription.setFont(TEXT_FONT);
 
-    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30),
-                                 5, 0);
+    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
     panel.add(shortDescription, gBC);
   }
 
   public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, final String url) {
 
-    if (StringUtil.isEmptyOrSpaces(name)) return;
+    if (StringUtil.isEmptyOrSpaces(name)) {
+      return;
+    }
+    else {
+      name = name.trim();
+    }
 
     final int y = myPluginsIdx += 2;
-    GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 20, 0, 0), 0, 0);
     Icon logoImage;
 
+    // Check the iconPath and insert empty icon in case of empty or invalid value
     if (StringUtil.isEmptyOrSpaces(iconPath)) {
       logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
@@ -455,45 +461,35 @@ public class WelcomeScreen {
       logoImage = IconLoader.getIcon(iconPath);
       if (logoImage == null) logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
-    // TODO[pti]: check the length of the name, and add a line break if necessary
-    JLabel logoName = new JLabel(name, logoImage, SwingConstants.LEFT);
+    JLabel imageLabel = new JLabel(logoImage);
+    GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                    new Insets(15, 20, 0, 0), 0, 0);
+    panel.add(imageLabel, gBC);
+
+    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH);
+    JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
+    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText(name);
+
+    gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                    new Insets(15, 7, 0, 0), 0, 0);
     panel.add(logoName, gBC);
 
-    String dsc = description;
-    if (!StringUtil.isEmptyOrSpaces(dsc)) {
-
-      if (dsc.length() > 35) {
-        String substring_1;
-        String substring_2;
-        int maxLength = 70;
-        for (int i = 34; i >= 0; i--) {
-          if (dsc.charAt(i) == ' ') {
-            substring_1 = dsc.substring(0, i) + "<br>";
-            if (dsc.length() <= maxLength) {
-              substring_2 = dsc.substring(i + 1, dsc.length());
-            }
-            else {
-              maxLength = i + 33;
-              substring_2 = dsc.substring(i + 1, maxLength) + "...";
-            }
-            dsc = substring_1 + substring_2;
-            break;
-          }
-        }
-      }
-
-      gBC = new GridBagConstraints(0, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                   new Insets(5, PLUGIN_LOGO_SIZE.width + 25, 0, 0), 5, 0);
-      JLabel pluginDescription = new JLabel("<html>" + dsc + "</html>");
-      pluginDescription.setToolTipText(description);
+    if (!StringUtil.isEmpty(description)) {
+      description = description.trim();
+      String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH);
+      JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
+      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText(description);
+
+      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                   new Insets(5, 7, 0, 0), 5, 0);
       panel.add(pluginDescription, gBC);
     }
 
     if (!StringUtil.isEmptyOrSpaces(url)) {
-      gBC = new GridBagConstraints(1, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 15, 0, 0), 0, 0);
+      gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 7, 0, 0), 0, 0);
       JLabel label = new JLabel("<html><nobr><u>Learn More...</u></nobr></html>");
       label.setFont(TEXT_FONT);
       label. setForeground(CAPTION_COLOR);
@@ -510,7 +506,7 @@ public class WelcomeScreen {
       label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       panel.add(label, gBC);
 
-      gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
+      gBC = new GridBagConstraints(3, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
       MyActionButton learnMore = new PluginsActionButton(null, LEARN_MORE_ICON, null) {
         protected void onPress(InputEvent e) {
           try {
@@ -527,11 +523,46 @@ public class WelcomeScreen {
       myPluginsButtonsCount++;
     }
     else {
-      gBC = new GridBagConstraints(1, y, 2, 2, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 15, 0, 10), 0, 0);
+      gBC = new GridBagConstraints(2, y, 2, 2, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0);
       JPanel emptyPane = new JPanel();
       emptyPane.setBackground(PLUGINS_PANEL_COLOR);
       panel.add(emptyPane, gBC);
     }
+  }
+
+  /* This method checks the width of the given name with given font applied, and breaks the name into two lines, and/or cuts it, so that
+   * the name does not exceed the given width (with ellipsis at the end).
+   * Returns the resulting string.
+  */
+  private String adjustStringBreaksByWidth(final String name, final Font font, final boolean isAntiAliased, final int maxWidth) {
+
+    String shortenedName = name;
+    Rectangle2D r = font.getStringBounds(name, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
+
+    if (r.getWidth() > maxWidth) {
+      String substring_1;
+      String substring_2;
+      int maxIdxPerLine = (int)(maxWidth / r.getWidth() * name.length());
+      for (int i = maxIdxPerLine; i > 0; i--) {
+        if (name.charAt(i) == ' ') {
+          substring_1 = name.substring(0, i) + "<br>";
+          if ((name.length() / 2) <= maxIdxPerLine) {
+            substring_2 = name.substring(i + 1, name.length());
+          }
+          else {
+            maxIdxPerLine = i + maxIdxPerLine - 2;
+            substring_2 = name.substring(i + 1, maxIdxPerLine) + "...";
+          }
+          shortenedName = substring_1 + substring_2;
+          break;
+        }
+      }
+      // In case there were no space characters for breaking the name properly, the name is cut to take only one line with ellipsis at the end
+      if (shortenedName.equals(name) && shortenedName.length() > maxIdxPerLine) {
+        shortenedName = name.substring(0, maxIdxPerLine - 2) + "...";
+      }
+    }
+    return "<html>" + shortenedName + "</html>";
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
