@@ -328,7 +328,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     private AbstractTreeNode findAbstractTreeNodeByLocation(final Point point) {
       final int row = myTree.getRowForLocation(point.x, point.y);
       final TreePath treePath = myTree.getPathForRow(row);
-      if (treePath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+      if (treePath != null && treePath.getLastPathComponent() instanceof DefaultMutableTreeNode){
         return (AbstractTreeNode)((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
       }
       return null;
