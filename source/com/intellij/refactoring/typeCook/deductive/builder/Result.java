@@ -60,8 +60,20 @@ public class Result {
     if (myBinding != null) {
       final PsiType type = myBinding.substitute(myTypes.get(element));
 
-      if (type == null && originalType.getCanonicalText().equals("java.lang.Object")) {
-        return originalType;
+      if (originalType.getCanonicalText().equals("java.lang.Object")) {
+        if (type == null) {
+          return originalType;
+        }
+
+        if (type instanceof PsiWildcardType){
+          final PsiType bound = ((PsiWildcardType)type).getBound();
+
+          if (bound != null){
+            return bound;
+          }
+
+          return originalType;
+        }
       }
 
       return type;
