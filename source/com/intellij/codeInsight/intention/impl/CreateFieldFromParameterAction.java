@@ -71,14 +71,14 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
 
     if (isInteractive) {
-      List namesList = new ArrayList();
+      List<String> namesList = new ArrayList<String>();
       namesList.addAll(Arrays.asList(names));
       String defaultName = styleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
       if (!namesList.contains(defaultName)) namesList.add(0, defaultName);
       else {
         Collections.swap(namesList, 0, namesList.indexOf(defaultName));
       }
-      names = (String[])namesList.toArray(new String[namesList.size()]);
+      names = namesList.toArray(new String[namesList.size()]);
 
       CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
         project,
