@@ -18,25 +18,21 @@ import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.util.Icons;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class DependenciesPanel extends JPanel {
@@ -334,6 +330,7 @@ public class DependenciesPanel extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      myUsagesPanel.dispose();
       DependencyValidationManager.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }

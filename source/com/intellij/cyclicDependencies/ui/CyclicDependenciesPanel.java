@@ -372,6 +372,7 @@ public class CyclicDependenciesPanel extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      myUsagesPanel.dispose();
       DependencyValidationManager.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }

@@ -9,11 +9,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.FindDependencyUtil;
-import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.psi.PsiFile;
+import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -135,6 +134,12 @@ public class UsagesPanel extends JPanel {
         revalidate();
       }
     });
+  }
+
+  public void dispose(){
+    if (myCurrentUsageView != null){
+      myCurrentUsageView.dispose();
+    }
   }
 
   private JComponent createLabel(String text) {
