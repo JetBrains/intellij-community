@@ -5,7 +5,6 @@
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
