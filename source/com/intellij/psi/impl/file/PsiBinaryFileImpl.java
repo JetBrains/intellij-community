@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -246,6 +247,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public PsiFile createPseudoPhysicalCopy() {
     LOG.assertTrue(false);
+    return null;
+  }
+
+  public ASTNode getNode() {
     return null;
   }
 }

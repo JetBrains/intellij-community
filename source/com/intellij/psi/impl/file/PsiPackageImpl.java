@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -21,9 +22,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.impl.PackageViewSelectInTarget;
-import com.intellij.ide.projectView.impl.PackageViewPane;
-import com.intellij.ide.projectView.ProjectView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -423,5 +421,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public boolean isPhysical() {
     return true;
+  }
+
+  public ASTNode getNode() {
+    return null;
   }
 }

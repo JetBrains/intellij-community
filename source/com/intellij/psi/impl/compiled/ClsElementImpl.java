@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -182,5 +183,9 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
 
   public PsiElement getOriginalElement() {
     return this;
+  }
+
+  public ASTNode getNode() {
+    return null;
   }
 }

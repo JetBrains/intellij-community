@@ -190,4 +190,8 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   public Language getLanguage() {
     return getElementType().getLanguage();
   }
+
+  public ASTNode getNode() {
+    return this;
+  }
 }

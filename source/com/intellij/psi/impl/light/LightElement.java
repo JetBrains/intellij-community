@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -108,4 +109,7 @@ public abstract class LightElement extends PsiElementBase {
     throw new IncorrectOperationException();
   }
 
+  public ASTNode getNode() {
+    return null;
+  }
 }

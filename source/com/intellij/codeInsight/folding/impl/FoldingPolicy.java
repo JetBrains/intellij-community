@@ -35,10 +35,10 @@ class FoldingPolicy {
     if (lang != null) {
       final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
       if (foldingBuilder != null) {
-        final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file, document);
+        final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
         for (int i = 0; i < foldingDescriptors.length; i++) {
           FoldingDescriptor descriptor = foldingDescriptors[i];
-          map.put(descriptor.getElement(), descriptor.getRange());
+          map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
         }
         return map;
       }
@@ -261,7 +261,7 @@ class FoldingPolicy {
     if (lang != null) {
       final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
       if (foldingBuilder != null) {
-        return foldingBuilder.getPlaceholderText(element);
+        return foldingBuilder.getPlaceholderText(element.getNode());
       }
     }
 
@@ -291,7 +291,7 @@ class FoldingPolicy {
     if (lang != null) {
       final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
       if (foldingBuilder != null) {
-        return foldingBuilder.isCollapsedByDefault(element);
+        return foldingBuilder.isCollapsedByDefault(element.getNode());
       }
     }
 
@@ -516,10 +516,8 @@ class FoldingPolicy {
       return buffer.toString();
     } else if (element instanceof PsiJavaFile) {
       return null;
-    } else {
-      LOG.error("Unknown element:" + element);
-      return null;
     }
+    return null;
   }
 
   private static <T extends PsiNamedElement> T restoreElementInternal (PsiElement parent, String name, int index, Class<T> hisClass) {

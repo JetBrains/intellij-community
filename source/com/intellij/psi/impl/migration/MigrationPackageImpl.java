@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.migration;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;
@@ -37,5 +38,9 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
 
   public VirtualFile[] occursInPackagePrefixes() {
     return VirtualFile.EMPTY_ARRAY;
+  }
+
+  public ASTNode getNode() {
+    return null;
   }
 }

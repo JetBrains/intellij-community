@@ -1,7 +1,7 @@
 package com.intellij.lang.folding;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,15 +11,15 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public class FoldingDescriptor {
-  private PsiElement myElement;
+  private ASTNode myElement;
   private TextRange myRange;
 
-  public FoldingDescriptor(final PsiElement element, final TextRange range) {
-    myElement = element;
+  public FoldingDescriptor(final ASTNode node, final TextRange range) {
+    myElement = node;
     myRange = range;
   }
 
-  public PsiElement getElement() {
+  public ASTNode getElement() {
     return myElement;
   }
 

@@ -1,7 +1,7 @@
 package com.intellij.lang.folding;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface FoldingBuilder {
-  FoldingDescriptor[] buildFoldRegions(PsiElement file, Document document);
+  FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document);
 
-  String getPlaceholderText(PsiElement elt);
+  String getPlaceholderText(ASTNode node);
 
-  boolean isCollapsedByDefault(PsiElement elt);
+  boolean isCollapsedByDefault(ASTNode node);
 }

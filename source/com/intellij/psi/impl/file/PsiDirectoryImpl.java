@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -589,6 +590,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public String toString() {
     return "PsiDirectory:" + myFile.getPresentableUrl();
+  }
+
+  public ASTNode getNode() {
+    return null;
   }
 }
 

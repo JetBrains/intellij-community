@@ -4,6 +4,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -116,4 +117,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   GlobalSearchScope getResolveScope();
   SearchScope getUseScope();
+
+  ASTNode getNode();
 }
