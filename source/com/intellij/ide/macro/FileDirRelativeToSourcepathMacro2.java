@@ -11,7 +11,7 @@ public final class FileDirRelativeToSourcepathMacro2 extends FileDirRelativeToSo
   }
 
   public String getDescription() {
-    return "File dir relative to the sourcepath the file belongs to (with forward slashes)";
+    return "File dir relative to the sourcepath root the file belongs to (with forward slashes)";
   }
 
   public String expand(DataContext dataContext) {

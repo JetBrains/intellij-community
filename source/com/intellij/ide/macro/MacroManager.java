@@ -45,10 +45,17 @@ public final class MacroManager implements ApplicationComponent {
     registerMacro(new PromptMacro());
     registerMacro(new SourcepathEntryMacro());
     registerMacro(new ClasspathEntryMacro());
+
     registerMacro(new ProjectFilePathMacro());
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
     registerMacro(new ProjectPathMacro());
+
+    registerMacro(new ModuleFilePathMacro());
+    registerMacro(new ModuleFileDirMacro());
+    registerMacro(new ModuleNameMacro());
+    registerMacro(new ModulePathMacro());
+
     registerMacro(new FileRelativePathMacro());
     registerMacro(new FileRelativeDirMacro());
     registerMacro(new JavaDocPathMacro());

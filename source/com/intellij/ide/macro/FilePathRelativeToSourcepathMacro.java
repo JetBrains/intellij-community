@@ -14,7 +14,7 @@ public class FilePathRelativeToSourcepathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File path relative to the sourcepath the file belongs to";
+    return "File path relative to the sourcepath root the file belongs to";
   }
 
   public String expand(final DataContext dataContext) {

@@ -16,13 +16,10 @@ public final class ProjectNameMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) return null;
-    String path = project.getProjectFilePath();
-    File file = new File(path);
-    if (!file.exists() || !file.isFile()) return null;
-    String name = file.getName();
-    int index = name.lastIndexOf('.');
-    return index >= 0 ? name.substring(0, index) : name;
+    final Project project = DataAccessor.PROJECT.from(dataContext);
+    if (project == null) {
+      return null;
+    }
+    return project.getName();
   }
 }

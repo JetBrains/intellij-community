@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.util.containers.CollectUtil;
 import com.intellij.util.containers.Convertor;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 
 public abstract class DataAccessor<T> {
   public static final DataAccessor<Project> PROJECT = new SimpleDataAccessor<Project>(DataConstants.PROJECT);
+  public static final DataAccessor<Module> MODULE = new SimpleDataAccessor<Module>(DataConstants.MODULE);
   public static final DataAccessor<Editor> EDITOR = new SimpleDataAccessor<Editor>(DataConstants.EDITOR);
 
   public static final DataAccessor<PsiManager> PSI_MANAGER = new DataAccessor<PsiManager>() {
@@ -68,6 +70,14 @@ public abstract class DataAccessor<T> {
       return project.getProjectFilePath();
     }
   };
+
+  public static final DataAccessor<String> MODULE_FILE_PATH = new DataAccessor<String>() {
+    public String getImpl(DataContext dataContext) throws NoDataException {
+      Module module = MODULE.getNotNull(dataContext);
+      return module.getModuleFilePath();
+    }
+  };
+
   public static final DataAccessor<ProjectEx> PROJECT_EX = new SubClassDataAccessor<Project, ProjectEx>(PROJECT, ProjectEx.class);
 
   public final T from(DataContext dataContext) {

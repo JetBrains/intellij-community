@@ -12,7 +12,7 @@ public final class ProjectPathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Project paths";
+    return "Project surce path";
   }
 
   public String expand(DataContext dataContext) {

@@ -11,7 +11,7 @@ public final class FileDirRelativeToProjectRootMacro2 extends FileDirRelativeToP
   }
 
   public String getDescription() {
-    return "File dir relative to the project root the file belongs to (with forward slashes)";
+    return "File dir relative to the module content root the file belongs to (with forward slashes)";
   }
 
   public String expand(DataContext dataContext) {

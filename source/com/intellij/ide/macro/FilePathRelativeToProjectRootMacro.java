@@ -14,7 +14,7 @@ public class FilePathRelativeToProjectRootMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File path relative to the project root the file belongs to";
+    return "File path relative to the module content root the file belongs to";
   }
 
   public String expand(final DataContext dataContext) {

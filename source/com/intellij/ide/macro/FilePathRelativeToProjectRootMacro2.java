@@ -11,7 +11,7 @@ public final class FilePathRelativeToProjectRootMacro2 extends FilePathRelativeT
   }
 
   public String getDescription() {
-    return "File path relative to the project root the file belongs to (with forward slashes)";
+    return "File path relative to the module content root the file belongs to (with forward slashes)";
   }
 
   public String expand(DataContext dataContext) {
