@@ -35,7 +35,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
 
 
     final PsiMethod equalsMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project));
-    final PsiMethod hashCodeMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature(project));
+    final PsiMethod hashCodeMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature());
 
     boolean needEquals = equalsMethod == null;
     boolean needHashCode = hashCodeMethod == null;

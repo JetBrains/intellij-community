@@ -62,7 +62,7 @@ public class GenerateEqualsHelper implements Runnable {
       throw new NoObjectClassException();
     }
 
-    boolean tmp = superMethodExists(getHashCodeSignature(myProject));
+    boolean tmp = superMethodExists(getHashCodeSignature());
     mySuperHasHashCode = tmp;
     myCodeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
   }
@@ -110,7 +110,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
 
     PsiMethod hashCode = null;
-    if (myHashCodeFields != null && findMethod(myClass, getHashCodeSignature(myProject)) == null) {
+    if (myHashCodeFields != null && findMethod(myClass, getHashCodeSignature()) == null) {
       if (myHashCodeFields.length > 0) {
         hashCode = createHashCode();
       } else {
@@ -163,11 +163,17 @@ public class GenerateEqualsHelper implements Runnable {
         PsiField field = (PsiField) iterator.next();
 
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          if (field.getType() instanceof PsiArrayType) {
+          final PsiType type = field.getType();
+          if (type instanceof PsiArrayType) {
             addArrayEquals(buffer, field);
-          } else if (field.getType() instanceof PsiPrimitiveType) {
+          } else if (type instanceof PsiPrimitiveType) {
+            if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
+              addDoubleFieldComparison(buffer, field);
+            }
+            else {
               addPrimitiveFieldComparison(buffer, field);
-            } else {
+            }
+          } else {
               addFieldComparison(buffer, field);
             }
         }
@@ -181,6 +187,11 @@ public class GenerateEqualsHelper implements Runnable {
     return method;
   }
 
+  private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
+    final String type = field.getType() == PsiType.DOUBLE ? "Double" : "Float";
+    final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
+    DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
+  }
 
   private static final MessageFormat ARRAY_COMPARER_MF =
           new MessageFormat("if(!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
@@ -190,7 +201,8 @@ public class GenerateEqualsHelper implements Runnable {
           new MessageFormat("if(!{1}.equals({0}.{1}))return false;\n");
   private static final MessageFormat PRIMITIVE_FIELD_COMPARER_MF =
           new MessageFormat("if({1}!={0}.{1})return false;\n");
-
+  private static final MessageFormat DOUBLE_FIELD_COMPARER_MF =
+          new MessageFormat("if({0}.compare({1}.{2}, {2}) != 0)return false;\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
@@ -212,21 +224,10 @@ public class GenerateEqualsHelper implements Runnable {
 
   private void addFieldComparison(StringBuffer buffer, PsiField field) {
     boolean canBeNull = !myNonNullSet.contains(field);
-    final String name = field.getName();
-    final String instanceFieldRef = myClassInstanceName + "." + name;
     if (canBeNull) {
       FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-      /*buffer.append("if(");
-      buffer.append(name + " != null ? !");
-      buffer.append(name);
-      buffer.append(".equals(");
-      buffer.append(instanceFieldRef);
-      buffer.append(") : ");
-      buffer.append(instanceFieldRef + "!= null");
-      buffer.append(") return false;\n");*/
     } else {
       NON_NULL_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-      /*buffer.append("if(!" + name + ".equals(" + instanceFieldRef + ")) return false;\n");*/
     }
   }
 
@@ -370,15 +371,6 @@ public class GenerateEqualsHelper implements Runnable {
   private void addPrimitiveFieldHashCode(StringBuffer buffer, PsiField field, String tempName) {
     MessageFormat format = (MessageFormat) PRIMITIVE_HASHCODE_FORMAT.get(field.getType().getCanonicalText());
     buffer.append(format.format(new Object[]{field.getName(), tempName}));
-/*
-    String boxedTypeName = (String) BOXED_OF_PRIMITIVE.get(field.getType().getCanonicalText());
-    LOG.assertTrue(boxedTypeName != null);
-    buffer.append("new ");
-    buffer.append(boxedTypeName);
-    buffer.append("(");
-    buffer.append(field.getName());
-    buffer.append(").hashCode()");
-*/
   }
 
   private void addFieldHashCode(StringBuffer buffer, PsiField field) {
@@ -459,7 +451,7 @@ public class GenerateEqualsHelper implements Runnable {
     return "java.lang.Object".equals(qName);
   }
 
-  public static MethodSignature getHashCodeSignature(Project project) {
+  public static MethodSignature getHashCodeSignature() {
     return MethodSignatureUtil.createMethodSignature("hashCode",(PsiType[])null,null,PsiSubstitutor.EMPTY);
   }
 
