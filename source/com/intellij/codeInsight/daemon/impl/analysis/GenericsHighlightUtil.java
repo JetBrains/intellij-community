@@ -833,7 +833,7 @@ public abstract class GenericsHighlightUtil {
       if (!(element instanceof PsiTypeParameterListOwner)) return null;
       if (((PsiTypeParameterListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return null;
       PsiClass containingClass = ((PsiTypeParameterListOwner)element).getContainingClass();
-      if (containingClass != null && PsiUtil.isRawSubstitutorForClass(containingClass, resolveResult.getSubstitutor())) {
+      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, refParamList, "Type arguments given on a raw " + (element instanceof PsiClass ? "type" : "method"));
       }
     }

@@ -89,7 +89,7 @@ public class PsiSuperMethodImplUtil {
       final PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
       for (int i = 0; i < ejbDeclarations.length; i++) {
         PsiMethod ejbDeclaration = ejbDeclarations[i];
-        sameSignatureMethods.add(new MethodSignatureBackedByPsiMethod(ejbDeclaration, PsiSubstitutor.EMPTY));
+        sameSignatureMethods.add(MethodSignatureBackedByPsiMethod.create(ejbDeclaration, PsiSubstitutor.EMPTY));
       }
     }
     PsiManager manager = method.getManager();

@@ -255,10 +255,6 @@ public class PsiImplUtil {
     return processor.getResults().toArray();
   }
 
-  public static final MethodSignature getMethodSignature(PsiMethod method, PsiSubstitutor substitutor) {
-    return new MethodSignatureBackedByPsiMethod(method, substitutor);
-  }
-
   public static boolean processDeclarationsInMethod(PsiMethod method, PsiScopeProcessor processor, PsiSubstitutor substitutor,
                                                     PsiElement lastParent, PsiElement place) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);

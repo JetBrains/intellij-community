@@ -101,7 +101,7 @@ public abstract class PsiClassType extends PsiType {
 
   public static boolean isRaw(ClassResolveResult resolveResult) {
     if (resolveResult.getElement() == null) return false;
-    return PsiUtil.isRawSubstitutorForClass(resolveResult.getElement(), resolveResult.getSubstitutor());
+    return PsiUtil.isRawSubstitutor(resolveResult.getElement(), resolveResult.getSubstitutor());
   }
 
   /**

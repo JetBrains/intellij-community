@@ -503,7 +503,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
     if (parent instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)parent;
-      final MethodSignatureBackedByPsiMethod methodSignature = new MethodSignatureBackedByPsiMethod(method, PsiSubstitutor.EMPTY);
+      final MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
         final List<MethodSignatureBackedByPsiMethod> superMethodSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(
           method, true);

@@ -448,7 +448,7 @@ public class PsiClassImplUtil{
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
                                                        PsiSubstitutor substitutor) {
     PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
-    if (PsiUtil.isRawSubstitutorForClass(aClass, substitutor)) {
+    if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
       return candidateSubstitutor.merge(elementFactory.createRawSubstitutor(candidateClass));
     }
 

@@ -51,10 +51,6 @@ public class MethodSignatureUtil {
   public static boolean areSignaturesEqual(MethodSignature method1, MethodSignature method2) {
     if (method2 == method1) return true;
     if (checkDifferentSignaturesLightweight(method1, method2)) return false;
-    if (method1.isRaw() && !method2.isRaw()) {
-      PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(method2, method1);
-      return checkSignaturesEqualInner(method2, method1, unifyingSubstitutor);
-    }
     PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(method1, method2);
     return checkSignaturesEqualInner(method1, method2, unifyingSubstitutor);
   }
@@ -63,23 +59,14 @@ public class MethodSignatureUtil {
                                                   final MethodSignature superSignature,
                                                   PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
-    PsiTypeParameter[] subTypeParameters = subSignature.getTypeParameters();
-    PsiTypeParameter[] superTypeParameters = superSignature.getTypeParameters();
-    if (subTypeParameters.length > superTypeParameters.length) return false;
-    for (int i = 0; i < subTypeParameters.length; i++) {
-      PsiType type1 = unifyingSubstitutor.substitute(subTypeParameters[i]);
-      PsiType type2 = unifyingSubstitutor.substitute(superTypeParameters[i]);
-      if (!Comparing.equal(type1, type2)) return false;
-    }
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();
     for (int i = 0; i < subParameterTypes.length; i++) {
       PsiType type1 = unifyingSubstitutor.substitute(subParameterTypes[i]);
       PsiType type2 = unifyingSubstitutor.substitute(superParameterTypes[i]);
-      if (!type1.equals(type2)) {
-        if (subSignature.getTypeParameters().length > 0) return false;
-        return checkErasures(subParameterTypes, superParameterTypes);
+      if (!Comparing.equal(type1, type2)) {
+        return false;
       }
     }
 
@@ -94,25 +81,17 @@ public class MethodSignatureUtil {
     final PsiType[] parameterTypes2 = sig2.getParameterTypes();
     if (parameterTypes1.length != parameterTypes2.length) return true;
 
+    if (sig1.getTypeParameters().length != sig2.getTypeParameters().length) return true;
+
     // optimization: check for really different types in method parameters
     for (int i = 0; i < parameterTypes1.length; i++) {
       PsiType type1 = parameterTypes1[i];
       PsiType type2 = parameterTypes2[i];
-      if (type1 instanceof PsiClassType != type2 instanceof PsiClassType) return true;
       if (type1 instanceof PsiPrimitiveType != type2 instanceof PsiPrimitiveType) return true;
       if (type1 instanceof PsiPrimitiveType && !type1.equals(type2)) return true;
     }
 
     return false;
-  }
-
-  private static boolean checkErasures(final PsiType[] subParamTypes, final PsiType[] superParamTypes) {
-    for (int i = 0; i < subParamTypes.length; i++) {
-      final PsiType type1 = TypeConversionUtil.erasure(superParamTypes[i]);
-      final PsiType type2 = subParamTypes[i];
-      if (!type1.equals(type2)) return false;
-    }
-    return true;
   }
 
   // TODO: add substitutor to signature
@@ -238,7 +217,7 @@ public class MethodSignatureUtil {
     final List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>(pairs.size());
     for (int i = 0; i < pairs.size(); i++) {
       Pair<PsiMethod, PsiSubstitutor> pair = pairs.get(i);
-      result.add(new MethodSignatureBackedByPsiMethod(pair.first, pair.second));
+      result.add(MethodSignatureBackedByPsiMethod.create(pair.first, pair.second));
     }
     return result;
   }
@@ -292,32 +271,18 @@ public class MethodSignatureUtil {
     PsiTypeParameter[] typeParameters2 = superMethodSignature.getTypeParameters();
 
     // both methods are parameterized and number of parameters mismatch
-    if (typeParameters1.length != typeParameters2.length && typeParameters1.length != 0 && typeParameters2.length != 0) return null;
+    if (typeParameters1.length != typeParameters2.length) return null;
 
-    boolean derivedRaw = methodSignature.isRaw();
-    boolean superRaw = superMethodSignature.isRaw();
-    if (derivedRaw || superRaw) {
-      if (!superRaw && derivedRaw) return null;  //Wrong order
-
-      PsiSubstitutor substitutor = superMethodSignature.getSubstitutor();
-      substitutor = eraseMethodTypeParameters(typeParameters2, substitutor);
-
-      if (derivedRaw) {
-        substitutor = eraseMethodTypeParameters(typeParameters1, substitutor);
-      }
-      return substitutor;
-    }
 
     PsiSubstitutor substitutor1 = methodSignature.getSubstitutor();
     PsiSubstitutor substitutor2 = superMethodSignature.getSubstitutor();
-    int limit = Math.min(typeParameters1.length, typeParameters2.length);
-    for (int i = 0; i < limit; i++) {
+    for (int i = 0; i < typeParameters1.length; i++) {
       PsiElementFactory factory = typeParameters1[i].getManager().getElementFactory();
       substitutor2 = substitutor2.put(typeParameters2[i], factory.createType(typeParameters1[i]));
     }
 
     //check bounds
-    for (int i = 0; i < limit; i++) {
+    for (int i = 0; i < typeParameters1.length; i++) {
       PsiTypeParameter typeParameter1 = typeParameters1[i];
       PsiTypeParameter typeParameter2 = typeParameters2[i];
       final PsiClassType[] supers1 = typeParameter1.getSuperTypes();
@@ -330,14 +295,6 @@ public class MethodSignatureUtil {
       }
     }
     return substitutor2;
-  }
-
-  private static PsiSubstitutor eraseMethodTypeParameters(PsiTypeParameter[] typeParameters1, PsiSubstitutor substitutor) {
-    for (int i = 0; i < typeParameters1.length; i++) {
-      PsiTypeParameter typeParameter = typeParameters1[i];
-      substitutor = substitutor.put(typeParameter, null);
-    }
-    return substitutor;
   }
 
   public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor) {

@@ -5,19 +5,21 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiTypeParameter;
-
-import java.util.Iterator;
+import com.intellij.psi.*;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
 
   private final PsiMethod myMethod;
+  private final boolean myIsRaw;
 
-  public MethodSignatureBackedByPsiMethod(PsiMethod method, PsiSubstitutor substitutor) {
-    super(substitutor, method.getParameterList(), method.getTypeParameterList());
+  private MethodSignatureBackedByPsiMethod(PsiMethod method,
+                                         PsiSubstitutor substitutor,
+                                         boolean isRaw,
+                                         PsiType[] parameterTypes,
+                                         PsiTypeParameter[] methodTypeParameters) {
+    super(substitutor, parameterTypes, methodTypeParameters);
+    myIsRaw = isRaw;
     LOG.assertTrue(method.isValid());
     myMethod = method;
   }
@@ -28,7 +30,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
 
 
   public boolean isRaw() {
-    return isRawSubstitutorForMethod(myMethod, getSubstitutor());
+    return myIsRaw;
   }
 
   public boolean equals(Object o) {
@@ -43,12 +45,25 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod;
   }
 
-  private static boolean isRawSubstitutorForMethod(PsiMethod method, PsiSubstitutor substitutor) {
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(method);
-    while (iterator.hasNext()) {
-      final PsiTypeParameter typeParameter = iterator.next();
-      if (substitutor.substitute(typeParameter) == null) return true;
+  public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor) {
+    final boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
+    PsiTypeParameter[] methodTypeParameters = method.getTypeParameterList().getTypeParameters();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiType[] parameterTypes = new PsiType[parameters.length];
+    for (int i = 0; i < parameterTypes.length; i++) {
+      parameterTypes[i] = parameters[i].getType();
     }
-    return false;
+
+    if (isRaw) {
+      for (int i = 0; i < methodTypeParameters.length; i++) {
+        substitutor = substitutor.put(methodTypeParameters[i], null);
+      }
+      methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
+
+      for (int i = 0; i < parameterTypes.length; i++) {
+        parameterTypes[i] = TypeConversionUtil.erasure(parameterTypes[i]);
+      }
+    }
+    return new MethodSignatureBackedByPsiMethod(method, substitutor, isRaw, parameterTypes, methodTypeParameters);
   }
 }

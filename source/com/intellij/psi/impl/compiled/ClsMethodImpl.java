@@ -659,7 +659,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public MethodSignature getSignature(PsiSubstitutor substitutor) {
-    return PsiImplUtil.getMethodSignature(this, substitutor);
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
   public String getMirrorText() {

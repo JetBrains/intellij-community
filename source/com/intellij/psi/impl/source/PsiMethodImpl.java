@@ -337,7 +337,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public MethodSignature getSignature(PsiSubstitutor substitutor){
-    return PsiImplUtil.getMethodSignature(this, substitutor);
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
   public void treeElementSubTreeChanged() {

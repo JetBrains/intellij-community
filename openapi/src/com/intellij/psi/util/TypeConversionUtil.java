@@ -810,7 +810,7 @@ public class TypeConversionUtil {
     if (!superClass.hasTypeParameters()) return PsiSubstitutor.EMPTY;
 
     final PsiManager manager = superClass.getManager();
-    if (PsiUtil.isRawSubstitutorForClass(derivedClass, derivedSubstitutor)) {
+    if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
       return manager.getElementFactory().createRawSubstitutor(superClass);
     }
 

@@ -346,7 +346,7 @@ public class GenerateMembersUtil {
     PsiClass hisClass = method.getContainingClass();
     PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
     if (typeParameters.length > 0) {
-      if (PsiUtil.isRawSubstitutorForClass(hisClass, substitutor)) {
+      if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
         for (int j = 0; j < typeParameters.length; j++) {
           substitutor = substitutor.put(typeParameters[j], null);
         }

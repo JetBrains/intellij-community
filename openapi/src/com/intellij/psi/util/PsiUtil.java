@@ -891,8 +891,8 @@ public final class PsiUtil {
            ((PsiArrayAccessExpression)expression.getParent()).getArrayExpression() == expression;
   }
 
-  public static boolean isRawSubstitutorForClass (PsiClass aClass, PsiSubstitutor substitutor) {
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
+  public static boolean isRawSubstitutor (PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(owner);
     while (iterator.hasNext()) {
       PsiTypeParameter parameter = iterator.next();
       if (substitutor.substitute(parameter) == null) return true;
