@@ -121,6 +121,9 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         if(PsiUtil.isConstantExpression(maskRhs)){
             final Object rhsValue =
                     ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
+            if (rhsValue == null) {
+                return false; // Might indeed be the case with "null" literal whoes constant value evaluates to null. Check out (a|null) case.
+            }
             constantMaskValue = ((Long) rhsValue).longValue();
         } else{
             final Object lhsValue =
