@@ -48,7 +48,10 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
   }
 
   public void updateImpl(PresentationData data) {
-    data.setPresentableText(getValue().getName());
+    final PsiClass value = getValue();
+    if (value != null) {
+      data.setPresentableText(value.getName());
+    }
   }
 
   public boolean isTopLevel() {

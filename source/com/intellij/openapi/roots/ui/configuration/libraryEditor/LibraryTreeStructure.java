@@ -143,4 +143,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     return false;
   }
 
+  public Library getLibrary() {
+    return myRootElement.getLibrary();
+  }
 }

@@ -296,7 +296,11 @@ public class LibraryTableEditor {
   }
 
   private Library getSelectedLibrary() {
-    return convertElementToLibrary(getSelectedElement());
+    if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
+      return ((LibraryTreeStructure)myTreeBuilder.getTreeStructure()).getLibrary();
+    } else {
+      return convertElementToLibrary(getSelectedElement());
+    }
   }
 
   private Library[] getSelectedLibraries() {
@@ -339,7 +343,7 @@ public class LibraryTableEditor {
     if (newName != null) {
       libraryEditor.setName(newName);
     }
-    librariesChanged();
+    librariesChanged(false);
 
   }
 
@@ -389,7 +393,7 @@ public class LibraryTableEditor {
           }
         }
       });
-      librariesChanged();
+      librariesChanged(true);
       if (libraryToSelect[0] != null) {
         selectLibrary(libraryToSelect[0], false);
       }
@@ -554,14 +558,16 @@ public class LibraryTableEditor {
           }
         }
       });
-      librariesChanged();
+      librariesChanged(true);
     }
 
   }
 
-  protected void librariesChanged() {
+  protected void librariesChanged(boolean putFocusIntoTree) {
     myTreeBuilder.updateFromRoot();
-    myTree.requestFocus();
+    if (putFocusIntoTree) {
+      myTree.requestFocus();
+    }
   }
 
   private class RenameLibraryAction implements ActionListener {
@@ -589,7 +595,7 @@ public class LibraryTableEditor {
       if (newName != null) {
         libraryEditor.setName(newName);
       }
-      librariesChanged();
+      librariesChanged(true);
     }
 
   }
@@ -668,7 +674,7 @@ public class LibraryTableEditor {
         myRemoveButton.setText("Remove");
         myRemoveButton.setMnemonic('R');
       }
-      boolean attachActionsEnabled = selectedElements.length == 1;
+      boolean attachActionsEnabled = selectedElements.length == 1 || getSelectedLibrary() != null;
       myAttachClassesButton.setEnabled(attachActionsEnabled);
       myAttachJavadocsButton.setEnabled(attachActionsEnabled);
       myAttachUrlJavadocsButton.setEnabled(attachActionsEnabled);
