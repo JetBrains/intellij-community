@@ -75,11 +75,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
     final MemberInfo[] memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
-        if (element instanceof PsiMethod) {
-          return !((PsiMethod) element).isConstructor();
-        } else {
-          return true;
-        }
+        return true;
       }
     });
     final String targetPackageName = (mySubclass.getContainingFile() instanceof PsiJavaFile)? ((PsiJavaFile) mySubclass.getContainingFile()).getPackageName() : null;

@@ -103,11 +103,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     mySubclass = aClass;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
-        if (element instanceof PsiMethod) {
-          return !((PsiMethod) element).isConstructor();
-        } else {
-          return true;
-        }
+        return true;
       }
     });
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);

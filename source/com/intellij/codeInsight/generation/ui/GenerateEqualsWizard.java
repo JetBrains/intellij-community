@@ -263,7 +263,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   private static class MyMemberInfoFilter implements MemberInfo.Filter {
     public boolean includeMember(PsiMember element) {
-      return element instanceof PsiField && !((PsiField) element).hasModifierProperty(PsiModifier.STATIC);
+      return element instanceof PsiField && !element.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 

@@ -32,8 +32,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;
-        return !method.isConstructor()
-               && !method.hasModifierProperty(PsiModifier.STATIC)
+        return !method.hasModifierProperty(PsiModifier.STATIC)
                && !method.hasModifierProperty(PsiModifier.PRIVATE);
       }
       else if (element instanceof PsiClass && ((PsiClass)element).isInterface()) {

@@ -794,15 +794,6 @@ public class PsiClassImplUtil{
     else {
       extendsListTypes = introducedExtendsList[0].getReferencedTypes();
     }
-    final PsiClassType[] implementsListTypes;
-    if (introducedImplementsList[0] == null) {
-      implementsListTypes = psiClass.getImplementsListTypes();
-    }
-    else {
-      implementsListTypes = introducedImplementsList[0].getReferencedTypes();
-    }
-
-
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
     }
@@ -812,6 +803,14 @@ public class PsiClassImplUtil{
       PsiClass baseClass = baseClassReference.resolve();
       if (baseClass != null && baseClass.isInterface()) return new PsiClass[]{baseClass};
       return PsiClass.EMPTY_ARRAY;
+    }
+
+    final PsiClassType[] implementsListTypes;
+    if (introducedImplementsList[0] == null) {
+      implementsListTypes = psiClass.getImplementsListTypes();
+    }
+    else {
+      implementsListTypes = introducedImplementsList[0].getReferencedTypes();
     }
 
     return resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);

@@ -135,33 +135,21 @@ public class MemberInfo {
 
 
   public static interface Filter {
-    boolean includeMember(PsiMember element);
+    boolean includeMember(PsiMember member);
   }
 
   public static MemberInfo[] extractClassMembers(PsiClass subclass, Filter filter) {
-    List members = new ArrayList();
+    List<MemberInfo> members = new ArrayList<MemberInfo>();
     extractClassMembers(subclass, members, filter);
-    return (MemberInfo[]) members.toArray(new MemberInfo[members.size()]);
+    return members.toArray(new MemberInfo[members.size()]);
   }
 
-  public static void extractClassMembers(PsiClass subclass, List result, Filter filter) {
-    if (!subclass.isInterface()) {
-      final PsiClass[] interfaces = subclass.getInterfaces();
-      for (int i = 0; i < interfaces.length; i++) {
-        PsiClass anInterface = interfaces[i];
-        if (filter.includeMember(anInterface)) {
-          result.add(new MemberInfo(anInterface, true));
-        }
-      }
-    } else {
-      final PsiClass[] superTypes = subclass.getSupers();
-      for (int i = 0; i < superTypes.length; i++) {
-        PsiClass superType = superTypes[i];
-        if (superType.isInterface()) {
-          if (filter.includeMember(superType)) {
-            result.add(new MemberInfo(superType, true));
-          }
-        }
+  public static void extractClassMembers(PsiClass subclass, List<MemberInfo> result, Filter filter) {
+    PsiClass[] interfaces = subclass.getInterfaces();
+    for (int i = 0; i < interfaces.length; i++) {
+      PsiClass anInterface = interfaces[i];
+      if (filter.includeMember(anInterface)) {
+        result.add(new MemberInfo(anInterface, true));
       }
     }
 
@@ -174,8 +162,9 @@ public class MemberInfo {
     PsiMethod[] methods = subclass.getMethods();
     for (int idx = 0; idx < methods.length; idx++) {
       PsiMethod method = methods[idx];
-      if (!(filter.includeMember(method))) continue;
-      result.add(new MemberInfo(method));
+      if (!method.isConstructor() && filter.includeMember(method)) {
+        result.add(new MemberInfo(method));
+      }
     }
     PsiField[] fields = subclass.getFields();
     for (int idx = 0; idx < fields.length; idx++) {

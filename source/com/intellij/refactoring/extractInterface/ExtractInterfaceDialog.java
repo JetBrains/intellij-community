@@ -60,8 +60,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     myMemberInfos = MemberInfo.extractClassMembers(myClass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
-          return !((PsiMethod)element).isConstructor()
-                 && element.hasModifierProperty(PsiModifier.PUBLIC)
+          return element.hasModifierProperty(PsiModifier.PUBLIC)
                  && !element.hasModifierProperty(PsiModifier.STATIC);
         }
         else if (element instanceof PsiField) {
