@@ -369,6 +369,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private void findClassUsages(final PsiClass psiClass, ArrayList<UsageInfo> usages) {
+    final boolean justPrivates = containsOnlyPrivates(psiClass);
     PsiManager manager = psiClass.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     final PsiReference[] references = manager.getSearchHelper().findReferences(psiClass, projectScope, false);
@@ -379,11 +380,43 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
       if (!isInside(element, myElements)) {
         PsiElement parent = element.getParent();
+        if (parent instanceof PsiReferenceList) {
+          final PsiElement pparent = parent.getParent();
+          if (pparent instanceof PsiClass) {
+            final PsiClass inheritor = ((PsiClass)pparent);
+            //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly
+            if (justPrivates) {
+              if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
+                usages.add(new SafeDeleteExtendsClassUsageInfo((PsiJavaCodeReferenceElement)element, psiClass, inheritor));
+                continue;
+              }
+            }
+          }
+        }
         usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(parent, psiClass, parent instanceof PsiImportStatement));
       }
     }
 
     addNonCodeUsages(psiClass, usages, myInsideDeletedElements);
+  }
+
+  private boolean containsOnlyPrivates(final PsiClass aClass) {
+    final PsiField[] fields = aClass.getFields();
+    for (int i = 0; i < fields.length; i++) {
+      if (!fields[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    }
+
+    final PsiMethod[] methods = aClass.getMethods();
+    for (int i = 0; i < methods.length; i++) {
+      if (!methods[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    }
+
+    final PsiClass[] inners = aClass.getInnerClasses();
+    for (int i = 0; i < inners.length; i++) {
+      if (!inners[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    }
+
+    return true;
   }
 
   private void findMethodUsages(PsiMethod psiMethod, ArrayList<UsageInfo> usages) {
