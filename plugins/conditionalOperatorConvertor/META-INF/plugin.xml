@@ -6,6 +6,7 @@
   <idea-version min="4.0" max="4.5"/>
 
   <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <component area="IDEA_PROJECT">
       <implementation>com.intellij.codeInsight.intention.ConditionalOperatorConvertor</implementation>
       <!--<options>-->

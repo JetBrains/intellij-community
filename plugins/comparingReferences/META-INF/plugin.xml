@@ -1,9 +1,13 @@
-<idea-plugin>
+<idea-plugin version="2">
   <name>ComparingRerencesInspection</name>
   <description>Inspection for (probably) inapporpriate use of equality relation operation</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
   <idea-version min="3.0" max="3.0"/>
+
+  <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
 
   <application-components>
     <component>

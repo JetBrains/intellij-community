@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | depends* | application-components? | project-components? | module-components? | actions? | helpset)+>
 <!ATTLIST idea-plugin
-    url CDATA #IMPLIED>
+    url CDATA #IMPLIED
+    version CDATA #IMPLIED>
 <!--
     <name> is a unique Plugin identifier
 -->

@@ -1,9 +1,13 @@
-<idea-plugin>
+<idea-plugin version="2">
   <name>CVS</name>
   <description>CVS integration</description>
   <version>0.1</version>
-  <vendor>IntelliJ</vendor>
+  <vendor>JetBrains</vendor>
   <idea-version min="4.0" max="4.0"/>
+
+  <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
 
   <application-components>
     <component>

@@ -9,13 +9,13 @@ package com.intellij.diagnostic;
  */
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -39,11 +39,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private JList myHeadersList;
   private DefaultListModel myHeadersModel = new DefaultListModel();
   private final MessagePool myMessagePool;
+  private IdeErrorsDialog.SubmitBugAction mySubmitBugAction;
 
   public IdeErrorsDialog(MessagePool messagePool) {
     super(JOptionPane.getRootFrame(), false);
 
     myMessagePool = messagePool;
+    mySubmitBugAction = new SubmitBugAction();
     myHeadersList = new JList(myHeadersModel);
 
     init();
@@ -66,7 +68,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   protected Action[] createActions() {
-    return new Action[]{new SubmitBugAction(), new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
+    return new Action[]{mySubmitBugAction, new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -104,7 +106,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           hideMessageDetails();
           return;
         }
-
+        mySubmitBugAction.update();
         showMessageDetails(getMessageAt(myHeadersList.getSelectedIndex()));
       }
     });
@@ -197,9 +199,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (int i = 0; i < elements.length; i++) {
       StackTraceElement element = elements[i];
       String className = element.getClassName();
-      if (PluginManager.isPluginClass(className) &&
-          !className.startsWith("com.intellij") &&
-          !className.startsWith("org.jetbrains")) {
+      if (PluginManager.isPluginClass(className)) {
         return PluginManager.getPluginByClassName(className);
       }
     }
@@ -300,6 +300,29 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       putValue(DEFAULT, Boolean.TRUE);
     }
 
+    public void update() {
+      if (myHeadersList.isSelectionEmpty()) {
+        setEnabled(false);
+        return;
+      }
+
+      final int selectedIndex = myHeadersList.getSelectedIndex();
+      final AbstractMessage logMessage = getMessageAt(selectedIndex);
+
+      if (logMessage.isSumbitted()) {
+        setEnabled(false);
+        return;
+      }
+
+      final ErrorReportSubmitter submitter = getSubmitter(logMessage);
+      if (submitter == null) {
+        setEnabled(false);
+        return;
+      }
+
+      setEnabled(true);
+    }
+
     public void actionPerformed(ActionEvent e) {
       if (myHeadersList.isSelectionEmpty()) {
         Messages.showMessageDialog("Please first select error to report", "Cannot Report", Messages.getInformationIcon());
@@ -328,34 +351,26 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private void reportMessage(final AbstractMessage logMessage) {
-      final String pluginName = findPluginName(logMessage.getThrowable());
-      final Object[] reporters = Extensions.getRootArea().getExtensionPoint(PluginManager.ERROR_HANDLER_EXTENSION_POINT).getExtensions();
-      ErrorReportSubmitter submitter = null;
-      for (int i = 0; i < reporters.length; i++) {
-        ErrorHandlerExtension reporterBean = (ErrorHandlerExtension)reporters[i];
-        if (Comparing.equal(pluginName, reporterBean.getPluginName())) {
-          final PluginDescriptor plugin = PluginManager.getPlugin(pluginName);
-          final ClassLoader loader;
-          if (plugin != null) {
-            loader = plugin.getLoader();
-          }
-          else {
-            loader = getClass().getClassLoader();
-          }
-
-          try {
-            final Class submitterClass = Class.forName(reporterBean.getHandlerClass(), true, loader);
-            submitter = (ErrorReportSubmitter)submitterClass.newInstance();
-          }
-          catch (Exception e) {
-            break;
-          }
-        }
-      }
+      ErrorReportSubmitter submitter = getSubmitter(logMessage);
 
       if (submitter != null) {
         logMessage.setSubmitted(submitter.submit(getEvents(logMessage), getContentPane()));
       }
+    }
+
+    private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
+      final String pluginName = findPluginName(logMessage.getThrowable());
+      final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT)
+          .getExtensions();
+      ErrorReportSubmitter submitter = null;
+      for (int i = 0; i < reporters.length; i++) {
+        ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporters[i];
+        final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+        if (pluginName == null && descriptor == null || descriptor != null && Comparing.equal(pluginName, descriptor.getPluginName())) {
+          submitter = reporter;
+        }
+      }
+      return submitter;
     }
 
     private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {

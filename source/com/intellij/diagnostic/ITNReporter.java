@@ -26,7 +26,7 @@ import java.io.IOException;
  * Time: 11:12:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ITNReporter implements ErrorReportSubmitter {
+public class ITNReporter extends ErrorReportSubmitter {
   private static int previousExceptionThreadId = 0;
   private static boolean wasException = false;
   private static final String URL_HEADER = "http://www.intellij.net/tracker/idea/viewSCR?publicId=";
