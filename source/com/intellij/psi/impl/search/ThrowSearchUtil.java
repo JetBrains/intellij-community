@@ -67,13 +67,15 @@ public class ThrowSearchUtil {
     while (elem != null) {
       final PsiElement parent = elem.getParent();
       if (elem instanceof PsiMethod) {
-        final PsiMethod method = PsiSuperMethodUtil.findDeepestSuperMethod((PsiMethod) elem);
+        final PsiMethod deepestSuperMethod = PsiSuperMethodUtil.findDeepestSuperMethod((PsiMethod)elem);
+        final PsiMethod method = deepestSuperMethod != null ? deepestSuperMethod : ((PsiMethod)elem);
         if (!processed.contains(method)) {
           processed.add(method);
           PsiSearchHelper helper = method.getManager().getSearchHelper();
           final PsiReference[] refs = helper.findReferencesIncludingOverriding(method, options.searchScope, true);
-          for (int i = 0; i != refs.length; ++ i)
-            scanCatches(refs [i].getElement (), processor, root, options, processed);
+          for (int i = 0; i != refs.length; ++i) {
+            scanCatches(refs[i].getElement(), processor, root, options, processed);
+          }
         }
         return;
       }
@@ -109,10 +111,12 @@ public class ThrowSearchUtil {
    */
 
   public static boolean isExactExnType(final PsiExpression exn) {
-    if (exn instanceof PsiNewExpression)
+    if (exn instanceof PsiNewExpression) {
       return true;
-    else
+    }
+    else {
       return false;
+    }
   }
 
   public static Root [] getSearchRoots (final PsiElement element) {
