@@ -1078,7 +1078,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
 
         private void processType(PsiType type) {
-          if (type == null || type instanceof PsiPrimitiveType) return;
           final PsiClass resolved = PsiUtil.resolveClassInType(type);
           if (resolved != null && !myBaseClassBases.contains(resolved)) {
             myPsiActions.add(new QualifyThis(expression));
@@ -1112,8 +1111,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       while (aClass != null && !myManager.areElementsEquivalent(aClass, myBaseClass)) {
         final PsiClassType[] implementsTypes = aClass.getImplementsListTypes();
         for (int i = 0; i < implementsTypes.length; i++) {
-          PsiClassType superType = implementsTypes[i];
-          PsiClass resolved = superType.resolve();
+          PsiClass resolved = implementsTypes[i].resolve();
           if (resolved != null && !myManager.areElementsEquivalent(resolved, myBaseClass)) {
             result.add(resolved);
             RefactoringHierarchyUtil.getSuperClasses(resolved, result, true);
@@ -1161,7 +1159,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     private void processTypedUsage(PsiType type, PsiExpression instanceRef) {
-      if (type == null || type instanceof PsiPrimitiveType) return;
       PsiClass aClass = PsiUtil.resolveClassInType(type);
       String qName = aClass.getQualifiedName();
       if (qName != null && "java.lang.Object".equals(qName)) {
