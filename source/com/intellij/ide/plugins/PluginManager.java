@@ -6,6 +6,7 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,7 +114,7 @@ public class PluginManager {
       final List classPath = pluginDescriptor.getClassPath();
       final String[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
       final ClassLoader[] parentLoaders = dependentPluginIds.length > 0? getParentLoaders(idToDescriptorMap, dependentPluginIds): new ClassLoader[] {parentLoader};
-      final PluginClassLoader pluginClassLoader = createPluginClassLoader((File[])classPath.toArray(new File[classPath.size()]), pluginDescriptor.getName(), parentLoaders, pluginDescriptor.getPath());
+      final IdeaClassLoader pluginClassLoader = createPluginClassLoader((File[])classPath.toArray(new File[classPath.size()]), pluginDescriptor.getName(), parentLoaders, pluginDescriptor.getPath());
       pluginDescriptor.setLoader(pluginClassLoader);
       pluginDescriptor.registerExtensions();
     }
@@ -193,6 +194,7 @@ public class PluginManager {
   }
 
   private static ClassLoader[] getParentLoaders(Map<String, PluginDescriptor> idToDescriptorMap, String[] pluginIds) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return new ClassLoader[0];
     final List<ClassLoader> classLoaders = new ArrayList<ClassLoader>();
     for (int idx = 0; idx < pluginIds.length; idx++) {
       final String id = pluginIds[idx];
@@ -200,7 +202,7 @@ public class PluginManager {
       if (pluginDescriptor == null) {
         getLogger().assertTrue(false, "Plugin not found: " + id);
       }
-      final PluginClassLoader loader = pluginDescriptor.getLoader();
+      final ClassLoader loader = pluginDescriptor.getLoader();
       if (loader == null) {
         getLogger().assertTrue(false, "Plugin class loader should be initialized for plugin " + id);
       }
@@ -422,35 +424,9 @@ public class PluginManager {
   }
 
   protected void bootstrap(List classpathElements) {
-    PathManager.loadProperties();
-
+    IdeaClassLoader newClassLoader = initClassloader(classpathElements);
     try {
-      addParentClasspath(classpathElements);
-      addIDEALibraries(classpathElements);
-      addAdditionalClassPath(classpathElements);
-    }
-    catch (IllegalArgumentException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
-      System.exit(1);
-    }
-    catch (MalformedURLException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
-      System.exit(1);
-    }
-
-    try {
-      IdeaClassLoader newClassLoader = new IdeaClassLoader(classpathElements, null);
-
-      // prepare plugins
-      if (!isLoadingOfExternalPluginsDisabled()) {
-        PluginInstaller.initPluginClasses ();
-        StartupActionScriptManager.executeActionScript();
-      }
-
-      Thread.currentThread().setContextClassLoader(newClassLoader);
-
       final Class mainClass = Class.forName(getClass().getName(), true, newClassLoader);
-
       Field field = mainClass.getDeclaredField("ourMainClass");
       field.setAccessible(true);
       field.set(null, ourMainClass);
@@ -469,14 +445,59 @@ public class PluginManager {
     }
     catch (Exception e) {
       Logger logger = getLogger();
-      if (logger == null)
+      if (logger == null) {
         e.printStackTrace(System.err);
-      else
+      }
+      else {
         logger.error(e);
+      }
     }
   }
 
-  private static PluginClassLoader createPluginClassLoader(final File[] classPath, final String pluginName, final ClassLoader[] parentLoaders, File pluginRoot) {
+  public IdeaClassLoader initClassloader(final List classpathElements) {
+    PathManager.loadProperties();
+
+    try {
+      addParentClasspath(classpathElements);
+      addIDEALibraries(classpathElements);
+      addAdditionalClassPath(classpathElements);
+    }
+    catch (IllegalArgumentException e) {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
+      System.exit(1);
+    }
+    catch (MalformedURLException e) {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
+      System.exit(1);
+    }
+
+    IdeaClassLoader newClassLoader = null;
+    try {
+      newClassLoader = new IdeaClassLoader(classpathElements, null);
+
+      // prepare plugins
+      if (!isLoadingOfExternalPluginsDisabled()) {
+        PluginInstaller.initPluginClasses ();
+        StartupActionScriptManager.executeActionScript();
+      }
+
+      Thread.currentThread().setContextClassLoader(newClassLoader);
+
+    }
+    catch (Exception e) {
+      Logger logger = getLogger();
+      if (logger == null) {
+        e.printStackTrace(System.err);
+      }
+      else {
+        logger.error(e);
+      }
+    }
+    return newClassLoader;
+  }
+
+  private static IdeaClassLoader createPluginClassLoader(final File[] classPath, final String pluginName, final ClassLoader[] parentLoaders, File pluginRoot) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     try {
       final List urls = new ArrayList(classPath.length);
       for (int idx = 0; idx < classPath.length; idx++) {

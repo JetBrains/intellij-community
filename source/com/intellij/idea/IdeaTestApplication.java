@@ -23,7 +23,6 @@ public class IdeaTestApplication extends CommandLineApplication {
 
   public synchronized static IdeaTestApplication getInstance() throws IOException, InvalidDataException {
     if (ourInstance == null) {
-      //Logger.setFactory(LoggerFactory.getInstance());
       new IdeaTestApplication();
       ApplicationManagerEx.getApplicationEx().load(null);
     }
