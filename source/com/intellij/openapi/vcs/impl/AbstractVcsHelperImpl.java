@@ -62,6 +62,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   private static final Key KEY = Key.create("ErrorTreeViewPanel.KEY");
 
   public void showErrors(final List abstractVcsExceptions, final String tabDisplayName) {
+    LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
@@ -110,6 +111,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     Content[] contents = messageView.getContents();
     for (int i = 0; i < contents.length; i++) {
       Content content = contents[i];
+      LOG.assertTrue(content != null);
       if (content.isPinned()) continue;
       if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
         ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
