@@ -104,7 +104,7 @@ public class PushDownHandler implements RefactoringActionHandler, PushDownDialog
   public void run(final PushDownDialog dialog) {
     new PushDownProcessor(
             myProject, dialog.getSelectedMemberInfos(), myClass,
-            new JavaDocPolicy(dialog.getJavaDocPolicy()), dialog.isPreviewUsages(), new Runnable() {
+            new JavaDocPolicy(dialog.getJavaDocPolicy()), new Runnable() {
               public void run() {
                 dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
               }

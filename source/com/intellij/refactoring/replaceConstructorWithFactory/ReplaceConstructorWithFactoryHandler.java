@@ -152,7 +152,7 @@ public class ReplaceConstructorWithFactoryHandler
       }
 
       new ReplaceConstructorWithFactoryProcessor(myProject, myMethod,
-              targetClass, dialog.getName(), dialog.isPreviewUsages(), new Runnable() {
+              targetClass, dialog.getName(), new Runnable() {
                 public void run() {
                   dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
                 }
@@ -180,7 +180,7 @@ public class ReplaceConstructorWithFactoryHandler
         return;
       }
       new ReplaceConstructorWithFactoryProcessor(myProject, myClass,
-              targetClass, dialog.getName(), dialog.isPreviewUsages(), new Runnable() {
+              targetClass, dialog.getName(), new Runnable() {
                 public void run() {
                   dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
                 }

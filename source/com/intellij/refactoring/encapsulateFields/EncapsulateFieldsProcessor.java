@@ -53,11 +53,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor impleme
     return new EncapsulateFieldsViewDescriptor(fields, usages, refreshCommand);
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myDialog.isPreviewUsages();
-    return super.isPreviewUsages(usages) || toPreview;
-  }
-
   protected String getCommandName() {
     return "Encapsulating fields in " + UsageViewUtil.getDescriptiveName(myClass);
   }

@@ -85,7 +85,6 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
                 dialog.getReturnType(),
                 dialog.getParameters(),
                 dialog.getExceptions(),
-                dialog.isPreviewUsages(),
                 new Runnable() {
                   public void run() {
                     dialog.close(DialogWrapper.OK_EXIT_CODE);

@@ -37,17 +37,16 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod myMethod;
   private PsiClass myMethodClass;
-  private boolean myPreviewUsages;
   private Settings mySettings;
 
   public MakeMethodStaticProcessor(Project project,
-                                   PsiMethod method,
-                                   boolean previewUsages, Settings settings, Runnable prepareSuccessfulCallback) {
+                                 PsiMethod method,
+                                 Settings settings,
+                                 Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myMethod = method;
     mySettings = settings;
     myMethodClass = method.getContainingClass();
-    myPreviewUsages = previewUsages;
   }
 
 
@@ -228,10 +227,6 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
   }
 
   protected void refreshElements(PsiElement[] elements) {
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return super.isPreviewUsages(usages) || myPreviewUsages;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

@@ -17,11 +17,11 @@ import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructor
  */
 public class ReplaceConstructorWithFactoryRefactoringImpl extends RefactoringImpl<ReplaceConstructorWithFactoryProcessor> implements ReplaceConstructorWithFactoryRefactoring {
   ReplaceConstructorWithFactoryRefactoringImpl(Project project, PsiMethod method, PsiClass targetClass, String factoryName) {
-    super(new ReplaceConstructorWithFactoryProcessor(project, method, targetClass, factoryName, true, BaseRefactoringProcessor.EMPTY_CALLBACK));
+    super(new ReplaceConstructorWithFactoryProcessor(project, method, targetClass, factoryName, BaseRefactoringProcessor.EMPTY_CALLBACK));
   }
 
   ReplaceConstructorWithFactoryRefactoringImpl(Project project, PsiClass originalClass, PsiClass targetClass, String factoryName) {
-    super(new ReplaceConstructorWithFactoryProcessor(project, originalClass, targetClass, factoryName, true, BaseRefactoringProcessor.EMPTY_CALLBACK));
+    super(new ReplaceConstructorWithFactoryProcessor(project, originalClass, targetClass, factoryName, BaseRefactoringProcessor.EMPTY_CALLBACK));
   }
 
   public PsiClass getOriginalClass() {

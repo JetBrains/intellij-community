@@ -63,7 +63,6 @@ public class SuperMethodReturnFix implements IntentionAction {
             mySuperMethod.getName(),
             mySuperMethodType,
             ParameterInfo.fromMethod(mySuperMethod),
-            false,
             null);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       processor.testRun();

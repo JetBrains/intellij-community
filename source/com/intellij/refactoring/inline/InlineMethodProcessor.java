@@ -178,16 +178,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     return result;
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    //if (myDialog.isInlineThisOnly()) return false;
-    boolean toPreview = myDialog.isPreviewUsages();
-    if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      toPreview = true;
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
-    }
-    return toPreview;
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
     int col = -1;
     int line = -1;

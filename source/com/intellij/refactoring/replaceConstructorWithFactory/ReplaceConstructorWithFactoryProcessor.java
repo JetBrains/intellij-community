@@ -32,21 +32,21 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     "#com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor");
   private final PsiMethod myConstructor;
   private final String myFactoryName;
-  private final boolean myPreviewUsages;
   private final PsiElementFactory myFactory;
   private final PsiClass myOriginalClass;
   private final PsiClass myTargetClass;
   private PsiManager myManager;
   private boolean myIsInner;
 
-  public ReplaceConstructorWithFactoryProcessor(Project project, PsiMethod constructor,
-                                                PsiClass targetClass, String factoryName, boolean previewUsages,
-                                                Runnable prepareSuccessfulCallback) {
+  public ReplaceConstructorWithFactoryProcessor(Project project,
+                                              PsiMethod constructor,
+                                              PsiClass targetClass,
+                                              String factoryName,
+                                              Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myOriginalClass = null;
     myConstructor = constructor;
     myFactoryName = factoryName;
-    myPreviewUsages = previewUsages;
     myTargetClass = targetClass;
     LOG.assertTrue(myConstructor.isConstructor());
     myManager = PsiManager.getInstance(project);
@@ -55,15 +55,16 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     myIsInner = isInner(myConstructor.getContainingClass());
   }
 
-  public ReplaceConstructorWithFactoryProcessor(Project project, PsiClass aClass, PsiClass targetClass,
-                                                String factoryName, boolean previewUsages,
-                                                Runnable prepareSuccessfulCallback) {
+  public ReplaceConstructorWithFactoryProcessor(Project project,
+                                              PsiClass aClass,
+                                              PsiClass targetClass,
+                                              String factoryName,
+                                              Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myOriginalClass = aClass;
     myConstructor = null;
     myTargetClass = targetClass;
     myFactoryName = factoryName;
-    myPreviewUsages = previewUsages;
     myManager = PsiManager.getInstance(project);
     myFactory = myManager.getElementFactory();
 
@@ -197,10 +198,6 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
   protected void refreshElements(PsiElement[] elements) {
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return super.isPreviewUsages(usages) || myPreviewUsages;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

@@ -66,7 +66,7 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
         targetClass = constructor.getContainingClass();
       }
       replaceConstructorWithFactoryProcessor = new ReplaceConstructorWithFactoryProcessor(
-        myProject, constructor, targetClass, "new" + constructor.getName(), false, null
+        myProject, constructor, targetClass, "new" + constructor.getName(), null
       );
     }
     else {
@@ -74,7 +74,7 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
         targetClass = aClass;
       }
       replaceConstructorWithFactoryProcessor = new ReplaceConstructorWithFactoryProcessor(
-        myProject, aClass, targetClass, "new" + aClass.getName(), false, null
+        myProject, aClass, targetClass, "new" + aClass.getName(), null
       );
     }
     replaceConstructorWithFactoryProcessor.testRun();

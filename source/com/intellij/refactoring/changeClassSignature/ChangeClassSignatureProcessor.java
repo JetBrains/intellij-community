@@ -44,10 +44,6 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     return "Change Class Signature";
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return super.isPreviewUsages(usages);
-  }
-
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
     return new ChangeClassSigntaureViewDescriptor(myClass, usages, refreshCommand);
   }

@@ -219,7 +219,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
       methodToSearchFor = method;
     }
     new IntroduceParameterProcessor(
-      myProject, method, methodToSearchFor, expr, expr, null, true, parameterName, false, replaceAllOccurences,
+      myProject, method, methodToSearchFor, expr, expr, null, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
       declareFinal, null, null).testRun();
 
@@ -247,7 +247,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     new IntroduceParameterProcessor(
       myProject, method, methodToSearchFor,
       parameterInitializer, null, localVariable, removeLocalVariable,
-      localVariable.getName(), false, replaceAllOccurences,
+      localVariable.getName(), replaceAllOccurences,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, null, null
     ).testRun();

@@ -21,15 +21,16 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
   private MemberInfo myMemberInfos[];
   private PsiClass myClass;
-  private boolean myIsPreviewUsages;
   private JavaDocPolicy myJavaDocPolicy;
 
-  public PushDownProcessor(Project project, MemberInfo[] memberInfos, PsiClass aClass, JavaDocPolicy javaDocPolicy, boolean previewUsages,
-                           Runnable prepareSuccessfulCallback) {
+  public PushDownProcessor(Project project,
+                         MemberInfo[] memberInfos,
+                         PsiClass aClass,
+                         JavaDocPolicy javaDocPolicy,
+                         Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myMemberInfos = memberInfos;
     myClass = aClass;
-    myIsPreviewUsages = previewUsages;
     myJavaDocPolicy = javaDocPolicy;
   }
 
@@ -88,10 +89,6 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     else {
       LOG.assertTrue(false);
     }
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return super.isPreviewUsages(usages) || myIsPreviewUsages;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

@@ -71,9 +71,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler {
     }
 
     new TurnRefsToSuperProcessor(
-            myProject, subClass, dialog.getSuperClass(), dialog.isUseInInstanceOf(),
-            dialog.isPreviewUsages()
-    ).run(null);
+            myProject, subClass, dialog.getSuperClass(), dialog.isUseInInstanceOf()).run(null);
   }
 
 }

@@ -40,7 +40,7 @@ public class ExtractClassUtil {
           if (dialog.isOK()) {
             RefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = dialog.isPreviewUsages();
             TurnRefsToSuperProcessor processor =
-                    new TurnRefsToSuperProcessor(project, (PsiClass) classElement, (PsiClass) interfaceElement, true, dialog.isPreviewUsages());
+                    new TurnRefsToSuperProcessor(project, (PsiClass) classElement, (PsiClass) interfaceElement, true);
             processor.run(null);
           }
         }

@@ -225,7 +225,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
             myProject, myMethod, myMethodToSearchFor,
             myParameterInitializer, myExpressionToSearchFor,
             myLocalVar, isDeleteLocalVariable,
-            parameterName, previewUsages, replaceAllOccurences,
+            parameterName, replaceAllOccurences,
             IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null, null).run(null);
     return true;
   }
@@ -253,7 +253,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
             myProject, myMethod, myMethodToSearchFor,
             myParameterInitializer, myExpressionToSearchFor,
             myLocalVar, isDeleteLocalVariable,
-            dialog.getParameterName(), dialog.isPreviewUsages(), dialog.isReplaceAllOccurences(),
+            dialog.getParameterName(), dialog.isReplaceAllOccurences(),
             dialog.getReplaceFieldsWithGetters(), dialog.isDeclareFinal(),
             dialog.getSelectedType(), new Runnable() {
               public void run() {

@@ -54,7 +54,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
         method.getName(),
         method.getReturnType(),
         getNewParametersInfo(method, parameter),
-        false, BaseRefactoringProcessor.EMPTY_CALLBACK);
+        BaseRefactoringProcessor.EMPTY_CALLBACK);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       processor.testRun();

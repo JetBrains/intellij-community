@@ -49,7 +49,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private String myNewName;
   private CanonicalTypes.Type myNewType;
   private ParameterInfo[] myParameterInfo;
-  private boolean myToPreviewUsages;
   private ChangeInfo myChangeInfo;
   private PsiManager myManager;
   private PsiElementFactory myFactory;
@@ -58,38 +57,42 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private HashSet<PsiMethod> myMethodsToBeChanged;
   private final boolean myGenerateDelegate;
 
-  public ChangeSignatureProcessor(Project project, PsiMethod method,
-                                  final boolean generateDelegate, String newVisibility,
-                                  String newName, PsiType newType,
-                                  ParameterInfo[] parameterInfo, boolean toPreviewUsages,
-                                  Runnable prepareSuccessfulCallback) {
+  public ChangeSignatureProcessor(Project project,
+                                PsiMethod method,
+                                final boolean generateDelegate,
+                                String newVisibility,
+                                String newName,
+                                PsiType newType,
+                                ParameterInfo[] parameterInfo,
+                                Runnable prepareSuccessfulCallback) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, null, toPreviewUsages, prepareSuccessfulCallback);
-  }
-
-  public ChangeSignatureProcessor(Project project, PsiMethod method,
-                                  final boolean generateDelegate, String newVisibility,
-                                  String newName, PsiType newType,
-                                  ParameterInfo[] parameterInfo,
-                                  ThrownExceptionInfo[] exceptionInfos,
-                                  boolean toPreviewUsages,
-                                  Runnable prepareSuccessfulCallback) {
-    this(project, method, generateDelegate, newVisibility, newName,
-         newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, exceptionInfos, toPreviewUsages, prepareSuccessfulCallback);
+         parameterInfo, null, prepareSuccessfulCallback);
   }
 
   public ChangeSignatureProcessor(Project project,
-                                  PsiMethod method,
-                                  boolean generateDelegate,
-                                  String newVisibility,
-                                  String newName,
-                                  CanonicalTypes.Type newType,
-                                  ParameterInfo[] parameterInfo,
-                                  ThrownExceptionInfo[] thrownExceptions,
-                                  boolean toPreviewUsages,
-                                  Runnable prepareSuccessfulCallback) {
+                                PsiMethod method,
+                                final boolean generateDelegate,
+                                String newVisibility,
+                                String newName,
+                                PsiType newType,
+                                ParameterInfo[] parameterInfo,
+                                ThrownExceptionInfo[] exceptionInfos,
+                                Runnable prepareSuccessfulCallback) {
+    this(project, method, generateDelegate, newVisibility, newName,
+         newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
+         parameterInfo, exceptionInfos, prepareSuccessfulCallback);
+  }
+
+  public ChangeSignatureProcessor(Project project,
+                                PsiMethod method,
+                                boolean generateDelegate,
+                                String newVisibility,
+                                String newName,
+                                CanonicalTypes.Type newType,
+                                ParameterInfo[] parameterInfo,
+                                ThrownExceptionInfo[] thrownExceptions,
+                                Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myGenerateDelegate = generateDelegate;
     LOG.assertTrue(method.isValid());
@@ -101,7 +104,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     myNewName = newName;
     myNewType = newType;
     myParameterInfo = parameterInfo;
-    myToPreviewUsages = toPreviewUsages;
 
     myChangeInfo = new ChangeInfo(myNewVisibility, method, myNewName, myNewType, myParameterInfo, thrownExceptions);
     LOG.assertTrue(myChangeInfo.getMethod().isValid());
@@ -263,10 +265,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
     myChangeInfo.updateMethod((PsiMethod) elements[0]);
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return super.isPreviewUsages(usages) || myToPreviewUsages;
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {

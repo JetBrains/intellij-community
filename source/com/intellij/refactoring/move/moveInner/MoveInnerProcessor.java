@@ -117,15 +117,6 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     myInnerClass = (PsiClass)elements[0];
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myPreviewUsages;
-    if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      toPreview = true;
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
-    }
-    return toPreview;
-  }
-
   public boolean isSearchInComments() {
     return mySearchInComments;
   }

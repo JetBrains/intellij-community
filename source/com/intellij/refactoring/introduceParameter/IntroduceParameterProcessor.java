@@ -55,7 +55,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private final PsiLocalVariable myLocalVariable;
   private final boolean myRemoveLocalVariable;
   private String myParameterName;
-  private boolean myPreviewUsages;
   private boolean myReplaceAllOccurences;
 
   private int myReplaceFieldsWithGetters;
@@ -66,12 +65,19 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   /**
    * if expressionToSearch is null, search for localVariable
    */
-  public IntroduceParameterProcessor(Project project, PsiMethod methodToReplaceIn, PsiMethod methodToSearchFor,
-                                     PsiExpression parameterInitializer,
-                                     PsiExpression expressionToSearch,
-                                     PsiLocalVariable localVariable,
-                                     boolean removeLocalVariable, String parameterName, boolean previewUsages, boolean replaceAllOccurences,
-                                     int replaceFieldsWithGetters, boolean declareFinal, PsiType forcedType, Runnable prepareSuccessfulCallback) {
+  public IntroduceParameterProcessor(Project project,
+                                   PsiMethod methodToReplaceIn,
+                                   PsiMethod methodToSearchFor,
+                                   PsiExpression parameterInitializer,
+                                   PsiExpression expressionToSearch,
+                                   PsiLocalVariable localVariable,
+                                   boolean removeLocalVariable,
+                                   String parameterName,
+                                   boolean replaceAllOccurences,
+                                   int replaceFieldsWithGetters,
+                                   boolean declareFinal,
+                                   PsiType forcedType,
+                                   Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
 
     myMethodToReplaceIn = methodToReplaceIn;
@@ -82,7 +88,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     myLocalVariable = localVariable;
     myRemoveLocalVariable = removeLocalVariable;
     myParameterName = parameterName;
-    myPreviewUsages = previewUsages;
     myReplaceAllOccurences = replaceAllOccurences;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myDeclareFinal = declareFinal;
@@ -310,10 +315,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
   protected void refreshElements(PsiElement[] elements) {
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return myPreviewUsages || super.isPreviewUsages(usages);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

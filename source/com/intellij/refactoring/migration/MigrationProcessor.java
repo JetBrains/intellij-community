@@ -110,10 +110,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
       Messages.showInfoMessage(myProject, "No Usages Found in the Project", "Migration");
       return false;
     }
-    return true;
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    setPreviewUsages(true);
     return true;
   }
 

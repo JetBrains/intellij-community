@@ -105,7 +105,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     PsiClass superClass = myPsiManager.findClass(superClassName);
     assertNotNull("Class " + superClassName + " not found", superClass);
 
-    new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf, false).testRun();
+    new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).testRun();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

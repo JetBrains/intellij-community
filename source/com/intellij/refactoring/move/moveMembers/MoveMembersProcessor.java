@@ -152,15 +152,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor implements Mo
     return false;
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myDialog.isPreviewUsages();
-    if (UsageViewUtil.hasReadOnlyUsages(usages)){
-      toPreview = true;
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
-    }
-    return toPreview;
-  }
-
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       // correct references to moved members from the outside

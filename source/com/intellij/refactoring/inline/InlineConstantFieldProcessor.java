@@ -207,15 +207,6 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
     return PsiUtil.isAccessedForWriting(expr);
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myDialog.isPreviewUsages();
-    if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      toPreview = true;
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
-    }
-    return toPreview;
-  }
-
   public void run(InlineFieldDialog dialog) {
     myDialog = dialog;
     this.run((Object)null);

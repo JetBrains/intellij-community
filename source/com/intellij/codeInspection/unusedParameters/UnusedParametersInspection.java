@@ -198,7 +198,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
       false, null, psiMethod.getName(),
       psiMethod.getReturnType(),
       parameterInfos,
-      false, BaseRefactoringProcessor.EMPTY_CALLBACK);
+      BaseRefactoringProcessor.EMPTY_CALLBACK);
 
     csp.run(null);
   }

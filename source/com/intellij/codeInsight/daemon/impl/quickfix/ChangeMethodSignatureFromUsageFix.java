@@ -125,7 +125,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             method.getName(),
                             method.getReturnType(),
                             myNewParametersInfo,
-                            false,
                             BaseRefactoringProcessor.EMPTY_CALLBACK);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         processor.testRun();
@@ -152,7 +151,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                       dialog.getReturnType(),
                       dialog.getParameters(),
                       null,
-                      dialog.isPreviewUsages(),
                       new Runnable() {
                         public void run() {
                           dialog.close(DialogWrapper.OK_EXIT_CODE);

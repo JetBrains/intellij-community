@@ -28,7 +28,7 @@ public class IntroduceParameterRefactoringImpl extends RefactoringImpl<Introduce
                                             boolean removeLocalVariable, boolean declareFinal, final boolean replaceAllOccurences) {
     super(
       new IntroduceParameterProcessor(project, methodToReplaceIn, methodToSearchFor,
-                                      parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, true, replaceAllOccurences,
+                                      parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurences,
                                       REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, declareFinal, null,
                                       BaseRefactoringProcessor.EMPTY_CALLBACK));
   }

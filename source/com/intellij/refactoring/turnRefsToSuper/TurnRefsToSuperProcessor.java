@@ -19,18 +19,13 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
 
   private PsiClass mySuper;
-  private final boolean myPreviewUsages;
-
   public TurnRefsToSuperProcessor(Project project,
-                                  PsiClass aClass,
-                                  PsiClass aSuper,
-                                  boolean replaceInstanceOf,
-                                  boolean previewUsages
-                                  ) {
+                                PsiClass aClass,
+                                PsiClass aSuper,
+                                boolean replaceInstanceOf) {
     super(project, replaceInstanceOf);
     myClass = aClass;
     mySuper = aSuper;
-    myPreviewUsages = previewUsages;
   }
 
   protected String getCommandName() {
@@ -60,11 +55,6 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     LOG.assertTrue(condition);
     myClass = (PsiClass) elements[0];
     mySuper = (PsiClass) elements[1];
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myPreviewUsages;
-    return super.isPreviewUsages(usages) || toPreview;
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {

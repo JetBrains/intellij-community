@@ -5,14 +5,12 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 
 import java.util.*;
 
@@ -54,17 +52,6 @@ public class TypeCookProcessor extends BaseRefactoringProcessor implements TypeC
 
   protected void refreshElements(PsiElement[] elements) {
     myElements = elements;
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myDialog.isPreviewUsages();
-
-    if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      toPreview = true;
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
-    }
-
-    return toPreview;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
