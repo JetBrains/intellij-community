@@ -133,6 +133,16 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     myConfiguration = mySettings.getConfiguration();
   }
 
+  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettingsImpl settings = getFactory().create();
+    if (myConfigurationEditor instanceof CheckableRunConfigurationEditor){
+      ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(settings.getConfiguration());
+    } else {
+      applyTo(settings);
+    }
+    return settings;
+  }
+
   private static class RunnersEditorComponent {
     private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
 

@@ -1,5 +1,6 @@
 package com.intellij.execution.applet;
 
+import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -23,7 +24,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
+public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>{
   private JPanel myWholePanel;
   private JRadioButton myMainClass;
   private JRadioButton myURL;
@@ -74,10 +75,11 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
   private void changePanel () {
     if (myMainClass.isSelected()) {
       myClassOptions.setVisible(true);
-         myHTMLOptions.setVisible(false);
-           } else {
-         myHTMLOptions.setVisible(true);
-         myClassOptions.setVisible(false);
+      myHTMLOptions.setVisible(false);
+    }
+    else {
+      myHTMLOptions.setVisible(true);
+      myClassOptions.setVisible(false);
     }
   }
 
@@ -152,33 +154,16 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
   }
 
   private void getConfigurationTo(final AppletConfiguration configuration) {
-    configuration.MAIN_CLASS_NAME = toNull(getClassNameComponent().getText());
-    configuration.HTML_FILE_NAME = toSystemFormat(getHtmlPathComponent().getText());
-    configuration.VM_PARAMETERS = toNull(getVMParametersComponent().getText());
-    configuration.setPolicyFile(getPolicyFileComponent().getText());
-    myModuleSelector.applyTo(configuration);
-    try {
-      configuration.WIDTH = Integer.parseInt(getWidthComponent().getText());
-    }
-    catch (NumberFormatException e) {
-    }
-    try {
-      configuration.HEIGHT = Integer.parseInt(getHeightComponent().getText());
-    }
-    catch (NumberFormatException e) {
-    }
-    configuration.HTML_USED = myURL.isSelected();
-    if (myTable.getCellEditor() != null) {
-      myTable.getCellEditor().stopCellEditing();
-    }
 
-    final List<AppletConfiguration.AppletParameter> items = myParameters.getItems();
+  }
+
+  private List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
     final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
     for (Iterator<AppletConfiguration.AppletParameter> iterator = items.iterator(); iterator.hasNext();) {
       AppletConfiguration.AppletParameter appletParameter = iterator.next();
       params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }
-    configuration.setAppletParameters(params);
+    return params;
   }
 
   private JTextField getWidthComponent() {
@@ -204,7 +189,10 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
   }
 
   public void applyEditorTo(final AppletConfiguration configuration) {
-    getConfigurationTo(configuration);
+    checkEditorData(configuration);
+    myTable.stopEditing();
+    final List<AppletConfiguration.AppletParameter> params = cloneParameters(myParameters.getItems());
+    configuration.setAppletParameters(params);
   }
 
   public void resetEditorFrom(final AppletConfiguration configuration) {
@@ -224,7 +212,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
 
     final AppletConfiguration.AppletParameter[] appletParameters = configuration.getAppletParameters();
     if (appletParameters != null) {
-      myParameters.setItems(Arrays.asList(appletParameters));
+      myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
     }
     myModuleSelector.reset(configuration);
   }
@@ -243,6 +231,25 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> {
   }
 
   public void disposeEditor() {
+  }
+
+  public void checkEditorData(final AppletConfiguration configuration) {
+    configuration.MAIN_CLASS_NAME = toNull(getClassNameComponent().getText());
+    configuration.HTML_FILE_NAME = toSystemFormat(getHtmlPathComponent().getText());
+    configuration.VM_PARAMETERS = toNull(getVMParametersComponent().getText());
+    configuration.setPolicyFile(getPolicyFileComponent().getText());
+    myModuleSelector.applyTo(configuration);
+    try {
+      configuration.WIDTH = Integer.parseInt(getWidthComponent().getText());
+    }
+    catch (NumberFormatException e) {
+    }
+    try {
+      configuration.HEIGHT = Integer.parseInt(getHeightComponent().getText());
+    }
+    catch (NumberFormatException e) {
+    }
+    configuration.HTML_USED = myURL.isSelected();
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {
