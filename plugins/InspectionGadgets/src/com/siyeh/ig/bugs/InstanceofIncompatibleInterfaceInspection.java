@@ -90,11 +90,14 @@ public class InstanceofIncompatibleInterfaceInspection extends ExpressionInspect
         if(aClass.isInheritor(anInterface, true)){
             return true;
         }
+        if("java.lang.Object".equals(aClass.getQualifiedName())){
+            return true;
+        }
         final PsiManager psiManager = aClass.getManager();
         final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
         final SearchScope searchScope = aClass.getUseScope();
         final PsiClass[] inheritors =
-                searchHelper.findInheritors(aClass, searchScope, false);
+                searchHelper.findInheritors(aClass, searchScope, true);
         for(int i = 0; i < inheritors.length; i++){
             final PsiClass inheritor = inheritors[i];
             if(inheritor.isInheritor(anInterface, true)){
