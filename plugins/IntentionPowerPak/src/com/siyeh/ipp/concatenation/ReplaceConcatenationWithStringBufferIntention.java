@@ -80,6 +80,9 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         final PsiReferenceExpression methodExpression =
                 methodCall.getMethodExpression();
         final PsiType type = methodExpression.getType();
+        if (type == null) {
+            return false;
+        }
         final String className = type.getCanonicalText();
         if(!"java.lang.StringBuffer".equals(className) &&
                    !"java.lang.StringBuilder".equals(className)){
