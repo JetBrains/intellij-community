@@ -16,6 +16,10 @@ public class PsiFieldNode extends BasePsiNode<PsiField>{
     super(project, value, viewSettings);
   }
 
+  public PsiFieldNode(final Project project, final Object value, final ViewSettings viewSettings) {
+    this(project, (PsiField)value, viewSettings);
+  }
+
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return null;
   }

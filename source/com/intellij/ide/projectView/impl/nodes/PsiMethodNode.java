@@ -15,6 +15,10 @@ public class PsiMethodNode extends BasePsiNode<PsiMethod>{
     super(project, value, viewSettings);
   }
 
+  public PsiMethodNode(final Project project, final Object value, final ViewSettings viewSettings) {
+    this(project, (PsiMethod)value, viewSettings);
+  }
+
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return null;
   }

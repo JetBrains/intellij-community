@@ -19,6 +19,9 @@ public abstract class ActionPlaces {
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
+  public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
+  public static final String FAVORITES_VIEW_TOOLBAR = "FavoritesViewToolbar";
+
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
   public static final String TESTSTATISTICS_VIEW_POPUP = "TestStatisticsViewPopup";

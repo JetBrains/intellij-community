@@ -1,8 +1,8 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.pom.Navigatable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +32,10 @@ public class Form implements Navigatable{
 
   public String getName() {
     return myClassToBind.getName();
+  }
+
+  public PsiClass getClassToBind() {
+    return myClassToBind;
   }
 
   public void navigate(boolean requestFocus) {

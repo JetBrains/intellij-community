@@ -28,6 +28,10 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     super(project, value, viewSettings);
   }
 
+  public NamedLibraryElementNode(final Project project, final Object value, final ViewSettings viewSettings) {
+    this(project, (NamedLibraryElement)value, viewSettings);
+  }
+
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     LibraryGroupNode.addLibraryChildren(getValue().getOrderEntry(), children, getProject(), this);

@@ -172,4 +172,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return list.toArray(new Object[list.size()]);
   }
 
+  public BaseProjectTreeBuilder getTreeBuilder() {
+    return myTreeBuilder;
+  }
 }

@@ -23,8 +23,7 @@ public class DirectoryUrl extends AbstractUrl {
     final VirtualFile virtualFile = directory.getVirtualFile();
     if (virtualFile == null) return null;
     final Module module = ModuleUtil.getModuleForFile(project, virtualFile);
-    if (module == null) return null;
-    return new DirectoryUrl(virtualFile.getUrl(), module.getName());
+    return new DirectoryUrl(virtualFile.getUrl(), module != null ? module.getName() : null);
   }
 
   public Object[] createPath(Project project) {

@@ -757,7 +757,22 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (DataConstantsEx.MODULE_CONTEXT_ARRAY.equals(dataId)) {
         return getSelectedModules();
       }
-
+      if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)){
+        final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
+      }
+      if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)){
+        final List<Form> selectedElements = getSelectedElements(Form.class);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new Form[selectedElements.size()]);
+      }
+      if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
+        final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
+      }
+      if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
+        final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+      }
       return null;
     }
 
@@ -785,6 +800,20 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
+  private <T>List<T> getSelectedElements(Class<T> klass){
+    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+     if (viewPane == null) return null;
+      final Object[] elements = viewPane.getSelectedElements();
+      ArrayList<T> result = new ArrayList<T>();
+      for (int i = 0; i < elements.length; i++) {
+        Object element = elements[i];
+        if (klass.isAssignableFrom(element.getClass())) {
+          result.add((T)element);
+        }
+      }
+     return result;
+  }
+
   private final class MyIdeView implements IdeView {
     public void selectElement(PsiElement element) {
       ProjectViewImpl.this.selectPsiElement(element, true);
@@ -809,7 +838,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }
         final Object userObject = node.getUserObject();
         if (userObject instanceof PsiDirectoryNode ||
-            userObject instanceof AbstractModuleNode
+            userObject instanceof ProjectViewModuleNode
             || userObject instanceof PackageElementNode) {
           break;
         }
@@ -826,8 +855,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           return new PsiDirectory[]{directory};
         }
       }
-      else if (userObject instanceof AbstractModuleNode) {
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
+      else if (userObject instanceof ProjectViewModuleNode) {
+        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((ProjectViewModuleNode)userObject).getValue());
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
         List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
         final PsiManager psiManager = PsiManager.getInstance(myProject);

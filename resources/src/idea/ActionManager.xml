@@ -15,6 +15,8 @@
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction" text="Show History _for Selection" description="Show history for editor selection"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
 
+    <action id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesAction" text="Add To Favorites" description="Add selected node to favorites" internal="true"/>
+
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="com.intellij.execution.actions.CreateAction"/>
     </group>
@@ -546,7 +548,6 @@
           <action id="LocalVcs.ShowRepHistory" class="com.intellij.localVcs.actions.PringRepositoryHistoryAction" text="Repository History" internal="true"/>
           <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
-          
           <separator/>
           <action id="Use new code formatter" class="com.intellij.psi.impl.source.codeStyle.NewCodeFormatterAction" text="Use New Code Formatter" description="Use New Code Formatter"/>
           <separator/>
@@ -581,8 +582,8 @@
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
-        <action id="SplitVertical"          class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split Vertically"    icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
-        <action id="SplitHorizontal"        class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
+        <action id="SplitHorisontal"        class="com.intellij.ide.actions.SplitHorizontalAction" text="Split Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
+        <action id="SplitVertical"          class="com.intellij.ide.actions.SplitVerticalAction"   text="Split Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
         <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter Orientation" description="Changes orientation of splitter"/>
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
         <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>
@@ -701,6 +702,8 @@
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <reference ref="FoldingGroup"/>
       <separator/>
       <reference ref="CloseEditor"/>
@@ -769,6 +772,8 @@
       <reference ref="ValidateXml"/>
       <reference ref="AddAntBuildFile"/>
       <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator />
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -799,6 +804,7 @@
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
+
       <reference ref="AssociateWithFileType"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -811,6 +817,8 @@
       <reference ref="ValidateXml"/>
       <reference ref="AddAntBuildFile"/>
       <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator />
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -834,12 +842,57 @@
       <reference ref="ModuleSettings"/>
     </group>
 
+    <group id="FavoritesViewPopupMenu">
+      <reference ref="OpenCustomEditor"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.RemoveFromFavoritesAction" text="Remove From Favorites" description="Remove selected node from favorites" internal="true"/>
+      <separator />
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="FindJoinpointsByPointcutAction"/>
+      <reference ref="AnalyzeMenu"/>
+      <reference ref="RefactoringMenu"/>
+      <reference ref="ValidateXml"/>
+      <reference ref="AddAntBuildFile"/>
+      <separator/>
+      <reference ref="TypeHierarchy"/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>      
+      <separator/>
+      <reference ref="ValidateJsp"/>
+      <reference ref="PackageFile"/>
+      <reference ref="MakeModule"/>
+      <reference ref="Compile"/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ModuleSettings"/>
+    </group>
+
     <group id="StructureViewPopupMenu">
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="FindJoinpointsByPointcutAction"/>
+      <separator/>
+        <reference ref="AddToFavorites"/>
+      <separator />
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -861,6 +914,9 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
+      <separator/>
+        <reference ref="AddToFavorites"/>
+      <separator />
       <reference ref="RunContextPopupGroup"/>
       <separator/>
       <reference ref="ReformatCode"/>
@@ -1118,7 +1174,7 @@
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction" text="Include" description="Include this usage(s) into processing"/>
-      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" text="Exclude" description="Exclude this usage(s) from processing"/>
+      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" text="Exclude" description="Exlude this usage(s) from processing"/>
       <!--todo: include/exclude-->
       <separator/>
       <reference ref="VersionControlsGroup"/>
@@ -1146,6 +1202,8 @@
       <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction" text="Shrink Selection" description="Shrink selection structurally" />
       <separator/>
       <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
       <separator/>
     </group>
 

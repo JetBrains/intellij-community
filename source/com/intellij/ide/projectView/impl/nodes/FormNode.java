@@ -7,8 +7,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 
 public class FormNode extends ProjectViewNode<Form>{
@@ -16,7 +21,7 @@ public class FormNode extends ProjectViewNode<Form>{
   public FormNode(Project project, Form value, ViewSettings viewSettings,
                   Collection<AbstractTreeNode> children) {
     super(project, value, viewSettings);
-    myChildren = children;    
+    myChildren = children;
   }
 
   public Collection<AbstractTreeNode> getChildren() {
@@ -50,5 +55,20 @@ public class FormNode extends ProjectViewNode<Form>{
 
   public String getToolTip() {
     return "UI Designer Form";
+  }
+
+  public static AbstractTreeNode constructFormNode(final PsiManager psiManager,
+                                             final PsiClass classToBind,
+                                             final Project project,
+                                             final ViewSettings settings) {
+    final PsiFile[] formsBoundToClass = psiManager.getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
+    final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
+    for (int i = 0; i < formsBoundToClass.length; i++) {
+      PsiFile formsBoundToClas = formsBoundToClass[i];
+      children.add(new FormNode(project, new Form(classToBind, Arrays.asList(new PsiFile[]{formsBoundToClas})), settings,
+                                new HashSet<AbstractTreeNode>()));
+    }
+    children.add(new ClassTreeNode(project, classToBind, settings));
+    return new FormNode(project, new Form(classToBind, Arrays.asList(formsBoundToClass)), settings, children);
   }
 }

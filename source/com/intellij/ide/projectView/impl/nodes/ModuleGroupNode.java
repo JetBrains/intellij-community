@@ -13,28 +13,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.util.*;
 
-public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
+public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
   private static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
-  private final Class<? extends AbstractTreeNode> myModuleNodeClass;
 
-  public ModuleGroupNode(final Project project,
-                 final ModuleGroup value,
-                 final ViewSettings viewSettings,
-                 final Class<? extends AbstractTreeNode> moduleNodeClass) {
+  public ModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
-    myModuleNodeClass = moduleNodeClass;
   }
+   public ModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
+    this(project, (ModuleGroup)value, viewSettings);
+  }
+
+  protected abstract Class<? extends AbstractTreeNode> getModuleNodeClass();
+  protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
 
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (Iterator iterator = childGroups.iterator(); iterator.hasNext();) {
       ModuleGroup moduleGroup = (ModuleGroup)iterator.next();
-      result.add(new ModuleGroupNode(getProject(), moduleGroup, getSettings(), myModuleNodeClass));
+      result.add(createModuleGroupNode(moduleGroup));
     }
     Module[] modules = getValue().modulesInGroup(getProject(), false);
-    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), myModuleNodeClass, getSettings());
+    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), getModuleNodeClass(), getSettings());
     result.addAll(childModules);
     return result;
   }

@@ -16,6 +16,10 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
     super(project, value, viewSettings);
   }
 
+  public ClassTreeNode(Project project, Object value, ViewSettings viewSettings) {
+    this(project, (PsiClass)value, viewSettings);
+  }
+
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getValue();
     final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();

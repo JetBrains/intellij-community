@@ -15,13 +15,16 @@ import com.intellij.util.Icons;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public LibraryGroupNode(Project project, LibraryGroupElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
+  }
+
+  public LibraryGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
+    this(project, (LibraryGroupElement)value, viewSettings);
   }
 
   public Collection<AbstractTreeNode> getChildren() {

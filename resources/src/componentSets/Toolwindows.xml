@@ -77,5 +77,22 @@
       <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
       <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.ide.favoritesTreeView.FavoritesViewImpl</interface-class>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesViewImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.favoritesTreeView.FavoritesTreeViewConfiguration</interface-class>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesTreeViewConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.ide.favoritesTreeView.FavoritesTreeStructure</interface-class>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesTreeStructure</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
   </project-components>
 </components>

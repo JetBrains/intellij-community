@@ -78,7 +78,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     if(ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-       ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {
+       ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+       ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
       presentation.setVisible(toEnable);
     }
     else if(DebuggerAction.isContextView(event)) {
@@ -105,7 +106,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if(project == null) return null;
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {
+        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if(psiElement instanceof PsiField) {
         return SourcePosition.createFromElement(psiElement);

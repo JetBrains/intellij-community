@@ -61,6 +61,11 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     super(project, value, viewSettings);
   }
 
+  public PackageElementNode(final Project project,
+                          final Object value,
+                          final ViewSettings viewSettings) {
+    this(project, (PackageElement)value, viewSettings);
+  }
   public boolean contains(final VirtualFile file) {
     if (!isUnderContent(file)) {
       return false;

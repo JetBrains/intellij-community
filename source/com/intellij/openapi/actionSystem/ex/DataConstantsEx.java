@@ -75,4 +75,24 @@ public interface DataConstantsEx extends DataConstants {
    * returns Boolean
    */
   String SOURCE_NAVIGATION_LOCKED = "sourceNavigationLocked";
+
+  /**
+   * returns array of ModuleGroups
+   */
+  String MODULE_GROUP_ARRAY = "moduleGroup.array";
+
+  /**
+   * returns array of Forms
+   */
+  String GUI_DESIGNER_FORM_ARRAY = "form.array";
+
+  /**
+   * returns array of LibraryGroups
+   */
+  String LIBRARY_GROUP_ARRAY = "libraryGroup.array";
+
+  /**
+   * returns array of NamedLibraryElements
+   */
+  String NAMED_LIBRARY_ARRAY = "namedLibrary.array";
 }

@@ -61,7 +61,8 @@ public class ToggleMethodBreakpointAction extends AnAction {
     Document document = null;
 
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {
+        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
         method = psiElement;
@@ -115,7 +116,8 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) ||
         ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {
+        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
       event.getPresentation().setVisible(toEnable);
     }
     else {

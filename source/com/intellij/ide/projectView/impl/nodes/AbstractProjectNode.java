@@ -70,9 +70,18 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
       }
     }
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    boolean isPackageView = false;
+    if (getModuleNodeClass() == PackageViewModuleNode.class){
+      isPackageView = true;
+    }
     for (Iterator<String> iterator = groups.keySet().iterator(); iterator.hasNext();) {
       String groupPath = iterator.next();
-      result.add(new ModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings(), getModuleNodeClass()));
+      if (isPackageView){
+        result.add(new PackageViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
+      } else {
+        result.add(new ProjectViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
+      }
+
     }
     result.addAll(ProjectViewNode.wrap(nonGroupedModules, getProject(), getModuleNodeClass(), getSettings()));
     return result;
