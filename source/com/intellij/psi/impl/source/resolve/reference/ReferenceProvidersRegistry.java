@@ -119,7 +119,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               new JavaClassListReferenceProvider());
 
-    registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
+    //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 
     HtmlUtil.HtmlReferenceProvider provider = new HtmlUtil.HtmlReferenceProvider();
     registerReferenceProvider(provider.getFilter(), XmlAttributeValue.class, provider);
