@@ -1,17 +1,12 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
-import com.intellij.psi.PsiAnchor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.util.VictimCollector;
@@ -60,7 +55,7 @@ public class SystemBuilder {
   }
 
   private boolean verifyMethod(final PsiElement element, final HashSet<PsiElement> victims, final PsiSearchHelper helper) {
-    PsiMethod method = null;
+    PsiMethod method;
     PsiParameter parameter = null;
     int index = 0;
 
@@ -195,10 +190,6 @@ public class SystemBuilder {
   private void addUsage(final System system, final PsiElement element) {
 
     class TypeEvaluator {
-      PsiType valuateType(final PsiExpression expr) {
-        return evaluateType(expr);
-      }
-
       PsiType evaluateType(final PsiExpression expr) {
         if (expr instanceof PsiArrayAccessExpression && !mySettings.preserveRawArrays()) {
           final PsiType at = evaluateType(((PsiArrayAccessExpression)expr).getArrayExpression());
@@ -231,7 +222,7 @@ public class SystemBuilder {
             PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
             PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
 
-            PsiType aType = null;
+            PsiType aType;
 
             if (method.isConstructor()) {
               if (isCooked(expr)) {
@@ -291,7 +282,7 @@ public class SystemBuilder {
             for (int i = 0; i < Math.min(parameters.length, arguments.length); i++) {
               final PsiType argumenType = evaluateType(arguments[i]);
 
-              PsiType parmType = null;
+              PsiType parmType;
 
               if (isCooked(parameters[i])) {
                 parmType = getType(parameters[i]);
@@ -507,24 +498,6 @@ public class SystemBuilder {
         else if (expr instanceof PsiConditionalExpression) {
           return evaluateType(((PsiConditionalExpression)expr).getThenExpression());
         }
-        else if (expr instanceof PsiNewExpression) {
-          final PsiExpression qualifier = ((PsiNewExpression)expr).getQualifier();
-
-          if (qualifier != null) {
-            final PsiClassType.ClassResolveResult qualifierResult = Util.resolveType(evaluateType(qualifier));
-
-            if (qualifierResult.getElement() != null) {
-              final PsiSubstitutor qualifierSubs = qualifierResult.getSubstitutor();
-              final PsiClassType.ClassResolveResult result = Util.resolveType(expr.getType());
-
-              if (result.getElement() != null) {
-                final PsiClass aClass = result.getElement();
-
-                return aClass.getManager().getElementFactory().createType(aClass, result.getSubstitutor().putAll(qualifierSubs));
-              }
-            }
-          }
-        }
         else if (expr instanceof PsiReferenceExpression) {
           final PsiReferenceExpression ref = ((PsiReferenceExpression)expr);
           final PsiExpression qualifier = ref.getQualifierExpression();
@@ -573,22 +546,14 @@ public class SystemBuilder {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
 
       if (initializer != null) {
-        final PsiExpression core = new Object() {
-          PsiExpression undress(final PsiExpression expr) {
-            if (expr instanceof PsiParenthesizedExpression) {
-              return undress(((PsiParenthesizedExpression)expr).getExpression());
-            }
-
-            return expr;
-          }
-        }.undress(initializer);
+        final PsiExpression core = PsiUtil.deparenthesizeExpression(initializer);
 
         if (core instanceof PsiArrayInitializerExpression) {
           final PsiExpression[] inits = ((PsiArrayInitializerExpression)core).getInitializers();
           final PsiType type = getType(element);
 
           for (int i = 0; i < inits.length; i++) {
-            system.addSubtypeConstraint(e.valuateType(inits[i]).createArrayType(), type);
+            system.addSubtypeConstraint(e.evaluateType(inits[i]).createArrayType(), type);
           }
         }
         else if (core instanceof PsiNewExpression) {
@@ -599,14 +564,14 @@ public class SystemBuilder {
             final PsiType type = getType(element);
 
             for (int i = 0; i < inits.length; i++) {
-              system.addSubtypeConstraint(e.valuateType(inits[i]).createArrayType(), type);
+              system.addSubtypeConstraint(e.evaluateType(inits[i]).createArrayType(), type);
             }
           }
 
-          system.addSubtypeConstraint(e.valuateType(core), getType(element));
+          system.addSubtypeConstraint(e.evaluateType(core), getType(element));
         }
         else {
-          system.addSubtypeConstraint(e.valuateType(core), getType(element));
+          system.addSubtypeConstraint(e.evaluateType(core), getType(element));
         }
       }
 
@@ -627,7 +592,7 @@ public class SystemBuilder {
                 final PsiExpression arg = call.getArgumentList().getExpressions()[method.getParameterList().getParameterIndex(
                   (PsiParameter)element)];
 
-                system.addSubtypeConstraint(e.valuateType(arg), myTypes.get(element));
+                system.addSubtypeConstraint(e.evaluateType(arg), myTypes.get(element));
               }
             }
           }
@@ -645,7 +610,7 @@ public class SystemBuilder {
                          final PsiExpression retExpr = statement.getReturnValue();
 
                          if (retExpr != null) {
-                           system.addSubtypeConstraint(e.valuateType(retExpr), reType);
+                           system.addSubtypeConstraint(e.evaluateType(retExpr), reType);
                          }
                        }
                      }
@@ -654,7 +619,7 @@ public class SystemBuilder {
       return;
     }
 
-    final PsiStatement root = (PsiStatement)PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    final PsiStatement root = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
 
     if (root != null) {
       final PsiAnchor anchor = new PsiAnchor(root);
@@ -664,21 +629,21 @@ public class SystemBuilder {
                       public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
                         super.visitAssignmentExpression(expression);
 
-                        system.addSubtypeConstraint(e.valuateType(expression.getRExpression()), e.valuateType(expression.getLExpression()));
+                        system.addSubtypeConstraint(e.evaluateType(expression.getRExpression()), e.evaluateType(expression.getLExpression()));
                       }
 
                       public void visitConditionalExpression(final PsiConditionalExpression expression) {
                         super.visitConditionalExpression(expression);
 
-                        system.addSubtypeConstraint(e.valuateType(expression.getThenExpression()),
-                                                    e.valuateType(expression.getElseExpression()));
-                        system.addSubtypeConstraint(e.valuateType(expression.getElseExpression()),
-                                                    e.valuateType(expression.getThenExpression()));
+                        system.addSubtypeConstraint(e.evaluateType(expression.getThenExpression()),
+                                                    e.evaluateType(expression.getElseExpression()));
+                        system.addSubtypeConstraint(e.evaluateType(expression.getElseExpression()),
+                                                    e.evaluateType(expression.getThenExpression()));
                       }
 
                       public void visitCallExpression(final PsiCallExpression expression) {
                         super.visitCallExpression(expression);
-                        e.valuateType(expression);
+                        e.evaluateType(expression);
                       }
 
                       public void visitReturnStatement(final PsiReturnStatement statement) {
@@ -687,7 +652,7 @@ public class SystemBuilder {
                         final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
 
                         if (method != null) {
-                          system.addSubtypeConstraint(e.valuateType(statement.getReturnValue()), getType(method));
+                          system.addSubtypeConstraint(e.evaluateType(statement.getReturnValue()), getType(method));
                         }
                       }
 
@@ -695,8 +660,8 @@ public class SystemBuilder {
                         super.visitTypeCastExpression(expression);
 
                         system.addCast(expression);
-                        final PsiType operandType = e.valuateType(expression.getOperand());
-                        final PsiType castType = e.valuateType(expression);
+                        final PsiType operandType = e.evaluateType(expression.getOperand());
+                        final PsiType castType = e.evaluateType(expression);
 
                         if (operandType.getDeepComponentType() instanceof PsiTypeVariable || castType.getDeepComponentType() instanceof PsiTypeVariable) {
                           system.addSubtypeConstraint(operandType, castType);
@@ -722,7 +687,7 @@ public class SystemBuilder {
                         final PsiExpression init = variable.getInitializer();
 
                         if (init != null) {
-                          system.addSubtypeConstraint(e.valuateType(init), getType(variable));
+                          system.addSubtypeConstraint(e.evaluateType(init), getType(variable));
                         }
                       }
 
@@ -736,7 +701,7 @@ public class SystemBuilder {
                           final PsiType type = getType(expression);
 
                           for (int i = 0; i < inits.length; i++) {
-                            system.addSubtypeConstraint(e.valuateType(inits[i]).createArrayType(), type);
+                            system.addSubtypeConstraint(e.evaluateType(inits[i]).createArrayType(), type);
                           }
                         }
                       }

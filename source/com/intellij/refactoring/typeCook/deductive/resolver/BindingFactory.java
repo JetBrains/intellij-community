@@ -47,7 +47,7 @@ public class BindingFactory {
     new Object() {
       public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
         if (aClass.isInheritor(bClass, true)) {
-          descendants.add(bClass);
+          descendants.add(aClass);
         }
         else {
           final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
@@ -1013,8 +1013,9 @@ public class BindingFactory {
             for (int i = 0; i < descendants.length; i++) {
               final PsiClass descendant = descendants[i];
 
-              final PsiSubstitutor x2aSubst = TypeConversionUtil.getSuperClassSubstitutor(xClass, descendant, xSubst);
-              final PsiSubstitutor y2aSubst = TypeConversionUtil.getSuperClassSubstitutor(yClass, descendant, ySubst);
+              final PsiSubstitutor x2aSubst = TypeConversionUtil.getClassSubstitutor(xClass, descendant, xSubst);
+              final PsiSubstitutor y2aSubst = TypeConversionUtil.getClassSubstitutor(yClass, descendant, ySubst);
+              LOG.assertTrue(x2aSubst != null && y2aSubst != null);
 
               final PsiElementFactory factory = xClass.getManager().getElementFactory();
 
