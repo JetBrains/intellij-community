@@ -300,7 +300,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
             new JRadioButton("Do not replace");
     myReplaceFieldsWithGettersNoneRadio.setMnemonic('N');
     myReplaceFieldsWithGettersInaccessibleRadio =
-            new JRadioButton("Replace fields inaccessble in usage context");
+            new JRadioButton("Replace fields inaccessible in usage context");
     myReplaceFieldsWithGettersInaccessibleRadio.setMnemonic('I');
     myReplaceFieldsWithGettersAllRadio =
             new JRadioButton("Replace all fields");
