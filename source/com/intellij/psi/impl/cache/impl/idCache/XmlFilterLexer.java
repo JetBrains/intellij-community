@@ -3,14 +3,11 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.search.UsageSearchContext;
 import gnu.trove.TIntIntHashMap;
 
-public class XmlFilterLexer extends BaseFilterLexer implements IdTableBuilding.ScanWordProcessor {
+public class XmlFilterLexer extends BaseFilterLexer {
   private boolean caseInsensitive;
-
-  public void run(char[] chars, int start, int end) {
-    IdTableBuilding.registerOccurence(chars, start, end, myTable, WordInfo.PLAIN_TEXT, caseInsensitive);
-  }
 
   public XmlFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
     this(originalLexer, table, todoCounts,false);
@@ -27,7 +24,13 @@ public class XmlFilterLexer extends BaseFilterLexer implements IdTableBuilding.S
       advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
     }
 
-    IdTableBuilding.scanWords(this, getBuffer(), getTokenStart(), getTokenEnd());
+    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(),
+                                UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_ALIEN_LANGUAGES, caseInsensitive);
+    } else {
+      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_PLAIN_TEXT, false);
+    }
+
     myOriginalLexer.advance();
   }
 }

@@ -76,7 +76,7 @@ public abstract class Language {
     return null;
   }
 
-  public boolean mayHaveReferences(IElementType token) {
+  public boolean mayHaveReferences(IElementType token, final short searchContext) {
     return false;
   }
 

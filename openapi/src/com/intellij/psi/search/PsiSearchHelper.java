@@ -28,8 +28,8 @@ public interface PsiSearchHelper {
   PsiReference[] findReferencesIncludingOverriding(PsiMethod method, SearchScope searchScope, boolean isStrictSignatureSearch);
   boolean processReferencesIncludingOverriding(PsiReferenceProcessor processor, PsiMethod method, SearchScope searchScope);
 
-  PsiIdentifier[] findIdentifiers(String identifier, SearchScope searchScope, int position);
-  boolean processIdentifiers(PsiElementProcessor processor, String identifier, SearchScope searchScope, int position);
+  PsiIdentifier[] findIdentifiers(String identifier, SearchScope searchScope, short searchContext);
+  boolean processIdentifiers(PsiElementProcessor processor, String identifier, SearchScope searchScope, short searchContext);
 
   PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope);
   PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope);

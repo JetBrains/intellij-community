@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.IdentifierPosition;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -94,7 +94,7 @@ public class ChangedConstantsDependencyProcessor {
       }
     }
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
-    PsiIdentifier[] identifiers = psiSearchHelper.findIdentifiers(myDependencyCache.resolve(info.getName()), searchScope, IdentifierPosition.IN_CODE);
+    PsiIdentifier[] identifiers = psiSearchHelper.findIdentifiers(myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
     for (int idx = 0; idx < identifiers.length; idx++) {
       PsiIdentifier identifier = identifiers[idx];
       PsiElement parent = identifier.getParent();
