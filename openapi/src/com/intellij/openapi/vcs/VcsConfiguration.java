@@ -113,9 +113,14 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public void saveCommitMessage(final String comment) {
+    if (comment.length() == 0) return;
+
+    myLastCommitMessages.remove(comment);
+
     while (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
       myLastCommitMessages.remove(0);
     }
+    
     myLastCommitMessages.add(comment);
   }
 
@@ -129,6 +134,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public ArrayList<String> getRecentMessages() {
-    return myLastCommitMessages;
+    return new ArrayList<String>(myLastCommitMessages);
   }
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ProfilingUtil;
 
 abstract class BaseDiffAction extends AnAction {
   protected static final Convertor<PsiElement, PsiElement> SOURCE_ELEMENT = new Convertor<PsiElement, PsiElement>() {
