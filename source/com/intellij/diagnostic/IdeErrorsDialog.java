@@ -261,7 +261,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void moveSelectionToEarliestMessage() {
     myIndex = 0;
-    for (int i = myModel.size() - 1; i > 0; i--) {
+    for (int i = 0; i < myModel.size(); i++) {
       final AbstractMessage each = getMessageAt(i);
       if (!each.isRead()) {
         myIndex = i;
@@ -275,7 +275,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void rebuildHeaders() {
     myModel.clear();
     myFatalErrors = myMessagePool.getFatalErrors(true, true);
-    Collections.reverse(myFatalErrors);
 
     Map<String, ArrayList<AbstractMessage>> hash2Messages = buildHashcode2MessageListMap(myFatalErrors);
 
