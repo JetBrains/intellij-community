@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -115,6 +116,9 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       }
 
       DiffManager.getInstance().getDiffTool().show(request);
+    }
+    catch (ProcessCanceledException e) {
+      //ignore
     }
     catch (VcsException e) {
       AbstractVcsHelper.getInstance(project).showError(e, "Diff");
