@@ -2,13 +2,15 @@ package com.intellij.newCodeFormatting;
 
 public class Wrap {
   private int myFirstEntry = -1;
+  private boolean myIsActive = false;
 
   public int getFirstEntry() {
     return myFirstEntry;
   }
 
-  public void skipFirstEntry() {
+  public void markAsUsed() {
     myFirstEntry = -1;
+    myIsActive = true;
   }
 
   public static class Type{
@@ -32,6 +34,10 @@ public class Wrap {
     if (myFirstEntry < 0) {
       myFirstEntry = startOffset;
     }
+  }
+
+  public boolean isIsActive() {
+    return myIsActive;
   }
 
 }

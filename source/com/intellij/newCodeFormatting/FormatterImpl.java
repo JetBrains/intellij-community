@@ -6,36 +6,41 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.*;
 
 public class FormatterImpl {
-  private final Stack<BlockInfo> myStack = new Stack<BlockInfo>();
   private FormattingModel myModel;
-  private Block myRootBlock;
-  private int myCurrentOffset = -1;
+  private BlockWrapper myCurrentBlock;
   private int myReparseFromOffset = -1;
 
-  private final Map <Block, WhiteSpace> myWhiteSpaceBeforeBlock = new LinkedHashMap<Block, WhiteSpace>();
+  private final Map<Block, BlockWrapper> myInfos;
+
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private CodeStyleSettings mySettings;
 
   private final Collection<Alignment> myAlignedAlignments = new HashSet<Alignment>();
+  private final List<BlockWrapper> myWrapCandidates = new ArrayList<BlockWrapper>();
 
   public FormatterImpl(FormattingModel model, Block rootBlock, CodeStyleSettings settings, CodeStyleSettings.IndentOptions indentOptions) {
     myModel = model;
-    myRootBlock = rootBlock;
     myIndentOption = indentOptions;
     mySettings = settings;
+    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model);
+    myInfos = builder.getBlockToInfoMap();
+    myCurrentBlock = builder.getFirstTokenBlock();
   }
 
   public void format() {
-    myWhiteSpaceBeforeBlock.putAll(WhiteSpacesBuilder.buildWhiteSpaces(myRootBlock, myModel));
-    myCurrentOffset  = 0;
+    while (myCurrentBlock != null) {
+      processToken(myCurrentBlock);
+    }
 
-    processBlock(myRootBlock, null);
+    performModifications();
+  }
 
+  private void performModifications() {
     int shift = 0;
     WhiteSpace prev = null;
-    for (Iterator<Block> iterator = myWhiteSpaceBeforeBlock.keySet().iterator(); iterator.hasNext();) {
+    for (Iterator<Block> iterator = myInfos.keySet().iterator(); iterator.hasNext();) {
       Block block = iterator.next();
-      final WhiteSpace whiteSpace = myWhiteSpaceBeforeBlock.get(block);
+      final WhiteSpace whiteSpace = getBlockInfo(block).getWhiteSpace();
       if (prev == whiteSpace) continue;
       final TextRange textRange = whiteSpace.getTextRange();
       final String newWhiteSpace = whiteSpace.generateWhiteSpace();
@@ -45,107 +50,108 @@ public class FormatterImpl {
     }
   }
 
-  private boolean processBlock(final Block rootBlock, final SpaceProperty spaceProperty) {
-    final WhiteSpace whiteSpace = myWhiteSpaceBeforeBlock.get(rootBlock);
-    final BlockInfo info = new BlockInfo(rootBlock);
-    info.setAlignment(rootBlock.getAlignment());
-    info.setWrap(rootBlock.getWrap());
-    BlockInfo parent = myStack.isEmpty() ? null : myStack.peek();
-    myStack.push(info);
-    if (parent != null && !parent.isFirstElementProcessed()) {
-      if (info.getAlignment() == null) {
-        info.setAlignment(parent.getAlignment());
-      }
-      if (info.getWrap() == null) {
-        info.setWrap(parent.getWrap());
-      }
-
-    }
-    final boolean subResult;
-    try {
-      final List<Block> subBlocks = rootBlock.getSubBlocks();
-      if (subBlocks.isEmpty()) {
-        subResult = processToken(spaceProperty, whiteSpace);
-      } else {
-        subResult = processCompositeBlock(subBlocks, spaceProperty, rootBlock);
-      }
-    }
-    finally {
-      myStack.pop();
-    }
-    if (!subResult && rootBlock.getTextRange().getStartOffset() <= myReparseFromOffset) {
-      return processBlock(rootBlock, spaceProperty);
-    } else {
-      return subResult;
-    }
+  private BlockWrapper getBlockInfo(final Block rootBlock) {
+    return myInfos.get(rootBlock);
   }
 
-  private boolean processCompositeBlock(final List<Block> subBlocks,
-                                     final SpaceProperty spaceProperty,
-                                     final Block rootBlock) {
-    Block previous = null;
-    for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
-      final Block current = iterator.next();
-      final boolean subResult = processBlock(current, previous == null ? spaceProperty : rootBlock.getSpaceProperty(previous, current));
-      if (!subResult) return false;
-      previous = current;
-    }
-    return true;
-  }
+  private void processToken(BlockWrapper wrapper) {
 
-  private boolean processToken(final SpaceProperty spaceProperty,
-                            final WhiteSpace whiteSpace) {
-    final BlockInfo info = myStack.peek();
-    final TextRange textRange = info.getBlock().getTextRange();
-    final Wrap wrap = info.getWrap();
+    final SpaceProperty spaceProperty = wrapper.getSpaceProperty();
+    final WhiteSpace whiteSpace = wrapper.getWhiteSpace();
+
     whiteSpace.arrangeLineFeeds(spaceProperty);
+
+    if (processWrap(wrapper)){
+      return;
+    }
+
+    if (whiteSpace.containsLineFeeds()) {
+      onCurrentLineChanged();
+    }
+
+    final Block block = wrapper.getBlock();
+    if (whiteSpace.containsLineFeeds()) {
+      adjustLineIndent(wrapper);
+    } else {
+      whiteSpace.arrangeSpaces(spaceProperty);
+    }
+
+    setAlignOffset(wrapper.getAlignment(), getOffsetBefore(block));
+
+    if (wrapper.containsLineFeeds()) {
+      onCurrentLineChanged();
+    }
+    myCurrentBlock = myCurrentBlock.getNextBlock();
+  }
+
+  private boolean processWrap(BlockWrapper wrapper) {
+    final WhiteSpace whiteSpace = wrapper.getWhiteSpace();
+    final TextRange textRange = wrapper.getBlock().getTextRange();
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
+
+    final Wrap wrap = wrapper.getWrap();
     if (shouldUseWrap(wrap) || wrapIsPresent) {
       whiteSpace.ensureLineFeed();
+      if (wrapCanBeUsedInTheFuture(wrap)) {
+        wrap.markAsUsed();
+      }
       if (wrap != null && wrap.getFirstEntry() >= 0) {
         myReparseFromOffset = wrap.getFirstEntry();
-        wrap.skipFirstEntry();
-        return false;
+        wrap.markAsUsed();
+        shiftToOffset(myReparseFromOffset);
+        myReparseFromOffset = -1;
+        return true;
       }
+    } else if (isCandidateToBeWrapped(wrap)){
+      myWrapCandidates.clear();
+      myWrapCandidates.add(myCurrentBlock);
     } else if (wrapCanBeUsedInTheFuture(wrap) && !wrapIsPresent) {
       wrap.saveFirstEntry(textRange.getStartOffset());
     }
 
-    final int wsLineFeeds = whiteSpace.getLineFeeds();
-    if (wsLineFeeds > 0) {
-      myAlignedAlignments.clear();
-      myCurrentOffset = whiteSpace.getSpaces();
-    } else {
-      myCurrentOffset += whiteSpace.getSpaces();
+    if (!whiteSpace.containsLineFeeds() && lineOver() && !myWrapCandidates.isEmpty()) {
+      myCurrentBlock = myWrapCandidates.get(myWrapCandidates.size() - 1);
+      return true;
     }
-    if (!onTheSameLine(whiteSpace)) {
-      final int before = whiteSpace.getSpaces();
-      int alignOffset = getAlignOffset(info.getAlignment());
-      if (alignOffset == -1) {
-        int indent = calculateIndent();
-        setFirstElementIsProcessed(indent);
-        whiteSpace.setSpaces(indent);
-      } else {
-        setFirstElementIsProcessed(alignOffset);
-        whiteSpace.setSpaces(alignOffset);
+
+    return false;
+  }
+
+  private boolean isCandidateToBeWrapped(final Wrap wrap) {
+    return wrap != null && (wrap.getType() == Wrap.Type.WRAP_AS_NEEDED || wrap.getType() == Wrap.Type.CHOP_IF_NEEDED);
+  }
+
+  private void onCurrentLineChanged() {
+    myAlignedAlignments.clear();
+    myWrapCandidates.clear();
+  }
+
+  private void adjustLineIndent(final BlockWrapper wrapper) {
+    int alignOffset = getAlignOffset(wrapper.getAlignment());
+    if (alignOffset == -1) {
+      wrapper.getWhiteSpace().setSpaces(calculateIndentUnder(getNearestIndentedParent(wrapper.getBlock())));
+    } else {
+      wrapper.getWhiteSpace().setSpaces(alignOffset);
+    }
+  }
+
+  private void shiftToOffset(final int marker) {
+    while (myCurrentBlock.getPreviousBlock() != null && myCurrentBlock.getBlock().getTextRange().getStartOffset() > marker) {
+      if (myCurrentBlock.getWhiteSpace().containsLineFeeds()) {
+        onCurrentLineChanged();
       }
-      final int after = whiteSpace.getSpaces();
-      myCurrentOffset += after - before;
-    } else {
-      setElementIsProcessed(myCurrentOffset);
-      whiteSpace.arrangeSpaces(spaceProperty);
+      myCurrentBlock = myCurrentBlock.getPreviousBlock();
+      if (myCurrentBlock.containsLineFeeds()) {
+        onCurrentLineChanged();
+      }
     }
+  }
 
-    setAlignOffset(info.getAlignment(), info.getCurrentIndent());
-
-    final int blockLineFeeds = getLineFeeds(textRange);
-    if (blockLineFeeds > 0) {
-      myAlignedAlignments.clear();
-      myCurrentOffset = getLastLineLength(textRange);
-    } else {
-      myCurrentOffset += textRange.getLength();
-    }
-    return true;
+  private Block getNearestIndentedParent(Block block) {
+    final Block parent = block.getParent();
+    if (parent == null) return null;
+    if (parent.getSubBlocks().get(0) != block) return parent;
+    return getNearestIndentedParent(parent);
   }
 
   private boolean wrapCanBeUsedInTheFuture(final Wrap wrap) {
@@ -153,21 +159,35 @@ public class FormatterImpl {
   }
 
   private boolean shouldUseWrap(final Wrap wrap) {
+    if (myWrapCandidates.contains(myCurrentBlock)) return true;
     if (wrap == null) return false;
+    if (wrap.isIsActive()) return true;
     final Wrap.Type type = wrap.getType();
     if (type == Wrap.Type.WRAP_ALWAYS) return true;
     if (type == Wrap.Type.WRAP_AS_NEEDED || type == Wrap.Type.CHOP_IF_NEEDED) {
-      return myCurrentOffset >= mySettings.RIGHT_MARGIN;
+      return lineOver();
     }
     return false;
   }
 
-  private int getLastLineLength(final TextRange textRange) {
-    return textRange.getEndOffset() - myModel.getLineStartOffset(myModel.getLineNumber(textRange.getEndOffset()));
+  private boolean lineOver() {
+    return getOffsetBefore(myCurrentBlock) >= mySettings.RIGHT_MARGIN;
   }
 
-  private int getLineFeeds(final TextRange textRange) {
-    return myModel.getLineNumber(textRange.getEndOffset()) - myModel.getLineNumber(textRange.getStartOffset());
+  private int getOffsetBefore(final Block block) {
+    int result = 0;
+    BlockWrapper info = getBlockInfo(block);
+    while (true) {
+      final WhiteSpace whiteSpace = info.getWhiteSpace();
+      result += whiteSpace.getSpaces();
+      if (whiteSpace.containsLineFeeds()){
+        return result;
+      }
+      info = info.getPreviousBlock();
+      if (info == null) return result;
+      result += info.getSymbolsAtTheLastLine();
+      if (info.containsLineFeeds()) return result;
+    }
   }
 
   private void setAlignOffset(final Alignment alignment, final int currentIndent) {
@@ -184,48 +204,29 @@ public class FormatterImpl {
     return alignment.getCurrentOffset();
   }
 
-  private void setElementIsProcessed(final int offset) {
-    for (int i = 0; i < myStack.size(); i++) {
-      final BlockInfo stackElement = myStack.get(i);
-      if (!stackElement.isFirstElementProcessed()){
-        stackElement.setCurrentIndent(offset);
-        stackElement.setIsAtTheStartOfLine(false);
-      }
-      stackElement.setFirstElementProcessed(true);
+  private int calculateIndentUnder(Block block) {
+    if (block == null) return 0;
+    final BlockWrapper info = getBlockInfo(block);
+    if (info.getWhiteSpace().containsLineFeeds()) {
+      return getOffsetBefore(info) + getIndent(block);
+    }
+    return calculateIndentUnder(block.getParent());
+  }
+
+  private int getOffsetBefore(final BlockWrapper info) {
+    final List<Block> subBlocks = info.getBlock().getSubBlocks();
+    if (subBlocks.isEmpty()) {
+      return getOffsetBefore(info.getBlock());
+    } else {
+      return getOffsetBefore(getBlockInfo(subBlocks.get(0)));
     }
   }
 
-  private void setFirstElementIsProcessed(final int indent) {
-    for (int i = 0; i < myStack.size(); i++) {
-      final BlockInfo stackElement = myStack.get(i);
-      if (!stackElement.isFirstElementProcessed()){
-        stackElement.setCurrentIndent(indent);
-        stackElement.setIsAtTheStartOfLine(true);
-      }
-      stackElement.setFirstElementProcessed(true);
-    }
-
-  }
-
-  private int calculateIndent() {
-    int result = 0;
-    for (int i = 0; i < myStack.size(); i++) {
-      final BlockInfo stackElement = myStack.get(i);
-      if (stackElement.getCurrentIndent() >= 0 && stackElement.isIsAtTheStartOfLine()){
-        result = stackElement.getCurrentIndent() + getIndent(stackElement);
-      }
-    }
-    return result;
-  }
-
-  private int getIndent(final BlockInfo stackElement) {
-    final Indent indent = stackElement.getBlock().getChildIndent();
+  private int getIndent(final Block block) {
+    final Indent indent = getBlockInfo(block).getChildIndent();
     if (indent == null) return myIndentOption.CONTINUATION_INDENT_SIZE;
     if (indent.getType() == Indent.Type.NORMAL) return myIndentOption.INDENT_SIZE;
     return myIndentOption.LABEL_INDENT_SIZE;
   }
 
-  private boolean onTheSameLine(WhiteSpace space) {
-    return !space.containsLineFeeds();
-  }
 }
