@@ -17,6 +17,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataContext;
 
 import java.util.HashMap;
 
@@ -63,20 +64,21 @@ public class DebuggerPanelsManager implements ProjectComponent{
   };
 
   public RunContentDescriptor attachVirtualMachine(RunProfile runProfile,
-                                              JavaProgramRunner runner,
-                                              RunProfileState state,
-                                              RunContentDescriptor reuseContent,
-                                              RemoteConnection remoteConnection,
-                                              boolean pollConnection) throws ExecutionException {
+                                                   JavaProgramRunner runner,
+                                                   RunProfileState state,
+                                                   RunContentDescriptor reuseContent,
+                                                   RemoteConnection remoteConnection,
+                                                   boolean pollConnection,
+                                                   final DataContext originContext) throws ExecutionException {
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
 
     DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
     RunContentDescriptor runContentDescriptor = sessionTab.attachToSession(
-            debuggerSession,
-            runner,
-            runProfile,
-            state.getRunnerSettings(),
-            state.getConfigurationSettings());
+        debuggerSession,
+        runner,
+        runProfile,
+        state.getRunnerSettings(),
+        state.getConfigurationSettings(), originContext);
 
     mySessionTabs.put(runContentDescriptor.getProcessHandler(), sessionTab);
     return runContentDescriptor;

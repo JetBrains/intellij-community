@@ -205,13 +205,14 @@ public class DebuggerSessionTab {
     return myWatchPanel;
   }  
   
-  private RunContentDescriptor initUI(ExecutionResult executionResult) {
+  private RunContentDescriptor initUI(ExecutionResult executionResult, final DataContext originContext) {
 
-    myConsole              = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myContentPanel,
-                                                                      getSessionName());
+    myConsole = executionResult.getExecutionConsole();
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myContentPanel, getSessionName());
 
-    if(ApplicationManager.getApplication().isUnitTestMode()) return myRunContentDescriptor;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myRunContentDescriptor;
+    }
 
     Content content = findContent(CONSOLE_CONTENT);
     if(content != null) {
@@ -234,7 +235,7 @@ public class DebuggerSessionTab {
       myContentPanel.remove(myToolBarPanel);
     }
 
-    myFirstToolbar  = createFirstToolbar(myRunContentDescriptor, myContentPanel);
+    myFirstToolbar  = createFirstToolbar(myRunContentDescriptor, myContentPanel, originContext);
     mySecondToolbar = createSecondToolbar();
 
     myToolBarPanel = new JPanel(new GridLayout(1, 2));
@@ -292,14 +293,16 @@ public class DebuggerSessionTab {
     return (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
-  private ActionToolbarEx createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
+  private ActionToolbarEx createFirstToolbar(RunContentDescriptor contentDescriptor,
+                                             JComponent component,
+                                             final DataContext originContext) {
     DefaultActionGroup group = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
 
     // first toolbar
 
     RestartAction restarAction = new RestartAction(myRunner, myConfiguration, contentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
-                                                   contentDescriptor, myRunnerSettings, myConfigurationSettings);
+                                                   contentDescriptor, myRunnerSettings, myConfigurationSettings, originContext);
     group.add(restarAction);
     restarAction.registerShortcut(component);
     AnAction action = actionManager.getAction(DebuggerActions.RESUME);
@@ -414,11 +417,12 @@ public class DebuggerSessionTab {
   }
 
   public RunContentDescriptor attachToSession(
-          final DebuggerSession session,
-          final JavaProgramRunner runner,
-          final RunProfile runProfile,
-          final RunnerSettings runnerSettings,
-          final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws ExecutionException {
+    final DebuggerSession session,
+    final JavaProgramRunner runner,
+    final RunProfile runProfile,
+    final RunnerSettings runnerSettings,
+    final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+    final DataContext originContext) throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
     myRunner = runner;
@@ -430,7 +434,7 @@ public class DebuggerSessionTab {
         myStateManager.fireStateChanged(newContext, event);
       }
     });
-    return initUI(getDebugProcess().getExecutionResult());
+    return initUI(getDebugProcess().getExecutionResult(), originContext);
   }
 
   public DebuggerSession getSession() {

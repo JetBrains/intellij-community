@@ -4,7 +4,6 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -67,7 +66,7 @@ public class RunContentBuilder {
     myRunnerActions.add(action);
   }
 
-  public RunContentDescriptor createDescriptor() {
+  public RunContentDescriptor createDescriptor(final DataContext originalContext) {
     if (myExecutionResult == null) throw new IllegalStateException("Missing ExecutionResult");
     if (myRunProfile == null) throw new IllegalStateException("Missing RunProfile");
 
@@ -82,15 +81,17 @@ public class RunContentBuilder {
       }
 
       if (myComponent != null) panel.add(myComponent, BorderLayout.CENTER);
-      panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
+      panel.add(createActionToolbar(contentDescriptor, panel, originalContext), BorderLayout.WEST);
     }
 
     return contentDescriptor;
   }
 
-  private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
+  private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor,
+                                         final JComponent component,
+                                         final DataContext originalContext) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
+    final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings, originalContext);
     action.registerShortcut(component);
     actionGroup.add(action);
 
@@ -119,8 +120,8 @@ public class RunContentBuilder {
   /**
    * @param reuseContent see {@link RunContentDescriptor#myContent}
    */
-  public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent) {
-    final RunContentDescriptor descriptor = createDescriptor();
+  public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent, final DataContext originalContext) {
+    final RunContentDescriptor descriptor = createDescriptor(originalContext);
     if(reuseContent != null) descriptor.setAttachedContent(reuseContent.getAttachedContent());
     return descriptor;
   }

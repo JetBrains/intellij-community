@@ -9,6 +9,7 @@ import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
@@ -43,9 +44,10 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
   }
 
   public RunContentDescriptor doExecute(final RunProfileState state,
-                         final RunProfile runProfile,
-                         RunContentDescriptor reuseContent,
-                         final Project project) throws ExecutionException {
+                                        final RunProfile runProfile,
+                                        RunContentDescriptor reuseContent,
+                                        final Project project,
+                                        final DataContext originContext) throws ExecutionException {
     final boolean addLvcsLabel = LvcsConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
     final LocalVcs localVcs = LocalVcs.getInstance(project);
     RunContentDescriptor contentDescriptor = null;
@@ -58,7 +60,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
         localVcs.addLabel("Debugging " + runProfile.getName(), "");
       }
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      contentDescriptor = manager.attachVirtualMachine(runProfile, this, javaCommandLine, reuseContent, connection, true);
+      contentDescriptor = manager.attachVirtualMachine(runProfile, this, javaCommandLine, reuseContent, connection, true, originContext);
     }
     else if (state instanceof PatchedRunnableState) {
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -66,14 +68,14 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
         localVcs.addLabel("Debugging " + runProfile.getName(), "");
       }
       final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
-      contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true);
+      contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true, originContext);
     }
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
       if (addLvcsLabel) localVcs.addLabel("Starting remote debugging " + runProfile.getName(), "");
       RemoteState remoteState = (RemoteState)state;
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, remoteState, reuseContent,
-                                             createRemoteDebugConnection(remoteState, state.getRunnerSettings()), false);
+                                             createRemoteDebugConnection(remoteState, state.getRunnerSettings()), false, originContext);
     }
 
     return contentDescriptor != null ? contentDescriptor : null;
