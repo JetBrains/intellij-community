@@ -29,7 +29,7 @@ public interface FileType {
 
   String getCharset(VirtualFile file);
 
-  FileHighlighter getHighlighter(Project project);
+  SyntaxHighlighter getHighlighter(Project project);
 
   PsiFile createPsiFile(VirtualFile file, Project project);
 

@@ -35,7 +35,7 @@ import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighterBase;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
 
-public class HtmlFileHighlighter extends FileHighlighterBase {
+public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
   private static Map<IElementType, TextAttributesKey> keys2;
 

@@ -5,10 +5,10 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerHighlighter;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.PlainFileHighlighter;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -20,11 +20,11 @@ public class HighlighterFactory {
   }
 
   public static LexerHighlighter createHTMLHighlighter(EditorColorsScheme settings){
-    FileHighlighter highlighter = new HtmlFileHighlighter();
+    SyntaxHighlighter highlighter = new HtmlFileHighlighter();
     return createHighlighter(highlighter, settings);
   }
 
-  public static LexerHighlighter createHighlighter(FileHighlighter highlighter, EditorColorsScheme settings) {
+  public static LexerHighlighter createHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme settings) {
     return new LexerHighlighter(highlighter, settings);
   }
 
@@ -63,7 +63,7 @@ public class HighlighterFactory {
   }
 
   public static LexerHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
-    FileHighlighter highlighter = fileType.getHighlighter(project);
-    return createHighlighter(highlighter != null ? highlighter : new PlainFileHighlighter(), settings);
+    SyntaxHighlighter highlighter = fileType.getHighlighter(project);
+    return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
   }
 }

@@ -35,7 +35,7 @@ import com.intellij.lexer.JavaHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighterBase;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
@@ -47,7 +47,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaFileHighlighter extends FileHighlighterBase {
+public class JavaFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourMap1;
   private static Map<IElementType, TextAttributesKey> ourMap2;
 

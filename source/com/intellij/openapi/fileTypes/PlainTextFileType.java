@@ -75,8 +75,8 @@ public class PlainTextFileType implements FileType {
     return null;
   }
 
-  public FileHighlighter getHighlighter(Project project) {
-    return new PlainFileHighlighter();
+  public SyntaxHighlighter getHighlighter(Project project) {
+    return new PlainSyntaxHighlighter();
   }
 
   public PsiFile createPsiFile(VirtualFile file, Project project) {

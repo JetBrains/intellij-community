@@ -34,7 +34,7 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -70,7 +70,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
     return COLORS;
   }
 
-  public FileHighlighter getHighlighter() {
+  public SyntaxHighlighter getHighlighter() {
     return new HtmlFileHighlighter();
   }
 

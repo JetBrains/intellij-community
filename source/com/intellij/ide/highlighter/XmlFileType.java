@@ -36,7 +36,7 @@ import com.intellij.codeFormatting.xml.XmlPseudoTextBuilder;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -84,7 +84,7 @@ public class XmlFileType implements FileType {
     return null;
   }
 
-  public FileHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project) {
     return new XmlFileHighlighter();
   }
 

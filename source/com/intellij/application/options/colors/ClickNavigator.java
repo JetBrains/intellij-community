@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ListScrollingUtil;
 
@@ -87,7 +87,7 @@ public class ClickNavigator {
   }
 
   public void addClickNavigator(final Editor view,
-                                final FileHighlighter highlighter,
+                                final SyntaxHighlighter highlighter,
                                 final HighlightData[] data,
                                 final boolean isBackgroundImportant) {
     addMouseMotionListener(view, highlighter, data, isBackgroundImportant);
@@ -100,7 +100,7 @@ public class ClickNavigator {
     view.getCaretModel().addCaretListener(listener);
   }
 
-  private boolean selectItem(boolean select, HighlighterIterator itr, FileHighlighter highlighter) {
+  private boolean selectItem(boolean select, HighlighterIterator itr, SyntaxHighlighter highlighter) {
 
     IElementType tokenType = itr.getTokenType();
     if (tokenType == null) return false;
@@ -108,7 +108,7 @@ public class ClickNavigator {
     return setSelectedItem(type, select);
   }
 
-  public static String highlightingTypeFromTokenType(IElementType tokenType, FileHighlighter highlighter) {
+  public static String highlightingTypeFromTokenType(IElementType tokenType, SyntaxHighlighter highlighter) {
     TextAttributesKey[] highlights = highlighter.getTokenHighlights(tokenType);
     String s = null;
     for (int i = 0; i < highlights.length; i++) {
@@ -122,7 +122,7 @@ public class ClickNavigator {
   }
 
   private void addMouseMotionListener(final Editor view,
-                                      final FileHighlighter highlighter,
+                                      final SyntaxHighlighter highlighter,
                                       final HighlightData[] data, final boolean isBackgroundImportant) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseMoved(MouseEvent e) {
@@ -134,7 +134,7 @@ public class ClickNavigator {
 
   private void navigate(final Editor editor, boolean select,
                         LogicalPosition pos,
-                        final FileHighlighter highlighter,
+                        final SyntaxHighlighter highlighter,
                         final HighlightData[] data, final boolean isBackgroundImportant) {
     int offset = editor.logicalPositionToOffset(pos);
 

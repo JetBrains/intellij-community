@@ -48,7 +48,7 @@ public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
     return true;
   }
 
-  public FileHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project) {
     return null;
   }
 

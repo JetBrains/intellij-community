@@ -34,7 +34,7 @@ package com.intellij.ide.highlighter;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
@@ -84,7 +84,7 @@ public class JavaFileType implements FileType {
     return null;
   }
 
-  public FileHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project) {
     LanguageLevel level = project != null ? PsiManager.getInstance(project).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
     return new JavaFileHighlighter(level);
   }

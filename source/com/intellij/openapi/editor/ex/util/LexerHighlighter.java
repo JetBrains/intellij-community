@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.Highlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -29,10 +29,10 @@ public class LexerHighlighter extends DocumentAdapter implements Highlighter {
   private Lexer myLexer;
   private Map<IElementType, TextAttributes> myAttributesMap;
   private SegmentArrayWithData mySegments = new SegmentArrayWithData();
-  private FileHighlighter myHighlighter;
+  private SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
 
-  public LexerHighlighter(FileHighlighter highlighter, EditorColorsScheme scheme) {
+  public LexerHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();

@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerHighlighter;
-import com.intellij.openapi.fileTypes.FileHighlighter;
-import com.intellij.openapi.fileTypes.FileHighlighterBase;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.tree.IElementType;
@@ -67,21 +67,21 @@ public class TemplateEditorUtil {
       fileType = StdFileTypes.PLAIN_TEXT;
     }
 
-    FileHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null));
+    SyntaxHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null));
     ((EditorEx)editor).setHighlighter(new LexerHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
   }
 
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{TemplateTokenType.TEXT});
 
-  private static FileHighlighter createTemplateTextHighlighter(final FileHighlighter original) {
+  private static SyntaxHighlighter createTemplateTextHighlighter(final SyntaxHighlighter original) {
     return new TemplateHighlighter(original);
   }
 
-  private static class TemplateHighlighter extends FileHighlighterBase {
+  private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private Lexer myLexer;
-    private FileHighlighter myOriginalHighlighter;
+    private SyntaxHighlighter myOriginalHighlighter;
 
-    public TemplateHighlighter(FileHighlighter original) {
+    public TemplateHighlighter(SyntaxHighlighter original) {
       myOriginalHighlighter = original;
       Lexer originalLexer = original.getHighlightingLexer();
       Lexer templateLexer = new TemplateTextLexer();

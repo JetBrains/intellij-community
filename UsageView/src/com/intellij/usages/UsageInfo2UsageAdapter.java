@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -252,7 +252,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
   }
 
-  private TextChunk[] createTextChunks(FileHighlighter highlighter, int start, int end) {
+  private TextChunk[] createTextChunks(SyntaxHighlighter highlighter, int start, int end) {
     LOG.assertTrue(start <= end);
     List<TextChunk> result = new ArrayList<TextChunk>();
 

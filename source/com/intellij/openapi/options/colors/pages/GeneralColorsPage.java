@@ -35,8 +35,8 @@ import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighter;
-import com.intellij.openapi.fileTypes.PlainFileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -93,8 +93,8 @@ public class GeneralColorsPage implements ColorSettingsPage {
     return COLOR_DESCRIPTORS;
   }
 
-  public FileHighlighter getHighlighter() {
-    return new PlainFileHighlighter();
+  public SyntaxHighlighter getHighlighter() {
+    return new PlainSyntaxHighlighter();
   }
 
   public String getDemoText() {

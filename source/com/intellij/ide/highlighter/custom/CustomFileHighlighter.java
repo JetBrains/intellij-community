@@ -33,14 +33,14 @@ package com.intellij.ide.highlighter.custom;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighterBase;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomFileHighlighter extends FileHighlighterBase {
+public class CustomFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourKeys;
   private SyntaxTable myTable;
 

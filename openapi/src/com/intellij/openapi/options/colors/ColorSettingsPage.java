@@ -32,7 +32,7 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 
 import javax.swing.*;
 import java.util.Map;
@@ -42,7 +42,7 @@ public interface ColorSettingsPage {
   Icon getIcon();
   AttributesDescriptor[] getAttributeDescriptors();
   ColorDescriptor[] getColorDescriptors();
-  FileHighlighter getHighlighter();
+  SyntaxHighlighter getHighlighter();
   String getDemoText();
   Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
 }

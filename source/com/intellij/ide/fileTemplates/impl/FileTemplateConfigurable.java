@@ -329,7 +329,7 @@ public class FileTemplateConfigurable implements Configurable {
       fileType = StdFileTypes.PLAIN_TEXT;
     }
 
-    FileHighlighter originalHighlighter = fileType.getHighlighter(null);
+    SyntaxHighlighter originalHighlighter = fileType.getHighlighter(null);
     LexerHighlighter highlighter = new LexerHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     ((EditorEx)myTemplateEditor).setHighlighter(highlighter);
     ((EditorEx)myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
@@ -337,11 +337,11 @@ public class FileTemplateConfigurable implements Configurable {
 
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{FileTemplateTokenType.TEXT});
 
-  private static class TemplateHighlighter extends FileHighlighterBase {
+  private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private Lexer myLexer;
-    private FileHighlighter myOriginalHighlighter;
+    private SyntaxHighlighter myOriginalHighlighter;
 
-    public TemplateHighlighter(FileHighlighter original) {
+    public TemplateHighlighter(SyntaxHighlighter original) {
       myOriginalHighlighter = original;
       Lexer originalLexer = original.getHighlightingLexer();
       Lexer templateLexer = new FileTemplateTextLexer();

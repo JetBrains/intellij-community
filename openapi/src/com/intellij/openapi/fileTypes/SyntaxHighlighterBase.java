@@ -37,7 +37,7 @@ import com.intellij.psi.tree.TokenSet;
 
 import java.util.Map;
 
-public abstract class FileHighlighterBase implements FileHighlighter {
+public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   private static final TextAttributesKey[] EMPTY = new TextAttributesKey[0];
 
   protected static TextAttributesKey[] pack(TextAttributesKey key) {

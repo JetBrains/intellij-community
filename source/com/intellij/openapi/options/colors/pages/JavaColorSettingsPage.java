@@ -36,7 +36,7 @@ import com.intellij.debugger.settings.DebuggerColors;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -141,7 +141,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     return ourColorDescriptors;
   }
 
-  public FileHighlighter getHighlighter() {
+  public SyntaxHighlighter getHighlighter() {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 

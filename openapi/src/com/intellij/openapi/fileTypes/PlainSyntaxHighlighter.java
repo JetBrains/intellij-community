@@ -31,11 +31,20 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.tree.IElementType;
 
-public interface FileHighlighter {
-  Lexer getHighlightingLexer();
-  TextAttributesKey[] getTokenHighlights(IElementType tokenType);
+public class PlainSyntaxHighlighter implements SyntaxHighlighter {
+  private static final TextAttributesKey[] ATTRS = new TextAttributesKey[] {HighlighterColors.TEXT};
+
+  public Lexer getHighlightingLexer() {
+    return new EmptyLexer();
+  }
+
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    return ATTRS;
+  }
 }
