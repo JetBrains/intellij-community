@@ -42,7 +42,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
   private int[] myStartOffsets;
   private int[] myEndOffsets;
   private boolean myAllLineComments;
-  //private CodeInsightSettings myCodeInsightSettings;
   private CodeStyleManager myCodeStyleManager;
 
   private static final Map<FileType,LineCommenter> customCommenters = new HashMap<FileType, LineCommenter>(4);
@@ -58,6 +57,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
     registerCommenter(StdFileTypes.XHTML,commenter);
     registerCommenter(StdFileTypes.JAVA, new JavaLineCommenter());
     registerCommenter(StdFileTypes.JSP, new JspLineCommenter());
+
+    registerCommenter(StdFileTypes.JSPX, new JspxLineCommenter());
   }
 
   public static LineCommenter getCustomCommenter(FileType fileType) {
@@ -477,9 +478,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
     private boolean myJavaComment;
     private boolean initialized;
 
-    public JspLineCommenter() {
-    }
-
     public void doComment(int offset, int line, LineCommenterContext context) {
       final Document myDocument = context.getDocument();
 
@@ -550,6 +548,83 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
       } catch(CloneNotSupportedException ex) {
         return null;
       }
+    }
+  }
+
+  private static class JspxLineCommenter extends HtmlLineCommenter {
+    private boolean myJavaComment;
+    private boolean initialized;
+
+    public void doComment(int offset, int line, LineCommenter.LineCommenterContext context) {
+      final Document myDocument = context.getDocument();
+
+      if (!initialized) {
+        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+
+        initialize(context);
+
+        initialized = true;
+      }
+
+      if (myJavaComment) {
+        myDocument.insertString(offset, "//");
+      }
+      else {
+        super.doComment(offset, line, context);
+      }
+    }
+
+    private void initialize(final LineCommenterContext context) {
+      Document myDocument = context.getDocument();
+      myJavaComment = false;
+
+      for (int line1 = context.getStartLine(); line1 <= context.getEndLine(); line1++) {
+        int offset1 = myDocument.getLineStartOffset(line1);
+        final PsiElement elementAt = context.getFile().findElementAt(offset1);
+        final XmlTag tag = PsiTreeUtil.getParentOfType(elementAt, XmlTag.class, false);
+
+        if (tag.getName().equals("jsp:scriplet") || tag.getName().equals("jsp:declaration")) {
+          myJavaComment = true;
+        }
+      }
+    }
+
+    public void doUncomment(int offset1, int offset2, LineCommenterContext context) {
+      final Document myDocument = context.getDocument();
+
+      if (CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset1, "//")) {
+        myDocument.deleteString(offset1, offset1 + "//".length());
+      }
+      else {
+        super.doUncomment(offset1, offset2, context);
+      }
+    }
+
+    public int getCommentStart(int offset, LineCommenterContext context) {
+      final Document myDocument = context.getDocument();
+      if (offset > myDocument.getTextLength() - "//".length()) return -1;
+
+      if (CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset, "//")) {
+        PsiDocumentManager.getInstance(context.getProject()).commitDocument(myDocument);
+        PsiElement element = context.getFile().findElementAt(offset);
+        if (element instanceof PsiComment && element.getTextRange().getStartOffset() == offset) {
+          return offset;
+        }
+      }
+      else {
+        return super.getCommentStart(offset, context);
+      }
+
+      return -1;
+    }
+
+    public int getCommentEnd(int offset, LineCommenterContext context) {
+      if (offset < 0) return -1;
+      if (!initialized) {
+        initialize(context);
+      }
+      if (myJavaComment) return offset;
+      return super.getCommentEnd(offset, context);
     }
   }
 }

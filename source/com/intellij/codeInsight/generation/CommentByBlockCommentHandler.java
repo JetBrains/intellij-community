@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.util.HashMap;
@@ -61,9 +62,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
     registerCommenter(StdFileTypes.JAVA,new JavaBlockCommenter());
     registerCommenter(StdFileTypes.JSP,new JspBlockCommenter());
     registerCommenter(StdFileTypes.XML,new XmlBlockCommenter());
+
     HtmlBlockCommenter blockCommenter = new HtmlBlockCommenter();
     registerCommenter(StdFileTypes.HTML,blockCommenter);
     registerCommenter(StdFileTypes.XHTML,blockCommenter);
+    registerCommenter(StdFileTypes.JSPX,new JspxBlockCommenter());
   }
 
   static class JavaBlockCommenter implements BlockCommenter {
@@ -177,6 +180,44 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
 
     public static void setScriptCommenter(BlockCommenter scriptCommenter) {
       ourScriptCommenter = scriptCommenter;
+    }
+  }
+
+  static class JspxBlockCommenter extends HtmlBlockCommenter {
+    private BlockCommenter javaCommenter = new JavaBlockCommenter();
+
+    private boolean isJavaCommentInsideXml(PsiElement element) {
+      boolean javaComment = !(element instanceof XmlToken);
+
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+
+      if (tag.getName().equals("jsp:scriplet") || tag.getName().equals("jsp:declaration")) {
+        javaComment = true;
+      }
+
+      return javaComment;
+    }
+
+    public void commentRange(int start, int end, BlockCommenterContext context) {
+      if (isJavaCommentInsideXml( context.getFile().findElementAt(start))) {
+        javaCommenter.commentRange(start, end, context);
+      } else {
+        super.commentRange(start, end, context);
+      }
+    }
+
+    public void uncommentRange(PsiElement element, int commentStart, BlockCommenterContext context) {
+      if (isJavaCommentInsideXml( context.getFile().findElementAt(commentStart))) {
+        javaCommenter.uncommentRange(element, commentStart, context);
+      } else {
+        super.uncommentRange(element, commentStart, context);
+      }
+    }
+
+    public Object clone() {
+      final JspxBlockCommenter commenter = (JspxBlockCommenter)super.clone();
+      commenter.javaCommenter = (BlockCommenter)javaCommenter.clone();
+      return commenter;
     }
   }
 

@@ -293,8 +293,7 @@ public class BraceMatchingUtil {
     final BraceMatcher defaultBraceMatcher = new DefaultBraceMatcher();
     registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
     registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
-    registerBraceMatcher(StdFileTypes.JSPX,defaultBraceMatcher);
-
+    
     HtmlBraceMatcher braceMatcher = new HtmlBraceMatcher();
     registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
     registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
