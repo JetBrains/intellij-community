@@ -18,15 +18,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -75,7 +73,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       }
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
+      return null;
     }
     return result;
   }
@@ -92,7 +90,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
 
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
-    return myNewParametersInfo != null;
+    return myNewParametersInfo != null && formatTypesList(myNewParametersInfo, myContext) != null;
   }
 
   public void invoke(final Project project, Editor editor, final PsiFile file) {
