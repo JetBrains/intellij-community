@@ -10,11 +10,10 @@ package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -109,7 +108,9 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
 
   protected void doAction() {
     RefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
-    close(OK_EXIT_CODE);
+    final TurnRefsToSuperProcessor processor = new TurnRefsToSuperProcessor(
+      getProject(), mySubClass, getSuperClass(), isUseInInstanceOf());
+    invokeRefactoring(processor);
   }
 
   protected JComponent createCenterPanel() {

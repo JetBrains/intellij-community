@@ -64,6 +64,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
       Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.REFACTORING_NAME);
       return false;
     }
+
+    prepareSuccessful();
     return true;
   }
 
