@@ -28,7 +28,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
   public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit"); 
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit");
 
   private ProjectJdk myInternalJavaSdk;
 
@@ -36,7 +36,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     super("IDEA JDK");
   }
 
-   public Icon getIcon() {
+  public Icon getIcon() {
     return SDK_CLOSED;
   }
 
@@ -49,7 +49,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public boolean isValidSdkHome(String path) {
-    if (isFromIDEAProject(path)){
+    if (isFromIDEAProject(path)) {
       return true;
     }
     File home = new File(path);
@@ -85,9 +85,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       return myInternalJavaSdk;
     }
     String jreHome;
-    if (SystemInfo.isLinux || SystemInfo.isWindows){
+    if (SystemInfo.isLinux || SystemInfo.isWindows) {
       jreHome = sdkHome + File.separator + "jre";
-    } else {
+    }
+    else {
       jreHome = System.getProperty("java.home");
     }
     return JavaSdk.getInstance().createJdk("", jreHome);
@@ -153,7 +154,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static void addSources(File file, SdkModificator sdkModificator) {
     final File src = new File(new File(file, "lib"), "src");
     if (!src.exists()) return;
-    File [] srcs = src.listFiles(new FileFilter() {
+    File[] srcs = src.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         if (pathname.getPath().indexOf("generics") > -1) return false;
         if (pathname.getPath().endsWith(".jar") || pathname.getPath().endsWith(".zip")) return true;
@@ -173,7 +174,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   public static void addDocs(File file, SdkModificator sdkModificator) {
     File docFile = new File(new File(file, "help"), "openapi");
-    if (docFile.exists() && docFile.isDirectory()){
+    if (docFile.exists() && docFile.isDirectory()) {
       sdkModificator.addRoot(LocalFileSystem.getInstance().findFileByIoFile(docFile), ProjectRootType.JAVADOC);
       return;
     }
@@ -187,40 +188,63 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private void addClasses(SdkModificator sdkModificator) {
-    String [] classes = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.CLASSES);
-    for (int i = 0; i < classes.length; i++) {
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(classes[i]);
-      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
+    addOrderEntries(OrderRootType.CLASSES, ProjectRootType.CLASS, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator);
+  }
+
+  private void addDocs(SdkModificator sdkModificator) {
+    if (!addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator) &&
+        SystemInfo.isMac){
+      ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
+      for(int i = 0; i < jdks.length; i++){
+        if (jdks[i].getSdkType() instanceof JavaSdk){
+          addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, jdks[i], sdkModificator);
+          break;
+        }
+      }
     }
   }
 
-  private void addDocs(SdkModificator sdkModificator){
-    String [] docs = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.JAVADOC);
+  private void addSources(SdkModificator sdkModificator) {
+    if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator) &&
+        SystemInfo.isMac){
+      ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
+      for(int i = 0; i < jdks.length; i++){
+        if (jdks[i].getSdkType() instanceof JavaSdk){
+          addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdks[i], sdkModificator);
+          break;
+        }
+      }
+    }
+  }
+
+  private boolean addOrderEntries(OrderRootType orderRootType, ProjectRootType projectRootType, Sdk sdk, SdkModificator toModificator){
+    final String[] docs = sdk.getRootProvider().getUrls(orderRootType);
     for (int i = 0; i < docs.length; i++) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(docs[i]);
-      sdkModificator.addRoot(virtualFile, ProjectRootType.JAVADOC);
+      toModificator.addRoot(virtualFile, projectRootType);
+      return true;
     }
+    return false;
   }
 
-  private void addSources(SdkModificator sdkModificator){
-    String [] src = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.SOURCES);
-    for (int i = 0; i < src.length; i++) {
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(src[i]);
-      sdkModificator.addRoot(virtualFile, ProjectRootType.SOURCE);
-    }
-  }
-
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
     sdkModel.addListener(new SdkModel.Listener() {
       public void sdkAdded(Sdk sdk) {
       }
+
       public void beforeSdkRemove(Sdk sdk) {
       }
+
       public void sdkChanged(Sdk sdk) {
       }
+
       public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
-        if (sdk.getSdkType() instanceof IdeaJdk){
-          myInternalJavaSdk = JavaSdk.getInstance().createJdk("", newSdkHome);
+        if (sdk.getSdkType() instanceof IdeaJdk) {
+          String jreHome;
+          if (SystemInfo.isLinux || SystemInfo.isWindows) {
+            jreHome = newSdkHome + File.separator + "jre";
+            myInternalJavaSdk = JavaSdk.getInstance().createJdk("", jreHome);
+          }
         }
       }
     });
