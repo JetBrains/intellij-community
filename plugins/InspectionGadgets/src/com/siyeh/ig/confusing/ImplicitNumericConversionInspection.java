@@ -194,33 +194,6 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiType expressionType = expression.getType();
-            if (expressionType == null) {
-                return;
-            }
-            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
-                return;
-            }
-
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
-            if (expectedType == null) {
-                return;
-            }
-
-            if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
-                return;
-            }
-            if (expectedType.equals(expressionType)) {
-                return;
-            }
-            if (m_ignoreWideningConversions && hasLowerPrecision(expressionType, expectedType)) {
-                return;
-            }
-            registerError(expression);
-        }
-
         public void visitExpression(PsiExpression exp) {
             super.visitExpression(exp);
             final PsiType expressionType = exp.getType();
