@@ -5,7 +5,6 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
 class SplitElseIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

@@ -46,7 +46,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
     public static boolean isSimplifiableImplicitReturn(PsiIfStatement ifStatement){
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
-        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
+        final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
@@ -62,7 +62,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
 
-        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
+        final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }

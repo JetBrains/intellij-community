@@ -87,7 +87,8 @@ public class SimplifyIfElseIntention extends Intention{
         final PsiExpression condition = statement.getCondition();
 
         final String conditionText =BoolUtils.getNegatedExpressionText(condition);
-        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, new Class[] {PsiWhiteSpace.class});
+        final PsiElement nextStatement =
+                PsiTreeUtil.skipSiblingsForward(statement, new Class[] {PsiWhiteSpace.class});
         final String newStatement = "return " + conditionText + ';';
         replaceStatement(project, newStatement, statement);
         nextStatement.delete();

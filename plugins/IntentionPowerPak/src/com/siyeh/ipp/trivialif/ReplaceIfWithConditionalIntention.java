@@ -113,7 +113,8 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final PsiExpression condition = ifStatement.getCondition();
             final PsiStatement rawThenBranch = ifStatement.getThenBranch();
             final PsiReturnStatement thenBranch = (PsiReturnStatement) ConditionalUtils.stripBraces(rawThenBranch);
-            PsiReturnStatement elseBranch = (PsiReturnStatement)PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
+            final PsiReturnStatement elseBranch =
+                    (PsiReturnStatement)PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
 
             final String thenValue;
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();

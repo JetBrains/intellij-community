@@ -435,6 +435,33 @@ public class ManualTestClass
         {
             System.out.println("2");
         }
+
+        if(foo)
+        {
+            System.out.println("2");
+            return;
+        }
+         if(bar)
+        {
+            System.out.println("2");
+             return;
+        }
+
+
+        if(foo)
+        {
+            System.out.println("1");
+            return;
+        }
+         if(bar)
+        {
+            System.out.println("1");
+             return;
+        }
+        else
+        {
+            System.out.println("2");
+        }
     }
 
     public void testFlipConditional()

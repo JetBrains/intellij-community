@@ -32,7 +32,8 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
 
 
     public static boolean isReplaceableImplicitReturn(PsiIfStatement ifStatement) {
-        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
+        final PsiElement nextStatement =
+                PsiTreeUtil.skipSiblingsForward(ifStatement, new Class[] {PsiWhiteSpace.class});
         if (!(nextStatement instanceof PsiReturnStatement)) {
             return false;
         }
@@ -124,7 +125,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
                 (PsiAssignmentExpression) ((PsiExpressionStatement) elseBranch).getExpression();
         final PsiJavaToken thenSign = thenExpression.getOperationSign();
         final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        if(thenSign.getTokenType() != elseSign.getTokenType()){
+        if(!thenSign.getTokenType().equals(elseSign.getTokenType())){
             return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();
