@@ -30,7 +30,7 @@ public class ShortestPathUtil <Node> {
 
   public List<Node> getShortestPath(Node from, Node to) {
     ArrayList<Node> result = new ArrayList<Node>();
-    if (myShortestPathTree == null) {
+    if (myShortestPathTree == null || ((DefaultMutableTreeNode)myShortestPathTree.getRoot()).getUserObject() != from) {
       shortestPath(from);
     }
     final boolean flag = traverse(to, result);

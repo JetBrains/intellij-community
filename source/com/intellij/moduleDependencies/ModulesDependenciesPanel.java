@@ -7,20 +7,18 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.projectRoots.ProjectRootListener;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -99,6 +97,20 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
     });
 
+    group.add(new ToggleAction("Dependencies Direction", "", DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
+      public boolean isSelected(AnActionEvent e) {
+        return DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection();
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        DependenciesAnalyzeManager.getInstance(myProject).setForwardDirection(state);
+        initLeftTreeModel();
+      }
+
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setIcon(DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png"));
+      }
+    });
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
   }
@@ -270,8 +282,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
-    SmartExpander.installOn(tree);
-    EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
     PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree, tree), ActionManager.getInstance());
   }
@@ -287,7 +297,23 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         return Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()).iterator();
       }
     }));
-    return graph;
+    if (DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection()){
+      return graph;
+    } else {
+      return new Graph<Module>(){
+        public Collection<Module> getNodes() {
+          return graph.getNodes();
+        }
+
+        public Iterator<Module> getIn(final Module n) {
+          return graph.getOut(n);
+        }
+
+        public Iterator<Module> getOut(final Module n) {
+          return graph.getIn(n);
+        }
+      };
+    }
   }
 
   public void setContent(final Content content) {

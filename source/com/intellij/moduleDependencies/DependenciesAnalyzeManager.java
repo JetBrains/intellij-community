@@ -4,7 +4,7 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -12,14 +12,16 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jdom.Element;
 
 /**
  * User: anna
  * Date: Feb 10, 2005
  */
-public class DependenciesAnalyzeManager implements ProjectComponent{
+public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectComponent{
   private Project myProject;
   private ContentManager myContentManager;
+  public boolean myForwardDirection;
 
   public DependenciesAnalyzeManager(final Project project) {
     myProject = project;
@@ -67,5 +69,21 @@ public class DependenciesAnalyzeManager implements ProjectComponent{
 
   public void disposeComponent() {
 
+  }
+
+  public boolean isForwardDirection() {
+    return myForwardDirection;
+  }
+
+  public void setForwardDirection(final boolean forwardDirection) {
+    myForwardDirection = forwardDirection;
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }
