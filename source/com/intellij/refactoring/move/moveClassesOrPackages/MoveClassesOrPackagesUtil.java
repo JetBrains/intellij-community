@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -17,11 +19,11 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ide.util.DirectoryChooser;
+import com.intellij.ide.util.DirectoryChooserModuleTreeView;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.io.File;
 
 public class MoveClassesOrPackagesUtil {
   private static final Logger LOG = Logger.getInstance(
@@ -334,6 +336,77 @@ public class MoveClassesOrPackagesUtil {
     }
     else {
       return UsageViewUtil.DEFAULT_PACKAGE_NAME;
+    }
+  }
+
+  public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
+                                              final VirtualFile[] contentSourceRoots,
+                                              final PsiDirectory initialDirectory) {
+    Project project = targetPackage.getManager().getProject();
+    List<PsiDirectory> targetDirectories = new ArrayList<PsiDirectory>();
+    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
+    buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
+    final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
+    chooser.setTitle("Choose Destination Directory");
+    chooser.fillList(
+      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      initialDirectory,
+      project,
+      relativePathsToCreate
+    );
+    chooser.show();
+    if (!chooser.isOK()) return null;
+    final PsiDirectory selectedDirectory = chooser.getSelectedDirectory();
+    final VirtualFile virt = selectedDirectory.getVirtualFile();
+    final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virt);
+    LOG.assertTrue(sourceRootForFile != null);
+    return sourceRootForFile;
+  }
+
+  private static void buildDirectoryList(PackageWrapper aPackage,
+                                  VirtualFile[] contentSourceRoots,
+                                  List<PsiDirectory> targetDirectories,
+                                  Map<PsiDirectory, String> relativePathsToCreate) {
+
+    sourceRoots:
+    for (int i = 0; i < contentSourceRoots.length; i++) {
+      VirtualFile root = contentSourceRoots[i];
+
+      final PsiDirectory[] directories = aPackage.getDirectories();
+      for (int j = 0; j < directories.length; j++) {
+        PsiDirectory directory = directories[j];
+        if (VfsUtil.isAncestor(root, directory.getVirtualFile(), false)) {
+          targetDirectories.add(directory);
+          continue sourceRoots;
+        }
+      }
+      String qNameToCreate;
+      try {
+        qNameToCreate = RefactoringUtil.qNameToCreateInSourceRoot(aPackage, root);
+      }
+      catch (IncorrectOperationException e) {
+        continue sourceRoots;
+      }
+      PsiDirectory currentDirectory = aPackage.getManager().findDirectory(root);
+      if (currentDirectory == null) continue;
+      final String[] shortNames = qNameToCreate.split("\\.");
+      for (int j = 0; j < shortNames.length; j++) {
+        String shortName = shortNames[j];
+        final PsiDirectory subdirectory = currentDirectory.findSubdirectory(shortName);
+        if (subdirectory == null) {
+          targetDirectories.add(currentDirectory);
+          final StringBuffer postfix = new StringBuffer();
+          for (int k = j; k < shortNames.length; k++) {
+            String name = shortNames[k];
+            postfix.append(File.separatorChar);
+            postfix.append(name);
+          }
+          relativePathsToCreate.put(currentDirectory, postfix.toString());
+          continue sourceRoots;
+        } else {
+          currentDirectory = subdirectory;
+        }
+      }
     }
   }
 }

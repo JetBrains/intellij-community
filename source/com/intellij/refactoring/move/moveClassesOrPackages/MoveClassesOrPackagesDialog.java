@@ -1,7 +1,5 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.ide.util.DirectoryChooserModuleTreeView;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -9,29 +7,22 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private final PsiElement[] myElementsToMove;
@@ -324,23 +315,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (contentSourceRoots.length == 1) {
       return new AutocreatingSingleSourceRootMoveDestination(targetPackage, contentSourceRoots[0]);
     }
-    List<PsiDirectory> targetDirectories = new ArrayList<PsiDirectory>();
-    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
-    buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
-    final DirectoryChooser chooser = new DirectoryChooser(myProject, new DirectoryChooserModuleTreeView(myProject));
-    chooser.setTitle("Choose Destination Directory");
-    chooser.fillList(
-      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
-      myInitialTargetDirectory,
-      myProject,
-      relativePathsToCreate
-    );
-    chooser.show();
-    if (!chooser.isOK()) return null;
-    final PsiDirectory selectedDirectory = chooser.getSelectedDirectory();
-    final VirtualFile virt = selectedDirectory.getVirtualFile();
-    final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(virt);
-    LOG.assertTrue(sourceRootForFile != null);
+    final VirtualFile sourceRootForFile = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, myInitialTargetDirectory);
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRootForFile);
   }
 
@@ -348,50 +323,4 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return ProjectRootManager.getInstance(myProject).getContentSourceRoots();
   }
 
-  private void buildDirectoryList(PackageWrapper aPackage,
-                                  VirtualFile[] contentSourceRoots,
-                                  List<PsiDirectory> targetDirectories,
-                                  Map<PsiDirectory, String> relativePathsToCreate) {
-
-    sourceRoots:
-    for (int i = 0; i < contentSourceRoots.length; i++) {
-      VirtualFile root = contentSourceRoots[i];
-
-      final PsiDirectory[] directories = aPackage.getDirectories();
-      for (int j = 0; j < directories.length; j++) {
-        PsiDirectory directory = directories[j];
-        if (VfsUtil.isAncestor(root, directory.getVirtualFile(), false)) {
-          targetDirectories.add(directory);
-          continue sourceRoots;
-        }
-      }
-      String qNameToCreate;
-      try {
-        qNameToCreate = RefactoringUtil.qNameToCreateInSourceRoot(aPackage, root);
-      }
-      catch (IncorrectOperationException e) {
-        continue sourceRoots;
-      }
-      PsiDirectory currentDirectory = myManager.findDirectory(root);
-      if (currentDirectory == null) continue;
-      final String[] shortNames = qNameToCreate.split("\\.");
-      for (int j = 0; j < shortNames.length; j++) {
-        String shortName = shortNames[j];
-        final PsiDirectory subdirectory = currentDirectory.findSubdirectory(shortName);
-        if (subdirectory == null) {
-          targetDirectories.add(currentDirectory);
-          final StringBuffer postfix = new StringBuffer();
-          for (int k = j; k < shortNames.length; k++) {
-            String name = shortNames[k];
-            postfix.append(File.separatorChar);
-            postfix.append(name);
-          }
-          relativePathsToCreate.put(currentDirectory, postfix.toString());
-          continue sourceRoots;
-        } else {
-          currentDirectory = subdirectory;
-        }
-      }
-    }
-  }
 }
