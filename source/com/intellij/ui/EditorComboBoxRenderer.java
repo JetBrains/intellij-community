@@ -8,9 +8,9 @@ import java.awt.*;
  * @author max
  */
 public class EditorComboBoxRenderer extends BasicComboBoxRenderer {
-  private EditorComboBoxEditor myEditor;
-
-  public EditorComboBoxRenderer(EditorComboBoxEditor editor) {
+  private ComboBoxEditor myEditor;
+          
+  public EditorComboBoxRenderer(ComboBoxEditor editor) {
     myEditor = editor;
   }
 
