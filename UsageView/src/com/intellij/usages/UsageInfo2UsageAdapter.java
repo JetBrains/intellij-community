@@ -41,7 +41,6 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
   private Document myDocument;
-  private EditorColorsScheme myColorsScheme;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
