@@ -1,6 +1,6 @@
 class Foreign {
-    void foo(MoveMethodTest.Inner inner, MoveMethodTest moveMethodTest) {
-       moveMethodTest.bar (inner);    
+    void foo(MoveMethodTest moveMethodTest, MoveMethodTest.Inner inner) {
+       moveMethodTest.bar (inner);
     }
 }
 
