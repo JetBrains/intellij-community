@@ -137,7 +137,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (!expression.isQualified()) {
             final PsiElement resolved = expression.resolve();
-            if (resolved.equals(myTargetVariable)) {
+            if (myTargetVariable.equals(resolved)) {
               usages.add(new InternalUsageInfo(expression));
             } else if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass().equals(myMethod.getContainingClass())) {
               usages.add(new InternalUsageInfo(expression));
