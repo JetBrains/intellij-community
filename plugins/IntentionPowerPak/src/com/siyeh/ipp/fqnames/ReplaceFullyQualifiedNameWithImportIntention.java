@@ -7,13 +7,12 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
-    public ReplaceFullyQualifiedNameWithImportIntention(Project project) {
-        super(project);
-    }
 
     public String getText() {
         return "Replace qualified name with import";
