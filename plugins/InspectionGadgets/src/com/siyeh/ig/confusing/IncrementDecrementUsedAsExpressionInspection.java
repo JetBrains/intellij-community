@@ -52,7 +52,9 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
 
         public void visitPostfixExpression(PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
-            if (expression.getParent() instanceof PsiExpressionStatement) {
+            if(expression.getParent() instanceof PsiExpressionStatement ||
+                                    (expression.getParent() instanceof PsiExpressionList &&
+                                        expression.getParent().getParent() instanceof PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -71,7 +73,9 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
             super.visitPrefixExpression(expression);
 
             if (expression.getParent() instanceof PsiExpressionStatement ||
-                    expression.getParent() instanceof PsiExpressionList) {
+                            (expression.getParent() instanceof PsiExpressionList &&
+                                    expression.getParent()
+                                    .getParent() instanceof PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
