@@ -198,7 +198,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     String [] docs = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.JAVADOC);
     for (int i = 0; i < docs.length; i++) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(docs[i]);
-      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
+      sdkModificator.addRoot(virtualFile, ProjectRootType.JAVADOC);
     }
   }
 
@@ -206,7 +206,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     String [] src = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.SOURCES);
     for (int i = 0; i < src.length; i++) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(src[i]);
-      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
+      sdkModificator.addRoot(virtualFile, ProjectRootType.SOURCE);
     }
   }
 
