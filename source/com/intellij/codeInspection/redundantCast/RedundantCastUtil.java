@@ -66,26 +66,31 @@ public class RedundantCastUtil {
     }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
-      PsiExpression rExpr = deParenthesize(expression.getROperand());
-      PsiExpression lExpr = deParenthesize(expression.getLOperand());
+      PsiExpression rExpr = deParenthesize(expression.getLOperand());
+      PsiExpression lExpr = deParenthesize(expression.getROperand());
 
       if (rExpr != null && lExpr != null) {
-        if (lExpr instanceof PsiTypeCastExpression) {
-          PsiTypeCastExpression typeCast = (PsiTypeCastExpression)lExpr;
-          PsiExpression operand = typeCast.getOperand();
-          if (operand != null && operand.getType() != null) {
-            if (expression.getOperationSign().getTokenType() != JavaTokenType.PLUS ||
-                !typeCast.getCastType().getType().equalsToText("java.lang.String") ||
-                operand.getType().equalsToText("java.lang.String")) {
-              addToResults(typeCast);
-            }
-          }
-        }
-        if (rExpr instanceof PsiTypeCastExpression) {
-          addToResults((PsiTypeCastExpression)rExpr);
-        }
+        processBinaryExpressionOperand(lExpr, expression, rExpr);
+        processBinaryExpressionOperand(rExpr, expression, lExpr);
       }
       super.visitBinaryExpression(expression);
+    }
+
+    private void processBinaryExpressionOperand(final PsiExpression expressionOperand,
+                                                final PsiBinaryExpression binExpression,
+                                                PsiExpression otherOperand) {
+      if (expressionOperand instanceof PsiTypeCastExpression) {
+        PsiTypeCastExpression typeCast = (PsiTypeCastExpression)expressionOperand;
+        PsiExpression castOperand = typeCast.getOperand();
+        if (castOperand != null && castOperand.getType() != null) {
+          if (binExpression.getOperationSign().getTokenType() != JavaTokenType.PLUS ||
+              !typeCast.getCastType().getType().equalsToText("java.lang.String") ||
+              castOperand.getType().equalsToText("java.lang.String") ||
+              otherOperand.getType().equalsToText("java.lang.String")) {
+            addToResults(typeCast);
+          }
+        }
+      }
     }
 
     private void processPossibleTypeCast(PsiExpression rExpr, PsiType lType) {
