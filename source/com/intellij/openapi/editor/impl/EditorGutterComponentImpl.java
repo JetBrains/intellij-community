@@ -15,6 +15,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -27,9 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
@@ -86,12 +85,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   protected void setUI(ComponentUI newUI) {
     super.setUI(newUI);
-    myBackgroundColor = null;
+    reinitSettings();
   }
 
   public void updateUI() {
     super.updateUI();
+    reinitSettings();
+  }
+
+  public void reinitSettings() {
     myBackgroundColor = null;
+    repaint();
   }
 
   public void paint(Graphics g) {
@@ -200,12 +204,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public Color getBackground() {
     if (myBackgroundColor == null) {
-      LafManager lafManager = LafManager.getInstance();
-      if (lafManager != null && lafManager.isUnderAquaLookAndFeel()) {
-        myBackgroundColor = new Color(0xF0F0F0);
+      final Color userDefinedColor = myEditor.getColorsScheme().getColor(EditorColors.LEFT_GUTTER_BACKGROUND);
+      if (userDefinedColor != null) {
+        myBackgroundColor = userDefinedColor;
       }
       else {
-        myBackgroundColor = super.getBackground();
+        LafManager lafManager = LafManager.getInstance();
+        if (lafManager != null && lafManager.isUnderAquaLookAndFeel()) {
+          myBackgroundColor = new Color(0xF0F0F0);
+        }
+        else {
+          myBackgroundColor = super.getBackground();
+        }
       }
     }
     return myBackgroundColor;

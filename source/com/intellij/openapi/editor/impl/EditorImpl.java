@@ -326,7 +326,9 @@ public class EditorImpl implements EditorEx {
 
     myHighlighter.setColorScheme(myScheme);
 
+    myGutterComponent.reinitSettings();
     myGutterComponent.revalidate();
+
     myEditorComponent.repaint();
 
     updateCaretCursor();

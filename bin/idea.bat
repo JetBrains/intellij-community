@@ -28,10 +28,12 @@ SET MAIN_CLASS_NAME=com.intellij.idea.Main
 :: ---------------------------------------------------------------------
 SET IDEA_POPUP_WEIGHT=heavy
 
+IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=%IDEA_PROPERTIES%
+
 :: ---------------------------------------------------------------------
 :: You may specify your own JVM arguments in IDEA_JVM_ARGS variable.
 :: ---------------------------------------------------------------------
-IF "%IDEA_JVM_ARGS%" == "" set IDEA_JVM_ARGS=-Xms32m -Xmx192m -Xbootclasspath/p:%IDEA_HOME%/lib/boot.jar -Dsun.java2d.noddraw=true -Didea.popup.weight=%IDEA_POPUP_WEIGHT% -Djavasvn.delta.disabled=true
+IF "%IDEA_JVM_ARGS%" == "" set IDEA_JVM_ARGS=-Xms32m -Xmx192m -Xbootclasspath/p:%IDEA_HOME%/lib/boot.jar %IDEA_PROPERTIES_PROPERTY% -Dsun.java2d.noddraw=true -Didea.popup.weight=%IDEA_POPUP_WEIGHT% -Djavasvn.delta.disabled=true
 
 SET JVM_ARGS= %IDEA_JVM_ARGS% -ea -Xrunyjpagent:port=10100
 

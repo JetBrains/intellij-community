@@ -11,12 +11,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ResourceBundle;
-import java.util.PropertyResourceBundle;
-import java.util.StringTokenizer;
-import java.util.MissingResourceException;
+import java.util.*;
 
 public class PathManager {
+  private static final String PROPERTIES_FILE = "idea.properties.file";
   private static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
   private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
@@ -84,10 +82,7 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else {
-      if (PropertyLoader.getProperty(PROPERTY_SYSTEM_PATH) != null)
-        ourSystemPath = getAbsolutePath(trimPathQuotes(PropertyLoader.getProperty(PROPERTY_SYSTEM_PATH)));
-      else
-        ourSystemPath = getHomePath() + File.separator + "system";
+      ourSystemPath = getHomePath() + File.separator + "system";
     }
 
     try {
@@ -125,9 +120,6 @@ public class PathManager {
       ourConfigPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_CONFIG_PATH)));
     }
     else {
-      if (PropertyLoader.getProperty(PROPERTY_CONFIG_PATH) != null)
-        ourConfigPath = getAbsolutePath(trimPathQuotes(PropertyLoader.getProperty(PROPERTY_CONFIG_PATH)));
-      else
       ourConfigPath = getHomePath() + File.separator + "config";
     }
     return ourConfigPath;
@@ -170,9 +162,6 @@ public class PathManager {
       if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
         ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
       } else {
-        if (PropertyLoader.getProperty(PROPERTY_PLUGINS_PATH) != null)
-          ourPluginsPath = getAbsolutePath(trimPathQuotes(PropertyLoader.getProperty(PROPERTY_PLUGINS_PATH)));
-        else
         ourPluginsPath = getConfigPath() + File.separatorChar + "plugins";
       }
     }
@@ -253,70 +242,48 @@ public class PathManager {
     return new File(getOptionsPath(),DEFAULT_OPTIONS_FILE_NAME+".xml");
   }
 
-  private static class PropertyLoader {
-    private static final String IDEA_PROPERTIES = "idea.properties";
-    private static ResourceBundle ourBundle;
-
-    private static final String LOAD_THIS_PROPERTIES = "load.this.properties";
-
-    private PropertyLoader() {
+  public static void loadProperties() {
+    String propFilePath = System.getProperty(PROPERTIES_FILE);
+    if (propFilePath == null || !new File(propFilePath).exists()) {
+      propFilePath = getBinPath() + File.separator + "idea.properties";
     }
 
-
-    static {
-      String loadThis = getProperty(LOAD_THIS_PROPERTIES);
-      if (loadThis != null) {
-        for (StringTokenizer stringTokenizer = new StringTokenizer(loadThis, ";"); stringTokenizer.hasMoreTokens();) {
-          String property = stringTokenizer.nextToken();
-          StringTokenizer tokenizer = new StringTokenizer(property, "=");
-
-          String propertyName = null;
-          String propertyValue = null;
-
-          if (tokenizer.hasMoreTokens()) {
-            propertyName = tokenizer.nextToken();
-            if (tokenizer.hasMoreTokens()) {
-              propertyValue = tokenizer.nextToken();
-            }
-          }
-
-          if (propertyName != null && propertyValue != null) {
-            System.setProperty(propertyName, propertyValue);
-          }
-        }
-      }
-    }
-
-    public static String getProperty (String key) {
-      if (ourBundle == null) {
-        init();
-      }
-
+    File propFile = new File(propFilePath);
+    if (propFile.exists()) {
       try {
-        if (ourBundle == null)
-          return null;
-        else
-          return ourBundle.getString(key);
+        final FileInputStream fis = new FileInputStream(propFile);
+        final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
+        fis.close();
+        final Enumeration keys = bundle.getKeys();
+        while (keys.hasMoreElements()) {
+          String key = (String)keys.nextElement();
+          final String value = substitueVars(bundle.getString(key));
+          System.getProperties().setProperty(key, value);
+        }
       }
-      catch (MissingResourceException e) {
-        // it's not a problem.
-        return null;
+      catch (IOException e) {
+        System.out.println("Problem reading from property file: " + propFilePath);
       }
     }
 
-    private static void init() {
-      File ideaPropertiesFile = new File(IDEA_PROPERTIES);
-      if (ideaPropertiesFile.exists()) {
-        try {
-          FileInputStream fis = new FileInputStream(IDEA_PROPERTIES);
-          ourBundle = new PropertyResourceBundle (fis);
-          fis.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
+    final Properties props = System.getProperties();
+    final Set keys = props.keySet();
+    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+      String key = (String)iterator.next();
+      String value = props.getProperty(key);
+      System.out.println(key + "="+value);
     }
   }
 
+  private static String substitueVars(String s) {
+    s = StringUtil.replace(s, "${idea.home}", PathManager.getHomePath());
+    final Properties props = System.getProperties();
+    final Set keys = props.keySet();
+    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+      String key = (String)iterator.next();
+      String value = props.getProperty(key);
+      s = StringUtil.replace(s, "${" + key + "}", value);
+    }
+    return s;
+  }
 }

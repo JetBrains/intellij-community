@@ -15,6 +15,10 @@ IDEA_BIN_HOME=`dirname "$0"`
 export JAVA_HOME
 export IDEA_HOME
 
+if [ -n $IDEA_PROPERTIES ]; then
+  IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=$IDEA_PROPERTIES
+fi
+
 # ---------------------------------------------------------------------
 # There are two possible values of IDEA_POPUP_WEIGHT property: "heavy" and "medium".
 # If you have WM configured as "Focus follows mouse with Auto Raise" then you have to
@@ -25,7 +29,7 @@ IDEA_POPUP_WEIGHT=heavy
 export IDEA_POPUP_WEIGHT
 
 MAIN_CLASS_NAME="com.intellij.codeInspection.InspectionMain"
-JVM_ARGS="-Xms16m -Xmx152m -Xbootclasspath/p:../lib/boot.jar -Dsun.java2d.noddraw=true -Didea.popup.weight=$IDEA_POPUP_WEIGHT"
+JVM_ARGS="-Xms16m -Xmx152m -Xbootclasspath/p:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY -Dsun.java2d.noddraw=true -Didea.popup.weight=$IDEA_POPUP_WEIGHT"
 
 while [ $# -gt 0 ]; do
   args="$args $1"

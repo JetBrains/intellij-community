@@ -72,6 +72,9 @@ public class PluginManager {
     ourMainClass = mainClass;
     ourMethodName = methodName;
 
+    PathManager.loadProperties();
+
+
     final PluginManager pluginManager = new PluginManager();
     pluginManager.bootstrap(classpathElements);
   }
