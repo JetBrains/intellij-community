@@ -272,7 +272,7 @@ private static int [][] unpackFromString(int size1, int size2, String st)
 		0, 13, 14, 15, 16, 17, 13, 13,
 		18, 19, 13, 13, 20, 21, 13, 22,
 		23, 13, 13, 13, 24, 25, 13, 13,
-		13, 26, 13, 0, 27, 0, 0, 13,
+		13, 26, 13, 0, 27, 0, 0, 8,
 		0, 13, 14, 15, 16, 17, 13, 13,
 		18, 19, 13, 13, 20, 21, 13, 22,
 		23, 13, 13, 13, 24, 25, 13, 13,
@@ -356,116 +356,221 @@ private static int [][] unpackFromString(int size1, int size2, String st)
 					if (0 != (YY_START & yy_anchor)) {
 		++yy_buffer_start;
 					}
-					if(yy_last_accept_state >= 79
-					||yy_last_accept_state <= -2 -79)
-						yy_error(YY_E_INTERNAL,false);
 					switch (yy_last_accept_state) {
 					case 0:
 						{ myTokenType = XmlTokenType.XML_DATA_CHARACTERS; return; }
+					case -2:
+						break;
 					case 1:
 						{ myTokenType = XmlTokenType.XML_WHITE_SPACE; return; }
+					case -3:
+						break;
 					case 2:
 						{ myTokenType = XmlTokenType.XML_START_TAG_START; yy_lexical_state = START_TAG_NAME; return; }
+					case -4:
+						break;
 					case 4:
 						{ myTokenType = XmlTokenType.XML_END_TAG_START; yy_lexical_state = END_TAG_NAME; return; }
+					case -5:
+						break;
 					case 5:
 						{ myTokenType = XmlTokenType.XML_PI_START; yy_lexical_state = PROCESSING_INSTRUCTION; return; }
+					case -6:
+						break;
 					case 6:
 						{ myTokenType = XmlTokenType.XML_COMMENT_START; yy_lexical_state = COMMENT; return; }
+					case -7:
+						break;
 					case 7:
 						{ myTokenType = XmlTokenType.XML_DOCTYPE_START; yy_lexical_state = DOC_TYPE; return; }
+					case -8:
+						break;
 					case 8:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -9:
+						break;
 					case 9:
 						{ myTokenType = XmlTokenType.XML_DOCTYPE_END; yy_lexical_state = YYINITIAL; return; }
+					case -10:
+						break;
 					case 10:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return;}
+					case -11:
+						break;
 					case 11:
 						{ myTokenType = XmlTokenType.XML_NAME;  return; }
+					case -12:
+						break;
 					case 12:
 						{ myTokenType = XmlTokenType.XML_DOCTYPE_PUBLIC;  return; }
+					case -13:
+						break;
 					case 13:
 						{ myTokenType = XmlTokenType.XML_COMMENT_CHARACTERS; return; }
+					case -14:
+						break;
 					case 14:
 						{ myTokenType = XmlTokenType.XML_COMMENT_END; yy_lexical_state = YYINITIAL; return; }
+					case -15:
+						break;
 					case 15:
 						{ myTokenType = XmlTokenType.XML_NAME; yy_lexical_state = TAG_ATTRIBUTES; return; }
+					case -16:
+						break;
 					case 16:
 						{ yy_lexical_state = YYINITIAL; --yy_buffer_index; break; }
+					case -17:
+						break;
 					case 17:
 						{ myTokenType = XmlTokenType.XML_DATA_CHARACTERS; return; }
+					case -18:
+						break;
 					case 18:
 						{ myTokenType = XmlTokenType.XML_NAME; return; }
+					case -19:
+						break;
 					case 19:
 						{ yy_lexical_state = YYINITIAL; --yy_buffer_index; }
+					case -20:
+						break;
 					case 20:
 						{ myTokenType = XmlTokenType.XML_EQ; yy_lexical_state = ATTRIBUTE_VALUE_START; return; }
+					case -21:
+						break;
 					case 21:
 						{ myTokenType = XmlTokenType.XML_TAG_END; yy_lexical_state = YYINITIAL; return; }
+					case -22:
+						break;
 					case 22:
 						{ myTokenType = XmlTokenType.XML_EMPTY_ELEMENT_END; yy_lexical_state = YYINITIAL; return; }
+					case -23:
+						break;
 					case 23:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; yy_lexical_state = TAG_ATTRIBUTES; return; }
+					case -24:
+						break;
 					case 24:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER; yy_lexical_state = ATTRIBUTE_VALUE_DQ; return; }
+					case -25:
+						break;
 					case 25:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER; yy_lexical_state = ATTRIBUTE_VALUE_SQ; return; }
+					case -26:
+						break;
 					case 26:
 						{ myTokenType = XmlTokenType.XML_TAG_END; yy_lexical_state = YYINITIAL; return; }
+					case -27:
+						break;
 					case 27:
 						{ myTokenType = XmlTokenType.XML_EMPTY_ELEMENT_END; yy_lexical_state = YYINITIAL; return; }
+					case -28:
+						break;
 					case 28:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -29:
+						break;
 					case 29:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER; yy_lexical_state = TAG_ATTRIBUTES; return; }
+					case -30:
+						break;
 					case 30:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -31:
+						break;
 					case 31:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -32:
+						break;
 					case 32:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -33:
+						break;
 					case 33:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER; yy_lexical_state = TAG_ATTRIBUTES; return; }
+					case -34:
+						break;
 					case 34:
 						{ myTokenType = XmlTokenType.XML_PI_TARGET; return; }
+					case -35:
+						break;
 					case 35:
 						{ myTokenType = XmlTokenType.XML_PI_END; yy_lexical_state = YYINITIAL; return; }
+					case -36:
+						break;
 					case 36:
 						{ myTokenType = XmlTokenType.XML_DATA_CHARACTERS; return; }
+					case -37:
+						break;
 					case 38:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -38:
+						break;
 					case 39:
 						{ myTokenType = XmlTokenType.XML_COMMENT_CHARACTERS; return; }
+					case -39:
+						break;
 					case 40:
 						{ myTokenType = XmlTokenType.XML_DATA_CHARACTERS; return; }
+					case -40:
+						break;
 					case 41:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; yy_lexical_state = TAG_ATTRIBUTES; return; }
+					case -41:
+						break;
 					case 42:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -42:
+						break;
 					case 43:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -43:
+						break;
 					case 44:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -44:
+						break;
 					case 45:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -45:
+						break;
 					case 46:
 						{ myTokenType = XmlTokenType.XML_PI_TARGET; return; }
+					case -46:
+						break;
 					case 48:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -47:
+						break;
 					case 49:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -48:
+						break;
 					case 50:
 						{ myTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN; return; }
+					case -49:
+						break;
 					case 52:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -50:
+						break;
 					case 54:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -51:
+						break;
 					case 56:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -52:
+						break;
 					case 58:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -53:
+						break;
 					case 60:
 						{ myTokenType = XmlTokenType.XML_BAD_CHARACTER; return; }
+					case -54:
+						break;
+					default:
+						yy_error(YY_E_INTERNAL,false);
 					case -1:
 					}
 					yy_initial = true;
