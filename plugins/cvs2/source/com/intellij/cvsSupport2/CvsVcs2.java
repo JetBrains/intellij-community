@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.cvsIntegration.CvsResult;
 
 import java.io.File;
 
@@ -155,6 +156,16 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   public int getFilesToProcessCount() {
     return myCvsStandardOperationsProvider.getFilesToProcessCount();
+  }
+
+  public static void executeOperation(String title, CvsOperation operation, final Project project) throws VcsException {
+    CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.performActionSync(new CommandCvsHandler(title, operation),
+                               CvsOperationExecutorCallback.EMPTY);
+    CvsResult result = executor.getResult();
+    if (!result.hasNoErrors()){
+      throw result.composeError();
+    }
   }
 
   private static class MyFileStatusProvider implements FileStatusProvider {

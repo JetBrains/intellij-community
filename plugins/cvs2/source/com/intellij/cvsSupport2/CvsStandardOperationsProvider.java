@@ -98,18 +98,8 @@ public class CvsStandardOperationsProvider implements StandardOperationsProvider
 
   public void commit(Object parameters) throws VcsException {
     getCurrentTransaction().setMessage(parameters);
-    executeOperation("Commit Transaction", getCurrentTransaction());
+    CvsVcs2.executeOperation("Commit Transaction", getCurrentTransaction(), myProject);
     myCurrentTransaction = null;
-  }
-
-  private void executeOperation(String title, CvsOperation operation) throws VcsException {
-    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(title, operation),
-                               CvsOperationExecutorCallback.EMPTY);
-    CvsResult result = executor.getResult();
-    if (!result.hasNoErrors()){
-      throw result.composeError();
-    }
   }
 
   public void rollback() {
@@ -119,7 +109,7 @@ public class CvsStandardOperationsProvider implements StandardOperationsProvider
   public byte[] getFileContent(String path) throws VcsException {
     try {
       GetFileContentOperation command = GetFileContentOperation.createForFile(CvsVfsUtil.findFileByIoFile(new File(path)));
-      executeOperation("Get File Content", command);
+      CvsVcs2.executeOperation("Get File Content", command, myProject);
       return command.getFileBytes();
     }
     catch (CannotFindCvsRootException cannotFindCvsRootException) {
