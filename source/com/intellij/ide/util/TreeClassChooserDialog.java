@@ -9,7 +9,7 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
-import com.intellij.ide.util.gotoByName.GotoClassModel;
+import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.NavigationItem;
@@ -57,16 +57,9 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   private TreeClassChooser.ClassFilter myClassFilter;
   private final PsiClass myInitialClass;
   private final PsiClassChildrenSource myClassChildrens;
-  private boolean myAddLocation = true;
-
-  
 
   public TreeClassChooserDialog(String title, Project project) {
-    this(
-      title,
-      project,
-      null
-    );
+    this(title, project, null);
   }
 
   public TreeClassChooserDialog(String title, Project project, PsiClass initialClass) {
@@ -120,10 +113,6 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         }
       }
     });
-  }
-
-  public void setAddLocation(final boolean addLocation) {
-    myAddLocation = addLocation;
   }
 
   protected JComponent createCenterPanel() {
@@ -209,7 +198,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     if (myInitialClass != null) {
       name = myInitialClass.getName();
     }
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoClassModel(myAddLocation), name) {
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoClassModel(myProject), name) {
       protected void close(boolean isOk) {
         super.close(isOk);
 
@@ -278,7 +267,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   public void showPopup() {
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, new MyGotoClassModel(myAddLocation));
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, new MyGotoClassModel(myProject));
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
 
@@ -347,11 +336,9 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     return myGotoByNamePanel.getPreferredFocusedComponent();
   }
 
-  private class MyGotoClassModel extends GotoClassModel {
-    private boolean myAddLocation;
-    public MyGotoClassModel(final boolean addLocation) {
-      super(myProject);
-      myAddLocation = addLocation;
+  private class MyGotoClassModel extends GotoClassModel2 {
+    public MyGotoClassModel(Project project) {
+      super(project);
     }
 
     public Object[] getElementsByName(final String name, final boolean checkBoxState) {
@@ -369,12 +356,6 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     public String getPromptText() {
       return null;
-    }
-
-    public PsiElementListCellRenderer getListCellRenderer() {
-      final PsiElementListCellRenderer listCellRenderer = super.getListCellRenderer();
-      listCellRenderer.setAddLocation(myAddLocation);
-      return listCellRenderer;
     }
   }
 

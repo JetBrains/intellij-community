@@ -16,13 +16,8 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class PsiElementListCellRenderer extends JPanel implements ListCellRenderer {
-  private boolean myAddLocation = true;
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
-  }
-
-  public void setAddLocation(final boolean addLocation) {
-    myAddLocation = addLocation;
   }
 
   private class LeftRenderer extends ColoredListCellRenderer {
@@ -62,17 +57,16 @@ public abstract class PsiElementListCellRenderer extends JPanel implements ListC
     }
   }
 
-  public Component getListCellRendererComponent(
-    JList list,
-    Object value,
-    int index,
-    boolean isSelected,
-    boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList list,
+                                                Object value,
+                                                int index,
+                                                boolean isSelected,
+                                                boolean cellHasFocus) {
     removeAll();
     final Component leftCellRendererComponent =
       new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, BorderLayout.WEST);
-    if (myAddLocation && UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION){
+    if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
       final Component rightCellRendererComponent =
         new PsiElementModuleRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       add(rightCellRendererComponent, BorderLayout.EAST);
