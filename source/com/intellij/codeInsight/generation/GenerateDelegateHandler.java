@@ -12,13 +12,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.Map;
 
 /**
  * @author mike
@@ -178,13 +180,25 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     List<CandidateInfo> methodInstances = new ArrayList<CandidateInfo>();
 
     final PsiMethod[] allMethods = targetClass.getAllMethods();
+    final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
+    Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
     PsiManager manager = targetClass.getManager();
     for (int i = 0; i < allMethods.length; i++) {
       PsiMethod method = allMethods[i];
-      if (method.getContainingClass().getQualifiedName().equals("java.lang.Object")) continue;
+      final PsiClass superClass = method.getContainingClass();
+      if (superClass.getQualifiedName().equals("java.lang.Object")) continue;
       if (method.isConstructor()) continue;
-      PsiSubstitutor methodSubstitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
-      if (manager.getResolveHelper().isAccessible(method, target, aClass)) methodInstances.add(new CandidateInfo(method, methodSubstitutor));
+      PsiSubstitutor superSubstitutor = superSubstitutors.get(superClass);
+      if (superSubstitutor == null) {
+        superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, targetClass, substitutor);
+        superSubstitutors.put(superClass, superSubstitutor);
+      }
+      PsiSubstitutor methodSubstitutor = GenerateMembersUtil.correctSubstitutor(method, superSubstitutor);
+      MethodSignature signature = method.getSignature(methodSubstitutor);
+      if (!signatures.contains(signature)) {
+        signatures.add(signature);
+        if (manager.getResolveHelper().isAccessible(method, target, aClass)) methodInstances.add(new CandidateInfo(method, methodSubstitutor));
+      }
     }
 
     CandidateInfo[] result;
