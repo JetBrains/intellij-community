@@ -1,13 +1,14 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 
 import java.util.HashMap;
 
@@ -19,6 +20,8 @@ import java.util.HashMap;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl");
+
   private XmlElementDescriptor delegate;
   private HashMap<String,XmlElementDescriptor> cachedDescriptors;
   private HashMap<String,XmlAttributeDescriptor> cachedAttributeDescriptors;
@@ -28,7 +31,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   }
 
   public HtmlElementDescriptorImpl() {
-    assert false;
+    LOG.error("Should not be called");
   }
 
   public String getQualifiedName() {

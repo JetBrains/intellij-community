@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.xml.XmlAttributeDescriptor;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,10 +15,11 @@ import com.intellij.psi.scope.PsiScopeProcessor;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl");
   private XmlAttributeDescriptor delegate;
 
   public HtmlAttributeDescriptorImpl() {
-    assert false;
+    LOG.error("should not be called");
   }
 
   public HtmlAttributeDescriptorImpl(XmlAttributeDescriptor _delegate) {

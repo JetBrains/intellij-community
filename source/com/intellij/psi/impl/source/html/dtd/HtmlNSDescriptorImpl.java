@@ -1,14 +1,16 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +20,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl");
+
   private XmlNSDescriptor delegate;
   private Map<String, XmlElementDescriptor> myCachedDecls;
 
@@ -26,7 +30,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   }
 
   public HtmlNSDescriptorImpl() {
-    assert false;
+    LOG.error("Should not be called");
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {

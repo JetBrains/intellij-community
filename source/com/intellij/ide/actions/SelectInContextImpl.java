@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -25,6 +26,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 abstract class SelectInContextImpl implements SelectInContext {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SelectInContextImpl");
   protected final PsiFile myPsiFile;
 
   protected SelectInContextImpl(PsiFile psiFile) {
@@ -128,8 +130,8 @@ abstract class SelectInContextImpl implements SelectInContext {
     private final PopupLocation myPopupLocation;
 
     public SelectInContextProvider(SelectInContext context, PopupLocation popupLocation) {
-      assert context != null : "Null SelectInContext";
-      assert popupLocation != null : "Null PopupLocation";
+      LOG.assertTrue(context != null, "Null SelectInContext");
+      LOG.assertTrue(popupLocation != null, "Null PopupLocation");
 
       myContext = context;
       myPopupLocation = popupLocation;
