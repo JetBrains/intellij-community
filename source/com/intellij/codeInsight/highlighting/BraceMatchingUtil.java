@@ -3,6 +3,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -45,9 +46,11 @@ public class BraceMatchingUtil {
 
   private static class PairedBraceMatcherAdapter implements BraceMatcher {
     private PairedBraceMatcher myMatcher;
+    private Language myLanguage;
 
-    public PairedBraceMatcherAdapter(final PairedBraceMatcher matcher) {
+    public PairedBraceMatcherAdapter(final PairedBraceMatcher matcher, Language language) {
       myMatcher = matcher;
+      myLanguage = language;
     }
 
     public int getTokenGroup(IElementType tokenType) {
@@ -95,6 +98,8 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (tokenType.getLanguage() != myLanguage) return null;
       final BracePair[] pairs = myMatcher.getPairs();
 
       for (int i = 0; i < pairs.length; i++) {
@@ -726,9 +731,10 @@ public class BraceMatchingUtil {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
     if (braceMatcher==null) {
       if (fileType instanceof LanguageFileType) {
-        final PairedBraceMatcher matcher = ((LanguageFileType)fileType).getLanguage().getPairedBraceMatcher();
+        final Language language = ((LanguageFileType)fileType).getLanguage();
+        final PairedBraceMatcher matcher = language.getPairedBraceMatcher();
         if (matcher != null) {
-          braceMatcher = new PairedBraceMatcherAdapter(matcher);
+          braceMatcher = new PairedBraceMatcherAdapter(matcher,language);
         }
       }
       if (braceMatcher == null) braceMatcher = getBraceMatcher(StdFileTypes.JAVA);
