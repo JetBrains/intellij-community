@@ -53,7 +53,8 @@ public class HighlightInfo {
     if (severity == HighlightSeverity.WARNING) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
-    return getAttributesByType(type).getErrorStripeColor();
+    final TextAttributes attributes = getAttributesByType(type);
+    return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, PsiElement element, String description) {
