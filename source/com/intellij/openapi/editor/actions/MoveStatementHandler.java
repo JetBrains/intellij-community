@@ -78,7 +78,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 
   private int calcInsertOffset(final Editor editor, final int startLine, final int endLine) {
-    int line = isDown ? endLine + 2 : startLine - 1;
+    int nearLine = isDown ? endLine + 2 : startLine - 1;
+    int line = nearLine;
     final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
     if (!(file instanceof PsiJavaFile)) {
       return editor.logicalPositionToOffset(new LogicalPosition(line, 0));
@@ -105,7 +106,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
       }
       line += isDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
-        return 0;
+        return nearLine;
       }
     }
   }
@@ -158,7 +159,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     // move operation should not go out of method
     final int insertOffset = calcInsertOffset(editor, result.startLine, result.endLine);
     if (guard != null && !guard.getTextRange().shiftRight(1).grown(-1).contains(insertOffset)) return null;
-    
+
     return result;
   }
 
