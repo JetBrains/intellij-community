@@ -43,7 +43,7 @@ public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
   public StructureViewTreeElement[] getChildrenBase() {
     XmlDocument document = getElement().getDocument();
-    if (document != null) {
+    if (document != null && document.getRootTag() != null) {
       return new StructureViewTreeElement[]{new XmlTagTreeElement(document.getRootTag())};
     }
     return new StructureViewTreeElement[0];
