@@ -4,11 +4,16 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+
+import javax.swing.*;
 
 public class InnerClassVariableHidesOuterClassVariableInspection extends FieldInspection {
+    public boolean m_ignoreInvisibleFields = false;
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
@@ -23,6 +28,11 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
         return fix;
     }
 
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel("Ignore outer fields not visible from inner class",
+                this, "m_ignoreInvisibleFields");
+    }
+
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
@@ -35,7 +45,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
         return new InnerClassVariableHidesOuterClassVariableVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class InnerClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
+    private class InnerClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
         private InnerClassVariableHidesOuterClassVariableVisitor(BaseInspection inspection,
                                                                  InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
@@ -50,17 +60,24 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
             if ("serialVersionUID".equals(fieldName)) {
                 return;    //special case
             }
+            boolean reportStaticsOnly = false;
+            if(aClass.hasModifierProperty(PsiModifier.STATIC))
+            {
+                reportStaticsOnly = true;
+            }
             PsiClass ancestorClass =
                     ClassUtils.getContainingClass(aClass);
             while (ancestorClass != null) {
-                if (ancestorClass.findFieldByName(fieldName, false) != null) {
-                    registerFieldError(field);
+                final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
+                if (ancestorField != null) {
+                    if (!m_ignoreInvisibleFields ||
+                            !reportStaticsOnly || field.hasModifierProperty(PsiModifier.STATIC)) {
+                       registerFieldError(field);
+                    }                                            
                 }
-                ancestorClass =
-                        ClassUtils.getContainingClass(ancestorClass);
+                ancestorClass = ClassUtils.getContainingClass(ancestorClass);
             }
         }
-
     }
 
 }

@@ -5,8 +5,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class MethodOverridesPrivateMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
@@ -65,23 +65,27 @@ public class MethodOverridesPrivateMethodInspection extends MethodInspection {
                 if (!visitedClasses.add(ancestorClass)) {
                     return;
                 }
-                final PsiMethod[] methods = ancestorClass.findMethodsByName(methodName, false);
-                if (methods != null) {
-                    for (int i = 0; i < methods.length; i++) {
-                        final PsiMethod testMethod = methods[i];
+                final PsiMethod overridingMethod = ancestorClass.findMethodBySignature(method, false);
+                if (overridingMethod == null) {
+                    //don't trigger if there's a method in that class
+                    final PsiMethod[] methods = ancestorClass.findMethodsByName(methodName, false);
+                    if (methods != null) {
+                        for (int i = 0; i < methods.length; i++) {
+                            final PsiMethod testMethod = methods[i];
 
-                        final PsiParameterList testParametersList = testMethod.getParameterList();
-                        if (testParametersList == null) {
-                            continue;
-                        }
-                        final int numTestParameters =
-                                testParametersList.getParameters().length;
-                        if (numParameters != numTestParameters) {
-                            continue;
-                        }
-                        if (testMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
-                            registerMethodError(method);
-                            return;
+                            final PsiParameterList testParametersList = testMethod.getParameterList();
+                            if (testParametersList == null) {
+                                continue;
+                            }
+                            final int numTestParameters =
+                                    testParametersList.getParameters().length;
+                            if (numParameters != numTestParameters) {
+                                continue;
+                            }
+                            if (testMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+                                registerMethodError(method);
+                                return;
+                            }
                         }
                     }
                 }

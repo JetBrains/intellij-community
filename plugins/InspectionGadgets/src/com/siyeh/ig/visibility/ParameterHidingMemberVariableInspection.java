@@ -17,6 +17,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
     public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
     public boolean m_ignoreForConstructors = false;
     public boolean m_ignoreForPropertySetters = false;
+    public boolean m_ignoreForAbstractMethods = false;
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
@@ -59,6 +60,10 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
                 return;
             }
             if (m_ignoreForConstructors && method.isConstructor()) {
+                return;
+            }
+            if (m_ignoreForAbstractMethods &&
+                    (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.getContainingClass().isInterface())) {
                 return;
             }
             if (m_ignoreForPropertySetters) {
@@ -138,6 +143,15 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
                 m_ignoreForConstructors = constructorModel.isSelected();
             }
         });
+        final JCheckBox abstractMethodsCheckbox = new JCheckBox("Ignore for abstract methods", m_ignoreForAbstractMethods);
+        final ButtonModel abstractMethodsModel = abstractMethodsCheckbox.getModel();
+        abstractMethodsModel.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                m_ignoreForAbstractMethods = abstractMethodsModel.isSelected();
+            }
+        });
+
         final JCheckBox staticMethodsCheckbox = new JCheckBox("Ignore for static method parameters hiding instance fields", m_ignoreStaticMethodParametersHidingInstanceFields);
         final ButtonModel staticMethodsModel = staticMethodsCheckbox.getModel();
         staticMethodsModel.addChangeListener(new ChangeListener() {
@@ -165,6 +179,10 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
         constraints.gridx = 0;
         constraints.gridy = 3;
         panel.add(staticMethodsCheckbox, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 4;
+        panel.add(abstractMethodsCheckbox, constraints);
         return panel;
     }
 }
