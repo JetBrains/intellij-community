@@ -139,7 +139,6 @@ class MoveStatementHandler extends EditorWriteActionHandler {
                      editor.offsetToLogicalPosition(elementRange.getSecond().getTextRange().getEndOffset()).line);
   }
 
-  //
   private static Pair<PsiElement, PsiElement> getElementRange(final PsiElement parent,
                                                               PsiElement element1,
                                                               PsiElement element2) {
