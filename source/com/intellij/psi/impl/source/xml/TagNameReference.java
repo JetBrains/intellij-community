@@ -59,7 +59,9 @@ class TagNameReference implements PsiReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return getElement().setName(newElementName);
+    final XmlTag element = getElement();
+    if(element!=null) element.setName(newElementName);
+    return element;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
