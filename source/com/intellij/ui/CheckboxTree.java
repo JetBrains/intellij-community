@@ -29,7 +29,7 @@ public class CheckboxTree extends Tree {
     new TreeSpeedSearch(this);
 
     addMouseListener(new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
+      public void mouseClicked(MouseEvent e) {
         int row = getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
           Rectangle rowBounds = getRowBounds(row);
