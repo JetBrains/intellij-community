@@ -28,51 +28,7 @@ public abstract class Language {
 
   private static Map<String, Language> ourRegisteredLanguages = new HashMap<String, Language>();
   private String myID;
-  public static final Language ANY = new Language("") {
-    public SyntaxHighlighter getSyntaxHighlighter(Project project) {
-      return super.getSyntaxHighlighter(project);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public PseudoTextBuilder getFormatter() {
-      return super.getFormatter();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public ParserDefinition getParserDefinition() {
-      return super.getParserDefinition();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public WordsScanner getWordsScanner() {
-      return super.getWordsScanner();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public boolean mayHaveReferences(IElementType token) {
-      return super.mayHaveReferences(token);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public FoldingBuilder getFoldingBuilder() {
-      return super.getFoldingBuilder();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public PairedBraceMatcher getPairedBraceMatcher() {
-      return super.getPairedBraceMatcher();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public Annotator getAnnotator() {
-      return super.getAnnotator();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public FindUsagesProvider getFindUsagesProvider() {
-      return super.getFindUsagesProvider();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
-      return super.getStructureViewBuilder(psiElement);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    public String toString() {
-      return super.toString();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-  };
+  public static final Language ANY = new Language("") {};
 
   protected Language(final String ID) {
     myID = ID;
@@ -95,7 +51,11 @@ public abstract class Language {
     return null;
   }
 
-  public ParserDefinition getParserDefinition() {
+  public ParserDefinition getParserDefinition(Project project) {
+    return null;
+  }
+
+  public PsiElement createElement(ASTNode node) {
     return null;
   }
 

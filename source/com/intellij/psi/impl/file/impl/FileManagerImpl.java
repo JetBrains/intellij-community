@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -352,7 +351,7 @@ public class FileManagerImpl implements FileManager {
     final Project project = myManager.getProject();
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
-      return language.getParserDefinition().createFile(project, vFile);
+      return language.getParserDefinition(project).createFile(vFile);
     }
 
     if (fileType instanceof JavaClassFileType) {

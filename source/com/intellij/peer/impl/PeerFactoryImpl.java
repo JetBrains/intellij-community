@@ -251,7 +251,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
     };
   }
 
-  public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq) {
-    return new PsiBuilderImpl(lang, SharedImplUtil.findCharTableByTree(tree), seq);
+  public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
+    return new PsiBuilderImpl(lang, project, SharedImplUtil.findCharTableByTree(tree), seq);
   }
 }

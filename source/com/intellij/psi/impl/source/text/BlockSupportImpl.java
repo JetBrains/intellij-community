@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
@@ -68,6 +69,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
   public void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
+    Project project = fileImpl.getProject();
     // hack
     final int textLength = file.getTextLength() + lengthShift;
 
@@ -96,15 +98,15 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
         }
 
         final String newTextStr = StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
-        if(reparseable.isParsable(newTextStr)){
+        if(reparseable.isParsable(newTextStr, project)){
           final ChameleonElement chameleon =
             (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
                                                               textRange.getEndOffset() + lengthShift, null, null);
-          ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
+          ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon, project).getTreeParent());
           return;
         }
         else if(reparseable instanceof IErrorCounterChameleonElementType){
-          int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr);
+          int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
           if(currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR){
             prevReparseable = parent;
           }
@@ -129,7 +131,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
                                                     textRange.getEndOffset() + lengthShift, -1, treeFileElement.getCharTable());
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
-      treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
+      treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer(), project).getTreeParent());
     }
     else{
       // file reparse

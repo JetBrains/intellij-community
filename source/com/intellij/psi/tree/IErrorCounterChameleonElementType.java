@@ -1,6 +1,7 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.project.Project;
 
 public abstract class IErrorCounterChameleonElementType extends IChameleonElementType{
   public static final int NO_ERRORS = 0;
@@ -10,9 +11,9 @@ public abstract class IErrorCounterChameleonElementType extends IChameleonElemen
     super(debugName, language);
   }
 
-  public abstract int getErrorsCount(CharSequence seq);
+  public abstract int getErrorsCount(CharSequence seq, Project project);
 
-  public boolean isParsable(CharSequence buffer) {
-    return getErrorsCount(buffer) == NO_ERRORS;
+  public boolean isParsable(CharSequence buffer, final Project project) {
+    return getErrorsCount(buffer, project) == NO_ERRORS;
   }
 }

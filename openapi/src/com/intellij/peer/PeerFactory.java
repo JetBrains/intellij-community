@@ -5,9 +5,14 @@
 package com.intellij.peer;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -15,10 +20,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
@@ -46,5 +47,5 @@ public abstract class PeerFactory {
 
   public abstract StructureViewFactory getStructureViewFactory();
 
-  public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq);
+  public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);
 }

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.FileTextParsing;
@@ -95,34 +96,34 @@ public interface JavaElementType {
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
 
   IElementType JAVA_FILE = new IChameleonElementType("JAVA_FILE_TEXT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
 
-      return FileTextParsing.parseFileText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+      return FileTextParsing.parseFileText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition(project).createLexer(),
                                            chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
     }
-    public boolean isParsable(CharSequence buffer) {return true;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
   IElementType IMPORT_LIST = new IChameleonElementType("IMPORT_LIST_TEXT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
-      return context.getImportsTextParsing().parseImportsText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+      return context.getImportsTextParsing().parseImportsText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition(project).createLexer(),
                                                               chars, 0, chars.length, ((LeafElement)chameleon).getState());
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return StatementParsing.parseCodeBlockText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+      return StatementParsing.parseCodeBlockText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition(project).createLexer(),
                                                  chars, 0, chars.length, ((LeafElement)chameleon).getState(),
                                                  SharedImplUtil.findCharTableByTree(chameleon)).getFirstChildNode();
     }
-    public int getErrorsCount(CharSequence seq) {
-      final Lexer lexer = getLanguage().getParserDefinition().createLexer();
+    public int getErrorsCount(CharSequence seq, Project project) {
+      final Lexer lexer = getLanguage().getParserDefinition(project).createLexer();
       final char[] chars = CharArrayUtil.fromSequence(seq);
       lexer.start(chars, 0, chars.length);
       int balance = 0;
@@ -142,46 +143,46 @@ public interface JavaElementType {
   };
 
   IElementType EXPRESSION_STATEMENT = new IChameleonElementType("EXPRESSION_STATEMENT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
       return context.getExpressionParsing().parseExpressionTextFragment(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, ((LeafElement)chameleon).getState());
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   //The following are the children of code fragment
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return StatementParsing.parseStatements(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(), chars, 0, chars.length,
+      return StatementParsing.parseStatements(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition(project).createLexer(), chars, 0, chars.length,
                                               ((LeafElement)chameleon).getState(), SharedImplUtil.findCharTableByTree(chameleon));
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
       return context.getExpressionParsing().parseExpressionTextFragment(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, ((LeafElement)chameleon).getState());
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       return Parsing.parseJavaCodeReferenceText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), true);
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(ASTNode chameleon, com.intellij.openapi.project.Project project) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       return Parsing.parseTypeText(chameleon.getTreeParent().getPsi().getManager(), null, chars, 0, chars.length, 0, SharedImplUtil.findCharTableByTree(chameleon));
     }
-    public boolean isParsable(CharSequence buffer) {return false;}
+    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 }

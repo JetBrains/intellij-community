@@ -1120,7 +1120,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         else {
           final Language lang = file.getLanguage();
           if (lang != null) {
-            final ParserDefinition parserDefinition = lang.getParserDefinition();
+            final ParserDefinition parserDefinition = lang.getParserDefinition(file.getProject());
             if (parserDefinition != null) {
               commentTokens = parserDefinition.getCommentTokens();
             }

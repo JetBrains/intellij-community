@@ -1,9 +1,7 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -17,15 +15,13 @@ import com.intellij.psi.tree.TokenSet;
  */
 public interface ParserDefinition {
   Lexer createLexer();
+  PsiParser createParser();
 
   IElementType getFileNodeType();
 
   TokenSet getWhitespaceTokens();
   TokenSet getCommentTokens();
 
-  PsiParser createParser();
-  PsiElement createElement(ASTNode node);
-
-  PsiFile createFile(Project project, VirtualFile file);
-  PsiFile createFile(Project project, String name, CharSequence text);
+  PsiFile createFile(VirtualFile file);
+  PsiFile createFile(String name, CharSequence text);
 }

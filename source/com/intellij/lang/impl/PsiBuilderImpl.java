@@ -6,6 +6,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -37,9 +38,9 @@ public class PsiBuilderImpl implements PsiBuilder {
   private int myCurrentLexem;
   private CharSequence myText;
 
-  public PsiBuilderImpl(Language lang, CharTable charTable, CharSequence text) {
+  public PsiBuilderImpl(Language lang, final Project project, CharTable charTable, CharSequence text) {
     myText = text;
-    ParserDefinition parserDefinition = lang.getParserDefinition();
+    ParserDefinition parserDefinition = lang.getParserDefinition(project);
     myLexer = parserDefinition.createLexer();
     myWhitespaces = parserDefinition.getWhitespaceTokens() != null ? parserDefinition.getWhitespaceTokens() : TokenSet.EMPTY;
     myComments = parserDefinition.getCommentTokens() != null ? parserDefinition.getCommentTokens() : TokenSet.EMPTY;

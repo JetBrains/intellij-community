@@ -8,7 +8,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.impl.source.tree.ElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +33,7 @@ public class HTMLLanguage extends XMLLanguage {
     return ENCODE_EACH_SYMBOL_POLICY;
   }
 
-  public ParserDefinition getParserDefinition() {
-    return new HTMLParserDefinition();
+  public ParserDefinition getParserDefinition(Project project) {
+    return new HTMLParserDefinition(project);
   }
 }

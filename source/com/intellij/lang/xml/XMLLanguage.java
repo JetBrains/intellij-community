@@ -49,8 +49,8 @@ public class XMLLanguage extends Language {
     return CDATA_ON_ANY_ENCODED_POLICY;
   }
 
-  public ParserDefinition getParserDefinition() {
-    return new XMLParserDefinition();
+  public ParserDefinition getParserDefinition(Project project) {
+    return new XMLParserDefinition(project);
   }
 
   public FindUsagesProvider getFindUsagesProvider() {

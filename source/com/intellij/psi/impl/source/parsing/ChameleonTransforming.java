@@ -27,7 +27,7 @@ public class ChameleonTransforming implements Constants {
       PsiFileImpl file = (PsiFileImpl)SourceTreeToPsiMap.treeElementToPsi(parent).getContainingFile();
       if (file == null) return null;
 
-      TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable(), file.createLexer());
+      TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable(), file.createLexer(), file.getProject());
       final TreeElement treeNext = chameleon.getTreeNext();
       TreeUtil.replaceWithList(chameleon, newElement);
       if (DebugUtil.CHECK) {

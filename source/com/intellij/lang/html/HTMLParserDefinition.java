@@ -21,6 +21,12 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class HTMLParserDefinition implements ParserDefinition {
+  private Project myProject;
+
+  public HTMLParserDefinition(final Project project) {
+    myProject = project;
+  }
+
   public Lexer createLexer() {
     return null;
   }
@@ -45,11 +51,11 @@ public class HTMLParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiFile createFile(Project project, VirtualFile file) {
-    return new HtmlFileImpl(project, file);
+  public PsiFile createFile(VirtualFile file) {
+    return new HtmlFileImpl(myProject, file);
   }
 
-  public PsiFile createFile(Project project, String name, CharSequence text) {
-    return new HtmlFileImpl(project, name, text, StdFileTypes.HTML);
+  public PsiFile createFile(String name, CharSequence text) {
+    return new HtmlFileImpl(myProject, name, text, StdFileTypes.HTML);
   }
 }

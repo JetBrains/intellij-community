@@ -32,7 +32,7 @@ public class XHTMLLanguage extends XMLLanguage {
     return ENCODE_EACH_SYMBOL_POLICY;
   }
 
-  public ParserDefinition getParserDefinition() {
-    return new XHTMLParserDefinition();
+  public ParserDefinition getParserDefinition(Project project) {
+    return new XHTMLParserDefinition(project);
   }
 }
