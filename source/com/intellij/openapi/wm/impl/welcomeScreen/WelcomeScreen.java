@@ -530,39 +530,45 @@ public class WelcomeScreen {
     }
   }
 
-  /* This method checks the width of the given name with given font applied, and breaks the name into two lines, and/or cuts it, so that
-   * the name does not exceed the given width (with ellipsis at the end).
-   * Returns the resulting string.
-  */
-  private String adjustStringBreaksByWidth(final String name, final Font font, final boolean isAntiAliased, final int maxWidth) {
+  /**
+   * This method checks the width of the given string with given font applied, breaks the string into two lines if necessary, and/or cuts it,
+   * so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
+   * Returns the resulting or original string surrounded by html tags.
+   * @param string not <code>null</code> {@link String String} value
+   * @param font not <code>null</code> {@link Font Font} object
+   * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not
+   * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels
+   * @return
+   */
+  private String adjustStringBreaksByWidth(final String string, final Font font, final boolean isAntiAliased, final int maxWidth) {
 
-    String shortenedName = name;
-    Rectangle2D r = font.getStringBounds(name, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
+    String shortenedString = string;
+    Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
 
     if (r.getWidth() > maxWidth) {
       String substring_1;
       String substring_2;
-      int maxIdxPerLine = (int)(maxWidth / r.getWidth() * name.length());
+      int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
       for (int i = maxIdxPerLine; i > 0; i--) {
-        if (name.charAt(i) == ' ') {
-          substring_1 = name.substring(0, i) + "<br>";
-          if ((name.length() - substring_1.length()) <= maxIdxPerLine) {
-            substring_2 = name.substring(i + 1, name.length());
+        if (string.charAt(i) == ' ') {
+          substring_1 = string.substring(0, i) + "<br>";
+          if ((string.length() - substring_1.length()) <= maxIdxPerLine) {
+            substring_2 = string.substring(i + 1, string.length());
           }
           else {
             maxIdxPerLine = i + maxIdxPerLine - 2;
-            substring_2 = name.substring(i + 1, maxIdxPerLine) + "...";
+            substring_2 = string.substring(i + 1, maxIdxPerLine) + "...";
           }
-          shortenedName = substring_1 + substring_2;
+          shortenedString = substring_1 + substring_2;
           break;
         }
       }
-      // In case there were no space characters for breaking the name properly, the name is cut to take only one line with ellipsis at the end
-      if (shortenedName.equals(name) && shortenedName.length() > maxIdxPerLine) {
-        shortenedName = name.substring(0, maxIdxPerLine - 2) + "...";
+      // In case there were no space characters for breaking the string properly, the string is cut to take only one line with ellipsis at the end
+      if (shortenedString.equals(string) && shortenedString.length() > maxIdxPerLine) {
+        shortenedString = string.substring(0, maxIdxPerLine - 2) + "...";
       }
     }
-    return "<html>" + shortenedName + "</html>";
+    return "<html>" + shortenedString + "</html>";
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
