@@ -153,7 +153,7 @@ public class ReplaceDialog extends SearchDialog {
       public void run() {
         Set<Usage> selection = context.getUsageView().getSelectedUsages();
 
-        if (!selection.isEmpty()) {
+        if (selection!=null && !selection.isEmpty()) {
           UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
 
           if (isValid(usage,context)) {
