@@ -37,15 +37,9 @@ public class Factory implements Constants {
 
   public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
     final LeafElement newElement;
-    if(table != null){
-      newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, table);
-      newElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
-    }
-    else{
-      final FileElement holderElement = new DummyHolder(manager, null, table).getTreeElement();
-      newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
-      TreeUtil.addChildren(holderElement, newElement);
-    }
+    final FileElement holderElement = new DummyHolder(manager, null, table).getTreeElement();
+    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
+    TreeUtil.addChildren(holderElement, newElement);
     return newElement;
   }
 
