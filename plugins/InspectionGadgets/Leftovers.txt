@@ -1,0 +1,22 @@
+    Query string should be constant
+    Reuse of local variable.
+    Logging not wrapped in if block
+    Public method without logging
+    Logger constructed without the current class name as argument.
+    Class initialization circularity
+    Incorrect lazy initialization of static field
+    setter or getter with non-standard name
+    Avoid repeated casting
+    arithmetic operations on volatile types
+    Field has setter but no getter
+    Name with forbidden component
+    Paired open/close for Sockets
+    Paired open/close for Channels
+    Paired acquire/release for Locks
+
+    Inheritance as type def (change the EmptyClass inspection)
+    changing multiply/divide to shift may change precedence!
+    Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
+              with unsynchronized private methods called only from synchronized contexts
+    SerialVersionUID calculation
+
