@@ -3,6 +3,7 @@ package com.intellij.xml.util.documentation;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.TypeDescriptor;
@@ -15,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -125,7 +127,8 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
         }
 
         if (elementDescriptor instanceof AnyXmlElementDescriptor) {
-          elementDescriptor = tagFromText.getDescriptor();
+          final XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespaceByPrefix(namespacePrefix), true);
+          elementDescriptor = nsDescriptor.getElementDescriptor(tagFromText);
         }
         
         if (elementDescriptor!=null) {
