@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.newXmlFormatter;
 
 import com.intellij.newCodeFormatting.Wrap;
 import com.intellij.psi.xml.XmlTag;

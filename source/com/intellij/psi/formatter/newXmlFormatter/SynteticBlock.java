@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.newXmlFormatter;
 
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;

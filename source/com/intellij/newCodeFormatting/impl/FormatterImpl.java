@@ -4,6 +4,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.util.IncorrectOperationException;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent{
   public Alignment createAlignment() {
@@ -42,7 +43,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
                      Block rootBlock,
                      CodeStyleSettings settings,
                      CodeStyleSettings.IndentOptions indentOptions,
-                     TextRange affectedRange) {
+                     TextRange affectedRange) throws IncorrectOperationException {
     new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).format();
   }
 

@@ -4,6 +4,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 import java.io.File;
@@ -110,10 +111,15 @@ class FormatProcessor {
     return result;
   }
 
-  public void format() {
+  public void format() throws IncorrectOperationException {
     formatWithoutRealModifications();
 
-    performModifications();
+    myModel.runModificationTransaction(new Runnable() {
+      public void run() {
+        performModifications();
+      }
+    });
+
   }
 
   public void formatWithoutRealModifications() {
