@@ -60,8 +60,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
 
 
     if (!myClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, myClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myClass)) return;
     }
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(

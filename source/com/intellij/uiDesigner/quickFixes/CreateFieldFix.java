@@ -70,11 +70,12 @@ public final class CreateFieldFix extends QuickFix{
     }
 
     if(!boundClass.isWritable()){
+      final boolean[] toReturn = new boolean[] {true};
       if(showErrors){
         ApplicationManager.getApplication().invokeLater(
           new Runnable() {
             public void run() {
-              RefactoringMessageUtil.showReadOnlyElementMessage(
+              toReturn[0] = RefactoringMessageUtil.checkReadOnlyStatus(
                 boundClass,
                 project,
                 "Cannot create field '" + fieldClassName + "'"
@@ -83,7 +84,7 @@ public final class CreateFieldFix extends QuickFix{
           }
         );
       }
-      return;
+      if (toReturn[0]) return;
     }
 
     final PsiClass fieldClass = PsiManager.getInstance(project).findClass(

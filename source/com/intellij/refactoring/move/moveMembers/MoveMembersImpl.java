@@ -86,8 +86,7 @@ public class MoveMembersImpl {
     }
 
     if (!sourceClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, sourceClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, sourceClass)) return;
     }
 
     final MoveMembersProcessor callback = new MoveMembersProcessor(project, moveCallback);

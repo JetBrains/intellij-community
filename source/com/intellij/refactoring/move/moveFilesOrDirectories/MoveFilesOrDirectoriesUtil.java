@@ -48,15 +48,13 @@ public class MoveFilesOrDirectoriesUtil {
         PsiPackage aPackage = ((PsiDirectory)element).getPackage();
         LOG.assertTrue(aPackage == null);
         if (!element.isWritable()) {
-          RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, element);
-          return;
+          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
         }
       }
       else if (element instanceof PsiFile) {
         PsiFile aFile = (PsiFile)element;
         if (!aFile.isWritable()) {
-          RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, aFile);
-          return;
+          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aFile)) return;
         }
       }
       else {

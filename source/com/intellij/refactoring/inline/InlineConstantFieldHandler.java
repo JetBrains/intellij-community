@@ -17,8 +17,7 @@ public class InlineConstantFieldHandler {
 
   public void invoke(Project project, Editor editor, PsiField field) {
     if (!field.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, field);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, field)) return;
     }
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -49,8 +48,7 @@ public class InlineConstantFieldHandler {
 
     final boolean invokedOnReference = (reference != null);
     if (!invokedOnReference && !field.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, field);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, field)) return;
     }
     PsiReferenceExpression element = reference != null ? (PsiReferenceExpression)reference.getElement() : null;
     final InlineConstantFieldProcessor processor = new InlineConstantFieldProcessor(field, project, element, editor);

@@ -61,8 +61,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     mySubclass = (PsiClass) elements[0];
 
     if (!mySubclass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, mySubclass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, mySubclass)) return;
     }
 
     if (mySubclass.isInterface()) {

@@ -85,8 +85,7 @@ public class DeleteHandler {
           for (int i = 0; i < elements.length; i++) {
             PsiElement element = elements[i];
             if (!element.isWritable()) {
-              RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, element);
-              return;
+              if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
             }
           }
           SafeDeleteProcessor.createInstance(project, new Runnable() {

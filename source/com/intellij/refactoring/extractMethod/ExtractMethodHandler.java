@@ -54,8 +54,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
 
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
 
 

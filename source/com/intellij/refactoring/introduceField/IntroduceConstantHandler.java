@@ -22,8 +22,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file,

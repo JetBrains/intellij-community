@@ -82,8 +82,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
     }
 
     if (!myClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, myClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myClass)) return;
     }
 
     final PsiClass[] bases = myClass.getSupers();

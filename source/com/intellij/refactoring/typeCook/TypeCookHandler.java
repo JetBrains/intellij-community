@@ -32,8 +32,7 @@ public class TypeCookHandler implements RefactoringActionHandler {
   private boolean canCook(PsiElement element, Project project) {
 
     if (!element.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, element);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
     }
 
     return true;

@@ -54,8 +54,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
 
   private void invoke(final PsiMethod method, final Project project, final PsiElement resolutionContext) {
     if (!method.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, method);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
     }
 
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, "refactor");
@@ -71,8 +70,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     }
 
     if (!method.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, method);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
     }
 
     final PsiClass containingClass = method.getContainingClass();
@@ -101,8 +99,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   private void invoke(final PsiClass aClass) {
     Project project = aClass.getProject();
     if (!aClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, aClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
     ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass);

@@ -25,8 +25,7 @@ public class MoveInnerImpl {
     LOG.assertTrue(condition);
 
     if (!aClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, aClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
 

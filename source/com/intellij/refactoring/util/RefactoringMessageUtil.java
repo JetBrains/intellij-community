@@ -1,20 +1,19 @@
 
 package com.intellij.refactoring.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiFormatUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class RefactoringMessageUtil {
@@ -25,11 +24,11 @@ public class RefactoringMessageUtil {
     dialog.show();
   }
 
-  public static void showReadOnlyElementRefactoringMessage(Project project, PsiElement element) {
-    showReadOnlyElementMessage(element, project, "Refactoring cannot be performed");
+  public static boolean checkReadOnlyStatus(Project project, PsiElement element) {
+    return checkReadOnlyStatus(element, project, "Refactoring cannot be performed");
   }
 
-  public static void showReadOnlyElementMessage(PsiElement element,
+  public static boolean checkReadOnlyStatus(PsiElement element,
                                                  Project project,
                                                  final String messagePrefix) {
     if (element instanceof PsiDirectory) {
@@ -38,48 +37,58 @@ public class RefactoringMessageUtil {
       if (vFile.getFileSystem() instanceof JarFileSystem) {
         String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is located in a jar file.";
         showErrorMessage("Cannot Modify Jar", message1, null, project);
+        return false;
       }
       else {
-        String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is read-only.";
-        showErrorMessage("Read-only Directory", message1, null, project);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(new VirtualFile[]{vFile});
-              }
-            });
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(new VirtualFile[]{vFile});
+        if (status.hasReadonlyFiles()) {
+          String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is read-only.";
+          showErrorMessage("Read-only Directory", message1, null, project);
+          return false;
+        }
+        return true;
       }
     }
     else if (element instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage) element).getDirectories();
-      StringBuffer message = new StringBuffer(messagePrefix);
-      message.append('\n');
       final List<VirtualFile> readOnlyDirs = new ArrayList<VirtualFile>();
+      final List<VirtualFile> failedDirs = new ArrayList<VirtualFile>();
       for (int i = 0; i < directories.length; i++) {
         PsiDirectory directory = directories[i];
         if (!directory.isWritable()) {
           final VirtualFile virtualFile = directory.getVirtualFile();
-          final String presentableUrl = virtualFile.getPresentableUrl();
           if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-            message.append("Directory " + presentableUrl + " is located in a jar file.\n");
+            failedDirs.add(virtualFile);
           } else {
-            message.append("Directory " + presentableUrl + " is read-only.\n");
             readOnlyDirs.add(virtualFile);
           }
         }
       }
-      showErrorMessage("Read-only package", message.toString(), null, project);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-              (VirtualFile[])readOnlyDirs.toArray(new VirtualFile[readOnlyDirs.size()])
-            );
+      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(readOnlyDirs.toArray(new VirtualFile[readOnlyDirs.size()]));
+      failedDirs.addAll(Arrays.asList(status.getReadonlyFiles()));
+      if (failedDirs.size() > 0) {
+        StringBuffer message = new StringBuffer(messagePrefix);
+        message.append('\n');
+        for (Iterator<VirtualFile> iterator = failedDirs.iterator(); iterator.hasNext();) {
+          VirtualFile virtualFile = iterator.next();
+          final String presentableUrl = virtualFile.getPresentableUrl();
+          if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+            message.append("Directory " + presentableUrl + " is located in a jar file.\n");
           }
-        });
+          else {
+            message.append("Directory " + presentableUrl + " is read-only.\n");
+            readOnlyDirs.add(virtualFile);
+          }
+        }
+        return false;
+      }
+      return true;
     }
     else if (element instanceof PsiCompiledElement) {
       PsiFile file = element.getContainingFile();
       String qName = ((PsiJavaFile)file).getClasses()[0].getQualifiedName();
       showErrorMessage("Compiled Class", messagePrefix + " on compiled class " + qName + ".", null, project);
+      return false;
     }
     else{
       PsiFile file = element.getContainingFile();
@@ -94,24 +103,22 @@ public class RefactoringMessageUtil {
           showErrorMessage("Read-only entity", message1, null, project);
         }
 
-        return;
+        return false;
       }
       VirtualFile vFile = file.getVirtualFile();
       if (vFile.getFileSystem() instanceof JarFileSystem) {
         String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is located in a jar file.";
         showErrorMessage("Cannot Modify Jar", message1, null, project);
+        return false;
       }
       else {
-        String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is read-only.";
-        showErrorMessage("Read-only File", message1, null, project);
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        if (document != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable(){
-                    public void run(){
-                      document.fireReadOnlyModificationAttempt();
-                    }
-                  });
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWriteable(new VirtualFile[]{vFile});
+        if (status.hasReadonlyFiles()) {
+          String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is read-only.";
+          showErrorMessage("Read-only File", message1, null, project);
+          return false;
         }
+        return true;
       }
     }
   }

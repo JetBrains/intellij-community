@@ -112,8 +112,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
 
     if (!myMethod.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, myMethod);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myMethod)) return false;
     }
 
     final PsiType typeByExpression = !invokedOnDeclaration ? RefactoringUtil.getTypeByExpressionWithExpectedType(expr) : null;
@@ -147,8 +146,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return false;
     }
     if (!myMethodToSearchFor.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, myMethodToSearchFor);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myMethodToSearchFor)) return false;
     }
 
     PsiExpression[] occurences;

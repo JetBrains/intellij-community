@@ -196,8 +196,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         for (int i = 0; i < elements.length; i++) {
           PsiElement element = elements[i];
           if (!element.isWritable()) {
-            RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, element);
-            return;
+            if (RefactoringMessageUtil.checkReadOnlyStatus(myProject, element)) return;
           }
         }
         ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);

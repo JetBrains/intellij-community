@@ -41,8 +41,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return;
     }
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, method);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
     if (method.isConstructor()) {
       String message = "Cannot perform refactoring.\n" +

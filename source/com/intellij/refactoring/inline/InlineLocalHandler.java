@@ -39,8 +39,7 @@ class InlineLocalHandler {
    */
   public void invoke(final Project project, final Editor editor, final PsiLocalVariable local) {
     if (!local.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, local);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, local)) return;
     }
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);

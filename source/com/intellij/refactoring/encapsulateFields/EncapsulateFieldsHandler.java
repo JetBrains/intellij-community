@@ -96,8 +96,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     if (!aClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, aClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
     EncapsulateFieldsDialog dialog = new EncapsulateFieldsDialog(

@@ -90,8 +90,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       XmlAttribute value = (XmlAttribute)element.getParent();
       if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
         if (!element.isWritable()) {
-          RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, element);
-          return false;
+          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
         }
         return true;
       }
@@ -116,8 +115,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     if (!element.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, element);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
     }
     return true;
   }
@@ -155,8 +153,7 @@ public class PsiElementRenameHandler implements RenameHandler {
         if (elementToRename == null) return;
 
         if (!elementToRename.isWritable()) {
-          RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, elementToRename);
-          return;
+          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, elementToRename)) return;
         }
       }
       String helpID = HelpID.getRenameHelpID(elementToRename);

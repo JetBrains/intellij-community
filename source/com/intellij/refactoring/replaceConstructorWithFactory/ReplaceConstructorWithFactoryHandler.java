@@ -79,8 +79,7 @@ public class ReplaceConstructorWithFactoryHandler
     );
     if (answer != 0) return;
     if (!aClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, aClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, aClass)) return;
     }
     final ReplaceConstructorWithFactoryDialog dialog =
             new ReplaceConstructorWithFactoryDialog(myProject, aClass, new MyCallbackForClass(aClass));
@@ -121,8 +120,7 @@ public class ReplaceConstructorWithFactoryHandler
     if (!checkAbstractClassOrInterfaceMessage(aClass)) return;
 
     if (!method.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, method);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, method)) return;
     }
     final ReplaceConstructorWithFactoryDialog dialog =
             new ReplaceConstructorWithFactoryDialog(myProject,
@@ -150,8 +148,7 @@ public class ReplaceConstructorWithFactoryHandler
         return;
       }
       if (!targetClass.isWritable()) {
-        RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, targetClass);
-        return;
+        if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, targetClass)) return;
       }
 
       new ReplaceConstructorWithFactoryProcessor(myProject, myMethod,

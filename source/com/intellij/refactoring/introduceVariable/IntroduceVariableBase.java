@@ -142,8 +142,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return false;
     }
 
     PsiElement containerParent = tempContainer;

@@ -56,8 +56,7 @@ class InlineMethodHandler {
 
     final boolean invokedOnReference = reference != null;
     if (!invokedOnReference && !method.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, method);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
     }
     PsiJavaCodeReferenceElement element = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
     final InlineMethodProcessor processor = new InlineMethodProcessor(project, method, element, editor);

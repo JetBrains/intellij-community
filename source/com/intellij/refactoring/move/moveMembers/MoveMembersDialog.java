@@ -262,7 +262,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
         }
 
         if (!targetClass[0].isWritable()) {
-          RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, targetClass[0]);
+          if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
           return "";
 //          return "Cannot perform the refactoring.\nDestination class " + targetClass[0].getQualifiedName() + " is read-only.";
         }

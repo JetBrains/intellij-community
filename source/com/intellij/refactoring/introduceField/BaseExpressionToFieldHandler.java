@@ -94,8 +94,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
-      return false;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return false;
     }
 
     final PsiClass parentClass = myParentClass;
@@ -180,7 +179,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiClass destClass = settings.getDestinationClass() == null ? myParentClass : settings.getDestinationClass();
 
           if (!destClass.getContainingFile().isWritable()) {
-            RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, destClass.getContainingFile());
+            RefactoringMessageUtil.checkReadOnlyStatus(project, destClass.getContainingFile());
             return;
           }
 

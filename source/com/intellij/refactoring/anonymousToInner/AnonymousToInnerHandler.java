@@ -47,8 +47,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   public void invoke(final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
 
     final int offset = editor.getCaretModel().getOffset();
@@ -89,8 +88,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     myTargetClass = (PsiClass) targetContainer;
 
     if (!myTargetClass.isWritable()) {
-      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(myProject, myTargetClass);
-      return;
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myTargetClass)) return;
     }
 
     HashMap<PsiVariable,VariableInfo> variableInfoMap = new HashMap<PsiVariable, VariableInfo>();
