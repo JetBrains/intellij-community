@@ -96,5 +96,4 @@ public abstract class AbstractCustomLexer implements Lexer {
     return myEndOffset;
   }
 
-  public abstract Object clone();
 }

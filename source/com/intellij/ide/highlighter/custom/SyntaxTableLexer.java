@@ -174,10 +174,4 @@ public class SyntaxTableLexer implements Lexer {
     return 0;
   }
 
-  public Object clone() {
-    SyntaxTableLexer lexer = new SyntaxTableLexer(table);
-    lexer.start(buffer, startOffset, endOffset);
-
-    return lexer;
-  }
 }

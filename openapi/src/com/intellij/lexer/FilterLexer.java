@@ -38,17 +38,6 @@ public class FilterLexer implements Lexer {
     this(original, filter, null);
   }
 
-  public Object clone() {
-    try{
-      FilterLexer clone = (FilterLexer)super.clone();
-      clone.myOriginal = (Lexer)myOriginal.clone();
-      return clone;
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
-
   public Lexer getOriginal() {
     return myOriginal;
   }

@@ -21,10 +21,6 @@ public class XmlFilterLexer extends BaseFilterLexer implements IdTableBuilding.S
     caseInsensitive = _caseInsensitive;
   }
 
-  public Object clone() {
-    return new XmlFilterLexer((Lexer)myOriginalLexer.clone(), myTable, myTodoCounts, caseInsensitive);
-  }
-
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {

@@ -349,14 +349,6 @@ public class JavaLexer implements Lexer, Cloneable {
     return myBufferEndOffset;
   }
 
-  public Object clone() {
-    try {
-      return super.clone();
-    } catch (CloneNotSupportedException e) {
-      return null;
-    }
-  }
-
   public static void main(String[] args) {
     BufferedReader reader;
 

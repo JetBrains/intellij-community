@@ -4,7 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author max
@@ -131,32 +133,6 @@ public class LayeredLexer implements Lexer, Cloneable {
 
   public int getBufferEnd() {
     return myBufferEnd;
-  }
-
-  public Object clone() {
-    try {
-      final LayeredLexer lexer = (LayeredLexer) super.clone();
-      lexer.myBaseLexer = (Lexer) myBaseLexer.clone();
-      lexer.myLayerLexers = new ArrayList<Lexer>(myLayerLexers.size());
-      for (int i = 0; i < myLayerLexers.size(); i++) {
-        lexer.myLayerLexers.add((Lexer) myLayerLexers.get(i).clone());
-      }
-
-      Collection<IElementType> tokens = myStartTokenToLayerLexer.keySet();
-      for (Iterator<IElementType> iterator = tokens.iterator(); iterator.hasNext();) {
-        IElementType value = iterator.next();
-        lexer.myStartTokenToLayerLexer.put(value, lexer.myLayerLexers.get(myLayerLexers.indexOf(myStartTokenToLayerLexer.get(value))));
-      }
-
-      lexer.myCurrentLayerLexer = myCurrentLayerLexer == null
-                                 ? null
-                                 : lexer.myLayerLexers.get(myLayerLexers.indexOf(myCurrentLayerLexer));
-
-      return lexer;
-    } catch (CloneNotSupportedException e) {
-      LOG.error(e);
-    }
-    return null;
   }
 
   private boolean isLayerActive() {

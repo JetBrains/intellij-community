@@ -173,12 +173,4 @@ public class StringLiteralLexer implements Lexer, Cloneable {
     return myBufferEnd;
   }
 
-  public Object clone() {
-    try {
-      return super.clone();
-    } catch (CloneNotSupportedException e) {
-      LOG.error(e);
-    }
-    return null;
-  }
 }

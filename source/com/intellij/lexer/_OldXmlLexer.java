@@ -65,14 +65,6 @@ public class _OldXmlLexer implements Lexer, Cloneable {
     _locateToken();
   }
 
-  public Object clone() {
-    try{
-      return super.clone();
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
   private int yy_buffer_index;
   private int yy_buffer_start;
   private int yy_buffer_end;

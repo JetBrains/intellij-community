@@ -12,18 +12,6 @@ public abstract class CompositeLexer implements Lexer, Cloneable{
     myLexer2 = lexer2;
   }
 
-  public Object clone() {
-    try{
-      CompositeLexer clone = (CompositeLexer)super.clone();
-      clone.myLexer1 = (Lexer)myLexer1.clone();
-      clone.myLexer2 = (Lexer)myLexer2.clone();
-      return clone;
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
-
   protected abstract IElementType getCompositeTokenType(IElementType type1, IElementType type2);
 
   public void start(char[] buffer) {

@@ -46,6 +46,4 @@ public interface Lexer {
 
   char[] getBuffer();
   int getBufferEnd();
-
-  Object clone();
 }

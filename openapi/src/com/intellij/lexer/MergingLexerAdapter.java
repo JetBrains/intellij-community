@@ -15,17 +15,6 @@ public class MergingLexerAdapter implements Lexer, Cloneable{
     myTokensToMerge = tokensToMerge;
   }
 
-  public Object clone() {
-    try{
-      MergingLexerAdapter clone = (MergingLexerAdapter)super.clone();
-      clone.myOriginal = (Lexer)myOriginal.clone();
-      return clone;
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
-
   public void start(char[] buffer){
     myOriginal.start(buffer);
     myTokenType = null;

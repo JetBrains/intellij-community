@@ -49,12 +49,4 @@ public class EmptyLexer implements Lexer, Cloneable{
     return myEndOffset;
   }
 
-  public Object clone() {
-    try{
-      return super.clone();
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
 }

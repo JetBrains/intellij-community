@@ -82,6 +82,4 @@ public abstract class BaseFilterLexer implements Lexer {
     }
   }
 
-  public abstract Object clone();
-
 }

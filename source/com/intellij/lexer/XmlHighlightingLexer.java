@@ -19,18 +19,6 @@ public class XmlHighlightingLexer implements Lexer {
     myLexer.advance();
   }
 
-  public Object clone() {
-    try {
-      XmlHighlightingLexer lexer = (XmlHighlightingLexer)super.clone();
-      lexer.myLexer = (XmlLexer)myLexer.clone();
-      return lexer;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   public char[] getBuffer() {
     return myLexer.getBuffer();
   }

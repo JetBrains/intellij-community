@@ -73,15 +73,7 @@ public class _HtmlLexer implements Lexer, Cloneable {
     return true;
   }
 
-  public Object clone() {
-    try{
-      return super.clone();
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
-	private int yy_buffer_index;
+  private int yy_buffer_index;
 	private int yy_buffer_start;
 	private int yy_buffer_end;
 	private char yy_buffer[];

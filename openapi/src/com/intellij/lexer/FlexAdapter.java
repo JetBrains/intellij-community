@@ -73,10 +73,6 @@ public class FlexAdapter implements Lexer {
     return myEnd;
   }
 
-  public Object clone() {
-    return null;
-  }
-
   private void locateToken() {
     if (myTokenType != null) return;
     try {

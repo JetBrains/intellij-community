@@ -40,7 +40,4 @@ public class JavaFilterLexer extends BaseFilterLexer {
     myOriginalLexer.advance();
   }
 
-  public Object clone() {
-    return new JavaFilterLexer((Lexer)myOriginalLexer.clone(), myTable, myTodoCounts);
-  }
 }

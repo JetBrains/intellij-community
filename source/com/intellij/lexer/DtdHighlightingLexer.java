@@ -20,18 +20,6 @@ public class DtdHighlightingLexer implements Lexer {
     myLexer.advance();
   }
 
-  public Object clone() {
-    try {
-      DtdHighlightingLexer lexer = (DtdHighlightingLexer)super.clone();
-      lexer.myLexer = (XmlLexer)myLexer.clone();
-      return lexer;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   public char[] getBuffer() {
     return myLexer.getBuffer();
   }

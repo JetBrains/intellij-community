@@ -173,16 +173,6 @@ abstract class BaseHtmlLexer implements Lexer {
     return baseLexer.getBufferEnd();
   }
 
-  public Object clone() {
-    try {
-      BaseHtmlLexer clone = (BaseHtmlLexer)super.clone();
-      clone.baseLexer = (Lexer)baseLexer.clone();
-    }
-    catch (CloneNotSupportedException e) {
-    }
-    return null;
-  }
-
   public IElementType getTokenType() {
     return baseLexer.getTokenType();
   }

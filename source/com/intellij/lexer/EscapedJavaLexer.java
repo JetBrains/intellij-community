@@ -33,17 +33,6 @@ public class EscapedJavaLexer implements Lexer, Cloneable{
     mySurroundingQuote = surroundingQuote;
   }
 
-  public Object clone() {
-    try{
-      EscapedJavaLexer clone = (EscapedJavaLexer)super.clone();
-      clone.myJavaLexer = (JavaLexer)clone.myJavaLexer.clone();
-      return clone;
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
-  }
-
   public void start(char[] buffer) {
     start(buffer, 0, buffer.length);
   }

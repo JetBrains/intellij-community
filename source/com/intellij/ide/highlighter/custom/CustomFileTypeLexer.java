@@ -1,7 +1,6 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.*;
-import com.intellij.ide.highlighter.custom.impl.CustomFileTypeEditor;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 import java.util.ArrayList;
@@ -18,12 +17,6 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     myTable = table;
   }
 
-
-  public Object clone() {
-    CustomFileTypeLexer lexer = new CustomFileTypeLexer(myTable);
-    lexer.start(myBuffer, myStartOffset, myEndOffset);
-    return lexer;
-  }
 
   private static TokenParser[] buildTokenParsers(SyntaxTable table) {
     final WhitespaceParser whitespaceParser = new WhitespaceParser();
