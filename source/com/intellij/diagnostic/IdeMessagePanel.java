@@ -2,12 +2,12 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fbq.diagnostic;
+package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import jetbrains.fbq.ui.messager.Callout;
-import jetbrains.fbq.util.awt.RelativePoint;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.messager.Callout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +18,7 @@ import java.awt.event.MouseEvent;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
-  private static final Logger LOG = Logger.getInstance("#jetbrains.fbq.diagnostic.IdeMessagePanel");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeMessagePanel");
 
   private IconPane myIdeFatal;
 

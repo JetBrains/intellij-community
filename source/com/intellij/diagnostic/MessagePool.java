@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fbq.diagnostic;
+package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.apache.log4j.Category;

@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.SystemInfo;
-import jetbrains.fbq.diagnostic.MessagePool;
 
 import javax.swing.*;
 import java.io.File;

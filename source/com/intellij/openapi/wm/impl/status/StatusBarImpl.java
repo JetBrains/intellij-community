@@ -1,5 +1,7 @@
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -7,8 +9,6 @@ import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
-import jetbrains.fbq.diagnostic.IdeMessagePanel;
-import jetbrains.fbq.diagnostic.MessagePool;
 
 import javax.swing.*;
 import javax.swing.border.Border;

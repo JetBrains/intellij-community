@@ -2,17 +2,16 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fbq.diagnostic;
+package com.intellij.diagnostic;
 
 /**
  * @author kir
  */
 
-import com.intellij.diagnostic.ErrorHandlerExtension;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.reporter.ScrData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -23,7 +22,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import jetbrains.fbq.ide.reporter.ScrData;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
