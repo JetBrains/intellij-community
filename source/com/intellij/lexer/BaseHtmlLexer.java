@@ -138,9 +138,29 @@ abstract class BaseHtmlLexer implements Lexer {
     baseLexer.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
   }
 
+  protected int skipToTheEndOfTheEmbeddment() {
+    int myTokenEnd = baseLexer.getTokenEnd();
+
+    if (seenTag) {
+      int lastState = 0;
+      int lastStart = 0;
+      while(baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+        lastState = baseLexer.getState();
+        myTokenEnd = baseLexer.getTokenEnd();
+        lastStart = baseLexer.getTokenStart();
+        if (myTokenEnd == getBufferEnd()) break;
+        baseLexer.advance();
+      }
+
+      baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
+      baseLexer.getTokenType();
+    }
+    return myTokenEnd;
+  }
+
   public void advance() {
     baseLexer.advance();
-    IElementType type = getTokenType();
+    IElementType type = baseLexer.getTokenType();
     TokenHandler tokenHandler = tokenHandlers.get(type);
     if (tokenHandler!=null) tokenHandler.handleElement(this);
   }
@@ -211,4 +231,8 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   protected abstract boolean isHtmlTagState(int state);
+
+  protected Lexer getBaseLexer() {
+    return baseLexer;
+  }
 }

@@ -91,10 +91,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
     if (newLexer!=null) {
       embeddedLexer = newLexer;
-      embeddedLexer.start(
-        getBuffer(),
-        HtmlHighlightingLexer.super.getTokenStart(),
-        HtmlHighlightingLexer.super.getTokenEnd());
+      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
     }
   }
 

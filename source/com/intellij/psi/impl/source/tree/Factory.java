@@ -4,6 +4,7 @@ import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
@@ -517,6 +518,8 @@ public class Factory implements Constants {
     }
     else if (type == ANNOTATION_PARAMETER_LIST) {
       element = new PsiAnnotationParameterListImpl();
+    } else if (type == CustomHighlighterTokenType.CUSTOM_CONTENT) {
+      element = new CompositePsiElement(type) {};
     }
     else {
       if (type instanceof IAspectElementType) {

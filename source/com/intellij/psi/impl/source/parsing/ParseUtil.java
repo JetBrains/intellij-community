@@ -106,6 +106,38 @@ public class ParseUtil implements Constants {
     boolean isTokenValid(IElementType tokenType);
   }
 
+  public static abstract class DefaultWhiteSpaceTokenProcessorImpl implements TokenProcessor {
+    public boolean isTokenValid(IElementType tokenType) {
+      return tokenType != null && isInSet(tokenType);
+    }
+
+    public TreeElement process(Lexer lexer, ParsingContext context) {
+      TreeElement first = null;
+      TreeElement last = null;
+      while (isTokenValid(lexer.getTokenType())) {
+        TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
+        IElementType type = lexer.getTokenType();
+
+        if (!isInSet(type)) {
+          LOG.error("Missed token should be white space or comment:" + tokenElement);
+          throw new RuntimeException();
+        }
+        if (last != null) {
+          last.setTreeNext(tokenElement);
+          tokenElement.setTreePrev(last);
+          last = tokenElement;
+        }
+        else {
+          first = last = tokenElement;
+        }
+        lexer.advance();
+      }
+      return first;
+    }
+
+    protected abstract boolean isInSet(final IElementType type);
+  }
+
   public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
     public static final TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
 

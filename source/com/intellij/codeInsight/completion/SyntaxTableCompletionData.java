@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -28,6 +29,7 @@ public class SyntaxTableCompletionData extends WordCompletionData {
     final CompletionVariant variant = new CompletionVariant(TrueFilter.INSTANCE);
     variant.includeScopeClass(PsiPlainText.class, true);
     variant.includeScopeClass(XmlToken.class, true); // for embedding custom file types into xml
+    variant.includeScopeClass(LeafPsiElement.class, true); // for embedding custom file types into xml
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     final String[] empty = {};
 

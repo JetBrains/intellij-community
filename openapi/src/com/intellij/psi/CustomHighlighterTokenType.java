@@ -39,4 +39,5 @@ public interface CustomHighlighterTokenType {
   IElementType R_BRACKET = new CustomElementType("R_BRACKET");
   IElementType L_PARENTH = new CustomElementType("L_PARENTH");
   IElementType R_PARENTH = new CustomElementType("R_PARENTH");
+  IElementType CUSTOM_CONTENT = new CustomElementType("CUSTOM_CONTENT");
 }
