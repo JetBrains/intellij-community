@@ -138,7 +138,7 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useNewFormatter(FileType fileType) {
-    return true;
+    return fileType instanceof LanguageFileType;
   }
 
   private ASTNode processRange(ASTNode element, int[] bounds) {
