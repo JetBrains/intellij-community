@@ -7,8 +7,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.PsiShortNamesCache;
 
 import java.util.ArrayList;
 
@@ -53,36 +56,31 @@ public class GotoFileModel implements ChooseByNameModel{
   }
 
   public String[] getNames(boolean checkBoxState) {
-    String[] fileNames = PsiManager.getInstance(myProject).getShortNamesCache().getAllFileNames();
+    return PsiManager.getInstance(myProject).getShortNamesCache().getAllFileNames();
+  }
 
-    ArrayList<String> array = new ArrayList<String>();
-    for(int i = 0; i < fileNames.length; i++){
-      String fileName = fileNames[i];
-      FileType type = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-      if (type.isBinary()) continue;
-      //if (!checkBoxState && (type == FileType.JAVA || type == FileType.CLASS)) continue;
-      if (type == StdFileTypes.CLASS) continue;
-      array.add(fileName);
-    }
+  private boolean isEditable(PsiFile psiFile, final boolean checkboxState) {
+    FileType type = psiFile.getFileType();
+    if (!checkboxState && type == StdFileTypes.JAVA) return false;
+    if (type == StdFileTypes.CLASS) return false; // Optimization
+    if (!type.isBinary()) return true; // Optimization
 
-    return array.toArray(new String[array.size()]);
+    final FileEditorProviderManager editorProvider = FileEditorProviderManager.getInstance();
+    VirtualFile vFile = psiFile.getVirtualFile();
+    return vFile != null && editorProvider.getProviders(myProject, vFile).length > 0;
   }
 
   public Object[] getElementsByName(final String name, final boolean checkBoxState) {
     PsiFile[] psiFiles = PsiManager.getInstance(myProject).getShortNamesCache().getFilesByName(name);
-    if (checkBoxState){
-      return psiFiles;
-    }
-    else{
-      ArrayList<PsiFile> list = new ArrayList<PsiFile>();
-      for(int i = 0; i < psiFiles.length; i++){
-        PsiFile file = psiFiles[i];
-        if (file.getFileType() == StdFileTypes.JAVA ||
-            file.getFileType() == StdFileTypes.CLASS) continue;
+    ArrayList<PsiFile> list = new ArrayList<PsiFile>();
+    for(int i = 0; i < psiFiles.length; i++){
+      PsiFile file = psiFiles[i];
+      if (isEditable(file, checkBoxState)) {
         list.add(file);
       }
-      return list.toArray(new PsiFile[list.size()]);
     }
+
+    return list.toArray(new PsiFile[list.size()]);
   }
 
   public String getElementName(final Object element) {
