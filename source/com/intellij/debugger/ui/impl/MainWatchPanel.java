@@ -6,7 +6,6 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationManager;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
@@ -72,7 +71,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   public void editNode(final DebuggerTreeNodeImpl node) {
     final DebuggerContextImpl context = getContext();
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(context), "evaluation");
-    comboBox.setText((TextWithImportsImpl)((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
+    comboBox.setText(((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
 
     DebuggerTree.InplaceEditor editor = new DebuggerTree.InplaceEditor(node) {
       public JComponent createEditorComponent() {
@@ -88,7 +87,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       }
 
       public void doOKAction() {
-        TextWithImportsImpl text = comboBox.getText();
+        TextWithImports text = comboBox.getText();
         WatchDebuggerTree.setWatchNodeText(node, text);
         comboBox.addRecent(text);
         super.doOKAction();

@@ -31,7 +31,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
   private MyEditorComboBoxEditor myEditor;
   private ComboBox myComboBox;
-  protected TextWithImportsImpl myItem;
+  protected TextWithImports myItem;
 
   private class MyEditorComboBoxEditor extends EditorComboBoxEditor{
     public MyEditorComboBoxEditor(Project project, FileType fileType) {
@@ -48,7 +48,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     public void setItem(Object item) {
-      super.setItem(createDocument((TextWithImportsImpl)item));
+      super.setItem(createDocument((TextWithImports)item));
     }
 
   }
@@ -63,23 +63,23 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       myComboBox.getEditor().setItem(item);
     }
     else {
-      myItem =  (TextWithImportsImpl)item;
+      myItem =  item;
     }
   }
 
-  public TextWithImportsImpl getText() {
-    return (TextWithImportsImpl)myComboBox.getEditor().getItem();
+  public TextWithImports getText() {
+    return (TextWithImports)myComboBox.getEditor().getItem();
   }
 
-  protected void updateEditor(TextWithImportsImpl item) {
+  protected void updateEditor(TextWithImports item) {
     if(!myComboBox.isEditable()) return;
 
     boolean focusOwner = myEditor != null ? myEditor.getEditorComponent().isFocusOwner() : false;
     int offset = 0;
-    TextWithImportsImpl oldItem = null;
+    TextWithImports oldItem = null;
     if(focusOwner) {
       offset = myEditor.getEditor().getCaretModel().getOffset();
-      oldItem = (TextWithImportsImpl)myEditor.getItem();
+      oldItem = (TextWithImports)myEditor.getItem();
     }
     myEditor = new MyEditorComboBoxEditor(getProject(), StdFileTypes.JAVA);
     myComboBox.setEditor(myEditor);
@@ -100,10 +100,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     boolean focusOwner = myEditor != null ? myEditor.getEditorComponent().isFocusOwner() : false;
     myComboBox.removeAllItems();
     if(getRecentsId() != null) {
-      LinkedList<TextWithImportsImpl> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
-      ArrayList<TextWithImportsImpl> singleLine = new ArrayList<TextWithImportsImpl>();
-      for (Iterator<TextWithImportsImpl> iterator = recents.iterator(); iterator.hasNext();) {
-        TextWithImportsImpl evaluationText = iterator.next();
+      LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+      ArrayList<TextWithImports> singleLine = new ArrayList<TextWithImports>();
+      for (Iterator<TextWithImports> iterator = recents.iterator(); iterator.hasNext();) {
+        TextWithImports evaluationText = iterator.next();
         if(evaluationText.getText().indexOf('\n') == -1) {
           singleLine.add(evaluationText);
         }
@@ -129,19 +129,19 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
         setRecents();
         updateEditor(myItem);
       } else {
-        myItem = (TextWithImportsImpl)myComboBox.getEditor().getItem();
+        myItem = (TextWithImports)myComboBox.getEditor().getItem();
         myComboBox.removeAllItems();
         myComboBox.addItem(myItem);
       }
     }
 
-  public TextWithImportsImpl createText(String text, String importsString) {
+  public TextWithImports createText(String text, String importsString) {
     return new TextWithImportsImpl(EvaluationManagerImpl.EXPRESSION_FACTORY, text, importsString);
   }
 
-  private void addRecents(List<TextWithImportsImpl> expressions) {
-    for (Iterator<TextWithImportsImpl> iterator = expressions.iterator(); iterator.hasNext();) {
-      final TextWithImportsImpl text = iterator.next();
+  private void addRecents(List<TextWithImports> expressions) {
+    for (Iterator<TextWithImports> iterator = expressions.iterator(); iterator.hasNext();) {
+      final TextWithImports text = iterator.next();
       myComboBox.addItem(text);
     }
     if (myComboBox.getItemCount() > 0) {
@@ -176,7 +176,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     return myEditor.getEditor();
   }
 
-  public void addRecent(TextWithImportsImpl text) {
+  public void addRecent(TextWithImports text) {
     super.addRecent(text);
     setRecents();
   }

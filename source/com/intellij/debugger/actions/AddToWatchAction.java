@@ -6,7 +6,6 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -59,7 +58,7 @@ public class AddToWatchAction extends DebuggerAction {
 
                 if(descriptor instanceof WatchItemDescriptor) {
 
-                  final TextWithImportsImpl expression = (TextWithImportsImpl) ((WatchItemDescriptor) descriptor).getEvaluationText();
+                  final TextWithImports expression = ((WatchItemDescriptor) descriptor).getEvaluationText();
                   if(expression != null) {
                     NodeDescriptorImpl watchDescriptor = watchPanel.getWatchTree().addWatch(expression).getDescriptor();
                     watchDescriptor.displayAs(descriptor);

@@ -1,6 +1,6 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -14,13 +14,13 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptorI
   private final ValueDescriptorImpl myParentDescriptor;
   private final String myTypeName;
   private final String myName;
-  protected TextWithImportsImpl myText;
+  protected TextWithImports myText;
 
   public UserExpressionData(
                  ValueDescriptorImpl parentDescriptor,
                  String typeName,
                  String name,
-                 TextWithImportsImpl text) {
+                 TextWithImports text) {
     super(UserExpressionDescriptorImpl.class);
     myParentDescriptor = parentDescriptor;
     myTypeName = typeName;

@@ -1,9 +1,9 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Lex
  */
 public class DebuggerRecents implements ProjectComponent {
-  private Map<Object, LinkedList<TextWithImportsImpl>> myRecentExpressions = new HashMap<Object, LinkedList<TextWithImportsImpl>>();
+  private Map<Object, LinkedList<TextWithImports>> myRecentExpressions = new HashMap<Object, LinkedList<TextWithImports>>();
 
   DebuggerRecents() {
   }
@@ -32,17 +32,17 @@ public class DebuggerRecents implements ProjectComponent {
   public void projectOpened() {
   }
 
-  public LinkedList<TextWithImportsImpl> getRecents(Object id) {
-    LinkedList<TextWithImportsImpl> result = myRecentExpressions.get(id);
+  public LinkedList<TextWithImports> getRecents(Object id) {
+    LinkedList<TextWithImports> result = myRecentExpressions.get(id);
     if(result == null){
-      result = new LinkedList<TextWithImportsImpl>();
+      result = new LinkedList<TextWithImports>();
       myRecentExpressions.put(id, result);
     }
     return result;
   }
 
-  public void addRecent(Object id, TextWithImportsImpl recent) {
-    LinkedList<TextWithImportsImpl> recents = getRecents(id);
+  public void addRecent(Object id, TextWithImports recent) {
+    LinkedList<TextWithImports> recents = getRecents(id);
     if(recents.size() >= DebuggerExpressionComboBox.MAX_ROWS) {
       recents.removeLast();
     }

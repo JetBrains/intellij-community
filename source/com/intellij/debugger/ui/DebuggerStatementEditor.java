@@ -58,7 +58,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     actionGroup.add(new ItemAction(IdeActions.ACTION_NEXT_OCCURENCE, this){
       public void actionPerformed(AnActionEvent e) {
         if(LOG.isDebugEnabled()) {
-          LinkedList<TextWithImportsImpl> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+          LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
           LOG.assertTrue(myRecentIdx < recents.size());
         }
         myRecentIdx ++;
@@ -66,7 +66,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
       }
 
       public void update(AnActionEvent e) {
-        LinkedList<TextWithImportsImpl> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+        LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
         e.getPresentation().setEnabled(myRecentIdx < recents.size());
       }
     });
@@ -78,7 +78,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   private void updateTextFromRecents() {
-    LinkedList<TextWithImportsImpl> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+    LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
     LOG.assertTrue(myRecentIdx <= recents.size());
     setText(myRecentIdx < recents.size() ? recents.get(myRecentIdx) : EvaluationManager.getInstance().getEmptyExpressionFragment());
   }
@@ -87,15 +87,15 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     return myEditor.getEditor().getContentComponent();
   }
 
-  public TextWithImportsImpl getText() {
+  public TextWithImports getText() {
     return createItem(myEditor.getDocument(), getProject());
   }
 
   public void setText(TextWithImports text) {
-    myEditor.setDocument(createDocument((TextWithImportsImpl)text));
+    myEditor.setDocument(createDocument(text));
   }
 
-  public TextWithImportsImpl createText(String text, String importsString) {
+  public TextWithImports createText(String text, String importsString) {
     return new TextWithImportsImpl(EvaluationManagerImpl.CODE_BLOCK_FACTORY, text, importsString);
   }
 

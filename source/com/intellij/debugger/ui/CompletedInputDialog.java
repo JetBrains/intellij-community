@@ -1,12 +1,12 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.PositionUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +53,7 @@ public class CompletedInputDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public TextWithImportsImpl getExpressionText() {
+  public TextWithImports getExpressionText() {
     return myCombo.getText();
   }
 

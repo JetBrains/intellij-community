@@ -3,7 +3,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -75,7 +74,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     return text;
   }
 
-  protected void initDialogData(TextWithImportsImpl text) {
+  protected void initDialogData(TextWithImports text) {
     super.initDialogData(text);
     getExpressionCombo().selectAll();
   }
@@ -94,7 +93,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     }
 
     public void actionPerformed(ActionEvent e) {
-      final TextWithImportsImpl text = (TextWithImportsImpl)getEditor().getText();
+      final TextWithImports text = getEditor().getText();
       doCancelAction();
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {

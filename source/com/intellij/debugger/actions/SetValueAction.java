@@ -121,8 +121,7 @@ public class SetValueAction extends DebuggerAction {
         askAndSet(node, debuggerContext, new SetValueRunnable() {
           public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                            InvalidTypeException,
-                                                                                           EvaluateException,
-                                                                                           IncompatibleThreadStateException {
+                                                                                           EvaluateException {
             debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getVariable().type()));
             update(debuggerContext);
           }
@@ -272,7 +271,7 @@ public class SetValueAction extends DebuggerAction {
           }
           else if (currentValue instanceof PrimitiveValue) {
             ValueLabelRenderer renderer = ((ValueDescriptorImpl) descriptor).getRenderer(debuggerContext.getDebugProcess());
-            initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && "HexRenderer".equals(((NodeRenderer) renderer).getUniqueId()));
+            initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && "HexRenderer".equals(renderer.getUniqueId()));
           }
 
           final String initialString1 = initialString;
@@ -325,7 +324,7 @@ public class SetValueAction extends DebuggerAction {
         Editor editor = comboBox.getEditor();
         if(editor == null) return;
 
-        final TextWithImportsImpl text = comboBox.getText();
+        final TextWithImports text = comboBox.getText();
 
         PsiFile psiFile = PsiDocumentManager.getInstance(debuggerContext.getProject()).getPsiFile(editor.getDocument());
 

@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -8,8 +9,6 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     myRecentsId = recentsId;
   }
 
-  protected TextWithImportsImpl createItem(Document document, Project project) {
+  protected TextWithImports createItem(Document document, Project project) {
     if (document != null) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -52,11 +51,11 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     return createText("");
   }
 
-  protected TextWithImportsImpl createText(String text) {
+  protected TextWithImports createText(String text) {
     return createText(text, "");
   }
 
-  protected abstract TextWithImportsImpl createText(String text, String importsString);
+  protected abstract TextWithImports createText(String text, String importsString);
 
   public abstract JComponent getPreferredFocusedComponent();
 
@@ -78,7 +77,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     getPreferredFocusedComponent().requestFocus();
   }
 
-  protected Document createDocument(TextWithImportsImpl item) {
+  protected Document createDocument(TextWithImports item) {
     LOG.assertTrue(myContext == null || myContext.isValid());
 
     if(item == null) {
@@ -106,7 +105,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     return myRecentsId;
   }
 
-  public void addRecent(TextWithImportsImpl text) {
+  public void addRecent(TextWithImports text) {
     if(getRecentsId() != null && text != null && !"".equals(text.getText())){
       DebuggerRecents.getInstance(getProject()).addRecent(getRecentsId(), text);
     }

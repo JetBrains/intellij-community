@@ -2,7 +2,6 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -27,6 +26,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import org.apache.log4j.lf5.viewer.categoryexplorer.TreeModelAdapter;
@@ -409,7 +408,7 @@ public class DebuggerSessionTab {
       return null;
     }
     if (descriptor instanceof WatchItemDescriptor) {
-      return (TextWithImportsImpl)((WatchItemDescriptor)descriptor).getEvaluationText();
+      return ((WatchItemDescriptor)descriptor).getEvaluationText();
     }
     return DebuggerTreeNodeExpression.createEvaluationText(node, getContextManager().getContext());
   }

@@ -5,10 +5,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
@@ -22,7 +19,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   private final String myTypeName;
   private final String myName;
 
-  public UserExpressionDescriptorImpl(Project project, ValueDescriptorImpl parent, String typeName, String name, TextWithImportsImpl text) {
+  public UserExpressionDescriptorImpl(Project project, ValueDescriptorImpl parent, String typeName, String name, TextWithImports text) {
     super(text, project);
     myParentDescriptor = parent;
     myTypeName = typeName;

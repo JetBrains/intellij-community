@@ -35,22 +35,22 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
     return myEditor.getEditor().getContentComponent();
   }
 
-  public TextWithImportsImpl getText() {
+  public TextWithImports getText() {
     return createItem(myEditor.getDocument(), getProject());
   }
 
   public void setText(TextWithImports text) {
-    myEditor.setDocument(createDocument((TextWithImportsImpl)text));
+    myEditor.setDocument(createDocument(text));
   }
 
-  public TextWithImportsImpl createText(String text, String importsString) {
+  public TextWithImports createText(String text, String importsString) {
     return new TextWithImportsImpl(EvaluationManagerImpl.EXPRESSION_FACTORY, text, importsString);
   }
 
   public void setEnabled(boolean enabled) {
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
-      final TextWithImportsImpl text = getText();
+      final TextWithImports text = getText();
       myStubField.setText(text.getText());
       ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, enabled? EDITOR : STUB);
     }

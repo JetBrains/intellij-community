@@ -3,7 +3,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -84,7 +83,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
   private void updateSwitchButton(Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-    PsiElement[] children = ((PsiCodeFragment)psiFile).getChildren();
+    PsiElement[] children = psiFile.getChildren();
     int nonWhite = 0;
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
@@ -122,7 +121,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     }
 
     public void actionPerformed(ActionEvent e) {
-      final TextWithImportsImpl text = (TextWithImportsImpl)getEditor().getText();
+      final TextWithImports text = getEditor().getText();
       doCancelAction();
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {

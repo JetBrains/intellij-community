@@ -1,7 +1,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.impl.descriptors.data.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
@@ -11,8 +10,8 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 
 import java.util.HashMap;
@@ -121,19 +120,19 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   public ValueDescriptorImpl getThisDescriptor(NodeDescriptorImpl parent, Value value) {
-    return getDescriptor((NodeDescriptorImpl)parent, new ThisData(value));
+    return getDescriptor(parent, new ThisData(value));
   }
 
   public ThreadDescriptorImpl getThreadDescriptor(NodeDescriptorImpl parent, ThreadReferenceProxyImpl thread) {
-    return getDescriptor((NodeDescriptorImpl)parent, new ThreadData(thread));
+    return getDescriptor(parent, new ThreadData(thread));
   }
 
   public ThreadGroupDescriptorImpl getThreadGroupDescriptor(NodeDescriptorImpl parent, ThreadGroupReferenceProxyImpl group) {
-    return getDescriptor((NodeDescriptorImpl)parent, new ThreadGroupData(group));
+    return getDescriptor(parent, new ThreadGroupData(group));
   }
 
   public UserExpressionDescriptorImpl getUserExpressionDescriptor(ValueDescriptor parent, String typeName, String name, TextWithImports expression) {
-    return getDescriptor((NodeDescriptorImpl)parent, new UserExpressionData((ValueDescriptorImpl)parent, typeName, name, (TextWithImportsImpl)expression));
+    return getDescriptor((NodeDescriptorImpl)parent, new UserExpressionData((ValueDescriptorImpl)parent, typeName, name, expression));
   }
 
   private static class DescriptorTreeSearcher {

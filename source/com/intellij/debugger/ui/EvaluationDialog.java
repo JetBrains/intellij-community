@@ -117,8 +117,8 @@ public abstract class EvaluationDialog extends DialogWrapper {
     getEditor().addRecent(getCodeToEvaluate());
   }
 
-  protected TextWithImportsImpl getCodeToEvaluate() {
-    TextWithImportsImpl text = (TextWithImportsImpl)getEditor().getText();
+  protected TextWithImports getCodeToEvaluate() {
+    TextWithImports text = getEditor().getText();
     String s = text.getText();
     if (s != null) {
       s = s.trim();
