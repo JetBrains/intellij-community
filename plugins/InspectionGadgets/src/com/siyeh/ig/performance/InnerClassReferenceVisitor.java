@@ -39,6 +39,16 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         return true;
     }
 
+    public void visitThisExpression(PsiThisExpression expression){
+        super.visitThisExpression(expression);
+        final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+        if(qualifier == null)
+        {
+            return;
+        }
+        m_referencesStaticallyAccessible = false;
+    }
+
     public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
         super.visitReferenceElement(referenceElement);
         final PsiElement element = referenceElement.resolve();

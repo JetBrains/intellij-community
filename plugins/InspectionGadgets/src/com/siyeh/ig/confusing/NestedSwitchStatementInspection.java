@@ -3,11 +3,13 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 public class NestedSwitchStatementInspection extends StatementInspection {
 
@@ -34,12 +36,20 @@ public class NestedSwitchStatementInspection extends StatementInspection {
 
         public void visitSwitchStatement(PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
-            if (PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class) == null) {
+            final PsiElement containingSwitchStatement =
+                    PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);
+            if (containingSwitchStatement == null) {
+                return;
+            }
+            final PsiMethod containingMethod = ClassUtils.getContainingMethod(statement);
+            final PsiMethod containingContainingMethod = ClassUtils.getContainingMethod(
+                    containingSwitchStatement);
+            if(!containingMethod.equals(containingContainingMethod))
+            {
                 return;
             }
             registerStatementError(statement);
         }
-
     }
 
 }

@@ -87,7 +87,7 @@ public class ClassUtils {
     }
 
     public static boolean isIntegral(PsiType type) {
-        return (type != null) && ( 
+        return (type != null) && (
                 type.equals(PsiType.LONG) ||
                 type.equals(PsiType.INT) ||
                 type.equals(PsiType.SHORT) ||
@@ -173,5 +173,9 @@ public class ClassUtils {
             }
         }
         return outerClass;
+    }
+
+    public static PsiMethod getContainingMethod(PsiElement element){
+       return  (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 }
