@@ -22,10 +22,11 @@ public class Parsing implements Constants{
   }
 
   public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, char[] buffer, CharTable table) {
-    return parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table, false);
+    return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table, false);
   }
 
-  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager,
+  //Since we are to parse greedily (up to the end), we are not guaranteed to return reference actually
+  public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
                                                             char[] buffer,
                                                             int startOffset,
                                                             int endOffset,
@@ -37,8 +38,13 @@ public class Parsing implements Constants{
 
     ParsingContext context = new ParsingContext(table);
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false);
-    if (ref == null) return null;
-    final FileElement dummyRoot = new DummyHolder(manager, ref, null, table).getTreeElement();
+    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
+    if (ref == null) {
+      if (!eatAll) return null;
+    } else {
+      TreeUtil.addChildren(dummyRoot, ref);
+    }
+
     if (lexer.getTokenType() != null) {
       if (!eatAll) return null;
       final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
@@ -51,7 +57,7 @@ public class Parsing implements Constants{
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return (CompositeElement)dummyRoot.getFirstChildNode();
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete) {
