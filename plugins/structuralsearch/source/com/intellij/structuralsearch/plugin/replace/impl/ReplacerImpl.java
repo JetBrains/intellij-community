@@ -282,6 +282,8 @@ public class ReplacerImpl {
 
                       el.replace(replacement);
                     }
+                  } else {
+                    el.delete();
                   }
 
                 } catch(IncorrectOperationException ex) {

@@ -1207,29 +1207,67 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
   /** comment */
   public void testRemove() {
-    if (true) return;
-    String s1 = "class b {\n" +
-                "  /* comment */\n" +
-                "  int c;\n" +
-                "  /* aaa */\n" +
-                "  void  d() {}\n" +
-                "  /* class */\n" +
-                "  class e {}\n" +
-                "}";
+    String s1 = "class A {\n" +
+                  "  /* */\n" +
+                  "  void a() {\n" +
+                  "  }\n" +
+                  "  /*\n" +
+                  "  */\n" +
+                  "  int b = 1;\n" +
+                  "  /*\n" +
+                  "   *\n" +
+                  "   */\n" +
+                  "   class C {}\n" +
+                  "  {\n" +
+                  "    /* aaa */\n" +
+                  "    int a;\n" +
+                  "    /* */\n" +
+                  "    a = 1;\n" +
+                  "  }\n" +
+                  "}";
     String s2 = "/* 'a:[regex( .* )] */";
+    String s2_2 = "/* */";
     String s3 = "";
-
-    /** comment */
+    String expectedResult = "class A {\n" +
+                  "  void a() {\n" +
+                  "  }\n" +
+                  "  int b = 1;\n" +
+                  "  class C {}\n" +
+                  "  {\n" +
+                  "      int a;\n" +
+                  "      a = 1;\n" +
+                  "  }\n" +
+                  "}";
     actualResult = replacer.testReplace(s1,s2,s3,options);
-    String expectedResult = "class b {\n" +
-                            "  int c;\n" +
-                            "  void d() {}\n" +
-                            "  class e {}\n" +
-                            "}";
 
     assertEquals(
-      "Removing comment",
+      "Removing comments",
       expectedResult,
+      actualResult
+    );
+
+    String expectedResult2 = "class A {\n" +
+                  "  void a() {\n" +
+                  "  }\n" +
+                  "  /*\n" +
+                  "  */\n" +
+                  "  int b = 1;\n" +
+                  "  /*\n" +
+                  "   *\n" +
+                  "   */\n" +
+                  "   class C {}\n" +
+                  "  {\n" +
+                  "    /* aaa */\n" +
+                  "    int a;\n" +
+                  "      a = 1;\n" +
+                  "  }\n" +
+                  "}";
+
+    actualResult = replacer.testReplace(s1,s2_2,s3,options);
+
+    assertEquals(
+      "Removing comments",
+      expectedResult2,
       actualResult
     );
   }

@@ -1,8 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +15,14 @@ public class CommentFilter extends NodeFilter {
   }
 
   public void visitField(PsiField field) {
+    result = true;
+  }
+
+  public void visitMethod(PsiMethod method) {
+    result = true;
+  }
+
+  public void visitClass(PsiClass clazz) {
     result = true;
   }
 

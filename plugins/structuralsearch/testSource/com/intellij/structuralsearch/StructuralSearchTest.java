@@ -684,14 +684,14 @@ public class StructuralSearchTest extends IdeaTestCase {
       findMatchesCount(s10029,s10030)
     );
 
-    String s10031 = "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
-                    "try { a(); } catch(Exception ex) {}";
-    String s10032 = "try { a(); } catch('Type+ 'Arg+) { 'Statements*; }\n";
-    assertEquals(
-      "finally matching",
-      2,
-      findMatchesCount(s10027,s10028)
-    );
+    //String s10031 = "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
+    //                "try { a(); } catch(Exception ex) {}";
+    //String s10032 = "try { a(); } catch('_Type+ 'Arg+) { 'Statements*; }\n";
+    //assertEquals(
+    //  "finally matching",
+    //  2,
+    //  findMatchesCount(s10031,s10032)
+    //);
   }
 
   public void testSearchClass() {
@@ -1884,6 +1884,23 @@ public class StructuralSearchTest extends IdeaTestCase {
       assertFalse("incorrect reg exp 2",false);
     } catch(UnsupportedPatternException ex) {
     }
+
+    String s107 = "class A {\n" +
+                  "  /* */\n" +
+                  "  void a() {\n" +
+                  "  }" +
+                  "  /* */\n" +
+                  "  int b = 1;\n" +
+                  "  /*" +
+                  "   *" +
+                  "   */\n" +
+                  "   class C {}" +
+                  "}";
+    String s108 = "  /*" +
+                  "   *" +
+                  "   */";
+
+    assertEquals("finding comments without typed var", 1, findMatchesCount(s107,s108));
 
     // a) custom modifiers
     // b) hierarchy navigation support

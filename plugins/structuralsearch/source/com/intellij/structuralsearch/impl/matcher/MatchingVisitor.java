@@ -35,7 +35,7 @@ public class MatchingVisitor extends PsiElementVisitor {
     PsiElement comment2 = null;
 
     if (!(element instanceof PsiComment)) {
-      if (element instanceof PsiField) {
+      if (element instanceof PsiMember) {
         final PsiElement[] children = element.getChildren();
         if (children[0] instanceof PsiComment) {
           comment2 = children[0];
@@ -64,7 +64,7 @@ public class MatchingVisitor extends PsiElementVisitor {
         matchContext
       );
     } else {
-      super.visitElement(comment);
+      result = comment.getText().equals(comment2.getText());
     }
   }
 
@@ -983,7 +983,19 @@ public class MatchingVisitor extends PsiElementVisitor {
       }
 
       if (matchedNodes == null) matchedNodes = new LinkedList<PsiElement>();
-      matchedNodes.add(element);
+
+      PsiElement elementToAdd = element;
+
+      if (patternElement instanceof PsiComment &&
+          element instanceof PsiMember
+         ) {
+        // psicomment and psidoccomment are placed inside the psimember next to them so
+        // simple topdown matching should do additional "dances" to cover this case.
+        elementToAdd = element.getFirstChild();
+        assert elementToAdd instanceof PsiComment;
+      }
+
+      matchedNodes.add(elementToAdd);
 
       if (handler.shouldAdvanceThePatternFor(patternElement, element)) {
         patternNodes.advance();
