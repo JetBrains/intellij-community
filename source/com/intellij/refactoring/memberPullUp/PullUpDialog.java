@@ -10,9 +10,9 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
@@ -27,7 +27,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PullUpDialog extends RefactoringDialog {
+public class PullUpDialog extends DialogWrapper {
   private final Callback myCallback;
   private MemberSelectionPanel myMemberSelectionPanel;
   private MyMemberInfoModel myMemberInfoModel;
