@@ -15,3 +15,16 @@ public class InstanceVaraibleUnitintializedUse{
     }
 
 }
+
+class AClass {
+  int aField;
+
+  AClass() {
+    aField = 31;
+  }
+
+  AClass(AClass a) {
+    aField = a.aField;
+  }
+}
+
