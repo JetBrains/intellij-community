@@ -51,7 +51,9 @@ public class InnerClassOnInterfaceInspection extends ClassInspection {
             }
             final PsiClass[] innerClasses = aClass.getInnerClasses();
             for (int i = 0; i < innerClasses.length; i++) {
-                registerClassError(innerClasses[i]);
+                if (!innerClasses[i].isEnum() && !innerClasses[i].isAnnotationType()) {
+                    registerClassError(innerClasses[i]);
+                }
             }
         }
 
