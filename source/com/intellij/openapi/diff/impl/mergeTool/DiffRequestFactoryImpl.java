@@ -51,9 +51,14 @@ public class DiffRequestFactoryImpl implements DiffRequestFactory {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl");
 
-  public MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, VirtualFile file, Project project) {
+  public MergeRequest createMergeRequest(String leftText,
+                                         String rightText,
+                                         String originalContent,
+                                         VirtualFile file,
+                                         Project project,
+                                         final boolean canCloseMergeDialog) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project);
+    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project,canCloseMergeDialog);
   }
 
   private MergeVersion createMergeVersion(VirtualFile file,

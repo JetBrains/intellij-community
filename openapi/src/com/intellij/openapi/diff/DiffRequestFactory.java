@@ -35,5 +35,5 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public interface DiffRequestFactory {
-  MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, VirtualFile file, Project project);
+  MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, VirtualFile file, Project project, boolean canCloseMergeDialog);
 }

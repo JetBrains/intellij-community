@@ -13,7 +13,7 @@ public class MergeTool implements DiffTool {
       return;
     }
     FrameWrapper frameWrapper = new FrameWrapper(data.getGroupKey());
-    DiffViewer mergePanel = createMergeComponent(data);
+    DiffViewer mergePanel = createMergeComponent(data, null);
     frameWrapper.setComponent(mergePanel.getComponent());
     frameWrapper.setPreferredFocusedComponent(mergePanel.getPreferredFocusedComponent());
     frameWrapper.closeOnEsc();
@@ -22,8 +22,8 @@ public class MergeTool implements DiffTool {
     frameWrapper.show();
   }
 
-  private MergePanel2 createMergeComponent(DiffRequest data) {
-    MergePanel2 mergePanel = new MergePanel2();
+  private MergePanel2 createMergeComponent(DiffRequest data, DialogBuilder builder) {
+    MergePanel2 mergePanel = new MergePanel2(builder);
     mergePanel.setDiffRequest(data);
     return mergePanel;
   }
@@ -32,7 +32,7 @@ public class MergeTool implements DiffTool {
     DialogBuilder builder = new DialogBuilder(data.getProject());
     builder.setDimensionServiceKey(data.getGroupKey());
     builder.setTitle(data.getWindowTitle());
-    MergePanel2 mergePanel = createMergeComponent(data);
+    MergePanel2 mergePanel = createMergeComponent(data, builder);
     builder.setCenterPanel(mergePanel.getComponent());
     builder.setPreferedFocusComponent(mergePanel.getPreferredFocusedComponent());
     data.setActions(builder, mergePanel);

@@ -50,6 +50,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -117,7 +118,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       if (virtualFile != null) mergedFiles.add(virtualFile);
     }
 
-    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles).actionPerformed(null);
+    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles,new AbstractMergeAction.FileValueHolder()).actionPerformed(null);
 
   }
 

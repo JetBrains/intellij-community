@@ -3,14 +3,12 @@ package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffToolbar;
-import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
+import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
@@ -29,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -131,8 +130,9 @@ public class MergePanel2 implements DiffViewer {
   };
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
+  private final DialogBuilder myBuilder;
 
-  public MergePanel2() {
+  public MergePanel2(DialogBuilder builder) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
     for (int i = 0; i < EDITORS_COUNT; i++) {
       EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i));
@@ -146,6 +146,7 @@ public class MergePanel2 implements DiffViewer {
     myPanel = new DiffPanelOutterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
     myPanel.setDataProvider(new MyDataProvider());
+    myBuilder = builder;
   }
 
   public Editor getEditor(int index) {
@@ -224,6 +225,9 @@ public class MergePanel2 implements DiffViewer {
       createMergeList();
       data.customizeToolbar(myPanel.resetToolbar());
       myPanel.registerToolbarActions();
+      if ( data instanceof MergeRequestImpl && myBuilder != null){
+        ((MergeRequestImpl)data).setActions(myBuilder, this);
+      }
     }
     finally {
       myDuringCreation = false;
@@ -497,7 +501,7 @@ public class MergePanel2 implements DiffViewer {
   }
 
   public static class AsComponent extends JPanel {
-    private final MergePanel2 myMergePanel = new MergePanel2();
+    private final MergePanel2 myMergePanel = new MergePanel2(null);
 
     public AsComponent() {
       super(new BorderLayout());

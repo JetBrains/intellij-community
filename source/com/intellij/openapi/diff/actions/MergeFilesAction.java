@@ -76,7 +76,7 @@ public class MergeFilesAction extends AnAction{
       String rightText = new String(files[2].contentsToCharArray());
 
       Project project = (Project)context.getData(DataConstants.PROJECT);
-      final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project);
+      final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,true);
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
                                              files[1].getPresentableUrl(),
                                              files[2].getPresentableUrl()});

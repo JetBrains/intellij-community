@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
@@ -164,7 +165,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       try {
         try {
           VirtualFile currentVirtualFile = getCurrentVirtualFile();
-          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, null);
+          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, null,new AbstractMergeAction.FileValueHolder());
           Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(new String(currentVirtualFile.contentsToCharArray()),
                                                                                     null);
           if (conflictWasResolved != null) {

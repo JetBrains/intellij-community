@@ -26,9 +26,11 @@ public class MergeRequestImpl extends MergeRequest {
   private String[] myVersionTitles = null;
   private int myResult;
   private String myHelpId;
+  private final boolean myCanCloseMergeDialog;
 
-  public MergeRequestImpl(String left, MergeVersion base, String right, Project project) {
+  public MergeRequestImpl(String left, MergeVersion base, String right, Project project, final boolean canCloseMergeDialog) {
     super(project);
+    myCanCloseMergeDialog = canCloseMergeDialog;
     myDiffContents[0] = new SimpleContent(left);
     myDiffContents[1] = new MergeContent(base);
     myDiffContents[2] = new SimpleContent(right);
@@ -54,8 +56,16 @@ public class MergeRequestImpl extends MergeRequest {
   public DiffContent getResultContent() { return getMergeContent(); }
 
   public void setActions(final DialogBuilder builder, MergePanel2 mergePanel) {
-    builder.addOkAction().setText("Apply");
-    builder.addCancelAction();
+    if (builder.getOkAction() == null) {
+      builder.addOkAction();
+    }
+    if (builder.getCancelAction() == null) {
+      builder.addCancelAction();
+    }
+    
+    (builder.getOkAction()).setText("Apply");
+
+    builder.setOkActionEnabled(myCanCloseMergeDialog);
     builder.setCancelOperation(new Runnable() {
       public void run() {
         if (Messages.showYesNoDialog(getProject(),
@@ -124,6 +134,7 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     public void run() {
+      if (!myCanCloseMergeDialog) return;
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;

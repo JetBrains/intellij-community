@@ -116,8 +116,12 @@ public class DialogBuilder {
   }
 
   public void showModal(boolean modal) {
-    if (modal) show();
-    else showNotModal();
+    if (modal) {
+      show();
+    }
+    else {
+      showNotModal();
+    }
   }
 
   public void setHelpId(String helpId) {
@@ -126,6 +130,26 @@ public class DialogBuilder {
 
   public void setCancelOperation(Runnable runnable) {
     myCancelOperation = runnable;
+  }
+
+  public void setOkActionEnabled(final boolean isEnabled) {
+    myDialogWrapper.setOKActionEnabled(isEnabled);
+  }
+
+  public CustomizableAction getOkAction() {
+    return get(getActionDescriptors(), OkActionDescriptor.class);
+  }
+
+  private CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
+    for (Iterator<ActionDescriptor> iterator = actionDescriptors.iterator(); iterator.hasNext();) {
+      ActionDescriptor actionDescriptor = iterator.next();
+      if (actionDescriptor.getClass().isAssignableFrom(aClass)) return ((CustomizableAction)actionDescriptor);
+    }
+    return null;
+  }
+
+  public CustomizableAction getCancelAction() {
+    return get(getActionDescriptors(), CancelActionDescriptor.class);
   }
 
   public interface ActionDescriptor {
@@ -256,12 +280,14 @@ public class DialogBuilder {
       if (myPreferedFocusComponent != null) return myPreferedFocusComponent;
       FocusTraversalPolicy focusTraversalPolicy = null;
       Container container = myCenterPanel;
-      while (container != null && (focusTraversalPolicy = container.getFocusTraversalPolicy()) == null && !(container instanceof Window))
+      while (container != null && (focusTraversalPolicy = container.getFocusTraversalPolicy()) == null && !(container instanceof Window)) {
         container = container.getParent();
+      }
       if (focusTraversalPolicy == null) return null;
       Component component = focusTraversalPolicy.getDefaultComponent(myCenterPanel);
-      while (!(component instanceof JComponent) && component != null)
+      while (!(component instanceof JComponent) && component != null) {
         component = focusTraversalPolicy.getComponentAfter(myCenterPanel, component);
+      }
       return (JComponent)component;
     }
 
@@ -278,8 +304,12 @@ public class DialogBuilder {
 
     public void doCancelAction() {
       if (!getCancelAction().isEnabled()) return;
-      if (myCancelOperation != null) myCancelOperation.run();
-      else super.doCancelAction();
+      if (myCancelOperation != null) {
+        myCancelOperation.run();
+      }
+      else {
+        super.doCancelAction();
+      }
     }
 
     protected void doHelpAction() {
