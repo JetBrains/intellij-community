@@ -44,38 +44,34 @@ import java.util.Calendar;
 
 public class DependenciesPanelTest extends TestSourceBasedTestCase{
   public void testDependencies(){
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 14, 13, 0, "max", "AnilizeDependencies should show file dependencies " +
-                                                                            "when the file is selected initially")) {
-      final PsiClass[] classes = getPackageDirectory("com/package1").getPackage().getClasses();
-      final PsiFile file = classes[0].getContainingFile();
-      final AnalysisScope scope = new AnalysisScope(file, new AnalysisScope.PsiFileFilter() {
-                                                      public boolean accept(PsiFile another) {
-                                                        return true;
-                                                      }
-                                                    });
-      final DependenciesBuilder builder = new DependenciesBuilder(myProject, scope);
-      builder.analyze();
-      final DependenciesPanel dependenciesPanel =
-       new DependenciesPanel(myProject, builder);
-      JTree leftTree = dependenciesPanel.getLeftTree();
-      IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
-                            " Library Classes\n" +
-                            " -Production Classes\n" +
-                            "  -" + myModule.getName() + "\n" +
-                            "   -com.package1\n" +
-                            "    [Class1.java]\n" +
-                                " Test Classes\n", true);
+    final PsiClass[] classes = getPackageDirectory("com/package1").getPackage().getClasses();
+    final PsiFile file = classes[0].getContainingFile();
+    final AnalysisScope scope = new AnalysisScope(file, new AnalysisScope.PsiFileFilter() {
+                                                    public boolean accept(PsiFile another) {
+                                                      return true;
+                                                    }
+                                                  });
+    final DependenciesBuilder builder = new DependenciesBuilder(myProject, scope);
+    builder.analyze();
+    final DependenciesPanel dependenciesPanel =
+     new DependenciesPanel(myProject, builder);
+    JTree leftTree = dependenciesPanel.getLeftTree();
+    IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
+                          " Library Classes\n" +
+                          " -Production Classes\n" +
+                          "  -" + myModule.getName() + "\n" +
+                          "   -com.package1\n" +
+                          "    [Class1.java]\n" +
+                              " Test Classes\n", true);
 
-      JTree rightTree = dependenciesPanel.getRightTree();
-      IdeaTestUtil.assertTreeEqual(rightTree, "-Root\n" +
-                             " Library Classes\n" +
-                             " -Production Classes\n" +
-                             "  -" + myModule.getName() + "\n" +
-                             "   -com.package1\n" +
-                             "    Class2.java\n" +
-                             " Test Classes\n", true);
-    }
-
+    JTree rightTree = dependenciesPanel.getRightTree();
+    IdeaTestUtil.assertTreeEqual(rightTree, "-Root\n" +
+                           " Library Classes\n" +
+                           " -Production Classes\n" +
+                           "  -" + myModule.getName() + "\n" +
+                           "   -com.package1\n" +
+                           "    Class2.java\n" +
+                           " Test Classes\n", true);
   }
 
   protected String getTestPath() {

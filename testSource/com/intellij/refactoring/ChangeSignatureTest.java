@@ -56,18 +56,16 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   public void testTypeParametersInMethod() throws Exception {
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 17, 15, 0, "lesya", "")) {
-      doTest(null, null, null, new GenParams() {
-        public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-          final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
-          return new ParameterInfo[] {
-            new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
-            new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
-            new ParameterInfo(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
-          };
-        }
-      }, false);
-    }
+    doTest(null, null, null, new GenParams() {
+             public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+               final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+               return new ParameterInfo[]{
+                   new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
+                   new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
+                   new ParameterInfo(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
+                 };
+             }
+           }, false);
   }
 
   public void testDefaultConstructor() throws Exception {
