@@ -1,7 +1,7 @@
 package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 class RemoveConditionalPredicate implements PsiElementPredicate {

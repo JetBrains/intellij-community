@@ -6,11 +6,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class ReplaceConditionalWithIfIntention extends Intention {
-    public ReplaceConditionalWithIfIntention(Project project) {
-        super(project);
-    }
 
     public String getText() {
         return "Replace ?: with if-else";

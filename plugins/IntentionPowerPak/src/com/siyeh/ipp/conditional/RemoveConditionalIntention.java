@@ -6,16 +6,13 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 
 public class RemoveConditionalIntention extends Intention
 {
-    public RemoveConditionalIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {

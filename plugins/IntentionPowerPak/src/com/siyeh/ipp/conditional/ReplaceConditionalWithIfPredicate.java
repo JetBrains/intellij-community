@@ -1,7 +1,7 @@
 package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
