@@ -790,7 +790,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               { // Handling whitespaces
                 final LeafElement leafElementAt = xmlText.findLeafElementAt(displayOffset);
                 if(leafElementAt != null && leafElementAt.getElementType() == XmlTokenType.XML_WHITE_SPACE){
-                  final String wsText = CodeEditUtil.getWhiteSpaceBetweenTokens(
+                  final String wsText = CodeEditUtil.getStringWhiteSpaceBetweenTokens(
                     ParseUtil.prevLeaf(leafElementAt, null),
                     ParseUtil.nextLeaf(leafElementAt, null),
                     getLanguage());

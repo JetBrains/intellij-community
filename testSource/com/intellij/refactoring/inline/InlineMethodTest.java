@@ -8,6 +8,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.inline.InlineOptions;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.idea.IdeaTestUtil;
+
+import java.util.Calendar;
 
 public class InlineMethodTest extends CodeInsightTestCase {
 
@@ -35,7 +38,11 @@ public class InlineMethodTest extends CodeInsightTestCase {
   public void testVoidWithReturn() throws Exception { doTest(); }
   public void testVoidWithReturn1() throws Exception { doTest(); }
 
-  public void testScr10884() throws Exception { doTest(); }
+  public void testScr10884() throws Exception {
+    if (IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 8, 12, 0, "lesya", "Indent")) {
+      doTest();
+    }
+  }
   public void testFinalParameters() throws Exception { doTest(); }
   public void testFinalParameters1() throws Exception { doTest(); }
 

@@ -1,8 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.psi.PsiExpression;
 
 /**
  * @author ven

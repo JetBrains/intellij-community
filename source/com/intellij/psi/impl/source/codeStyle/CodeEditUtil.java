@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -31,11 +32,11 @@ public class CodeEditUtil {
     FileType fileType = file.getFileType();
 
     //???
-    if (first.getElementType() == ElementType.WHITE_SPACE){
+    if (first.getElementType() == ElementType.WHITE_SPACE) {
       if (first == last) return null;
       first = first.getTreeNext();
     }
-    if (last.getElementType() == ElementType.WHITE_SPACE){
+    if (last.getElementType() == ElementType.WHITE_SPACE) {
       if (first == last) return null;
       last = last.getTreePrev();
     }
@@ -51,25 +52,25 @@ public class CodeEditUtil {
 
     ASTNode afterLast = last.getTreeNext();
     ASTNode next;
-    for(ASTNode child = first; child != afterLast; child = next){
+    for (ASTNode child = first; child != afterLast; child = next) {
       next = child.getTreeNext();
       parent.addChild(child, anchorBefore);
     }
 
-    if(fileType == StdFileTypes.XHTML) return first;
-    if (adjustSelf){
+    if (fileType == StdFileTypes.XHTML) return first;
+    if (adjustSelf) {
       ASTNode elementBefore = Helper.shiftBackwardToNonSpace(parent.getTreePrev());
       parent = (CompositeElement)codeLayouter.processSpace(elementBefore, parent);
       parent = (CompositeElement)indentAdjuster.adjustFirstLineIndent(parent);
       ASTNode elementAfter = Helper.shiftForwardToNonSpace(parent.getTreeNext());
       elementAfter = codeLayouter.processSpace(parent, elementAfter);
-      if (elementAfter != null){
+      if (elementAfter != null) {
         elementAfter = indentAdjuster.adjustFirstLineIndent(elementAfter);
       }
     }
 
     ASTNode elementBefore = Helper.shiftBackwardToNonSpace(first.getTreePrev());
-    if (needSeparateLines(first) && helper.getLineBreakCount(parent, elementBefore, first) == 0){
+    if (needSeparateLines(first) && helper.getLineBreakCount(parent, elementBefore, first) == 0) {
       helper.makeVerticalSpace(parent, elementBefore, first, 0);
     }
     first = (TreeElement)codeLayouter.processSpace(elementBefore, first);// special mode?
@@ -79,33 +80,33 @@ public class CodeEditUtil {
     String spaceText = Helper.getSpaceText(parent, prev, first);
     int index = Math.max(spaceText.lastIndexOf('\n'), spaceText.lastIndexOf('\r'));
     if (index >= 0
-      || (parent.getTreeParent() == null && prev == null && first.getTextRange().getStartOffset() == spaceText.length())){
+    || (parent.getTreeParent() == null && prev == null && first.getTextRange().getStartOffset() == spaceText.length())) {
       spaceText = spaceText.substring(0, index + 1) + helper.fillIndent(oldIndent);
       first = (TreeElement)helper.makeSpace(parent, prev, first, spaceText, false);
     }
 
-    if (oneElement){
+    if (oneElement) {
       last = first;
     }
 
     ASTNode elementAfter = Helper.shiftForwardToNonSpace(last.getTreeNext());
-    if (elementAfter != null && needSeparateLines(last) && helper.getLineBreakCount(parent, last, elementAfter) == 0){
+    if (elementAfter != null && needSeparateLines(last) && helper.getLineBreakCount(parent, last, elementAfter) == 0) {
       helper.makeVerticalSpace(parent, last, elementAfter, 0);
     }
     elementAfter = codeLayouter.processSpace(last, elementAfter);// special mode?
-    if (elementAfter != null){
+    if (elementAfter != null) {
       elementAfter = indentAdjuster.adjustFirstLineIndent(elementAfter);
     }
 
     afterLast = last.getTreeNext();
-    for(ASTNode child = first; child != afterLast; child = child.getTreeNext()){
+    for (ASTNode child = first; child != afterLast; child = child.getTreeNext()) {
       child = indentAdjuster.adjustNormalizeIndent(child);
-      if (child.getElementType() == ElementType.CODE_BLOCK){
+      if (child.getElementType() == ElementType.CODE_BLOCK) {
         PsiElement[] children = SourceTreeToPsiMap.treeElementToPsi(child).getChildren();
-        for(int i = 0; i < children.length; i++){
+        for (int i = 0; i < children.length; i++) {
           PsiElement element = children[i];
           ASTNode child1 = SourceTreeToPsiMap.psiElementToTree(element);
-          if (Helper.isNonSpace(child1)){
+          if (Helper.isNonSpace(child1)) {
             child1 = indentAdjuster.adjustIndent(child1);
           }
         }
@@ -141,17 +142,17 @@ public class CodeEditUtil {
     final String spaceAfterText = spaceAfter == null ? null : spaceAfter.getText();
 
     ASTNode childNext;
-    for(ASTNode child = first; child != next; child = childNext){
+    for (ASTNode child = first; child != next; child = childNext) {
       childNext = child.getTreeNext();
       parent.removeChild(child);
     }
-    if(fileType == StdFileTypes.XHTML) return;
+    if (fileType == StdFileTypes.XHTML) return;
 
-    if (prevNonSpace == null && nextNonSpace == null){
-      if (spaceBefore != null){
+    if (prevNonSpace == null && nextNonSpace == null) {
+      if (spaceBefore != null) {
         parent.removeChild(spaceBefore);
       }
-      if (spaceAfter != null){
+      if (spaceAfter != null) {
         parent.removeChild(spaceAfter);
       }
       LOG.assertTrue(parent.getTextLength() == 0);
@@ -159,7 +160,7 @@ public class CodeEditUtil {
       ASTNode elementAfter = Helper.shiftForwardToNonSpace(parent.getTreeNext());
       normalizeSpace(helper, parent.getTreeParent(), elementBefore, elementAfter, charTableByTree);
       elementAfter = codeLayouter.processSpace(elementBefore, elementAfter);
-      if (elementAfter != null){
+      if (elementAfter != null) {
         elementAfter = indentAdjuster.adjustFirstLineIndent(elementAfter);
       }
       return;
@@ -171,12 +172,12 @@ public class CodeEditUtil {
     normalizeSpace(helper, parent, prevNonSpace, nextNonSpace, charTableByTree);
 
     int newBreaks = Math.max(breaksBefore, breaksAfter);
-    if (newBreaks != breaksBefore + breaksAfter){
+    if (newBreaks != breaksBefore + breaksAfter) {
       helper.makeLineBreaks(parent, prevNonSpace, nextNonSpace, newBreaks);
     }
 
     nextNonSpace = codeLayouter.processSpace(prevNonSpace, nextNonSpace);
-    if (nextNonSpace != null){
+    if (nextNonSpace != null) {
       nextNonSpace = indentAdjuster.adjustFirstLineIndent(nextNonSpace);
     }
   }
@@ -196,15 +197,15 @@ public class CodeEditUtil {
     int oldIndent = helper.getIndent(newChild);
 
     parent.replaceChild(oldChild, newChild);
-    if(fileType == StdFileTypes.XHTML) return newChild;
+    if (fileType == StdFileTypes.XHTML) return newChild;
 
     ASTNode prevNonSpace = Helper.shiftBackwardToNonSpace(newChild.getTreePrev());
     ASTNode nextNonSpace = Helper.shiftForwardToNonSpace(newChild.getTreeNext());
 
-    if (newChild instanceof CompositeElement && newChild.getTextLength() == 0){
+    if (newChild instanceof CompositeElement && newChild.getTextLength() == 0) {
       normalizeSpace(helper, parent, prevNonSpace, nextNonSpace, treeCharTab);
     }
-    else{
+    else {
       normalizeSpace(helper, parent, prevNonSpace, newChild, treeCharTab); // just to not allow sticking tokens
       normalizeSpace(helper, parent, newChild, nextNonSpace, treeCharTab); // just to not allow sticking tokens
     }
@@ -212,12 +213,12 @@ public class CodeEditUtil {
     // restore old indent of the first line
     String newChildText = newChild.getText();
     boolean isMultiline = newChildText.indexOf('\n') >= 0 || newChildText.indexOf('\r') >= 0;
-    if (isMultiline){
+    if (isMultiline) {
       String spaceText = helper.getSpaceText(parent, prevNonSpace, newChild);
       int index = Math.max(spaceText.lastIndexOf('\n'), spaceText.lastIndexOf('\r'));
       if (index >= 0
-        || (parent.getTreeParent() == null && prevNonSpace == null && newChild.getTextRange().getStartOffset() == spaceText.length())
-      ){
+      || (parent.getTreeParent() == null && prevNonSpace == null && newChild.getTextRange().getStartOffset() == spaceText.length())
+      ) {
         spaceText = spaceText.substring(0, index + 1) + helper.fillIndent(oldIndent);
         newChild = helper.makeSpace(parent, prevNonSpace, newChild, spaceText, false);
         //indentAdjuster.adjustIndent(newChild);
@@ -236,11 +237,11 @@ public class CodeEditUtil {
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(original).getContainingFile();
     FileType fileType = file.getFileType();
     Helper helper = new Helper(fileType, manager.getProject());
-/*
-    TreeElement prevWS = helper.getPrevWhitespace(original);
-    if( prevWS == null || prevWS.getText().indexOf('\n') < 0 ) return;
-*/
-    if( clone instanceof CompositeElement) {
+    /*
+        TreeElement prevWS = helper.getPrevWhitespace(original);
+        if( prevWS == null || prevWS.getText().indexOf('\n') < 0 ) return;
+    */
+    if (clone instanceof CompositeElement) {
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(manager.getProject());
 
       int origIndent = helper.getIndent(original);
@@ -255,7 +256,7 @@ public class CodeEditUtil {
     return importHelper.getDefaultAnchor(list, statement);
   }
 
-  private static final HashMap<String,Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
+  private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
 
   static { //TODO : options?
     ourModifierToOrderMap.put(PsiModifier.PUBLIC, new Integer(1));
@@ -274,13 +275,13 @@ public class CodeEditUtil {
   public static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
     Integer order = ourModifierToOrderMap.get(modifier.getText());
     if (order == null) return null;
-    for(ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode();
-        child != null;
-        child = child.getTreeNext()){
-      if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())){
+    for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode();
+         child != null;
+         child = child.getTreeNext()) {
+      if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
         Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;
-        if (order1.intValue() > order.intValue()){
+        if (order1.intValue() > order.intValue()) {
           return child;
         }
       }
@@ -302,7 +303,7 @@ public class CodeEditUtil {
         if (lastMember != null) {
           PsiElement nextSibling = lastMember.getNextSibling();
           while (nextSibling instanceof PsiJavaToken &&
-                 (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
+                                                     (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
             nextSibling = nextSibling.getNextSibling();
           }
           return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
@@ -317,37 +318,37 @@ public class CodeEditUtil {
   }
 
   private static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
-    if (member instanceof PsiField){
+    if (member instanceof PsiField) {
       return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
     }
-    else if (member instanceof PsiMethod){
-      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1: settings.METHODS_ORDER_WEIGHT + 1;
+    else if (member instanceof PsiMethod) {
+      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
     }
-    else if (member instanceof PsiClass){
+    else if (member instanceof PsiClass) {
       return settings.INNER_CLASSES_ORDER_WEIGHT + 1;
     }
-    else{
+    else {
       return -1;
     }
   }
 
   private static boolean needSeparateLines(ASTNode element) {
-    if (ElementType.STATEMENT_BIT_SET.isInSet(element.getElementType())){
+    if (ElementType.STATEMENT_BIT_SET.isInSet(element.getElementType())) {
       return true;
     }
-    else if (element.getElementType() == ElementType.FIELD){
+    else if (element.getElementType() == ElementType.FIELD) {
       return true;
     }
-    else if (element.getElementType() == ElementType.METHOD){
+    else if (element.getElementType() == ElementType.METHOD) {
       return true;
     }
-    else if (element.getElementType() == ElementType.CLASS){
+    else if (element.getElementType() == ElementType.CLASS) {
       return true;
     }
-    else if (element.getElementType() == ElementType.CLASS_INITIALIZER){
+    else if (element.getElementType() == ElementType.CLASS_INITIALIZER) {
       return true;
     }
-    else{
+    else {
       return false;
     }
   }
@@ -373,57 +374,84 @@ public class CodeEditUtil {
   public static void normalizeSpace(Helper helper, ASTNode parent, ASTNode child1, ASTNode child2, CharTable table) {
     StringBuffer buffer = null;
     int count = 0;
-    for(ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = child.getTreeNext()){
+    for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = child.getTreeNext()) {
       if (child instanceof CompositeElement && child.getFirstChildNode() == null) continue;
 
       if (Helper.isNonSpace(child)) {
         LOG.error("Whitespace expected");
       }
-      if (buffer == null){
+      if (buffer == null) {
         buffer = new StringBuffer();
       }
       buffer.append(child.getText());
       count++;
     }
 
-    if (count > 1){
-      LeafElement newSpace = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, buffer.toString().toCharArray(), 0, buffer.length(), table, null);
+    if (count > 1) {
+      LeafElement newSpace =
+        Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, buffer.toString().toCharArray(), 0, buffer.length(), table, null);
       count = 0;
       ASTNode next;
-      for(ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = next){
+      for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = next) {
         next = child.getTreeNext();
         if (child instanceof CompositeElement && child.getTextLength() == 0) continue;
-        if (count == 0){
+        if (count == 0) {
           parent.replaceChild(child, newSpace);
         }
-        else{
+        else {
           parent.removeChild(child);
         }
         count++;
       }
     }
 
-    if (child1 != null && child2 != null && Helper.getSpaceText(parent, child1, child2).length() == 0){
-      if (!helper.canStickChildrenTogether(child1, child2)){
+    if (child1 != null && child2 != null && Helper.getSpaceText(parent, child1, child2).length() == 0) {
+      if (!helper.canStickChildrenTogether(child1, child2)) {
         helper.makeSpace(parent, child1, child2, " ");
       }
     }
   }
 
-  public static String getWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
-    final PsiElement firstAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(first);
-    LOG.assertTrue(firstAsPsiElement != null);
-    final PsiFile file = firstAsPsiElement.getContainingFile();
+  public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
     final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
-    if(pseudoTextBuilder == null){
+    if (pseudoTextBuilder == null) {
       final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
-      if(leafElement != second) return leafElement.getText();
+      if (leafElement != second) {
+        return leafElement.getText();
+      }
+      else {
+        return null;
+      }
     }
+    else {
+      return getWhiteSpaceBeforeToken(second, language).generateNewWhiteSpace();
+    }
+
+  }
+
+  public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
+                                                  final Language language) {
+    return getWhiteSpaceBeforeToken(tokenNode, language, null);
+  }
+
+  public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
+                                                        final Language language,
+                                                        TextRange textRange) {
+    return getWhiteSpaceBeforeToken(tokenNode, language, textRange);
+  }
+
+  public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
+                                                  final Language language,
+                                                  TextRange significantRange) {
+    LOG.assertTrue(tokenNode != null);
+    final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
+    LOG.assertTrue(secondAsPsiElement != null);
+    final PsiFile file = secondAsPsiElement.getContainingFile();
+    final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
     LOG.assertTrue(pseudoTextBuilder != null);
-    final Project project = firstAsPsiElement.getProject();
+    final Project project = secondAsPsiElement.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int startOffset = first.getStartOffset();
-    final int endOffset = second.getStartOffset();
+    final int endOffset = tokenNode.getStartOffset();
 
     final boolean oldValue = settings.XML_KEEP_LINE_BREAKS;
     settings.XML_KEEP_LINE_BREAKS = false;
@@ -433,10 +461,11 @@ public class CodeEditUtil {
                                                             settings,
                                                             file);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), startOffset, endOffset);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset, significantRange);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
     }
   }
+
 }
