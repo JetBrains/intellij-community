@@ -32,7 +32,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private static boolean DEBUG_REGISTRATION = true;
 
   private MutablePicoContainer myPicoContainer;
-//  private Map myPluginName2picoContainer = new HashMap();
   private Throwable myCreationTrace = null;
   private Map myExtensionPoints = new HashMap();
   private Map myEPTraces = new HashMap();
@@ -133,7 +132,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private MutablePicoContainer internalGetPluginContainer(String pluginName) {
-//    return myPicoContainer;
     DefaultPicoContainer pluginContainer = (DefaultPicoContainer) myPluginName2picoContainer.get(pluginName);
     if (pluginContainer == null) {
       pluginContainer = new DefaultPicoContainer(myPicoContainer);
@@ -353,5 +351,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   public MutablePicoContainer[] getPluginContainers() {
     return (MutablePicoContainer[])myPluginName2picoContainer.values().toArray(new MutablePicoContainer[myPluginName2picoContainer.values().size()]);
+  }
+
+  public void removeAllComponents(final Set extensionAdapters) {
+    for (Iterator iterator = extensionAdapters.iterator(); iterator.hasNext();) {
+      ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)iterator.next();
+      final String pluginName = componentAdapter.getPluginName();
+      internalGetPluginContainer(pluginName).unregisterComponent(componentAdapter.getComponentKey());
+    }
   }
 }

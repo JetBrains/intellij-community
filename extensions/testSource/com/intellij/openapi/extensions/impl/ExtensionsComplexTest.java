@@ -53,6 +53,11 @@ public class ExtensionsComplexTest extends TestCase {
     "    <dependentOne/>\n" +
     "  </extensions>";
 
+  private static final String EXTENSIONS_ROOT_FAILING =
+    "  <extensions>\n" +
+    "    <extension point=\"the.test.plugin.extensionPoint\" implementation=\"com.intellij.openapi.extensions.impl.NonCreatableClass\" />\n" +
+    "  </extensions>";
+
   private static final String EXTENSIONS_4_AREA =
     "  <extensions xmlns=\"the.test.plugin\">\n" +
     "    <extensionPoint4area area=\"area\"/>\n" +
@@ -136,6 +141,34 @@ public class ExtensionsComplexTest extends TestCase {
 
     DependentObjectTwo dependentObjectTwo = (DependentObjectTwo)Extensions.getArea(areaInstance).getExtensionPoint(TEST_DEPENDENT2_NAME).getExtension();
     assertSame(dependentObjectOne, dependentObjectTwo.getOne());
+  }
+
+  public void testInitFailureUnload() throws Throwable {
+    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
+    initExtensions(EXTENSIONS_ROOT, null);
+    try {
+      initExtensions(EXTENSIONS_ROOT_FAILING, null);
+      fail("Should have failed");
+    }
+    catch (ExceptionInInitializerError e) {
+    }
+    try {
+      Extensions.getRootArea().unregisterExtensionPoint(TEST_EP_NAME);
+      Extensions.getRootArea().unregisterExtensionPoint(TEST_DEPENDENT1_NAME);
+      assertFalse(Extensions.getRootArea().hasExtensionPoint(TEST_DEPENDENT1_NAME));
+      assertFalse(Extensions.getRootArea().hasExtensionPoint(TEST_EP_NAME));
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
+    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
+    initExtensions(EXTENSIONS_ROOT, null);
+    assertEquals(1, Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtensions().length);
+    assertEquals(1, Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtensions().length);
+    DependentObjectOne dependentObjectOne = (DependentObjectOne)Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtension();
+    assertEquals(1, dependentObjectOne.getTestBeans().length);
+    assertSame(Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension(), dependentObjectOne.getTestBeans()[0]);
   }
 
   public void testPluginInitInAreas() throws Exception {

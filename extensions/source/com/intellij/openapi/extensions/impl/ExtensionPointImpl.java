@@ -235,6 +235,8 @@ public class ExtensionPointImpl implements ExtensionPoint {
   }
 
   public void reset() {
+    myOwner.removeAllComponents(myExtensionAdapters);
+    myExtensionAdapters.clear();
     Object[] extensions = getExtensions();
     for (int i = 0; i < extensions.length; i++) {
       Object extension = extensions[i];

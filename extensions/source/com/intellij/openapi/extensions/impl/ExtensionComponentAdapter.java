@@ -79,4 +79,8 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
   public Element getDescribingElement() {
     return getExtensionElement();
   }
+
+  public String getPluginName() {
+    return myPluginName;
+  }
 }
