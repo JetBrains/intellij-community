@@ -206,27 +206,38 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   private static Type getSuperTypeInt(Type subType, String superType) {
     Type result;
-    if (subType == null) return null;
+    if (subType == null) {
+      return null;
+    }
 
-    if (subType.name().equals(superType)) return subType;
+    if (subType.name().equals(superType)) {
+      return subType;
+    }
 
     if (subType instanceof ClassType) {
       result = getSuperType(((ClassType)subType).superclass(), superType);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
 
       List ifaces = ((ClassType)subType).allInterfaces();
       for (Iterator iterator = ifaces.iterator(); iterator.hasNext();) {
         InterfaceType interfaceType = (InterfaceType)iterator.next();
-        if (interfaceType.name().equals(superType)) return interfaceType;
+        if (interfaceType.name().equals(superType)) {
+          return interfaceType;
+        }
       }
       return null;
     }
-    else if (subType instanceof InterfaceType) {
+
+    if (subType instanceof InterfaceType) {
       List ifaces = ((InterfaceType)subType).superinterfaces();
       for (Iterator iterator = ifaces.iterator(); iterator.hasNext();) {
         InterfaceType interfaceType = (InterfaceType)iterator.next();
         result = getSuperType(interfaceType, superType);
-        if (result != null) return result;
+        if (result != null) {
+          return result;
+        }
       }
     }
     else if (subType instanceof ArrayType) {

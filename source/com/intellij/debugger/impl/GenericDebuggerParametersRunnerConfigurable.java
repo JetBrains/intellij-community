@@ -1,14 +1,15 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.settings.*;
-import com.intellij.debugger.ui.PropertiesDialog;
+import com.intellij.debugger.settings.DebuggerConfigurable;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -31,8 +32,8 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myDebuggerSettings.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         DebuggerConfigurable debuggerConfigurable = new DebuggerConfigurable();
-        PropertiesDialog dialog = new PropertiesDialog(debuggerConfigurable, project);
-        dialog.show();
+        SingleConfigurableEditor editor = new SingleConfigurableEditor(project, debuggerConfigurable);
+        editor.show();
         if("".equals(getPort())) {
           setPort(GenericDebuggerRunnerSettings.getDefaultPort(getTransport()));
         }

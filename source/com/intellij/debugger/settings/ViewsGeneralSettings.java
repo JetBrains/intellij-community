@@ -14,7 +14,6 @@ public class ViewsGeneralSettings implements NamedJDOMExternalizable, Applicatio
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
-  public boolean USE_ALTERNATIVE_RENDERERS = true;
   private NodeRendererSettings myNodeRendererSettings;
 
   public ViewsGeneralSettings(NodeRendererSettings instance) {

@@ -26,7 +26,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
 
   protected ValueLabelRenderer myLabelRenderer;
   protected ChildrenRenderer myChildrenRenderer;
-  private final NodeRendererSettings myRendererSettings;
+  protected final NodeRendererSettings myRendererSettings;
 
   public CompoundNodeRenderer(NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     myRendererSettings = rendererSettings;

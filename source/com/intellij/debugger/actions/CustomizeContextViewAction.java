@@ -1,13 +1,13 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.settings.*;
-import com.intellij.debugger.ui.PropertiesDialog;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 
 import javax.swing.*;
 import java.util.List;
@@ -22,10 +22,10 @@ public class CustomizeContextViewAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
 
-    CompositeConfigurable configurable = new CompositeConfigurable() {
+    final CompositeConfigurable configurable = new CompositeConfigurable() {
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
-        array.add(new ViewsGeneralConfigurable());
+        array.add(new BaseRenderersConfigurable(project));
         array.add(new NodeRendererConfigurable(project));
         return array;
       }
@@ -43,8 +43,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
       }
     };
 
-    PropertiesDialog dialog = new PropertiesDialog(configurable, project);
-    dialog.show();
+    new SingleConfigurableEditor(project, configurable).show();
   }
 
   public void update(AnActionEvent e) {

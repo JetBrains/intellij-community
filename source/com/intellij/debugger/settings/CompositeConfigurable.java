@@ -1,9 +1,9 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -15,10 +15,8 @@ import java.util.List;
  */
 
 public abstract class CompositeConfigurable extends BaseConfigurable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerConfigurable");
-
-  private JTabbedPane myTabbedPane;
   private List<Configurable> myConfigurables;
+  private TabbedPaneWrapper myTabbedPane;
 
   public void reset() {
     for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
@@ -37,23 +35,34 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
   public boolean isModified() {
     for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
       Configurable configurable = iterator.next();
-      if(configurable.isModified()) return true;
+      if(configurable.isModified()) {
+        return true;
+      }
     }
     return false;
   }
 
   public JComponent createComponent() {
-    myTabbedPane = new JTabbedPane();
+    myTabbedPane = new TabbedPaneWrapper();
     for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
       Configurable configurable = iterator.next();
-      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent());
+      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
     }
-    return myTabbedPane;
+    myTabbedPane.installKeyboardNavigation();
+    return myTabbedPane.getComponent();
   }
 
   public void disposeUIResources() {
-    myTabbedPane = null;
-    myConfigurables = null;
+    if (myTabbedPane != null) {
+      myTabbedPane.uninstallKeyboardNavigation();
+      myTabbedPane = null;
+    }
+    if (myConfigurables != null) {
+      for (Iterator<Configurable> it = myConfigurables.iterator(); it.hasNext();) {
+        it.next().disposeUIResources();
+      }
+      myConfigurables = null;
+    }
   }
 
   protected abstract List<Configurable> createConfigurables();

@@ -19,11 +19,11 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   public void setLabelRenderer(ValueLabelRenderer labelRenderer) {
-    super.setLabelRenderer(NodeRendererSettings.getInstance().isDefault(labelRenderer) ? null : labelRenderer);
+    super.setLabelRenderer(myRendererSettings.isBase(labelRenderer) ? null : labelRenderer);
   }
 
   public void setChildrenRenderer(ChildrenRenderer childrenRenderer) {
-    super.setChildrenRenderer(NodeRendererSettings.getInstance().isDefault(childrenRenderer) ? null : childrenRenderer);
+    super.setChildrenRenderer(myRendererSettings.isBase(childrenRenderer) ? null : childrenRenderer);
   }
 
   public ChildrenRenderer getChildrenRenderer() {
@@ -31,8 +31,7 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   private NodeRenderer getDefaultRenderer() {
-    final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
-    return  getClassName().endsWith("]") ? (NodeRenderer)rendererSettings.getArrayRenderer() : (NodeRenderer)rendererSettings.getClassRenderer();
+    return  getClassName().endsWith("]") ? (NodeRenderer)myRendererSettings.getArrayRenderer() : (NodeRenderer)myRendererSettings.getClassRenderer();
   }
 
   public ValueLabelRenderer getLabelRenderer() {

@@ -185,14 +185,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static ClassFilter[] readFilters(List children) throws InvalidDataException {
-    List classFiltersList = new LinkedList();
+    if (children == null || children.size() == 0) {
+      return ClassFilter.EMPTY_ARRAY;
+    }
+    List<ClassFilter> classFiltersList = new ArrayList<ClassFilter>(children.size());
     for (Iterator i = children.iterator(); i.hasNext();) {
-      Element filter = (Element)i.next();
-      ClassFilter classFilter = new ClassFilter();
-      classFilter.readExternal(filter);
+      final ClassFilter classFilter = new ClassFilter();
+      classFilter.readExternal((Element)i.next());
       classFiltersList.add(classFilter);
     }
-    return (ClassFilter[])classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
+    return classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
   }
 
   public static void writeFilters(Element parentNode, String tagName, ClassFilter[] filters) throws WriteExternalException {

@@ -5,14 +5,13 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.ClassFilter;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ui.Table;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -34,21 +33,23 @@ public class ClassFilterEditor extends JPanel {
   private JButton myRemoveButton;
   protected Project myProject;
   private TreeClassChooser.ClassFilter myChooserFilter;
-  private JPanel myPanel;
-  private JScrollPane myScrollPane;
-  private JPanel myScrollPanePlace;
 
   public ClassFilterEditor(Project project) {
     this (project, null);
   }
 
   public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
-    super(new BorderLayout());
-    add(myPanel);
+    super(new GridBagLayout());
+    myAddClassButton = new JButton("Add Class...");
+    myAddPatternButton = new JButton("Add Pattern...");
+    myRemoveButton = new JButton("Remove");
     myTable = new Table();
-    myScrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    myScrollPanePlace.setLayout(new BorderLayout());
-    myScrollPanePlace.add(myScrollPane);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+
+    add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 3, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(4, 4, 4, 6), 0, 0));
+    add(myAddClassButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 4), 0, 0));
+    add(myAddPatternButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 4), 0, 0));
+    add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 4), 0, 0));
 
     myChooserFilter = classFilter;
     myProject = project;

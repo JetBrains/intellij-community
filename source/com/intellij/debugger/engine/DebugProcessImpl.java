@@ -114,7 +114,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private final DescriptorHistoryManager myDescriptorHistoryManager;
 
-  private final List<AutoRendererNode> myRenderers = new ArrayList<AutoRendererNode>();
+  private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
   private final Map<Type, NodeRenderer>  myNodeRederersMap = new com.intellij.util.containers.HashMap<Type, NodeRenderer>();
   private final NodeRendererSettingsListener  mySettingsListener = new NodeRendererSettingsListener() {
       public void renderersChanged() {
@@ -145,16 +145,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private void loadRenderers() {
     getManagerThread().invoke(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        if(ViewsGeneralSettings.getInstance().USE_ALTERNATIVE_RENDERERS) {
-          final NodeRendererSettings settings = ((NodeRendererSettings) NodeRendererSettings.getInstance());
-          settings.iterateRenderers(new InternalIterator<AutoRendererNode>() {
-            public boolean visit(AutoRendererNode rendererNode) {
-              if(rendererNode.getRenderer() instanceof ValueLabelRenderer) {
-                myRenderers.add(rendererNode);
-              }
-              return true;
-            }
-          });
+        final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
+        for (Iterator<NodeRenderer> it = rendererSettings.getAllRenderers().iterator(); it.hasNext();) {
+          final NodeRenderer renderer = it.next();
+          if(renderer.isEnabled() && renderer instanceof ValueLabelRenderer) {
+            myRenderers.add(renderer);
+          }
         }
       }
     });
@@ -167,10 +163,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     NodeRenderer renderer = myNodeRederersMap.get(type);
     if(renderer == null) {
-      for (Iterator<AutoRendererNode> iterator = myRenderers.iterator(); iterator.hasNext();) {
-        final AutoRendererNode nodeAutoRenderer = iterator.next();
-        if(nodeAutoRenderer.isApplicable(type, false)) {
-          renderer = nodeAutoRenderer.getRenderer();
+      for (Iterator<NodeRenderer> iterator = myRenderers.iterator(); iterator.hasNext();) {
+        final NodeRenderer nodeRenderer = iterator.next();
+        if(nodeRenderer.isApplicable(type)) {
+          renderer = nodeRenderer;
           break;
         }
       }
@@ -186,17 +182,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public NodeRenderer getDefaultRenderer(Type type) {
     final NodeRendererSettings settings = NodeRendererSettings.getInstance();
 
-    final PrimitiveRenderer primitiveRenderer = (PrimitiveRenderer)settings.getPrimitiveRenderer();
+    final PrimitiveRenderer primitiveRenderer = settings.getPrimitiveRenderer();
     if(primitiveRenderer.isApplicable(type)) {
       return primitiveRenderer;
     }
 
-    final ArrayRenderer arrayRenderer = (ArrayRenderer)settings.getArrayRenderer();
+    final ArrayRenderer arrayRenderer = settings.getArrayRenderer();
     if(arrayRenderer.isApplicable(type)) {
       return arrayRenderer;
     }
 
-    final ClassRenderer classRenderer = (ClassRenderer)settings.getClassRenderer();
+    final ClassRenderer classRenderer = settings.getClassRenderer();
     LOG.assertTrue(classRenderer.isApplicable(type), type.name());
     return classRenderer;
   }
@@ -320,7 +316,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         String currentClassName = getCurrentClassName(stepThread);
         if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
           // add class filters
-          ClassFilter[] filters = settings.getFilters();
+          ClassFilter[] filters = settings.getSteppingFilters();
           for (int idx = 0; idx < filters.length; idx++) {
             if (filters[idx].isEnabled()) {
               stepRequest.addClassExclusionFilter(filters[idx].getPattern());

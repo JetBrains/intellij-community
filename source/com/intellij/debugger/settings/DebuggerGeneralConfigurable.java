@@ -1,11 +1,10 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ui.ClassFilterEditor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 
 import javax.swing.*;
@@ -13,128 +12,115 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: lex
- * Date: Oct 6, 2003
- * Time: 7:37:05 PM
- */
 public class DebuggerGeneralConfigurable implements Configurable{
-  private JPanel myPanel;
-  private JPanel myNodeRepresentationEditorPlace;
-  private JPanel mySteppingFiltersEditorPlace;
-  private JRadioButton mySocketTransportRadio;
-  private JRadioButton myShmemTransportRadio;
-  private JCheckBox myFiltersCheckBox;
-  private JCheckBox mySkipSyntheticMethodsCheckBox;
-  private JCheckBox mySkipConstructorsCheckBox;
+  private JRadioButton myRbSocket;
+  private JRadioButton myRbShmem;
+  private JCheckBox myCbStepInfoFiltersEnabled;
+  private JCheckBox myCbSkipSyntheticMethods;
+  private JCheckBox myCbSkipConstructors;
   private JCheckBox myHideDebuggerCheckBox;
-  private JRadioButton myRunHotswapAlways;
-  private JRadioButton myRunHotswapNever;
-  private JRadioButton myRunHotswapAsk;
-  private StateRestoringCheckBox myForceClassicCheckBox;
-  private ClassFilterEditor myFilterEditor;
-  private JTextField myValueLookupDelayField;
-  private JCheckBox mySkipGettersCheckBox;
-  private JCheckBox myCheckBox1;
+  private JRadioButton myRbAlways;
+  private JRadioButton myRbNever;
+  private JRadioButton myRbAsk;
+  private StateRestoringCheckBox myCbForceClassicVM;
+  private ClassFilterEditor mySteppingFilterEditor;
+  private JTextField myValueTooltipDelayField;
+  private JCheckBox myCbSkipSimpleGetters;
+  private final Project myProject;
+  private BaseRenderersConfigurable myBaseRenderersConfigurable;
 
   public DebuggerGeneralConfigurable(Project project) {
-    myFilterEditor = new ClassFilterEditor(project);
-    mySteppingFiltersEditorPlace.setLayout(new BorderLayout());
-    mySteppingFiltersEditorPlace.add(myFilterEditor, BorderLayout.CENTER);
-
-    ButtonGroup group = new ButtonGroup();
-    group.add(mySocketTransportRadio);
-    group.add(myShmemTransportRadio);
-
-    group = new ButtonGroup();
-    group.add(myRunHotswapAlways);
-    group.add(myRunHotswapNever);
-    group.add(myRunHotswapAsk);
-
-    myFiltersCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myFilterEditor.setEnabled(myFiltersCheckBox.isSelected());
-      }
-    });
+    myProject = project;
+    myBaseRenderersConfigurable = new BaseRenderersConfigurable(project);
   }
 
   public void reset() {
+    myBaseRenderersConfigurable.reset();
+    final DebuggerSettings settings = DebuggerSettings.getInstance();
     if (!SystemInfo.isWindows) {
-      mySocketTransportRadio.setSelected(true);
-      myShmemTransportRadio.setEnabled(false);
+      myRbSocket.setSelected(true);
+      myRbShmem.setEnabled(false);
     }
     else {
-      if (getSettings().DEBUGGER_TRANSPORT == DebuggerSettings.SHMEM_TRANSPORT) {
-        myShmemTransportRadio.setSelected(true);
+      if (settings.DEBUGGER_TRANSPORT == DebuggerSettings.SHMEM_TRANSPORT) {
+        myRbShmem.setSelected(true);
       }
       else {
-        mySocketTransportRadio.setSelected(true);
+        myRbSocket.setSelected(true);
       }
-      myShmemTransportRadio.setEnabled(true);
+      myRbShmem.setEnabled(true);
     }
-    mySkipGettersCheckBox.setSelected(getSettings().SKIP_GETTERS);
-    mySkipSyntheticMethodsCheckBox.setSelected(getSettings().SKIP_SYNTHETIC_METHODS);
-    mySkipConstructorsCheckBox.setSelected(getSettings().SKIP_CONSTRUCTORS);
-    myValueLookupDelayField.setText(Integer.toString(getSettings().VALUE_LOOKUP_DELAY));
-    myHideDebuggerCheckBox.setSelected(getSettings().HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
-    myForceClassicCheckBox.setSelected(getSettings().FORCE_CLASSIC_VM);
+    myCbSkipSimpleGetters.setSelected(settings.SKIP_GETTERS);
+    myCbSkipSyntheticMethods.setSelected(settings.SKIP_SYNTHETIC_METHODS);
+    myCbSkipConstructors.setSelected(settings.SKIP_CONSTRUCTORS);
+    myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
+    myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
+    myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
 
-    myFiltersCheckBox.setSelected(getSettings().TRACING_FILTERS_ENABLED);
+    myCbStepInfoFiltersEnabled.setSelected(settings.TRACING_FILTERS_ENABLED);
 
-    myFilterEditor.setFilters(getSettings().getFilters());
-    myFilterEditor.setEnabled(getSettings().TRACING_FILTERS_ENABLED);
+    mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
+    mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
 
-    if(DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(getSettings().RUN_HOTSWAP_AFTER_COMPILE)) {
-      myRunHotswapAlways.setSelected(true);
-    } else if(DebuggerSettings.RUN_HOTSWAP_NEVER.equals(getSettings().RUN_HOTSWAP_AFTER_COMPILE)) {
-      myRunHotswapNever.setSelected(true);
-    } else {
-      myRunHotswapAsk.setSelected(true);
+    if(DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(settings.RUN_HOTSWAP_AFTER_COMPILE)) {
+      myRbAlways.setSelected(true);
+    }
+    else if(DebuggerSettings.RUN_HOTSWAP_NEVER.equals(settings.RUN_HOTSWAP_AFTER_COMPILE)) {
+      myRbNever.setSelected(true);
+    }
+    else {
+      myRbAsk.setSelected(true);
     }
   }
 
   public void apply() {
-    getSettingsTo(getSettings());
+    getSettingsTo(DebuggerSettings.getInstance());
+    myBaseRenderersConfigurable.apply();
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
-    if (myShmemTransportRadio.isSelected()) {
+    if (myRbShmem.isSelected()) {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SHMEM_TRANSPORT;
     }
-    else if (mySocketTransportRadio.isSelected()) {
+    else if (myRbSocket.isSelected()) {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     }
     else {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     }
-    settings.SKIP_GETTERS = mySkipGettersCheckBox.isSelected();
-    settings.SKIP_SYNTHETIC_METHODS = mySkipSyntheticMethodsCheckBox.isSelected();
-    settings.SKIP_CONSTRUCTORS = mySkipConstructorsCheckBox.isSelected();
+    settings.SKIP_GETTERS = myCbSkipSimpleGetters.isSelected();
+    settings.SKIP_SYNTHETIC_METHODS = myCbSkipSyntheticMethods.isSelected();
+    settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
     try {
-      settings.VALUE_LOOKUP_DELAY = Integer.parseInt(myValueLookupDelayField.getText().trim());
+      settings.VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
     }
     catch (NumberFormatException e) {
     }
     settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
-    settings.FORCE_CLASSIC_VM = myForceClassicCheckBox.isSelectedWhenSelectable();
-    settings.TRACING_FILTERS_ENABLED = myFiltersCheckBox.isSelected();
+    settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
+    settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
 
-    myFilterEditor.stopEditing();
-    settings.setFilters(myFilterEditor.getFilters());
+    mySteppingFilterEditor.stopEditing();
+    settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
 
-    if(myRunHotswapAlways.isSelected())
+    if (myRbAlways.isSelected()) {
       settings.RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ALWAYS;
-    else if(myRunHotswapNever.isSelected())
+    }
+    else if (myRbNever.isSelected()) {
       settings.RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_NEVER;
-    else
+    }
+    else {
       settings.RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ASK;
+    }
   }
 
   public boolean isModified() {
-    DebuggerSettings    debuggerSettings    = new DebuggerSettings();
-
+    if (myBaseRenderersConfigurable.isModified()) {
+      return true;
+    }
+    final DebuggerSettings debuggerSettings = new DebuggerSettings();
     getSettingsTo(debuggerSettings);
-    return !debuggerSettings.equals(getSettings());
+    return !debuggerSettings.equals(DebuggerSettings.getInstance());
   }
 
   public String getDisplayName() {
@@ -150,12 +136,115 @@ public class DebuggerGeneralConfigurable implements Configurable{
   }
 
   public JComponent createComponent() {
-    return myPanel;
+    final JPanel panel = new JPanel(new GridBagLayout());
+
+    final JComponent generalGroup = createGeneralGroup();
+    panel.add(generalGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+    final JComponent launchingGroup = createLaunchingGroup();
+    panel.add(launchingGroup, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+    final JComponent baseRenderersGroup = createBaseRenderersGroup();
+    panel.add(baseRenderersGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+    final JComponent steppingGroup = createSteppingGroup();
+    panel.add(steppingGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+    return panel;
+  }
+
+  private JComponent createGeneralGroup() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder("General"));
+
+    myHideDebuggerCheckBox = new JCheckBox("Hide debug window on process termination");
+    myHideDebuggerCheckBox.setMnemonic('w');
+    panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    final JLabel tooltipLabel = new JLabel("Value tooltips delay (ms):");
+    panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myValueTooltipDelayField = new JTextField(10);
+    panel.add(myValueTooltipDelayField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    tooltipLabel.setLabelFor(myValueTooltipDelayField);
+    tooltipLabel.setDisplayedMnemonic('d');
+
+    panel.add(new JLabel("Reload classes after compilation:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myRbAlways = new JRadioButton("Always");
+    myRbAlways.setMnemonic('A');
+    myRbNever = new JRadioButton("Never");
+    myRbNever.setMnemonic('N');
+    myRbAsk = new JRadioButton("Ask");
+    myRbAsk.setMnemonic('k');
+    final ButtonGroup group = new ButtonGroup();
+    group.add(myRbAlways);
+    group.add(myRbNever);
+    group.add(myRbAsk);
+    final Box box = Box.createHorizontalBox();
+    box.add(myRbAlways);
+    box.add(myRbNever);
+    box.add(myRbAsk);
+    panel.add(box, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    return panel;
+  }
+
+  private JComponent createLaunchingGroup() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Launching"));
+
+    myCbForceClassicVM = new StateRestoringCheckBox("Force Classic VM for JDK 1.3.x and earlier");
+    myCbForceClassicVM.setMnemonic('i');
+    panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    panel.add(new JLabel("Debugger transport:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myRbSocket = new JRadioButton("Socket");
+    myRbSocket.setMnemonic('S');
+    myRbShmem = new JRadioButton("Shared memory");
+    myRbShmem.setMnemonic('m');
+    final Box box = Box.createHorizontalBox();
+    box.add(myRbSocket);
+    box.add(myRbShmem);
+    panel.add(box, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    return panel;
+  }
+
+  private JComponent createBaseRenderersGroup() {
+    final JComponent component = myBaseRenderersConfigurable.createComponent();
+    component.setBorder(IdeBorderFactory.createTitledBorder("Views"));
+    return component;
+  }
+
+  private JComponent createSteppingGroup() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Stepping"));
+
+    myCbSkipSyntheticMethods = new JCheckBox("Skip synthetic methods");
+    myCbSkipSyntheticMethods.setMnemonic('p');
+    myCbSkipConstructors = new JCheckBox("Skip constructors");
+    myCbSkipConstructors.setMnemonic('c');
+    myCbSkipSimpleGetters = new JCheckBox("Skip simple getters");
+    myCbSkipSimpleGetters.setMnemonic('g');
+    myCbStepInfoFiltersEnabled = new JCheckBox("Do not step into the classes");
+    myCbStepInfoFiltersEnabled.setMnemonic('i');
+    panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
+    panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
+    panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
+    panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 4, 0, 0),0, 0));
+
+    mySteppingFilterEditor = new ClassFilterEditor(myProject);
+    panel.add(mySteppingFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 12, 0, 0),0, 0));
+
+    myCbStepInfoFiltersEnabled.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
+      }
+    });
+    return panel;
   }
 
   public void disposeUIResources() {
+    myBaseRenderersConfigurable.disposeUIResources();
   }
-
-  private DebuggerSettings getSettings() { return DebuggerSettings.getInstance(); }
 
 }

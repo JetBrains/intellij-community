@@ -1,11 +1,11 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.settings.ThreadsViewSettings;
-import com.intellij.debugger.ui.PropertiesDialog;
 import com.intellij.debugger.ui.impl.ThreadsDebuggerTree;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 
 /**
  * User: lex
@@ -15,8 +15,8 @@ import com.intellij.openapi.project.Project;
 public class CustomizeThreadsViewAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    PropertiesDialog dialog = new PropertiesDialog(ThreadsViewSettings.getInstance().getConfigurable(), project);
-    dialog.show();
+    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, ThreadsViewSettings.getInstance().getConfigurable());
+    editor.show();
   }
 
   public void update(AnActionEvent e) {

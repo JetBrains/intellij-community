@@ -51,7 +51,6 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Appli
       project = ProjectManager.getInstance().getDefaultProject();
     }
     configurables.add(new DebuggerGeneralConfigurable(project));
-    configurables.add(new ViewsGeneralConfigurable());
     configurables.add(new NodeRendererConfigurable(project));
     return configurables;
   }

@@ -1,19 +1,27 @@
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
 
-import java.util.List;
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: lex
@@ -29,15 +37,50 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private RendererConfiguration myRendererConfiguration = new RendererConfiguration(this);
 
-  // default singleton renderers
+  // base renderers
   private final PrimitiveRenderer myPrimitiveRenderer = new PrimitiveRenderer();
   private final ArrayRenderer myArrayRenderer = new ArrayRenderer();
   private final ClassRenderer myClassRenderer = new ClassRenderer();
   private final HexRenderer myHexRenderer = new HexRenderer();
+  private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
+  // alternate collections
+  private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
+      createCompoundReferenceRenderer(
+        "Map", "java.util.Map",
+        createLabelRenderer("size = ", "size()", null),
+        createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
+      ),
+      createCompoundReferenceRenderer(
+        "Map.Entry", "java.util.Map$Entry",
+        createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null),
+        createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
+      ),
+      createCompoundReferenceRenderer(
+        "Collection", "java.util.Collection",
+        createLabelRenderer("size = ", "size()", null),
+        createExpressionChildrenRenderer("toArray()", "!isEmpty()")
+      )
+    };
 
+  public NodeRendererSettings() {
+    // default configuration
+    myHexRenderer.setEnabled(false);
+    myToStringRenderer.setEnabled(true);
+    setAlternateCollectionViewsEnabled(true);
+  }
 
   public static NodeRendererSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(NodeRendererSettings.class);
+  }
+
+  public void setAlternateCollectionViewsEnabled(boolean enabled) {
+    for (int idx = 0; idx < myAlternateCollectionRenderers.length; idx++) {
+      myAlternateCollectionRenderers[idx].setEnabled(enabled);
+    }
+  }
+
+  public boolean areAlternateCollectionViewsEnabled() {
+    return myAlternateCollectionRenderers[0].isEnabled();
   }
 
   public String getComponentName() {
@@ -89,7 +132,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     }
   }
 
-  public void iterateRenderers(InternalIterator<AutoRendererNode> iterator) {
+  public void iterateUserRenderers(InternalIterator<AutoRendererNode> iterator) {
     myRendererConfiguration.iterateRenderers(iterator);
   }
 
@@ -109,26 +152,35 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     return myHexRenderer;
   }
 
+  public ToStringRenderer getToStringRenderer() {
+    return myToStringRenderer;
+  }
+
   public void fireRenderersChanged() {
     myDispatcher.getMulticaster().renderersChanged();
   }
 
   public List<NodeRenderer> getAllRenderers() {
+    // the order is important as the renderers are applied according to it
     final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
+    allRenderers.add(myHexRenderer);
+    allRenderers.add(myPrimitiveRenderer);
     myRendererConfiguration.iterateRenderers(new InternalIterator<AutoRendererNode>() {
       public boolean visit(final AutoRendererNode element) {
         allRenderers.add(element.getRenderer());
         return true;
       }
     });
+    for (int idx = 0; idx < myAlternateCollectionRenderers.length; idx++) {
+      allRenderers.add(myAlternateCollectionRenderers[idx]);
+    }
+    allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);
-    allRenderers.add(myPrimitiveRenderer);
-    allRenderers.add(myHexRenderer);
     return allRenderers;
   }
 
-  public boolean isDefault(final Renderer renderer) {
+  public boolean isBase(final Renderer renderer) {
     return renderer == myPrimitiveRenderer || renderer == myArrayRenderer || renderer == myClassRenderer;
   }
 
@@ -188,11 +240,62 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       return new EnumerationChildrenRenderer();
     }
     else if(rendererId.equals(ToStringRenderer.UNIQUE_ID)) {
-      return new ToStringRenderer();
+      return myToStringRenderer;
     }
     else if(rendererId.equals(CompoundNodeRenderer.UNIQUE_ID) || rendererId.equals(REFERENCE_RENDERER)) {
-      return new CompoundReferenceRenderer(this, "unnamed", null, null);
+      return createCompoundReferenceRenderer("unnamed", "java.lang.Object", null, null);
     }
     return null;
   }
+
+  private CompoundReferenceRenderer createCompoundReferenceRenderer(
+    final String rendererName, final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    ) {
+    CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
+    renderer.setClassName(className);
+    return renderer;
+  }
+
+  private ExpressionChildrenRenderer createExpressionChildrenRenderer(String expressionText, String childrenExpandableText) {
+    final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
+    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expressionText));
+    if (childrenExpandableText != null) {
+      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, childrenExpandableText));
+    }
+    return childrenRenderer;
+  }
+
+  private EnumerationChildrenRenderer createEnumerationChildrenRenderer(String[][] expressions) {
+    final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
+    if (expressions != null && expressions.length > 0) {
+      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
+      for (int idx = 0; idx < expressions.length; idx++) {
+        final String[] expression = expressions[idx];
+        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expression[1])));
+      }
+      childrenRenderer.setChildren(childrenList);
+    }
+    return childrenRenderer;
+  }
+
+  private LabelRenderer createLabelRenderer(final String prefix, final String expressionText, final String postfix) {
+    final LabelRenderer labelRenderer = new LabelRenderer() {
+      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
+        final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);
+        if (prefix == null && postfix == null) {
+          return evaluated;
+        }
+        if (prefix != null && postfix != null) {
+          return prefix + evaluated + postfix;
+        }
+        if (prefix != null) {
+          return prefix + evaluated;
+        }
+        return evaluated + postfix;
+      }
+    };
+    labelRenderer.setLabelExpression(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expressionText));
+    return labelRenderer;
+  }
+
 }

@@ -6,13 +6,6 @@ import org.jdom.Element;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 13, 2004
- * Time: 2:58:50 PM
- * To change this template use File | Settings | File Templates.
- */
 public class JDOMExternalizerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.JDOMExternalizerUtil");
     

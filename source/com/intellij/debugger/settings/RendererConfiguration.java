@@ -100,17 +100,6 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     myRepresentationNodes.remove(renderer);
   }
 
-  public List<NodeRenderer> getRenderers() {
-    List<NodeRenderer> result = new ArrayList<NodeRenderer>();
-
-    for (Iterator<AutoRendererNode> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      AutoRendererNode autoRendererNode = iterator.next();
-      result.add(autoRendererNode.getRenderer());
-    }
-
-    return result;
-  }
-
   public List<AutoRendererNode> getAutoNodes() {
     List<AutoRendererNode> result = new ArrayList<AutoRendererNode>();
 

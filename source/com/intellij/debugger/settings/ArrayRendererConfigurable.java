@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -16,39 +17,18 @@ import javax.swing.event.DocumentListener;
 
 public class ArrayRendererConfigurable implements UnnamedConfigurable{
   private JTextField myEntriesLimit;
-  private JTextField myFirstIndex;
+  private JTextField myStartIndex;
   private JTextField myEndIndex;
 
   private ArrayRenderer myRenderer;
   private JComponent myPanel;
 
   private JLabel myEntriesLimitLabel;
-  private JLabel myLastIndexLabel;
-  private JLabel myFirstIndexLabel;
+  private JLabel myEndIndexLabel;
+  private JLabel myStartIndexLabel;
 
   public ArrayRendererConfigurable(ArrayRenderer renderer) {
     myRenderer = renderer;
-
-    myFirstIndexLabel.setLabelFor(myFirstIndex);
-    myLastIndexLabel.setLabelFor(myLastIndexLabel);
-    myEntriesLimitLabel.setLabelFor(myEntriesLimit);
-
-    final DocumentListener listener = new DocumentListener() {
-      private void updateEntriesLimit() {
-        myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myFirstIndex) + 1));
-      }
-      public void changedUpdate(DocumentEvent e) {
-        updateEntriesLimit();
-      }
-      public void insertUpdate (DocumentEvent e) {
-        updateEntriesLimit();
-      }
-      public void removeUpdate (DocumentEvent e) {
-        updateEntriesLimit();
-      }
-    };
-    myFirstIndex.getDocument().addDocumentListener(listener);
-    myEndIndex.getDocument().addDocumentListener(listener);
   }
 
   public ArrayRenderer getRenderer() {
@@ -56,7 +36,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void reset() {
-    myFirstIndex.setText(String.valueOf(myRenderer.START_INDEX));
+    myStartIndex.setText(String.valueOf(myRenderer.START_INDEX));
     myEndIndex.setText(String.valueOf(myRenderer.END_INDEX));
     myEntriesLimit.setText(String.valueOf(myRenderer.ENTRIES_LIMIT));
   }
@@ -66,7 +46,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   private void applyTo(ArrayRenderer renderer) {
-    int newStartIndex = getInt(myFirstIndex);
+    int newStartIndex = getInt(myStartIndex);
     int newEndIndex = getInt(myEndIndex);
     int newLimit = getInt(myEntriesLimit);
 
@@ -77,7 +57,9 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
         newEndIndex = newStartIndex + (currentEndIndex - currentStartIndex);
       }
 
-      if(newLimit <= 0) newLimit = 1;
+      if(newLimit <= 0) {
+        newLimit = 1;
+      }
 
       if(newEndIndex - newStartIndex > 10000) {
         if(Messages.showOkCancelDialog(myPanel.getRootPane(), "Range specified is too big. IDEA needs too much resources to perform requested operation. Are you shure you want to continue?", "Range is Too Big", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) return;
@@ -90,6 +72,56 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   public JComponent createComponent() {
+    myPanel = new JPanel(new GridBagLayout());
+
+    myStartIndex = new JTextField(5);
+    myEndIndex = new JTextField(5);
+    myEntriesLimit = new JTextField(5);
+
+    final FontMetrics fontMetrics = myStartIndex.getFontMetrics(myStartIndex.getFont());
+    final Dimension minSize = new Dimension(myStartIndex.getPreferredSize());
+    minSize.width = fontMetrics.stringWidth("AAAAA");
+    myStartIndex.setMinimumSize(minSize);
+    myEndIndex.setMinimumSize(minSize);
+    myEntriesLimit.setMinimumSize(minSize);
+
+    myStartIndexLabel = new JLabel("Array start index:");
+    myStartIndexLabel.setLabelFor(myStartIndex);
+    myStartIndexLabel.setDisplayedMnemonic('r');
+
+    myEndIndexLabel = new JLabel("end index:");
+    myEndIndexLabel.setLabelFor(myEndIndex);
+    myEndIndexLabel.setDisplayedMnemonic('d');
+
+    myEntriesLimitLabel = new JLabel("Show maximum");
+    myEntriesLimitLabel.setLabelFor(myEntriesLimit);
+    myEntriesLimitLabel.setDisplayedMnemonic('m');
+
+    myPanel.add(myStartIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(myEndIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+
+    myPanel.add(myEntriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(new JLabel("array elements"), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+
+    final DocumentListener listener = new DocumentListener() {
+      private void updateEntriesLimit() {
+        myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myStartIndex) + 1));
+      }
+      public void changedUpdate(DocumentEvent e) {
+        updateEntriesLimit();
+      }
+      public void insertUpdate (DocumentEvent e) {
+        updateEntriesLimit();
+      }
+      public void removeUpdate (DocumentEvent e) {
+        updateEntriesLimit();
+      }
+    };
+    myStartIndex.getDocument().addDocumentListener(listener);
+    myEndIndex.getDocument().addDocumentListener(listener);
     return myPanel;
   }
 

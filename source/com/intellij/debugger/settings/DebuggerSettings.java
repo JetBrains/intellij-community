@@ -1,16 +1,9 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.ui.RunHotswapDialog;
-import com.intellij.debugger.ClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -49,7 +42,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String STEP_THREAD_SUSPEND_POLICY;
   public String RUN_HOTSWAP_AFTER_COMPILE;
 
-  private ClassFilter[] myFilters = ClassFilter.EMPTY_ARRAY;
+  private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   public DebuggerSettings() {
   }
@@ -59,8 +52,8 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public void initComponent() { }
 
-  public ClassFilter[] getFilters() {
-    return retrieveFilters(myFilters);
+  public ClassFilter[] getSteppingFilters() {
+    return retrieveFilters(mySteppingFilters);
   }
 
   private ClassFilter[] retrieveFilters(ClassFilter[] filters) {
@@ -75,11 +68,11 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     if (!TRACING_FILTERS_ENABLED) {
       return false;
     }
-    return DebuggerUtilsEx.isFiltered(qName, myFilters);
+    return DebuggerUtilsEx.isFiltered(qName, mySteppingFilters);
   }
 
-  void setFilters(ClassFilter[] filters) {
-    myFilters = (filters != null)? filters : ClassFilter.EMPTY_ARRAY;
+  void setSteppingFilters(ClassFilter[] steppingFilters) {
+    mySteppingFilters = (steppingFilters != null)? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
@@ -90,7 +83,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       Element filter = (Element)i.next();
       filtersList.add(DebuggerUtilsEx.create(filter));
     }
-    setFilters((ClassFilter[])filtersList.toArray(new ClassFilter[filtersList.size()]));
+    setSteppingFilters((ClassFilter[])filtersList.toArray(new ClassFilter[filtersList.size()]));
 
     filtersList.clear();
   }
@@ -98,10 +91,10 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     Element element;
-    for (int idx = 0; idx < myFilters.length; idx++) {
+    for (int idx = 0; idx < mySteppingFilters.length; idx++) {
       element = new Element("filter");
       parentNode.addContent(element);
-      myFilters[idx].writeExternal(element);
+      mySteppingFilters[idx].writeExternal(element);
     }
   }
 
@@ -121,8 +114,9 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
+      SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
-      DebuggerUtilsEx.filterEquals(myFilters, secondSettings.myFilters);
+      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
   }
 
   public String getComponentName() {
