@@ -18,7 +18,7 @@ public class SendToFavoritesGroup extends DefaultActionGroup{
                                    selectedNodeDescriptors != null &&
                                    allAddActionNamesButThis != null);
     removeAll();
-    for (int i = 0; i < allAddActionNamesButThis.length; i++) {
+    for (int i = 0; allAddActionNamesButThis != null && i < allAddActionNamesButThis.length; i++) {
       String addAction = allAddActionNamesButThis[i];
       add(new SendToFavoritesAction(addAction));
     }

@@ -110,6 +110,24 @@ public class AddToFavoritesAction extends AnAction {
       return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
+    //on module groups
+    ModuleGroup[] moduleGroups = (ModuleGroup[])dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY);
+    if (moduleGroups != null) {
+      boolean isPackageView = false;
+      if (currentViewId.equals(PackageViewPane.ID)) {
+        isPackageView = true;
+      }
+      for (int i = 0; i < moduleGroups.length; i++) {
+        ModuleGroup moduleGroup = moduleGroups[i];
+        if (isPackageView){
+          result.add(new PackageViewModuleGroupNode(project, moduleGroup, favoritesConfig));
+        } else {
+          result.add(new ProjectViewModuleGroupNode(project, moduleGroup, favoritesConfig));
+        }
+      }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
+    }
+
     //on module node
     Module module = (Module)dataContext.getData(DataConstants.MODULE);
     if (module != null) {
@@ -131,24 +149,6 @@ public class AddToFavoritesAction extends AnAction {
         }
         else {
           result.add(new ProjectViewModuleNode(project, modules[i], favoritesConfig));
-        }
-      }
-      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
-    }
-
-    //on module groups
-    ModuleGroup[] moduleGroups = (ModuleGroup[])dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY);
-    if (moduleGroups != null) {
-      boolean isPackageView = false;
-      if (currentViewId.equals(PackageViewPane.ID)) {
-        isPackageView = true;
-      }
-      for (int i = 0; i < moduleGroups.length; i++) {
-        ModuleGroup moduleGroup = moduleGroups[i];
-        if (isPackageView){
-          result.add(new PackageViewModuleGroupNode(project, moduleGroup, favoritesConfig));
-        } else {
-          result.add(new ProjectViewModuleGroupNode(project, moduleGroup, favoritesConfig));
         }
       }
       return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);

@@ -16,7 +16,6 @@ import com.intellij.j2ee.module.view.web.ListenerUrl;
 import com.intellij.j2ee.module.view.web.ServletUrl;
 import com.intellij.j2ee.module.view.web.WebRootFileUrl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
@@ -150,44 +149,43 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   public boolean contains(final VirtualFile vFile){
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final Set<Boolean> find = new HashSet<Boolean>();
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(VirtualFile fileOrDir) {
-        if (fileOrDir == null ? vFile == null : fileOrDir.equals(vFile)) {
-          return true;
+        if (fileOrDir == null ? vFile == null : fileOrDir.getPath().equals(vFile.getPath())) {
+          find.add(Boolean.TRUE);
         }
-        return false;
+        return true;
       }
     };
     for (Iterator<AbstractTreeNode> iterator = myRoot.getChildren().iterator(); iterator.hasNext();) {
       AbstractTreeNode node = iterator.next();
-      boolean find = false;
       if (node.getValue() instanceof PsiElement){
         final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((PsiElement)node.getValue()));
-        if (vFile == null ? virtualFile == null : vFile.equals(virtualFile)){
+        if (vFile == null ? virtualFile == null : vFile.getPath().equals(virtualFile.getPath())){
           return true;
         }
         if (!virtualFile.isDirectory()){
           continue;
         }
-        final Module module = ModuleUtil.findModuleForPsiElement(((PsiElement)node.getValue()));
-        if (module != null){
-          find = ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(virtualFile, contentIterator);
-        } else {
-          find = projectFileIndex.iterateContentUnderDirectory(virtualFile, contentIterator);
-        }
+        projectFileIndex.iterateContentUnderDirectory(virtualFile, contentIterator);
       }
       if (node.getValue() instanceof Module){
-        find = ModuleRootManager.getInstance(((Module)node.getValue())).getFileIndex().iterateContent(contentIterator);
+        ModuleRootManager.getInstance(((Module)node.getValue())).getFileIndex().iterateContent(contentIterator);
       }
       if (node.getValue() instanceof LibraryGroupElement){
-        find = ModuleRootManager.getInstance(((LibraryGroupElement)node.getValue()).getModule()).getFileIndex().isInContent(vFile) &&
-               projectFileIndex.isInLibraryClasses(vFile);
+        final boolean inLibrary =
+          ModuleRootManager.getInstance(((LibraryGroupElement)node.getValue()).getModule()).getFileIndex().isInContent(vFile) &&
+          projectFileIndex.isInLibraryClasses(vFile);
+        if (inLibrary){
+          return true;
+        }
       }
       if (node.getValue() instanceof NamedLibraryElement){
         NamedLibraryElement namedLibraryElement = (NamedLibraryElement)node.getValue();
         final VirtualFile[] files = namedLibraryElement.getOrderEntry().getFiles(OrderRootType.CLASSES);
-        if (files != null){
-          find = ArrayUtil.find(files, vFile) > -1;
+        if (files != null && ArrayUtil.find(files, vFile) > -1){
+          return true;
         }
       }
       if (node.getValue() instanceof Form){
@@ -201,19 +199,16 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
           }
         }
       }
-      if (find){
-        return true;
-      }
       if (node.getValue() instanceof ModuleGroup){
         ModuleGroup group = (ModuleGroup) node.getValue();
         final Module[] modules = group.modulesInGroup(myProject, true);
         for (int i = 0; i < modules.length; i++) {
           Module module = modules[i];
-          find = ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
-          if (find){
-            return true;
-          }
+          ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
         }
+      }
+      if (!find.isEmpty()){
+        return true;
       }
     }
     return false;

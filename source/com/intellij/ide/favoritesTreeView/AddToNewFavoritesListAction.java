@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
  */
 class AddToNewFavoritesListAction extends AnAction {
  public AddToNewFavoritesListAction() {
-   super("Add To New Favorites List");
+   super("Add to New Favorites List");
  }
 
  public void actionPerformed(AnActionEvent e) {
