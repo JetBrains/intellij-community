@@ -157,7 +157,9 @@ public class IdeaApplication {
       String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
       if (lastProjectPath != null) {
         ProjectUtil.openProject(lastProjectPath, null, false);
-      }else{
+      }
+/* The below part is commented since instead of New Project Wizard the Welcome Screen will appear (appropriate code is added in IdeRootPane.java)
+      else{
         // This is VERY BAD code. IONA wants to open their project wizard
         // on startup. They replace NEW_PROJECT action and we have to invoke
         // this action by ID. PLEASE, DO NOT COPY THIS CODE, DO NOT INVOKE
@@ -176,7 +178,8 @@ public class IdeaApplication {
           newProjectAction.actionPerformed(event);
         }
       }
-    }
+*/
+      }
   }
 
   public String[] getCommandLineArguments() {

@@ -9,7 +9,7 @@
   <version>1.0</version>
 
   <!-- Plugin's vendor -->
-  <vendor>IntelliJ</vendor>
+  <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 
   <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
   <idea-version min="3.0" max="3.1"/>

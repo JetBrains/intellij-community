@@ -5,7 +5,7 @@
   <description>SamplePlugin</description>
 <!-- plugin versuin -->
   <version>1.0</version>
-  <vendor>IntelliJ</vendor>
+  <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 <!-- minimum and maximum IDEA version plugin is supposed to work with -->
   <idea-version min="3.0" max="3.1"/>
 <!-- application components of the plugin -->

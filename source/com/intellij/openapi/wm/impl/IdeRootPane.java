@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
 import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.*;
@@ -37,6 +37,7 @@ public class IdeRootPane extends JRootPane{
   private JPanel myContentPane;
   private ActionManager myActionManager;
   private UISettings myUISettings;
+  private static Component myWelcomePane;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager){
     myActionManager = actionManager;
@@ -50,6 +51,15 @@ public class IdeRootPane extends JRootPane{
 
     myUISettingsListener=new MyUISettingsListenerImpl();
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
+
+    if (myWelcomePane != null) {
+      myContentPane.remove(myWelcomePane);
+      myWelcomePane = null;
+    }
+    else {
+      myWelcomePane = WelcomeScreen.getWelcomePanel();
+      myContentPane.add(myWelcomePane);
+    }
   }
 
   /**
@@ -73,14 +83,24 @@ public class IdeRootPane extends JRootPane{
    * If <code>toolWindowsPane</code> is <code>null</code> then the method just removes
    * the current tool windows pane.
    */
-  final void setToolWindowsPane(final ToolWindowsPane toolWindowsPane){
-    final Container contentPane=getContentPane();
-    if(myToolWindowsPane!=null){
+  final void setToolWindowsPane(final ToolWindowsPane toolWindowsPane) {
+    final Container contentPane = getContentPane();
+    if(myToolWindowsPane != null){
       contentPane.remove(myToolWindowsPane);
     }
-    myToolWindowsPane=toolWindowsPane;
-    if(myToolWindowsPane!=null){
+
+    if (myWelcomePane != null) {
+      contentPane.remove(myWelcomePane);
+      myWelcomePane = null;
+    }
+
+    myToolWindowsPane = toolWindowsPane;
+    if(myToolWindowsPane != null) {
       contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
+    }
+    else {
+      myWelcomePane = WelcomeScreen.getWelcomePanel();
+      contentPane.add(myWelcomePane);
     }
   }
 
