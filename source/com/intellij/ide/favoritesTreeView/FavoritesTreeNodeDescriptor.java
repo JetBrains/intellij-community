@@ -11,6 +11,8 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 
@@ -37,7 +39,12 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     final Object value = myElement.getValue();
     if (value instanceof PsiElement){
       if (((PsiElement)value).getContainingFile() != null){
-        myColor = FileStatusManager.getInstance(myProject).getStatus(((PsiElement)value).getContainingFile().getVirtualFile()).getColor();
+        final VirtualFile virtualFile = ((PsiElement)value).getContainingFile().getVirtualFile();
+        if (virtualFile != null){
+          myColor = FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor();
+        } else {
+          myColor = FileStatus.NOT_CHANGED.getColor();
+        }
         int flags = ((PsiElement)value).getContainingFile() instanceof PsiJavaFile  ?  Iconable.ICON_FLAG_VISIBILITY : 0;
         if (isMarkReadOnly()) {
           flags |= Iconable.ICON_FLAG_READ_STATUS;
