@@ -74,7 +74,7 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
       myAttributeDescriptors = new XmlAttributeDescriptor[subTags.length];
 
       for (int i = 0; i < subTags.length; i++) {
-        myAttributeDescriptors[i] = new TldAttributeDescriptor(subTags[i]);
+        myAttributeDescriptors[i] = new TldAttributeDescriptor(subTags[i],CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
       }
     }
     return myAttributeDescriptors;
@@ -176,52 +176,11 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
     }
 
     final XmlTag[] vars = myTag.findSubTags("variable");
-    for (int i = 0; i < vars.length; i++) {
-      XmlTag var = vars[i];
 
-      final XmlTag nameGiven = var.findFirstSubTag("name-given");
-      final XmlTag variableClass = var.findFirstSubTag("variable-class");
-      final XmlTag declare = var.findFirstSubTag("declare");
-      final XmlTag scope = var.findFirstSubTag("scope");
-      final XmlTag nameFromAttribute = var.findFirstSubTag("name-from-attribute");
-//      final XmlTag fragment = var.findSubTag("fragment"); 2.0 support
-
-      String className = "java.lang.Object";
-      if (variableClass != null && !variableClass.getValue().getTrimmedText().equals("")) className = variableClass.getValue().getTrimmedText();
-      int scopeInt = VariableInfo.NESTED;
-      if(scope != null){
-        final String scopeStr = scope.getValue().getTrimmedText();
-        if("AT_BEGIN".equals(scopeStr)){
-          scopeInt = VariableInfo.AT_BEGIN;
-        }
-        else if("AT_END".equals(scopeStr)){
-          scopeInt = VariableInfo.AT_END;
-        }
-      }
-
-      myTLDVars.add(new TagVariableInfo(
-        nameGiven != null ? nameGiven.getValue().getTrimmedText() : null,
-        nameFromAttribute != null ? nameFromAttribute.getValue().getTrimmedText() : null,
-        className,
-        declare == null || ("true".equals(declare.getValue().getTrimmedText()) || "yes".equals(declare.getValue().getTrimmedText())),
-        scopeInt/*, 2.0 support
-        fragment != null ? fragment.getValue() : null*/
-      ));
-    }
+    CustomTagSupportUtil.configureVariables(myTLDVars, vars, CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
 
     final XmlTag[] attributes = myTag.findSubTags("attribute");
-    for (int i = 0; i < attributes.length; i++) {
-      final XmlTag attName = attributes[i].findFirstSubTag("name");
-      final XmlTag requiered = attributes[i].findFirstSubTag("requiered");
-      final XmlTag rtEx = attributes[i].findFirstSubTag("rtexprvalue");
-      final XmlTag type = attributes[i].findFirstSubTag("type");
-
-      myTLDAttributes.add(new TagAttributeInfo(
-        attName != null ? attName.getValue().getTrimmedText() : null,
-        requiered != null && ("true".equals(requiered.getValue().getTrimmedText()) || "yes".equals(requiered.getValue().getTrimmedText())),
-        type != null ? type.getValue().getTrimmedText() : null,
-        rtEx != null && ("true".equals(rtEx.getValue().getTrimmedText()) || "yes".equals(rtEx.getValue().getTrimmedText()))));
-    }
+    CustomTagSupportUtil.configureAttributes(myTLDAttributes, attributes, CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
   }
 
   public Object[] getDependences() {
