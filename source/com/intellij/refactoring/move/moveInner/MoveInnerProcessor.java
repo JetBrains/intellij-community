@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -50,7 +49,6 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private String myFieldNameOuterClass;
   private String myDescriptiveName = "";
   private String myNewClassName;
-  private boolean myPreviewUsages;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
   private UsageInfo[] myUsagesAfterRefactoring;
@@ -62,7 +60,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   public MoveInnerProcessor(Project project, PsiClass innerClass, String name, boolean passOuterClass, String parameterName) {
     super(project);
-    setup(innerClass, name, passOuterClass, parameterName, true, true, true);
+    setup(innerClass, name, passOuterClass, parameterName, true, true);
   }
 
   protected String getCommandName() {
@@ -359,13 +357,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
     };
 
-    final boolean previewUsages = dialog.isPreviewUsages();
     final String className = dialog.getClassName();
     final PsiClass innerClass = dialog.getInnerClass();
     final boolean passOuterClass = dialog.isPassOuterClass();
     final String parameterName = dialog.getParameterName();
 
-    setup(innerClass, className, passOuterClass, parameterName, previewUsages,
+    setup(innerClass, className, passOuterClass, parameterName,
           dialog.isSearchInComments(), dialog.isSearchInNonJavaFiles());
 
     run();
@@ -375,10 +372,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                     final String className,
                     final boolean passOuterClass,
                     final String parameterName,
-                    final boolean previewUsages,
                     boolean searchInComments,
                     boolean searchInNonJava) {
-    myPreviewUsages = previewUsages;
     myNewClassName = className;
     myInnerClass = innerClass;
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myInnerClass);
