@@ -128,11 +128,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     if (myTargetClass.isInterface()) {
-      final PsiClass[] inheritors = searchHelper.findInheritors(myTargetClass, searchScope, false);
-      for (int i = 0; i < inheritors.length; i++) {
-        PsiClass inheritor = inheritors[i];
-        usages.add(new InheritorUsageInfo(inheritor));
-      }
+      addInheritorUsages(myTargetClass, searchHelper, searchScope, usages);
     }
 
     final PsiCodeBlock body = myMethod.getBody();
@@ -154,6 +150,22 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  private void addInheritorUsages(PsiClass aClass,
+                                  final PsiSearchHelper searchHelper,
+                                  final GlobalSearchScope searchScope,
+                                  final List<UsageInfo> usages) {
+    final PsiClass[] inheritors = searchHelper.findInheritors(aClass, searchScope, false);
+    for (int i = 0; i < inheritors.length; i++) {
+      PsiClass inheritor = inheritors[i];
+      if (!inheritor.isInterface()) {
+        usages.add(new InheritorUsageInfo(inheritor));
+      }
+      else {
+        addInheritorUsages(inheritor, searchHelper, searchScope, usages);
+      }
+    }
   }
 
   protected void refreshElements(PsiElement[] elements) {
