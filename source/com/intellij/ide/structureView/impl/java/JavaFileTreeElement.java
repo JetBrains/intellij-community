@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -48,5 +49,21 @@ public class JavaFileTreeElement implements StructureViewTreeElement, ItemPresen
 
   public String toString() {
     return getPresentableText();
+  }
+
+  public int hashCode() {
+    if (myFile == null) {
+      return 0;
+    } else {
+      return myFile.hashCode();
+    }
+  }
+
+  public boolean equals(Object object) {
+    if (object instanceof JavaFileTreeElement) {
+      return Comparing.equal(myFile, ((JavaFileTreeElement)object).myFile);
+    } else {
+      return false;
+    }
   }
 }
