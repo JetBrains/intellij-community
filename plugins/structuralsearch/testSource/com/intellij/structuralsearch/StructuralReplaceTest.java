@@ -503,7 +503,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testSeveralStatements() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 27, 15, 0, "lesya", "formatterProblen")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 27, 15, 0, "lesya", "Formatter problem")) return;
     String s1 = "{\n" +
                 "        System.out.println(1);\n" +
                 "        System.out.println(2);\n" +
