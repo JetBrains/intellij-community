@@ -19,9 +19,9 @@ public class ParenthesesUtils {
     private static final int POSTFIX_PRECEDENCE = 2;
     public static final int PREFIX_PRECEDENCE = 3;
     public static final int TYPE_CAST_PRECEDENCE = 4;
-    private static final int MULTIPLICATIVE_PRECEDENCE = 5;
+    public static final int MULTIPLICATIVE_PRECEDENCE = 5;
     private static final int ADDITIVE_PRECEDENCE = 6;
-    private static final int SHIFT_PRECEDENCE = 7;
+    public static final int SHIFT_PRECEDENCE = 7;
     private static final int RELATIONAL_PRECEDENCE = 8;
     private static final int EQUALITY_PRECEDENCE = 9;
 

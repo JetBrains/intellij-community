@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 
 public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection {
     private final MultiplyByPowerOfTwoFix fix = new MultiplyByPowerOfTwoFix();
@@ -53,7 +54,24 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
                 operator = ">>";
             }
         }
-        return lhs.getText() + ' ' + operator + ' ' + ShiftUtils.getLogBaseTwo(rhs);
+        final String lhsText;
+        if(ParenthesesUtils.getPrecendence(lhs) >
+                ParenthesesUtils.SHIFT_PRECEDENCE){
+            lhsText = '(' + lhs.getText() + ')';
+        } else{
+            lhsText = lhs.getText();
+        }
+        String expString =
+        lhsText + operator + ShiftUtils.getLogBaseTwo(rhs);
+        final PsiElement parent = expression.getParent();
+        if(parent != null && parent instanceof PsiExpression){
+            if(!(parent instanceof PsiParenthesizedExpression) &&
+                    ParenthesesUtils.getPrecendence((PsiExpression) parent) <
+                            ParenthesesUtils.SHIFT_PRECEDENCE){
+                expString = '(' + expString + ')';
+            }
+        }
+        return expString;
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

@@ -1,17 +1,17 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
+import com.intellij.openapi.project.Project;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 
 public class StringBufferReplaceableByStringBuilderInspection extends ExpressionInspection {
+    private final StringBufferMayBeStringBuilderFix fix = new StringBufferMayBeStringBuilderFix();
 
     public String getDisplayName() {
         return "StringBuffer may be StringBuilder (J2SDK 5.0 only)";
@@ -25,6 +25,26 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
         return "StringBuffer #ref may be declared as StringBuilder #loc";
     }
 
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class StringBufferMayBeStringBuilderFix
+            extends InspectionGadgetsFix{
+        public String getName(){
+            return "Replace with StringBuilder";
+        }
+
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            final PsiElement variableIdentifier =
+                    descriptor.getPsiElement();
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement) variableIdentifier.getParent().getParent();
+            final String text = declarationStatement.getText();
+            final String newStatement = text.replaceAll("StringBuffer", "StringBuilder");
+            replaceStatement(project, declarationStatement, newStatement);
+        }
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new StringBufferReplaceableByStringBuilderVisitor(this, inspectionManager, onTheFly);
     }

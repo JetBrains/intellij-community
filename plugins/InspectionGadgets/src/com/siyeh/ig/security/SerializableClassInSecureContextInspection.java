@@ -51,7 +51,7 @@ public class SerializableClassInSecureContextInspection extends ClassInspection 
                     }
                 }
             }
-            registerError(aClass);
+            registerClassError(aClass);
         }
     }
 }

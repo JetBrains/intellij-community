@@ -1,9 +1,7 @@
     Query string should be constant
-    Reuse of local variable.
     Logging not wrapped in if block
     Public method without logging
     Logger constructed without the current class name as argument.
-    Class initialization circularity
     Incorrect lazy initialization of static field
     setter or getter with non-standard name
     Avoid repeated casting
@@ -13,38 +11,26 @@
     Paired open/close for Sockets
     Paired open/close for Channels
     Paired acquire/release for Locks
-    Local variable may be moved to first use;
     Duplicate condition
-    Boolean method name must begin with
-    Non-Boolean method name cannot begin with
     Empty zip file entry
     Empty jar file entry
-    Method parameter dead but overwritten
-    Iterator.next() which won't throw NoSuchElementException
     getClass().getResource()
     Using nextDouble rather than nextInt() to create random integer
     Inefficient use of keySet iterator rather than entrySet iterator
     Equals methods that do not check parameter type
     Call to simple getter or setter from within class
     Copyright comment
-    Make "Merge else-if" understand chained returning ifs
     Static inheritance fix
-    Fixes for the assignment and return encapsulation inspections
     Static import fix
+    Fix for non-static initializer
     Check IDs for all inspections
+    Better handling of unnecessary block
+    Expand "Trivial If" inspection to cover same cases as the intention
     Flag inspections with default on-off and default warning level
-    Quick fix for "Constant StringBuffer may be String"
-    Quick fix for Non-constant String should be StringBuffer
-    Quick fix for "String concatenation in loop"
-    Quick fix for "StringBuffer may be StringBuilder"
-    Genericize "StringBuffer.toString() in concatenation"
-    Split "Portability Issues" into "Portability Issues" and "JDK issues"
-    QuickFix for "Confusing else Branch"
-    QuickFix for "Integer division in floating point context"
     More detectors and quickfixes for "Simplifiable JUnit Assertion"
     Inheritance as type def (change the EmptyClass inspection)
-    changing multiply/divide to shift may change precedence!
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
     SerialVersionUID calculation
+    Fix list table alignment
 

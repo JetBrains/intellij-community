@@ -11,7 +11,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     public void foo() throws IOException
     {
-        final int i = 3 * 8;
+        final int i = 3 + 3*8;
         final int j = i / 8;
         final int k = j / 7;
         final int m = j * 7;
