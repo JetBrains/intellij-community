@@ -3,18 +3,18 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.VoidValueImpl;
+import gnu.trove.THashMap;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,11 +29,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private int myTimeStamp = 0;
 
   // cached data
-  private Map<ObjectReference, ObjectReferenceProxyImpl>          myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
-  private Map<ThreadReference, ThreadReferenceProxyImpl>           myAllThreads            = new com.intellij.util.containers.HashMap<ThreadReference, ThreadReferenceProxyImpl>();
-  private Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups          = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
+  private Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
+  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new com.intellij.util.containers.HashMap<ThreadReference, ThreadReferenceProxyImpl>();
+  private Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
+  private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>();
+
   public Throwable mySuspendLogger = new Throwable();
 
   public VirtualMachineProxyImpl(DebugProcessImpl debugProcess, VirtualMachine virtualMachine) {
@@ -56,6 +58,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return (List<ReferenceType>)myVirtualMachine.classesByName(s);
   }
 
+  public List<ReferenceType> nestedTypes(ReferenceType refType) {
+    List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
+    if (nestedTypes == null) {
+      nestedTypes = (List<ReferenceType>)refType.nestedTypes();
+      myNestedClassesCache.put(refType, nestedTypes);
+    }
+    return nestedTypes;
+  }
+
   public List<ReferenceType> allClasses() {
     if (myAllClasses == null) {
       myAllClasses = (List<ReferenceType>)myVirtualMachine.allClasses();
@@ -71,8 +82,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       myVirtualMachine.redefineClasses(map);
-    } finally {
+    }
+    finally {
       clearCaches();
+      // clear nested classes cache only on class redefinition
+      if (myNestedClassesCache.size() > 0) {
+        myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
+      }
     }
   }
 

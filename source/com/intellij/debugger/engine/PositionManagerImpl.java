@@ -116,52 +116,31 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
-      final String signature = location.method().signature();
-      final String name = location.method().name();
-      if(location.declaringType() == null) return -1;
-
-      final String className = location.declaringType().name();
-
-      if(name == null || signature == null) return -1;
-
-      final PsiClass[] compiledClass = new PsiClass[1];
-      final PsiMethod[] compiledMethod = new PsiMethod[1];
-
-      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        public void visitClass(PsiClass aClass) {
-          List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
-          for (Iterator<ReferenceType> iterator = allClasses.iterator(); iterator.hasNext();) {
-            ReferenceType referenceType = iterator.next();
-            if(referenceType.name().equals(className)) {
-              compiledClass[0] = aClass;
-            }
-          }
-
-          aClass.acceptChildren(this);
-        }
-
-        public void visitMethod(PsiMethod method) {
-          try {
-            String methodName = method.isConstructor() ? "<init>" : method.getName();
-            PsiClass containingClass = method.getContainingClass();
-            
-            if(containingClass != null && containingClass.equals(compiledClass[0]) && name.equals(methodName) && JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(signature)) {
-              compiledMethod[0] = method;
-            }
-          }
-          catch (EvaluateException e) {
-            LOG.debug(e);
-          }
-        }
-      };
-      psiFile.accept(visitor);
-      if(compiledMethod [0] != null) {
-        Document document = PsiDocumentManager.getInstance(myDebugProcess.getProject()).getDocument(psiFile);
-        if(document != null){
-          return document.getLineNumber(compiledMethod[0].getTextOffset());
-        }
+      final String methodSignature = location.method().signature();
+      if (methodSignature == null) {
+        return -1;
       }
-      return -1;
+      final String methodName = location.method().name();
+      if(methodName == null) {
+        return -1;
+      }
+      if(location.declaringType() == null) {
+        return -1;
+      }
+
+      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodSignature);
+      psiFile.accept(finder);
+
+      final PsiMethod compiledMethod = finder.getCompiledMethod();
+      if (compiledMethod == null) {
+        return -1;
+      }
+      final Document document = PsiDocumentManager.getInstance(myDebugProcess.getProject()).getDocument(psiFile);
+      if(document == null){
+        return -1;
+      }
+
+      return document.getLineNumber(finder.getCompiledMethod().getTextOffset());
     }
 
     return lineNumber;
@@ -197,34 +176,41 @@ public class PositionManagerImpl implements PositionManager {
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
     final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
 
-    if(psiClass == null) return (List<ReferenceType>)Collections.EMPTY_LIST;
+    if(psiClass == null) {
+      return (List<ReferenceType>)Collections.EMPTY_LIST;
+    }
 
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>> () {
       public List<ReferenceType> compute() {
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-          PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
-          if(parentNonLocal == null && psiClass != null) {
+          final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
+          if(parentNonLocal == null) {
             LOG.assertTrue(false, "Local class has no non-local parent");
             return (List<ReferenceType>)Collections.EMPTY_LIST;
           }
-          String name = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
-          List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(name);
-          return findNested(outer, classPosition);
-        } else {
-          String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
-          return myDebugProcess.getVirtualMachineProxy().classesByName(name);
+          final String parentClassName = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
+          final List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
+          final List<ReferenceType> result = new ArrayList<ReferenceType>();
+          findNested(outer, classPosition, result);
+          return result;
+        }
+        else {
+          final String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          return myDebugProcess.getVirtualMachineProxy().classesByName(className);
         }
       }
     });
   }
 
-  private List<ReferenceType> findNested(List<ReferenceType> outer, SourcePosition classPosition) {
-    List<ReferenceType> result = new ArrayList<ReferenceType>();
-
+  private void findNested(List<ReferenceType> outer, SourcePosition classPosition, final List<ReferenceType> result) {
+    if (outer.size() == 0) {
+      return;
+    }
     for (Iterator<ReferenceType> iterator = outer.iterator(); iterator.hasNext();) {
       ReferenceType referenceType = iterator.next();
       if(referenceType.isPrepared()) {
-        result.addAll(findNested((List<ReferenceType>)referenceType.nestedTypes(), classPosition));
+        final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(referenceType);
+        findNested(nested, classPosition, result);
 
         try {
           if(referenceType.locationsOfLine(classPosition.getLine() + 1).size() > 0) {
@@ -235,6 +221,55 @@ public class PositionManagerImpl implements PositionManager {
         }
       }
     }
-    return result;
+  }
+
+  private class MethodFinder extends PsiRecursiveElementVisitor {
+    private final String myClassName;
+    private PsiClass myCompiledClass;
+    private final String myMethodSignature;
+    private PsiMethod myCompiledMethod;
+
+    public MethodFinder(final String className, final String methodSignature) {
+      myClassName = className;
+      myMethodSignature = methodSignature;
+    }
+
+    public void visitClass(PsiClass aClass) {
+      final List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
+      for (Iterator<ReferenceType> iterator = allClasses.iterator(); iterator.hasNext();) {
+        ReferenceType referenceType = iterator.next();
+        if(referenceType.name().equals(myClassName)) {
+          myCompiledClass = aClass;
+        }
+      }
+
+      aClass.acceptChildren(this);
+    }
+
+    public void visitMethod(PsiMethod method) {
+      try {
+        String methodName = method.isConstructor() ? "<init>" : method.getName();
+        PsiClass containingClass = method.getContainingClass();
+
+        if(containingClass != null &&
+           containingClass.equals(myCompiledClass) &&
+           methodName.equals(methodName) &&
+           JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
+
+          myCompiledMethod = method;
+        }
+      }
+      catch (EvaluateException e) {
+        LOG.debug(e);
+      }
+    }
+
+    public PsiClass getCompiledClass() {
+      return myCompiledClass;
+    }
+
+    public PsiMethod getCompiledMethod() {
+      return myCompiledMethod;
+    }
   }
 }

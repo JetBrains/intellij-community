@@ -7,8 +7,10 @@ package com.intellij.debugger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 
 /**
  * User: lex
@@ -81,7 +83,8 @@ public abstract class SourcePosition {
   public static SourcePosition createFromOffset(final PsiFile file, final int offset) {
     return new SourcePositionCache(file) {
       protected int calcLine() {
-        return StringUtil.offsetToLineNumber(file.getText(), offset);
+        final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        return document.getLineNumber(offset);
       }
 
       protected int calcOffset() {
