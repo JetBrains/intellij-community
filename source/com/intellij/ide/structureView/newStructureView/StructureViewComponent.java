@@ -607,12 +607,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         return null;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-      Object element = descriptor.getElement();
-      //if (element instanceof PropertyElement) {
-      //  PsiElement[] elements = ((PropertyElement)element).getPsiElements();
-      //  if (elements[0].isValid()) return elements[0];
-      //}
+      AbstractTreeNode descriptor = (AbstractTreeNode)node.getUserObject();
+      Object element = descriptor.getValue();
+      if (element instanceof StructureViewTreeElement) {
+        element = ((StructureViewTreeElement)element).getValue();
+      }
       if (!(element instanceof PsiElement))
       {
         return null;

@@ -370,5 +370,6 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getFieldPresentation(this);
   }
+
 }
 
