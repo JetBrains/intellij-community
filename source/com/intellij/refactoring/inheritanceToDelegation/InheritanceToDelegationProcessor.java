@@ -28,10 +28,7 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
@@ -825,7 +822,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
     manager.showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
-                       UsageInfo2UsageAdapter.convert(usages),
+                       UsageInfoToUsageConverter.convert(usages),
                        presentation);
 
     WindowManager.getInstance().getStatusBar(myProject).setInfo("Instances upcasted to java.lang.Object found");

@@ -375,25 +375,33 @@ public class UsageViewImpl implements UsageView {
   }
 
   public void appendUsage(Usage usage) {
-    UsageNode node = myBuilder.appendUsage(usage);
-    if (myUsageNodes.size() == 0) { //first usage
-      TreePath usagePath = new TreePath(node.getPath());
-      myTree.expandPath(usagePath.getParentPath());
-      myTree.setSelectionPath(usagePath);
+    final UsageNode node = myBuilder.appendUsage(usage);
+    if (node != null) {
+      if (myUsageNodes.size() == 0) { //first usage
+        TreePath usagePath = new TreePath(node.getPath());
+        myTree.expandPath(usagePath.getParentPath());
+        myTree.setSelectionPath(usagePath);
+      }
     }
     myUsageNodes.put(usage, node);
   }
 
   public void includeUsages(Usage[] usages) {
     for (int i = 0; i < usages.length; i++) {
-      myUsageNodes.get(usages[i]).setUsageExcluded(false);
+      final UsageNode node = myUsageNodes.get(usages[i]);
+      if (node != null) {
+        node.setUsageExcluded(false);
+      }
     }
     updateImmediately();
   }
 
   public void excludeUsages(Usage[] usages) {
     for (int i = 0; i < usages.length; i++) {
-      myUsageNodes.get(usages[i]).setUsageExcluded(true);
+      final UsageNode node = myUsageNodes.get(usages[i]);
+      if (node != null) {
+        node.setUsageExcluded(true);
+      }
     }
     updateImmediately();
   }
@@ -560,15 +568,14 @@ public class UsageViewImpl implements UsageView {
   }
 
   private Set<Usage> getReadOnlyUsages() {
-    Set<Usage> result = new HashSet<Usage>();
-    Collection<UsageNode> usageNodes = myUsageNodes.values();
-    for (Iterator<UsageNode> i = usageNodes.iterator(); i.hasNext();) {
-      UsageNode node = i.next();
-      if (node.getUsage().isReadOnly()) {
-        result.add(node.getUsage());
+    final Set<Usage> result = new HashSet<Usage>();
+    final Collection<Usage> usages = myUsageNodes.keySet();
+    for (Iterator<Usage> i = usages.iterator(); i.hasNext();) {
+      Usage usage = i.next();
+      if (usage.isReadOnly()) {
+        result.add(usage);
       }
     }
-
     return result;
   }
 
@@ -594,8 +601,13 @@ public class UsageViewImpl implements UsageView {
     Set<Usage> result = new HashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
     for (Iterator<UsageNode> i = usageNodes.iterator(); i.hasNext();) {
-      UsageNode node = i.next();
-      if (node.isExcluded()) result.add(node.getUsage());
+      final UsageNode node = i.next();
+      if (node == null) {
+        continue;
+      }
+      if (node.isExcluded()) {
+        result.add(node.getUsage());
+      }
     }
 
     return result;

@@ -91,7 +91,7 @@ public class UsagesPanel extends JPanel {
 
   private void showUsages(final UsageInfo[] usageInfos) {
     try {
-      Usage[] usages = UsageInfo2UsageAdapter.convert(usageInfos);
+      Usage[] usages = UsageInfoToUsageConverter.convert(usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString("Usages of the right tree scope selection in the left tree scope selection");
       UsageView usageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],

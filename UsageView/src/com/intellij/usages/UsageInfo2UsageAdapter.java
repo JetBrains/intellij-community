@@ -17,11 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -48,15 +46,13 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   private int myLineNumber;
   private int myColumnNumber;
   private PsiFile myPsiFile;
-  private Icon myIcon;
+  protected Icon myIcon;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
-  private boolean myShowReadAccessIcon;
-  private boolean myShowWriteAccessIcon;
   private TextChunk[] myTextChunks;
   private Document myDocument;
   private EditorColorsScheme myColorsScheme;
 
-  public UsageInfo2UsageAdapter(UsageInfo usageInfo) {
+  public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
     myUsageInfo = usageInfo;
     PsiElement element = myUsageInfo.getElement();
@@ -64,8 +60,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     Project project = element.getProject();
     myDocument = PsiDocumentManager.getInstance(project).getDocument(myPsiFile);
 
-    myShowReadAccessIcon = false; // TODO:
-    myShowWriteAccessIcon = false;
+    final PsiElement psiElement = usageInfo.getElement();
 
     TextRange range = element.getTextRange();
     int startOffset = range.getStartOffset() + usageInfo.startOffset;
@@ -76,8 +71,11 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
     myColumnNumber = startOffset - lineStartOffset;
 
-    LOG.assertTrue(endOffset <= myDocument.getTextLength(), "Invalid usage info, psiElement:" + usageInfo.getElement()
-                                                            + " end offset: " + endOffset + " psiFile: " + myPsiFile.getName());
+    if (endOffset > myDocument.getTextLength()) {
+      LOG.assertTrue(false,
+        "Invalid usage info, psiElement:" + psiElement + " end offset: " + endOffset + " psiFile: " + myPsiFile.getName()
+      );
+    }
 
     myRangeMarkers.add(myDocument.createRangeMarker(startOffset, endOffset));
 
@@ -86,16 +84,6 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
     else {
       myIcon = element.getIcon(0);
-      if (myIcon == null) {
-        if (myShowReadAccessIcon || myShowWriteAccessIcon) {
-          if (myShowWriteAccessIcon) {
-            myIcon = Icons.VARIABLE_WRITE_ACCESS;           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-          }
-          else {
-            myIcon = Icons.VARIABLE_READ_ACCESS;            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-          }
-        }
-      }
     }
 
     initChunks();
@@ -374,15 +362,6 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public boolean isNonCodeUsage() {
     return myUsageInfo.isNonCodeUsage;
-  }
-
-  public static Usage[] convert(UsageInfo[] usageInfos) {
-    Usage[] usages = new Usage[usageInfos.length];
-    for (int i = 0; i < usages.length; i++) {
-      usages[i] = new UsageInfo2UsageAdapter(usageInfos[i]);
-    }
-
-    return usages;
   }
 
   public UsageInfo getUsageInfo() {

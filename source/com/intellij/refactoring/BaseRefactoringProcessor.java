@@ -204,7 +204,7 @@ public abstract class BaseRefactoringProcessor {
             }
 
             UsageInfo[] usageInfos = viewDescriptor.getUsages();
-            final Usage[] usages = UsageInfo2UsageAdapter.convert(usageInfos);
+            final Usage[] usages = UsageInfoToUsageConverter.convert(usageInfos);
 
             for (int i = 0; i < usages.length; i++) {
               Usage usage = usages[i];

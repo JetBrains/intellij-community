@@ -537,9 +537,7 @@ public class FindUsagesManager {
     }
   }
 
-  private UsageSearcher getUsageSearcher(final PsiElement[] elementsToSearch,
-                                         final FindUsagesOptions options,
-                                         final PsiFile scopeFile) {
+  private UsageSearcher getUsageSearcher(final PsiElement[] elementsToSearch, final FindUsagesOptions options, final PsiFile scopeFile) {
     return new UsageSearcher() {
       public void generate(final Processor<Usage> processor) {
         if (scopeFile != null) {
@@ -549,10 +547,10 @@ public class FindUsagesManager {
           final PsiElement elementToSearch = elementsToSearch[i];
           if (elementToSearch != null && elementToSearch.isValid()) {
             FindUsagesUtil.processUsages(elementToSearch, new Processor<UsageInfo>() {
-                                           public boolean process(UsageInfo usageInfo) {
-                                             return processor.process(new UsageInfo2UsageAdapter(usageInfo));
-                                           }
-                                         }, options);
+              public boolean process(UsageInfo usageInfo) {
+                return processor.process(UsageInfoToUsageConverter.convert(usageInfo));
+              }
+            }, options);
           }
         }
       }

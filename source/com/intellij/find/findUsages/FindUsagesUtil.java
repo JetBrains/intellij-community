@@ -37,7 +37,8 @@ public class FindUsagesUtil {
         else{
           addElementUsages(element, new Processor<UsageInfo>() {
             public boolean process(UsageInfo info) {
-              boolean isWrite = isAccessedForWriting(info.getElement());
+              final PsiElement element = info.getElement();
+              boolean isWrite = (element instanceof PsiExpression)? PsiUtil.isAccessedForWriting(((PsiExpression)element)) : false;
               if (isWrite == options.isWriteAccess) {
                 if (!processor.process(info)) return false;
               }
@@ -577,23 +578,4 @@ public class FindUsagesUtil {
     }
     return true;
   }
-
-  public static boolean isAccessedForWriting (PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referent = (PsiReferenceExpression)element;
-      //[ven] TODO: make a separate highlighting feature
-      /*if (referent.getParent() instanceof PsiArrayAccessExpression) {
-        PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)referent.getParent();
-        while (arrayAccess.getParent() instanceof PsiArrayAccessExpression) arrayAccess =
-                                                                            (PsiArrayAccessExpression)arrayAccess.getParent();
-        return PsiUtil.isAccessedForWriting(arrayAccess);
-      }*/
-
-      return PsiUtil.isAccessedForWriting(referent);
-    }
-
-    return false;
-  }
-
-
 }
