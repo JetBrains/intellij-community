@@ -64,7 +64,7 @@ public abstract class ProjectViewSelectInTarget implements SelectInTarget {
     if (!(parent instanceof PsiFile)) return false;
     final VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
     if (virtualFile == null) return false;
-    return virtualFile.getFileType() == StdFileTypes.JAVA;
+    return virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS;
   }
 
   public String getToolWindowId() {
