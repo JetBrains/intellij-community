@@ -70,8 +70,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     while(true){
       if (start == 0) break;
       char c = chars.charAt(start - 1);
-      if (Character.isWhitespace(c)) break;
-      //if (!Character.isJavaIdentifierPart(c)) break;
+      if (!Character.isJavaIdentifierPart(c)) break;
       start--;
     }
     return chars.subSequence(start, offset).toString();
