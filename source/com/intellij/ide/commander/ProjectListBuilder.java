@@ -1,23 +1,23 @@
 package com.intellij.ide.commander;
 
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ArrayList;
 
 public class ProjectListBuilder extends AbstractListBuilder {
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
@@ -155,12 +155,14 @@ public class ProjectListBuilder extends AbstractListBuilder {
         return;
       }
       final Object element = getParentElement();
-      if (element instanceof PsiElement){
-        if (!((PsiElement)element).isValid()){
+      if (element instanceof ProjectViewNode && ((ProjectViewNode)element).getValue() instanceof PsiElement){
+        PsiElement psiElement = (PsiElement)((ProjectViewNode)element).getValue();
+
+        if (!psiElement.isValid()){
           addUpdateRequest();
           return;
         }
-        PsiElement psiElement = (PsiElement)element;
+
         PsiElement pparent = parent.getParent();
         if (pparent instanceof PsiFile){
           pparent = pparent.getParent();

@@ -121,7 +121,13 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   }
 
   public String getTestPresentation() {
-    return myValue == null ? "" : myValue.toString();
+    if (myName != null) {
+      return myName;
+    } else if (getValue() != null){
+      return getValue().toString();
+    } else {
+      return null;
+    }
   }
 
   public ItemPresentation getPresentation() {
