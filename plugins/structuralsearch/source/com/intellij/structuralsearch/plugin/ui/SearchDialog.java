@@ -3,9 +3,8 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindSettings;
+import com.intellij.find.FindProgressIndicator;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -17,8 +16,10 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,8 +27,8 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.usageView.UsageView;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.*;
+import com.intellij.util.Processor;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -62,12 +63,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected static final String USER_DEFINED = "user defined";
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
-  protected UsageView usageView;
   private boolean useLastConfiguration;
-  protected StructuralSearchViewDescriptor descriptor;
+
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
   private static String ourFileType = "java";
+
+  protected UsageViewContext createUsageViewContext(Configuration configuration) {
+    return new UsageViewContext(searchContext, configuration);
+  }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
     this.useLastConfiguration = useLastConfiguration;
@@ -254,19 +258,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
   }
 
-  protected StructuralSearchViewDescriptor createDescriptor(SearchContext context, Configuration config) {
-    return new StructuralSearchViewDescriptor(
-      config.getMatchOptions().getSearchPattern(), new SearchCommand(context, config)
-    );
-  }
-
   protected void runAction(final Configuration config, final SearchContext searchContext) {
     if (searchIncrementally.isSelected()) {
       NavigateSearchResultsDialog resultsDialog = createResultsNavigator(searchContext, config);
 
       DoSearchAction.execute(searchContext.getProject(), resultsDialog, config);
     } else {
-      descriptor = createDescriptor(searchContext,config);
       createUsageView(searchContext, config);
     }
   }
@@ -277,30 +274,88 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void createUsageView(final SearchContext searchContext, final Configuration config) {
-    usageView = UsageViewManager.getInstance(searchContext.getProject()).addContent(
-      UIUtil.createSearchResultsTitle(config),
-      descriptor,
-      true,
-      openInNewTab.isSelected(),
-      true,
-      null
+    com.intellij.usages.UsageViewManager manager = searchContext.getProject().getComponent(com.intellij.usages.UsageViewManager.class);
+
+    assert manager!=null;
+
+    final UsageViewContext context = createUsageViewContext(config);
+    final UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setOpenInNewTab(openInNewTab.isSelected());
+    presentation.setScopeText(config.getMatchOptions().getScope().getDisplayName());
+    context.configure(presentation);
+
+    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    processPresentation.setShowNotFoundMessage(true);
+    processPresentation.setShowPanelIfOnlyOneUsage(true);
+
+    processPresentation.setProgressIndicatorFactory(
+      new Factory<ProgressIndicator>() {
+        public ProgressIndicator create() {
+          return new FindProgressIndicator(searchContext.getProject(), presentation.getScopeText()) {
+            public void cancel() {
+              context.getCommand().stopAsyncSearch();
+              super.cancel();
+            }
+          };
+        }
+      }
     );
 
-    final AnAction replaceSelected = new AnAction() {
-      {
-        getTemplatePresentation().setText("Edit &Query...");
+    processPresentation.addNotFoundAction(
+      new AbstractAction("Edit Query") {
+        {
+          putValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY,"Edit &Query");
+        }
+        public void actionPerformed(ActionEvent e) {
+          UIUtil.invokeActionAnotherTime(config,searchContext);
+        }
       }
-      public void actionPerformed(AnActionEvent e) {
-        usageView.dispose();
-        UIUtil.invokeActionAnotherTime(config,searchContext);
-      }
+    );
 
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!usageView.isInAsyncUpdate());
-        super.update(e);    //To change body of overridden methods use File | Settings | File Templates.
+    manager.searchAndShowUsages(
+      new UsageTarget[] {
+        context.getTarget()
+      },
+      new Factory<UsageSearcher>() {
+        public UsageSearcher create() {
+          return new UsageSearcher() {
+            public void generate(final Processor<Usage> processor) {
+              context.getCommand().findUsages(processor
+              );
+            }
+          };
+        }
+      },
+      processPresentation,
+      presentation,
+      new com.intellij.usages.UsageViewManager.UsageViewStateListener() {
+        public void usageViewCreated(com.intellij.usages.UsageView usageView) {
+          context.setUsageView(usageView);
+          configureActions(context);
+        }
+
+        public void findingUsagesFinished() {
+        }
       }
-    };
-    usageView.addButton(0, replaceSelected);
+    );
+  }
+
+  protected void configureActions(final UsageViewContext context) {
+    context.getUsageView().addPerformOperationAction(
+      new Runnable() {
+       public void run() {
+          SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+              UIUtil.invokeActionAnotherTime(context.getConfiguration(),searchContext);
+            }
+          });
+       }
+      },
+      "Edit Query",
+      null,
+      "Edit Query",
+      'Q'
+    );
   }
 
   public SearchDialog(SearchContext _searchContext) {
@@ -666,12 +721,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   private FileType getFileTypeByString(String ourFileType) {
-    if (ourFileType.equals("java"))
+    if (ourFileType.equals("java")) {
       return StdFileTypes.JAVA;
-    else if (ourFileType.equals("html"))
+    }
+    else if (ourFileType.equals("html")) {
       return StdFileTypes.HTML;
-    else
+    }
+    else {
       return StdFileTypes.XML;
+    }
   }
 
   protected boolean isSearchOnDemandEnabled() {
@@ -689,7 +747,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected void dispose() {
     Configuration.setActiveCreator(null);
 
-    // this will remove from excluded
+    // this will remove from myExcludedSet
     DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(
       PsiDocumentManager.getInstance(searchContext.getProject()).getPsiFile(
         searchCriteriaEdit.getDocument()

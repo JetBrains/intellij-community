@@ -190,6 +190,7 @@ public class PatternCompiler {
 
       try {
         matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(),false, options.getFileType(), project);
+        if (matchStatements.length==0) throw new MalformedPatternException();
         patternNode = matchStatements[0].getParent();
       } catch (IncorrectOperationException e) {
         throw new MalformedPatternException();

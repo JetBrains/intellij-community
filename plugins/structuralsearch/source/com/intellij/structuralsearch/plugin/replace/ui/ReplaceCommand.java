@@ -2,18 +2,10 @@ package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.openapi.project.Project;
-
-import java.util.List;
-import java.util.ArrayList;
+import com.intellij.usages.Usage;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,17 +15,12 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class ReplaceCommand extends SearchCommand {
-  private List<ReplacementInfo> resultPtrList;
-  private Replacer replacer;
   private ReplaceOptions options;
-  private List<UsageInfo> usages;
 
-  public ReplaceCommand(SearchContext searchContext, Configuration _config) {
-    super(searchContext, _config );
-    options = ((ReplaceConfiguration)_config).getOptions();
-    resultPtrList = new ArrayList<ReplacementInfo>(1);
-    usages = new ArrayList<UsageInfo>(1);
-    replacer = new Replacer(project, options);
+  public ReplaceCommand(Project project, ReplaceUsageViewContext context) {
+    super( project, context );
+    options = ((ReplaceConfiguration)context.getConfiguration()).getOptions();
+
   }
 
   protected void findStarted() {
@@ -48,31 +35,14 @@ public class ReplaceCommand extends SearchCommand {
     super.findEnded();
   }
 
-  protected void foundUsage(MatchResult result, UsageInfo usageInfo) {
-    super.foundUsage(result, usageInfo);
+  protected void foundUsage(MatchResult result, Usage usage) {
+    super.foundUsage(result, usage);
 
-    resultPtrList.add( replacer.buildReplacement(result) );
-    usages.add(usageInfo);
-  }
-
-  public List<ReplacementInfo> getResultPtrList() {
-    return resultPtrList;
-  }
-
-  public List<UsageInfo> getUsages() {
-    return usages;
+    final ReplaceUsageViewContext replaceUsageViewContext = ((ReplaceUsageViewContext)context);
+    replaceUsageViewContext.addReplaceUsage(usage,replaceUsageViewContext.getReplacer().buildReplacement(result));
   }
 
   public ReplaceOptions getOptions() {
     return options;
-  }
-
-  public void reset() {
-    resultPtrList.clear();
-    usages.clear();
-  }
-
-  public Replacer getReplacer() {
-    return replacer;
   }
 }

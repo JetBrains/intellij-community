@@ -84,12 +84,12 @@ public class ConfigurationManager {
 
   public void loadConfigurations(Element element) {
     if (configurations != null) return;
-    List patterns = element.getChildren(SAVE_TAG_NAME);
+    List patterns = element.getChildren();
 
     if (patterns!=null && patterns.size() > 0) {
       for(Iterator i = patterns.iterator();i.hasNext();) {
-        final Configuration config = new SearchConfiguration();
         final Element childElement = (Element)i.next();
+        final Configuration config = childElement.getName().equals(SAVE_TAG_NAME)?(Configuration)new SearchConfiguration():new ReplaceConfiguration();
 
         config.readExternal( childElement );
 
@@ -99,17 +99,6 @@ public class ConfigurationManager {
         } else {
           addConfiguration( config );
         }
-      }
-    }
-
-    patterns = element.getChildren(SAVE_TAG_NAME2);
-
-    if (patterns!=null && patterns.size() > 0) {
-      for(Iterator i = patterns.iterator();i.hasNext();) {
-        final Configuration config = new ReplaceConfiguration();
-
-        config.readExternal( (Element)i.next() );
-        addConfiguration( config );
       }
     }
   }

@@ -1,22 +1,26 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.structuralsearch.plugin.replace.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageView;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 // Class to show the user the request for search
 public class ReplaceDialog extends SearchDialog {
@@ -70,14 +74,6 @@ public class ReplaceDialog extends SearchDialog {
     return "#com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog";
   }
 
-  protected StructuralSearchViewDescriptor createDescriptor(SearchContext context, Configuration config) {
-    return new StructuralReplaceViewDescriptor(
-      config.getMatchOptions().getSearchPattern(),
-      new ReplaceCommand(context, config),
-      replaceCriteriaEdit.getDocument().getText()
-    );
-  }
-
   protected void buildOptions(JPanel searchOptions) {
     super.buildOptions(searchOptions);
     searchOptions.add(
@@ -99,83 +95,102 @@ public class ReplaceDialog extends SearchDialog {
     return resultsDialog;
   }
 
-  private static boolean isValid(UsageInfo info, UsageView usageView) {
-    return !usageView.isExcluded(info) && info.getElement()!=null && info.getElement().isValid();
+  protected UsageViewContext createUsageViewContext(Configuration configuration) {
+    return new ReplaceUsageViewContext(searchContext, configuration);
   }
-  protected void createUsageView(final SearchContext searchContext, Configuration config) {
-    super.createUsageView(searchContext, config);
+
+  private static boolean isValid(UsageInfo2UsageAdapter _info, UsageViewContext context) {
+    final UsageInfo info = _info.getUsageInfo();
+    return !context.isExcluded(_info) && info.getElement()!=null && info.getElement().isValid();
+  }
+
+  protected void configureActions(UsageViewContext _context) {
+    final ReplaceUsageViewContext context = (ReplaceUsageViewContext)_context;
 
     final Runnable replaceRunnable = new Runnable() {
-      public void run() {
-        LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
+          public void run() {
+            LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
+            LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
 
-        doReplace(usageView, (StructuralReplaceViewDescriptor)descriptor);
-        UsageViewManager.getInstance(searchContext.getProject()).closeContent(usageView);
-        lvcsAction.finish();
-      }
-    };
-
-    usageView.addDoProcessAction(replaceRunnable, "Replace All",null,"&Do Replace All");
-
-    final AnAction replaceSelected = new AnAction() {
-      {
-        getTemplatePresentation().setText("Replace S&elected");
-      }
-      public void actionPerformed(AnActionEvent e) {
-        final UsageInfo infos[] = usageView.getSelectedUsages();
-        if (infos==null) return;
-
-        LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
-
-        for(int i=0;i<infos.length;++i) {
-          if (!isValid(infos[i],usageView)) {
-            continue;
+            doReplace(context);
+            context.getUsageView().close();
+            lvcsAction.finish();
           }
-          replaceOne(infos[i], searchContext,false);
+        };
+
+    context.getUsageView().addPerformOperationAction(
+      replaceRunnable,
+      "Replace All",null,"Do Replace All", 'D'
+    );
+
+    final Runnable replaceSelected = new Runnable() {
+      public void run() {
+        final Set<Usage> infos = context.getUsageView().getSelectedUsages();
+        if (infos.isEmpty()) return;
+
+        LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
+        LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
+
+        for(Iterator<Usage> i = infos.iterator();i.hasNext();) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)i.next();
+
+          if (isValid(usage,context)) {
+            ensureFileWritable(usage);
+            replaceOne(usage, context, searchContext.getProject(),false);
+          }
         }
+
         lvcsAction.finish();
       }
+    };
 
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!usageView.isInAsyncUpdate());
-        super.update(e);
+    context.getUsageView().addButtonToLowerPane(
+      replaceSelected,
+      "Replace Selected", 'e'
+    );
+
+    final Runnable previewReplacement = new Runnable() {
+      public void run() {
+        Set<Usage> selection = context.getUsageView().getSelectedUsages();
+
+        if (!selection.isEmpty()) {
+          UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
+
+          if (isValid(usage,context)) {
+            ensureFileWritable(usage);
+
+            replaceOne(usage, context, searchContext.getProject(), true);
+          }
+        }
       }
     };
-    usageView.addButton(1, replaceSelected);
 
-    usageView.addButton(2,new AnAction("P&review Replacement") {
-      public void actionPerformed(AnActionEvent e) {
-        UsageInfo[] selection = usageView.getSelectedUsages();
+    context.getUsageView().addButtonToLowerPane(
+      previewReplacement,
+      "Preview Replacement", 'r'
+    );
 
-        if (selection == null ||
-            selection.length == 0 ||
-            !isValid(selection[0],usageView)
-            ) {
-          return;
-        }
-        UsageInfo info = selection[0];
-
-        replaceOne(info, searchContext,true);
-      }
-    });
+    super.configureActions(_context);
   }
 
-  private void replaceOne(UsageInfo info, final SearchContext searchContext, boolean doConfirm) {
+  private void ensureFileWritable(final UsageInfo2UsageAdapter usage) {
+    final VirtualFile file = usage.getFile();
 
-    StructuralReplaceViewDescriptor replaceDescriptor = ((StructuralReplaceViewDescriptor)descriptor);
+    if (!file.isWritable()) {
+      ReadonlyStatusHandler.getInstance(searchContext.getProject()).ensureFilesWritable(
+        new VirtualFile[] { file }
+      );
+    }
+  }
 
-    int index = replaceDescriptor.getUsagesList().indexOf(info);
-    if (index==-1) return;
-
-    ReplacementInfo replacementInfo = replaceDescriptor.getResultPtrList().get(index);
+  private static void replaceOne(UsageInfo2UsageAdapter info, ReplaceUsageViewContext context, Project project, boolean doConfirm) {
+    ReplacementInfo replacementInfo = context.getUsage2ReplacementInfo().get(info);
     boolean approved;
 
     if (doConfirm) {
       ReplacementPreviewDialog wrapper = new ReplacementPreviewDialog(
-        searchContext.getProject(),
-        info,
+        project,
+        info.getUsageInfo(),
         replacementInfo.getReplacement()
       );
 
@@ -186,27 +201,28 @@ public class ReplaceDialog extends SearchDialog {
     }
 
     if (approved) {
-      usageView.removeUsage(info);
-      replaceDescriptor.getReplacer().replace(replacementInfo);
+      context.getUsageView().removeUsage(info);
+      context.getReplacer().replace(replacementInfo);
+
+      if (context.getUsageView().getUsagesCount() == 0) {
+        context.getUsageView().close();
+      }
     }
   }
 
-  private void doReplace(UsageView view, StructuralReplaceViewDescriptor descriptor) {
-    UsageInfo infos[] = view.getUsages();
-    java.util.List<ReplacementInfo> results = descriptor.getResultPtrList();
+  private static void doReplace(ReplaceUsageViewContext context) {
+    Set<Usage> infos = context.getUsageView().getUsages();
+    java.util.List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
 
-    for(int i = 0; i < infos.length; ++i) {
+    for(Iterator<Usage> i = infos.iterator(); i.hasNext();) {
+      UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)i.next();
 
-      if (!isValid(infos[i],usageView)) {
-        int index = descriptor.getUsagesList().indexOf(infos[i]);
-        if (index!=-1) {
-          results.remove(index);
-          descriptor.getUsagesList().remove(infos[i]);
-        }
+      if (isValid(usage,context)) {
+        results.add(context.getUsage2ReplacementInfo().get(usage));
       }
     }
 
-    descriptor.getReplacer().replaceAll(results);
+    context.getReplacer().replaceAll(results);
   }
 
   public ReplaceDialog(SearchContext _searchContext) {
