@@ -290,6 +290,9 @@ public class HighlightMethodUtil {
 
   //@top
   static HighlightInfo checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_THROWS_DECL)) {
+      return null;
+    }
     if (!(referenceElement.getParent() instanceof PsiReferenceList)) return null;
     final PsiReferenceList referenceList = (PsiReferenceList)referenceElement.getParent();
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
@@ -301,9 +304,6 @@ public class HighlightMethodUtil {
     PsiManager manager = referenceElement.getManager();
     final PsiClassType exceptionType = manager.getElementFactory().createType(referenceElement);
     if (ExceptionUtil.isUncheckedExceptionOrSuperclass(exceptionType)) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_THROWS_DECL)) {
-      return null;
-    }
 
     final PsiCodeBlock body = method.getBody();
     if (body == null) return null;

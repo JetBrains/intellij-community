@@ -5,6 +5,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import gnu.trove.THashSet;
 
 import java.util.*;
 
@@ -172,7 +173,7 @@ public class ExceptionUtil {
       final PsiClass aClass = constructor.getContainingClass();
       final PsiClass superClass = aClass == null ? null : aClass.getSuperClass();
       final PsiMethod[] superConstructors = superClass == null ? PsiMethod.EMPTY_ARRAY : superClass.getConstructors();
-      Collection<PsiClassType> unhandled = new HashSet<PsiClassType>();
+      Set<PsiClassType> unhandled = new HashSet<PsiClassType>();
       for (int i = 0; i < superConstructors.length; i++) {
         PsiMethod superConstructor = superConstructors[i];
         if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) &&
@@ -180,8 +181,7 @@ public class ExceptionUtil {
           final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
           for (int j = 0; j < exceptionTypes.length; j++) {
             PsiClassType exceptionType = exceptionTypes[j];
-            if (!isUncheckedException(exceptionType) &&
-                !isHandled(element, exceptionType, topElement)) {
+            if (!isUncheckedException(exceptionType) && !isHandled(element, exceptionType, topElement)) {
               unhandled.add(exceptionType);
             }
           }
@@ -189,6 +189,23 @@ public class ExceptionUtil {
         }
       }
 
+      // plus all exceptions thrown in instance class initializers
+      if (aClass != null) {
+        final PsiClassInitializer[] initializers = aClass.getInitializers();
+        final Set<PsiClassType> thrownByInitializer = new THashSet<PsiClassType>();
+        for (int i = 0; i < initializers.length; i++) {
+          PsiClassInitializer initializer = initializers[i];
+          if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
+          thrownByInitializer.clear();
+          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer);
+          for (Iterator<PsiClassType> iterator = thrownByInitializer.iterator(); iterator.hasNext();) {
+            PsiClassType thrown = iterator.next();
+            if (!isHandled(constructor.getBody(), thrown, topElement)) {
+              unhandled.add(thrown);
+            }
+          }
+        }
+      }
       unhandledExceptions = unhandled.toArray(new PsiClassType[unhandled.size()]);
     }
 
@@ -333,7 +350,9 @@ public class ExceptionUtil {
     if (aClass == null) return false;
     PsiClass runtimeExceptionClass = aClass.getManager().findClass("java.lang.RuntimeException", searchScope);
     if (runtimeExceptionClass != null &&
-        InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) return true;
+        InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) {
+      return true;
+    }
 
     PsiClass errorClass = aClass.getManager().findClass("java.lang.Error", searchScope);
     if (errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true)) return true;
