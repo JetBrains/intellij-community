@@ -1360,31 +1360,15 @@ public class CompileDriver {
     }
 
     if (nonExistingOutputPaths.size() > 0) {
-      StringBuffer paths = new StringBuffer();
       for (Iterator<File> it = nonExistingOutputPaths.iterator(); it.hasNext();) {
         File file = it.next();
-        if (paths.length() > 0) {
-          paths.append(",\n");
+        final boolean succeeded = file.mkdirs();
+        if (!succeeded) {
+          Messages.showMessageDialog(myProject, "Failed to create directory " + file.getPath(), "Unable To Create Directory", Messages.getErrorIcon());
+          return false;
         }
-        paths.append(file.getPath());
       }
-      final String notExistsMessage = (nonExistingOutputPaths.size() > 1 ?
-                                       "The following output paths do not exist:\n" :
-                                       "The following output path does not exist:\n") +
-                                      paths.toString() +
-                                      "\n\nWould you like to create" + (nonExistingOutputPaths.size() > 1 ? " them " : " it ") + "and continue?";
-      final int answer = Messages.showYesNoDialog(myProject, notExistsMessage, "Output Path Does Not Exist", Messages.getQuestionIcon());
-
-      if (answer == 0) { // yes
-        for (Iterator<File> it = nonExistingOutputPaths.iterator(); it.hasNext();) {
-          File file = it.next();
-          final boolean succeeded = file.mkdirs();
-          if (!succeeded) {
-            Messages.showMessageDialog(myProject, "Failed to create directory " + file.getPath(), "Unable To Create Directory", Messages.getErrorIcon());
-            return false;
-          }
-        }
-        final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+      final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
           public Boolean compute() {
             for (Iterator<File> it = nonExistingOutputPaths.iterator(); it.hasNext();) {
               File file = it.next();
@@ -1396,11 +1380,7 @@ public class CompileDriver {
             return Boolean.TRUE;
           }
         });
-        if (!refreshSuccess.booleanValue()) {
-          return false;
-        }
-      }
-      else {
+      if (!refreshSuccess.booleanValue()) {
         return false;
       }
     }
