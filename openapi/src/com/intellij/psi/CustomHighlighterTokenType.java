@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
 public interface CustomHighlighterTokenType {
   class CustomElementType extends IElementType {
     public CustomElementType(String debugName) {
-      super(debugName);
+      super(debugName, null);
     }
   }
   

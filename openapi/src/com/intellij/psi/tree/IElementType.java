@@ -31,12 +31,12 @@
  */
 package com.intellij.psi.tree;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.intellij.openapi.diagnostic.Logger;
 
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
@@ -52,6 +52,7 @@ public class IElementType {
   };
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   private String myDebugName;
+  private Language myLanguage;
 
   public static IElementType[] enumerate(Predicate p) {
     List matches = new ArrayList();
@@ -65,11 +66,16 @@ public class IElementType {
     return (IElementType[])matches.toArray(new IElementType[matches.size()]);
   }
 
-  public IElementType(String debugName) {
+  public IElementType(String debugName, Language language) {
     myDebugName = debugName;
+    myLanguage = language;
     myIndex = (short) ourCounter++;
     LOG.assertTrue(ourCounter < Short.MAX_VALUE, "Too many element types registered. Out of (short) range.");
     ourRegistry.put(myIndex, this);
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
   }
 
   public final short getIndex() {

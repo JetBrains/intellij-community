@@ -85,7 +85,7 @@ public interface JavaElementType {
   IElementType LABELED_STATEMENT = new IJavaElementType("LABELED_STATEMENT");
   IElementType ASSERT_STATEMENT = new IJavaElementType("ASSERT_STATEMENT");
 
-  IElementType CATCH_SECTION = new IElementType("CATCH_SECTION");
+  IElementType CATCH_SECTION = new IJavaElementType("CATCH_SECTION");
 
   IElementType ANNOTATION_METHOD = new IJavaElementType("ANNOTATION_METHOD");
   IElementType ANNOTATION_ARRAY_INITIALIZER = new IJavaElementType("ANNOTATION_ARRAY_INITIALIZER");

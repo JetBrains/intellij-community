@@ -32,11 +32,10 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -48,8 +47,12 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 
 import javax.swing.*;
 
-public class XHtmlFileType implements FileType {
+public class XHtmlFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
+
+  public XHtmlFileType() {
+    super(new XHTMLLanguage());
+  }
 
   public String getName() {
     return "XHTML";
@@ -65,22 +68,6 @@ public class XHtmlFileType implements FileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public boolean isBinary() {
-    return false;
-  }
-
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  public String getCharset(VirtualFile file) {
-    return null;
-  }
-
-  public SyntaxHighlighter getHighlighter(Project project) {
-    return new XmlFileHighlighter(false,true);
   }
 
   public PsiFile createPsiFile(VirtualFile file, Project project) {

@@ -1,22 +1,21 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenTypeLinks;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.*;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -204,7 +203,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
   private boolean isInternalReference() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
-      if (e.getElementType() instanceof IXmlElementType) {
+      if (e.getElementType() instanceof IXmlLeafElementType) {
         XmlToken token = (XmlToken)SourceTreeToPsiMap.treeElementToPsi(e);
         if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC || token.getTokenType() == XmlToken.XML_DOCTYPE_SYSTEM) {
           return false;

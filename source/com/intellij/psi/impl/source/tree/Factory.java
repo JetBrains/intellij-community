@@ -9,9 +9,9 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspTokenType;
@@ -19,7 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.util.CharTable;
 
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ public class Factory implements Constants {
     if (type == JAVA_FILE_TEXT) {
       element = new JavaFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
     }
-    else if (type instanceof IXmlElementType) {
+    else if (type instanceof IXmlLeafElementType) {
       element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JSP_FILE_TEXT) {

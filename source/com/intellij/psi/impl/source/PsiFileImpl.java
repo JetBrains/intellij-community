@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lang.ASTNode;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -335,4 +335,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public abstract Lexer createLexer();
+
+  public Language getLanguage() {
+    return getFileType().getLanguage();
+  }
 }

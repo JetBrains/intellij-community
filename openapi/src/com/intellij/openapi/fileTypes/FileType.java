@@ -6,6 +6,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -37,8 +38,9 @@ public interface FileType {
 
   FileTypeSupportCapabilities getSupportCapabilities();
 
-
   PseudoTextBuilder getPseudoTextBuilder();
 
   StructureViewModel getStructureViewModel(VirtualFile file, Project project);
+
+  Language getLanguage();
 }

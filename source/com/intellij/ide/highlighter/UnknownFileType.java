@@ -32,11 +32,11 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,6 +96,10 @@ public class UnknownFileType implements FileType {
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
+    return null;
+  }
+
+  public Language getLanguage() {
     return null;
   }
 }

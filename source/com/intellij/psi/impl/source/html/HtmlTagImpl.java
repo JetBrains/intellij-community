@@ -1,15 +1,17 @@
 package com.intellij.psi.impl.source.html;
 
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -100,5 +102,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   public String toString() {
     return "HtmlTag:" + getName();
+  }
+
+  public Language getLanguage() {
+    return StdFileTypes.HTML.getLanguage();
   }
 }

@@ -11,6 +11,6 @@ import com.intellij.psi.tree.IElementType;
  * @author max
  */
 public interface StringEscapesTokenTypes {
-  IElementType VALID_STRING_ESCAPE_TOKEN = new IElementType("VALID_STRING_ESCAPE_TOKEN");
-  IElementType INVALID_STRING_ESCAPE_TOKEN = new IElementType("INVALID_STRING_ESCAPE_TOKEN");
+  IElementType VALID_STRING_ESCAPE_TOKEN = new IElementType("VALID_STRING_ESCAPE_TOKEN", null);
+  IElementType INVALID_STRING_ESCAPE_TOKEN = new IElementType("INVALID_STRING_ESCAPE_TOKEN", null);
 }

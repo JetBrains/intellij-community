@@ -1,21 +1,22 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.ide.util.EditSourceUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -258,5 +259,9 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public ASTNode getNode() {
     return myNode;
+  }
+
+  public Language getLanguage() {
+    return myNode.getElementType().getLanguage();
   }
 }

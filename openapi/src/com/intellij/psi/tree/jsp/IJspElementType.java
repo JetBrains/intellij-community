@@ -31,10 +31,11 @@
  */
 package com.intellij.psi.tree.jsp;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.tree.IElementType;
 
 public class IJspElementType extends IElementType {
   public IJspElementType(String debugName) {
-    super(debugName);
+    super(debugName, StdFileTypes.JSP.getLanguage());
   }
 }

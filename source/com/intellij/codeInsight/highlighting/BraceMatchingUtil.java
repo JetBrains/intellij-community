@@ -12,7 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
@@ -63,7 +63,7 @@ public class BraceMatchingUtil {
       if (tokenType instanceof IJavaElementType) {
         return JAVA_TOKEN_GROUP;
       }
-      else if (tokenType instanceof IXmlElementType) {
+      else if (tokenType instanceof IXmlLeafElementType) {
         return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER || tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
                ? XML_VALUE_DELIMITER_GROUP
                : XML_TAG_TOKEN_GROUP;

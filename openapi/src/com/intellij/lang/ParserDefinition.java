@@ -3,6 +3,7 @@ package com.intellij.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +15,11 @@ import com.intellij.psi.tree.IElementType;
 public interface ParserDefinition {
   Lexer createLexer();
 
-  PsiParser createParser();
+  IElementType getFileNodeType();
 
+  TokenSet getWhitespaceTokens();
+  TokenSet getCommentTokens();
+
+  PsiParser createParser();
   PsiElement createElement(ASTNode node);
 }

@@ -17,12 +17,12 @@ public interface ElementType extends
                              JspElementType,
                              XmlElementType,
                              AspectElementType {
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE");
-  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT");
-  IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT");
-  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT");
-  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER");
-  IElementType GRAMMAR_CHAMELEON = new IElementType("GRAMMAR_CHAMELEON");
+  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", null);
+  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", null);
+  IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", null);
+  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", null);
+  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", null);
+  IElementType GRAMMAR_CHAMELEON = new IElementType("GRAMMAR_CHAMELEON", null);
 
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, JSP_DIRECTIVE_WHITE_SPACE, JSP_ACTION_WHITE_SPACE});
 

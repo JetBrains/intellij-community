@@ -33,29 +33,32 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
-import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
+import com.intellij.psi.xml.XmlFile;
 
 import javax.swing.*;
 
-public class XmlFileType implements FileType {
+public class XmlFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
+
+  public XmlFileType() {
+    super(new XMLLanguage());
+  }
 
   public String getName() {
     return "XML";
@@ -71,22 +74,6 @@ public class XmlFileType implements FileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public boolean isBinary() {
-    return false;
-  }
-
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  public String getCharset(VirtualFile file) {
-    return null;
-  }
-
-  public SyntaxHighlighter getHighlighter(Project project) {
-    return new XmlFileHighlighter();
   }
 
   public PsiFile createPsiFile(VirtualFile file, Project project) {
@@ -117,5 +104,4 @@ public class XmlFileType implements FileType {
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
     return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
   }
-
 }

@@ -29,13 +29,10 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.psi.tree.java;
+package com.intellij.psi.tree.xml;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.tree.IElementType;
-
-public class IJavaElementType extends IElementType {
-  public IJavaElementType(String debugName) {
-    super(debugName, StdFileTypes.JAVA.getLanguage());
+public class IXmlLeafElementType extends IXmlElementType {
+  public IXmlLeafElementType(String debugName) {
+    super(debugName);
   }
 }

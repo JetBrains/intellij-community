@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
@@ -12,6 +14,10 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
   protected TreeElement myMirror = null;
+
+  public Language getLanguage() {
+    return StdFileTypes.JAVA.getLanguage();
+  }
 
   public PsiManager getManager() {
     return getParent().getManager();
@@ -77,7 +83,6 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
       if (myMirror == null) {
         getContainingFile().getText(); // to initialize mirror
       }
-      ;
     }
     return SourceTreeToPsiMap.treeElementToPsi(myMirror);
   }

@@ -1,12 +1,13 @@
 package com.intellij.lang;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.EmptyLexer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +17,25 @@ import com.intellij.psi.PsiMethod;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class Language {
-  public SyntaxHighlighter getSyntaxHighlighter() {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
+
+  private static Map<String, Language> ourRegisteredLanguages = new HashMap<String, Language>();
+  private String myID;
+
+  protected Language(final String ID) {
+    myID = ID;
+    if (ourRegisteredLanguages.containsKey(ID)) {
+      LOG.error("Language '" + ID + "' is already registered");
+      return;
+    }
+    ourRegisteredLanguages.put(ID, this);
+  }
+
+  public static Language findByID(String id) {
+    return ourRegisteredLanguages.get(id);
+  }
+
+  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new PlainSyntaxHighlighter();
   }
 
@@ -28,5 +47,7 @@ public abstract class Language {
     return null;
   }
 
-
+  public String toString() {
+    return "Language: " + myID;
+  }
 }

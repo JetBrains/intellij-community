@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -13,7 +15,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
@@ -183,5 +184,9 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
 
   public Project getProject() {
     return getManager().getProject();
+  }
+
+  public Language getLanguage() {
+    return getElementType().getLanguage();
   }
 }

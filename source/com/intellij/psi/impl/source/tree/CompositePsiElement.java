@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +21,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
@@ -235,5 +236,9 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   public Project getProject() {
     return getManager().getProject();
+  }
+
+  public Language getLanguage() {
+    return getElementType().getLanguage();
   }
 }

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.tree.xml.IXmlLeafElementType;
 
 public class CodeBlockUtil {
   private static final int JAVA_BLOCK_BRACE = 1,
@@ -33,7 +33,7 @@ public class CodeBlockUtil {
     final IElementType type = iterator.getTokenType();
     if (type instanceof IJavaElementType) {
       return JAVA_BLOCK_BRACE;
-    } else if (type instanceof IXmlElementType) {
+    } else if (type instanceof IXmlLeafElementType) {
       return XML_TAG_BRACE;
     } else if (type instanceof IJspElementType) {
       return JSP_TAG_BRACE;

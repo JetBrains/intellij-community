@@ -34,15 +34,15 @@ package com.intellij.ide.highlighter;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
@@ -53,8 +53,12 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 
 import javax.swing.*;
 
-public class JavaFileType implements FileType {
+public class JavaFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/java.png");
+
+  public JavaFileType() {
+    super(new JavaLanguage());
+  }
 
   public String getName() {
     return "JAVA";
@@ -70,23 +74,6 @@ public class JavaFileType implements FileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public boolean isBinary() {
-    return false;
-  }
-
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  public String getCharset(VirtualFile file) {
-    return null;
-  }
-
-  public SyntaxHighlighter getHighlighter(Project project) {
-    LanguageLevel level = project != null ? PsiManager.getInstance(project).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
-    return new JavaFileHighlighter(level);
   }
 
   public PsiFile createPsiFile(VirtualFile file, Project project) {

@@ -4,6 +4,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -17,6 +18,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
   Project getProject();
+
+  Language getLanguage();
 
   PsiManager getManager();
 
