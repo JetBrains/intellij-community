@@ -9,9 +9,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.impl.analysis.AlternativeWay;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,7 +29,7 @@ public class RefManager {
   private final RefProject myRefProject;
   private final PsiManager myPsiManager;
   private HashMap<PsiElement, RefElement> myRefTable;
-  private HashMap myPackages;
+  private HashMap<String,RefPackage> myPackages;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private PsiMethod myAppMainPattern;
@@ -142,10 +139,10 @@ public class RefManager {
 
   public RefPackage getPackage(String packageName) {
     if (myPackages == null) {
-      myPackages = new HashMap();
+      myPackages = new HashMap<String, RefPackage>();
     }
 
-    RefPackage refPackage = (RefPackage)myPackages.get(packageName);
+    RefPackage refPackage = myPackages.get(packageName);
     if (refPackage == null) {
       refPackage = new RefPackage(packageName);
       myPackages.put(packageName, refPackage);
@@ -177,8 +174,8 @@ public class RefManager {
 
     //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
     Set<PsiElement> keys = refTable.keySet();
-    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-      PsiElement psiElement = (PsiElement)iterator.next();
+    for (Iterator<PsiElement> iterator = keys.iterator(); iterator.hasNext();) {
+      PsiElement psiElement = iterator.next();
       if (refTable.get(psiElement) == refElem) {
         refTable.remove(psiElement);
         return;
@@ -199,18 +196,6 @@ public class RefManager {
     }
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-    }
-
-    public void visitFile(PsiFile file) {
-      if (file instanceof PsiJavaFile && !(file instanceof PsiCompiledElement)) {
-        InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-        manager.incrementJobDoneAmount(InspectionManagerEx.BUILD_GRAPH, file.getVirtualFile().getPresentableUrl());
-        if (RefUtil.belongsToScope(file, RefManager.this)) {
-          AlternativeWay.processFile(file);
-          super.visitFile(file);
-          myPsiManager.dropResolveCaches();
-        }
-      }
     }
 
     public void visitClass(PsiClass aClass) {

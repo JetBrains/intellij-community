@@ -5,7 +5,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
@@ -153,8 +155,17 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return myCanonicalText;
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode) {
-    final PsiElement resolve = resolve();
+  private static class Resolver implements ResolveCache.GenericsResolver {
+    public static Resolver INSTANCE = new Resolver();
+
+    public ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+      final ResolveResult resolveResult = ((ClsJavaCodeReferenceElementImpl)ref).advancedResolveImpl();
+      return resolveResult.getElement() == null ? ResolveResult.EMPTY_ARRAY : new ResolveResult[] {resolveResult};
+    }
+  }
+
+  private ResolveResult advancedResolveImpl() {
+    final PsiElement resolve = resolveElement();
     if (resolve instanceof PsiClass) {
       final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
       final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiClass)resolve);
@@ -176,13 +187,23 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
+
+  public ResolveResult advancedResolve(boolean incompleteCode) {
+    final ResolveResult[] results = multiResolve(incompleteCode);
+    if (results.length == 1) return results[0];
+    return ResolveResult.EMPTY;
+  }
+
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveResult result = advancedResolve(incompleteCode);
-    if (result != ResolveResult.EMPTY) return new ResolveResult[]{result};
-    return ResolveResult.EMPTY_ARRAY;
+    final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
+    return resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
   }
 
   public PsiElement resolve() {
+    return advancedResolve(false).getElement();
+  }
+
+  private PsiElement resolveElement() {
     PsiElement element = getParent();
     while(!(element instanceof PsiClass) || element instanceof PsiTypeParameter){
       if(element instanceof PsiMethod){

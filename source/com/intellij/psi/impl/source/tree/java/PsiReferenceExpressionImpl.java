@@ -80,12 +80,6 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return getQualifierExpression();
   }
 
-  // very special method
-  public void setCachedResolveResult(PsiElement result, Boolean problemWithAccess, Boolean problemWithStatic) {
-    ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
-    resolveCache.setCachedJavaResolve(this, new ResolveResult[]{new CandidateInfo(result, PsiSubstitutor.EMPTY)}, true, true);
-  }
-
   public PsiReference getReference() {
     return this;
   }

@@ -151,8 +151,8 @@ public class ResolveCache {
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
   }
 
-  public void setCachedJavaResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean ic){
-    int index = getIndex(physical, ic);
+  private void setCachedJavaResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean incomplete){
+    int index = getIndex(physical, incomplete);
     myJavaResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
   }
 

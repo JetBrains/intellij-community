@@ -136,12 +136,6 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return false;
   }
 
-  // very special method
-  public void setCachedResolveResult(PsiElement result, Boolean problemWithAccess, Boolean problemWithStatic) {
-    ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
-    resolveCache.setCachedJavaResolve(this, new ResolveResult[]{new CandidateInfo(result, PsiSubstitutor.EMPTY)}, true, true);
-  }
-
   public String getMirrorText() {
     return getText();
   }
