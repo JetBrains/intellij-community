@@ -250,7 +250,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     if (variable instanceof PsiParameter) {
       final PsiElement declScope = ((PsiParameter)variable).getDeclarationScope();
-      if (declScope instanceof PsiTryStatement) {
+      if (declScope instanceof PsiCatchSection) {
         markNode(type);
       }
       else if (declScope instanceof PsiForeachStatement) {

@@ -76,7 +76,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     if (psiParameter != null) {
       final PsiElement scope = psiParameter.getDeclarationScope();
       if (scope instanceof PsiMethod) return UsageType.CLASS_METHOD_PARAMETER_DECLARATION;
-      if (scope instanceof PsiTryStatement) return UsageType.CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION;
+      if (scope instanceof PsiCatchSection) return UsageType.CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION;
       if (scope instanceof PsiForeachStatement) return UsageType.CLASS_LOCAL_VAR_DECLARATION;
       return UsageType.UNCLASSIFIED;
     }

@@ -121,7 +121,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
       return parent;
     }
     else if (parent instanceof PsiCatchSection) {
-      return parent.getParent();
+      return parent;
     }
     else{
       PsiElement[] children = parent.getChildren();

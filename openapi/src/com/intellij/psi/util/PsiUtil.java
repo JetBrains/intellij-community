@@ -336,15 +336,8 @@ public final class PsiUtil {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
-      if (declarationScope instanceof PsiTryStatement) {
-        PsiElement element = variable;
-        while (element != null) {
-          if (element instanceof PsiCodeBlock) {
-            codeBlock = element;
-            break;
-          }
-          element = element.getNextSibling();
-        }
+      if (declarationScope instanceof PsiCatchSection) {
+        codeBlock = ((PsiCatchSection)declarationScope).getCatchBlock();
       }
       else if (declarationScope instanceof PsiForeachStatement) {
         codeBlock = (((PsiForeachStatement)declarationScope)).getBody();

@@ -690,7 +690,7 @@ public abstract class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkCatchParameterIsClass(PsiParameter parameter) {
-    if (parameter.getDeclarationScope() instanceof PsiTryStatement) {
+    if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
       PsiType type = parameter.getType();
       if (type instanceof PsiClassType) {
         PsiClass aClass = ((PsiClassType)type).resolve();

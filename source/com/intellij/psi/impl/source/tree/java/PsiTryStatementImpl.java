@@ -1,15 +1,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 
@@ -128,27 +126,5 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
 
   public String toString() {
     return "PsiTryStatement";
-  }
-
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null){
-      // Outside members should not know about inner elements
-      return true;
-    }
-
-    if (!PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
-
-    PsiCatchSection[] sections = getCatchSections();
-    for(int i = 0; i < sections.length; i++){
-      if (lastParent.equals(sections[i])){
-        PsiParameter parameter = sections[i].getParameter();
-        if (parameter != null && !processor.execute(parameter, substitutor)){
-          return false;
-        }
-      }
-    }
-
-    return true;
   }
 }

@@ -1,13 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author ven
@@ -83,5 +84,22 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
 
     return ChildRole.NONE;
+  }
+
+  public boolean processDeclarations(PsiScopeProcessor processor,
+                                     PsiSubstitutor substitutor,
+                                     PsiElement lastParent,
+                                     PsiElement place) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
+    if (lastParent == null || lastParent.getParent() != this)
+      // Parent element should not see our vars
+      return true;
+
+    final PsiParameter catchParameter = getParameter();
+    if (catchParameter != null) {
+      return processor.execute(catchParameter, substitutor);
+    }
+
+    return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
   }
 }

@@ -577,8 +577,8 @@ public class HighlightUtil {
     PsiIdentifier identifier = variable.getNameIdentifier();
     String name = identifier.getText();
     if (variable instanceof PsiLocalVariable
-        || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiTryStatement
-        || variable instanceof PsiParameter && variable.getParent() instanceof PsiForeachStatement) {
+        || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection
+        || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, new Class[]{PsiFile.class, PsiMethod.class, PsiClassInitializer.class},
                                                      true);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
@@ -852,8 +852,8 @@ public class HighlightUtil {
   //@top
   static HighlightInfo checkExceptionThrownInTry(PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
-    if (!(declarationScope instanceof PsiTryStatement)) return null;
-    PsiTryStatement statement = (PsiTryStatement)declarationScope;
+    if (!(declarationScope instanceof PsiCatchSection)) return null;
+    PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
     PsiClassType[] classes = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
     if (classes == null) classes = PsiClassType.EMPTY_ARRAY;
 
@@ -1098,7 +1098,7 @@ public class HighlightUtil {
 
   //@top
   public static HighlightInfo checkCatchParameterIsThrowable(PsiParameter parameter) {
-    if (parameter.getDeclarationScope() instanceof PsiTryStatement) {
+    if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
       final PsiType type = parameter.getType();
       return checkMustBeThrowable(type, parameter, true);
     }
@@ -1604,11 +1604,11 @@ public class HighlightUtil {
     if (!(element.getParent() instanceof PsiTypeElement)) return null;
     PsiElement catchParameter = element.getParent().getParent();
     if (!(catchParameter instanceof PsiParameter)
-        || !(((PsiParameter)catchParameter).getDeclarationScope() instanceof PsiTryStatement)) {
+        || !(((PsiParameter)catchParameter).getDeclarationScope() instanceof PsiCatchSection)) {
       return null;
     }
-    PsiCatchSection catchSection = (PsiCatchSection)catchParameter.getParent();
-    PsiTryStatement statement = (PsiTryStatement)((PsiParameter)catchParameter).getDeclarationScope();
+    PsiCatchSection catchSection = (PsiCatchSection)((PsiParameter)catchParameter).getDeclarationScope();
+    PsiTryStatement statement = catchSection.getTryStatement();
     PsiCatchSection[] catchSections = statement.getCatchSections();
     int i = ArrayUtil.find(catchSections, catchSection);
     for (i--; i >= 0; i--) {
