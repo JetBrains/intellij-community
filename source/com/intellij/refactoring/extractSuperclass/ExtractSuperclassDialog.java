@@ -5,7 +5,6 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -15,6 +14,7 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -42,7 +42,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   private PsiDirectory myTargetDirectory;
   private JTextField mySourceClassField;
   private JTextField myClassNameField;
-  private final TextFieldWithBrowseButton myTfPackageName;
+  private final ReferenceEditorWithBrowseButton myTfPackageName;
   private PsiClass mySourceClass;
 
   private JavaDocPanel myJavaDocPanel;
@@ -60,7 +60,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     setTitle(ExtractSuperclassHandler.REFACTORING_NAME);
     mySourceClass = sourceClass;
 
-    myTfPackageName = new TextFieldWithBrowseButton();
+    myTfPackageName = new ReferenceEditorWithBrowseButton(null, targetPackageName, PsiManager.getInstance(myProject), false);
 
     init();
     updateDialogForExtractSuperclass();
@@ -68,14 +68,14 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList list = new ArrayList(myMemberInfos.length);
+    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
     for (int idx = 0; idx < myMemberInfos.length; idx++) {
       MemberInfo info = myMemberInfos[idx];
       if (info.isChecked()) {
         list.add(info);
       }
     }
-    return (MemberInfo[])list.toArray(new MemberInfo[list.size()]);
+    return list.toArray(new MemberInfo[list.size()]);
   }
 
   InterfaceContainmentVerifier getContainmentVerifier() {

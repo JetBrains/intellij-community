@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -17,6 +16,7 @@ import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   private MemberInfo[] myMemberInfos;
 
   private JTextField myInterfaceNameField;
-  private final TextFieldWithBrowseButton myPackageNameField;
+  private final ReferenceEditorWithBrowseButton myPackageNameField;
   private JTextField mySourceClassField;
 
   private JavaDocPanel myJavaDocPanel;
@@ -47,7 +47,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     myProject = project;
     myClass = aClass;
 
-    myPackageNameField = new TextFieldWithBrowseButton();
+    myPackageNameField = new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(myProject), false);
     init();
   }
 
