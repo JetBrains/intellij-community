@@ -656,11 +656,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return myTreeModel;
   }
 
-  public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
-    return navigateToSelectedElement(requestFocus);
-  }
-
   public boolean navigateToSelectedElement(boolean requestFocus) {
-    return navigateToSelectedElement(requestFocus);
+    return select(myTreeModel.getCurrentEditorElement(), requestFocus);
   }
 }
