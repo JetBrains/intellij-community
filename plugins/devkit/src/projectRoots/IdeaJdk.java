@@ -167,6 +167,11 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public static void addDocs(File file, SdkModificator sdkModificator) {
+    File docFile = new File(new File(file, "help"), "openapi");
+    if (docFile.exists() && docFile.isDirectory()){
+      sdkModificator.addRoot(LocalFileSystem.getInstance().findFileByIoFile(docFile), ProjectRootType.JAVADOC);
+      return;
+    }
     File jarfile = new File(new File(file, "help"), "openapihelp.jar");
     if (jarfile.exists()) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
