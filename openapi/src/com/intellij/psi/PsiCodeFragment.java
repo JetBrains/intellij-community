@@ -16,6 +16,9 @@ public interface PsiCodeFragment extends PsiFile {
   void setVisibilityChecker(VisibilityChecker checker);
   VisibilityChecker getVisibilityChecker();
 
+  void setExceptionHandler(ExceptionHandler checker);
+  ExceptionHandler getExceptionHandler();
+
   interface VisibilityChecker {
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
@@ -34,5 +37,9 @@ public interface PsiCodeFragment extends PsiFile {
         return myName;
       }
     }
+  }
+
+  interface ExceptionHandler {
+    boolean isHandledException(PsiClassType exceptionType);
   }
 }

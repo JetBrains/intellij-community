@@ -28,6 +28,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private PsiType myThisType;
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
+  private ExceptionHandler myExceptionHandler;
 
   public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
@@ -247,5 +248,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
       Document document = myDocument;
       return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
     }
+  }
+
+  public ExceptionHandler getExceptionHandler() {
+    return myExceptionHandler;
+  }
+
+  public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
+    myExceptionHandler = exceptionHandler;
   }
 }

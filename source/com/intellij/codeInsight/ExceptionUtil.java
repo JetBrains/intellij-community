@@ -408,6 +408,11 @@ public class ExceptionUtil {
         return isHandled(parent, exceptionType, topElement);
       }
     }
+    else if (parent instanceof PsiCodeFragment) {
+      PsiCodeFragment codeFragment = (PsiCodeFragment)parent;
+      if (codeFragment.getExceptionHandler() == null) return false;
+      return codeFragment.getExceptionHandler().isHandledException(exceptionType);
+    }
     else if (parent instanceof JspFile) {
       return true;
     }
