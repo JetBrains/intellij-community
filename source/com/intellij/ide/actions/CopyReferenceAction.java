@@ -7,25 +7,30 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.PasteProvider;
+import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.j2ee.j2eeDom.web.WebRoot;
+import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
@@ -101,7 +106,6 @@ public class CopyReferenceAction extends AnAction {
           public void run() {
             try {
               doInsert(fqn, element, editor, project);
-
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);
@@ -125,21 +129,27 @@ public class CopyReferenceAction extends AnAction {
 
     final int offset = editor.getCaretModel().getOffset();
     fqn = fqn.replace('#', '.');
-    String toInsert = element.getName();
+    String toInsert;
     String suffix = "";
-    if (element instanceof PsiClass) {
+    if (element == null) {
+      toInsert = fqn;
+    }
+    else {
+      toInsert = element.getName();
+      if (element instanceof PsiClass) {
         suffix = " ";
       }
-    else if (element instanceof PsiMethod) {
-      suffix = "()";
-    }
-    final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
-    final PsiExpression expression = factory.createExpressionFromText(toInsert+suffix, file.findElementAt(offset));
-    final PsiReferenceExpression referenceExpression=expression instanceof PsiMethodCallExpression ?
-      ((PsiMethodCallExpression)expression).getMethodExpression() :  expression instanceof PsiReferenceExpression ?
-      (PsiReferenceExpression)expression : null;
-    if (referenceExpression == null || referenceExpression.advancedResolve(true).getElement() != element) {
-      toInsert = fqn;
+      else if (element instanceof PsiMethod) {
+        suffix = "()";
+      }
+      final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      final PsiExpression expression = factory.createExpressionFromText(toInsert+suffix, file.findElementAt(offset));
+      final PsiReferenceExpression referenceExpression=expression instanceof PsiMethodCallExpression ?
+        ((PsiMethodCallExpression)expression).getMethodExpression() :  expression instanceof PsiReferenceExpression ?
+        (PsiReferenceExpression)expression : null;
+      if (referenceExpression == null || referenceExpression.advancedResolve(true).getElement() != element) {
+        toInsert = fqn;
+      }
     }
 
     document.insertString(offset, toInsert+suffix);
@@ -175,8 +185,8 @@ public class CopyReferenceAction extends AnAction {
       if (project == null || editor == null) return;
 
       final String fqn = getCopiedFqn();
-      PsiMember member = CopyReferenceAction.fqnToMember(project, fqn);
-      insert(fqn, (PsiNamedElement)member, editor);
+      PsiNamedElement element = CopyReferenceAction.fqnToElement(project, fqn);
+      insert(fqn, element, editor);
 
       if (editor.getSelectionModel().hasSelection()) {
         ApplicationManager.getApplication().runWriteAction(
@@ -205,8 +215,7 @@ public class CopyReferenceAction extends AnAction {
     final Transferable contents = CopyPasteManagerEx.getInstance().getContents();
     if (contents == null) return null;
     try {
-      final String fqn = (String)contents.getTransferData(OUR_DATA_FLAVOR);
-      return fqn;
+      return (String)contents.getTransferData(OUR_DATA_FLAVOR);
     }
     catch (UnsupportedFlavorException e) {
     }
@@ -257,8 +266,7 @@ public class CopyReferenceAction extends AnAction {
     }
     else if (element instanceof PsiFile) {
       final PsiFile file = (PsiFile)element;
-      final VirtualFile virtualFile = file.getVirtualFile();
-      fqn = virtualFile == null ? file.getName() : FileUtil.toSystemDependentName(virtualFile.getPath());
+      fqn = FileUtil.toSystemIndependentName(getFileFqn(file));
     }
     else {
       fqn = element.getClass().getName();
@@ -266,21 +274,48 @@ public class CopyReferenceAction extends AnAction {
     return fqn;
   }
 
-  static PsiMember fqnToMember(final Project project, final String fqn) {
-    PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
-    PsiMember member;
-    if (aClass != null) {
-      member = aClass;
+  private static String getFileFqn(final PsiFile file) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return file.getName();
     }
-    else {
-      String className = fqn.substring(0, fqn.indexOf("#"));
-      aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-      String memberName = fqn.substring(fqn.indexOf("#") + 1);
-      member = aClass.findFieldByName(memberName, false);
-      if (member == null) {
-        member = aClass.findMethodsByName(memberName, false)[0];
+    final Project project = file.getManager().getProject();
+    final WebModuleProperties webModuleProperties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
+    if (webModuleProperties != null) {
+      final WebRoot webRoot = WebUtil.findParentWebRoot(virtualFile, webModuleProperties.getWebRoots(true));
+      if (webRoot != null && webRoot.getFile() != null) {
+        return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(webRoot.getFile()), VfsUtil.virtualToIoFile(virtualFile));
       }
     }
-    return member;
+
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virtualFile);
+    if (sourceRoot != null) {
+      return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(sourceRoot), VfsUtil.virtualToIoFile(virtualFile));
+    }
+    final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
+    if (contentRoot != null) {
+      return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(contentRoot), VfsUtil.virtualToIoFile(virtualFile));
+    }
+    return virtualFile.getPath();
+  }
+
+  private static PsiNamedElement fqnToElement(final Project project, final String fqn) {
+    PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
+    PsiNamedElement element;
+    if (aClass != null) {
+      return aClass;
+    }
+    final int endIndex = fqn.indexOf("#");
+    if (endIndex == -1) return null;
+    String className = fqn.substring(0, endIndex);
+    if (className == null) return null;
+    aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+    String memberName = fqn.substring(endIndex + 1);
+    element = aClass.findFieldByName(memberName, false);
+    if (element != null) {
+      return element;
+    }
+    element = aClass.findMethodsByName(memberName, false)[0];
+    return element;
   }
 }
