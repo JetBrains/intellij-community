@@ -17,4 +17,8 @@ public class Wrap {
   public Type getType() {
     return myType;
   }
+
+  public void markAsUsed() {
+  }
+  
 }

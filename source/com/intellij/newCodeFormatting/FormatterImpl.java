@@ -25,9 +25,10 @@ public class FormatterImpl {
 
   public void format() {
     myWhiteSpaceBeforeBlock.putAll(WhiteSpacesBuilder.buildWhiteSpaces(myRootBlock, myModel));
-    processBlock(myRootBlock, null);
     myCurrentLine = 0;
     myCurrentOffset  = 0;
+
+    processBlock(myRootBlock, null);
 
     int shift = 0;
     WhiteSpace prev = null;
@@ -46,11 +47,23 @@ public class FormatterImpl {
   private void processBlock(final Block rootBlock, final SpaceProperty spaceProperty) {
     final WhiteSpace whiteSpace = myWhiteSpaceBeforeBlock.get(rootBlock);
     final BlockInfo info = new BlockInfo(rootBlock);
+    info.setAlignment(rootBlock.getAlignment());
+    info.setWrap(rootBlock.getWrap());
+    BlockInfo parent = myStack.isEmpty() ? null : myStack.peek();
     myStack.push(info);
+    if (parent != null && !parent.isFirstElementProcessed()) {
+      if (info.getAlignment() == null) {
+        info.setAlignment(parent.getAlignment());
+      }
+      if (info.getWrap() == null) {
+        info.setWrap(parent.getWrap());
+      }
+
+    }
     try {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
-        processToken(rootBlock, info, spaceProperty, whiteSpace);
+        processToken(spaceProperty, whiteSpace);
       } else {
         processCompositeBlock(subBlocks, spaceProperty, rootBlock);
       }
@@ -71,12 +84,14 @@ public class FormatterImpl {
     }
   }
 
-  private void processToken(final Block rootBlock,
-                            final BlockInfo info,
-                            final SpaceProperty spaceProperty,
+  private void processToken(final SpaceProperty spaceProperty,
                             final WhiteSpace whiteSpace) {
-    calculateAlignment();
+    final BlockInfo info = myStack.peek();
+    final Wrap wrap = info.getWrap();
     whiteSpace.arrangeLineFeeds(spaceProperty);
+    if (shouldUseWrap(wrap)) {
+      whiteSpace.ensureLineFeed();
+    }
     final int wsLineFeeds = whiteSpace.getLineFeeds();
     if (wsLineFeeds > 0) {
       myCurrentLine += wsLineFeeds;
@@ -85,6 +100,7 @@ public class FormatterImpl {
       myCurrentOffset += whiteSpace.getSpaces();
     }
     if (!onTheSameLine(whiteSpace)) {
+      final int before = whiteSpace.getSpaces();
       int alignOffset = getAlignOffset(info.getAlignment());
       if (alignOffset == -1) {
         int indent = calculateIndent();
@@ -94,19 +110,32 @@ public class FormatterImpl {
         setFirstElementIsProcessed(alignOffset);
         whiteSpace.setSpaces(alignOffset);
       }
+      final int after = whiteSpace.getSpaces();
+      myCurrentOffset += after - before;
     } else {
       setElementIsProcessed(myCurrentOffset);
       whiteSpace.arrangeSpaces(spaceProperty);
     }
 
     setAlignOffset(info.getAlignment(), info.getCurrentIndent(), myCurrentLine);
-    final int blockLineFeeds = getLineFeeds(rootBlock.getTextRange());
+    final TextRange textRange = info.getBlock().getTextRange();
+    final int blockLineFeeds = getLineFeeds(textRange);
     if (blockLineFeeds > 0) {
       myCurrentLine += blockLineFeeds;
-      myCurrentOffset = getLastLineLength(rootBlock.getTextRange());
+      myCurrentOffset = getLastLineLength(textRange);
     } else {
-      myCurrentOffset += rootBlock.getTextRange().getLength();
+      myCurrentOffset += textRange.getLength();
     }
+  }
+
+  private boolean shouldUseWrap(final Wrap wrap) {
+    if (wrap == null) return false;
+    final Wrap.Type type = wrap.getType();
+    if (type == Wrap.Type.WRAP_ALWAYS) return true;
+    if (type == Wrap.Type.WRAP_AS_NEEDED || type == Wrap.Type.CHOP_IF_NEEDED) {
+      return myCurrentOffset >= mySettings.RIGHT_MARGIN;
+    }
+    return false;
   }
 
   private int getLastLineLength(final TextRange textRange) {
@@ -126,20 +155,6 @@ public class FormatterImpl {
   private int getAlignOffset(final Alignment alignment) {
     if (alignment == null) return -1;
     return alignment.getCurrentOffset();
-  }
-
-  private void calculateAlignment() {
-    Alignment alignment = null;
-    for (int i = 0; i < myStack.size(); i++) {
-      final BlockInfo stackElement = myStack.get(i);
-      final Alignment blockAlignment = stackElement.getBlock().getAlignment();
-      if (!stackElement.isFirstElementProcessed()){
-        stackElement.setAlignment(blockAlignment == null ? alignment : blockAlignment);
-      } else {
-        alignment = blockAlignment;
-      }
-    }
-
   }
 
   private void setElementIsProcessed(final int offset) {

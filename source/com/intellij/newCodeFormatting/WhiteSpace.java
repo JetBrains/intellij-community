@@ -80,5 +80,12 @@ public class WhiteSpace{
   public int getSpaces() {
     return mySpaces;
   }
+
+  public void ensureLineFeed() {
+    if (!containsLineFeeds()) {
+      myLineFeeds = 1;
+      mySpaces = 0;
+    }
+  }
 }
 
