@@ -111,6 +111,13 @@ public class ProgressWindow extends BlockingProgressIndicator {
     myDialog.show();
   }
 
+  public void setIndeterminate(boolean indeterminate) {
+    super.setIndeterminate(indeterminate);
+    if (myDialog != null) {
+      myDialog.setIndeterminate(indeterminate);
+    }
+  }
+
   public synchronized void stop() {
     LOG.assertTrue(!myStoppedAlready);
     myInstallFunAlarm.cancelAllRequests();
@@ -153,21 +160,21 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public void setText(String text) {
-    if (!text.equals(getText())) {
+    if (isIndeterminate() || !text.equals(getText())) {
       super.setText(text);
       update();
     }
   }
 
   public void setFraction(double fraction) {
-    if (fraction != getFraction()) {
+    if (isIndeterminate() || fraction != getFraction()) {
       super.setFraction(fraction);
       update();
     }
   }
 
   public void setText2(String text) {
-    if (!text.equals(getText2())) {
+    if (isIndeterminate() || !text.equals(getText2())) {
       super.setText2(text);
       update();
     }

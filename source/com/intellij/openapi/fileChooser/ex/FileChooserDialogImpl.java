@@ -89,7 +89,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     group.add(new NewFolderAction(myFileSystemTree));
     group.add(new FileDeleteAction(myFileSystemTree));
     group.addSeparator();
-    SynchronizeAction action1 = new SynchronizeAction(false);
+    SynchronizeAction action1 = new SynchronizeAction();
     AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
     action1.copyFrom(original);
     action1.registerCustomShortcutSet(original.getShortcutSet(), myFileSystemTree.getTree());

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
@@ -40,9 +41,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private int myRefreshCount = 0;
   private ArrayList<Runnable> myRefreshEventsToFire = null;
   private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
+  private final ProgressManager myProgressManager;
 
 
-  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems) {
+  public VirtualFileManagerImpl(ProgressManager progressManager, VirtualFileSystem[] fileSystems) {
+    myProgressManager = progressManager;
     myFileSystems = new ArrayList<VirtualFileSystem>();
     myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
     for (int i = 0; i < fileSystems.length; i++) {
@@ -93,7 +96,14 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void refresh(boolean asynchronous, final Runnable postAction) {
-    ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+    final ModalityState modalityState;
+    if (EventQueue.isDispatchThread()) {
+      modalityState = ModalityState.current();
+    }
+    else {
+      final ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
+      modalityState = (progressIndicator != null)? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
+    }
 
     beforeRefreshStart(asynchronous, modalityState, postAction);
 

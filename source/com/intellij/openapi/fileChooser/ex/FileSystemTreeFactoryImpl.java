@@ -55,7 +55,7 @@ public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
     group.add(new NewFolderAction(fileSystemTree));
     group.add(new FileDeleteAction(fileSystemTree));
     group.addSeparator();
-    SynchronizeAction action1 = new SynchronizeAction(false);
+    SynchronizeAction action1 = new SynchronizeAction();
     AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
     action1.copyFrom(original);
     action1.registerCustomShortcutSet(original.getShortcutSet(), fileSystemTree.getTree());

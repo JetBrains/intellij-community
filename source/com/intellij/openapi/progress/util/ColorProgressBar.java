@@ -57,18 +57,21 @@ public class ColorProgressBar extends JComponent {
 
   public void setFraction(double fraction) {
     if (myIndeterminate) {
-      if (myFraction >= 1.0)
+      if (myFraction >= 1.0) {
         myIndeterminateInc = -INDETERMINATE_INC_OFFSET;
-      else if (myFraction <= 0)
+      }
+      else if (myFraction <= 0) {
         myIndeterminateInc = INDETERMINATE_INC_OFFSET;
+      }
 
-      boolean changed = myFraction == 0 ||
-                        getBricksToDraw(myFraction) != getBricksToDraw(myFraction + myIndeterminateInc);
+      final boolean changed = myFraction == 0 || getBricksToDraw(myFraction) != getBricksToDraw(myFraction + myIndeterminateInc);
       myFraction += myIndeterminateInc;
 
-      if (changed)
+      if (changed) {
         repaint();
-    } else {
+      }
+    }
+    else {
       boolean changed = myFraction == 0 || getBricksToDraw(myFraction) != getBricksToDraw(fraction);
       myFraction = fraction;
       if (changed) {

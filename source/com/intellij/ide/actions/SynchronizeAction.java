@@ -17,42 +17,47 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.util.concurrency.Semaphore;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class SynchronizeAction extends AnAction {
-  private final boolean myAsynchronous;
-
-  public SynchronizeAction() {
-    this(false);
-  }
-
-  public SynchronizeAction(boolean asynchronous) {
-    myAsynchronous = asynchronous;
-  }
+  private static final long PROGRESS_REPAINT_INTERVAL = 100L;
 
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final VirtualFileManager vfMan = VirtualFileManager.getInstance();
-    final Runnable synchronizeRunnable = new Runnable() {
-      public void run() {
-        vfMan.refresh(myAsynchronous);
-      }
-    };
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    if (myAsynchronous) {
-      application.runReadAction(synchronizeRunnable);
-    }
-    else {
-      final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
-      application.runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-          pi.setText("Synchronizing files...");
-          application.invokeAndWait(new Runnable() {
-            public void run() {
-              application.runWriteAction(synchronizeRunnable);
-            }
-          }, pi.getModalityState());
+    final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    application.runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+        pi.setText("Synchronizing files...");
+        pi.setIndeterminate(true);
+        final Semaphore refreshSemaphore = new Semaphore();
+        refreshSemaphore.down();
+        application.runReadAction(new Runnable() {
+          public void run() {
+            vfMan.refresh(true, new Runnable() {
+              public void run() {
+                refreshSemaphore.up();
+              }
+            });
+          }
+        });
+        final Timer updateTimer = new Timer(true);
+        updateTimer.scheduleAtFixedRate(new TimerTask() {
+          public void run() {
+            pi.setFraction(1.0);
+          }
+        }, 0L, PROGRESS_REPAINT_INTERVAL);
+
+        try {
+          refreshSemaphore.waitFor();
         }
-      }, "", false, project);
-    }
+        finally {
+          updateTimer.cancel();
+        }
+      }
+    }, "", false, project);
   }
 }
