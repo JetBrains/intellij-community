@@ -59,18 +59,18 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
     JTree leftTree = dependenciesPanel.getLeftTree();
     IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
                           " Library Classes\n" +
-                          " -Production Classes (1 entry)\n" +
-                          "  -" + myModule.getName() + " (1 entry)\n" +
-                          "   -com.package1 (1 entry)\n" +
+                          " -Production Classes\n" +
+                          "  -" + myModule.getName() + "\n" +
+                          "   -com.package1\n" +
                           "    [Class1.java]\n" +
                               " Test Classes\n", true);
 
     JTree rightTree = dependenciesPanel.getRightTree();
     IdeaTestUtil.assertTreeEqual(rightTree, "-Root\n" +
                            " Library Classes\n" +
-                           " -Production Classes (1 entry)\n" +
-                           "  -" + myModule.getName() + " (1 entry)\n" +
-                           "   -com.package1 (1 entry)\n" +
+                           " -Production Classes\n" +
+                           "  -" + myModule.getName() + "\n" +
+                           "   -com.package1\n" +
                            "    Class2.java\n" +
                            " Test Classes\n", true);
   }
