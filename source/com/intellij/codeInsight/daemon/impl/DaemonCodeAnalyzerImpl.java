@@ -236,8 +236,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntConfigurationListener);
     }
 
-    myStatusBarUpdater.dispose();
-    myEditorTracker.dispose();
+    if (myStatusBarUpdater != null) myStatusBarUpdater.dispose();
+    if (myEditorTracker != null) myEditorTracker.dispose();
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
     // clear dangling references to PsiFiles/Documents. SCR#10358
