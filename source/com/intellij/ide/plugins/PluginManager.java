@@ -222,7 +222,6 @@ public class PluginManager {
       Runnable runnable = new Runnable() {
         public void run() {
           try {
-            PathManager.loadProperties();
             Class aClass = Class.forName(ourMainClass);
             final Method method = aClass.getDeclaredMethod(ourMethodName, new Class[]{(ArrayUtil.EMPTY_STRING_ARRAY).getClass()});
             method.setAccessible(true);
@@ -422,6 +421,8 @@ public class PluginManager {
   }
 
   protected void bootstrap(List classpathElements) {
+    PathManager.loadProperties();
+
     try {
       addParentClasspath(classpathElements);
       addIDEALibraries(classpathElements);
