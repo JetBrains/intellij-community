@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspTokenType;
@@ -442,6 +443,9 @@ public class Factory implements Constants {
     }
     else if (type == JSP_TEMPLATE_STATEMENT) {
       element = new JspTemplateStatement();
+    }
+    else if (type == JSP_TEMPLATE_DECLARATION) {
+      element = new JspTemplateDeclaration();
     }
     else if (type == JSP_FILE_REFERENCE) {
       element = new JspFileReferenceImpl();
