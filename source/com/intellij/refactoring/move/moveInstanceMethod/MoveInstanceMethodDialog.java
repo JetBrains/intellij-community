@@ -45,7 +45,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     mainPanel.add(jLabel1, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
 
     String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(myMethod.getContainingClass());
-    myOldClassParameterNameField = new EditorTextField(suggestedName, myProject, StdFileTypes.JAVA);
+    myOldClassParameterNameField = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
     mainPanel.add(myOldClassParameterNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
 
     jLabel.setLabelFor(myList);
@@ -57,7 +57,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
     final String parameterName = myOldClassParameterNameField.getText().trim();
     if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
-      Messages.showErrorDialog(myProject, "Please Enter a Valid name for Parameter", myRefactoringName);
+      Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
       return;
     }
 
