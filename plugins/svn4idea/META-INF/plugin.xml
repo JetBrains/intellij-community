@@ -37,7 +37,6 @@
       <separator/>
     </group>
 
-
     <action id="Subversion.ShowDiffAction" class="com.qintsoft.svn4idea.actions.ShowDiffAction" text="Show Diff..." description="Show difference with Subversion base version"/>
 
     <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
