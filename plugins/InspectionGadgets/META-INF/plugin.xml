@@ -17,14 +17,4 @@
         </component>
     </project-components-->
 
-    <actions>
-        <group>
-            <action id="InspectionGadgets.Toggle"
-                class="com.siyeh.ig.TogglePluginAction"
-                text="_InspectionGadgets error highlighting">
-                <keyboard-shortcut first-keystroke="alt I" keymap="$default"/>
-            </action>
-            <add-to-group group-id="AnalyzeMenu" anchor="last"/>
-        </group>
-    </actions>
 </idea-plugin>
