@@ -14,6 +14,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -191,6 +192,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
+    if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
+
     PsiMethod patternMethod = createPatternMethod();
     final List<PsiReference> docRefs = new ArrayList<PsiReference>();
     for (int i = 0; i < usages.length; i++) {
