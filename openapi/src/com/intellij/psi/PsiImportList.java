@@ -14,4 +14,5 @@ public interface PsiImportList extends PsiElement {
   PsiImportStatement findSingleClassImportStatement(String qName);
   PsiImportStatement findOnDemandImportStatement(String packageName);
   PsiImportStatementBase findSingleImportStatement(String name);
+  boolean isReplaceEquivalent(PsiImportList otherList);
 }

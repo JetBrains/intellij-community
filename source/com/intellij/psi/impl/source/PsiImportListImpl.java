@@ -182,6 +182,10 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
     return (PsiImportStatementBase)myNameToSingleImportMap.get(name);
   }
 
+  public boolean isReplaceEquivalent(PsiImportList otherList) {
+    return getText().equals(otherList.getText());
+  }
+
   private void initializeMaps() {
     if (myClassNameToImportMap == null) {
       myClassNameToImportMap = new HashMap();

@@ -115,7 +115,7 @@ public class ImportHelper{
 
       PsiImportList resultList = dummyFile.getImportList();
       PsiImportList oldList = file.getImportList();
-      if (resultList.getText().equals(oldList.getText())) return null;
+      if (oldList.isReplaceEquivalent(resultList)) return null;
       return resultList;
     }
     catch(IncorrectOperationException e) {

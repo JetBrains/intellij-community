@@ -44,10 +44,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         public void run() {
           try {
             if (newImportList != null) {
-              PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
-              if (!oldImportList.getText().equals(newImportList.getText())) {
-                oldImportList.replace(newImportList);
-              }
+              ((PsiJavaFile)file).getImportList().replace(newImportList);
             }
           }
           catch (IncorrectOperationException e) {
