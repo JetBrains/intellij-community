@@ -84,7 +84,7 @@ public class EmptyCatchBlockInspection extends StatementInspection {
             for (int i = 0; i < catchSections.length; i++) {
                 final PsiCatchSection section = catchSections[i];
                 final PsiCodeBlock block = section.getCatchBlock();
-                if (catchBlockIsEmpty(block)) {
+                if (block!=null && catchBlockIsEmpty(block)) {
                     final PsiElement catchToken = section.getFirstChild();
                     registerError(catchToken);
                 }
