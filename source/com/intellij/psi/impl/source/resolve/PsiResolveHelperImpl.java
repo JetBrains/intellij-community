@@ -64,9 +64,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText.toCharArray(), holderElement.getCharTable());
     if (ref == null) return null;
-    if (!SourceTreeToPsiMap.hasTreeElement(context)) { //???
-      return myManager.findClass(referenceText, context.getResolveScope());
-    }
     TreeUtil.addChildren(holderElement, ref);
 
     return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref));
