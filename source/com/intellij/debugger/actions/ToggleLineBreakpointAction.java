@@ -1,11 +1,10 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +52,7 @@ public class ToggleLineBreakpointAction extends AnAction {
       if (file != null) {
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         FileType fileType = fileTypeManager.getFileTypeByFile(file.getVirtualFile());
-        if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP  == fileType) {
+        if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP  == fileType || StdFileTypes.JSPX == fileType) {
           final Editor editor1 = editor;
           return new PlaceInDocument() {
             public Document getDocument() {

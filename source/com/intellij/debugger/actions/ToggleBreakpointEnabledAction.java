@@ -3,7 +3,6 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -60,7 +59,7 @@ public class ToggleBreakpointEnabledAction extends AnAction {
 
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType fileType = fileTypeManager.getFileTypeByFile(file.getVirtualFile());
-    if(StdFileTypes.JAVA != fileType && StdFileTypes.JSP != fileType){
+    if(StdFileTypes.JAVA != fileType && StdFileTypes.JSP != fileType && StdFileTypes.JSPX != fileType){
       presentation.setEnabled(false);
       return;
     }

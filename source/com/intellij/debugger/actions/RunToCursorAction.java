@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +53,7 @@ public class RunToCursorAction extends AnAction {
       } else {
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
-        if (StdFileTypes.JAVA != fileType && StdFileTypes.JSP != fileType) {
+        if (StdFileTypes.JAVA != fileType && StdFileTypes.JSP != fileType && StdFileTypes.JSPX != fileType) {
           enabled = false;
         } else {
           DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();

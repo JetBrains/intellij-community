@@ -11,6 +11,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.j2ee.deployment.JspDeploymentManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
@@ -70,7 +71,8 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException {
-    if(!(classPosition.getFile().getFileType().equals(StdFileTypes.JSP))) {
+    final FileType fileType = classPosition.getFile().getFileType();
+    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
       throw new NoDataException();
     }
 
@@ -100,7 +102,8 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   private List<Location> locationsOfClassAt(final ReferenceType type, final SourcePosition position) throws NoDataException {
-    if(!(position.getFile().getFileType().equals(StdFileTypes.JSP))) {
+    final FileType fileType = position.getFile().getFileType();
+    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
       throw new NoDataException();
     }
 
@@ -133,7 +136,8 @@ public abstract class JSR45PositionManager implements PositionManager {
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
     throws NoDataException {
-    if(!(position.getFile().getFileType().equals(StdFileTypes.JSP))) {
+    final FileType fileType = position.getFile().getFileType();
+    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
       throw new NoDataException();
     }
 
