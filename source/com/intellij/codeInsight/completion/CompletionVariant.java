@@ -123,11 +123,11 @@ implements JDOMExternalizable{
   }
 
   public void addCompletionFilterOnElement(ElementFilter filter, int tailType){
-    addCompletion((Object)new ElementExtractorFilter(filter), tailType);
+    addCompletion(new ElementExtractorFilter(filter), tailType);
   }
 
   public void addCompletionFilter(ElementFilter filter, int tailType){
-    addCompletion((Object)filter, tailType);
+    addCompletion(filter, tailType);
   }
 
   public void addCompletionFilter(ElementFilter filter){
@@ -183,7 +183,7 @@ implements JDOMExternalizable{
     final Iterator<CompletionVariantItem> iter = myCompletionsList.iterator();
 
     while(iter.hasNext()){
-      final CompletionVariantItem ce = (CompletionVariantItem)iter.next();
+      final CompletionVariantItem ce = iter.next();
       addReferenceCompletions(reference, position, set, prefix, ce);
     }
   }
@@ -216,11 +216,11 @@ implements JDOMExternalizable{
         ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
       }
       else{
-        if(completion instanceof PsiNamedElement && key == LookupItem.FORCE_QUALIFY){
-          final PsiNamedElement completionElement = (PsiNamedElement) completion;
-          final PsiElement parent = completionElement.getParent();
-          if(parent instanceof PsiClass){
-            final String className = ((PsiClass) parent).getName();
+        if(completion instanceof PsiMember && key == LookupItem.FORCE_QUALIFY){
+          final PsiMember completionElement = (PsiMember)completion;
+          final PsiClass containingClass = completionElement.getContainingClass();
+          if(containingClass != null){
+            final String className = containingClass.getName();
             ret.setLookupString(className + "." + ret.getLookupString());
             ret.setAttribute(key, myItemProperties.get(key));
           }
@@ -315,7 +315,7 @@ implements JDOMExternalizable{
 
     final Element completionsElement = variantElement.getChild("completions", CompletionData.COMPLETION_NS);
 
-    myPosition = (ElementFilter)FilterUtil.readFilterGroup(filterElement).get(0);
+    myPosition = FilterUtil.readFilterGroup(filterElement).get(0);
 
     final Iterator keywordsIterator = completionsElement.getChildren("keyword-set", CompletionData.COMPLETION_NS).iterator();
     while(keywordsIterator.hasNext()){

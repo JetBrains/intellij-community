@@ -298,10 +298,12 @@ class LookupCellRenderer implements ListCellRenderer {
               PsiMethod method = (PsiMethod)element;
               if (!method.isConstructor()){
                 final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
-                if(substitutor != null)
+                if (substitutor != null) {
                   text = substitutor.substitute(method.getReturnType()).getPresentableText();
-                else
+                }
+                else {
                   text = method.getReturnType().getPresentableText();
+                }
               }
             }
             else if (element instanceof PsiVariable){
@@ -379,8 +381,9 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
-      if(o instanceof PsiElement && ((PsiElement)o).getParent() instanceof PsiClass)
-        name = ((PsiClass) ((PsiElement) o).getParent()).getName() + "." + name;
+      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
+        name = ((PsiMember)o).getContainingClass().getName() + "." + name;
+      }
     }
 
     return name;
@@ -473,8 +476,9 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
-      if(o instanceof PsiElement && ((PsiElement)o).getParent() instanceof PsiClass)
-        text = ((PsiClass) ((PsiElement) o).getParent()).getName() + "." + text;
+      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
+        text = ((PsiMember)o).getContainingClass().getName() + "." + text;
+      }
     }
 
 
