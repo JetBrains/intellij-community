@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -48,7 +49,9 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       I18nInspection.class,
 
       DependencyViolationInspection.class,
-      FieldCanBeLocalInspection.class
+      FieldCanBeLocalInspection.class,
+
+      DuplicateStringLiteralInspection.class,
       };
   }
 }

@@ -4,25 +4,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlFile;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private final PsiManager myManager;
@@ -84,113 +78,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
 
   public boolean isAccessible(PsiMember member, PsiModifierList modifierList, PsiElement place, PsiClass accessObjectClass) {
-    if (modifierList == null) return true;
-    final PsiFile placeContainingFile = place.getContainingFile();
-    final PsiManager manager = placeContainingFile.getManager();
-    if (placeContainingFile instanceof PsiCodeFragment) {
-      PsiCodeFragment fragment = (PsiCodeFragment)placeContainingFile;
-      PsiCodeFragment.VisibilityChecker visibilityChecker = fragment.getVisibilityChecker();
-      if (visibilityChecker != null) {
-        PsiCodeFragment.VisibilityChecker.Visibility visibility = visibilityChecker.isDeclarationVisible(member, place);
-        if (visibility == PsiCodeFragment.VisibilityChecker.Visibility.VISIBLE) return true;
-        if (visibility == PsiCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
-      }
-    }
-    else if (placeContainingFile instanceof XmlFile) return true;
-    // We don't care about access rights in javadoc
-    if (ResolveUtil.findParentContextOfClass(place, PsiDocComment.class, false) != null) return true;
-
-    // access modifier of member as it seen from the place.
-    // In case of methods it can be different from member modifier,
-    //  if method is overridden in subclass with different access modifier. See SCR 9547
-    if (accessObjectClass != null && !isAccessible(accessObjectClass, place, null)) return false;
-
-    int effectiveAccessLevel = PsiUtil.getAccessLevel(modifierList);
-    PsiFile file = ResolveUtil.getContextFile(place); //TODO: implementation method!!!!
-    if (file instanceof JspFile && (member.getContainingFile() instanceof JspFile || member instanceof JspImplicitVariable)) return true;
-    if (file instanceof XmlFile) return true;
-    if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
-      return true;
-    }
-    else if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (manager.arePackagesTheSame(member, place)) return true;
-      PsiClass memberClass = member.getContainingClass();
-      if (memberClass == null) return false;
-
-      for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-        if (placeParent instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)placeParent, memberClass, true)) {
-          if (member instanceof PsiClass || modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
-          if (accessObjectClass == null) return true;
-          if (manager.areElementsEquivalent(accessObjectClass, placeParent)
-              || accessObjectClass.isInheritor((PsiClass)placeParent, true)) {
-            return true;
-          }
-        }
-        if (placeParent instanceof JspFileImpl && InheritanceUtil.isInheritorOrSelf(((JspFileImpl)placeParent).getBaseClass(), memberClass, true)) {
-          if (accessObjectClass == null) return true;
-          if (accessObjectClass.isInheritor(((JspFileImpl)placeParent).getBaseClass(), true)) return true;
-        }
-      }
-      return false;
-    }
-    else if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
-      final PsiClass memberClass = member.getContainingClass();
-      if (accessObjectClass != null) {
-        PsiClass topMemberClass = getPlaceTopLevelClass(memberClass, accessObjectClass, false);
-        PsiClass topAccessClass = getPlaceTopLevelClass(accessObjectClass, memberClass, false);
-        if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
-      }
-
-      boolean isConstructor = member instanceof PsiMethod && ((PsiMethod)member).isConstructor();
-      PsiClass placeClass = getPlaceTopLevelClass (place, memberClass, isConstructor);
-      if (placeClass != null) {
-        for (PsiElement memberClassParent = memberClass; memberClassParent != null; memberClassParent = memberClassParent.getContext()) {
-          if (manager.areElementsEquivalent(placeClass, memberClassParent)) return true;
-        }
-        for (PsiElement placeClassParent = placeClass; placeClassParent != null; placeClassParent = placeClassParent.getContext()) {
-          if (manager.areElementsEquivalent(memberClass, placeClassParent)) return true;
-        }
-      }
-
-      return false;
-    }
-    else {
-      if (!manager.arePackagesTheSame(member, place)) return false;
-      if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
-      // maybe inheritance lead through package local class in other package ?
-      final PsiClass memberClass = member.getContainingClass();
-      final PsiClass placeClass = ResolveUtil.getContextClass(place);
-      if (memberClass == null || placeClass == null) return true;
-      // check only classes since interface members are public,  and if placeClass is interface,
-      // then its members are static, and cannot refer to nonstatic members of memberClass
-      if (memberClass.isInterface() || placeClass.isInterface()) return true;
-      if (placeClass.isInheritor(memberClass, true)) {
-        PsiClass superClass = placeClass.getSuperClass();
-        while (!manager.areElementsEquivalent(superClass, memberClass)) {
-          if (!manager.arePackagesTheSame(superClass, memberClass)) return false;
-          superClass = superClass.getSuperClass();
-        }
-      }
-
-      return true;
-    }
-  }
-
-  private PsiClass getPlaceTopLevelClass(PsiElement place, PsiClass memberClass, boolean ignoreBaseClassCheck) {
-    PsiManager manager = place.getManager();
-    PsiClass lastClass = null;
-    for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-      if (placeParent instanceof PsiClass && !(placeParent instanceof PsiTypeParameter)) {
-        PsiClass aClass = (PsiClass)placeParent;
-
-        //what we see is the member from the base class rather than enclosing one
-        if (!ignoreBaseClassCheck && manager.areElementsEquivalent(memberClass, aClass.getSuperClass())) return aClass;
-
-        lastClass = aClass;
-      }
-    }
-
-    return lastClass;
+    return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass);
   }
 
   public CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression expr, boolean dummyImplicitConstructor) {
@@ -241,7 +129,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return substitution;
   }
 
-  private PsiType processArgType(PsiType arg, boolean captureWildcard) {
+  private static PsiType processArgType(PsiType arg, boolean captureWildcard) {
     if (arg instanceof PsiWildcardType) {
       return captureWildcard ? arg : PsiType.NULL;
     } else {

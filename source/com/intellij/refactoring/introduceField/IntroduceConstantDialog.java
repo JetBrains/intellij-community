@@ -6,12 +6,16 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.TextAccessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -20,14 +24,18 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
@@ -39,7 +47,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final boolean myInvokedOnDeclaration;
   private final PsiExpression[] myOccurrences;
   private final int myOccurrencesCount;
-  private final PsiClass myTargetClass;
+  private PsiClass myTargetClass;
   private final TypeSelectorManager myTypeSelectorManager;
 
   private NameSuggestionsField myNameField;
@@ -53,7 +61,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private TypeSelector myTypeSelector;
   private StateRestoringCheckBox myCbDeleteVariable;
   private final CodeStyleManager myCodeStyleManager;
-  private ReferenceEditorWithBrowseButton myTfTargetClassName;
+  private TextAccessor myTfTargetClassName;
   private PsiClass myDestinationClass;
   private JPanel myTypePanel;
   private JPanel myTargetClassNamePanel;
@@ -161,10 +169,41 @@ class IntroduceConstantDialog extends DialogWrapper {
     myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
-    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
-    myTargetClassNamePanel.setLayout(new BorderLayout());
-    myTargetClassNamePanel.add(myTfTargetClassName, BorderLayout.CENTER);
-    myTargetClassNameLabel.setLabelFor(myTfTargetClassName);
+    Set<String> possibleClassNames = new LinkedHashSet<String>();
+    for (int i = 0; i < myOccurrences.length; i++) {
+      final PsiExpression occurrence = myOccurrences[i];
+      final PsiClass parentClass = new IntroduceConstantHandler().getParentClass(occurrence);
+      if (parentClass != null && parentClass.getQualifiedName() != null) {
+        possibleClassNames.add(parentClass.getQualifiedName());
+      }
+    }
+    if (possibleClassNames.size() > 1) {
+      ReferenceEditorComboWithBrowseButton targetClassName =
+        new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
+      myTargetClassNamePanel.setLayout(new BorderLayout());
+      myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
+      myTargetClassNameLabel.setLabelFor(targetClassName);
+      targetClassName.setHistory(possibleClassNames.toArray(new String[possibleClassNames.size()]));
+      myTfTargetClassName = targetClassName;
+      targetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+        public void documentChanged(DocumentEvent e) {
+          targetClassChanged();
+        }
+      });
+    }
+    else {
+      ReferenceEditorWithBrowseButton targetClassName =
+        new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
+      myTargetClassNamePanel.setLayout(new BorderLayout());
+      myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
+      myTargetClassNameLabel.setLabelFor(targetClassName);
+      myTfTargetClassName = targetClassName;
+      targetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+        public void documentChanged(DocumentEvent e) {
+          targetClassChanged();
+        }
+      });
+    }
 
     final String propertyName;
     if (myLocalVariable != null) {
@@ -173,8 +212,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       propertyName = null;
     }
-    nameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                          new NameSuggestionsGenerator() {
+    nameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         return myCodeStyleManager.suggestVariableName(
           VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type
@@ -227,8 +265,22 @@ class IntroduceConstantDialog extends DialogWrapper {
       myCbDeleteVariable.setVisible(false);
     }
     updateTypeSelector();
+
+    ButtonGroup bg = new ButtonGroup();
+    bg.add(myRbPrivate);
+    bg.add(myRbpackageLocal);
+    bg.add(myRbProtected);
+    bg.add(myRbPublic);
+
+
     updateVisibilityPanel();
     return myPanel;
+  }
+
+  private void targetClassChanged() {
+    final String targetClassName = getTargetClassName();
+    myTargetClass = PsiManager.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+    updateVisibilityPanel();
   }
 
   protected JComponent createCenterPanel() {
@@ -258,13 +310,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   private void updateVisibilityPanel() {
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbPrivate);
-    bg.add(myRbpackageLocal);
-    bg.add(myRbProtected);
-    bg.add(myRbPublic);
-
-
+    if (myTargetClass == null) return;
     if (myTargetClass.isInterface()) {
       myRbPrivate.setEnabled(false);
       myRbProtected.setEnabled(false);
@@ -272,18 +318,51 @@ class IntroduceConstantDialog extends DialogWrapper {
       myRbPublic.setEnabled(true);
       myRbPublic.setSelected(true);
     }
+    else {
+      myRbPrivate.setEnabled(true);
+      myRbProtected.setEnabled(true);
+      myRbpackageLocal.setEnabled(true);
+      myRbPublic.setEnabled(true);
+      // exclude all modifiers not visible from all occurences
+      final Set<String> visible = new THashSet<String>();
+      visible.add(PsiModifier.PRIVATE);
+      visible.add(PsiModifier.PROTECTED);
+      visible.add(PsiModifier.PACKAGE_LOCAL);
+      visible.add(PsiModifier.PUBLIC);
+      for (int i = 0; i < myOccurrences.length; i++) {
+        PsiExpression occurrence = myOccurrences[i];
+        final PsiManager psiManager = PsiManager.getInstance(myProject);
+        for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
+          String modifier = iterator.next();
+
+          try {
+            final String modifierText = modifier == PsiModifier.PACKAGE_LOCAL ? "" : modifier;
+            final PsiField field = psiManager.getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
+            if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass)) {
+              iterator.remove();
+            }
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      }
+      if (visible.contains(PsiModifier.PUBLIC)) myRbPublic.setSelected(true);
+      if (visible.contains(PsiModifier.PACKAGE_LOCAL)) myRbpackageLocal.setSelected(true);
+      if (visible.contains(PsiModifier.PROTECTED)) myRbProtected.setSelected(true);
+      if (visible.contains(PsiModifier.PRIVATE)) myRbPrivate.setSelected(true);
+    }
   }
 
   protected void doOKAction() {
-
     final String targetClassName = getTargetClassName();
     if (!"".equals (targetClassName)) {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      final PsiClass  newClass = manager.findClass(targetClassName);
+      final PsiClass  newClass = manager.findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         RefactoringMessageUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
-                "Class does not exist",
+                "Class does not exist in the project",
                 HelpID.INTRODUCE_FIELD,
                 myProject);
         return;

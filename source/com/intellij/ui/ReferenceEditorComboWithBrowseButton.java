@@ -14,17 +14,12 @@ import java.awt.event.ActionListener;
 /**
  * @author ven
  */
-public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor{
-  private final PsiManager myManager;
-  private final boolean myToAcceptClasses;
-
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
+public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
+  public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
                                          final String text,
                                          final PsiManager manager,
                                          boolean toAcceptClasses) {
-    super(new EditorTextField(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
-    myManager = manager;
-    myToAcceptClasses = toAcceptClasses;
+    super(new EditorComboBox(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
   }
 
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
@@ -34,26 +29,27 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 
-  public EditorTextField getEditorTextField() {
-    return getChildComponent();
-  }
-
   public String getText(){
-    return getEditorTextField().getText().trim();
+    return getChildComponent().getText().trim();
   }
 
   public void setText(final String text){
-    getEditorTextField().setDocument(createDocument(text, myManager, myToAcceptClasses));
+    getChildComponent().setText(text);
   }
 
   public void setTextFieldPreferredWidth(final int charCount) {
-    Dimension size = getEditorTextField().getPreferredSize();
-    FontMetrics fontMetrics = getEditorTextField().getFontMetrics(getEditorTextField().getFont());
+    Dimension size = getChildComponent().getPreferredSize();
+    FontMetrics fontMetrics = getChildComponent().getFontMetrics(getChildComponent().getFont());
     size.width = fontMetrics.charWidth('a') * charCount;
-    getEditorTextField().setPreferredSize(size);
+    getChildComponent().setPreferredSize(size);
   }
 
   public boolean isEditable() {
-    return !getEditorTextField().getEditor().isViewer();
+    return !getChildComponent().getEditorEx().isViewer();
   }
+
+  public void setHistory(String[] history) {
+    getChildComponent().setHistory(history);
+  }
+
 }

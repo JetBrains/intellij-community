@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 
 import java.util.*;
@@ -215,7 +216,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           return level.getAttributesKey();
         }
       };
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, message, message);
+      String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
       infos.add(highlightInfo);
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
@@ -253,7 +255,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     if (message == null) return "Error message unavaliable";
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
-    message = message.replaceAll("<[^>]*>", "");
+    //message = message.replaceAll("<[^>]*>", "");
     message = StringUtil.replace(message, "#ref", psiElement.getText());
     message = StringUtil.replace(message, "#loc", "");
     return message;

@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -43,13 +44,11 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImplUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -98,7 +97,7 @@ public class FindInProjectUtil {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
       if (path.indexOf(JarFileSystem.JAR_SEPARATOR) < 0) {
-        path = path + JarFileSystem.JAR_SEPARATOR;
+        path += JarFileSystem.JAR_SEPARATOR;
       }
       virtualFile = JarFileSystem.getInstance().findFileByPath(path);
     }
@@ -218,15 +217,35 @@ public class FindInProjectUtil {
                                 ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
 
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
-      if (!findModel.isRegularExpressions() && findModel.isWholeWordsOnly() && findModel.isCaseSensitive()) {
+      if (canBeOptimizedForWordSearching(findModel)) {
         // optimization
         final CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
         final GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
                                         GlobalSearchScope.projectScope(project) :
                                         GlobalSearchScope.packageScope(psiDirectory.getPackage(), findModel.isWithSubdirectories());
-        List<VirtualFile> virtualFiles = cacheManager.getVirtualFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope);
-        return virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
+        final List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
+        // search for longer strings first
+        Collections.sort(words, new Comparator<String>() {
+          public int compare(final String o1, final String o2) {
+            return o2.length() - o1.length();
+          }
+        });
+        Set<VirtualFile> resultFiles = new THashSet<VirtualFile>();
+        for (int i = 0; i < words.size(); i++) {
+          String word = words.get(i);
+          List<VirtualFile> virtualFiles = cacheManager.getVirtualFilesWithWord(word, UsageSearchContext.ANY, scope);
+
+          if (i == 0) {
+            resultFiles.addAll(virtualFiles);
+          }
+          else {
+            resultFiles.retainAll(virtualFiles);
+          }
+          if (resultFiles.size() == 0) break;
+        }
+
+        return resultFiles.toArray(new VirtualFile[resultFiles.size()]);
       }
       class EnumContentIterator implements ContentIterator {
         List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
@@ -269,6 +288,10 @@ public class FindInProjectUtil {
                                     createFileMaskRegExp(findModel));
       return vFileList.toArray(new VirtualFile[vFileList.size()]);
     }
+  }
+
+  private static boolean canBeOptimizedForWordSearching(final FindModel findModel) {
+    return findModel.isWholeWordsOnly() && findModel.isCaseSensitive() && !findModel.isRegularExpressions();
   }
 
   private static void addToUsages(Project project, Document document, AsyncFindUsagesProcessListener consumer, FindModel findModel) {

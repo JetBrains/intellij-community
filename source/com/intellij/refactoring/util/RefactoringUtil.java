@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +43,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -488,16 +490,9 @@ public class RefactoringUtil {
   }
 
   public static boolean canBeDeclaredFinal(PsiVariable variable) {
-    PsiManager manager = variable.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
-    PsiReference[] refs = helper.findReferences(variable, GlobalSearchScope.projectScope(manager.getProject()), false);
-    for (int i = 0; i < refs.length; i++) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)refs[i].getElement();
-      if (PsiUtil.isAccessedForWriting(ref)) {
-        return false; // TODO: more correct check based on control flow
-      }
-    }
-    return true;
+    LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
+    final boolean isReassigned = HighlightControlFlowUtil.isReassigned(variable, new THashMap(), new THashMap());
+    return !isReassigned;
   }
 
   public static PsiExpression inlineVariable(PsiLocalVariable variable, PsiExpression initializer,

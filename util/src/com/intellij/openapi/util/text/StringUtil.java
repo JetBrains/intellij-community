@@ -4,10 +4,13 @@
  */
 package com.intellij.openapi.util.text;
 
+import com.intellij.util.SmartList;
+
 import java.beans.Introspector;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.StringTokenizer;
+import java.util.List;
 
 public class StringUtil {
   private static final String VOWELS = "aeiouy";
@@ -540,5 +543,25 @@ public class StringUtil {
     final StringBuffer buffer = new StringBuffer();
     repeatSymbol(buffer,aChar, count);
     return buffer.toString();
+  }
+
+  public static List<String> getWordsIn(String text) {
+    List<String> result = new SmartList<String>();
+    int start = -1;
+    for (int i=0;i<text.length();i++) {
+      char c = text.charAt(i);
+      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      if (isIdentifierPart && start == -1) {
+        start = i;
+      }
+      if (isIdentifierPart && i == text.length()-1 && start != -1) {
+        result.add(text.substring(start, i+1));
+      }
+      else if (!isIdentifierPart && start != -1) {
+        result.add(text.substring(start, i));
+        start = -1;
+      }
+    }
+    return result;
   }
 }

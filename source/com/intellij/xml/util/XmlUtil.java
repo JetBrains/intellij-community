@@ -579,8 +579,12 @@ public class XmlUtil {
           list.add(info);
         }
         while (attributes.length > index) {
-          if (attributes[index].getValue() != null) list.add(new MyAttributeInfo(attributes[index++].getName(), false));
-          else index++;
+          if (attributes[index].getValue() != null) {
+            list.add(new MyAttributeInfo(attributes[index++].getName(), false));
+          }
+          else {
+            index++;
+          }
         }
       }
       attributesMap.put(tagName, list);
@@ -845,5 +849,32 @@ public class XmlUtil {
     }
 
     return text;
+  }
+  private static final String[] REPLACES = new String[]{
+    "&lt;","<",
+    "&nbsp;"," ",
+    "&gt;",">",
+    "&amp;","&",
+    "&apos;","'",
+    "&quot;","\"",
+  };
+  public static String unescape(String text){
+    StringBuffer result = new StringBuffer(text.length());
+    replace:
+    for (int i=0; i<text.length();i++) {
+      for (int j = 0; j < REPLACES.length; j+=2) {
+        String toReplace = REPLACES[j];
+        String replaceWith = REPLACES[j+1];
+
+        final int len = toReplace.length();
+        if (text.regionMatches(i, toReplace, 0, len)) {
+          result.append(replaceWith);
+          i += len-1;
+          continue replace;
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    return result.toString();
   }
 }
