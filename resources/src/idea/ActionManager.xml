@@ -436,6 +436,7 @@
         <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction" text="View _Offline Inspection Results..." description="Load offline inspection results"/>
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction" text="Analyze _Dependencies..." description="Browse code choosen analysis item depends on" />
         <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction" text="Analyze _Backward Dependencies..." description="Browse code choosen analysis item used in" />
+        <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction" text="Analyze _Cyclic Dependencies..." description="Browse code choosen analysis item used in cycles" />
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
       </group>
 
