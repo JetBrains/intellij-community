@@ -248,6 +248,10 @@ public class UsageViewImpl implements UsageView {
     myBuilder.setFilteringRules(getFilteringRuleProvider().getActiveRules(myProject));
     for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
       Usage usage = i.next();
+      if (!usage.isValid()) {
+        i.remove();
+        continue;
+      }
       if (usage instanceof MergeableUsage) {
         ((MergeableUsage)usage).reset();
       }
