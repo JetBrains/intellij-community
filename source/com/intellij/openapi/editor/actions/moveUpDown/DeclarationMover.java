@@ -8,38 +8,43 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
 class DeclarationMover extends LineMover {
-  public LineRange getRangeToMove(Editor editor, PsiFile file, boolean isDown) {
-    LineRange lineRange = super.getRangeToMove(editor, file, isDown);
+  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
     if (!(file instanceof PsiJavaFile)) {
       return null;
     }
-    final Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, lineRange);
+    final InsertionInfo oldInsertionInfo = super.getInsertionInfo(editor, file, isDown);
+    if (oldInsertionInfo == null) return null;
+    LineRange oldRange = oldInsertionInfo.whatToMove;
+    final Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, oldRange);
     if (psiRange == null) return null;
 
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
+    final LineRange range;
     if (firstMember != null && firstMember == lastMember) {
-      final LineRange newRange = memberRange(firstMember, editor, lineRange);
-      newRange.firstElement = firstMember;
-      newRange.lastElement = lastMember;
-      return newRange;
+      range = memberRange(firstMember, editor, oldRange);
+      if (range == null) return null;
+      range.firstElement = firstMember;
+      range.lastElement = lastMember;
     }
+    else {
+      final PsiElement parent = PsiTreeUtil.findCommonParent(firstMember, lastMember);
+      if (parent == null) return null;
 
-    final PsiElement parent = PsiTreeUtil.findCommonParent(firstMember, lastMember);
-    if (parent == null) return null;
-
-    final Pair<PsiElement, PsiElement> combinedRange = getElementRange(parent, firstMember, lastMember);
-    if (combinedRange == null) return null;
-    final LineRange lineRange1 = memberRange(combinedRange.getFirst(), editor, lineRange);
-    if (lineRange1 == null) return null;
-    final LineRange lineRange2 = memberRange(combinedRange.getSecond(), editor, lineRange);
-    if (lineRange2 == null) return null;
+      final Pair<PsiElement, PsiElement> combinedRange = getElementRange(parent, firstMember, lastMember);
+      if (combinedRange == null) return null;
+      final LineRange lineRange1 = memberRange(combinedRange.getFirst(), editor, oldRange);
+      if (lineRange1 == null) return null;
+      final LineRange lineRange2 = memberRange(combinedRange.getSecond(), editor, oldRange);
+      if (lineRange2 == null) return null;
 
 
-    final LineRange newRange = new LineRange(lineRange1.startLine, lineRange2.endLine);
-    newRange.firstElement = combinedRange.getFirst();
-    newRange.lastElement = combinedRange.getSecond();
-    return newRange;
+      range = new LineRange(lineRange1.startLine, lineRange2.endLine);
+      range.firstElement = combinedRange.getFirst();
+      range.lastElement = combinedRange.getSecond();
+    }
+    final int offset = calcInsertOffset(editor, range, isDown);
+    return offset == -1 ? null : new InsertionInfo(range, offset);
   }
 
   private static LineRange memberRange(PsiElement member, Editor editor, LineRange lineRange) {
@@ -53,10 +58,6 @@ class DeclarationMover extends LineMover {
     }
 
     return new LineRange(startLine, endLine);
-  }
-
-  public int getOffsetToMoveTo(Editor editor, PsiFile file, LineRange range, boolean isDown) {
-    return calcInsertOffset(editor, range, isDown);
   }
   private static int calcInsertOffset(Editor editor, LineRange range, final boolean isDown) {
     PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();

@@ -10,32 +10,30 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 
 class LineMover implements Mover {
-  public LineRange getRangeToMove(Editor editor, PsiFile file, boolean isDown) {
+
+  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final int startLine;
     final int endLine;
-    LineRange result;
+    LineRange range;
     if (selectionModel.hasSelection()) {
       startLine = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).line;
       final LogicalPosition endPos = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
       endLine = endPos.column == 0 ? endPos.line - 1 : endPos.line;
-      result = new LineRange(startLine, endLine);
+      range = new LineRange(startLine, endLine);
     }
     else {
       startLine = editor.getCaretModel().getLogicalPosition().line;
       endLine = startLine;
-      result = new LineRange(startLine, endLine);
+      range = new LineRange(startLine, endLine);
     }
-    return result;
-  }
 
-  public int getOffsetToMoveTo(Editor editor, PsiFile file, LineRange range, boolean isDown) {
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine <= 1 && !isDown) return -1;
-    if (range.endLine >= maxLine - 1 && isDown) return -1;
+    if (range.startLine <= 1 && !isDown) return null;
+    if (range.endLine >= maxLine - 1 && isDown) return null;
 
     int nearLine = isDown ? range.endLine + 2 : range.startLine - 1;
-    return editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+    return new InsertionInfo(range, editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0)));
   }
 
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {

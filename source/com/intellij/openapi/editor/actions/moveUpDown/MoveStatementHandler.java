@@ -32,11 +32,13 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiFile file = documentManager.getPsiFile(document);
 
     final Mover mover = getMover(editor, file);
-    final LineRange lineRange = mover.getRangeToMove(editor,file,isDown);
+    final InsertionInfo insertionInfo = mover.getInsertionInfo(editor, file, isDown);
+    insertionInfo.prepareToMove(isDown);
+    final LineRange lineRange = insertionInfo.whatToMove;
     final int startLine = lineRange.startLine;
     final int endLine = lineRange.endLine;
 
-    final int insertOffset = mover.getOffsetToMoveTo(editor, file, lineRange, isDown);
+    final int insertOffset = insertionInfo.insertOffset;
 
     final int start = editor.logicalPositionToOffset(new LogicalPosition(startLine, 0));
     final int end = editor.logicalPositionToOffset(new LogicalPosition(endLine+1, 0));
@@ -97,11 +99,10 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiFile file = documentManager.getPsiFile(document);
     final Mover mover = getMover(editor, file);
     if (mover == null) return false;
-    final LineRange range = mover.getRangeToMove(editor, file, isDown);
-    if (range == null) return false;
-    final int insertOffset = mover.getOffsetToMoveTo(editor, file, range, isDown);
-    if (insertOffset == -1) return false;
+    final InsertionInfo insertionInfo = mover.getInsertionInfo(editor, file, isDown);
+    if (insertionInfo == null) return false;
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
+    final LineRange range = insertionInfo.whatToMove;
     if (range.startLine <= 1 && !isDown) return false;
     if (range.endLine >= maxLine - 1 && isDown) return false;
 
@@ -111,15 +112,11 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   private Mover getMover(final Editor editor, final PsiFile file) {
     for (int i = 0; i < myMovers.length; i++) {
       final Mover mover = myMovers[i];
-      final LineRange range = mover.getRangeToMove(editor, file, isDown);
+      final InsertionInfo range = mover.getInsertionInfo(editor, file, isDown);
       if (range != null) return mover;
     }
     return null;
   }
 
 }
-//todo
-   // + no move inside/outside class(except nested)/method/initializer/comment
-// + moving declarations
-// create codeblock when moving inside statement
 
