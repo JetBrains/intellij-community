@@ -55,6 +55,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   };
   public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
+  private ModulePath[] myModulePaths;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -125,12 +126,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
-    final ModulePath[] paths = getPathsToModuleFiles(element);
-    if (paths.length > 0) {
+    myModulePaths = getPathsToModuleFiles(element);
+  }
+
+  public void loadModules() {
+    if (myModulePaths.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (int idx = 0; idx < paths.length; idx++) {
-            final ModulePath modulePath = paths[idx];
+          for (int idx = 0; idx < myModulePaths.length; idx++) {
+            final ModulePath modulePath = myModulePaths[idx];
             try {
               final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
               final String groupPathString = modulePath.getModuleGroup();
