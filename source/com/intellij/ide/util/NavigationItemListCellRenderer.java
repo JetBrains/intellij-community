@@ -36,6 +36,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -56,6 +58,9 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     int index,
     boolean isSelected,
     boolean cellHasFocus) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+    setFont(editorFont);
     removeAll();
     final Component leftCellRendererComponent =
       new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

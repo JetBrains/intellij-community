@@ -85,7 +85,6 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     setHorizontalTextPosition(SwingConstants.LEFT);
     setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
-    setFont(UIManager.getFont("List.font"));
     setForeground(selected ? UIManager.getColor("List.selectionForeground") : UIManager.getColor("textInactiveText"));
   }
 }
