@@ -18,9 +18,9 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlCompletionData extends XmlCompletionData {
-  private CompletionData myStyleCompletionData;
+  private static CompletionData ourStyleCompletionData;
   private boolean myCaseInsensitive;
-  private CompletionData myScriptCompletionData;
+  private static CompletionData ourScriptCompletionData;
 
   public HtmlCompletionData() {
     this(true);
@@ -123,14 +123,14 @@ public class HtmlCompletionData extends XmlCompletionData {
   public CompletionVariant[] findVariants(PsiElement position, CompletionContext context) {
     CompletionVariant[] variants = super.findVariants(position, context);
 
-    if (myStyleCompletionData!=null && isStyleContext(position)) {
-      final CompletionVariant[] styleVariants = myStyleCompletionData.findVariants(position, context);
+    if (ourStyleCompletionData!=null && isStyleContext(position)) {
+      final CompletionVariant[] styleVariants = ourStyleCompletionData.findVariants(position, context);
 
       variants = ArrayUtil.mergeArrays(variants,styleVariants, CompletionVariant.class);
     }
 
-    if (myScriptCompletionData!=null && isScriptContext(position)) {
-      final CompletionVariant[] scriptVariants = myScriptCompletionData.findVariants(position, context);
+    if (ourScriptCompletionData!=null && isScriptContext(position)) {
+      final CompletionVariant[] scriptVariants = ourScriptCompletionData.findVariants(position, context);
 
       variants = ArrayUtil.mergeArrays(variants,scriptVariants, CompletionVariant.class);
     }
@@ -153,15 +153,15 @@ public class HtmlCompletionData extends XmlCompletionData {
   public void addKeywordVariants(Set set, CompletionContext context, PsiElement position) {
     super.addKeywordVariants(set, context, position);
 
-    if (myStyleCompletionData!=null && isStyleContext(position)) {
-      myStyleCompletionData.addKeywordVariants(set, context, position);
-    } else if (myScriptCompletionData!=null && isScriptContext(position)) {
-      myScriptCompletionData.addKeywordVariants(set, context, position);
+    if (ourStyleCompletionData!=null && isStyleContext(position)) {
+      ourStyleCompletionData.addKeywordVariants(set, context, position);
+    } else if (ourScriptCompletionData!=null && isScriptContext(position)) {
+      ourScriptCompletionData.addKeywordVariants(set, context, position);
     }
   }
 
-  public void setStyleCompletionData(CompletionData cssCompletionData) {
-    myStyleCompletionData = cssCompletionData;
+  public static void setStyleCompletionData(CompletionData cssCompletionData) {
+    ourStyleCompletionData = cssCompletionData;
   }
 
   public void registerVariant(CompletionVariant variant) {
@@ -173,10 +173,10 @@ public class HtmlCompletionData extends XmlCompletionData {
     XmlTag tag = PsiTreeUtil.getParentOfType(insertedElement, XmlTag.class, false);
     String prefix = null;
 
-    if (isScriptTag(tag) && myScriptCompletionData!=null) {
-      prefix = myScriptCompletionData.findPrefix(insertedElement, offset);
-    } else if (isStyleTag(tag) && myStyleCompletionData!=null) {
-      prefix = myStyleCompletionData.findPrefix(insertedElement, offset);
+    if (isScriptTag(tag) && ourScriptCompletionData!=null) {
+      prefix = ourScriptCompletionData.findPrefix(insertedElement, offset);
+    } else if (isStyleTag(tag) && ourStyleCompletionData!=null) {
+      prefix = ourStyleCompletionData.findPrefix(insertedElement, offset);
     }
 
     if (prefix == null) {
@@ -186,7 +186,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     return prefix;
   }
 
-  public void setScriptCompletionData(CompletionData scriptCompletionData) {
-    myScriptCompletionData = scriptCompletionData;
+  public static void setScriptCompletionData(CompletionData scriptCompletionData) {
+    ourScriptCompletionData = scriptCompletionData;
   }
 }
