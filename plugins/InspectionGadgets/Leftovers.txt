@@ -25,4 +25,3 @@
     Fix damn "Instanceof Incompatible Interface" inspection
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
-    Fix list table alignment
