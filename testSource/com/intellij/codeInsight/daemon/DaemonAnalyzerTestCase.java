@@ -58,8 +58,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     Document document = myEditor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(
-      myProject, myFile, document, 0, myFile.getTextLength(), false, true);
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), false, true);
     action1.doCollectInformation(new MockProgressInidicator());
     HighlightInfo[] highlights1 = action1.getHighlights();
 
