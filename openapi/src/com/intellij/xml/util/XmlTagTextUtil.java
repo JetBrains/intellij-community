@@ -17,6 +17,7 @@ public class XmlTagTextUtil {
     ourCharacterEntities.put("gt", new Character('>'));
     ourCharacterEntities.put("apos", new Character('\''));
     ourCharacterEntities.put("quot", new Character('\"'));
+    ourCharacterEntities.put("nbsp", new Character(' '));
     ourCharacterEntities.put("amp", new Character('&'));
   }
 
