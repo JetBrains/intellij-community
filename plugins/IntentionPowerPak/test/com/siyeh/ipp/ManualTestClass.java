@@ -20,7 +20,7 @@ public class ManualTestClass
         long bar = 0x1fL;
 
 // convert between octal, hex, and decimal
-        int foo2 = 31000000000000000000000000000000000000000000000;
+        int foo2 = 02556055060602406713736772653302544613000000000000000;
 
 // convert between octal, hex, and decimal
         long bar2 = 31000000000000000000000000000000000000000000000L;
@@ -1019,6 +1019,13 @@ public class ManualTestClass
         "foo".compareTo("bar");
     }
 
+    public void testAssertToIf(boolean foo)
+    {
+        assert foo :"bar";
+        assert foo ;
+        assert !foo ;
+    }
+
     public void testDetailException() throws IOException
     {
         // check that this is detailed
@@ -1167,12 +1174,9 @@ public class ManualTestClass
 
     public void testSplitElseIf()
     {
-        if(bar())
-        {
+        if (bar()) {
             System.out.println("1");
-        }
-        else if(!bar())
-        {
+        } else if (!bar()) {
             System.out.println("2");
         }
 
