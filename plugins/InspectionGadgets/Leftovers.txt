@@ -4,7 +4,6 @@
     Logger constructed without the current class name as argument.
     Incorrect lazy initialization of static field
     Avoid repeated casting
-    arithmetic operations on volatile types
     Class name with forbidden name component
     Paired open/close for Sockets
     Paired open/close for Channels
