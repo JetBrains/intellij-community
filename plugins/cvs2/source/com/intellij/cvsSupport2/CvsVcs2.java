@@ -3,28 +3,37 @@ package com.intellij.cvsSupport2;
 
 import com.intellij.cvsSupport2.actions.EditAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
+import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
+import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
-import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -246,6 +255,21 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   public AnnotationProvider getAnnotationProvider() {
     return myCvsAnnotationProvider;
+  }
+
+  public FileAnnotation createAnnotation(File cvsLightweightFile, VirtualFile cvsVirtualFile,
+                   String revision, CvsEnvironment environment) throws VcsException {
+    final AnnotateOperation annotateOperation = new AnnotateOperation(cvsLightweightFile, revision, environment);
+    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+    executor.performActionSync(new CommandCvsHandler("Annotate", annotateOperation),
+                               CvsOperationExecutorCallback.EMPTY);
+
+    if (executor.getResult().hasNoErrors()) {
+      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), cvsVirtualFile);      
+    } else {
+      throw executor.getResult().composeError();
+    }
+
   }
 }
 

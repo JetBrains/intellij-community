@@ -33,7 +33,12 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 
 public interface AnnotationProvider {
+
   FileAnnotation annotate(VirtualFile file) throws VcsException;
+
+  FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException;
+  
 }

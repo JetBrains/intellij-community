@@ -29,42 +29,53 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.cvsSupport2.annotate;
+package com.intellij.openapi.vcs.annotate;
 
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.File;
+public class Annotater {
 
-public class CvsAnnotationProvider implements AnnotationProvider{
   private final Project myProject;
+  private final VirtualFile myVirtualFile;
+  private final FileAnnotation myFileAnnotation;
 
-  public CvsAnnotationProvider(final Project project) {
+  public Annotater(FileAnnotation fileAnnotation, Project project, VirtualFile virtualFile) {
+    myFileAnnotation = fileAnnotation;
     myProject = project;
+    myVirtualFile = virtualFile;
   }
 
-  public FileAnnotation annotate(VirtualFile file) throws VcsException {
-    final AnnotateOperation operation = AnnotateOperation.createForFile(new File(file.getPath()));
-    final CvsOperationExecutor executor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
-    executor.performActionSync(new CommandCvsHandler("Annotate", operation),
-                               CvsOperationExecutorCallback.EMPTY);
-    if (executor.getResult().hasNoErrors()) {
-      return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), file);
-    } else {
-      throw executor.getFirstError();
+  public void showAnnotation() {
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, myVirtualFile);
+    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    if (editor == null) {
+      Messages.showMessageDialog("Cannot open text editor for file " + myVirtualFile.getPresentableUrl(),
+                                 "Cannot Open Editor", Messages.getInformationIcon());
+      return;
     }
-  }
 
-  public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
-    return null;
+    EditorGutter gutterComponent = editor.getGutter();
+    gutterComponent.closeAllAnnotations();
+
+    final LineAnnotationAspect[] aspects = myFileAnnotation.getAspects();
+    for (int i = 0; i < aspects.length; i++) {
+      final LineAnnotationAspect aspect = aspects[i];
+      gutterComponent.registerTextAnnotation(new TextAnnotationGutterProvider() {
+        public String getLineText(int line, Editor editor) {
+          return aspect.getValue(line);
+        }
+
+        public void gutterClosed() {
+        }
+      });
+
+    }
   }
 }

@@ -11,12 +11,16 @@ import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotater;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vcs.annotate.Annotater;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
@@ -125,9 +129,14 @@ public class BrowserPanel extends JPanel implements DataProvider {
 
     public void actionPerformed(AnActionEvent e) {
       VcsVirtualFile vcsVirtualFile = (VcsVirtualFile)getCvsVirtualFile();
-      new Annotater(getCvsLightFile().getCvsFile(), myProject,
-                    vcsVirtualFile, vcsVirtualFile.getRevision(),
-                    myCvsRootConfiguration).execute();
+      try {
+        final FileAnnotation annotation = CvsVcs2.getInstance(myProject)
+            .createAnnotation(getCvsLightFile().getCvsFile(), vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
+        new Annotater(annotation, myProject, vcsVirtualFile).showAnnotation();
+      }
+      catch (VcsException e1) {
+        AbstractVcsHelper.getInstance(myProject).showError(e1, "CVS Annotate");        
+      }
     }
   }
 
