@@ -257,8 +257,7 @@ class IntroduceConstantDialog extends DialogWrapper {
           public void itemStateChanged(ItemEvent e) {
             updateCbDeleteVariable();
           }
-        }
-        );
+        });
       }
     }
     else {
