@@ -14,7 +14,13 @@ class InlineMethodHandler {
 
   public void invoke(final Project project, Editor editor, final PsiMethod method) {
     if (method.getBody() == null){
-      String message = REFACTORING_NAME + " refactoring cannot be applied to abstract methods";
+      String message;
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        message = REFACTORING_NAME + " refactoring cannot be applied to abstract methods";
+      }
+      else {
+        message = REFACTORING_NAME + " refactoring cannot be applied: no sources attached";
+      }
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
       return;
     }
@@ -49,7 +55,7 @@ class InlineMethodHandler {
       }
     }
     else {
-      if (reference != null && !method.equals(reference.resolve())) {
+      if (reference != null && !method.getManager().areElementsEquivalent(method, reference.resolve())) {
         reference = null;
       }
     }

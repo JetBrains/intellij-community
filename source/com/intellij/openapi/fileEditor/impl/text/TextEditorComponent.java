@@ -285,7 +285,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
-      return targetElement == null ? psiFile : targetElement;
+      return targetElement == null ? psiFile : targetElement.getNavigationElement();
     }
     else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
