@@ -266,11 +266,13 @@ public class MatcherImpl {
     }
 
     private void clearSchedule() {
-      if (tasks.size()!=0) tasks.clear();
-      ended=true;
-      taskQueueEndAction.run();
+      if (!ended) {
+        if (tasks.size()!=0) tasks.clear();
+        ended=true;
+        taskQueueEndAction.run();
 
-      PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+        PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+      }
     }
 
     public void actionPerformed(ActionEvent event) {
