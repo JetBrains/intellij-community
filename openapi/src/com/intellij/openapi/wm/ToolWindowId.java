@@ -9,7 +9,7 @@ public interface ToolWindowId {
   String MESSAGES_WINDOW = "Messages";
   String PROJECT_VIEW = "Project";
   String STRUCTURE_VIEW = "Structure";
-  String FAVORITES_VIEW = "My Favorites";
+  String FAVORITES_VIEW = "Favorites";
   String ANT_BUILD = "Ant Build";
   String DEBUG = "Debug";
   String RUN = "Run";
