@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -52,11 +54,8 @@ public class IdeRootPane extends JRootPane{
     myUISettingsListener=new MyUISettingsListenerImpl();
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
 
-    if (myWelcomePane != null) {
-      myContentPane.remove(myWelcomePane);
-      myWelcomePane = null;
-    }
-    else {
+    if (!GeneralSettings.getInstance().isReopenLastProject() ||
+        RecentProjectsManager.getInstance().getLastProjectPath() == null) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
     }
