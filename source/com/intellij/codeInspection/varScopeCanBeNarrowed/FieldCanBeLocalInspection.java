@@ -148,11 +148,17 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
               ((PsiReferenceExpression)ref).replace(refExpr);
             }
           }
-          myField.delete();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+      }
+
+      try {
+        myField.delete();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
 

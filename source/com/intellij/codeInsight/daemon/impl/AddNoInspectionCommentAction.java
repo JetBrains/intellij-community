@@ -23,7 +23,7 @@ class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Suppress '" + myTool.getDisplayName() + "' for statement";
+    return "Suppress '" + myTool.getID() + "' for statement";
   }
 
   private PsiStatement getContainer() {
