@@ -16,7 +16,6 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.codeInsight.hint.HintManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +52,9 @@ public class WelcomeScreen {
   private static final int PLUGINS_GROUP = 1;
   private static final int COLUMNS_IN_MAIN = 2;
   private static final int PLUGIN_DSC_MAX_WIDTH = 180;
+  private static final int PLUGIN_DSC_MAX_ROWS = 2;
   private static final int PLUGIN_NAME_MAX_WIDTH = 180;
+  private static final int PLUGIN_NAME_MAX_ROWS = 2;
   private static final int MAX_TOOLTIP_WIDTH = 400;
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(78, 78);
@@ -431,7 +432,7 @@ public class WelcomeScreen {
                                                     new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 
-    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, 2);
+    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
@@ -452,7 +453,7 @@ public class WelcomeScreen {
         }
       }
       description = description.replaceAll("\\n", "");
-      String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, 2);
+      String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, PLUGIN_DSC_MAX_ROWS);
       JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
       if (shortenedDcs.endsWith("...</html>")) {
@@ -551,7 +552,7 @@ public class WelcomeScreen {
             break;
           }
         }
-        if (i == 0 && maxRows == 0) {
+        if (i == 0 && rows > 2) {
           prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
           suffix = suffix.substring(maxIdxPerLine, suffix.length());
           lengthLeft = suffix.length();
