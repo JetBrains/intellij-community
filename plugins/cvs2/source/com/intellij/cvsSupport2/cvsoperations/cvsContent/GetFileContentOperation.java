@@ -111,7 +111,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     LOG.assertTrue(myState == LOADING, "state = " + String.valueOf(myState));
     if (myContent == null && myBinaryContent == null) {
       myState = DELETED;
-      return new byte[0];
+      return null;
     }
     else {
       myState = SUCCESSFULLY_LOADED;
