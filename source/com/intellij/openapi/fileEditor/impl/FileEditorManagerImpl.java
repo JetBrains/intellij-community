@@ -684,7 +684,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   public FileEditor getSelectedEditor(final VirtualFile file) {
-    return getSelectedEditorWithProvider(file).getFirst();
+    final Pair<FileEditor, FileEditorProvider> selectedEditorWithProvider = getSelectedEditorWithProvider(file);
+    return selectedEditorWithProvider == null ? null : selectedEditorWithProvider.getFirst();
   }
 
 
