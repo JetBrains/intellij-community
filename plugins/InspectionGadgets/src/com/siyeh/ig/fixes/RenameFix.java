@@ -26,7 +26,7 @@ public class RenameFix extends InspectionGadgetsFix {
         if (m_targetName == null) {
             return "Rename";
         } else {
-            return "Rename to '" + m_targetName + "()'";
+            return "Rename to '" + m_targetName + "'";
         }
     }
 
