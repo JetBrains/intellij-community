@@ -52,8 +52,8 @@ public class WelcomeScreen {
   private static final int MAIN_GROUP = 0;
   private static final int PLUGINS_GROUP = 1;
   private static final int COLUMNS_IN_MAIN = 2;
-  private static final int PLUGIN_DSC_MAX_WIDTH = 170;
-  private static final int PLUGIN_NAME_MAX_WIDTH = 170;
+  private static final int PLUGIN_DSC_MAX_WIDTH = 180;
+  private static final int PLUGIN_NAME_MAX_WIDTH = 180;
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(78, 78);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
@@ -136,7 +136,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     topPluginsPanel.add(emptyLabel_1, gBC);
 
-    gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 20), 0, 0);
+    gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(null, OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
         new SingleConfigurableEditor(myPluginsPanel, PluginManagerConfigurable.getInstance(), null).show();
@@ -546,7 +546,7 @@ public class WelcomeScreen {
       for (int i = maxIdxPerLine; i > 0; i--) {
         if (name.charAt(i) == ' ') {
           substring_1 = name.substring(0, i) + "<br>";
-          if ((name.length() / 2) <= maxIdxPerLine) {
+          if ((name.length() - substring_1.length()) <= maxIdxPerLine) {
             substring_2 = name.substring(i + 1, name.length());
           }
           else {
