@@ -3,8 +3,6 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.*;
@@ -36,14 +34,16 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             return "Weaken overly-strong cast";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiElement castTypeElement = descriptor.getPsiElement();
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression);
-            final String newExpression = '(' + expectedType.getPresentableText() + ')' + expression.getOperand().getText();
+            final String newExpression =
+                    '(' + expectedType.getPresentableText() + ')' +
+                    expression.getOperand().getText();
             replaceExpression(project, expression, newExpression);
         }
     }

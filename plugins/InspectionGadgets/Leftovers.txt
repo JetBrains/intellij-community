@@ -19,7 +19,6 @@
     Inefficient use of keySet iterator rather than entrySet iterator
     Equals methods that do not check parameter type
     Call to simple getter or setter from within class
-    Copyright comment
     Static inheritance fix
     Static import fix
     Fix for non-static initializer

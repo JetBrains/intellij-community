@@ -1,8 +1,11 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -50,5 +53,14 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
             final Logger logger = Logger.getInstance(className);
             logger.error(e);
         }
+    }
+
+    public static boolean isQuickFixOnReadOnlyFile(Project project,
+                                                    ProblemDescriptor descriptor){
+        final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
+        final PsiElement problemElement = descriptor.getPsiElement();
+        final PsiFile containingPsiFile = problemElement.getContainingFile();
+        final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
+        return handler.ensureFilesWritable(new VirtualFile[]{virtualFile}).hasReadonlyFiles();
     }
 }
