@@ -286,6 +286,7 @@
         <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
           <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction" text="_File Structure Popup" description="Popup structure of the current file for quick navigation"/>
           <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction" text="Se_lect In..." description="Select the current class or method in any view"/>
+          <reference ref="AddToFavorites"/>
           <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for the symbol at caret"/>
           <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction" text="Quick _Implementations" description="Show a popup window with the symbol (and its implementations) code"/>
           <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction" text="_Parameter Info" description="Show parameters of the method call at caret"/>
