@@ -561,6 +561,15 @@ public class ResolverTree {
         final PsiType right = constr.getRight();
 
         if (!(left instanceof PsiTypeVariable) && right instanceof PsiTypeVariable) {
+          final HashSet<PsiTypeVariable> bound = new PsiTypeVarCollector().getSet(left);
+
+          if (bound.contains(right)){
+            myConstraints.remove(constr);
+            mySons = new ResolverTree[]{applyRule(myBindingFactory.create(((PsiTypeVariable)right), Bottom.BOTTOM))};
+
+            return;
+          }
+
           final PsiManager manager = PsiManager.getInstance(myProject);
           final PsiType leftType = left instanceof PsiWildcardType ? ((PsiWildcardType)left).getBound() : left;
           final PsiType[] types = getTypeRange(PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(myProject)), leftType);
