@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -45,7 +44,7 @@ public class SelectWordUtil {
     new XmlTagSelectioner(),
     new XmlElementSelectioner(),
     new XmlTokenSelectioner(),
-    new NonJavaFileLineSelectioner()
+    new PlainTextLineSelectioner()
   };
 
   public static void registerSelectioner(Selectioner selectioner) {
@@ -974,22 +973,9 @@ public class SelectWordUtil {
     }
   }
 
-  static class NonJavaFileLineSelectioner extends BasicSelectioner {
+  static class PlainTextLineSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
-      boolean result = e instanceof PsiPlainText;
-
-      if (!result) {
-        final PsiFile containingFile = e.getContainingFile();
-
-        FileType fileType = (containingFile != null) ? containingFile.getFileType() : null;
-        if (fileType == StdFileTypes.HTML ||
-            fileType == StdFileTypes.XHTML ||
-            fileType == StdFileTypes.JSPX) {
-          result = true;
-        }
-      }
-
-      return result;
+      return e instanceof PsiPlainText || e instanceof XmlToken && ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
@@ -1000,7 +986,9 @@ public class SelectWordUtil {
       int end = cursorOffset;
       while (end < editorText.length() && editorText.charAt(end) != '\n' && editorText.charAt(end) != '\r') end++;
 
-      result.add(new TextRange(start, end));
+      final TextRange range = new TextRange(start, end);
+      if (!e.getParent().getTextRange().contains(range)) return null;
+      result.add(range);
       return result;
     }
   }
