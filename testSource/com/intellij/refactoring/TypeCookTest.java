@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.typeCook.Kitchen;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.*;
+import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import junit.textui.TestRunner;
 
 import java.io.File;
@@ -615,6 +617,10 @@ public class TypeCookTest extends MultiFileTestCase {
   //      start();
   //}
 
+  public void testT146() throws Exception {
+        start();
+  }
+
   public void start() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
@@ -628,7 +634,9 @@ public class TypeCookTest extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
+    SystemBuilder b = new SystemBuilder(aClass.getManager(),
     SystemBuilder b = new SystemBuilder(aClass.getManager().getProject(),
+    SystemBuilder b = new SystemBuilder(myPsiManager.getProject(),
                                         new Settings() {
                                           public boolean dropObsoleteCasts() {
                                             return true;
@@ -643,17 +651,44 @@ public class TypeCookTest extends MultiFileTestCase {
                                           }
                                         });
 
-    //final com.intellij.refactoring.typeCook.deductive.builder.System system = b.build(b.collect(new PsiElement[]{aClass}));
-    //
+    final com.intellij.refactoring.typeCook.deductive.builder.System commonSystem = b.build(b.collect(new PsiElement[]{aClass}));
+
+    System.out.println("System built:\n" + commonSystem);
+
+    final com.intellij.refactoring.typeCook.deductive.builder.System[] systems = commonSystem.isolate();
+
+    System.out.println("Systems isolated:\n" + commonSystem);
+
+    com.intellij.refactoring.typeCook.deductive.builder.System system = null;
+
+    for (int i = 0; i < systems.length; i++) {
+      com.intellij.refactoring.typeCook.deductive.builder.System s = systems[i];
+
+      if (s != null && system == null) {
+        System.out.println(s);
+        system = s;
+      }
+    }
+
+    Binding[] bindings = null;
+
+    if (system != null) {
+      final ResolverTree tree = new ResolverTree(system);
+
+      tree.resolve();
+
+      bindings = tree.getSolutions();
+    }
+
     //System.out.println("" + system);
-    //
+
     //if (system != null) return;
 
-    Kitchen d = new Kitchen(aClass.getManager());
+    //Kitchen d = new Kitchen(aClass.getManager());
 
-    d.buildGraph(new PsiElement[]{aClass});
+    //d.buildGraph(new PsiElement[]{aClass});
 
-    String itemRepr = d.resultString();
+    String itemRepr = system != null ? system.dumpString() : commonSystem.dumpString();// d.resultString();
     String itemName = className + ".items";
     String patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
 
@@ -679,10 +714,10 @@ public class TypeCookTest extends MultiFileTestCase {
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
 
-    d.analyze();
-    d.relax();
+    //d.analyze();
+    //d.relax();
 
-    itemRepr = d.resultString();
+    itemRepr = system != null ? system.dumpResult(bindings) : commonSystem.dumpString(); //d.resultString();
 
     itemName = className + ".1.items";
     patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;

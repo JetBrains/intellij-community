@@ -233,7 +233,7 @@ public class Util {
       final PsiClassType.ClassResolveResult result = resolveType(t);
       final PsiClass theClass = result.getElement();
 
-      if (theClass == null){
+      if (theClass == null) {
         return t;
       }
 
@@ -242,7 +242,7 @@ public class Util {
 
       PsiSubstitutor subst = PsiSubstitutor.EMPTY;
 
-      for (final Iterator<PsiTypeParameter> p=theSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();){
+      for (final Iterator<PsiTypeParameter> p = theSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
         final PsiTypeParameter theParm = p.next();
         final PsiType actualType = theSubst.substitute(theParm);
 
@@ -262,7 +262,7 @@ public class Util {
 
       return theManager.getElementFactory().createType(theClass, subst);
     }
-    else if (t instanceof PsiArrayType){
+    else if (t instanceof PsiArrayType) {
       return banalize(((PsiArrayType)t).getComponentType()).createArrayType();
     }
 
@@ -391,7 +391,7 @@ public class Util {
       return aClass.getManager().getElementFactory()
         .createType(aClass);
     }
-    ;
+  ;
 
     return PsiType.getJavaLangObject(aClass.getManager());
   }
@@ -630,7 +630,7 @@ public class Util {
       for (int i = 0; i < parms.length; i++) {
         max = Math.max(max, getHeight(aSubst.substitute(parms[i])));
         if (max > HEIGHT_BOUND) {
-          break;
+        break;
         }
       }
 
@@ -671,14 +671,14 @@ public class Util {
         final PsiTypeParameter parm = i.next();
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory);
 
-        if (type instanceof PsiTypeVariable){
+        if (type instanceof PsiTypeVariable) {
           cluster.add((PsiTypeVariable)type);
         }
 
         theSubst = theSubst.put(parm, type);
       }
 
-      if (cluster.size() > 1){
+      if (cluster.size() > 1) {
         factory.registerCluster(cluster);
       }
 
@@ -692,33 +692,53 @@ public class Util {
   }
 
   public static PsiType substituteType(final PsiType type, final PsiSubstitutor subst) {
-    final int level = getArrayLevel(type);
-    final PsiClassType.ClassResolveResult result = resolveType(type);
+    if (type instanceof PsiWildcardType) {
+      final PsiWildcardType wcType = ((PsiWildcardType)type);
+      final PsiType bound = wcType.getBound();
 
-    if (result.getElement() != null) {
-      final PsiClass aClass = result.getElement();
-      final PsiSubstitutor aSubst = result.getSubstitutor();
-      final PsiManager manager = aClass.getManager();
+      if (bound != null) {
+        final PsiClass aClass = resolveType(bound).getElement();
 
-      if (aClass instanceof PsiTypeParameter) {
-        final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
+        if (aClass != null) {
+          final PsiManager manager = aClass.getManager();
 
-        return createArrayType(sType == null ? PsiType.getJavaLangObject(manager) : sType, level);
+          return wcType.isExtends()
+                 ? PsiWildcardType.createExtends(manager, substituteType(bound, subst))
+                 : PsiWildcardType.createSuper(manager, substituteType(bound, subst));
+        }
       }
 
-      final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
-      PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-      for (int i = 0; i < aParms.length; i++) {
-        PsiTypeParameter aParm = aParms[i];
-
-        theSubst = theSubst.put(aParm, substituteType(aSubst.substitute(aParm), subst));
-      }
-
-      return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
+      return type;
     }
+    else {
+      final int level = getArrayLevel(type);
+      final PsiClassType.ClassResolveResult result = resolveType(type);
+      final PsiClass aClass = result.getElement();
 
-    return createArrayType(type, level);
+      if (aClass != null) {
+        final PsiSubstitutor aSubst = result.getSubstitutor();
+        final PsiManager manager = aClass.getManager();
+
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
+
+          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager) : sType, level);
+        }
+
+        final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
+        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+        for (int i = 0; i < aParms.length; i++) {
+          PsiTypeParameter aParm = aParms[i];
+
+          theSubst = theSubst.put(aParm, substituteType(aSubst.substitute(aParm), subst));
+        }
+
+        return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
+      }
+
+      return createArrayType(type, level);
+    }
   }
 
   public static boolean bindsTypeVariables(final PsiType t) {
