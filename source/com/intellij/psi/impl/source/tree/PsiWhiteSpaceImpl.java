@@ -22,7 +22,6 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
 
   public Language getLanguage() {
     PsiElement master = getNextSibling();
-    if (master == null) master = getPrevSibling();
     if (master == null) master = getParent();
     return master.getLanguage();
   }
