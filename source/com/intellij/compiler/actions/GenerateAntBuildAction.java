@@ -9,12 +9,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.*;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Arrays;
 
 public class GenerateAntBuildAction extends CompileActionBase {
 
@@ -90,6 +91,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + ".xml");
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
 
+    ensureFilesWritable(project, new File[] {destFile, propertiesFile});
+
     if (!backup(destFile, project, genOptions, filesToRefresh)) {
       return null;
     }
@@ -118,12 +121,41 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return new File[] {destFile, propertiesFile};
   }
 
+  private void ensureFilesWritable(Project project, File[] files) throws IOException {
+    final List<VirtualFile> toCheck = new ArrayList<VirtualFile>(files.length);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    for (int idx = 0; idx < files.length; idx++) {
+      final VirtualFile vFile = lfs.findFileByIoFile(files[idx]);
+      if (vFile != null) {
+        toCheck.add(vFile);
+      }
+    }
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck.toArray(new VirtualFile[toCheck.size()]));
+    if (status.hasReadonlyFiles()) {
+      throw new IOException(status.getReadonlyFilesMessage());
+    }
+  }
+
   public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getProjectFile().getParent());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<File>();
     final File projectBuildFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + ".xml");
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
+    final ModuleChunk[] chunks = genOptions.getModuleChunks();
+
+    final File[] chunkFiles = new File[chunks.length];
+    for (int idx = 0; idx < chunks.length; idx++) {
+      final ModuleChunk chunk = chunks[idx];
+      final File chunkBaseDir = BuildProperties.getModuleChunkBaseDir(chunk);
+      chunkFiles[idx] = new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + ".xml");
+    }
+
+    final List<File> allFiles = new ArrayList<File>(2 + chunkFiles.length);
+    allFiles.add(projectBuildFile);
+    allFiles.add(propertiesFile);
+    allFiles.addAll(Arrays.asList(chunkFiles));
+    ensureFilesWritable(project, allFiles.toArray(new File[allFiles.size()]));
 
     if (!backup(projectBuildFile, project, genOptions, filesToRefresh)) {
       return null;
@@ -141,14 +173,14 @@ public class GenerateAntBuildAction extends CompileActionBase {
       generated.add(projectBuildFile);
 
       // the sequence in which modules are imported is important cause output path properties for dependent modules should be defined first
-      ModuleChunk[] chunks = genOptions.getModuleChunks();
 
       for (int idx = 0; idx < chunks.length; idx++) {
         final ModuleChunk chunk = chunks[idx];
-        final File chunkBaseDir = BuildProperties.getModuleChunkBaseDir(chunk);
-        chunkBaseDir.mkdirs();
-        final File chunkBuildFile = new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + ".xml");
-
+        final File chunkBuildFile = chunkFiles[idx];
+        final File chunkBaseDir = chunkBuildFile.getParentFile();
+        if (chunkBaseDir != null) {
+          chunkBaseDir.mkdirs();
+        }
         final boolean moduleBackupOk = backup(chunkBuildFile, project, genOptions, filesToRefresh);
         if (!moduleBackupOk) {
           return null;
