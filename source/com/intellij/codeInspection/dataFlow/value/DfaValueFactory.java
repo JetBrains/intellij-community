@@ -32,13 +32,13 @@ public class DfaValueFactory {
     return myInstance;
   }
 
-  int createID(DfaValue value) {
+  int createID() {
     myLastID++;
     LOG.assertTrue(myLastID >= 0, "Overflow");
     return myLastID;
   }
 
-  void registerID(DfaValue value) {
+  void registerValue(DfaValue value) {
     myValues.put(value.getID(), value);
   }
 

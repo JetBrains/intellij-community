@@ -5,8 +5,8 @@ public class DfaValue {
 
   protected DfaValue() {
     final DfaValueFactory factory = DfaValueFactory.getInstance();
-    myID = factory.createID(this);
-    factory.registerID(this);
+    myID = factory.createID();
+    factory.registerValue(this);
   }
 
   public int getID() {
