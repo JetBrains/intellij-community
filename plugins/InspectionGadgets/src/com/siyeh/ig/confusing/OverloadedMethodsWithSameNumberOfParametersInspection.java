@@ -63,8 +63,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
         private static int calculateParamCount(PsiMethod method) {
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
-            final int parameterCount = parameters.length;
-            return parameterCount;
+            return parameters.length;
         }
     }
 

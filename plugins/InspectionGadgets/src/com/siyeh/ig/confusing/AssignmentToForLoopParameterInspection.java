@@ -47,8 +47,8 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUSPLUS &&
-                    sign.getTokenType() != JavaTokenType.MINUSMINUS) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUSPLUS) &&
+                    !sign.getTokenType().equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();
@@ -64,8 +64,8 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUSPLUS &&
-                    sign.getTokenType() != JavaTokenType.MINUSMINUS) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUSPLUS) &&
+                    !sign.getTokenType().equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();

@@ -22,14 +22,14 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
         final String expressionType;
         if (location instanceof PsiPostfixExpression) {
             final PsiJavaToken sign = ((PsiPostfixExpression) location).getOperationSign();
-            if (sign.getTokenType() == JavaTokenType.PLUSPLUS) {
+            if (sign.getTokenType().equals(JavaTokenType.PLUSPLUS)) {
                 expressionType = "post-increment";
             } else {
                 expressionType = "post-decrement";
             }
         } else {
             final PsiJavaToken sign = ((PsiPrefixExpression) location).getOperationSign();
-            if (sign.getTokenType() == JavaTokenType.PLUSPLUS) {
+            if (sign.getTokenType().equals(JavaTokenType.PLUSPLUS)) {
                 expressionType = "pre-increment";
             } else {
                 expressionType = "pre-decrement";

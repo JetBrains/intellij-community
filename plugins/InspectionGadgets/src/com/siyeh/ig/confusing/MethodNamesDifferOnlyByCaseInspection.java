@@ -19,8 +19,8 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
         return GroupNames.CONFUSING_GROUP_NAME;
     }
 
-    public String buildErrorString(Object val) {
-        return "Method names '#ref' and '" + val + "' differ only by case";
+    public String buildErrorString(Object arg) {
+        return "Method names '#ref' and '" + arg + "' differ only by case";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
