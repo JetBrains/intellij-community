@@ -6,10 +6,13 @@ import com.intellij.aspects.psi.PsiWithinPointcut;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -28,9 +31,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -609,8 +612,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
                                            int startOffset,
                                            int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
-    PsiFile psiFile = fileType.createPsiFile(manager.getProject(), name, chars, startOffset, endOffset);
-    return psiFile != null ? psiFile : new PsiPlainTextFileImpl(manager, name, fileType, chars, startOffset, endOffset);
+    final Project project = manager.getProject();
+    final CharArrayCharSequence text = new CharArrayCharSequence(chars, startOffset, endOffset);
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage().getParserDefinition(project).createFile(project, name, text);
+    }
+    return new PsiPlainTextFileImpl(project, name, fileType, text);
   }
 
   public PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException {
@@ -751,19 +758,17 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiExpressionCodeFragment createExpressionCodeFragment(String text, PsiElement context, boolean isPhysical) {
     final PsiExpressionCodeFragmentImpl result = new PsiExpressionCodeFragmentImpl(
-      myManager, isPhysical, "fragment.java", text.toCharArray(), 0, text.length());
+      myManager.getProject(), isPhysical, "fragment.java", text);
     result.setContext(context);
     return result;
   }
 
   public PsiCodeFragment createCodeBlockCodeFragment(String text, PsiElement context, boolean isPhysical) {
-    final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager,
+    final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager.getProject(),
                                                                ElementType.STATEMENTS,
                                                                isPhysical,
                                                                "fragment.java",
-                                                               text.toCharArray(),
-                                                               0,
-                                                               text.length());
+                                                               text);
     result.setContext(context);
     return result;
   }
@@ -786,13 +791,11 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
                                                     boolean isVoidValid,
                                                     boolean isPhysical,
                                                     boolean allowEllipsis) {
-    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager,
+    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(),
                                                                        isPhysical,
                                                                        allowEllipsis,
                                                                        "fragment.java",
-                                                                       text.toCharArray(),
-                                                                       0,
-                                                                       text.length());
+                                                                       text);
     result.setContext(context);
     if (isVoidValid) {
       result.putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);

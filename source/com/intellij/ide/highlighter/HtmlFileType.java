@@ -36,14 +36,10 @@ import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
 
 import javax.swing.*;
@@ -69,14 +65,6 @@ public class HtmlFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    return new HtmlFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
-    return new HtmlFileImpl((PsiManagerImpl)PsiManager.getInstance(project), name, text, startOffset, endOffset, StdFileTypes.HTML);
   }
 
   private static FileTypeSupportCapabilities capabilities = new FileTypeSupportCapabilities() {

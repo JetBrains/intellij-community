@@ -4,17 +4,17 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
-  public PsiJavaFileImpl(PsiManagerImpl manager, VirtualFile file) {
-    super(manager, JAVA_FILE, JAVA_FILE_TEXT, file);
+  public PsiJavaFileImpl(Project project, VirtualFile file) {
+    super(project, JAVA_FILE, JAVA_FILE_TEXT, file);
   }
 
-  public PsiJavaFileImpl(PsiManagerImpl manager, String name, char[] text, int startOffset, int endOffset) {
-    super(manager, JAVA_FILE, JAVA_FILE_TEXT, name, text, startOffset, endOffset);
+  public PsiJavaFileImpl(Project project, String name, CharSequence text) {
+    super(project, JAVA_FILE, JAVA_FILE_TEXT, name, text);
   }
 
   public String toString(){

@@ -1,12 +1,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -14,6 +13,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -34,18 +34,16 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
 
-  protected PsiJavaFileBaseImpl(PsiManagerImpl manager,
-                             IElementType elementType,
-                             IElementType contentElementType,
-                             String name,
-                             char[] text,
-                             int startOffset,
-                             int endOffset) {
-    super(manager, elementType, contentElementType, name, text, startOffset, endOffset);
+  protected PsiJavaFileBaseImpl(Project project,
+                                IElementType elementType,
+                                IElementType contentElementType,
+                                String name,
+                                CharSequence text) {
+    super(project, elementType, contentElementType, name, text);
   }
 
-  protected PsiJavaFileBaseImpl(PsiManagerImpl manager, IElementType elementType, IElementType contentElementType, VirtualFile file) {
-    super(manager, elementType, contentElementType, file);
+  protected PsiJavaFileBaseImpl(Project project, IElementType elementType, IElementType contentElementType, VirtualFile file) {
+    super(project, elementType, contentElementType, file);
   }
 
   public void subtreeChanged() {

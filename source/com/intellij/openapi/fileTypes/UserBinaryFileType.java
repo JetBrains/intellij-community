@@ -33,11 +33,6 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 
 public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
   public SettingsEditor<UserBinaryFileType> getEditor() {
@@ -52,11 +47,4 @@ public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
     return null;
   }
 
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    return new PsiBinaryFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
-    return null;
-  }
 }

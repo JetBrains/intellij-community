@@ -3,6 +3,7 @@ package com.intellij.lang.java;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -34,5 +35,9 @@ public class JavaLanguage extends Language {
         return StdFileTypes.JAVA;
       }
     };
+  }
+
+  public ParserDefinition getParserDefinition(Project project) {
+    return new JavaParserDefinition();
   }
 }

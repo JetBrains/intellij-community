@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtil;
 
 /**
@@ -10,13 +10,11 @@ import com.intellij.psi.util.PsiUtil;
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
   private final boolean myAllowEllipsis;
 
-  public PsiTypeCodeFragmentImpl(PsiManagerImpl manager,
+  public PsiTypeCodeFragmentImpl(Project manager,
                                  boolean isPhysical,
                                  boolean allowEllipsis, String name,
-                                 char[] text,
-                                 int startOffset,
-                                 int endOffset) {
-    super(manager, TYPE_TEXT, isPhysical, name, text, startOffset, endOffset);
+                                 CharSequence text) {
+    super(manager, TYPE_TEXT, isPhysical, name, text);
     myAllowEllipsis = allowEllipsis;
   }
 

@@ -2,6 +2,7 @@ package com.intellij.lang.dtd;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 
@@ -22,4 +23,7 @@ public class DTDLanguage extends Language {
     return new XmlFileHighlighter(true);
   }
 
+  public ParserDefinition getParserDefinition(Project project) {
+    return new DTDParserDefinition();
+  }
 }

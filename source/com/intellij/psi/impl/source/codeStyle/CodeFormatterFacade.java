@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -110,7 +111,7 @@ public class CodeFormatterFacade implements Constants {
   public ASTNode processRange(ASTNode element, int startOffset, int endOffset) {
     FileType fileType = myHelper.getFileType();
     if (useNewFormatter(fileType)) {
-      PseudoTextBuilder pseudoTextBuilder = fileType.getLanguage().getFormatter();
+      PseudoTextBuilder pseudoTextBuilder = ((LanguageFileType)fileType).getLanguage().getFormatter();
       if (pseudoTextBuilder == null) {
         return element;
       }

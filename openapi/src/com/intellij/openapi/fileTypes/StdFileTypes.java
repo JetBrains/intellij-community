@@ -32,18 +32,18 @@
 package com.intellij.openapi.fileTypes;
 
 public class StdFileTypes {
-  public static FileType JAVA;
+  public static LanguageFileType JAVA;
   public static FileType CLASS;
-  public static FileType JSP;
-  public static FileType JSPX;
-  public static FileType XML;
-  public static FileType DTD;
-  public static FileType HTML;
-  public static FileType XHTML;
+  public static LanguageFileType JSP;
+  public static LanguageFileType JSPX;
+  public static LanguageFileType XML;
+  public static LanguageFileType DTD;
+  public static LanguageFileType HTML;
+  public static LanguageFileType XHTML;
+  public static LanguageFileType ASPECT;
   public static FileType PLAIN_TEXT;
   public static FileType ARCHIVE;
   public static FileType UNKNOWN;
-  public static FileType ASPECT;
   public static FileType GUI_DESIGNER_FORM;
   public static FileType IDEA_WORKSPACE;
   public static FileType IDEA_PROJECT;

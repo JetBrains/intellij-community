@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.text;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -20,7 +21,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 public class BlockSupportImpl extends BlockSupport implements Constants, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -147,8 +147,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
                              FileType fileType) {
     if(parent instanceof CodeFragmentElement){
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
-      LeafElement chameleon = Factory.createLeafElement(fileImpl.getContentElementType(), newFileText, 0, textLength, -1, holderElement.getCharTable());
-      TreeUtil.addChildren(holderElement, chameleon);
+      TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else{

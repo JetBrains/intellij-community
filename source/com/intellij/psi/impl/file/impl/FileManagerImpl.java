@@ -1,18 +1,17 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
@@ -346,19 +345,30 @@ public class FileManagerImpl implements FileManager {
     if (psiDir == null) return null;
 
     FileType fileType = myFileTypeManager.getFileTypeByFileName(name);
-    PsiFile psiFile = fileType.createPsiFile(vFile, myManager.getProject());
-    if (psiFile == null) {
-      // a bit hacky.
-      if (fileType instanceof JavaClassFileType) return null;
-
-      if (fileType.isBinary()) {
-        psiFile = new PsiBinaryFileImpl(myManager, vFile);
-      }
-      else {
-        psiFile = new PsiPlainTextFileImpl(myManager, vFile);
-      }
+    final Project project = myManager.getProject();
+    if (fileType instanceof LanguageFileType) {
+      final Language language = ((LanguageFileType)fileType).getLanguage();
+      return language.getParserDefinition(project).createFile(project, vFile);
     }
-    return psiFile;
+
+    if (fileType instanceof JavaClassFileType) {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (fileIndex.isInLibraryClasses(vFile)) {
+        // skip inners & anonymous
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex < 0) dotIndex = name.length();
+        int index = name.lastIndexOf('$', dotIndex);
+        if (index >= 0) return null;
+
+        return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), vFile);
+      }
+      return null;
+    }
+
+    if (fileType.isBinary()) {
+      return new PsiBinaryFileImpl(myManager, vFile);
+    }
+    return new PsiPlainTextFileImpl(project, vFile);
   }
 
   public PsiDirectory findDirectory(VirtualFile vFile) {

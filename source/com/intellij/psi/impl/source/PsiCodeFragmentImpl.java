@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -30,14 +29,12 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
 
-  public PsiCodeFragmentImpl(PsiManagerImpl manager,
+  public PsiCodeFragmentImpl(Project manager,
                              IElementType contentElementType,
                              boolean isPhysical,
                              String name,
-                             char[] text,
-                             int startOffset,
-                             int endOffset) {
-    super(manager, CODE_FRAGMENT, contentElementType, name, text, startOffset, endOffset);
+                             CharSequence text) {
+    super(manager, CODE_FRAGMENT, contentElementType, name, text);
     myPhysical = isPhysical;
   }
 
@@ -173,7 +170,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     }
 
 
-    IElementType i = getContentElementType();
+    IElementType i = myContentElementType;
     if (i == ElementType.TYPE_TEXT) {
       return true;
     }

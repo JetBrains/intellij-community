@@ -25,13 +25,15 @@ public class PsiBuilderImpl implements PsiBuilder {
   private List<Object> myProduction = new ArrayList<Object>();
 
   private Lexer myLexer;
+  private boolean myFileLevelParsing;
   private int myCurrentLexem;
   private CharTable myCharTable;
   private boolean myStarted = false;
 
-  public PsiBuilderImpl(final Lexer lexer, final CharTable charTable) {
+  public PsiBuilderImpl(final Lexer lexer, final CharTable charTable, boolean fileLevelParsing) {
     myCharTable = charTable;
     myLexer = lexer;
+    myFileLevelParsing = fileLevelParsing;
   }
 
   private static class MarkerImpl implements Marker {
@@ -165,8 +167,16 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public ASTNode getTreeBuilt() {
     MarkerImpl rootMarker = (MarkerImpl)myProduction.get(0);
-    ASTNode rootNode = new CompositeElement(rootMarker.myType);
-    rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
+
+    final ASTNode rootNode;
+    if (myFileLevelParsing) {
+      rootNode = new FileElement(rootMarker.myType);
+      myCharTable = ((FileElement)rootNode).getCharTable();
+    }
+    else {
+      rootNode = new CompositeElement(rootMarker.myType);
+      rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
+    }
 
     ASTNode curNode = rootNode;
     for (int i = 1; i < myProduction.size(); i++) {

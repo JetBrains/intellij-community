@@ -4,6 +4,7 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
@@ -40,5 +41,9 @@ public class XMLLanguage extends Language {
 
   public XmlPsiPolicy getPsiPolicy(){
     return CDATA_ON_ANY_ENCODED_POLICY;
+  }
+
+  public ParserDefinition getParserDefinition(Project project) {
+    return new XMLParserDefinition();
   }
 }

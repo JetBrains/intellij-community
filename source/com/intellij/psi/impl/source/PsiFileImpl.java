@@ -7,6 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -17,6 +20,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
@@ -28,7 +32,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   private String myName; // for myFile == null only
 
   private final IElementType myElementType;
-  private final IElementType myContentElementType;
+  protected final IElementType myContentElementType;
 
   private long myModificationStamp;
   private boolean myModificationStampSticky = false;
@@ -37,31 +41,34 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   private boolean myExplicitlySetAsPhysical;
   private boolean myExplicitlySetAsValid;
 
-  protected PsiFileImpl(PsiManagerImpl manager, IElementType elementType, IElementType contentElementType, VirtualFile file) {
-    super(manager, -2);
+  protected PsiFileImpl(Project project, IElementType elementType, IElementType contentElementType, VirtualFile file) {
+    super((PsiManagerImpl)PsiManager.getInstance(project), -2);
     myFile = file;
     myElementType = elementType;
     myContentElementType = contentElementType;
     myModificationStamp = file.getModificationStamp();
   }
 
-  protected PsiFileImpl(PsiManagerImpl manager,
+  protected PsiFileImpl(Project project,
                         IElementType elementType,
                         IElementType contentElementType,
                         String name,
-                        char[] text,
-                        int startOffset,
-                        int endOffset) {
-    super(manager, (RepositoryTreeElement)Factory.createCompositeElement(elementType));
+                        CharSequence text) {
+    super((PsiManagerImpl)PsiManager.getInstance(project), (RepositoryTreeElement)Factory.createCompositeElement(elementType));
     LOG.assertTrue(name != null);
     myName = name;
     myFile = null;
     myElementType = elementType;
     myContentElementType = contentElementType;
     final FileElement parent = getTreeElement();
-    TreeElement contentElement = Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, parent.getCharTable());
+    char[] chars = CharArrayUtil.fromSequence(text);
+    TreeElement contentElement = createContentLeafElement(chars, 0, text.length(), parent.getCharTable());
     TreeUtil.addChildren(parent, contentElement);
     myModificationStamp = LocalTimeCounter.currentTime();
+  }
+
+  public TreeElement createContentLeafElement(final char[] text, final int startOffset, final int endOffset, final CharTable table) {
+    return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, table);
   }
 
   protected PsiFileImpl(PsiManagerImpl manager, IElementType elementType) {
@@ -114,13 +121,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return myFile;
   }
 
-  public void setVirtualFile(VirtualFile file) {
-    myFile = file;
-    if (file != null) {
-      myName = null;
-    }
-  }
-
   public boolean isValid() {
     if (myFile == null || myExplicitlySetAsValid) return true; // "dummy" file
     if (!myFile.isValid()) return false;
@@ -132,34 +132,39 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement loadTreeElement() {
-               // load document outside lock for better performance
-               if (!isPhysical()) {
-                 return getTreeElement();
-               }
-               final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-
-  synchronized (PsiLock.LOCK) {
-    FileElement treeElement = getTreeElement();
-    if (treeElement != null) return treeElement;
-    if (myFile != null && myManager.isAssertOnFileLoading(myFile)) {
-      LOG.error("File text loaded " + myFile.getPresentableUrl());
+    // load document outside lock for better performance
+    if (!isPhysical()) {
+      return getTreeElement();
     }
-    treeElement = (FileElement)Factory.createCompositeElement(myElementType);
-    treeElement.setDocument(document);
-    final CharSequence docText = document.getCharsSequence();
-    char[] chars = CharArrayUtil.fromSequence(docText);
+    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
 
-    TreeElement contentElement =
-    Factory.createLeafElement(myContentElementType, chars, 0, docText.length(), -1, treeElement.getCharTable());
-    TreeUtil.addChildren(treeElement, contentElement);
-    setTreeElement(treeElement);
-    treeElement.setPsiElement(this);
+    synchronized (PsiLock.LOCK) {
+      FileElement treeElement = getTreeElement();
+      if (treeElement != null) return treeElement;
+      if (myFile != null && myManager.isAssertOnFileLoading(myFile)) {
+        LOG.error("File text loaded " + myFile.getPresentableUrl());
+      }
+      final CharSequence docText = document.getCharsSequence();
+
+      treeElement = createFileElement(docText);
+
+      treeElement.setDocument(document);
+      setTreeElement(treeElement);
+      treeElement.setPsiElement(this);
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Loaded text for file " + myFile.getPresentableUrl());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Loaded text for file " + myFile.getPresentableUrl());
+      }
+      return treeElement;
     }
-    return treeElement;
   }
+
+  protected FileElement createFileElement(final CharSequence docText) {
+    final FileElement treeElement = (FileElement)Factory.createCompositeElement(myElementType);
+    char[] chars = CharArrayUtil.fromSequence(docText);
+    TreeElement contentElement = createContentLeafElement(chars, 0, docText.length(), treeElement.getCharTable());
+    TreeUtil.addChildren(treeElement, contentElement);
+    return treeElement;
   }
 
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
@@ -318,10 +323,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return copy;
   }
 
-  public IElementType getContentElementType() {
-    return myContentElementType;
-  }
-
   public <T> T getCopyableUserData(Key<T> key) {
     return getCopyableUserDataImpl(key);
   }
@@ -337,6 +338,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   public abstract Lexer createLexer();
 
   public Language getLanguage() {
-    return getFileType().getLanguage();
+    final FileType fileType = getFileType();
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 }

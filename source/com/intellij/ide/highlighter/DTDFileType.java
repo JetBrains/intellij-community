@@ -35,14 +35,9 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.xml.XmlFileImpl;
 
 import javax.swing.*;
 
@@ -67,14 +62,6 @@ public class DTDFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    return new XmlFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
-    return new XmlFileImpl((PsiManagerImpl)PsiManager.getInstance(project), name, text, startOffset, endOffset, StdFileTypes.DTD);
   }
 
   private FileTypeSupportCapabilities mySupportCapabilities = new FileTypeSupportCapabilities() {

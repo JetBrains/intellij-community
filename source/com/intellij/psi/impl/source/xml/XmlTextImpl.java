@@ -1,30 +1,22 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.xml.*;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.xml.aspect.XmlTextChanged;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.CharTable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.xml.util.XmlTagTextUtil;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.PomTransaction;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.event.PomModelEvent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlTagTextUtil;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
@@ -245,6 +237,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
   public Language getLanguage() {
     final FileType fileType = getContainingFile().getFileType();
-    return fileType.getLanguage();
+    return ((LanguageFileType)fileType).getLanguage();
   }
 }

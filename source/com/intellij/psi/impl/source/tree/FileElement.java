@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiLock;
@@ -9,9 +10,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
-public abstract class FileElement extends RepositoryTreeElement{
+public class FileElement extends RepositoryTreeElement{
   private Document myDocument; // only to hold document
   private CharTable myCharTable = new CharTableImpl();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.FileElement");
@@ -20,7 +20,7 @@ public abstract class FileElement extends RepositoryTreeElement{
     return myCharTable;
   }
 
-  protected FileElement(IElementType type) {
+  public FileElement(IElementType type) {
     super(type);
   }
 

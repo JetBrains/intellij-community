@@ -39,10 +39,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 
 import javax.swing.*;
 
@@ -78,14 +74,6 @@ public class ArchiveFileType implements FileType {
   }
 
   public SyntaxHighlighter getHighlighter(Project project) {
-    return null;
-  }
-
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    return new PsiBinaryFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
     return null;
   }
 

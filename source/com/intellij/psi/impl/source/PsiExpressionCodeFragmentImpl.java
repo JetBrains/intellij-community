@@ -1,20 +1,19 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 
 public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiExpressionCodeFragment {
-  public PsiExpressionCodeFragmentImpl(PsiManagerImpl manager,
+  public PsiExpressionCodeFragmentImpl(Project project,
                                        boolean isPhysical,
                                        String name,
-                                       char[] text,
-                                       int startOffset,
-                                       int endOffset) {
-    super(manager, ElementType.EXPRESSION_TEXT, isPhysical, name, text, startOffset, endOffset);
+                                       CharSequence text) {
+    super(project, ElementType.EXPRESSION_TEXT, isPhysical, name, text);
   }
 
   public PsiExpression getExpression() {

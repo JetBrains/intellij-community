@@ -37,16 +37,11 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.PsiJavaFileImpl;
-import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 
 import javax.swing.*;
 
@@ -71,18 +66,6 @@ public class JavaFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (fileIndex.isInSource(file)) {
-      return new PsiJavaFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-    }
-    return new PsiPlainTextFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
-    return new PsiJavaFileImpl((PsiManagerImpl)PsiManager.getInstance(project), name, text, startOffset, endOffset);
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {

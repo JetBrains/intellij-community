@@ -3,12 +3,11 @@ package com.intellij.lang.html;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
-import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,5 +31,9 @@ public class HTMLLanguage extends XMLLanguage {
 
   public XmlPsiPolicy getPsiPolicy() {
     return ENCODE_EACH_SYMBOL_POLICY;
+  }
+
+  public ParserDefinition getParserDefinition(Project project) {
+    return new HTMLParserDefinition();
   }
 }

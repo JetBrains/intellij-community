@@ -37,15 +37,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 
 import javax.swing.*;
 
@@ -82,25 +76,6 @@ public class JavaClassFileType implements FileType {
 
   public SyntaxHighlighter getHighlighter(Project project) {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
-  }
-
-  public PsiFile createPsiFile(VirtualFile file, Project project) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (fileIndex.isInLibraryClasses(file)) {
-      // skip inners & anonymous
-      String name = file.getName();
-      int dotIndex = name.lastIndexOf('.');
-      if (dotIndex < 0) dotIndex = name.length();
-      int index = name.lastIndexOf('$', dotIndex);
-      if (index >= 0) return null;
-
-      return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), file);
-    }
-    return null;
-  }
-
-  public PsiFile createPsiFile(Project project, String name, char[] text, int startOffset, int endOffset) {
-    return null;
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
