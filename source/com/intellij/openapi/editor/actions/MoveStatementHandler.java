@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -90,8 +91,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
       if (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
       }
-      while (true) {
-        if (element == null) break;
+      while (element != null) {
         if ((element instanceof PsiStatement || element instanceof PsiComment) && element.getParent() instanceof PsiCodeBlock) {
           return offset;
         }
@@ -101,12 +101,13 @@ class MoveStatementHandler extends EditorWriteActionHandler {
           return offset;
         }
         element = element.getParent();
-        if (!isDown && element.getTextOffset() < offset) break;
-        if (isDown && element.getTextRange().getEndOffset() >= editor.logicalPositionToOffset(new LogicalPosition(line+1, 0))) break;
+        final TextRange range = element.getTextRange();
+        if (!isDown && range.getStartOffset() < offset) break;
+        if (isDown && range.getEndOffset() >= editor.logicalPositionToOffset(new LogicalPosition(line+1, 0))) break;
       }
       line += isDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
-        return nearLine;
+        return editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
       }
     }
   }
