@@ -60,6 +60,7 @@
   <tip file="CreatePropertyTag.html"/>
   <tip file="CompleteStatement.html"/>
   <tip file="CamelPrefixesInNavigationPopups.html"/>
-    
+
   <tip file="CopyPasteReference.html"/>
+  <tip file="MoveUpDown.html"/>
 </tips>
