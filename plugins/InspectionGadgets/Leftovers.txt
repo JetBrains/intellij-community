@@ -14,6 +14,12 @@
     Paired open/close for Channels
     Paired acquire/release for Locks
 
+    Questionable name
+    Boolean method name must begin with
+    Non-Boolean method name cannot begin with
+    Equals methods that do not check parameter type
+    Call to simple getter or setter from within class
+
     Inheritance as type def (change the EmptyClass inspection)
     changing multiply/divide to shift may change precedence!
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal

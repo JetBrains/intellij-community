@@ -1,5 +1,8 @@
 package com.siyeh.igtest.verbose;
 
+/**
+ * {@link java.lang.String}
+ */
 public class UnnecessaryFullyQualifiedNameInspection
 {
     private String m_string1;
