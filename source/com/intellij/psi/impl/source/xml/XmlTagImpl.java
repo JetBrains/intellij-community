@@ -9,9 +9,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.*;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -22,7 +25,7 @@ import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.xml.aspect.*;
+import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiBaseElementProcessor;
@@ -377,7 +380,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
         if(childByRole != null) ChangeUtil.replaceChild(tag, (TreeElement)childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
 
-        return XmlTagNameChanged.createXmlTagNameChanged(model, tag, oldName);
+        return XmlTagNameChangedImpl.createXmlTagNameChanged(model, tag, oldName);
       }
     }, model.getModelAspect(XmlAspect.class));
     return this;
@@ -750,7 +753,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           }
 
           retHolder[0] = treeElement;
-          return XmlAttributeSet.createXmlAttributeSet(model, XmlTagImpl.this, name, value);
+          return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, value);
         }
 
       }, aspect);
@@ -765,7 +768,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         public PomModelEvent run() {
           final TreeElement treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
           retHolder[0] = treeElement;
-          return XmlTagChildAdd.createXmlTagChildAdd(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
+          return XmlTagChildAddImpl.createXmlTagChildAdd(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
         }
       }, aspect);
     }
@@ -773,8 +776,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public void deleteChildInternal(final ASTNode child) {
-    final PsiFile containingFile = getContainingFile();
-    final FileType fileType = containingFile.getFileType();
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try {
@@ -805,10 +806,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               }
               final PomModelEvent event = new PomModelEvent(model);
               { // event construction
-                final XmlAspectChangeSet xmlAspectChangeSet = new XmlAspectChangeSet(model, (XmlFile)getContainingFile());
-                xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)treeNext));
-                xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
-                xmlAspectChangeSet.add(new XmlTextChanged(xmlText, oldText));
+                final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
+                xmlAspectChangeSet.add(new XmlTagChildRemovedImpl(XmlTagImpl.this, (XmlTagChild)treeNext));
+                xmlAspectChangeSet.add(new XmlTagChildRemovedImpl(XmlTagImpl.this, (XmlTagChild)child));
+                xmlAspectChangeSet.add(new XmlTextChangedImpl(xmlText, oldText));
                 event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
               }
               return event;
@@ -824,10 +825,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             final String name = ((XmlAttribute)child).getName();
             XmlTagImpl.super.deleteChildInternal(child);
 
-            return XmlAttributeSet.createXmlAttributeSet(model, XmlTagImpl.this, name, null);
+            return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, null);
           }
           XmlTagImpl.super.deleteChildInternal(child);
-          return XmlTagChildRemoved.createXmlTagChildRemoved(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(child));
+          return XmlTagChildRemovedImpl.createXmlTagChildRemoved(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(child));
         }
       }, aspect);
 
@@ -910,14 +911,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           final String text = xmlText.getText();
           xmlText.insertText(xmlChildAsText.getValue(), xmlText.getValue().length());
           myNewElement = left;
-          return XmlTextChanged.createXmlTextChanged(myModel, xmlText, text);
+          return XmlTextChangedImpl.createXmlTextChanged(myModel, xmlText, text);
         }
         if(right != null && right.getElementType() == XmlElementType.XML_TEXT){
           final XmlText xmlText = (XmlText)right;
           final String text = xmlText.getText();
           xmlText.insertText(xmlChildAsText.getValue(), 0);
           myNewElement = right;
-          return XmlTextChanged.createXmlTextChanged(myModel, xmlText, text);
+          return XmlTextChangedImpl.createXmlTextChanged(myModel, xmlText, text);
         }
       }
 
@@ -952,7 +953,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                   treeElement = addInternalHack(myChild, myChild, child, Boolean.FALSE, myFileType);
                 }
                 myNewElement = treeElement;
-                return XmlTagChildAdd.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
+                return XmlTagChildAddImpl.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
               }
             }
           }
@@ -969,12 +970,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           // empty tag
           final XmlElement parent = getParent();
           if(parent instanceof XmlTag)
-            return XmlTagChildChanged.createXmlTagChildChanged(myModel, (XmlTag)parent, XmlTagImpl.this);
-          return XmlDocumentChanged.createXmlDocumentChanged(myModel, (XmlDocument)parent);
+            return XmlTagChildChangedImpl.createXmlTagChildChanged(myModel, (XmlTag)parent, XmlTagImpl.this);
+          return XmlDocumentChangedImpl.createXmlDocumentChanged(myModel, (XmlDocument)parent);
         }
       }
       myNewElement = treeElement;
-      return XmlTagChildAdd.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
+      return XmlTagChildAddImpl.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
     }
 
     TreeElement getNewElement(){
@@ -1033,9 +1034,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
         final PomModelEvent event = new PomModelEvent(model);
         {// event construction
-          final XmlAspectChangeSet change = new XmlAspectChangeSet(model, (XmlFile)(containingFile instanceof XmlFile ? containingFile : null));
-          change.add(new XmlTextChanged(childText, text));
-          change.add(new XmlTagChildAdd(XmlTagImpl.this, rightText));
+          final XmlAspectChangeSetImpl change = new XmlAspectChangeSetImpl(model, (XmlFile)(containingFile instanceof XmlFile ? containingFile : null));
+          change.add(new XmlTextChangedImpl(childText, text));
+          change.add(new XmlTagChildAddImpl(XmlTagImpl.this, rightText));
           event.registerChangeSet(aspect, change);
         }
         myRight = rightText;

@@ -205,20 +205,20 @@
       <implementation-class>com.intellij.pom.core.impl.PomModelImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.impl.source.xml.XmlAspect</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.xml.XmlAspect</implementation-class>
+      <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
+      <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.impl.source.parsing.tabular.TreeAspect</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.parsing.tabular.TreeAspect</implementation-class>
+      <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
+      <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.impl.source.parsing.tabular.PsiEventWrapperAspect</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.parsing.tabular.PsiEventWrapperAspect</implementation-class>
+      <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
+      <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.psi.search.scope.packageSet.NamedScopeManager</implementation-class>

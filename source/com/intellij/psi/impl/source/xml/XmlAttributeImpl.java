@@ -1,26 +1,27 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.xml.aspect.XmlAttributeSet;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.PomTransaction;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         else {
           CodeEditUtil.addChild(XmlAttributeImpl.this, (TreeElement)newValue, null);
         }
-        return XmlAttributeSet.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
+        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
       }
     }, model.getModelAspect(XmlAspect.class));
   }
@@ -113,12 +114,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     model.runTransaction(new PomTransactionBase(getParent()) {
       public PomModelEvent run(){
         CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
-        return XmlAttributeSet.createXmlAttributeSet(model, getParent(), nameText, getValue());
+        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), nameText, getValue());
       }
     }, model.getModelAspect(XmlAspect.class));
     model.runTransaction(new PomTransactionBase(getParent()) {
       public PomModelEvent run(){
-        return XmlAttributeSet.createXmlAttributeSet(model, getParent(), oldName, null);
+        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), oldName, null);
       }
     }, model.getModelAspect(XmlAspect.class));
 

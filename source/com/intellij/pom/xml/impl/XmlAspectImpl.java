@@ -1,0 +1,186 @@
+package com.intellij.pom.xml.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.pom.tree.events.ReplaceChangeInfo;
+import com.intellij.pom.tree.events.TreeChange;
+import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.TreeChangeImpl;
+import com.intellij.pom.xml.impl.events.*;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.xml.*;
+import com.intellij.util.CharTable;
+
+import java.util.Collections;
+
+public class XmlAspectImpl implements XmlAspect {
+  private final PomModel myModel;
+  private final TreeAspect myTreeAspect;
+
+  public XmlAspectImpl(PomModel model, TreeAspect aspect) {
+    myModel = model;
+    myTreeAspect = aspect;
+    myModel.registerAspect(this, Collections.singleton((PomModelAspect)myTreeAspect));
+  }
+
+  public void update(PomModelEvent event) {
+    if (!event.getChangedAspects().contains(myTreeAspect)) return;
+    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
+    if (changeSet == null) return;
+    final ASTNode rootElement = changeSet.getRootElement();
+    final PsiFile file = (PsiFile)rootElement.getPsi();
+    if (!(file instanceof XmlFile)) return;
+    final XmlAspectChangeSetImpl xmlChangeSet = new XmlAspectChangeSetImpl(myModel, (XmlFile)file);
+    event.registerChangeSet(this, xmlChangeSet);
+
+    final ASTNode[] changedElements = changeSet.getChangedElements();
+    final CharTable table = ((FileElement)changeSet.getRootElement()).getCharTable();
+    for (int i = 0; i < changedElements.length; i++) {
+      ASTNode changedElement = changedElements[i];
+      TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
+      PsiElement psiElement = null;
+      while (changedElement != null && (psiElement = SourceTreeToPsiMap.treeElementToPsi(changedElement)) == null) {
+        final ASTNode parent = changedElement.getTreeParent();
+        final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement, table);
+        changeInfo.compactChange(changedElement, changesByElement);
+        changesByElement = new TreeChangeImpl(parent);
+        changesByElement.addChange(changedElement, changeInfo);
+        changedElement = parent;
+      }
+      if (changedElement == null) continue;
+      final TreeChange finalChangedElement = changesByElement;
+      psiElement.accept(new PsiElementVisitor() {
+        TreeChange myChange = finalChangedElement;
+
+        public void visitReferenceExpression(PsiReferenceExpression expression) { }
+
+        public void visitElement(PsiElement element) {
+          final PsiElement parent = element.getParent();
+          if (parent == null) return;
+          final ASTNode treeParent = SourceTreeToPsiMap.psiElementToTree(parent);
+          final ASTNode child = SourceTreeToPsiMap.psiElementToTree(element);
+          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child, table);
+
+          changeInfo.compactChange(child, myChange);
+          myChange = new TreeChangeImpl(treeParent);
+
+          myChange.addChange(child, changeInfo);
+          parent.accept(this);
+        }
+
+        public void visitXmlAttribute(XmlAttribute attribute) {
+          final ASTNode[] affectedChildren = myChange.getAffectedChildren();
+          String oldName = null;
+          String oldValue = null;
+          for (int j = 0; j < affectedChildren.length; j++) {
+            final ASTNode treeElement = affectedChildren[j];
+            final ChangeInfo changeByChild = myChange.getChangeByChild(treeElement);
+            final int changeType = changeByChild.getChangeType();
+            if (treeElement.getElementType() == XmlTokenType.XML_NAME) {
+              if (changeType == ChangeInfo.REMOVED) {
+                oldName = ((TreeElement)treeElement).getText(table);
+              }
+              else if (changeType == ChangeInfo.REPLACE) {
+                oldName = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText(table);
+              }
+            }
+            if (treeElement.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
+              if (changeType == ChangeInfo.REMOVED) {
+                oldValue = ((TreeElement)treeElement).getText(table);
+              }
+              else if (changeType == ChangeInfo.REPLACE) {
+                oldValue = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText(table);
+              }
+            }
+          }
+          if (oldName != null && !oldName.equals(attribute.getName())) {
+            xmlChangeSet.add(new XmlAttributeSetImpl(attribute.getParent(), oldName, null));
+            xmlChangeSet.add(new XmlAttributeSetImpl(attribute.getParent(), attribute.getName(), attribute.getValue()));
+          }
+          else if (oldValue != null) {
+            xmlChangeSet.add(new XmlAttributeSetImpl(attribute.getParent(), attribute.getName(), attribute.getValue()));
+          }
+          else {
+            xmlChangeSet.add(new XmlElementChangedImpl(attribute));
+          }
+        }
+
+        public void visitXmlTag(XmlTag tag) {
+          ASTNode[] affectedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
+
+          for (int j = 0; j < affectedChildren.length; j++) {
+            final ASTNode treeElement = affectedChildren[j];
+            if (!(treeElement instanceof XmlTagChild)) {
+              visitElement(tag);
+              return;
+            }
+          }
+
+          for (int j = 0; j < affectedChildren.length; j++) {
+            final ChangeInfo changeByChild = myChange.getChangeByChild(affectedChildren[j]);
+            final int changeType = changeByChild.getChangeType();
+            final ASTNode treeElement = affectedChildren[j];
+            switch (changeType) {
+              case ChangeInfo.ADD:
+                   xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                   break;
+              case ChangeInfo.REMOVED:
+                   treeElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
+                   xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, (XmlTagChild)treeElement));
+                   break;
+              case ChangeInfo.CONTENTS_CHANGED:
+                   xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)treeElement));
+                   break;
+              case ChangeInfo.REPLACE:
+                   final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced();
+                   replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
+                   xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
+                   xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                   break;
+              }
+          }
+        }
+
+        public void visitXmlDocument(XmlDocument document) {
+          xmlChangeSet.clear();
+          xmlChangeSet.add(new XmlDocumentChangedImpl(document));
+        }
+
+        public void visitXmlFile(XmlFile file) {
+          xmlChangeSet.clear();
+          xmlChangeSet.add(new XmlDocumentChangedImpl(file.getDocument()));
+        }
+      });
+    }
+  }
+
+  private ASTNode[] shortenChange(ASTNode[] affectedChildren, TreeChangeEvent event) {
+    // TODO
+    return affectedChildren;
+  }
+
+  public void projectOpened() { }
+
+  public void projectClosed() { }
+
+  public void initComponent() { }
+
+  public void disposeComponent() { }
+
+  public String getComponentName() {
+    return "XML POM aspect";
+  }
+}
