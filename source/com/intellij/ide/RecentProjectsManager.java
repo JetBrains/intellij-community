@@ -120,7 +120,13 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
     }
   }
 
-  public AnAction[] getRecentProjectsActions() {
+
+  /**
+   * @param addClearListItem - used for detecting whether the "Clear List" action should be added
+   * to the end of the returned list of actions
+   * @return
+   */
+  public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
     validateRecentProjects();
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -149,13 +155,16 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
       AnAction action = actions.get(i);
       list.add(action);
     }
-    AnAction clearListAction = new AnAction("Clear List") {
-      public void actionPerformed(AnActionEvent e) {
-        myRecentProjects.clear();
-      }
-    };
-    list.add(Separator.getInstance());
-    list.add(clearListAction);
+    if (addClearListItem) {
+      AnAction clearListAction = new AnAction("Clear List") {
+        public void actionPerformed(AnActionEvent e) {
+          myRecentProjects.clear();
+        }
+      };
+      list.add(Separator.getInstance());
+      list.add(clearListAction);
+    }
+    
     return list.toArray(new AnAction[list.size()]);
   }
 
