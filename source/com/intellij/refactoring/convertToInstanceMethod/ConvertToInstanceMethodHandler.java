@@ -60,10 +60,10 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     for (int i = 0; i < parameters.length; i++) {
       final PsiParameter parameter = parameters[i];
       final PsiType type = parameter.getType();
-      if (type instanceof PsiClassType) {
+      if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters()) {
         classTypesFound = true;
         final PsiClass psiClass = ((PsiClassType)type).resolve();
-        if (psiClass != null) {
+        if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
           resolvableClassesFound = true;
           final boolean inProject = method.getManager().isInProject(psiClass);
           if (inProject) {
