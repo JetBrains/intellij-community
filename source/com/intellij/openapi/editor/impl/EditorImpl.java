@@ -4,6 +4,7 @@ import com.intellij.Patches;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -3481,7 +3482,7 @@ public class EditorImpl implements EditorEx {
           final Point p = SwingUtilities.convertPoint((Component)e.getSource(),
                                                       e.getPoint(),
                                                       getComponent().getRootPane().getLayeredPane());
-          controller.showTooltip(EditorImpl.this, p, range, false, FOLDING_TOOLTIP_GROUP);
+          controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
         }
         else {
           controller.cancelTooltip(FOLDING_TOOLTIP_GROUP);

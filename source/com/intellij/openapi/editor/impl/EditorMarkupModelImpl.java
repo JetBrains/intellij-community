@@ -11,11 +11,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -119,15 +116,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
 
-      Collections.sort(
-        myCachedSortedHighlighters, new Comparator() {
-          public int compare(Object o1, Object o2) {
-            RangeHighlighter h1 = (RangeHighlighter)o1;
-            RangeHighlighter h2 = (RangeHighlighter)o2;
-            return h1.getStartOffset() - h2.getEndOffset();
+      if (myCachedSortedHighlighters.size() != 0) {
+        Collections.sort(
+          myCachedSortedHighlighters, new Comparator() {
+            public int compare(Object o1, Object o2) {
+              RangeHighlighter h1 = (RangeHighlighter)o1;
+              RangeHighlighter h2 = (RangeHighlighter)o2;
+              return h1.getStartOffset() - h2.getEndOffset();
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     return myCachedSortedHighlighters;
@@ -201,7 +200,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
         String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
-        showTooltip(e, tooltipMessage);
+        showTooltip(e, new LineTooltipRenderer(tooltipMessage));
         return;
       }
 
@@ -239,7 +238,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(MouseEvent e, final Object tooltipObject) {
+  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
     if (tooltipObject != null) {
       final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
       tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
@@ -374,7 +373,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private int yEnd;
     private List<RangeHighlighter> markers = new ArrayList<RangeHighlighter>();
     private TIntArrayList paintingEndOffsets = new TIntArrayList();
-    private static final int MAX_TOOLTIP_LINES = 10;
 
     public ErrorMarkPile(final int yStart) {
       this.yStart = yStart;
@@ -473,48 +471,41 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (!inside(e, width)) {
         return false;
       }
+      LineTooltipRenderer bigRenderer = null;
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
       for (int i = 0; i < markers.size(); i++) {
         RangeHighlighter marker = markers.get(i);
-        if (marker.getErrorStripeTooltip() instanceof HighlightInfo) {
-          infos.add((HighlightInfo)marker.getErrorStripeTooltip());
+        final Object tooltipObject = marker.getErrorStripeTooltip();
+        if (tooltipObject == null) continue;
+        if (tooltipObject instanceof HighlightInfo) {
+          infos.add((HighlightInfo)tooltipObject);
         }
-      }
-      if (infos.size() == 0) {
-        RangeHighlighter marker = markers.get(0);
-        showTooltip(e, marker.getErrorStripeTooltip());
-      }
-      else {
-        // need to show tooltips for multiple highlightinfos
-        final int oldSize = infos.size();
-        int moreErrors = 0;
-        int moreWarnings = 0;
-        if (oldSize > MAX_TOOLTIP_LINES) {
-          for (int i = MAX_TOOLTIP_LINES; i < infos.size(); i++) {
-            HighlightInfo info = infos.get(i);
-            final HighlightSeverity severity = info.getSeverity();
-            if (severity == HighlightSeverity.ERROR) {
-              moreErrors++;
-            }
-            else {
-              moreWarnings++;
-            }
+        else {
+          final String text = tooltipObject.toString();
+          if (bigRenderer == null) {
+            bigRenderer = new LineTooltipRenderer(text);
           }
-          infos = infos.subList(0, MAX_TOOLTIP_LINES);
+          else {
+            bigRenderer.addBelow(text);
+          }
         }
+      }
+      if (infos.size() != 0) {
+        Collections.sort(infos, new Comparator<HighlightInfo>() {
+          public int compare(final HighlightInfo o1, final HighlightInfo o2) {
+            return o1.getSeverity().compareTo(o2.getSeverity());
+          }
+        });
         final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
-        if (moreErrors + moreWarnings != 0) {
-          String line = "&nbsp;&nbsp;&nbsp;...";
-          if (moreErrors != 0) {
-            line += " and "+moreErrors + " more error" + (moreErrors == 1 ? "":"s");
-          }
-          if (moreWarnings != 0) {
-            line += " and " + moreWarnings + " more warning" + (moreWarnings == 1 ? "" : "s");
-          }
-          line += "...";
-          composite.addToolTipLine(line);
+        if (bigRenderer == null) {
+          bigRenderer = new LineTooltipRenderer(composite.toolTip);
         }
-        showTooltip(e, composite);
+        else {
+          bigRenderer.addBelow(composite.toolTip);
+        }
+      }
+      if (bigRenderer != null) {
+        showTooltip(e, bigRenderer);
       }
       return true;
     }

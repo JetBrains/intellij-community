@@ -1,14 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.application.options.ErrorHighlightingOptions;
-import com.intellij.application.options.ErrorHighlightingPanel;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -21,9 +18,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
 import java.util.*;
@@ -181,16 +177,25 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
       String message = renderDescriptionMessage(descriptor);
-      HighlightInfoType level = myLevels.get(i);
+      final HighlightInfoType level = myLevels.get(i);
 
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
       if (!inspectionProfile.isToolEnabled(key)) continue;
-      boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
+      final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(level, psiElement, message, message);
+
+      final HighlightInfoType type = new HighlightInfoType() {
+        public HighlightSeverity getSeverity() {
+          return isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
+        }
+
+        public TextAttributesKey getAttributesKey() {
+          return level.getAttributesKey();
+        }
+      };
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, message, message);
       infos.add(highlightInfo);
-      highlightInfo.severity = isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
       }

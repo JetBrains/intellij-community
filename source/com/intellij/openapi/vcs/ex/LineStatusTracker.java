@@ -109,7 +109,10 @@ public class LineStatusTracker implements EditorColorsListener {
     highlighter.setGreedyToRight(true);
     highlighter.setLineMarkerRenderer(createRenderer(range));
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-    highlighter.setErrorStripeTooltip("Line changed");
+    final int line1 = myDocument.getLineNumber(first);
+    final int line2 = myDocument.getLineNumber(second);
+    final String tooltip = "Line" + (line1 == line2 ? " "+line1 : "s "+line1+"-"+line2) + " changed";
+    highlighter.setErrorStripeTooltip(tooltip);
     return highlighter;
   }
 

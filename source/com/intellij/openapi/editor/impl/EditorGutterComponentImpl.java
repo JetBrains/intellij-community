@@ -11,6 +11,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -894,7 +895,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     TooltipController controller = HintManager.getInstance().getTooltipController();
     if (tooltip != null && tooltip.length() != 0) {
-      controller.showTooltipByMouseMove(myEditor, e, tooltip, false, GUTTER_TOOLTIP_GROUP);
+      controller.showTooltipByMouseMove(myEditor, e, new LineTooltipRenderer(tooltip), false, GUTTER_TOOLTIP_GROUP);
     }
     else {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);

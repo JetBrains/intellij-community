@@ -91,5 +91,12 @@ public class SmartList<E> extends AbstractList<E> {
     }
     return ArrayUtil.<E>emptyArray();
   }
+
+  public E set(final int index, final E element) {
+    if (mySize <= 2) {
+      return myArray2[index] = element;
+    }
+    return myList.set(index, element);
+  }
 }
 

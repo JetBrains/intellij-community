@@ -129,7 +129,7 @@ public class HighlightInfo {
 
   public String description;
   public String toolTip;
-  public HighlightSeverity severity;
+  public final HighlightSeverity severity;
 
   public boolean isAfterEndOfLine = false;
   public int navigationShift = 0;

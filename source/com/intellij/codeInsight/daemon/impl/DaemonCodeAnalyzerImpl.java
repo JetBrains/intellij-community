@@ -391,7 +391,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (int i = 0; i < highlights.length; i++) {
       HighlightInfo info = highlights[i];
-      if (info.getSeverity().isGreaterOrEqual(minSeverity)) {
+      if (info.getSeverity().compareTo(minSeverity) >=0) {
         array.add(info);
       }
     }
@@ -426,10 +426,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
       if (foundInfoList.size() != 0) {
         final HighlightInfo foundInfo = foundInfoList.get(0);
-        if (foundInfo.getSeverity().isLess(info.getSeverity())) {
+        if (foundInfo.getSeverity().compareTo(info.getSeverity()) < 0) {
           foundInfoList.clear();
         }
-        else if (info.getSeverity().isLess(foundInfo.getSeverity())) {
+        else if (info.getSeverity().compareTo(foundInfo.getSeverity()) < 0) {
           continue;
         }
       }
