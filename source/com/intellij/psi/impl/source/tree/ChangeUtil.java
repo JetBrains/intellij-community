@@ -123,6 +123,9 @@ public class ChangeUtil implements Constants {
         }
       }, parent);
     }
+    else {
+      removeChildren(parent, (TreeElement)parent.getFirstChildNode(), null);
+    }
   }
 
   private static TreeElement transformAll(TreeElement first){

@@ -14,6 +14,9 @@ public class CharArrayCharSequence implements CharSequence {
   }
 
   public CharArrayCharSequence(char[] chars, int start, int end) {
+    if (start >= 0 && end < chars.length) throw new IndexOutOfBoundsException("chars.length:" + chars.length +
+                                                                              ", start:" + start +
+                                                                              ", end:" + end);
     myChars = chars;
     myStart = start;
     myEnd = end;
