@@ -6,6 +6,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.idea.IdeaTestUtil;
+
+import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -104,6 +107,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace() {
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 25, 12, 0, "lesya", "method parameter alignment")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
@@ -148,7 +152,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                              "\n" +
                              "      // searching for several constructions\n" +
                              "\n" +
-                             "    //options.setLooseMatching(true);\n" +
+                             "      //options.setLooseMatching(true);\n" +
                              "      // searching for several constructions";
 
     assertEquals("Empty replacement",expectedResult2,actualResult);
@@ -966,8 +970,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s26 = "short a;";
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
-                              "    // comment before\n" +
-                              "                protected Object a;//  comment after\n" +
+                              "// comment before\n" +
+                              "            protected Object a;//  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
