@@ -347,12 +347,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (attribute.isNamespaceDeclaration()) {
       checkNamespaceAttribute(attribute);
       return;
-    }
-
-    if (attribute.getName().endsWith("Location")) {
+    } else if (attribute.getName().endsWith("Location")) {
       final String namespace = attribute.getNamespace();
-      // TODO[ik]: check schema attributes
-      if (namespace.equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) return;
+
+      if (namespace.equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
+        checkSchemaLocationAttribute(attribute);
+        return;
+      }
     }
 
     final XmlElementDescriptor elementDescriptor = tag.getDescriptor();
@@ -569,11 +570,45 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return;
     }
 
-    // check if the namespace is defined
     final XmlAttributeValue element = attribute.getValueElement();
     if(element == null) return;
     final int start = element.getTextRange().getStartOffset() + 1;
     int end = element.getTextRange().getEndOffset() - 1;
+
+    reportURIProblem(start,end);
+  }
+
+  private void checkSchemaLocationAttribute(XmlAttribute attribute) {
+    if(attribute.getValueElement() == null) return;
+    String location = attribute.getValue();
+
+    if (attribute.getLocalName().equals("noNamespaceSchemaLocation")) {
+      if(XmlUtil.findXmlFile(attribute.getContainingFile(),location) == null) {
+        final int start = attribute.getValueElement().getTextOffset();
+        reportURIProblem(start,start + location.length());
+      }
+    } else if (attribute.getLocalName().equals("schemaLocation")) {
+      StringTokenizer tokenizer = new StringTokenizer(location);
+      XmlFile file = null;
+
+      while(tokenizer.hasMoreElements()) {
+        tokenizer.nextToken(); // skip namespace
+        if (!tokenizer.hasMoreElements()) return;
+        String url = tokenizer.nextToken();
+
+        if (file == null) {
+          file = (XmlFile)attribute.getContainingFile();
+        }
+
+        if(XmlUtil.findXmlFile(file,url) == null) {
+          final int start = attribute.getValueElement().getTextOffset() + location.indexOf(url);
+          reportURIProblem(start,start+url.length());
+        }
+      }
+    }
+  }
+
+  private void reportURIProblem(int start, int end) { // report the problem
     if (start > end) {
       end = start;
     }

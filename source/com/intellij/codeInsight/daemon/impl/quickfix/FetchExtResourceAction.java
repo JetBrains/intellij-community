@@ -29,6 +29,7 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -66,13 +67,37 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
 
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
-    if (attribute != null && attribute.isNamespaceDeclaration()) {
+    if(attribute == null) return null;
+
+    if (attribute.isNamespaceDeclaration()) {
       final String uri = attribute.getValue();
       final PsiElement parent = attribute.getParent();
+
       if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
         return uri;
       }
+    } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
+      final String location = attribute.getValue();
+
+      if (attribute.getLocalName().equals("noNamespaceSchemaLocation")) {
+        if (XmlUtil.findXmlFile(file,location) == null) return location;
+      } else if (attribute.getLocalName().equals("schemaLocation")) {
+        StringTokenizer tokenizer = new StringTokenizer(location);
+        int offsetInAttr = offset - attribute.getValueElement().getTextOffset();
+
+        while(tokenizer.hasMoreElements()) {
+          tokenizer.nextToken(); // skip namespace
+          if (!tokenizer.hasMoreElements()) return null;
+          String url = tokenizer.nextToken();
+
+          int index = location.indexOf(url);
+          if (index <= offsetInAttr && index + url.length() >= offsetInAttr ) {
+            return url;
+          }
+        }
+      }
     }
+
     return null;
   }
 
