@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.util.containers.CollectionUtil;
 import org.jdom.Element;
 
 import java.util.*;
@@ -222,7 +223,7 @@ class RootModelImpl implements ModifiableRootModel {
       OrderEntry orderEntry = iterator.next();
       result.addAll(Arrays.asList(orderEntry.getFiles(type)));
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public String[] getOrderedRootUrls(OrderRootType type) {
@@ -232,7 +233,7 @@ class RootModelImpl implements ModifiableRootModel {
       OrderEntry orderEntry = iterator.next();
       result.addAll(Arrays.asList(orderEntry.getUrls(type)));
     }
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getContentRoots() {
@@ -245,7 +246,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public String[] getContentRootUrls() {
@@ -255,7 +256,7 @@ class RootModelImpl implements ModifiableRootModel {
       ContentEntry contentEntry = iterator.next();
       result.add(contentEntry.getUrl());
     }
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public String[] getExcludeRootUrls() {
@@ -268,7 +269,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(excludeFolder.getUrl());
       }
     }
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getExcludeRoots() {
@@ -284,7 +285,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
 
@@ -298,7 +299,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(sourceFolder.getUrl());
       }
     }
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public String[] getSourceRootUrls(boolean testFlagValue) {
@@ -313,7 +314,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getSourceRoots() {
@@ -329,7 +330,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public ContentEntry[] getContentEntries() {
@@ -787,8 +788,7 @@ class RootModelImpl implements ModifiableRootModel {
     }
     final String[] urls = myJavadocPointerContainer.getUrls();
     final String[] thatUrls = getSourceModel().myJavadocPointerContainer.getUrls();
-    if (!Arrays.equals(urls, thatUrls)) return true;
-    return false;
+    return !Arrays.equals(urls, thatUrls);
   }
 
   void addExportedFiles(OrderRootType type, List<VirtualFile> result, Set<Module> processed) {
@@ -997,7 +997,7 @@ class RootModelImpl implements ModifiableRootModel {
 
   public String[] getDependencyModuleNames() {
     List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
-    return result.toArray(new String[result.size()]);
+    return CollectionUtil.toArray(result, new String[result.size()]);
   }
 
   public Module[] getModuleDependencies() {
@@ -1013,7 +1013,7 @@ class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    return result.toArray(new Module[result.size()]);
+    return CollectionUtil.toArray(result, new Module[result.size()]);
   }
 
   VirtualFilePointerFactory pointerFactory() {
