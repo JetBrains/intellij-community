@@ -5,9 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.siyeh.ig.abstraction.*;
 import com.siyeh.ig.bugs.*;
 import com.siyeh.ig.classlayout.*;
@@ -17,6 +14,7 @@ import com.siyeh.ig.cloneable.CloneCallsSuperCloneInspection;
 import com.siyeh.ig.cloneable.CloneDeclaresCloneNotSupportedInspection;
 import com.siyeh.ig.cloneable.CloneableImplementsCloneInspection;
 import com.siyeh.ig.confusing.*;
+import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
 import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
@@ -27,14 +25,19 @@ import com.siyeh.ig.imports.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
 import com.siyeh.ig.junit.*;
-import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
 import com.siyeh.ig.logging.ClassWithMultipleLoggersInspection;
+import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
 import com.siyeh.ig.logging.NonStaticFinalLoggerInspection;
 import com.siyeh.ig.maturity.*;
 import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.naming.*;
+import com.siyeh.ig.packaging.PackageEncapsulationInspection;
+import com.siyeh.ig.packaging.PackageSizeInspection;
+import com.siyeh.ig.packaging.PackageTangleInspection;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
+import com.siyeh.ig.resources.IOResourceInspection;
+import com.siyeh.ig.resources.JDBCResourceInspection;
 import com.siyeh.ig.security.CloneableClassInSecureContextInspection;
 import com.siyeh.ig.security.DeserializableClassInSecureContextInspection;
 import com.siyeh.ig.security.NonStaticInnerClassInSecureContextInspection;
@@ -44,13 +47,6 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.ig.dependency.*;
-import com.siyeh.ig.packaging.PackageSizeInspection;
-import com.siyeh.ig.packaging.PackageEncapsulationInspection;
-import com.siyeh.ig.packaging.PackageTangleInspection;
-import com.siyeh.ig.resources.IOResourceInspection;
-import com.siyeh.ig.resources.JDBCResourceInspection;
-import org.jdom.Element;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -58,11 +54,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class InspectionGadgetsPlugin implements ApplicationComponent,
-        InspectionToolProvider, JDOMExternalizable {
+        InspectionToolProvider {
     private static final int NUM_INSPECTIONS = 360;
     private final List m_inspectionClasses = new ArrayList(NUM_INSPECTIONS);
-
-    private final InspectionGadgetsConfig m_config = new InspectionGadgetsConfig();
 
     public static void main(String[] args) {
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
@@ -733,23 +727,4 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     public void disposeComponent() {
 
     }
-
-    public InspectionGadgetsConfig getConfig() {
-        return m_config;
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-        m_config.readExternal(element);
-    }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-        m_config.writeExternal(element);
-    }
-
-    public static boolean isEnabled() {
-        final InspectionGadgetsPlugin instance = getInstance();
-        final InspectionGadgetsConfig config = instance.getConfig();
-        return config.isEnabled();
-    }
-
 }
