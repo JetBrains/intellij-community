@@ -7,17 +7,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.typeCook.Kitchen;
 import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.refactoring.typeCook.deductive.builder.*;
-import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
+import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import junit.textui.TestRunner;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.lang.System;
 
 /**
  * Created by IntelliJ IDEA.
@@ -682,14 +680,6 @@ public class TypeCookTest extends MultiFileTestCase {
       binding = tree.getBestSolution();
     }
 
-    //System.out.println("" + system);
-
-    //if (system != null) return;
-
-    //Kitchen d = new Kitchen(aClass.getManager());
-
-    //d.buildGraph(new PsiElement[]{aClass});
-
     String itemRepr = system != null ? system.dumpString() : commonSystem.dumpString();// d.resultString();
     String itemName = className + ".items";
     String patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
@@ -715,9 +705,6 @@ public class TypeCookTest extends MultiFileTestCase {
     writer.close();
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
-
-    //d.analyze();
-    //d.relax();
 
     itemRepr = system != null ? system.dumpResult(binding) : commonSystem.dumpString(); //d.resultString();
 

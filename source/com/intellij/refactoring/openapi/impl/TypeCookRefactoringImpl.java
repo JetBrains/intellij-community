@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.TypeCookRefactoring;
 import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.refactoring.typeCook.deductive.TypeCookProcessor;
+import com.intellij.refactoring.typeCook.TypeCookProcessor;
 
 import java.util.List;
 

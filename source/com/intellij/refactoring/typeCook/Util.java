@@ -25,8 +25,6 @@ import java.util.Set;
 public class Util {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.Util");
 
-  private static final int HEIGHT_BOUND = 6;
-
   public static int getArrayLevel(PsiType t) {
     if (t instanceof PsiArrayType) {
       return 1 + getArrayLevel(((PsiArrayType)t).getComponentType());
@@ -56,41 +54,13 @@ public class Util {
     else if (type instanceof PsiArrayType) {
       return resolveType(((PsiArrayType)type).getComponentType());
     }
-    else if (type instanceof SubtypeOf) {
-      return resolveType(((SubtypeOf)type).getSuperType());
-    }
-    else if (type instanceof SupertypeOf) {
-      return resolveType(((SupertypeOf)type).getSubType());
-    }
     else {
       return PsiClassType.ClassResolveResult.EMPTY;
     }
   }
 
-  public static PsiElement getParentElement(PsiElement element) {
-    PsiElement parent = element;
-
-    while ((parent = parent.getParent()) instanceof PsiParenthesizedExpression) ;
-
-    return parent;
-  }
-
-  public static boolean isSonOfReferenceExpression(PsiElement he) {
-    PsiElement wormlet = he;
-
-    while ((wormlet = wormlet.getParent()) instanceof PsiParenthesizedExpression) ;
-
-    return wormlet instanceof PsiReferenceExpression;
-  }
-
   public static PsiType normalize(PsiType t, boolean objectBottom) {
-    if (t instanceof SubtypeOf) {
-      return normalize(((SubtypeOf)t).getSuperType(), objectBottom);
-    }
-    else if (t instanceof SupertypeOf) {
-      return normalize(((SupertypeOf)t).getSubType(), objectBottom);
-    }
-    else if (t instanceof PsiArrayType) {
+    if (t instanceof PsiArrayType) {
       PsiType normType = normalize(((PsiArrayType)t).getComponentType(), objectBottom);
 
       return normType == null ? null : normType.createArrayType();
@@ -147,45 +117,6 @@ public class Util {
     }
   }
 
-  public static boolean hasNoParameters(PsiType t) {
-    if (t instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = resolveType(t);
-
-      if (resolveResult == null) {
-        return true;
-      }
-
-      if (PsiClassType.isRaw(resolveResult)) {
-        return true;
-      }
-
-      PsiSubstitutor subst = resolveResult.getSubstitutor();
-      PsiClass element = resolveResult.getElement();
-
-      if (element instanceof PsiTypeParameter) {
-        return false;
-      }
-
-      PsiTypeParameter[] parameters = getTypeParametersList(element);
-
-      for (int i = 0; i < parameters.length; i++) {
-        PsiType actual = subst.substitute(parameters[i]);
-        if (hasNoParameters(actual)) {
-          return true;
-        }
-      }
-    }
-    else if (t instanceof PsiArrayType) {
-      return hasNoParameters(((PsiArrayType)t).getComponentType());
-    }
-
-    return false;
-  }
-
-  public static boolean isRaw(PsiType t) {
-    return isRaw(t, true);
-  }
-
   public static boolean isRaw(PsiType t, boolean arrays) {
     if (t instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = resolveType(t);
@@ -215,17 +146,6 @@ public class Util {
     }
 
     return false;
-  }
-
-  public static boolean isTypeParameter(PsiType t) {
-
-    PsiClassType.ClassResolveResult result = resolveType(t);
-
-    if (result == null) {
-      return false;
-    }
-
-    return result.getElement() instanceof PsiTypeParameter;
   }
 
   public static PsiType banalize(final PsiType t) {
@@ -286,32 +206,6 @@ public class Util {
     return subst;
   }
 
-  public static boolean bindsTypeParameters(PsiSubstitutor theSubst, HashSet<PsiTypeParameter> params) {
-    Collection<PsiType> values = theSubst.getSubstitutionMap().values();
-
-    for (Iterator<PsiType> i = values.iterator(); i.hasNext();) {
-      PsiType type = i.next();
-      PsiClassType.ClassResolveResult result = Util.resolveType(type);
-
-      if (result == null) {
-        return false;
-      }
-
-      PsiClass aClass = result.getElement();
-
-      if (aClass instanceof PsiTypeParameter) {
-        return params.contains(aClass);
-      }
-      else {
-        if (bindsTypeParameters(result.getSubstitutor(), params)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public static boolean bindsTypeParameters(PsiType t, HashSet<PsiTypeParameter> params) {
     if (t instanceof PsiWildcardType) {
       final PsiWildcardType wct = ((PsiWildcardType)t);
@@ -350,72 +244,6 @@ public class Util {
     return false;
   }
 
-  public static boolean bindsTypeParameters(PsiType t) {
-    return bindsTypeParameters(t, null);
-  }
-
-  public static PsiSubstitutor createIdentitySubstitutor(PsiTypeParameterList p) {
-    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-    PsiTypeParameter[] parms = p.getTypeParameters();
-
-    for (int i = 0; i < parms.length; i++) {
-      PsiTypeParameter pp = parms[i];
-      subst = subst.put(pp, pp.getManager().getElementFactory().createType(pp));
-    }
-
-    return subst;
-  }
-
-  public static PsiSubstitutor createIdentitySubstitutor(Set<PsiTypeParameter> params) {
-    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-
-    for (Iterator<PsiTypeParameter> i = params.iterator(); i.hasNext();) {
-      PsiTypeParameter p = i.next();
-      subst = subst.put(p, p.getManager().getElementFactory().createType(p));
-    }
-
-    return subst;
-  }
-
-  public static PsiType getNCA(PsiClass aClass, PsiClass bClass) {
-    if (InheritanceUtil.isCorrectDescendant(aClass, bClass, true)) {
-      return aClass.getManager().getElementFactory()
-        .createType(bClass);
-    }
-    if (InheritanceUtil.isCorrectDescendant(bClass, aClass, true)) {
-      return aClass.getManager().getElementFactory()
-        .createType(aClass);
-    }
-  ;
-
-    return PsiType.getJavaLangObject(aClass.getManager());
-  }
-
-  public static PsiType cloneType(PsiType t, PsiManager manager) {
-    return manager.getElementFactory().detachType(t);
-  }
-
-  public static TypeNode killOthers(TypeNode baseNode,
-                                    TypeNode objectNode,
-                                    PsiClass mainClass,
-                                    HashSet<PsiClass> boundParameters) {
-    if (!mainClass.hasTypeParameters()) {
-      return baseNode;
-    }
-
-    PsiTypeParameter[] mainParms = getTypeParametersList(mainClass);
-
-    for (int i = 0; i < mainParms.length; i++) {
-      PsiTypeParameter p = mainParms[i];
-
-      if (!boundParameters.contains(p)) {
-        TypeEdge.connectParameter(baseNode, objectNode, p.getIndex());
-      }
-    }
-
-    return baseNode;
-  }
-
   public static PsiType getType(PsiElement element) {
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getType();
@@ -430,49 +258,6 @@ public class Util {
     return null;
   }
 
-  public static boolean equals(PsiClass a, PsiClass b) {
-    if (a.getManager().areElementsEquivalent(a, b)) {
-      return getTypeParametersList(a).length == getTypeParametersList(b).length;
-    }
-
-    return false;
-  }
-
-  private static boolean clashes(PsiClass a, PsiClass b) {
-    return
-      a.getManager().areElementsEquivalent(a, b) &&
-      (getTypeParametersList(a).length != getTypeParametersList(b).length);
-  }
-
-  public static boolean isDescendant(PsiClass a, PsiClass b) {
-    boolean semi = InheritanceUtil.isCorrectDescendant(a, b, true);
-
-    if (semi && clashes(a, b)) {
-      return false;
-    }
-
-    return semi;
-  }
-
-  public static int getTypeKind(PsiType t) {
-    if (t instanceof PsiClassType) return 0;
-    if (t instanceof PsiArrayType) return 1;
-    if (t instanceof SupertypeOf) return 2;
-    if (t instanceof SubtypeOf) return 3;
-    if (t instanceof Bottom) return 4;
-
-    LOG.error("Class/Array/Super/Sub-type expected in getTypeKind.");
-
-    return 5; // PsiPrimitiveType
-  }
-
-  public static PsiType balanceSubtype(PsiClass aClass, PsiClass bClass, PsiSubstitutor aSubst) {
-    PsiSubstitutor subSubst = TypeConversionUtil.getClassSubstitutor(bClass, aClass, PsiSubstitutor.EMPTY);
-    PsiSubstitutor theSubst = Util.composeSubstitutors(aSubst, subSubst);
-
-    return aClass.getManager().getElementFactory().createType(bClass, theSubst);
-  }
-
   public static PsiTypeParameter[] getTypeParametersList(PsiClass a) {
     PsiTypeParameterList list = a.getTypeParameterList();
 
@@ -482,46 +267,6 @@ public class Util {
     else {
       return list.getTypeParameters();
     }
-  }
-
-  public static boolean isGeneric(PsiType a) {
-    if (a instanceof PsiArrayType) {
-      return isGeneric(((PsiArrayType)a).getDeepComponentType());
-    }
-
-    if (a instanceof SubtypeOf) {
-      return isGeneric(((SubtypeOf)a).getSuperType());
-    }
-
-    if (a instanceof SupertypeOf) {
-      return isGeneric(((SupertypeOf)a).getSubType());
-    }
-
-    if (a instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = resolveType(a);
-
-      if (result == null) {
-        return false;
-      }
-
-      PsiClass aClass = result.getElement();
-
-      return aClass != null && aClass.hasTypeParameters();
-    }
-
-    return a == Bottom.BOTTOM;
-  }
-
-  public static PsiType undress(PsiType t) {
-    if (t instanceof SupertypeOf) {
-      return undress(((SupertypeOf)t).getSubType());
-    }
-
-    if (t instanceof SubtypeOf) {
-      return undress(((SubtypeOf)t).getSuperType());
-    }
-
-    return t;
   }
 
   public static PsiType avoidAnonymous(PsiType type) {
@@ -561,91 +306,6 @@ public class Util {
     }
 
     return type;
-  }
-
-  private static boolean isValidType(PsiType type, PsiElement context) {
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = resolveType(type);
-
-      if (result == null) {
-        return false;
-      }
-
-      PsiClass aClass = result.getElement();
-      PsiSubstitutor aSubst = result.getSubstitutor();
-
-      if (!PsiUtil.isAccessible(aClass, context, null)) {
-        return false;
-      }
-
-      PsiTypeParameter[] aParms = getTypeParametersList(aClass);
-
-      for (int i = 0; i < aParms.length; i++) {
-        if (!isValidType(aSubst.substitute(aParms[i]), context)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    if (type instanceof PsiArrayType) {
-      return isValidType(((PsiArrayType)type).getComponentType(), context);
-    }
-
-    return true;
-  }
-
-  public static boolean isValidTypeInContext(PsiType type, PsiElement context) {
-    try {
-      return isValidType(context.getManager().getElementFactory().createTypeFromText(type.getCanonicalText(), context),
-                         context);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error("Incorrect operation during factory.createTypeFromText");
-    }
-
-    return false;
-  }
-
-  private static int getHeight(PsiType t) {
-    if (t instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType)t).resolveGenerics();
-      PsiClass aClass = result.getElement();
-      PsiSubstitutor aSubst = result.getSubstitutor();
-
-      if (aClass == null) {
-        return 0;
-      }
-
-      PsiTypeParameter[] parms = getTypeParametersList(aClass);
-
-      int max = 0;
-
-      for (int i = 0; i < parms.length; i++) {
-        max = Math.max(max, getHeight(aSubst.substitute(parms[i])));
-        if (max > HEIGHT_BOUND) {
-        break;
-        }
-      }
-
-      return 1 + max;
-    }
-    else if (t instanceof PsiArrayType) {
-      return getHeight(((PsiArrayType)t).getDeepComponentType());
-    }
-    else if (t instanceof SubtypeOf) {
-      return getHeight(((SubtypeOf)t).getSuperType());
-    }
-    else if (t instanceof SupertypeOf) {
-      return getHeight(((SupertypeOf)t).getSubType());
-    }
-
-    return 0;
-  }
-
-  public static boolean prunedType(PsiType t) {
-    return getHeight(t) > HEIGHT_BOUND;
   }
 
   public static PsiType createParameterizedType(final PsiType t, final PsiTypeVariableFactory factory) {

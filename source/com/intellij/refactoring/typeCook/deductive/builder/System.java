@@ -3,7 +3,6 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.TypeNode;
 import com.intellij.refactoring.typeCook.Bottom;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;

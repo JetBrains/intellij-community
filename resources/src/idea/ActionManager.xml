@@ -546,9 +546,7 @@
           <action id="LocalVcs.ShowRepHistory" class="com.intellij.localVcs.actions.PringRepositoryHistoryAction" text="Repository History" internal="true"/>
           <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
-          <separator/>
-          <action id="Deductive Cook" class="com.intellij.refactoring.actions.DeductiveTypeCookAction" text="Deductive Type Cook..." description="Reimplementation of Type Cook"/>
-
+          
           <separator/>
           <action id="Use new code formatter" class="com.intellij.psi.impl.source.codeStyle.NewCodeFormatterAction" text="Use New Code Formatter" description="Use New Code Formatter"/>
           <separator/>
