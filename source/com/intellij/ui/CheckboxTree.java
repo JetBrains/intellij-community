@@ -39,9 +39,11 @@ public class CheckboxTree extends Tree {
 
           if (checkBounds.contains(e.getPoint())) {
             CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
-            toggleNode(node);
-            e.consume();
-            setSelectionRow(row);
+            if (node.isEnabled()) {
+              toggleNode(node);
+              e.consume();
+              setSelectionRow(row);
+            }
           }
         }
       }
@@ -114,6 +116,7 @@ public class CheckboxTree extends Tree {
       invalidate();
       if (value instanceof CheckedTreeNode) {
         CheckedTreeNode node = (CheckedTreeNode)value;
+        myCheckbox.setEnabled(node.isEnabled());
         myCheckbox.setSelected(node.isChecked());
 
         myCheckbox.setBackground(null);
@@ -139,8 +142,8 @@ public class CheckboxTree extends Tree {
       boolean hasFocus
     );
 
-    public SimpleColoredComponent getTextRenderer    () { return myTextRenderer; }
-    public JCheckBox              getCheckbox() { return myCheckbox; }
+    public ColoredTreeCellRenderer getTextRenderer    () { return myTextRenderer; }
+    public JCheckBox               getCheckbox()         { return myCheckbox; }
   }
 
 

@@ -8,7 +8,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * Time: 5:14:07 PM
  */
 public class CheckedTreeNode extends DefaultMutableTreeNode {
-  private boolean isChecked = true;
+  protected boolean isChecked = true;
+  private boolean isEnabled = true;
   public CheckedTreeNode(Object userObject) {
     super(userObject);
   }
@@ -20,5 +21,13 @@ public class CheckedTreeNode extends DefaultMutableTreeNode {
 
   public void setChecked(boolean checked) {
     isChecked = checked;
+  }
+
+  public void setEnabled(final boolean enabled) {
+    isEnabled = enabled;
+  }
+
+  public boolean isEnabled() {
+    return isEnabled;
   }
 }
