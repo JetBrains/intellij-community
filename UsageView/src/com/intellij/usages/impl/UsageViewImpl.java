@@ -28,9 +28,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -473,6 +471,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  public void removeUsage(Usage usage) {
+    final UsageNode node = myUsageNodes.get(usage);
+
+    if (node != null) {
+      ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent (node);
+      myUsageNodes.remove(usage);
+      ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
+    }
+  }
+
   public void includeUsages(Usage[] usages) {
     for (int i = 0; i < usages.length; i++) {
       final UsageNode node = myUsageNodes.get(usages[i]);
@@ -491,6 +499,23 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     }
     updateImmediately();
+  }
+
+  public void selectUsages(Usage[] usages) {
+    if (usages == null) return;
+
+    List<TreePath> pathes = new LinkedList<TreePath>();
+
+    for (int i = 0; i < usages.length; i++) {
+      final UsageNode node = myUsageNodes.get(usages[i]);
+
+      if (node != null) {
+        pathes.add(new TreePath(node.getPath()));
+      }
+    }
+
+    myTree.setSelectionPaths(pathes.toArray(new TreePath[pathes.size()]));
+    if (pathes.size() > 0) myTree.scrollPathToVisible(pathes.get(0));
   }
 
   public JComponent getComponent() {
@@ -710,7 +735,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return node instanceof Node ? (Node)node : null;
   }
 
-  private Usage[] getSelectedUsages() {
+  public Set<Usage> getSelectedUsages() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
 
@@ -721,7 +746,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       collectUsages(node, usages);
     }
 
-    return usages.toArray(new Usage[usages.size()]);
+    return usages;
+  }
+
+  public Set<Usage> getUsages() {
+    final LinkedHashSet<Usage> usages = new LinkedHashSet<Usage>();
+    collectUsages((DefaultMutableTreeNode)myTree.getModel().getRoot(), usages);
+    return usages;
   }
 
   private void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {
@@ -837,7 +868,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
 
       if (dataId.equals(USAGES)) {
-        return getSelectedUsages();
+        final Set<Usage> selectedUsages = getSelectedUsages();
+        return selectedUsages.toArray(new Usage[selectedUsages.size()]);
       }
 
       if (dataId.equals(USAGE_TARGETS)) {

@@ -25,8 +25,10 @@ public interface UsageView extends Disposeable {
   String USAGE_VIEW = "UsageView.new";
 
   void appendUsage(Usage usage);
+  void removeUsage(Usage usage);
   void includeUsages(Usage[] usages);
   void excludeUsages(Usage[] usages);
+  void selectUsages(Usage[] usages);
 
   void close();
   boolean isSearchInProgress();
@@ -36,6 +38,8 @@ public interface UsageView extends Disposeable {
   UsageViewPresentation getPresentation();
 
   Set<Usage> getExcludedUsages();
+  Set<Usage> getSelectedUsages();
+  Set<Usage> getUsages();
 
   JComponent getComponent();
 }

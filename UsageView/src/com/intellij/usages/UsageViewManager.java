@@ -21,9 +21,16 @@ public interface UsageViewManager {
                                 boolean showPanelIfOnlyOneUsage,
                                 boolean showNotFoundMessage, UsageViewPresentation presentation);
 
-  UsageView searchAndShowUsages(UsageTarget[] searchFor,
-                                Factory<UsageSearcher> searcherFactory,
-                                boolean showPanelIfOnlyOneUsage,
-                                boolean showNotFoundMessage, UsageViewPresentation presentation,
-                                Factory<ProgressIndicator> progressIndicatorFactory);
+  interface UsageViewStateListener {
+    void usageViewCreated(UsageView usageView);
+    void findingUsagesFinished();
+  }
+
+  void searchAndShowUsages(UsageTarget[] searchFor,
+                           Factory<UsageSearcher> searcherFactory,
+                           boolean showPanelIfOnlyOneUsage,
+                           boolean showNotFoundMessage,
+                           UsageViewPresentation presentation,
+                           Factory<ProgressIndicator> progressIndicatorFactory,
+                           UsageViewStateListener listener);
 }

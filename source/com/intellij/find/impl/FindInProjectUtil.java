@@ -1,7 +1,11 @@
 package com.intellij.find.impl;
 
 import com.intellij.Patches;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.usages.impl.UsageViewImplUtil;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.Usage;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -9,9 +13,10 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -28,14 +33,18 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PatternUtil;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -293,5 +302,97 @@ public class FindInProjectUtil {
     }
 
     return result.toString();
+  }
+
+  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, final FindModel findModelCopy) {
+    final UsageViewPresentation presentation = new UsageViewPresentation();
+
+    presentation.setScopeText(getTitleForScope(findModelCopy));
+    presentation.setTabText("Occurrences of '" + findModelCopy.getStringToFind() + "'");
+    presentation.setUsagesString("occurrences of '" + findModelCopy.getStringToFind() + "'");
+    presentation.setOpenInNewTab(toOpenInNewTab);
+    presentation.setCodeUsages(false);
+
+    return presentation;
+  }
+
+  public static boolean hasReadOnlyUsages(final Set<Usage> usages) {
+    for (Iterator<Usage> iterator = usages.iterator(); iterator.hasNext();) {
+      Usage usage = iterator.next();
+
+      if (usage.isReadOnly()) return true;
+    }
+
+    return false;
+  }
+
+  public static class StringUsageTarget implements UsageTarget {
+    private String myStringToFind;
+
+    private ItemPresentation myItemPresentation = new ItemPresentation() {
+      public String getPresentableText() {
+        return "String '" + myStringToFind + "'";
+      }
+
+      public String getLocationString() {
+        return myStringToFind + "!!";
+      }
+
+      public Icon getIcon(boolean open) {
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
+
+    public StringUsageTarget(String _stringToFind) {
+      myStringToFind = _stringToFind;
+    }
+
+    public void findUsages() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void findUsagesInEditor(FileEditor editor) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+
+    public boolean isReadOnly() {
+      return true;
+    }
+
+    public VirtualFile[] getFiles() {
+      throw new UnsupportedOperationException();
+    }
+
+    public String getName() {
+      return myStringToFind;
+    }
+
+    public ItemPresentation getPresentation() {
+      return myItemPresentation;
+    }
+
+    public FileStatus getFileStatus() {
+      return null;
+    }
+
+    public void navigate(boolean requestFocus) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean canNavigate() {
+      return false;
+    }
+
+    public boolean canNavigateToSource() {
+      return false;
+    }
   }
 }

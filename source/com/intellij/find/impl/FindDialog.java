@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.openapi.module.ModuleManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.util.PatternUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,6 +50,7 @@ final class FindDialog extends DialogWrapper {
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox useFileFilter;
   private ComboBox myFileFilter;
+  protected JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
 
   public FindDialog(Project project, FindModel model){
@@ -234,6 +233,15 @@ final class FindDialog extends DialogWrapper {
 
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
+
+      if (!myModel.isReplaceState()) {
+        myCbToSkipResultsWhenOneUsage = new StateRestoringCheckBox(
+                                          "Skip results tab with one usage",
+                                          FindSettings.getInstance().isSkipResultsWithOneUsage()
+                                        );
+        myCbToSkipResultsWhenOneUsage.setMnemonic('k');
+        optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
+      }
     }
 
     if (myModel.isOpenInNewTabVisible()){
@@ -353,7 +361,18 @@ final class FindDialog extends DialogWrapper {
       }
     }
 
+    if (myCbToSkipResultsWhenOneUsage != null){
+      FindSettings.getInstance().setSkipResultsWithOneUsage(
+        isSkipResultsWhenOneUsage()
+      );
+    }
+
     super.doOKAction();
+  }
+
+  public boolean isSkipResultsWhenOneUsage() {
+    return myCbToSkipResultsWhenOneUsage!=null &&
+    myCbToSkipResultsWhenOneUsage.isSelected();
   }
 
   private JPanel createFindOptionsPanel() {
@@ -668,15 +687,18 @@ final class FindDialog extends DialogWrapper {
     FindSettings findSettings = FindSettings.getInstance();
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
     findSettings.setCaseSensitive(myCbCaseSensitive.isSelected());
+
     if (model.isReplaceState()) {
       model.setPreserveCase(myCbPreserveCase.isSelected());
       findSettings.setPreserveCase(myCbPreserveCase.isSelected());
     }
+
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
     findSettings.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     findSettings.setRegularExpressions(myCbRegularExpressions.isSelected());
     model.setStringToFind((String)myInputComboBox.getSelectedItem());
+
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
       model.setReplaceAll(false);
@@ -686,6 +708,7 @@ final class FindDialog extends DialogWrapper {
       }
       model.setStringToReplace(stringToReplace);
     }
+
     if (!model.isMultipleFiles()){
       model.setForward(myRbForward.isSelected());
       findSettings.setForward(myRbForward.isSelected());
@@ -698,8 +721,7 @@ final class FindDialog extends DialogWrapper {
       if (myCbToOpenInNewTab != null){
         model.setOpenInNewTab(myCbToOpenInNewTab.isSelected());
       }
-      model.setWithSubdirectories(myCbWithSubdirectories.isSelected());
-      findSettings.setWithSubdirectories(myCbWithSubdirectories.isSelected());
+
       model.setProjectScope(myRbProject.isSelected());
       model.setDirectoryName(null);
       model.setModuleName(null);
@@ -707,10 +729,8 @@ final class FindDialog extends DialogWrapper {
       if (myRbDirectory.isSelected()){
         String directory = getDirectory();
         model.setDirectoryName(directory == null ? "" : directory);
-        if (directory==null) {
-          //model.setWithSubdirectories(myCbWithSubdirectories.isSelected());
-          //findSettings.setWithSubdirectories(myCbWithSubdirectories.isSelected());
-        }
+        model.setWithSubdirectories(myCbWithSubdirectories.isSelected());
+        findSettings.setWithSubdirectories(myCbWithSubdirectories.isSelected());
       } else if (myRbModule.isSelected()) {
         model.setModuleName((String)myModuleComboBox.getSelectedItem());
       }
@@ -776,7 +796,7 @@ final class FindDialog extends DialogWrapper {
         myModuleComboBox.setEnabled(true);
         myModuleComboBox.setSelectedItem(myModel.getModuleName());
       }
-      
+
       myCbWithSubdirectories.setSelected(myModel.isWithSubdirectories());
 
       if (myModel.getFileFilter()!=null && myModel.getFileFilter().length() > 0) {

@@ -122,6 +122,10 @@ public class FindManagerImpl extends FindManager implements ProjectComponent {
     }
     if (model.isMultipleFiles() && !model.isProjectScope()){
       FindSettings.getInstance().addDirectory(model.getDirectoryName());
+
+      if (model.getDirectoryName()!=null) {
+        myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
+      }
     }
     return true;
   }

@@ -67,7 +67,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
     final Application application = ApplicationManager.getApplication();
     application.runProcessWithProgressSynchronously(
-      createSearchRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, application),
+      createSearchRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, null),
       getProgressTitle(presentation),
       true,
       myProject
@@ -82,19 +82,22 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
                                         final Factory<UsageSearcher> searcherFactory,
                                         final boolean showNotFoundMessage,
                                         final boolean showPanelIfOnlyOneUsage,
-                                        final Application application) {
-    return new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, application);
+                                        final UsageViewManager.UsageViewStateListener listener) {
+    return new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, listener);
   }
 
-  public UsageView searchAndShowUsages(UsageTarget[] searchFor,
+  public void searchAndShowUsages(UsageTarget[] searchFor,
                                        Factory<UsageSearcher> searcherFactory,
                                        boolean showPanelIfOnlyOneUsage,
                                        boolean showNotFoundMessage,
                                        UsageViewPresentation presentation,
-                                       final Factory<ProgressIndicator> progressIndicatorFactory) {
+                                       final Factory<ProgressIndicator> progressIndicatorFactory,
+                                       UsageViewManager.UsageViewStateListener listener
+                                       ) {
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
-    final Application application = ApplicationManager.getApplication();
-    final SearchForUsagesRunnable runnable = (SearchForUsagesRunnable)createSearchRunnable(usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, application);
+    final SearchForUsagesRunnable runnable = (SearchForUsagesRunnable)createSearchRunnable(
+      usageView, presentation, searchFor, searcherFactory, showNotFoundMessage, showPanelIfOnlyOneUsage, listener
+    );
 
     UsageViewImplUtil.runProcessWithProgress(
       progressIndicatorFactory.create(),
@@ -110,8 +113,6 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
         }
       }
     );
-
-    return usageView[0];
   }
 
   static String getProgressTitle(UsageViewPresentation presentation) {
@@ -122,7 +123,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
   private void activateToolwindow() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
-    if (!toolWindow.isActive()) toolWindow.activate(null);
+    if (!toolWindow.isActive()) toolWindow.show(null);
   }
 
   private void appendUsages(Usage[] foundUsages, UsageViewImpl usageView) {
@@ -154,7 +155,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     private final Factory<UsageSearcher> mySearcherFactory;
     private final boolean myShowNotFoundMessage;
     private final boolean myShowPanelIfOnlyOneUsage;
-    private final Application myApplication;
+    private UsageViewManager.UsageViewStateListener myListener;
 
     public SearchForUsagesRunnable(final UsageViewImpl[] usageView,
                    final UsageViewPresentation presentation,
@@ -162,14 +163,14 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
                    final Factory<UsageSearcher> searcherFactory,
                    final boolean showNotFoundMessage,
                    final boolean showPanelIfOnlyOneUsage,
-                   final Application application) {
+                   final UsageViewManager.UsageViewStateListener listener) {
       myUsageView = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;
       mySearcherFactory = searcherFactory;
       myShowNotFoundMessage = showNotFoundMessage;
       myShowPanelIfOnlyOneUsage = showPanelIfOnlyOneUsage;
-      myApplication = application;
+      myListener = listener;
     }
 
     private void activateView() {
@@ -179,6 +180,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           addContent(myUsageView[0], myPresentation);
+          if (myListener!=null) myListener.usageViewCreated(myUsageView[0]);
           activateToolwindow();
         }
       });
@@ -222,7 +224,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
 
     private void endSearchForUsages() {
       if (myUsageCount == 0 && myShowNotFoundMessage) {
-        myApplication.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(myProject, "No " + myPresentation.getUsagesString() + " found in " + myPresentation.getScopeText(), "Information",
                                    Messages.getInformationIcon());
@@ -240,6 +242,10 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
       }
       else {
         myUsageView[0].setSearchInProgress(false);
+      }
+
+      if (myListener != null) {
+        myListener.findingUsagesFinished();
       }
     }
   }

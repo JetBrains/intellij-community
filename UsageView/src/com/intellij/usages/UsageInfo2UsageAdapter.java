@@ -109,16 +109,20 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   public void selectInEditor() {
     if (!isValid()) return;
     Editor editor = openTextEditor(false);
-    RangeMarker marker = myRangeMarkers.get(0);
+    RangeMarker marker = getRangeMarker();
     editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
   }
 
   public void highlightInEditor() {
     if (!isValid()) return;
 
-    RangeMarker marker = myRangeMarkers.get(0);
+    RangeMarker marker = getRangeMarker();
     SelectInEditorManager.getInstance(getProject())
       .selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+  }
+
+  public final RangeMarker getRangeMarker() {
+    return myRangeMarkers.get(0);
   }
 
   public void navigate(boolean focus) {
@@ -141,7 +145,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   private OpenFileDescriptor getDescriptor() {
-    return isValid() ? new OpenFileDescriptor(getProject(), getFile(), myRangeMarkers.get(0).getStartOffset()) : null;
+    return isValid() ? new OpenFileDescriptor(getProject(), getFile(), getRangeMarker().getStartOffset()) : null;
   }
 
   private Project getProject() {
@@ -217,7 +221,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public void reset() {
     if (myRangeMarkers.size() > 1) {
-      RangeMarker marker = myRangeMarkers.get(0);
+      RangeMarker marker = getRangeMarker();
       myRangeMarkers = new ArrayList<RangeMarker>();
       myRangeMarkers.add(marker);
       initChunks();

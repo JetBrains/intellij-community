@@ -72,6 +72,36 @@ class GroupNode extends Node implements Navigatable {
     return null;
   }
 
+  public boolean removeUsage(UsageNode usage) {
+    final Collection<GroupNode> groupNodes = mySubgroupNodes.values();
+
+    for(Iterator<GroupNode> i = groupNodes.iterator();i.hasNext();) {
+      final GroupNode groupNode = i.next();
+
+      if(groupNode.removeUsage(usage)) {
+        doUpdate();
+
+        if (groupNode.getRecursiveUsageCount() == 0) {
+          myTreeModel.removeNodeFromParent(groupNode);
+          mySubgroupNodes.remove(groupNode);
+        }
+        return true;
+      }
+    }
+
+    if (myUsageNodes.remove(usage)) {
+      doUpdate();
+      return true;
+    }
+
+    return false;
+  }
+
+  private void doUpdate() {
+    --myRecursiveUsageCount;
+    myTreeModel.reload(this);
+  }
+
   public UsageNode addUsage(Usage usage) {
     try {
       UsageNode mergedWith = tryMerge(usage);
