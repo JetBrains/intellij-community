@@ -152,7 +152,7 @@ public class PullUpDialog extends DialogWrapper {
     }*/
   }
 
-  protected void doAction() {
+  protected void doOKAction() {
     if (!myCallback.checkConflicts(this)) return;
     RefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
     close(OK_EXIT_CODE);
