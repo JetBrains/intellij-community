@@ -5,9 +5,8 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationManager;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -117,9 +116,4 @@ public class EvaluateAction extends DebuggerAction {
       presentation.setVisible(true);
     }
   }
-
-  protected interface TextAcceptor {
-    void accept(TextWithImportsImpl text);
-  }
-
 }
