@@ -7,12 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.Tree;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -25,7 +27,8 @@ import java.util.ArrayList;
 /**
  * @author ven
  */
-public class CallerChooser extends DialogWrapper {
+public abstract class CallerChooser extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.inCallers.CallerChooser");
   PsiMethod myMethod;
   private EditorTextField myEditorField;
   private Alarm myAlarm = new Alarm();
@@ -126,7 +129,7 @@ public class CallerChooser extends DialogWrapper {
     }
   }
 
-  public PsiMethod[] getSelectedMethods () {
+  private PsiMethod[] getSelectedMethods () {
     MethodNode node = myRoot;
     ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
     getSelectedMethodsInner(node, result);
@@ -146,10 +149,13 @@ public class CallerChooser extends DialogWrapper {
 
   protected void doOKAction() {
     if (!verifyPaths(myRoot)) {
-      Messages.showErrorDialog(myProject, "Not all paths to refactored method are selected", "Change Signature");
+      Messages.showErrorDialog(myProject, "Not all paths to refactored method are covered", ChangeSignatureHandler.REFACTORING_NAME);
       return;
     }
 
+    final PsiMethod[] selectedMethods = getSelectedMethods();
+    LOG.assertTrue(selectedMethods.length > 0);
+    callersChosen(selectedMethods);
     super.doOKAction();
   }
 
@@ -163,4 +169,6 @@ public class CallerChooser extends DialogWrapper {
     }
     return true;
   }
+
+  abstract protected void callersChosen (PsiMethod[] callers);
 }

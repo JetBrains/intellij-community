@@ -155,7 +155,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                         public void run() {
                           dialog.close(DialogWrapper.OK_EXIT_CODE);
                         }
-                      }).run(null);
+                      }, null, null).run(null);
             }
           };
       ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, callback);

@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -61,6 +62,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private DelegationPanel myDelegationPanel;
   private JTable myExceptionsTable;
   private ExceptionsTableModel myExceptionsTableModel;
+  private JButton myPropagateParamChangesButton;
+  private JButton myPropagateExnChangesButton;
+  private PsiMethod[] myMethodsToPropagateParameters = null;
+  private PsiMethod[] myMethodsToPropagateExceptions = null;
 
   public interface Callback {
     void run(ChangeSignatureDialog dialog);
@@ -155,13 +160,41 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    //panel.setBorder(BorderFactory.createTitledBorder("Method"));
 
+    JPanel top = new JPanel(new BorderLayout());
     if (myAllowDelegation)
     {
       myDelegationPanel = createDelegationPanel();
-      panel.add(myDelegationPanel);
+      top.add(myDelegationPanel, BorderLayout.WEST);
     }
+
+    JPanel propagatePanel = new JPanel();
+    myPropagateParamChangesButton = new JButton("Propagate Parameters");
+    myPropagateParamChangesButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        new CallerChooser(myMethod, "Select Caller Methods To Apply Default Value") {
+          protected void callersChosen(PsiMethod[] callers) {
+            myMethodsToPropagateParameters = callers;
+          }
+        }.show();
+      }
+    });
+    propagatePanel.add(myPropagateParamChangesButton);
+
+    myPropagateExnChangesButton = new JButton("Propagate Exceptions");
+    myPropagateExnChangesButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        new CallerChooser(myMethod, "Select Caller Methods To Insert Catch Statements") {
+          protected void callersChosen(PsiMethod[] callers) {
+            myMethodsToPropagateExceptions = callers;
+          }
+        }.show();
+      }
+    });
+    propagatePanel.add(myPropagateExnChangesButton);
+    top.add(propagatePanel, BorderLayout.EAST);
+
+    panel.add(top);
     if (!myMethod.isConstructor()) {
       JLabel namePrompt = new JLabel("Name:");
       panel.add(namePrompt);
@@ -307,6 +340,14 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
   }
 
+  public PsiMethod[] getEndPointsToPropagateExceptions() {
+    return myMethodsToPropagateExceptions;
+  }
+
+  public PsiMethod[] getEndPointsToPropagateParameters() {
+    return myMethodsToPropagateParameters;
+  }
+
   private void completeVariable(EditorTextField editorTextField, PsiType type) {
     Editor editor = editorTextField.getEditor();
     String prefix = editorTextField.getText();
@@ -352,6 +393,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myUpdateSignatureAlarm.addRequest(new Runnable() {
       public void run() {
         doUpdateSignature();
+        updatePropagateButtons();
       }
     }, 100, ModalityState.stateForComponent(mySignatureArea));
   }
@@ -360,6 +402,31 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     String signature = calculateSignature();
     mySignatureArea.setText(signature);
+  }
+
+  private void updatePropagateButtons () {
+    myPropagateParamChangesButton.setEnabled(!isGenerateDelegate() && mayPropagateParameters());
+    myPropagateExnChangesButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+  }
+
+  private boolean mayPropagateExceptions() {
+    final ThrownExceptionInfo[] thrownExceptions = myExceptionsTableModel.getThrownExceptions();
+    final PsiClassType[] types = myMethod.getThrowsList().getReferencedTypes();
+    if (thrownExceptions.length < types.length) return false;
+    for (int i = 0; i < types.length; i++) {
+      if (thrownExceptions[i].oldIndex != i) return false;
+    }
+    return true;
+  }
+
+  private boolean mayPropagateParameters() {
+    final ParameterInfo[] infos = myParametersTableModel.getParameters();
+    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    if (infos.length < parameters.length) return false;
+    for (int i = 0; i < parameters.length; i++) {
+      if (infos[i].oldParameterIndex != i) return false;
+    }
+    return true;
   }
 
   private String calculateSignature() {
@@ -445,6 +512,14 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       return;
     }
 
+    if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
+      Messages.showWarningDialog(myProject, "Recursive propagation of parameter changes won't be performed", ChangeSignatureHandler.REFACTORING_NAME);
+      myMethodsToPropagateParameters = null;
+    }
+    if (myMethodsToPropagateExceptions != null && !mayPropagateExceptions()) {
+      Messages.showWarningDialog(myProject, "Recursive propagation of thrown exceptions changes won't be performed", ChangeSignatureHandler.REFACTORING_NAME);
+      myMethodsToPropagateExceptions = null;
+    }
     myCallback.run(this);
   }
 
@@ -583,19 +658,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
           prototype.getParameterList().add(param);
         }
       }
-
-      /*ThrownExceptionInfo[] exceptions = getExceptions();
-      for (int i = 0; i < exceptions.length; i++) {
-        ThrownExceptionInfo info = exceptions[i];
-        PsiType exceptionType = info.createType(myMethod);
-        if (!RefactoringUtil.isResolvableType(exceptionType)) {
-          final int ret = Messages.showOkCancelDialog(myProject,
-                                                "Type " + info.getTypeText() + " cannot be resolved.\nContinue?",
-                                                "Change Method Signature", Messages.getErrorIcon()
-                                                );
-          if (ret != 0) return false;
-        }
-      }*/
     }
     catch (IncorrectOperationException e) {
       prototype = null;
@@ -627,18 +689,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       }
       append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
     }
-  }
-
-  public void addParameter(String name, String type, String defaultValue) {
-    myParametersTableModel.addRow();
-    final int index = myParametersTableModel.getRowCount() - 1;
-    myParametersTableModel.setValueAt(type, index, 0);
-    myParametersTableModel.setValueAt(name, index, 1);
-    myParametersTableModel.setValueAt(defaultValue, index, 2);
-
-    myParametersTable.setRowSelectionInterval(index, index);
-    myParametersTable.setColumnSelectionInterval(2, 2);
-    myParametersTable.editCellAt(index, 2);
   }
 
   private class MyNameTableCellEditor extends StringTableCellEditor {

@@ -56,6 +56,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           new Class[]{PsiStatement.class, PsiClass.class, PsiFile.class};
   private HashSet<PsiMethod> myMethodsToBeChanged;
   private final boolean myGenerateDelegate;
+  private final PsiMethod[] myPropagateParametersEndPoints;
+  private final PsiMethod[] myPropagateExceptionsEndPoints;
 
   public ChangeSignatureProcessor(Project project,
                                 PsiMethod method,
@@ -67,7 +69,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                 Runnable prepareSuccessfulCallback) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, null, prepareSuccessfulCallback);
+         parameterInfo, null, prepareSuccessfulCallback, null, null);
   }
 
   public ChangeSignatureProcessor(Project project,
@@ -81,20 +83,24 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                 Runnable prepareSuccessfulCallback) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, exceptionInfos, prepareSuccessfulCallback);
+         parameterInfo, exceptionInfos, prepareSuccessfulCallback, null, null);
   }
 
   public ChangeSignatureProcessor(Project project,
-                                PsiMethod method,
-                                boolean generateDelegate,
-                                String newVisibility,
-                                String newName,
-                                CanonicalTypes.Type newType,
-                                ParameterInfo[] parameterInfo,
-                                ThrownExceptionInfo[] thrownExceptions,
-                                Runnable prepareSuccessfulCallback) {
+                                  PsiMethod method,
+                                  boolean generateDelegate,
+                                  String newVisibility,
+                                  String newName,
+                                  CanonicalTypes.Type newType,
+                                  ParameterInfo[] parameterInfo,
+                                  ThrownExceptionInfo[] thrownExceptions,
+                                  Runnable prepareSuccessfulCallback,
+                                  PsiMethod[] propagateParametersEndPoints,
+                                  PsiMethod[] propagateExceptionsEndPoints) {
     super(project, prepareSuccessfulCallback);
     myGenerateDelegate = generateDelegate;
+    myPropagateParametersEndPoints = propagateParametersEndPoints;
+    myPropagateExceptionsEndPoints = propagateExceptionsEndPoints;
     LOG.assertTrue(method.isValid());
     if (newVisibility == null) {
       myNewVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
@@ -882,8 +888,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       } else {
         newParms[i] = createNewParameter(info, substitutor);
-//        newParms[i] = factory.createParameterFromText(info.type + " " + info.name, myResolutionContext);
-//        newParms[i].getTypeElement().replace(getTypeFromName(type));
       }
     }
 
@@ -912,12 +916,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         final MethodSignature superMethodSignature = myChangeInfo.getMethod().getSignature(superClassSubstitutor);
         final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
         final PsiSubstitutor superMethodSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superMethodSignature);
-        if (superMethodSubstitutor != null) {
-          substitutor = superMethodSubstitutor;
-        }
-        else {
-          substitutor = superClassSubstitutor;
-        }
+        substitutor = superMethodSubstitutor != null ? superMethodSubstitutor : superClassSubstitutor;
       } else {
         substitutor = PsiSubstitutor.EMPTY;
       }
@@ -955,11 +954,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   public static PsiElement normalizeResolutionContext(PsiElement resolutionContext) {
     PsiElement result = PsiTreeUtil.getParentOfType(resolutionContext, NORMALIZED_RESOLUTION_CONTEXT_CLASSES, false);
-    if (result != null) {
-      return result;
-    } else {
-      return resolutionContext;
-    }
+    if (result != null) return result;
+
+    return resolutionContext;
   }
 
   private static class RenamedParameterCollidesWithLocalUsageInfo extends UnresolvableCollisionUsageInfo {
