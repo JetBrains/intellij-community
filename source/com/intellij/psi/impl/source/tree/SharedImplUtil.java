@@ -133,7 +133,8 @@ public class SharedImplUtil {
       else if (i == ElementType.RBRACKET ||
         i == ElementType.WHITE_SPACE ||
         i == ElementType.C_STYLE_COMMENT ||
-        i == ElementType.DOC_COMMENT ||
+        i == JavaDocElementType.DOC_COMMENT ||
+        i == JavaTokenType.DOC_COMMENT ||
         i == ElementType.END_OF_LINE_COMMENT) {
       }
       else {
