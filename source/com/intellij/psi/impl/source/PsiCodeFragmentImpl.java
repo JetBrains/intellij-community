@@ -209,30 +209,47 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     myManager.nonPhysicalChange(); // to clear resolve caches!
     if (isPhysical()) {
       final Project project = myManager.getProject();
-      UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
-        public boolean isComplex() {
-          return false;
-        }
-
-        public void undo() {
-          myPseudoImports.remove(className);
-        }
-
-        public void redo() {
-          myPseudoImports.put(className, qName);
-        }
-
-        public DocumentReference[] getAffectedDocuments() {
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-          Document document = psiDocumentManager.getDocument(PsiCodeFragmentImpl.this);
-          return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
-        }
-      });
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(this);
+      UndoManager.getInstance(project).undoableActionPerformed(new ImportClassUndoableAction(className, qName, document, myPseudoImports));
     }
     return true;
     //}
     //else{
     //  return false;
     //}
+  }
+
+  private static class ImportClassUndoableAction implements UndoableAction {
+    private final String myClassName;
+    private final String myQName;
+    private LinkedHashMap<String,String> myPseudoImports;
+    private Document myDocument;
+
+    public ImportClassUndoableAction(final String className,
+                                     final String qName,
+                                     final Document document,
+                                     final LinkedHashMap<String, String> pseudoImportsMap) {
+      myClassName = className;
+      myQName = qName;
+      myDocument = document;
+      myPseudoImports = pseudoImportsMap;
+    }
+
+    public boolean isComplex() {
+      return false;
+    }
+
+    public void undo() {
+      myPseudoImports.remove(myClassName);
+    }
+
+    public void redo() {
+      myPseudoImports.put(myClassName, myQName);
+    }
+
+    public DocumentReference[] getAffectedDocuments() {
+      Document document = myDocument;
+      return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
+    }
   }
 }
