@@ -11,6 +11,7 @@ public class FormatterImpl {
   private Block myRootBlock;
   private int myCurrentLine = -1;
   private int myCurrentOffset = -1;
+  private int myReparseFromOffset = -1;
 
   private final Map <Block, WhiteSpace> myWhiteSpaceBeforeBlock = new LinkedHashMap<Block, WhiteSpace>();
   private final CodeStyleSettings.IndentOptions myIndentOption;
@@ -28,6 +29,8 @@ public class FormatterImpl {
     myCurrentLine = 0;
     myCurrentOffset  = 0;
 
+
+
     processBlock(myRootBlock, null);
 
     int shift = 0;
@@ -44,7 +47,7 @@ public class FormatterImpl {
     }
   }
 
-  private void processBlock(final Block rootBlock, final SpaceProperty spaceProperty) {
+  private boolean processBlock(final Block rootBlock, final SpaceProperty spaceProperty) {
     final WhiteSpace whiteSpace = myWhiteSpaceBeforeBlock.get(rootBlock);
     final BlockInfo info = new BlockInfo(rootBlock);
     info.setAlignment(rootBlock.getAlignment());
@@ -60,38 +63,56 @@ public class FormatterImpl {
       }
 
     }
+    final boolean subResult;
     try {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
-        processToken(spaceProperty, whiteSpace);
+        subResult = processToken(spaceProperty, whiteSpace);
       } else {
-        processCompositeBlock(subBlocks, spaceProperty, rootBlock);
+        subResult = processCompositeBlock(subBlocks, spaceProperty, rootBlock);
       }
     }
     finally {
       myStack.pop();
     }
+    if (!subResult && rootBlock.getTextRange().getStartOffset() <= myReparseFromOffset) {
+      return processBlock(rootBlock, spaceProperty);
+    } else {
+      return subResult;
+    }
   }
 
-  private void processCompositeBlock(final List<Block> subBlocks,
+  private boolean processCompositeBlock(final List<Block> subBlocks,
                                      final SpaceProperty spaceProperty,
                                      final Block rootBlock) {
     Block previous = null;
     for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
       final Block current = iterator.next();
-      processBlock(current, previous == null ? spaceProperty : rootBlock.getSpaceProperty(previous, current));
+      final boolean subResult = processBlock(current, previous == null ? spaceProperty : rootBlock.getSpaceProperty(previous, current));
+      if (!subResult) return false;
       previous = current;
     }
+    return true;
   }
 
-  private void processToken(final SpaceProperty spaceProperty,
+  private boolean processToken(final SpaceProperty spaceProperty,
                             final WhiteSpace whiteSpace) {
     final BlockInfo info = myStack.peek();
+    final TextRange textRange = info.getBlock().getTextRange();
     final Wrap wrap = info.getWrap();
     whiteSpace.arrangeLineFeeds(spaceProperty);
-    if (shouldUseWrap(wrap)) {
+    boolean wrapIsPresent = whiteSpace.containsLineFeeds();
+    if (shouldUseWrap(wrap) || wrapIsPresent) {
       whiteSpace.ensureLineFeed();
+      if (wrap != null && wrap.getFirstEntry() >= 0) {
+        myReparseFromOffset = wrap.getFirstEntry();
+        wrap.skipFirstEntry();
+        return false;
+      }
+    } else if (wrapCanBeUsedInTheFuture(wrap) && !wrapIsPresent) {
+      wrap.saveFirstEntry(textRange.getStartOffset());
     }
+
     final int wsLineFeeds = whiteSpace.getLineFeeds();
     if (wsLineFeeds > 0) {
       myCurrentLine += wsLineFeeds;
@@ -118,7 +139,7 @@ public class FormatterImpl {
     }
 
     setAlignOffset(info.getAlignment(), info.getCurrentIndent(), myCurrentLine);
-    final TextRange textRange = info.getBlock().getTextRange();
+
     final int blockLineFeeds = getLineFeeds(textRange);
     if (blockLineFeeds > 0) {
       myCurrentLine += blockLineFeeds;
@@ -126,6 +147,11 @@ public class FormatterImpl {
     } else {
       myCurrentOffset += textRange.getLength();
     }
+    return true;
+  }
+
+  private boolean wrapCanBeUsedInTheFuture(final Wrap wrap) {
+    return wrap != null && wrap.getType() == Wrap.Type.CHOP_IF_NEEDED;
   }
 
   private boolean shouldUseWrap(final Wrap wrap) {
