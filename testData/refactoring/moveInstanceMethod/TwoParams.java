@@ -6,7 +6,7 @@ class MoveMethodTest {
 
     class Inner {
       void <caret>foo(final Foreign foreign) {
-         bar (this);    
+         bar (this);
       }
     }
 }
