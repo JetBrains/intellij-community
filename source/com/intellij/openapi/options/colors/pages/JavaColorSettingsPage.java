@@ -36,8 +36,8 @@ import com.intellij.debugger.settings.DebuggerColors;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -164,17 +164,16 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "  private <class>String</class> <field>field</field> = \"Hello World\";\n" +
       "  private double <unusedField>unusedField</unusedField> = 12345.67890;\n" +
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
-      "  private int[] <field>array</field> = new int[] {1, 2, 3};\n" +
       "  public static int <static>staticField</static> = 0;\n" +
       "\n" +
-      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int <mutableParameter>mutableParam</mutableParameter>) {\n" +
+      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <mutableParameter>mutableParam</mutableParameter>) {\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <field>field</field> + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
       "    int <mutableLocalVar>mutableValue</mutableLocalVar> = this.<warning>staticField</warning>; \n" +
       "    <mutableLocalVar>mutableValue</mutableLocalVar> ++; \n" +
       "    new <constructorCall>SomeClass</constructorCall>();\n" +
-      "    <mutableParameter>mutableParam</mutableParameter> = 0;\n" +
+      "    <mutableParameter>mutableParam</mutableParameter> = new int[2];\n" +
       "  }\n" +
       "}\n" +
       "\n" +

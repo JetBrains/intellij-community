@@ -980,14 +980,13 @@ public class HighlightUtil {
     }
     final PsiClass aClass = qualifier == null ? null : (PsiClass)qualifier.resolve();
     if (aClass != null && aClass.isInterface()) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier,
-                                               HighlightClassUtil.CLASS_EXPECTED);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
     }
     PsiType type = expr.getType();
     if (type == null) return null;
     PsiClass referencedClass = PsiUtil.resolveClassInType(type);
     if (referencedClass == null) return null;
-    if (HighlightClassUtil.hasEnclosedInstanceInScope(referencedClass, expr)) return null;
+    if (HighlightClassUtil.hasEnclosingInstanceInScope(referencedClass, expr)) return null;
 
     return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
   }

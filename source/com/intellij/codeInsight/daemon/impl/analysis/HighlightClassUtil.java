@@ -738,7 +738,7 @@ public class HighlightClassUtil {
     if (!PsiUtil.isInnerClass(base)) return null;
     PsiClass baseOuter = (PsiClass)base.getParent();
 
-    if (!hasEnclosedInstanceInScope(baseOuter, extendRef)) {
+    if (!hasEnclosingInstanceInScope(baseOuter, extendRef)) {
       String description = MessageFormat.format("No enclosing instance of type ''{0}'' is in scope",
                                                 new Object[]{HighlightUtil.formatClass(baseOuter)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
@@ -779,7 +779,7 @@ public class HighlightClassUtil {
   }
 
   //todo topdown
-  public static boolean hasEnclosedInstanceInScope(PsiClass aClass, PsiElement scope) {
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass, PsiElement scope) {
     PsiElement place = scope;
     while (place != null && place != aClass && !(place instanceof PsiFile)) {
       if (place instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)place, aClass, true)) {
@@ -824,7 +824,7 @@ public class HighlightClassUtil {
     else {
       placeToSearchEnclosingFrom = expression;
     }
-    if (hasEnclosedInstanceInScope(outerClass, placeToSearchEnclosingFrom)) return null;
+    if (hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
   }
 
