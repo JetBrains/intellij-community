@@ -17,7 +17,7 @@ public interface XmlChangeVisitor {
 
   void visitXmlElementChanged(final XmlElementChanged xmlElementChanged);
 
-  void visitXmlTahChildAdd(final XmlTagChildAdd xmlTagChildAdd);
+  void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd);
 
   void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged);
 

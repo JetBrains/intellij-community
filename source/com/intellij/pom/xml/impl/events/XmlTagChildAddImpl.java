@@ -40,6 +40,6 @@ public class XmlTagChildAddImpl implements XmlTagChildAdd {
   }
 
   public void accept(XmlChangeVisitor visitor) {
-    visitor.visitXmlTahChildAdd(this);
+    visitor.visitXmlTagChildAdd(this);
   }
 }
