@@ -40,6 +40,8 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
                 registerVariableError(variable);
             } else if (isImmediatelyReturned(variable)) {
                 registerVariableError(variable);
+            } else if (isImmediatelyThrown(variable)) {
+                registerVariableError(variable);
             } else if (isImmediatelyAssigned(variable)) {
                 registerVariableError(variable);
             }else if (isImmediatelyAssignedAsDeclaration(variable)) {
@@ -122,7 +124,46 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         if (!(returnValue instanceof PsiReferenceExpression)) {
             return false;
         }
-        final PsiElement referent = ((PsiReferenceExpression) returnValue).resolve();
+        final PsiElement referent = ((PsiReference) returnValue).resolve();
+        if (referent == null || !referent.equals(variable)) {
+            return false;
+        }
+        return true;
+    }
+    private static boolean isImmediatelyThrown(PsiVariable variable) {
+
+        final PsiCodeBlock containingScope =
+                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+        if (containingScope == null) {
+            return false;
+        }
+        final PsiDeclarationStatement declarationStatement =
+                (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+        if (declarationStatement == null) {
+            return false;
+        }
+        PsiStatement nextStatement = null;
+        final PsiStatement[] statements = containingScope.getStatements();
+        for (int i = 0; i < statements.length - 1; i++) {
+            if (statements[i].equals(declarationStatement)) {
+                nextStatement = statements[i + 1];
+            }
+        }
+        if (nextStatement == null) {
+            return false;
+        }
+        if (!(nextStatement instanceof PsiThrowStatement)) {
+            return false;
+        }
+        final PsiThrowStatement throwStatement = (PsiThrowStatement) nextStatement;
+        final PsiExpression returnValue = throwStatement.getException();
+        if (returnValue == null) {
+            return false;
+        }
+        if (!(returnValue instanceof PsiReferenceExpression)) {
+            return false;
+        }
+        final PsiElement referent = ((PsiReference) returnValue).resolve();
         if (referent == null || !referent.equals(variable)) {
             return false;
         }
@@ -172,7 +213,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         if (!(rhs instanceof PsiReferenceExpression)) {
             return false;
         }
-        final PsiElement referent = ((PsiReferenceExpression) rhs).resolve();
+        final PsiElement referent = ((PsiReference) rhs).resolve();
         if (referent == null || !referent.equals(variable)) {
             return false;
         }
@@ -233,7 +274,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         if (!(rhs instanceof PsiReferenceExpression)) {
             return false;
         }
-        final PsiElement referent = ((PsiReferenceExpression) rhs).resolve();
+        final PsiElement referent = ((PsiReference) rhs).resolve();
         if (referent == null || !referent.equals(variable)) {
             return false;
         }
