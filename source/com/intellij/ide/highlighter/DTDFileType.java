@@ -49,7 +49,7 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import javax.swing.*;
 
 public class DTDFileType implements FileType {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
+  private static final Icon ICON = IconLoader.getIcon("/fileTypes/dtd.png");
 
   public String getName() {
     return "DTD";
