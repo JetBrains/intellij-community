@@ -25,7 +25,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import com.intellij.lang.ASTNode;
 
 import java.util.*;
@@ -42,7 +42,7 @@ public class ImportHelper{
   public PsiImportList prepareOptimizeImportsResult(CodeStyleManager codeStyleManager, final PsiJavaFile file) {
     PsiManager manager = file.getManager();
 
-    final Set<String> namesToImportStaticly = new HashSet<String>();
+    final Set<String> namesToImportStaticly = new THashSet<String>();
     String[] names = collectNamesToImport(file, namesToImportStaticly); // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     Arrays.sort(names);
 
@@ -89,7 +89,7 @@ public class ImportHelper{
       }
     }
 
-    final Set<String> classesOrPackagesToImportOnDemand = new HashSet<String>();
+    final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
     class MyVisitorProcedure implements TObjectIntProcedure {
       boolean myIsVisitingPackages;
 
@@ -128,13 +128,13 @@ public class ImportHelper{
     }
   }
 
-  private HashSet<String> findSingleImports(final PsiJavaFile file,
+  private static Set<String> findSingleImports(final PsiJavaFile file,
                                             String[] names,
                                             final Set<String> onDemandImports, Set<String> namesToImportStaticly) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
-    HashSet<String> namesToUseSingle = new HashSet<String>();
+    Set<String> namesToUseSingle = new THashSet<String>();
     final String thisPackageName = file.getPackageName();
-    final Set<String> implicitlyImportedPackages = new HashSet<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
+    final Set<String> implicitlyImportedPackages = new THashSet<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
     final PsiManager manager = file.getManager();
     for(int i = 0; i < names.length; i++){
       String name = names[i];
@@ -192,10 +192,10 @@ public class ImportHelper{
     return namesToUseSingle;
   }
 
-  private String buildImportListText(String[] names,
+  private static String buildImportListText(String[] names,
                                      final Set<String> packagesOrClassesToImportOnDemand,
                                      final Set<String> namesToUseSingle, Set<String> namesToImportStaticly) {
-    final HashSet<String> importedPackagesOrClasses = new HashSet<String>();
+    final Set<String> importedPackagesOrClasses = new THashSet<String>();
     final StringBuffer buffer = new StringBuffer();
     for(int i = 0; i < names.length; i++){
       String name = names[i];
@@ -587,7 +587,7 @@ public class ImportHelper{
   }
 
   private String[] collectNamesToImport(PsiFile file, Set<String> namesToImportStaticly){
-    HashSet<String> names = new HashSet<String>();
+    Set<String> names = new THashSet<String>();
     String packageName = null;
     if (file instanceof PsiJavaFile){
       packageName = ((PsiJavaFile)file).getPackageName();
@@ -598,7 +598,7 @@ public class ImportHelper{
     return names.toArray(new String[names.size()]);
   }
 
-  private void addNamesToImport(HashSet<String> names,
+  private void addNamesToImport(Set<String> names,
                                    ASTNode scope,
                                    String thisPackageName,
                                    Set<String> namesToImportStaticly){
@@ -658,7 +658,7 @@ public class ImportHelper{
     }
   }
 
-  private static void addUnresolvedImportNames(HashSet<String> set, PsiFile file, Set<String> namesToImportStaticly) {
+  private static void addUnresolvedImportNames(Set<String> set, PsiFile file, Set<String> namesToImportStaticly) {
     if (file instanceof PsiJavaFile){
       PsiImportStatementBase[] imports = ((PsiJavaFile)file).getImportList().getAllImportStatements();
       for(int i = 0; i < imports.length; i++){
