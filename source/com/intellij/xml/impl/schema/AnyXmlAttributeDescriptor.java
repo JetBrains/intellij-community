@@ -15,7 +15,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.util.ArrayUtil;
 
-class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
+public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myAttributeName;
 
   public AnyXmlAttributeDescriptor(String attributeName) {
