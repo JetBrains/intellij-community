@@ -1,5 +1,6 @@
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
@@ -8,17 +9,12 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
-
-import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,10 +35,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     super.commitVM(vm);
     if(vm != null) {
       vmAttached();
-
       myEventThread = new DebuggerEventThread();
       myEventThread.start();
-
     }
   }
 
@@ -177,13 +171,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
           try {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Listening events");
-            }
             final EventSet eventSet = eventQueue.remove();
 
             if (LOG.isDebugEnabled()) {
-              LOG.debug("EventSet " + eventSet.toString() + ", suspendPolicy=" + eventSet.suspendPolicy() + ";size=" + eventSet.size());
+              LOG.debug("EVENTSET " + eventSet);
             }
 
             DebugProcessEvents.this.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
@@ -194,7 +185,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   final Event event = eventIterator.nextEvent();
 
                   if (LOG.isDebugEnabled()) {
-                    LOG.debug("Event : " + event);
+                    LOG.debug("EVENT : " + event);
                   }
                   try {
                     if (event instanceof VMStartEvent) {
@@ -342,7 +333,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (LOG.isDebugEnabled()) {
           LOG.debug("STEPOUT doStep");
         }
-        shouldResume = doStep(suspendContext.getThread(), hint.getDepth(), hint);
+        final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+        doStep(threadProxy, hint.getDepth(), hint);
+        shouldResume = true;
       }
 
       if(!shouldResume && hint.isRestoreBreakpoints()) {
@@ -352,7 +345,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     if(shouldResume) {
       getSuspendManager().voteResume(suspendContext);
-    } else {
+    }
+    else {
       showStatusText("");
       getSuspendManager().voteSuspend(suspendContext);
     }

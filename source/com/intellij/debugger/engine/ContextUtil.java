@@ -30,8 +30,12 @@ public class ContextUtil {
 
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)context.getDebugProcess();
-    if(debugProcess == null) return null;
-    if(context.getFrameProxy() == null) return null;
+    if(debugProcess == null) {
+      return null;
+    }
+    if(context.getFrameProxy() == null) {
+      return null;
+    }
     Location location = null;
     try {
       location = context.getFrameProxy().location();

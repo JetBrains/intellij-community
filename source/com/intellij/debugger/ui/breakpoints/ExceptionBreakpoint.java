@@ -4,12 +4,10 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,6 +77,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   }
 
   public void createRequest(DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!ENABLED || !debugProcess.isAttached() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }

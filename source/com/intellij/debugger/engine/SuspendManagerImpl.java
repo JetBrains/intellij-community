@@ -1,12 +1,11 @@
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.Patches;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.Patches;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
-import com.sun.jdi.InternalException;
 
 import java.util.*;
 
@@ -98,7 +97,8 @@ public class SuspendManagerImpl implements SuspendManager {
           LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
-        LOG.assertTrue(getThread() != null ? getThread().isSuspended() : true);
+        final ThreadReferenceProxyImpl thread = getThread();
+        LOG.assertTrue(thread != null ? thread.isSuspended() : true);
         try {
           set.resume();
         }
@@ -142,7 +142,6 @@ public class SuspendManagerImpl implements SuspendManager {
     myDebugProcess.clearCashes(suspendPolicy);
   }
 
-
   public void popFrame(SuspendContextImpl suspendContext) {
     popContext(suspendContext);
     SuspendContextImpl newSuspendContext = pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
@@ -160,9 +159,9 @@ public class SuspendManagerImpl implements SuspendManager {
       LOG.debug("popContext, suspends = " + suspends);
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    boolean removed = myEventContexts.remove(suspendContext);
-    if(LOG.isDebugEnabled()) {
-      LOG.assertTrue(removed, suspendContext.toString());
+    final boolean removed = myEventContexts.remove(suspendContext);
+    if (!removed) {
+      LOG.assertTrue(false, suspendContext.toString());
     }
     myPausedContexts.remove(suspendContext);
   }
@@ -255,7 +254,8 @@ public class SuspendManagerImpl implements SuspendManager {
     if(suspendContext.myVotesToVote == 0) {
       if(suspendContext.myIsVotedForResume) {
         resume(suspendContext);
-      } else {
+      }
+      else {
         if (LOG.isDebugEnabled()) {
           LOG.debug("vote paused");
         }

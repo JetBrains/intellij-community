@@ -718,7 +718,7 @@ public class BreakpointManager implements JDOMExternalizable {
     List<Breakpoint> breakpoints = getBreakpoints();
     for (Iterator<Breakpoint> iterator = breakpoints.iterator(); iterator.hasNext();) {
       Breakpoint breakpoint = iterator.next();
-      debugProcess.getRequestsManager().createRequest(breakpoint);
+      breakpoint.createRequest(debugProcess);
     }
   }
 

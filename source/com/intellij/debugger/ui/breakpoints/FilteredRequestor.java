@@ -123,7 +123,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     if(COUNT_FILTER_ENABLED) {
       context.getDebugProcess().getVirtualMachineProxy().suspend();
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
-      context.getDebugProcess().getRequestsManager().createRequest((Breakpoint)this);
+      ((Breakpoint)this).createRequest(context.getDebugProcess());
       context.getDebugProcess().getVirtualMachineProxy().resume();
     }
     if (INSTANCE_FILTERS_ENABLED) {

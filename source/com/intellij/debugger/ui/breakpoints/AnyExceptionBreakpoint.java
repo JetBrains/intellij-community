@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.sun.jdi.ReferenceType;
@@ -22,6 +23,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   }
 
   public void createRequest(DebugProcessImpl debuggerProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!ENABLED || !debuggerProcess.isAttached() || !debuggerProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }

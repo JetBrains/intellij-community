@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerColors;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
@@ -297,7 +298,8 @@ public class PositionHighlighter {
 
       try {
         StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
-        isExecutionPoint = frameProxy.equals(getSuspendContext().getThread().frame(0));
+        final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
+        isExecutionPoint = (thread != null)? frameProxy.equals(thread.frame(0)) : false;
       } catch(Throwable th) {
         LOG.debug(th);
       }

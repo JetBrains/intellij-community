@@ -144,8 +144,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if ("SENDS".compareToIgnoreCase(token) == 0) {
           mask |= VirtualMachine.TRACE_SENDS;
         }
+        else if ("RAW_SENDS".compareToIgnoreCase(token) == 0) {
+          mask |= 0x01000000;
+        }
         else if ("RECEIVES".compareToIgnoreCase(token) == 0) {
           mask |= VirtualMachine.TRACE_RECEIVES;
+        }
+        else if ("RAW_RECEIVES".compareToIgnoreCase(token) == 0) {
+          mask |= 0x02000000;
         }
         else if ("EVENTS".compareToIgnoreCase(token) == 0) {
           mask |= VirtualMachine.TRACE_EVENTS;
@@ -212,26 +218,26 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   /**
    *
-   * @return
    * @param stepThread
    * @param depth
    * @param hint may be null
    */
-  protected boolean doStep(ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
-    final ThreadReferenceProxyImpl currentThreadProxy = stepThread;
-    if (currentThreadProxy == null || !currentThreadProxy.isSuspended()) {
+  protected void doStep(final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
+    /*
+    if (stepThread == null || !stepThread.isSuspended()) {
       return false;
     }
+    */
     if (LOG.isDebugEnabled()) {
-      LOG.debug("DO_STEP: creating step request for " + currentThreadProxy.getThreadReference());
+      LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
     }
-    deleteStepRequests(currentThreadProxy);
+    deleteStepRequests(stepThread);
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-    StepRequest stepRequest = requestManager.createStepRequest(currentThreadProxy.getThreadReference(), StepRequest.STEP_LINE, depth);
+    StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
     DebuggerSettings settings = DebuggerSettings.getInstance();
     if (!(hint != null && hint.isIgnoreFilters()) && depth == StepRequest.STEP_INTO) {
       if (settings.TRACING_FILTERS_ENABLED) {
-        String currentClassName = getCurrentClassName(currentThreadProxy);
+        String currentClassName = getCurrentClassName(stepThread);
         if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
           // add class filters
           ClassFilter[] filters = settings.getFilters();
@@ -250,7 +256,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       stepRequest.putProperty("hint", hint);
     }
     stepRequest.enable();
-    return true;
   }
 
   void deleteStepRequests(ThreadReferenceProxy requestsInThread) {
@@ -334,7 +339,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
           return connector.accept(myArguments);
         }
         finally {
-          if(myArguments != null) connector.stopListening(myArguments);
+          if(myArguments != null) {
+            connector.stopListening(myArguments);
+          }
         }
       }
       else {
@@ -1172,9 +1179,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText("Stepping into");
       final SuspendContextImpl suspendContext = getSuspendContext();
-      RequestHint hint = new RequestHint(suspendContext, StepRequest.STEP_INTO);
+      final ThreadReferenceProxyImpl stepThread = suspendContext.getThread();
+      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
       hint.setIgnoreFilters(myIgnoreFilters);
-      doStep(suspendContext.getThread(), StepRequest.STEP_INTO, hint);
+      doStep(stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
   }
@@ -1190,14 +1198,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText("Stepping over");
       final SuspendContextImpl suspendContext = getSuspendContext();
-      RequestHint hint = new RequestHint(suspendContext, StepRequest.STEP_OVER);
+      final ThreadReferenceProxyImpl steppingThread = suspendContext.getThread();
+      RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
 
-      final boolean succeeded = doStep(suspendContext.getThread(), StepRequest.STEP_OVER, hint);
-      if (succeeded) {
-        if (myIsIgnoreBreakpoints) {
-          DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
-        }
+      doStep(steppingThread, StepRequest.STEP_OVER, hint);
+
+      if (myIsIgnoreBreakpoints) {
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
       super.contextAction();
     }
@@ -1219,7 +1227,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       myRunToCursorBreakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
       myRunToCursorBreakpoint.LOG_ENABLED = false;
-      getRequestsManager().createRequest(myRunToCursorBreakpoint);
+      myRunToCursorBreakpoint.createRequest(getSuspendContext().getDebugProcess());
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
       super.contextAction();
     }
@@ -1243,7 +1251,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void action() {
-      if (!isAttached()) return;
+      if (!isAttached()) {
+        return;
+      }
       logThreads();
       getVirtualMachineProxy().suspend();
       logThreads();

@@ -229,17 +229,15 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return req;
   }
 
-  public void createRequest(Breakpoint breakpoint) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!myDebugProcess.isAttached() || !findRequests(breakpoint).isEmpty()) return;
-    breakpoint.createRequest(myDebugProcess);
-  }
-
   public void deleteRequest(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!myDebugProcess.isAttached()) return;
+    if(!myDebugProcess.isAttached()) {
+      return;
+    }
     Set<EventRequest> requests = myRequestorToBelongedRequests.get(requestor);
-    if(requests == null) return;
+    if(requests == null) {
+      return;
+    }
     myRequestorToBelongedRequests.remove(requestor);
     for (Iterator iterator = requests.iterator(); iterator.hasNext();) {
       EventRequest eventRequest = (EventRequest) iterator.next();
@@ -335,7 +333,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     for (Iterator<Breakpoint> iterator = breakpointManager.getBreakpoints().iterator(); iterator.hasNext();) {
       Breakpoint breakpoint = iterator.next();
-      myDebugProcess.getRequestsManager().createRequest(breakpoint);
+      breakpoint.createRequest(myDebugProcess);
     }
   }
 
@@ -383,7 +381,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public static void createRequests(final Breakpoint breakpoint) {
     invoke(breakpoint.getProject(), new AllProcessesCommand (){
       public void action(DebugProcessImpl process)  {
-        process.getRequestsManager().createRequest(breakpoint);
+        breakpoint.createRequest(process);
       }
     });
   }
@@ -393,7 +391,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       public void action(DebugProcessImpl process)  {
         process.getRequestsManager().myInvalidRequestors.remove(breakpoint);
         process.getRequestsManager().deleteRequest(breakpoint);
-        process.getRequestsManager().createRequest(breakpoint);
+        breakpoint.createRequest(process);
       }
     });
   }

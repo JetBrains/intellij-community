@@ -7,6 +7,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -33,18 +34,33 @@ class RequestHint {
   private boolean myRestoreBreakpoints = false;
   private boolean mySkipThisMethod = false;
 
-  public RequestHint(final SuspendContextImpl suspendContext, int depth) {
+  public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth) {
     final DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     myDepth = depth;
     myVirtualMachineProxy = debugProcess.getVirtualMachineProxy();
 
     try {
-      final ThreadReferenceProxyImpl thread = suspendContext.getThread();
-      myFrameCount = thread.frameCount();
+      myFrameCount = stepThread.frameCount();
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          myPosition = ContextUtil.getSourcePosition(suspendContext);
+          myPosition = ContextUtil.getSourcePosition(new StackFrameContext() {
+            public StackFrameProxy getFrameProxy() {
+              try {
+                return stepThread.frame(0);
+              }
+              catch (EvaluateException e) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug(e);
+                }
+                return null;
+              }
+            }
+
+            public DebugProcess getDebugProcess() {
+              return suspendContext.getDebugProcess();
+            }
+          });
         }
       });
     }
