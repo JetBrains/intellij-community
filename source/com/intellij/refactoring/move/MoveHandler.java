@@ -73,52 +73,71 @@ public class MoveHandler implements RefactoringActionHandler {
         RefactoringMessageUtil.showErrorMessage("Move", message, null, project);
         return;
       }
-      if (element instanceof PsiField) {
-        MoveMembersImpl.doMove(project, new PsiElement[] {element}, null, null);
-        return;
-      }
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-          new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
-        } else {
-          MoveMembersImpl.doMove(project, new PsiElement[] {method}, null, null);
-        }
-        return;
-      }
-      if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
-        if (aClass.getContainingClass() != null) { // this is inner class
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
-          if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-            MoveInnerImpl.doMove(project, new PsiElement[] {aClass}, null);
-          }
-          else {
-            SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);
-            dialog.show();
-            if (dialog.isOK()) {
-              int type = dialog.getRefactoringType();
-              if (type == INNER_TO_UPPER) {
-                MoveInnerImpl.doMove(project, new PsiElement[] {aClass}, null);
-              }
-              else if (type == MEMBERS){
-                MoveMembersImpl.doMove(project, new PsiElement[] {aClass}, null, null);
-              }
-            }
-          }
-          return;
-        }
-        if (!(element instanceof PsiAnonymousClass)) {
-          MoveClassesOrPackagesImpl.doMove(project, new PsiElement[] {aClass}, myTargetContainerFinder.getTargetContainer(dataContext), null);
-        } else {
-          new AnonymousToInnerHandler().invoke(project, (PsiAnonymousClass) element);
-        }
 
+      if (tryToMoveElement(element, project, dataContext)) {
         return;
+      } else {
+        final PsiReference reference = element.getReference();
+        if (reference != null) {
+          final PsiElement refElement = reference.resolve();
+          if (tryToMoveElement(refElement, project, dataContext)) return;
+        }
       }
+
       element = element.getParent();
     }
   }
+
+  private boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
+    if (element instanceof PsiField) {
+      MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
+      return true;
+    }
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
+      }
+      else {
+        MoveMembersImpl.doMove(project, new PsiElement[]{method}, null, null);
+      }
+      return true;
+    }
+    if (element instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)element;
+      if (aClass.getContainingClass() != null) { // this is inner class
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
+        if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
+          MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
+        }
+        else {
+          SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);
+          dialog.show();
+          if (dialog.isOK()) {
+            int type = dialog.getRefactoringType();
+            if (type == INNER_TO_UPPER) {
+              MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
+            }
+            else if (type == MEMBERS) {
+              MoveMembersImpl.doMove(project, new PsiElement[]{aClass}, null, null);
+            }
+          }
+        }
+        return true;
+      }
+      if (!(element instanceof PsiAnonymousClass)) {
+        MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{aClass}, myTargetContainerFinder.getTargetContainer(dataContext), null);
+      }
+      else {
+        new AnonymousToInnerHandler().invoke(project, (PsiAnonymousClass)element);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
   /**
    * called by an Action in AtomicAction
    */
