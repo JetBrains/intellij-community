@@ -118,7 +118,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     else {
       setRefCountHolders(null);
     }
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     try {
       for (int j = 0; j < psiRoots.length; j++) {
         final PsiElement psiRoot = psiRoots[j];
@@ -144,7 +144,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     myHighlights = result.toArray(new HighlightInfo[result.size()]);
   }
 
-  private void addHighlights(List<HighlightInfo> result, Collection<HighlightInfo> highlights) {
+  private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
     if (myCompiled) {
       for (Iterator<HighlightInfo> iterator = highlights.iterator(); iterator.hasNext();) {
         final HighlightInfo info = iterator.next();
