@@ -1,7 +1,8 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class AssertTrueOrFalsePredicate implements PsiElementPredicate
 {

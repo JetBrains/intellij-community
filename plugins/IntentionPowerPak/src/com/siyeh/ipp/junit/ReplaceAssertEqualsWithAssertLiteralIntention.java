@@ -5,12 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedIntention {
-
-    public ReplaceAssertEqualsWithAssertLiteralIntention(Project project) {
-        super(project);
-    }
 
     protected String getTextForElement(PsiElement element) {
 
