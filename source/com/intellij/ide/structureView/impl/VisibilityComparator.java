@@ -12,6 +12,7 @@ public class VisibilityComparator implements Comparator {
   private static final int GROUP_ACCESS_SUBLEVEL = 1;
   public static Comparator THEN_SOURCE = new VisibilityComparator(SourceComparator.INSTANCE);
   public static Comparator THEN_ALPHA = new VisibilityComparator(AlphaComparator.INSTANCE);
+  public static Comparator IMSTANCE = new VisibilityComparator(null);
 
   private Comparator myNextComparator;
   public static final int UNKNOWN_ACCESS_LEVEL = -1;

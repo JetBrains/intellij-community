@@ -34,7 +34,7 @@ public class JavaFileTreeModel implements StructureViewModel {
   }
 
   public Sorter[] getSorters() {
-    return new Sorter[]{KindSorter.INSTANCE, Sorter.ALPHA_SORTER};
+    return new Sorter[]{KindSorter.INSTANCE, Sorter.ALPHA_SORTER, VisibilitySorter.INSTANCE};
   }
 
   public Object getCurrentEditorElement() {
