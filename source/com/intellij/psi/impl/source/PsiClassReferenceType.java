@@ -114,26 +114,6 @@ public class PsiClassReferenceType extends PsiClassType {
     return myReference.getReferenceName();
   }
 
-  public PsiClassType getQualiferType() {
-    if (!(myReference instanceof SourceJavaCodeReference)) {
-      // todo[dsl] fix this for compiled code
-      return null;
-    }
-    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(((SourceJavaCodeReference) myReference).getTreeQualifier());
-    if (psiElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement qualifierReference = ((PsiJavaCodeReferenceElement)psiElement);
-      if (qualifierReference.getTypeParameters().length > 0) {
-        return new PsiClassReferenceType(qualifierReference);
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      return null;
-    }
-  }
-
   public PsiType[] getParameters() {
     return myReference.getTypeParameters();
   }

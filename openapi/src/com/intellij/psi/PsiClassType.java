@@ -19,7 +19,6 @@ public abstract class PsiClassType extends PsiType {
 
   public abstract String getClassName();
 
-  public abstract PsiClassType getQualiferType();
   public abstract PsiType[] getParameters();
 
   public boolean equals(Object obj) {

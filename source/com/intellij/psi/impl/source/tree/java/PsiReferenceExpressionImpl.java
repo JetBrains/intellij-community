@@ -554,10 +554,6 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }
 
-  public ASTNode getTreeQualifier() {
-    return findChildByRole(ChildRole.QUALIFIER);
-  }
-
   public void dequalify() {
     SourceUtil.dequalifyImpl(this);
   }

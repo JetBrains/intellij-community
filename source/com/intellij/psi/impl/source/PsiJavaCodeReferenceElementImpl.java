@@ -676,12 +676,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return getChildRole(getFirstChildNode()) != ChildRole.REFERENCE_NAME;
   }
 
-  public ASTNode getTreeQualifier() {
-    return findChildByRole(ChildRole.QUALIFIER);
-  }
-
   public PsiElement getQualifier() {
-    return SourceTreeToPsiMap.treeElementToPsi(getTreeQualifier());
+    return SourceTreeToPsiMap.treeElementToPsi(findChildByRole(ChildRole.QUALIFIER));
   }
 
   public void dequalify() {

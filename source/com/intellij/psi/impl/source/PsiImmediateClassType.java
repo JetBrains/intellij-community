@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 
@@ -70,22 +69,6 @@ public class PsiImmediateClassType extends PsiClassType {
   public String getClassName() {
     return myClass.getName();
   }
-
-  private PsiClassType myCachedQualiferType;
-  private boolean isQualifierTypeCalculated = false;
-  public PsiClassType getQualiferType() {
-    if (isQualifierTypeCalculated) {
-      if (!(myClass.getParent() instanceof PsiClass)) {
-        myCachedQualiferType = null;
-      } else {
-        final PsiClass parentClass = ((PsiClass)myClass.getParent());
-        myCachedQualiferType = new PsiImmediateClassType(parentClass, mySubstitutor);
-      }
-      isQualifierTypeCalculated = true;
-    }
-    return myCachedQualiferType;
-  }
-
   public PsiType[] getParameters() {
     List<PsiType> lst = new ArrayList<PsiType>();
     final PsiTypeParameterList list = myClass.getTypeParameterList();
