@@ -1321,7 +1321,7 @@ public class EditorImpl implements EditorEx {
     TextAttributes attributes = iterationState.getMergedAttributes();
     Color currentColor = attributes.getForegroundColor();
     if (currentColor == null) {
-      currentColor = Color.black;
+      currentColor = getForegroundColor();
     }
     Color effectColor = attributes.getEffectColor();
     EffectType effectType = attributes.getEffectType();
@@ -1372,7 +1372,7 @@ public class EditorImpl implements EditorEx {
         attributes = iterationState.getMergedAttributes();
         Color color = attributes.getForegroundColor();
         if (color == null) {
-          color = Color.black;
+          color = getForegroundColor();
         }
         if (color != currentColor) {
           g.setColor(color);
@@ -2703,7 +2703,7 @@ public class EditorImpl implements EditorEx {
       if (!SystemInfo.isMac) {
         Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
         if (background == null) background = getBackroundColor();
-        g.setXORMode(background != null ? background : Color.white);
+        g.setXORMode(background);
       }
 
       if (EditorImpl.this.myIsInsertMode != mySettings.isBlockCursor()) {
