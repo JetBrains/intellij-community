@@ -601,7 +601,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public boolean canNavigate() {
-    return true;
+    return isValid();
   }
 
   public void navigate(boolean requestFocus) {
