@@ -13,7 +13,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -28,31 +30,35 @@ import java.util.List;
  */
 public class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
-  private Document myDocument;
-  private int myLineNumber;
-  private PsiFile myPsiFile;
-  private List<RangeMarker> myRangeMarkers;
-  private EditorColorsScheme myColorsScheme;
-  private int myColumnNumber;
 
-  public ChunkExtractor(final Document document,
-    final int lineNumber,
-    final PsiFile psiFile,
-    final List<RangeMarker> rangeMarkers,
-    final int columnNumber) {
-    myDocument = document;
-    myLineNumber = lineNumber;
-    myPsiFile = psiFile;
+  private final PsiElement myElement;
+  private final Document myDocument;
+  private final int myLineNumber;
+  private final int myColumnNumber;
+
+  private final List<RangeMarker> myRangeMarkers;
+  private final EditorColorsScheme myColorsScheme;
+
+  public ChunkExtractor(final PsiElement element,
+                      final List<RangeMarker> rangeMarkers,
+                      final int startOffset) {
+
+    myElement = element;
     myRangeMarkers = rangeMarkers;
-    myColumnNumber = columnNumber;
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+
+    final int absoluteStartOffset = myElement.getTextRange().getStartOffset() + startOffset;
+
+    myDocument = PsiDocumentManager.getInstance(myElement.getProject()).getDocument(myElement.getContainingFile());
+    myLineNumber = myDocument.getLineNumber(absoluteStartOffset);
+    myColumnNumber = absoluteStartOffset - myDocument.getLineStartOffset(myLineNumber);
   }
 
-
   public TextChunk[] extractChunks() {
-    int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
-    int lineEndOffset = myDocument.getLineEndOffset(myLineNumber);
-    return createTextChunks(myDocument.getCharsSequence(), myPsiFile.getFileType().getHighlighter(myPsiFile.getProject()), lineStartOffset, lineEndOffset);
+    final int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
+    final int lineEndOffset = myDocument.getLineEndOffset(myLineNumber);
+    final FileType fileType = myElement.getContainingFile().getFileType();
+    return createTextChunks(myDocument.getCharsSequence(), fileType.getHighlighter(myElement.getProject()), lineStartOffset, lineEndOffset);
   }
 
   private TextChunk[] createTextChunks(final CharSequence chars,

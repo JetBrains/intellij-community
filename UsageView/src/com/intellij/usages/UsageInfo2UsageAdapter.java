@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -35,38 +34,29 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   private final UsageInfo myUsageInfo;
   private int myLineNumber;
-  private int myColumnNumber;
-  private PsiFile myPsiFile;
   protected Icon myIcon;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
-  private Document myDocument;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
-    PsiElement element = myUsageInfo.getElement();
-    myPsiFile = element.getContainingFile();
-    Project project = element.getProject();
-    myDocument = PsiDocumentManager.getInstance(project).getDocument(myPsiFile);
-
-    final PsiElement psiElement = usageInfo.getElement();
+    PsiElement element = getElement();
+    PsiFile psiFile = element.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
 
     TextRange range = element.getTextRange();
-    int startOffset = range.getStartOffset() + usageInfo.startOffset;
-    int endOffset = range.getStartOffset() + usageInfo.endOffset;
+    int startOffset = range.getStartOffset() + myUsageInfo.startOffset;
+    int endOffset = range.getStartOffset() + myUsageInfo.endOffset;
 
-    myLineNumber = myDocument.getLineNumber(startOffset);
+    myLineNumber = document.getLineNumber(startOffset);
 
-    int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
-    myColumnNumber = startOffset - lineStartOffset;
-
-    if (endOffset > myDocument.getTextLength()) {
+    if (endOffset > document.getTextLength()) {
       LOG.assertTrue(false,
-        "Invalid usage info, psiElement:" + psiElement + " end offset: " + endOffset + " psiFile: " + myPsiFile.getName()
+        "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName()
       );
     }
 
-    myRangeMarkers.add(myDocument.createRangeMarker(startOffset, endOffset));
+    myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));
 
     if (element instanceof PsiFile) {
       myIcon = null;
@@ -79,7 +69,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   private void initChunks() {
-    myTextChunks = new ChunkExtractor(myDocument, myLineNumber, myPsiFile, myRangeMarkers, myColumnNumber).extractChunks();
+    myTextChunks = new ChunkExtractor(getElement(), myRangeMarkers, myUsageInfo.startOffset).extractChunks();
   }
 
   public UsagePresentation getPresentation() {
@@ -95,7 +85,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public boolean isValid() {
-    if (myUsageInfo.getElement() == null) return false;
+    if (getElement() == null) return false;
     for (int i = 0; i < myRangeMarkers.size(); i++) {
       RangeMarker rangeMarker = myRangeMarkers.get(i);
       if (!rangeMarker.isValid()) return false;
@@ -104,16 +94,16 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public boolean isReadOnly() {
-    return isValid() && !myUsageInfo.getElement().isWritable();
+    return isValid() && !getElement().isWritable();
   }
 
   public FileEditorLocation getLocation() {
-    VirtualFile virtualFile = myPsiFile.getVirtualFile();
+    VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
     if (editor == null) return null;
 
-    return new TextEditorLocation(myUsageInfo.startOffset + myUsageInfo.getElement().getTextRange().getStartOffset(), (TextEditor)editor);
+    return new TextEditorLocation(myUsageInfo.startOffset + getElement().getTextRange().getStartOffset(), (TextEditor)editor);
   }
 
   public void selectInEditor() {
@@ -138,8 +128,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   private Editor openTextEditor(boolean focus) {
-    Project project = myPsiFile.getProject();
-    return FileEditorManager.getInstance(project).openTextEditor(getDescriptor(), focus);
+    return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
   }
 
   public boolean canNavigate() {
@@ -153,8 +142,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   private Project getProject() {
-    Project project = myPsiFile.getProject();
-    return project;
+    return getElement().getProject();
   }
 
   public static int compareTo(Usage usage) {
@@ -175,7 +163,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public Module getModule() {
     if (!isValid()) return null;
-    PsiElement element = myUsageInfo.getElement();
+    PsiElement element = getElement();
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 
@@ -186,7 +174,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public OrderEntry getLibraryEntry() {
     if (!isValid()) return null;
-    PsiElement element = myUsageInfo.getElement();
+    PsiElement element = getElement();
     PsiFile psiFile = element.getContainingFile();
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
@@ -208,7 +196,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public VirtualFile getFile() {
-    return isValid() ? myUsageInfo.getElement().getContainingFile().getVirtualFile() : null;
+    return isValid() ? getElement().getContainingFile().getVirtualFile() : null;
   }
 
   public int getLine() {
