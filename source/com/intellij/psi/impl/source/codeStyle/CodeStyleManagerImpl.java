@@ -93,7 +93,14 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     Helper helper = new Helper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
-    return SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
+    final PsiElement startElement = element.getContainingFile().findElementAt(startOffset);
+    final PsiElement endElement = element.getContainingFile().findElementAt(endOffset);
+    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
+    if (startElement.isValid() && endElement.isValid()) {
+      return new BraceEnforcer(getSettings()).process(formatted, startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
+    } else {
+      return formatted;
+    }
   }
 
   public PsiElement shortenClassReferences(PsiElement element) throws IncorrectOperationException {
