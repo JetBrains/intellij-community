@@ -223,13 +223,15 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private void correctMethodCall(final PsiMethodCallExpression expression, boolean isInternalCall) {
     try {
       final PsiManager manager = myMethod.getManager();
-      final PsiExpression oldQualifier = expression.getMethodExpression().getQualifierExpression();
+      PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      if (!methodExpression.isReferenceTo(myMethod)) return;
+      final PsiExpression oldQualifier = methodExpression.getQualifierExpression();
       PsiExpression newQualifier = null;
       if (myTargetVariable instanceof PsiParameter) {
         final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
         final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
         if (index < arguments.length) {
-          final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(expression.getMethodExpression());
+          final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(methodExpression);
           if (isInternalCall && classReferencedByThis != null) {
             //See MoveInstanceMethodTest.testRecursive
             final String paramName = getParameterNameToCreate(classReferencedByThis);
@@ -240,12 +242,12 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
           arguments[index].delete();
         }
-      } else {
+      }
+      else {
         VisibilityUtil.escalateVisibility((PsiField)myTargetVariable, expression);
         newQualifier = manager.getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
       }
 
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         final PsiElement resolved = methodExpression.resolve();
@@ -256,7 +258,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             if (isInternalCall) {
               //To be correctly overwritten in recursive visitor invocation
               thisArgumentText = myTargetVariable.getName();
-            } else if (!manager.areElementsEquivalent(myMethod.getContainingClass(), containingClass)) {
+            }
+            else if (!manager.areElementsEquivalent(myMethod.getContainingClass(), containingClass)) {
               thisArgumentText = containingClass.getName() + ".this";
             }
           }
@@ -271,9 +274,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           if (oldQualifier != null) oldQualifier.delete();
         }
         else {
-          final PsiReferenceExpression refExpr = (PsiReferenceExpression)manager.getElementFactory().createExpressionFromText("q." + myMethod.getName(), null);
+          final PsiReferenceExpression refExpr = (PsiReferenceExpression)manager.getElementFactory()
+              .createExpressionFromText("q." + myMethod.getName(), null);
           refExpr.getQualifierExpression().replace(newQualifier);
-          expression.getMethodExpression().replace(refExpr);
+          methodExpression.replace(refExpr);
         }
       }
     }
