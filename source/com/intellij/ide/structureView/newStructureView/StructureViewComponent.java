@@ -558,10 +558,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     protected void setAutoScrollMode(boolean state) {
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
       structureViewFactory.AUTOSCROLL_FROM_SOURCE = state;
-      Editor selectedTextEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(selectedTextEditor.getDocument());
-      if (file != null) {
-        if (state) scrollToElementAtCaret(FileEditorManager.getInstance(myProject).getSelectedEditor(file));
+      final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      if (selectedEditors != null && selectedEditors.length > 0) {
+        if (state) scrollToElementAtCaret(selectedEditors[0]);
       }
     }
   }
