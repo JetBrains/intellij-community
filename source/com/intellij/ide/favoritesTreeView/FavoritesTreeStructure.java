@@ -127,7 +127,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   private AbstractTreeNode<String> getEmptyScreen() {
-    return new AbstractTreeNode<String>(myProject, "There is nothing to display. Add node to favorites list."){
+    return new AbstractTreeNode<String>(myProject, "There is nothing to display. Add item to favorites list: Main Menu -> View -> Add To Favorites "){
                                 public Collection<AbstractTreeNode> getChildren() {
                                   return null;
                                 }
