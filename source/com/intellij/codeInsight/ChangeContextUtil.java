@@ -19,13 +19,8 @@ public class ChangeContextUtil {
   private static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
   private static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
   private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");;
-  private static final Key<PsiFileSystemItem> REF_FILE_SYSTEM_ITEM_KEY = Key.create("REF_FILE_SYSTEM_ITEM_KEY");
 
   public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses) {
-    encodeContextInfo(scope, includeRefClasses, false);
-  }
-
-  public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses, boolean includeRefToFileSystem) {
     if (scope instanceof PsiThisExpression){
       scope.putCopyableUserData(ENCODED_KEY, "");
 
@@ -64,33 +59,20 @@ public class ChangeContextUtil {
         refExpr.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, canRemoveQualifier(refExpr) ? Boolean.TRUE : Boolean.FALSE);
       }
     }
-    else {
-      if (includeRefClasses) {
-        PsiReference ref = scope.getReference();
-        if (ref != null){
-          scope.putCopyableUserData(ENCODED_KEY, "");
+    else if (includeRefClasses) {
+      PsiReference ref = scope.getReference();
+      if (ref != null){
+        scope.putCopyableUserData(ENCODED_KEY, "");
 
-          PsiElement refElement = ref.resolve();
-          if (refElement instanceof PsiClass){
-            scope.putCopyableUserData(REF_CLASS_KEY, ( (PsiClass)refElement));
-          }
-        }
-      }
-
-      if (includeRefToFileSystem) {
-        final PsiReference[] refs = scope.getReferences();
-        if (refs.length > 0) {
-          final PsiElement resolved = refs[refs.length - 1].resolve();
-          if (resolved instanceof PsiFileSystemItem) {
-            scope.putCopyableUserData(ENCODED_KEY, "");
-            scope.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)resolved));
-          }
+        PsiElement refElement = ref.resolve();
+        if (refElement instanceof PsiClass){
+          scope.putCopyableUserData(REF_CLASS_KEY, ( (PsiClass)refElement));
         }
       }
     }
 
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
-      encodeContextInfo(child, includeRefClasses, includeRefToFileSystem);
+      encodeContextInfo(child, includeRefClasses);
     }
   }
 
@@ -118,15 +100,6 @@ public class ChangeContextUtil {
             if (refClass.getManager().findClass(qualifiedName, scope.getResolveScope()) != null) {
               scope = ref.bindToElement(refClass);
             }
-          }
-        }
-
-        final PsiFileSystemItem item = scope.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
-        scope.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, null);
-        if (item != null && item.isValid()) {
-          PsiReference[] refs = scope.getReferences();
-          if (refs.length > 0) {
-            scope = refs[refs.length - 1].bindToElement(item);
           }
         }
       }
