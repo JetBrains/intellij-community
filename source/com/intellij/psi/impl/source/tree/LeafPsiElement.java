@@ -138,6 +138,7 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
     LOG.assertTrue(getTreeParent() != null);
     CheckUtil.checkWritable(this);
     getTreeParent().deleteChildInternal(this);
+    SharedImplUtil.invalidate(this);
   }
 
   public void checkDelete() throws IncorrectOperationException {
@@ -156,10 +157,7 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
     final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
 
-    // invalidate replaced element
-    setTreeNext(null);
-    setTreePrev(null);
-    setTreeParent(null);
+    SharedImplUtil.invalidate(this);
     return result;
   }
 

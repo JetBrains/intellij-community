@@ -191,4 +191,11 @@ public class SharedImplUtil {
       ChangeUtil.replaceChild(variableElement, type, newType);
     }
   }
+
+  public static void invalidate(final TreeElement element) {
+    // invalidate replaced element
+    element.setTreeNext(null);
+    element.setTreePrev(null);
+    element.setTreeParent(null);
+  }
 }

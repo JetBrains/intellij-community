@@ -69,8 +69,12 @@ public class TextRange {
   }
 
   public String replace(String original, String replacement) {
-    String beggining = original.substring(0, getStartOffset());
+    String beginning = original.substring(0, getStartOffset());
     String ending = original.substring(getEndOffset(), original.length());
-    return beggining + replacement + ending;
+    return beginning + replacement + ending;
+  }
+
+  public boolean intersects(TextRange textRange) {
+    return Math.max(myStartOffset, textRange.getStartOffset()) <= Math.min(myEndOffset, textRange.getEndOffset());
   }
 }
