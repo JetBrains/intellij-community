@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static Icon myValueIcon = IconLoader.getIcon("/debugger/value.png");
   private static Icon myArrayValueIcon = IconLoader.getIcon("/debugger/db_array.png");
   private static Icon myPrimitiveValueIcon = IconLoader.getIcon("/debugger/db_primitive.png");
-  private static Icon myStaticFieldIcon = IconLoader.getIcon("/nodes/staticField.png");
+  private static Icon myStaticFieldIcon = Icons.FIELD_ICON;
 
   private static Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 
