@@ -117,7 +117,9 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     setUpProject();
 
     DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(InspectionProfileImpl.EMPTY_PROFILE);
-    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+    if (Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JUNIT_PATCHER) == null){
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+    }
   }
 
   protected void setUpProject() throws IOException {

@@ -191,7 +191,9 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
-    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+    if (Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JUNIT_PATCHER) == null){
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+    }
   }
 
   protected void tearDown() throws Exception {
