@@ -6,23 +6,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class AutoUnboxingInspection extends ExpressionInspection {
+public class AutoUnboxingInspection extends ExpressionInspection{
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Map s_unboxingMethods = new HashMap(8);
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Set s_numberTypes = new HashSet(8);
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
-    static {
+    static{
         s_unboxingMethods.put("int", "intValue");
         s_unboxingMethods.put("short", "shortValue");
         s_unboxingMethods.put("boolean", "booleanValue");
@@ -41,71 +46,69 @@ public class AutoUnboxingInspection extends ExpressionInspection {
         s_numberTypes.add("java.lang.Number");
     }
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Auto-unboxing";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Auto-unboxing #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new AutoUnboxingVisitor(this, inspectionManager, onTheFly);
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class AutoUnboxingFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class AutoUnboxingFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Make unboxing explicit";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
+        public void applyFix(Project project, ProblemDescriptor descriptor){
             if(isQuickFixOnReadOnlyFile(project, descriptor)){
                 return;
             }
-            final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
+            final PsiExpression expression =
+                    (PsiExpression) descriptor.getPsiElement();
             final PsiType type = expression.getType();
 
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            final PsiType expectedType =
+                    ExpectedTypeUtils.findExpectedType(expression);
 
             final String expectedTypeText = expectedType.getCanonicalText();
             final String typeText = type.getCanonicalText();
-            if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
-                replaceExpression(project, expression, expression.getText() + '.' + s_unboxingMethods.get(expectedTypeText) + "()");
-            }
-            if (s_numberTypes.contains(typeText)) {
-                replaceExpression(project, expression, expression.getText() + '.' + s_unboxingMethods.get(expectedTypeText) + "()");
-            } else {
-                replaceExpression(project, expression, "((Number)" + expression.getText() + ")." + s_unboxingMethods.get(expectedTypeText) + "()");
+            final String expressionText = expression.getText();
+            final Object boxClassName = s_unboxingMethods.get(expectedTypeText);
+            if(TypeUtils.typeEquals("java.lang.Boolean", type)){
+                replaceExpression(project, expression,
+                                  expressionText + '.' + boxClassName + "()");
+            } else if(s_numberTypes.contains(typeText)){
+                replaceExpression(project, expression,
+                                  expressionText + '.' + boxClassName + "()");
+            } else{
+                replaceExpression(project, expression,
+                                  "((Number)" + expressionText + ")." + boxClassName + "()");
             }
         }
-
     }
 
-    private static class AutoUnboxingVisitor extends BaseInspectionVisitor {
-        private AutoUnboxingVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
+        private AutoUnboxingVisitor(BaseInspection inspection,
+                                    InspectionManager inspectionManager,
+                                    boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(PsiExpression expression){
             super.visitExpression(expression);
-            checkExpression(expression);
-        }
-
-        public void visitReferenceExpression(PsiReferenceExpression expression){
-            super.visitReferenceExpression(expression);
-            checkExpression(expression);
-        }
-
-        public void checkExpression(PsiExpression expression) {
-
             final PsiType expressionType = expression.getType();
             if(expressionType == null){
                 return;
@@ -126,9 +129,6 @@ public class AutoUnboxingInspection extends ExpressionInspection {
                 return;
             }
             registerError(expression);
-
         }
-
     }
-
 }
