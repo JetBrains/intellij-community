@@ -31,8 +31,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Document document = editor.getDocument();
     final PsiFile file = documentManager.getPsiFile(document);
 
-    final Mover mover = getMover(editor, file);
-    final InsertionInfo insertionInfo = mover.getInsertionInfo(editor, file, isDown);
+    final InsertionInfo insertionInfo = getInsertionInfo(editor, file);
     insertionInfo.prepareToMove(isDown);
     final LineRange lineRange = insertionInfo.whatToMove;
     final int startLine = lineRange.startLine;
@@ -97,10 +96,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     final PsiFile file = documentManager.getPsiFile(document);
-    final Mover mover = getMover(editor, file);
-    if (mover == null) return false;
-    final InsertionInfo insertionInfo = mover.getInsertionInfo(editor, file, isDown);
-    if (insertionInfo == null) return false;
+    final InsertionInfo insertionInfo = getInsertionInfo(editor, file);
+    if (insertionInfo == null || insertionInfo == InsertionInfo.ILLEGAL_INFO) return false;
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     final LineRange range = insertionInfo.whatToMove;
     if (range.startLine <= 1 && !isDown) return false;
@@ -109,11 +106,11 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     return true;
   }
 
-  private Mover getMover(final Editor editor, final PsiFile file) {
+  private InsertionInfo getInsertionInfo(final Editor editor, final PsiFile file) {
     for (int i = 0; i < myMovers.length; i++) {
       final Mover mover = myMovers[i];
       final InsertionInfo range = mover.getInsertionInfo(editor, file, isDown);
-      if (range != null) return mover;
+      if (range != null) return range;
     }
     return null;
   }

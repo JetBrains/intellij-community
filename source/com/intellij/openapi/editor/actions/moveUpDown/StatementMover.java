@@ -51,11 +51,11 @@ class StatementMover extends LineMover {
     }
   }
 
-  public StatementInsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
+  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
     if (!(file instanceof PsiJavaFile)) return null;
-    final InsertionInfo insertionInfo = super.getInsertionInfo(editor, file, isDown);
-    if (insertionInfo == null) return null;
-    LineRange range = insertionInfo.whatToMove;
+    final InsertionInfo lineInsertionInfo = super.getInsertionInfo(editor, file, isDown);
+    if (lineInsertionInfo == null) return null;
+    LineRange range = lineInsertionInfo.whatToMove;
 
     range = expandLineRangeToCoverPsiElements(range, editor, file);
     if (range == null) return null;
@@ -65,7 +65,7 @@ class StatementMover extends LineMover {
     if (statements == null || statements.length == 0) return null;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
-    if (!checkMovingInsideOutside(file, editor, range, isDown)) return null;
+    if (!checkMovingInsideOutside(file, editor, range, isDown)) return InsertionInfo.ILLEGAL_INFO;
     return calcInsertOffset(editor, file, range, isDown);
   }
 

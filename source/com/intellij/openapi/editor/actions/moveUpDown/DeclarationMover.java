@@ -43,8 +43,7 @@ class DeclarationMover extends LineMover {
       range.firstElement = combinedRange.getFirst();
       range.lastElement = combinedRange.getSecond();
     }
-    final int offset = calcInsertOffset(editor, range, isDown);
-    return offset == -1 ? null : new InsertionInfo(range, offset);
+    return calcInsertOffset(editor, range, isDown);
   }
 
   private static LineRange memberRange(PsiElement member, Editor editor, LineRange lineRange) {
@@ -59,23 +58,27 @@ class DeclarationMover extends LineMover {
 
     return new LineRange(startLine, endLine);
   }
-  private static int calcInsertOffset(Editor editor, LineRange range, final boolean isDown) {
+  private static InsertionInfo calcInsertOffset(Editor editor, LineRange range, final boolean isDown) {
     PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
-    if (sibling == null) return -1;
+    if (sibling == null) return null;
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     sibling = firstNonWhiteElement(sibling, isDown);
     int offset = moveInsideOutsideClassOffset(editor, sibling, isDown, areWeMovingClass);
-    if (offset != 0) return offset;
+    if (offset == -1) return InsertionInfo.ILLEGAL_INFO;
+    if (offset != 0) return new InsertionInfo(range, offset);
     if (isDown) {
       sibling = sibling.getNextSibling();
-      if (sibling == null) return -1;
+      if (sibling == null) return null;
       sibling = firstNonWhiteElement(sibling, isDown);
-      if (sibling == null) return -1;
+      if (sibling == null) return null;
     }
 
-    return sibling.getTextRange().getStartOffset();
+    return new InsertionInfo(range, sibling.getTextRange().getStartOffset());
   }
 
+  // 0 means we are not moving in/out class
+  // -1 means illegal move in/out class
+  // other offset - sepcific offset inside/outside class
   private static int moveInsideOutsideClassOffset(Editor editor,
                                                   PsiElement sibling,
                                                   final boolean isDown,
