@@ -112,8 +112,9 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
       lastTokenStart = tokenStart;
 
       int tokenEnd = myLexer.getTokenEnd();
-      data = packData(myLexer.getTokenType(), myLexer.getState());
-      if(tokenStart >= newEndOffset) {
+      lexerState = myLexer.getState();
+      data = packData(myLexer.getTokenType(), lexerState);
+      if(tokenStart >= newEndOffset && lexerState == myInitialState) {
         int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
         int index = mySegments.findSegmentIndex(shiftedTokenStart);
         if (mySegments.getSegmentStart(index) == shiftedTokenStart && mySegments.getSegmentData(index) == data) {

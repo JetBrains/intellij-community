@@ -11,6 +11,6 @@ public class JavaDocLexer extends MergingLexerAdapter {
   });
 
   public JavaDocLexer() {
-    super(new _JavaDocLexer(), TOKENS_TO_MERGE);
+    super(new FlexAdapter(new _JavaDocLexer()), TOKENS_TO_MERGE);
   }
 }
