@@ -671,9 +671,7 @@ public class TypeConversionUtil {
     if (rightUnboxedType != null) {
       return isAssignable(left, rightUnboxedType);
     }
-    {
-      return false;
-    }
+    return false;
   }
 
   public static boolean boxingConversionApplicable(final PsiType left, final PsiType right) {

@@ -912,17 +912,15 @@ public class HighlightUtil {
   }
 
   private static boolean isValidTypeForSwitchSelector(final PsiType type) {
-    if (type instanceof PsiPrimitiveType) {
-      return PsiType.BYTE == type || PsiType.CHAR == type || PsiType.INT == type || PsiType.SHORT == type;
-    }
-    else if (type instanceof PsiClassType) {
+    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return true;
+    if (type instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType)type).resolve();
       if (psiClass == null) return false;
-      return psiClass != null && psiClass.isEnum();
+      if (psiClass.isEnum()) {
+        return true;
+      }
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   //@top
@@ -967,17 +965,15 @@ public class HighlightUtil {
   public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr, PsiJavaCodeReferenceElement qualifier) {
     if (expr instanceof PsiSuperExpression && !(expr.getParent() instanceof PsiReferenceExpression)) {
       // like in 'Object o = super;'
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            expr.getTextRange().getEndOffset(),
-                                                                            expr.getTextRange().getEndOffset() + 1,
-                                                                            "'.' expected");
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               expr.getTextRange().getEndOffset(),
+                                               expr.getTextRange().getEndOffset() + 1,
+                                               "'.' expected");
     }
     final PsiClass aClass = qualifier == null ? null : (PsiClass)qualifier.resolve();
     if (aClass != null && aClass.isInterface()) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier,
-                                                                      HighlightClassUtil.CLASS_EXPECTED);
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier,
+                                               HighlightClassUtil.CLASS_EXPECTED);
     }
     PsiType type = expr.getType();
     if (type == null) return null;
@@ -1461,16 +1457,15 @@ public class HighlightUtil {
         if (parentClass == null) {
           return null;
         }
-        else {
-          // only this class/superclasses instance methods are not allowed to call
-          final PsiClass aClass = (PsiClass)parentClass;
-          // field or method should be declared in this class or super
-          if (!InheritanceUtil.isInheritorOrSelf(aClass, referencedClass, true)) return null;
-          // and point to our instance
-          if (expression instanceof PsiReferenceExpression
-              && !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
-            return null;
-          }
+
+        // only this class/superclasses instance methods are not allowed to call
+        final PsiClass aClass = (PsiClass)parentClass;
+        // field or method should be declared in this class or super
+        if (!InheritanceUtil.isInheritorOrSelf(aClass, referencedClass, true)) return null;
+        // and point to our instance
+        if (expression instanceof PsiReferenceExpression
+        && !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
+          return null;
         }
         String description = MessageFormat.format("Cannot reference ''{0}'' before supertype constructor has been called",
                                                   new Object[]{resolvedName});
