@@ -3,8 +3,10 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ui.Table;
+import gnu.trove.TObjectIntHashMap;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -67,6 +69,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     final MyTableModel model = new MyTableModel();
     myTable = new Table(model);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    new MySpeedSearch(myTable);
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
 
     // Calculate width for "Key" columns
@@ -92,11 +95,15 @@ public final class KeyChooserDialog extends DialogWrapper{
       }
     }
     if(indexToPreselect != -1){
-      myTable.getSelectionModel().setSelectionInterval(indexToPreselect, indexToPreselect);
-      myTable.scrollRectToVisible(myTable.getCellRect(indexToPreselect, 0, true));
+      selectElementAt(indexToPreselect);
     }
 
     init();
+  }
+
+  private void selectElementAt(final int index) {
+    myTable.getSelectionModel().setSelectionInterval(index, index);
+    myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
   protected String getDimensionServiceKey() {
@@ -130,7 +137,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
   private static final class MyPairComparator implements Comparator<Pair<String, String>>{
     public int compare(final Pair<String, String> p1, final Pair<String, String> p2) {
-      return p1.getFirst().compareToIgnoreCase(p2.getSecond());
+      return p1.getFirst().compareToIgnoreCase(p2.getFirst());
     }
   }
 
@@ -177,6 +184,40 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public int getRowCount() {
       return myPairs.size();
+    }
+  }
+
+  private class MySpeedSearch extends SpeedSearchBase<Table> {
+    private TObjectIntHashMap myElements;
+    private Object[] myElementsArray;
+
+    public MySpeedSearch(final Table component) {
+      super(component);
+    }
+
+    public int getSelectedIndex() {
+      return myComponent.getSelectedRow();
+    }
+
+    public Object[] getAllElements() {
+      if (myElements == null) {
+        myElements = new TObjectIntHashMap();
+        myElementsArray = myPairs.toArray();
+        for (int idx = 0; idx < myElementsArray.length; idx++) {
+          Object element = myElementsArray[idx];
+          myElements.put(element, idx);
+        }
+      }
+      return myElementsArray;
+    }
+
+    public String getElementText(final Object element) {
+      return ((Pair<String, String>)element).getFirst();
+    }
+
+    public void selectElement(final Object element, final String selectedText) {
+      final int index = myElements.get(element);
+      selectElementAt(index);
     }
   }
 }
