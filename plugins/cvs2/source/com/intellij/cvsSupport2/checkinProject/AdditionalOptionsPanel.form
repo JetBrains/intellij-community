@@ -12,15 +12,15 @@
       <grid id="31e6d" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="296" height="78"/>
+          <xy x="0" y="0" width="304" height="100"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="CVS: After Checkin"/>
+        <border type="etched" title="CVS: After Check In"/>
         <children>
           <component id="57727" class="javax.swing.JCheckBox" binding="myTag">
             <constraints>
-              <xy x="2" y="2" width="113" height="22"/>
+              <xy x="6" y="20" width="113" height="22"/>
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -29,7 +29,7 @@
           </component>
           <component id="a8463" class="javax.swing.JLabel" binding="myErrorLabel">
             <constraints>
-              <xy x="22" y="59" width="78" height="14"/>
+              <xy x="26" y="77" width="78" height="14"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -38,7 +38,7 @@
           </component>
           <hspacer id="8fa3">
             <constraints>
-              <xy x="2" y="60" width="20" height="11"/>
+              <xy x="6" y="78" width="20" height="11"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                 <preferred-size width="10" height="-1"/>
               </grid>
@@ -46,7 +46,7 @@
           </hspacer>
           <component id="4e1da" class="javax.swing.JTextField" binding="myTagName">
             <constraints>
-              <xy x="22" y="29" width="150" height="21"/>
+              <xy x="26" y="48" width="150" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -55,7 +55,7 @@
           </component>
           <component id="4406f" class="javax.swing.JCheckBox" binding="myOverrideExistings">
             <constraints>
-              <xy x="182" y="29" width="112" height="22"/>
+              <xy x="186" y="47" width="112" height="22"/>
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -66,13 +66,13 @@
       </grid>
       <vspacer id="f94d9">
         <constraints>
-          <xy x="142" y="78" width="11" height="20"/>
+          <xy x="146" y="100" width="11" height="20"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <hspacer id="aad1f">
         <constraints>
-          <xy x="296" y="33" width="20" height="11"/>
+          <xy x="304" y="44" width="20" height="11"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>
