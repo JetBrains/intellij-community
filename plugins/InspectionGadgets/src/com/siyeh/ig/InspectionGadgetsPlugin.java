@@ -279,6 +279,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(EmptyStatementBodyInspection.class);
         inspectionClasses.add(EmptyInitializerInspection.class);
         inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
+        inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
+        inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
         inspectionClasses.add(BigDecimalEqualsInspection.class);
         inspectionClasses.add(CovariantCompareToInspection.class);
         inspectionClasses.add(CovariantEqualsInspection.class);
