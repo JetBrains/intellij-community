@@ -53,6 +53,11 @@ public class ChooseByNameRegistry implements ApplicationComponent {
     myGotoSymbolContributors.add(contributor);
   }
 
+  public void removeContributor(ChooseByNameContributor contributor) {
+    myGotoClassContributors.remove(contributor);
+    myGotoSymbolContributors.remove(contributor);
+  }
+
   public ChooseByNameContributor[] getClassModelContributors() {
     return myGotoClassContributors.toArray(new ChooseByNameContributor[myGotoClassContributors.size()]);
   }
