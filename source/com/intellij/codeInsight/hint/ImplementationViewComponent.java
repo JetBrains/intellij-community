@@ -39,6 +39,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -184,6 +185,7 @@ public class ImplementationViewComponent extends JPanel {
             fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), doc.getCharsSequence().subSequence(lineStart, end).toString());
             fragmentDoc.setReadOnly(true);
             myEditor.getCaretModel().moveToOffset(0);
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           }
         });
       }
