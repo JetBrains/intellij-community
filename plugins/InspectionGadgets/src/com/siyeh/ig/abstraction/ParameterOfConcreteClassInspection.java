@@ -35,7 +35,7 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
         public void visitParameter(PsiParameter parameter) {
             super.visitParameter(parameter);
 
-            if (parameter.getParent() instanceof PsiTryStatement) {
+            if (parameter.getDeclarationScope() instanceof PsiTryStatement) {
                 return;
             }
             final PsiTypeElement typeElement = parameter.getTypeElement();

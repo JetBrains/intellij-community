@@ -85,7 +85,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection 
             if (!(variable instanceof PsiParameter)) {
                 return;
             }
-            if (variable.getParent() instanceof PsiTryStatement) {
+            if (((PsiParameter)variable).getDeclarationScope() instanceof PsiTryStatement) {
                 return;
             }
             registerError(expression);

@@ -114,7 +114,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
 
         public void visitParameter(PsiParameter variable) {
             final boolean isCatchParameter =
-                    variable.getParent() instanceof PsiTryStatement;
+                    variable.getDeclarationScope() instanceof PsiTryStatement;
             if (!isCatchParameter) {
                 return;
             }

@@ -26,8 +26,7 @@ class NestingDepthVisitor extends PsiRecursiveElementVisitor {
                 parent instanceof PsiWhileStatement ||
                 parent instanceof PsiForStatement ||
                 parent instanceof PsiIfStatement ||
-                parent instanceof PsiSynchronizedStatement ||
-                parent instanceof PsiTryStatement;
+                parent instanceof PsiSynchronizedStatement;
         if (!isAlreadyCounted) {
             enterScope();
         }

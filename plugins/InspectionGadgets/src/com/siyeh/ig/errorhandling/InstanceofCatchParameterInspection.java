@@ -52,7 +52,7 @@ public class InstanceofCatchParameterInspection extends ExpressionInspection {
             if (!(referent instanceof PsiParameter)) {
                 return;
             }
-            if (!(referent.getParent() instanceof PsiTryStatement)) {
+            if (!(((PsiParameter)referent).getDeclarationScope() instanceof PsiTryStatement)) {
                 return;
             }
             registerError(exp);

@@ -50,7 +50,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
 
         public void visitParameter(PsiParameter variable) {
             super.visitParameter(variable);
-            if (variable.getParent() instanceof PsiTryStatement) {
+            if (variable.getDeclarationScope() instanceof PsiTryStatement) {
                 return;
             }
             final PsiMethod method =

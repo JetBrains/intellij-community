@@ -77,7 +77,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
         }
 
         public void visitParameter(PsiParameter variable) {
-            if (variable.getParent() instanceof PsiTryStatement) {
+            if (variable.getDeclarationScope() instanceof PsiTryStatement) {
                 return;
             }
             final String name = variable.getName();
