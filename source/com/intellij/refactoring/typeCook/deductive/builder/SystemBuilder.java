@@ -555,7 +555,7 @@ public class SystemBuilder {
 
         if (method != null) {
           final PsiSearchHelper helper = myManager.getSearchHelper();
-          final PsiReference[] refs = helper.findReferences(method, helper.getAccessScope(method), true);
+          final PsiReference[] refs = helper.findReferences(method, helper.getUseScope(method), true);
 
           for (int i = 0; i < refs.length; i++) {
             final PsiElement ref = refs[i].getElement();
@@ -787,9 +787,7 @@ public class SystemBuilder {
       addUsage(system, element);
 
       if (!(element instanceof PsiExpression)) {
-        PsiReference[] refs = helper.findReferences(element, helper.getAccessScope(element), true);
-        PsiReference[] refs = helper.findReferences(element, helper.getUseScope(element), true);
-        final PsiReference[] refs = helper.findReferences(element, helper.getAccessScope(element), true);
+        final PsiReference[] refs = helper.findReferences(element, helper.getUseScope(element), true);
 
         for (int k = 0; k < refs.length; k++) {
           final PsiElement ref = refs[k].getElement();
