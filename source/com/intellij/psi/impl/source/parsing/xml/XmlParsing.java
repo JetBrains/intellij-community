@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer._OldXmlLexer;
@@ -11,11 +12,9 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -708,10 +707,7 @@ public class XmlParsing implements ElementType {
       lexer.advance();
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
-    ParseUtil.insertMissingTokens(dummyRoot,
-                                  originalLexer,
-                                  start,
-                                  end,
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
