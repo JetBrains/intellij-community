@@ -135,7 +135,7 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public Token getCurrentToken() {
     Token lastToken;
-    while(true) {
+    while (true) {
       lastToken = getTokenOrWhitespace();
       if (lastToken == null) return null;
       if (whitespaceOrComment(lastToken.getTokenType())) {
@@ -170,7 +170,6 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public boolean eof() {
     if (myCurrentLexem + 1 < myLexems.size()) return false;
-    if (myLexer.getTokenType() == null) return true;
     return getCurrentToken() == null;
   }
 
@@ -208,6 +207,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   }
 
   public void error(String messageText) {
+    if (myProduction.get(myProduction.size() - 1) instanceof ErrorItem) return;
     myProduction.add(new ErrorItem(messageText, myCurrentLexem));
   }
 
@@ -224,11 +224,26 @@ public class PsiBuilderImpl implements PsiBuilder {
       rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
     }
 
+    for (int i = 1; i < myProduction.size() - 1; i++) {
+      ProductionMarker item = myProduction.get(i);
+
+      if (item instanceof StartMarker) {
+        while (item.myLexemIndex < myLexems.size() && myWhitespaces.isInSet(myLexems.get(item.myLexemIndex).getTokenType())) item.myLexemIndex++;
+      }
+      else if (item instanceof DoneMarker || item instanceof ErrorItem) {
+        int prevProductionLexIndex = myProduction.get(i - 1).myLexemIndex;
+        while (item.myLexemIndex > prevProductionLexIndex &&
+               myWhitespaces.isInSet(myLexems.get(item.myLexemIndex - 1).getTokenType())) {
+          item.myLexemIndex--;
+        }
+      }
+    }
+
     ASTNode curNode = rootNode;
     int curToken = 0;
+    int lastErrorIndex = -1;
     for (int i = 1; i < myProduction.size(); i++) {
       ProductionMarker item = myProduction.get(i);
-      if (item == null) continue;
 
       LOG.assertTrue(curNode != null, "Unexpected end of the production");
       int lexIndex = item.myLexemIndex;
@@ -246,6 +261,9 @@ public class PsiBuilderImpl implements PsiBuilder {
         curNode = curNode.getTreeParent();
       }
       else if (item instanceof ErrorItem) {
+        curToken = insertLeafs(curToken, lexIndex, curNode);
+        if (curToken == lastErrorIndex) continue;
+        lastErrorIndex = curToken;
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
         errorElement.setErrorDescription(((ErrorItem)item).myMessage);
         TreeUtil.addChildren((CompositeElement)curNode, errorElement);
@@ -273,6 +291,9 @@ public class PsiBuilderImpl implements PsiBuilder {
     return curToken;
   }
 
+  /**
+   * just to make removeRange method available.
+   */
   private static class MyList extends ArrayList<ProductionMarker> {
     public void removeRange(final int fromIndex, final int toIndex) {
       super.removeRange(fromIndex, toIndex);
