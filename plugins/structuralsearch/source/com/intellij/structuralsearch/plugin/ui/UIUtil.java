@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -60,12 +61,10 @@ public class UIUtil {
       Color c = globalScheme.getColor(EditorColors.READONLY_BACKGROUND_COLOR);
 
       if (c==null) {
-        c = globalScheme.getColor(EditorColors.BACKGROUND_COLOR);
+        c = globalScheme.getDefaultBackground();
       }
-      scheme.setColor(
-        EditorColors.BACKGROUND_COLOR,
-        c
-      );
+
+      ((EditorEx)editor).setBackgroundColor(c);
     } else {
       //editor.setTabEnabled(false);
     }
