@@ -1,6 +1,8 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
  * To change this template use File | Settings | File Templates.
  */
 public class PsiAnchor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiAnchor");
   private Class myClass;
   private int myStartOffset;
   private int myEndOffset;
@@ -22,7 +25,16 @@ public class PsiAnchor {
     }
     else {
       myElement = null;
-      myFile = element.getContainingFile();
+      final PsiFile[] psiRoots = element.getContainingFile().getPsiRoots();
+      for (int i = 0; i < psiRoots.length; i++) {
+        PsiFile root = psiRoots[i];
+        if (PsiUtil.isUnderPsiRoot(root, element)) {
+          myFile = root;
+          break;
+        }
+      }
+      LOG.assertTrue(myFile != null);
+
       myClass = element.getClass();
 
       TextRange textRange = element.getTextRange();
@@ -39,10 +51,11 @@ public class PsiAnchor {
 
     PsiElement element = myFile.findElementAt(myStartOffset);
 
-    while (!element.getClass().equals(myClass) ||
+    while  (!element.getClass().equals(myClass) ||
            (element.getTextRange().getStartOffset() != myStartOffset) ||
            (element.getTextRange().getEndOffset() != myEndOffset)) {
       element = element.getParent();
+      if (element == null || element.getTextRange() == null) return null;
     }
 
     return element;
