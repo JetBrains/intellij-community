@@ -1,8 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -393,11 +395,15 @@ public abstract class GenericsHighlightUtil {
     if (!isGenericToRaw(lType, rType)) return null;
     String description = MessageFormat.format("Unchecked assignment: ''{0}'' to ''{1}''",
                                               new Object[]{HighlightUtil.formatType(rType), HighlightUtil.formatType(lType)});
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
-                                                                    elementToHighlight,
-                                                                    description);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()));
-    return highlightInfo;
+    if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_ASSIGNMENT)){
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_ASSIGNMENT,
+                                                                      elementToHighlight,
+                                                                      description);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_ASSIGNMENT));
+      return highlightInfo;
+    }
+    return null;
   }
 
   private static boolean isGenericToRaw(PsiType lType, PsiType rType) {
@@ -421,11 +427,14 @@ public abstract class GenericsHighlightUtil {
     if (isUncheckedTypeCast(castType, exprType)) {
       String description = MessageFormat.format("Unchecked cast: ''{0}'' to ''{1}''",
                                                 new Object[]{HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType)});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
-                                                                      typeCast,
-                                                                      description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()));
-      return highlightInfo;
+     if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_ASSIGNMENT)){
+        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_ASSIGNMENT,
+                                                                        typeCast,
+                                                                        description);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_ASSIGNMENT));
+        return highlightInfo;
+      }
     }
     return null;
   }
@@ -530,9 +539,12 @@ public abstract class GenericsHighlightUtil {
         String description = MessageFormat.format("Unchecked call to ''{0}'' as a member of raw type ''{1}''",
                                                   new Object[]{HighlightUtil.formatMethod(method), HighlightUtil.formatType(type)});
         PsiElement element = call instanceof PsiMethodCallExpression ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression() : call;
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, element, description);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
-        return highlightInfo;
+        if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_ASSIGNMENT)){
+          HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_ASSIGNMENT, element, description);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
+          QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_ASSIGNMENT));
+          return highlightInfo;
+        }
       }
     }
     return null;

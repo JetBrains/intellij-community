@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -1570,9 +1571,11 @@ public class HighlightUtil {
     final PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
     final PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return null;
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
-                                             assignment,
-                                             "Silly assignment");
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
+                                                                          assignment,
+                                                                          "Silly assignment");
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
+    return highlightInfo;
   }
 
   /**
@@ -1791,6 +1794,7 @@ public class HighlightUtil {
                                                                           expr,
                                                                           description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result));
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
     return highlightInfo;
   }
 
@@ -1943,6 +1947,7 @@ public class HighlightUtil {
             return null;
           }
           type = HighlightInfoType.JAVADOC_WRONG_REF;
+          QuickFixAction.registerQuickFixAction(HighlightInfo.createHighlightInfo(type, refName, description), new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         }
 
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, new Class[]{PsiNewExpression.class, PsiMethod.class});
@@ -2042,6 +2047,8 @@ public class HighlightUtil {
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
       HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
 
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight, description);
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight, description);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
+    return highlightInfo;
   }
 }

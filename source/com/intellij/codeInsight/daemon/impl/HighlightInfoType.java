@@ -20,6 +20,7 @@ public interface HighlightInfoType {
   HighlightInfoType EJB_WARNING = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.EJB_WARNING);
 
   HighlightInfoType ILLEGAL_DEPENDENCY = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.ILLEGAL_DEPENDENCY);
+  HighlightInfoType UNCHECKED_ASSIGNMENT = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNCHECKED_ASSIGNMENT);
 
   HighlightInfoType WRONG_ELEMENT_NAME = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 

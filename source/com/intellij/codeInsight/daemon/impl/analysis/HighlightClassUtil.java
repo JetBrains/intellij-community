@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
+import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -460,6 +461,7 @@ public class HighlightClassUtil {
                                                                             description);
       if (classPackage != null) QuickFixAction.registerQuickFixAction(highlightInfo, new MoveToPackageFix(file, classPackage));
       QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(file, statement, dirPackage));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
       return highlightInfo;
     }
     return null;
@@ -495,6 +497,7 @@ public class HighlightClassUtil {
                                                                             textRange,
                                                                             description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(javaFile, null, dirPackage));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
       return highlightInfo;
     }
     return null;

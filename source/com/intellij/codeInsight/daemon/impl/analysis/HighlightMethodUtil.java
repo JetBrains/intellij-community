@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
+import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -346,6 +347,7 @@ public class HighlightMethodUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_THROWS_DECL, referenceElement, description);
 
     QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(method, exceptionType, false));
+    QuickFixAction.registerQuickFixAction(errorResult, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_THROWS_DECL));
     return errorResult;
   }
 
@@ -1142,7 +1144,9 @@ public class HighlightMethodUtil {
       if (superMethod.isDeprecated()) {
         String description = MessageFormat.format("Overrides deprecated method in ''{0}''", new Object[]{
           HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY)});
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
+        return highlightInfo;
       }
     }
     return null;

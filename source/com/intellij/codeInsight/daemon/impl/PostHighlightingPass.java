@@ -196,28 +196,30 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
     if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
-
+    HighlightInfo info;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
 
     if (parent instanceof PsiLocalVariable) {
-      return processLocalVariable((PsiLocalVariable)parent);
+      info = processLocalVariable((PsiLocalVariable)parent);
     }
     else if (parent instanceof PsiField) {
-      return processField((PsiField)parent);
+      info = processField((PsiField)parent);
     }
     else if (parent instanceof PsiParameter) {
-      return processParameter((PsiParameter)parent);
+      info = processParameter((PsiParameter)parent);
     }
     else if (parent instanceof PsiMethod) {
-      return processMethod((PsiMethod)parent);
+      info = processMethod((PsiMethod)parent);
     }
     else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier())) {
-      return processClass((PsiClass)parent);
+      info = processClass((PsiClass)parent);
     }
     else {
       return null;
     }
+    QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
+    return info;
   }
 
   private HighlightInfo processLocalVariable(PsiLocalVariable variable) {
@@ -450,6 +452,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_IMPORT, importStatement, "Unused import statement");
     QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix());
     QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix());
+    QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_IMPORT));
     myHasRedundantImports = true;
     return info;
   }

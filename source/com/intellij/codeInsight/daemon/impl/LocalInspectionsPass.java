@@ -233,38 +233,4 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return message;
   }
 
-  private static class SwitchOffToolAction implements IntentionAction {
-    private final LocalInspectionTool myTool;
-
-    public SwitchOffToolAction(LocalInspectionTool tool) {
-      myTool = tool;
-    }
-
-    public String getText() {
-      return "Edit options of \"" + myTool.getDisplayName() + "\"";
-    }
-
-    public String getFamilyName() {
-      return "Edit options of reporter inspection";
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      Runnable selectTool = new Runnable() {
-        public void run() {
-          final ErrorHighlightingPanel panel = ErrorHighlightingOptions.getInstance().getPanel();
-          panel.selectInspectionTool(myTool.getShortName());
-        }
-      };
-
-      ShowSettingsUtil.getInstance().editConfigurable(project, ErrorHighlightingOptions.getInstance(), selectTool);
-    }
-
-    public boolean startInWriteAction() {
-      return false;
-    }
-  }
 }
