@@ -115,20 +115,20 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       Icon methodIcon = role == null
                         ? modifierList.hasModifierProperty(PsiModifier.STATIC) ? Icons.STATIC_METHOD_ICON : Icons.METHOD_ICON
                         : role.getIcon();
-      baseIcon = createLockableIcon(methodIcon, showReadStatus && !elementWritable);
+      baseIcon = createLockableIcon(methodIcon, false);
     }
     else if (element instanceof PsiField) {
       Icon fieldIcon = ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) ? Icons.STATIC_FIELD_ICON : Icons.FIELD_ICON;
-      baseIcon = createLockableIcon(fieldIcon, showReadStatus && !elementWritable);
+      baseIcon = createLockableIcon(fieldIcon, false);
     }
     else if (element instanceof PsiParameter) {
-      baseIcon = createLockableIcon(Icons.PARAMETER_ICON, showReadStatus && !elementWritable);
+      baseIcon = createLockableIcon(Icons.PARAMETER_ICON, false);
     }
     else if (element instanceof PsiVariable) {
-      baseIcon = createLockableIcon(Icons.VARIABLE_ICON, showReadStatus && !elementWritable);
+      baseIcon = createLockableIcon(Icons.VARIABLE_ICON, false);
     }
     else if (element instanceof PsiPointcutDef) {
-      baseIcon = createLockableIcon(Icons.POINTCUT_ICON, showReadStatus && !elementWritable);
+      baseIcon = createLockableIcon(Icons.POINTCUT_ICON, false);
     }
     else if (element instanceof PsiParentsIntroduction) {
       baseIcon = createLockableIcon(Icons.PARENTS_INTRODUCTION_ICON, false);
