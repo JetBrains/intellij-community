@@ -41,7 +41,8 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   public ChildrenRenderer getChildrenRenderer() {
-    return super.getChildrenRenderer() != null ? super.getChildrenRenderer() : getDefaultRenderer();
+    final ChildrenRenderer childrenRenderer = super.getChildrenRenderer();
+    return childrenRenderer != null ? childrenRenderer : getDefaultRenderer();
   }
 
   private NodeRenderer getDefaultRenderer() {
@@ -49,7 +50,8 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
   }
 
   public ValueLabelRenderer getLabelRenderer() {
-    return super.getLabelRenderer() != null ? super.getLabelRenderer() : getDefaultRenderer();
+    final ValueLabelRenderer labelRenderer = super.getLabelRenderer();
+    return labelRenderer != null ? labelRenderer : getDefaultRenderer();
   }
 
   private ChildrenRenderer getRawChildrenRenderer() {

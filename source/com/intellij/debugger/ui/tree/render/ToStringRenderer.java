@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -123,17 +124,18 @@ public class ToStringRenderer extends NodeRendererImpl {
     getDefaultRenderer(value, evaluationContext).buildChildren(value, builder, evaluationContext);
   }
 
-  private static NodeRenderer getDefaultRenderer(Value value, StackFrameContext context) {
-    Type type = value != null ? value.type() : null;
-    return ((DebugProcessImpl)context.getDebugProcess()).getDefaultRenderer(type);
-  }
-
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return getDefaultRenderer(((ValueDescriptor) node.getDescriptor()).getValue(), context).getChildValueExpression(node, context);
+    final Value parentValue = ((ValueDescriptor)node.getParent().getDescriptor()).getValue();
+    return getDefaultRenderer(parentValue, context).getChildValueExpression(node, context);
   }
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return getDefaultRenderer(value, evaluationContext).isExpandable(value, evaluationContext, parentDescriptor);
+  }
+
+  private static NodeRenderer getDefaultRenderer(Value value, StackFrameContext context) {
+    final Type type = (value != null) ? value.type() : null;
+    return ((DebugProcessImpl)context.getDebugProcess()).getDefaultRenderer(type);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
