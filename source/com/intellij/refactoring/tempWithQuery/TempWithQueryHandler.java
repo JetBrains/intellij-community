@@ -3,6 +3,7 @@ package com.intellij.refactoring.tempWithQuery;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,11 +47,13 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       return;
     }
 
+    invokeOnVariable(file, project, ((PsiLocalVariable)element), editor);
+  }
+
+  private void invokeOnVariable(final PsiFile file, final Project project, final PsiLocalVariable local, final Editor editor) {
     if (!file.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
-
-    final PsiLocalVariable local = (PsiLocalVariable) element;
 
     String localName = local.getName();
     final PsiExpression initializer = local.getInitializer();
@@ -156,5 +159,14 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+    if (elements != null && elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
+      if (dataContext != null) {
+        final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+        final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+        if (file != null && editor != null) {
+          invokeOnVariable(file, project, (PsiLocalVariable)elements[0], editor);
+        }
+      }
+    }
   }
 }
