@@ -1,5 +1,6 @@
-package com.intellij.analysis;
+package com.intellij.cyclicDependencies.actions;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,19 +14,25 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
+import javax.swing.text.NumberFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 import java.awt.event.KeyEvent;
 
-public abstract class BaseAnalysisAction extends AnAction {
-  protected final AnalysisScope.PsiFileFilter myFileFilter;
-  protected final String myTitle;
-  protected final String myAnalysisVerb;
-  protected final String myAnalysisNoon;
+/**
+ * User: anna
+ * Date: Jan 31, 2005
+ */
+public class CyclicDependenciesAction extends AnAction{
+  private final String myAnalysisVerb;
+  private final String myAnalysisNoon;
+  private final AnalysisScope.PsiFileFilter myFileFilter;
+  private final String myTitle;
 
-  protected BaseAnalysisAction(AnalysisScope.PsiFileFilter fileFilter, String title, String analysisVerb, String analysisNoon) {
-    myFileFilter = fileFilter;
-    myTitle = title;
-    myAnalysisVerb = analysisVerb;
-    myAnalysisNoon = analysisNoon;
+  public CyclicDependenciesAction() {
+    myAnalysisVerb = "Analyze";
+    myAnalysisNoon = "Analysis";
+    myFileFilter = AnalysisScope.SOURCE_JAVA_FILES;
+    myTitle = "Cyclic Dependency Analysis";
   }
 
   public void update(AnActionEvent event) {
@@ -39,24 +46,21 @@ public abstract class BaseAnalysisAction extends AnAction {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final Module module = (Module)dataContext.getData(DataConstants.MODULE);
     if (project != null) {
-      AnalysisScope scope;
-      boolean calledFromNonJavaFile = false;
       PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
       if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
-        scope = new AnalysisScope(psiFile, myFileFilter);
-        calledFromNonJavaFile = true;
+        return;
       }
-      else {
-        scope = getInspectionScope(dataContext);
+      AnalysisScope scope = getInspectionScope(dataContext);
+      boolean showChooseScope = true;
+      if (scope.getScopeType() == AnalysisScope.MODULES){
+        showChooseScope = false;
       }
-      if (calledFromNonJavaFile ||
-          scope.getScopeType() == AnalysisScope.FILE &&
-          (ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.EDITOR_POPUP.equals(e.getPlace()))) {
-        FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(scope.getDisplayName(),
-                                                          module != null ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                          calledFromNonJavaFile);
-        dlg.show();
-        if (!dlg.isOK()) return;
+      ProjectModuleOrPackageDialog dlg = new ProjectModuleOrPackageDialog(dataContext,
+                                                        module != null ? ModuleUtil.getModuleNameInReadAction(module) : null,
+                                                        showChooseScope);
+      dlg.show();
+      if (!dlg.isOK()) return;
+      if (showChooseScope){
         if (dlg.isProjectScopeSelected()) {
           scope = getProjectScope(dataContext);
         }
@@ -69,14 +73,14 @@ public abstract class BaseAnalysisAction extends AnAction {
 
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      analyze(project, scope);
+      new CyclicDependenciesHandler(project, scope, dlg.getMaxPerPackageCycleCount()).analyze();
     }
   }
 
-  protected abstract void analyze(Project project, AnalysisScope scope);
 
   private AnalysisScope getInspectionScope(final DataContext dataContext) {
-    if (dataContext.getData(DataConstants.PROJECT) == null) return null;
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
 
@@ -84,7 +88,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
-    //Possible scopes: file, directory, package, project, module.
+    //Possible scopes: package, project, module.
     Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
     if (projectContext != null) {
       return new AnalysisScope(projectContext, myFileFilter);
@@ -99,25 +103,10 @@ public abstract class BaseAnalysisAction extends AnAction {
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray, myFileFilter);
     }
-    PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    if (psiFile != null) {
-      return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile, myFileFilter) : null;
-    }
 
-    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-    if (psiTarget instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
-      if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
-      return new AnalysisScope(psiDirectory, myFileFilter);
-    }
-    else if (psiTarget instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)psiTarget;
-      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
-      if (dirs == null || dirs.length == 0) return null;
-      return new AnalysisScope(pack, myFileFilter);
-    }
-    else if (psiTarget != null) {
-      return null;
+    AnalysisScope packageScope = getPackageScope(dataContext);
+    if (packageScope != null){
+      return packageScope;
     }
 
     return getProjectScope(dataContext);
@@ -131,48 +120,76 @@ public abstract class BaseAnalysisAction extends AnAction {
     return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE), myFileFilter);
   }
 
-  private class FileProjectOrModuleDialog extends DialogWrapper {
-    private String myFileName;
+  private AnalysisScope getPackageScope(DataContext dataContext){
+    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (psiTarget instanceof PsiDirectory) {
+      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
+      if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
+      return new AnalysisScope(psiDirectory, myFileFilter);
+    }
+    else if (psiTarget instanceof PsiPackage) {
+      PsiPackage pack = (PsiPackage)psiTarget;
+      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
+      if (dirs == null || dirs.length == 0) return null;
+      return new AnalysisScope(pack, myFileFilter);
+    }
+    return null;
+  }
+
+  private class ProjectModuleOrPackageDialog extends DialogWrapper {
+    private String myPackageName;
     private String myModuleName;
-    private JRadioButton myFileButton;
+    private JRadioButton myPackageButton;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
+    private boolean myShowChooseScope;
+    private JFormattedTextField myPerPackageCycleCount;
 
-    public FileProjectOrModuleDialog(String fileName, String moduleName, boolean nonJavaFile) {
+    private JPanel myScopePanel;
+    private JPanel myWholePanel;
+
+
+    public ProjectModuleOrPackageDialog(DataContext dataContext, String moduleName, boolean showChooseScope) {
       super(true);
-      myFileName = fileName;
+      myShowChooseScope = showChooseScope;
       myModuleName = moduleName;
+      final AnalysisScope scope = getPackageScope(dataContext);
+      if (scope != null){
+        myPackageName = scope.getDisplayName();
+      }
       init();
       setTitle("Specify " + myTitle + " Scope");
-      if (nonJavaFile) {
-        myFileButton.setEnabled(false);
+      if (scope == null){
+        myPackageButton.setVisible(false);
         myProjectButton.setSelected(true);
+      } else {
+        myPackageButton.setSelected(true);
       }
-      else {
-        myFileButton.setSelected(true);
+      if (moduleName == null){
+        myModuleButton.setVisible(false);
       }
     }
 
     protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel();
-      panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      myFileButton = new JRadioButton(myAnalysisVerb + " " + StringUtil.decapitalize(myFileName));
-      myFileButton.setMnemonic(KeyEvent.VK_F);
-      myProjectButton = new JRadioButton(myAnalysisVerb + " the whole project");
+      myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
+      myPackageButton.setText(myAnalysisVerb + StringUtil.decapitalize(myPackageName));
+      myPackageButton.setMnemonic(KeyEvent.VK_K);
+      myProjectButton.setText(myAnalysisVerb + " the whole project");
       myProjectButton.setMnemonic(KeyEvent.VK_P);
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
-      group.add(myFileButton);
-      panel.add(myProjectButton);
       if (myModuleName != null) {
-        myModuleButton = new JRadioButton(myAnalysisVerb + " module \'" + myModuleName + "\'");
+        myModuleButton.setText(myAnalysisVerb + " module \'" + myModuleName + "\'");
         myModuleButton.setMnemonic(KeyEvent.VK_M);
         group.add(myModuleButton);
-        panel.add(myModuleButton);
       }
-      panel.add(myFileButton);
-      return panel;
+      group.add(myPackageButton);
+      myPerPackageCycleCount.setFormatterFactory(new DefaultFormatterFactory());
+      myPerPackageCycleCount.setText("1");
+      if (!myShowChooseScope){
+        myScopePanel.setVisible(false);
+      }
+      return myWholePanel;
     }
 
     public boolean isProjectScopeSelected() {
@@ -181,6 +198,10 @@ public abstract class BaseAnalysisAction extends AnAction {
 
     public boolean isModuleScopeSelected() {
       return myModuleButton != null ? myModuleButton.isSelected() : false;
+    }
+
+    public int getMaxPerPackageCycleCount(){
+      return Integer.parseInt(myPerPackageCycleCount.getText());
     }
   }
 }

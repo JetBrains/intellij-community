@@ -16,12 +16,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
@@ -40,7 +38,7 @@ public class AnalysisScope {
   private final Module myModule;
   private final PsiElement myElement;
   private final int myType;
-  private HashSet myFilesSet;
+  private HashSet<VirtualFile> myFilesSet;
 
 
   public interface PsiFileFilter {
@@ -149,15 +147,15 @@ public class AnalysisScope {
 
   private void initFilesSet() {
     if (myType == FILE) {
-      myFilesSet = new HashSet(1);
+      myFilesSet = new HashSet<VirtualFile>(1);
       myFilesSet.add(((PsiFile)myElement).getVirtualFile());
     }
     else if (myType == DIRECTORY) {
-      myFilesSet = new HashSet();
+      myFilesSet = new HashSet<VirtualFile>();
       myElement.accept(createFileSearcher());
     }
     else if (myType == PROJECT || myType == MODULES || myType == MODULE || myType == PACKAGE) {
-      myFilesSet = new HashSet();
+      myFilesSet = new HashSet<VirtualFile>();
       accept(createFileSearcher());
     }
   }
@@ -207,19 +205,42 @@ public class AnalysisScope {
     }
     HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
     final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
+    for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
+      final Module module = iterator.next();
+      Set<Module> modulesToAnalyze = getDirectBackwardDependencies(module, allModules);
+      modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
+      modulesToAnalyze.add(module);
+      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()]), SOURCE_JAVA_FILES));
+    }
+    return result.toArray(new AnalysisScope[result.size()]);
+  }
+
+
+  private static Set<Module> getExportBackwardDependencies(Module fromModule, Module [] allModules) {
+    Set<Module> result = new HashSet<Module>();
     for (int i = 0; i < allModules.length; i++) {
-      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-        final Module module = iterator.next();
-        if (allModules[i].equals(module)) {
-          result.add(new AnalysisScope(allModules[i], SOURCE_JAVA_FILES));
-          continue;
-        }
-        if (ModuleManager.getInstance(defaultProject).isModuleDependent(allModules[i], module)) {
-          result.add(new AnalysisScope(allModules[i], SOURCE_JAVA_FILES));
+      Module module = allModules[i];
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (int j = 0; j < orderEntries.length; j++) {
+        OrderEntry orderEntry = orderEntries[j];
+        if (orderEntry instanceof ModuleOrderEntry && ((ModuleOrderEntry)orderEntry).isExported() && fromModule == ((ModuleOrderEntry)orderEntry).getModule()){
+          result.addAll(getDirectBackwardDependencies(module, allModules));
         }
       }
     }
-    return result.toArray(new AnalysisScope[result.size()]);
+    return result;
+  }
+
+  private static Set<Module> getDirectBackwardDependencies(Module module, Module [] allModules) {
+    Set<Module> result = new HashSet<Module>();
+    for (int i = 0; i < allModules.length; i++) {
+      Module dependency = allModules[i];
+      if (ArrayUtil.find(ModuleRootManager.getInstance(dependency).getDependencies(), module) > -1){
+        result.add(dependency);
+      }
+    }
+    return result;
   }
 
   private HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
