@@ -41,6 +41,9 @@ public class MethodNameSameAsParentNameInspection extends MethodInspection {
 
         public void visitMethod(PsiMethod method) {
             // no call to super, so it doesn't drill down into inner classes
+            if(method.isConstructor()){
+                return;
+            }
             final String methodName = method.getName();
             if (methodName == null) {
                 return;
