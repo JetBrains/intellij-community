@@ -82,7 +82,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         }
 
         final PsiVariable initialization = (PsiVariable) referent;
-        final VariableAssignedVisitor visitor2 = new VariableAssignedVisitor(variable);
+        final VariableAssignedVisitor visitor2 = new VariableAssignedVisitor(initialization);
         containingScope.accept(visitor2);
         if (visitor2.isAssigned()) {
             return false;

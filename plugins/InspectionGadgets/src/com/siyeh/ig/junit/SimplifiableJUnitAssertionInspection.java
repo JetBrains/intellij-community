@@ -52,7 +52,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             final PsiExpression[] args = argumentList.getExpressions();
             final int testPosition;
             final PsiExpression message;
-            if (paramType1.equals(stringType) && parameters.length > 2) {
+            if (paramType1.equals(stringType) && parameters.length >= 2) {
                 testPosition = 1;
                 message = args[0];
             } else {
@@ -88,7 +88,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
                 newExpression.append(',');
             }
             newExpression.append(lhs.getText());
-                newExpression.append(',');
+            newExpression.append(',');
             newExpression.append(rhs.getText());
             if(isFloatingPoint(lhs) || isFloatingPoint(rhs))
             {

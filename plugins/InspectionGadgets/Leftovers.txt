@@ -37,6 +37,7 @@
     QuickFix for "Integer division in floating point context"
     Quickfix for "Non-serializable class with..."
     Quickfix for "Unnecessary default"
+    More detectors and quickfixes for "Simplifiable JUnit Assertion"
 
 
     Inheritance as type def (change the EmptyClass inspection)
