@@ -102,10 +102,6 @@ public class MethodSignatureUtil {
 
     PsiParameter[] parms1 = method1.getParameterList().getParameters();
     PsiParameter[] parms2 = method2.getParameterList().getParameters();
-    return areParametersEqual(parms1, parms2);
-  }
-
-  private static boolean areParametersEqual(PsiParameter[] parms1, PsiParameter[] parms2) {
     return areParametersEqual(parms1, PsiSubstitutor.EMPTY, parms2, PsiSubstitutor.EMPTY);
   }
 
