@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -82,10 +83,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     newScheme.myEditorFontSize = myEditorFontSize;
     newScheme.myLineSpacing = myLineSpacing;
     newScheme.setEditorFontName(getEditorFontName());
-    for (Iterator<Map.Entry<EditorFontType, Font>> iterator = myFonts.entrySet().iterator(); iterator.hasNext();) {
-      Map.Entry<EditorFontType, Font> entry = iterator.next();
-      newScheme.setFont(entry.getKey(), entry.getValue());
+
+    final Set<EditorFontType> types = myFonts.keySet();
+    for (Iterator<EditorFontType> i = types.iterator(); i.hasNext();) {
+      EditorFontType type = i.next();
+      Font font = myFonts.get(type);
+      newScheme.setFont(type, font);
     }
+
     newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap);
     newScheme.myColorsMap = new HashMap<ColorKey, Color>(myColorsMap);
     newScheme.myVersion = myVersion;
@@ -180,8 +185,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       }
 
       if (myDeprecatedBackgroundColor != null) {
-        final TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
-        textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
+        TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
+        if (textAttributes == null) {
+          textAttributes = new TextAttributes(Color.black, myDeprecatedBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
+          myAttributesMap.put(HighlighterColors.TEXT, textAttributes);
+        }
+        else {
+          textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
+        }
       }
 
       initFonts();

@@ -133,6 +133,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
         addColorsScheme(loadScheme(files[i]));
       }
       catch (Exception e) {
+        e.printStackTrace();
         Messages.showErrorDialog("Error reading color scheme from " + files[i].getName(), "Corrupted File");
       }
     }
