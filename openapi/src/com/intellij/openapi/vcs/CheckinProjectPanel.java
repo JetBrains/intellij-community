@@ -39,4 +39,6 @@ public interface CheckinProjectPanel extends Refreshable {
   Project getProject();
 
   List<VcsOperation> getCheckinOperations(CheckinEnvironment checkinEnvironment);
+
+  Collection<VirtualFile> getRoots();
 }
