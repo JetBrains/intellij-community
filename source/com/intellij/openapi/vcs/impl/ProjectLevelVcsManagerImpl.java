@@ -158,7 +158,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                                                                             toolWindowManager.registerToolWindow(ToolWindowId.VCS,
                                                                                                                  myContentManager.getComponent(),
                                                                                                                  ToolWindowAnchor.BOTTOM);
-                                                                            toolWindow.setIcon(IconLoader.getIcon("/_cvs/cvs.png"));
+                                                                            toolWindow.setIcon(IconLoader.getIcon("/general/smallConfigurableVcs.png"));
                                                                             toolWindow.installWatcher(myContentManager);
                                                                           }
                                                                         }

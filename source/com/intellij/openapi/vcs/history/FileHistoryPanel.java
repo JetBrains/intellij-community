@@ -520,7 +520,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private class MyShowAsTreeAction extends ToggleAction {
     public MyShowAsTreeAction() {
-      super("Show as Tree", null, IconLoader.getIcon("/_cvs/showAsTree.png"));
+      super("Show as Tree", null, IconLoader.getIcon("/general/smallConfigurableVcs.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {

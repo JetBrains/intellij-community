@@ -213,7 +213,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class MyGroupByPackagesAction extends ToggleAction {
     public MyGroupByPackagesAction() {
-      super("Group by Packages", null, IconLoader.getIcon("/_cvs/showAsTree.png"));
+      super("Group by Packages", null, IconLoader.getIcon("/general/smallConfigurableVcs.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {
