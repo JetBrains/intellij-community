@@ -5,6 +5,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.UserDataHolder;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public interface Editor extends UserDataHolder {
   Document getDocument();
@@ -64,4 +66,6 @@ public interface Editor extends UserDataHolder {
   boolean isOneLineMode();
 
   EditorGutter getGutter();
+
+  EditorMouseEventArea getMouseEventArea(MouseEvent e);
 }

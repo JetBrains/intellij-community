@@ -3,6 +3,7 @@ package com.intellij.lang;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.validation.Validator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -63,6 +64,10 @@ public abstract class Language {
   }
 
   public PairedBraceMatcher getPairedBraceMatcher() {
+    return null;
+  }
+
+  public Validator getValidator() {
     return null;
   }
 
