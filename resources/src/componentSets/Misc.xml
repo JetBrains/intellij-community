@@ -52,11 +52,7 @@
       <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
       <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
       <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.intellijac.IntelliJacManager</implementation-class>
-      <option name="internal" value="true"/>
-    </component>
+    </component>   
     <component>
       <interface-class>com.intellij.find.FindManager</interface-class>
       <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
