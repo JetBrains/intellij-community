@@ -628,7 +628,7 @@ public class TypeCookTest extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
-    SystemBuilder b = new SystemBuilder(aClass.getManager(),
+    SystemBuilder b = new SystemBuilder(aClass.getManager().getProject(),
                                         new Settings() {
                                           public boolean dropObsoleteCasts() {
                                             return true;
