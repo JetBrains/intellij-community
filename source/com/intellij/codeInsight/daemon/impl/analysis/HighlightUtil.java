@@ -66,7 +66,7 @@ public class HighlightUtil {
   public static final String EXPRESSION_EXPECTED = "Expression expected";
   private static final Set<String> ourConstructorNotAllowedModifiers;
   public static final String INCONVERTIBLE_TYPE_CAST = "Inconvertible types; cannot cast ''{0}'' to ''{1}''";
-  public static final String BINARY_OPERATOR_NOT_APPLICABLE = "Operator ''{0}'' cannot be applied to ''{1}'',''{2}''";
+  private static final String BINARY_OPERATOR_NOT_APPLICABLE = "Operator ''{0}'' cannot be applied to ''{1}'',''{2}''";
 
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
@@ -942,9 +942,7 @@ public class HighlightUtil {
                                               formatType(lOperand.getType()),
                                               formatType(rOperand.getType())
                                             });
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               expression,
-                                               message);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
     }
     return null;
   }
@@ -961,9 +959,12 @@ public class HighlightUtil {
                                               token.getText(),
                                               formatType(type)
                                             });
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               token.getParent(),
-                                               message);
+      final PsiElement parentExpr = token.getParent();
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parentExpr, message);
+      if (parentExpr instanceof PsiPrefixExpression && token.getTokenType() == JavaTokenType.EXCL) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new NegationBroadScopeFix((PsiPrefixExpression)parentExpr));
+      }
+      return highlightInfo;
     }
     return null;
   }
