@@ -121,6 +121,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     processBeforeEvent(event);
   }
 
+  public void beforeChildrenChange(PsiTreeChangeEvent event) {
+    processBeforeEvent(event);
+  }
+
   private void processBeforeEvent(PsiTreeChangeEvent event) {
     if (toProcessPsiEvent()) {
       PsiFile psiFile = event.getParent().getContainingFile();
