@@ -11,9 +11,11 @@ import java.util.*;
  */
 public class LayeredLexer implements Lexer, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
+  private static final int IN_LAYER_STATE = Integer.MAX_VALUE;
 
   private char[] myBuffer;
   private int myBufferEnd;
+  private int myState;
 
   private Lexer myBaseLexer;
   private Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
@@ -22,17 +24,9 @@ public class LayeredLexer implements Lexer, Cloneable {
   private HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
   private HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
 
-  private int myMaxLayerStatesCount = 0;
-  private int myBaseStatesCount;
-  private int myLastState;
-  private int myLastBaseState;
-  private int mySmartUpdate;
-  private int myStateToReturn;
 
   public LayeredLexer(Lexer baseLexer) {
     myBaseLexer = baseLexer;
-    myBaseStatesCount =  (baseLexer.getLastState() + 1);
-    mySmartUpdate = baseLexer.getSmartUpdateShift();
   }
 
   public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
@@ -48,15 +42,6 @@ public class LayeredLexer implements Lexer, Cloneable {
     }
 
     myLayerLexers.add(Lexer);
-    myMaxLayerStatesCount =  Math.max(myMaxLayerStatesCount, Lexer.getLastState() + 1);
-    mySmartUpdate = Math.max(mySmartUpdate, Lexer.getSmartUpdateShift());
-    calcLastState();
-  }
-
-  private void calcLastState() {
-    int lastState = (myLayerLexers.size() + 1) * myMaxLayerStatesCount * myBaseStatesCount;
-    LOG.assertTrue(lastState > 0, "out of half int range for states");
-    myLastState =  lastState;
   }
 
   private void activateLayerIfNecessary() {
@@ -67,7 +52,6 @@ public class LayeredLexer implements Lexer, Cloneable {
         myBaseLexer.advance();
       }
     }
-    myLastBaseState = getLexState(myBaseLexer);
   }
 
   public void start(char[] buffer) {
@@ -79,58 +63,21 @@ public class LayeredLexer implements Lexer, Cloneable {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
+    myState = initialState;
+    myCurrentLayerLexer = null;
     myBuffer = buffer;
     myBufferEnd = endOffset;
-    myStateToReturn = initialState;
-
-    final int layerIndex = initialState % (myLayerLexers.size() + 1);
-    initialState /= (myLayerLexers.size() + 1);
-    final int layerState = initialState % myMaxLayerStatesCount;
-    initialState /= myMaxLayerStatesCount;
-
-    myLastBaseState = initialState;
-
-    if (layerIndex != 0) {
-      myCurrentLayerLexer = myLayerLexers.get(layerIndex - 1);
-      if (!mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
-        myBaseLexer.start(buffer, startOffset, endOffset, myLastBaseState);
-        endOffset = myBaseLexer.getTokenEnd();
-      }
-      myCurrentLayerLexer.start(buffer, startOffset, endOffset,  layerState);
-    } else {
-      LOG.assertTrue(layerState == 0);
-      myCurrentLayerLexer = null;
-      myBaseLexer.start(buffer, startOffset, endOffset, myLastBaseState);
-      activateLayerIfNecessary();
-    }
+    myBaseLexer.start(buffer, startOffset, endOffset, initialState);
+    activateLayerIfNecessary();
   }
 
   public int getState() {
-    return myStateToReturn;
-  }
-
-  private int calcState() {
-    int layerState = isLayerActive() ? getLexState(myCurrentLayerLexer) : 0;
-    return packState(getLexState(myBaseLexer), layerState, (short) (myLayerLexers.indexOf(myCurrentLayerLexer) + 1));
-  }
-
-  private int getLexState(Lexer lexer) {
-    int state = lexer.getState();
-    LOG.assertTrue(state <= lexer.getLastState(), "lastState() too optimistic");
-    return state;
-  }
-
-  private int packState(int baseState, int layerState, short layerIndex) {
-    int result = baseState;
-    result *= myMaxLayerStatesCount;
-    result += layerState;
-    result *= myLayerLexers.size() + 1;
-    result += layerIndex;
-    return  result;
+    return myState;
   }
 
   public int getLastState() {
-    return myLastState;
+    return 0;
   }
 
   public IElementType getTokenType() {
@@ -169,8 +116,7 @@ public class LayeredLexer implements Lexer, Cloneable {
       myBaseLexer.advance();
       activateLayerIfNecessary();
     }
-
-    myStateToReturn = calcState();
+    myState = isLayerActive() ? IN_LAYER_STATE : myBaseLexer.getState();
   }
 
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {
