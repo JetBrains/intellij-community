@@ -60,9 +60,9 @@ public class PsiTreeUtil {
     return null;
   }
 
-  public static PsiElement getNextSiblingOfType(PsiElement sibling, Class aClass) {
+  public static <ChildType extends PsiElement> ChildType getNextSiblingOfType(PsiElement sibling, Class<ChildType> aClass) {
     for(PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()){
-      if (aClass.isInstance(child)) return child;
+      if (aClass.isInstance(child)) return (ChildType)child;
     }
     return null;
   }

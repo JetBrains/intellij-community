@@ -33,6 +33,7 @@ public class InlineMethodTest extends CodeInsightTestCase {
   public void testInlineWithTry() throws Exception { doTest(); }
 
   public void testVoidWithReturn() throws Exception { doTest(); }
+  public void testVoidWithReturn1() throws Exception { doTest(); }
 
   public void testScr10884() throws Exception { doTest(); }
   public void testFinalParameters() throws Exception { doTest(); }

@@ -408,7 +408,7 @@ public class OverrideImplementUtil {
       prevBaseMethod = PsiTreeUtil.getPrevSiblingOfType(prevBaseMethod, PsiMethod.class);
     }
 
-    PsiMethod nextBaseMethod = (PsiMethod)PsiTreeUtil.getNextSiblingOfType(baseMethod, PsiMethod.class);
+    PsiMethod nextBaseMethod = PsiTreeUtil.getNextSiblingOfType(baseMethod, PsiMethod.class);
     while(nextBaseMethod != null) {
       String name = nextBaseMethod.isConstructor() ? aClass.getName() : nextBaseMethod.getName();
       if (name != null) {
@@ -418,7 +418,7 @@ public class OverrideImplementUtil {
           return nextMethod;
         }
       }
-      nextBaseMethod = (PsiMethod)PsiTreeUtil.getNextSiblingOfType(nextBaseMethod, PsiMethod.class);
+      nextBaseMethod = PsiTreeUtil.getNextSiblingOfType(nextBaseMethod, PsiMethod.class);
     }
 
     return null;

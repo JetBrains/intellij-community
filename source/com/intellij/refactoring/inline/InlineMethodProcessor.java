@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -317,50 +316,46 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     PsiLocalVariable thisVar = null;
     PsiLocalVariable[] parmVars = new PsiLocalVariable[blockData.parmVars.length];
     PsiLocalVariable resultVar = null;
-    PsiElement[] methodStatements = blockData.block.getChildren();
-    if (methodStatements.length > 2) {
-      PsiElement first = methodStatements[1];
-      PsiElement last = methodStatements[methodStatements.length - 2];
+    PsiStatement[] statements = blockData.block.getStatements();
+    if (statements.length > 0) {
+      int first = 0;
+      int last = statements.length - 1;
+      /*PsiElement first = statements[0];
+      PsiElement last = statements[statements.length - 1];*/
 
-      PsiStatement[] statements = blockData.block.getStatements();
       if (statements.length > 0 && statements[statements.length - 1] instanceof PsiReturnStatement) {
-        last = statements[statements.length - 1].getPrevSibling();
+        last--;
       }
 
-      PsiElement firstAdded = anchorParent.addRangeBefore(first, last, anchor);
+      if (first <= last) {
+        PsiElement firstAdded = anchorParent.addRangeBefore(statements[first], statements[last], anchor);
 
-      PsiElement current = firstAdded;
-      if (blockData.thisVar != null) {
-        while (current != null && !(current instanceof PsiStatement)) {
-          current = current.getNextSibling();
+        PsiElement current = firstAdded.getPrevSibling();
+        if (blockData.thisVar != null) {
+          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+          thisVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
+          current = statement;
         }
-        if (current == null) {
-          current = firstAdded;
+        for (int i = 0; i < parmVars.length; i++) {
+          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+          parmVars[i] = (PsiLocalVariable)statement.getDeclaredElements()[0];
+          current = statement;
         }
-        thisVar = (PsiLocalVariable)((PsiDeclarationStatement)current).getDeclaredElements()[0];
-        current = current.getNextSibling();
+        if (blockData.resultVar != null) {
+          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+          resultVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
+        }
       }
-      for (int i = 0; i < parmVars.length; i++) {
-        final PsiElement oldCurrent = current;
-        while (current != null && !(current instanceof PsiStatement)) {
-          current = current.getNextSibling();
+      if (statements.length > 0) {
+        final PsiStatement lastStatement = statements[statements.length - 1];
+        if (lastStatement instanceof PsiReturnStatement) {
+          final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
+          if (returnValue != null) {
+            PsiExpressionStatement exprStatement = (PsiExpressionStatement)myFactory.createStatementFromText("a;", null);
+            exprStatement.getExpression().replace(returnValue);
+            anchorParent.addBefore(exprStatement, anchor);
+          }
         }
-        if (current == null) {
-          current = oldCurrent;
-        }
-        parmVars[i] = (PsiLocalVariable)((PsiDeclarationStatement)current).getDeclaredElements()[0];
-        current = current.getNextSibling();
-      }
-      if (blockData.resultVar != null) {
-        final PsiElement oldCurrent = current;
-        while (current != null && !(current instanceof PsiStatement)) {
-          current = current.getNextSibling();
-        }
-        if (current == null) {
-          current = oldCurrent;
-        }
-        resultVar = (PsiLocalVariable)((PsiDeclarationStatement)current).getDeclaredElements()[0];
-        current = current.getNextSibling();
       }
     }
 
@@ -458,8 +453,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
   }
 
 
-  private boolean syncNeeded (final Object thisVar, final PsiReferenceExpression ref) {
-    if (thisVar == null) return false;
+  private boolean syncNeeded(final PsiReferenceExpression ref) {
     if (!myMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) return false;
     final PsiMethod containingMethod = Util.getContainingMethod(ref);
     if (containingMethod == null) return true;
@@ -507,9 +501,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
                                                                                          initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parmVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      if (parm.hasModifierProperty(PsiModifier.FINAL)) {
-        parmVars[i].getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-      }
+      parmVars[i].getModifierList().setModifierProperty(PsiModifier.FINAL, parm.hasModifierProperty(PsiModifier.FINAL));
     }
 
     PsiLocalVariable thisVar = null;
@@ -531,8 +523,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
       }
     }
 
-    //if (myMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED) && thisVar != null)
-    if (syncNeeded (thisVar, ref)) {
+    if (thisVar != null && syncNeeded (ref)) {
       PsiSynchronizedStatement synchronizedStatement =
         (PsiSynchronizedStatement)myFactory.createStatementFromText("synchronized(" + thisVar.getName() + "){}", block);
       synchronizedStatement =
@@ -676,7 +667,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
               PsiElement newRefElement = refExpr.resolve();
               if (!refElement.equals(newRefElement)) {
                 // change back
-                refExpr = (PsiReferenceExpression)refExpr.replace(exprCopy);
+                refExpr.replace(exprCopy);
               }
             }
           }
