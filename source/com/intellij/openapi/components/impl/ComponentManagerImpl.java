@@ -1,5 +1,6 @@
 package com.intellij.openapi.components.impl;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.ComponentDescriptor;
 import com.intellij.ide.plugins.PluginDescriptor;
@@ -375,7 +376,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
     
     final ComponentDescriptor[] componentDescriptors =
-      (ComponentDescriptor[])extensionsArea.getExtensionPoint(PluginManager.COMPONENT_EXTENSION_POINT).getExtensions();
+      (ComponentDescriptor[])extensionsArea.getExtensionPoint(ExtensionPoints.COMPONENT).getExtensions();
     for (int i = 0; i < componentDescriptors.length; i++) {
       ComponentDescriptor descriptor = componentDescriptors[i];
       final Map<String, String> options = descriptor.getOptionsMap();

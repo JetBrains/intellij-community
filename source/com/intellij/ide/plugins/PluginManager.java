@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -40,7 +41,6 @@ import java.util.zip.ZipFile;
 public class PluginManager {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
-  public static final String COMPONENT_EXTENSION_POINT = "com.intellij.component";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -125,12 +125,12 @@ public class PluginManager {
     Extensions.registerAreaClass("IDEA_PROJECT", null);
     Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
 
-    Extensions.getRootArea().registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.COMPONENT, ComponentDescriptor.class.getName());
 
     Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
       public void areaCreated(String areaClass, AreaInstance areaInstance) {
         if ("IDEA_PROJECT".equals(areaClass) || "IDEA_MODULE".equals(areaClass)) {
-          Extensions.getArea(areaInstance).registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
+          Extensions.getArea(areaInstance).registerExtensionPoint(ExtensionPoints.COMPONENT, ComponentDescriptor.class.getName());
         }
       }
 
@@ -138,8 +138,8 @@ public class PluginManager {
       }
     }, LoadingOrder.FIRST);
 
-    Extensions.getRootArea().registerExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT, ErrorReportSubmitter.class.getName());
-    Extensions.getRootArea().getExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT).registerExtension(new ITNReporter());
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.ERROR_HANDLER, ErrorReportSubmitter.class.getName());
+    Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).registerExtension(new ITNReporter());
   }
 
   public static boolean shouldLoadPlugins() {

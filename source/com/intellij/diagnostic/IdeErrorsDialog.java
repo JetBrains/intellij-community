@@ -8,6 +8,7 @@ package com.intellij.diagnostic;
  * @author kir, max
  */
 
+import com.intellij.ExtensionPoints;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
@@ -467,7 +468,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
     final String pluginName = findPluginName(logMessage.getThrowable());
-    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT)
+    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER)
         .getExtensions();
     ErrorReportSubmitter submitter = null;
     for (int i = 0; i < reporters.length; i++) {
