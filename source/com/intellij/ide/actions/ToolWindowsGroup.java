@@ -39,6 +39,7 @@ public final class ToolWindowsGroup extends ActionGroup{
     ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor("TODO", IconLoader.getIcon("/general/toolWindowTodo.png")));
     ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor("I&nspection", IconLoader.getIcon("/general/toolWindowInspection.png")));
     ourId2Text.put(ToolWindowId.ASPECTS_VIEW, new MyDescriptor("Aspects", IconLoader.getIcon("/general/toolWindowInspection.png")));
+    ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor("&Favorites", IconLoader.getIcon("/general/toolWindowFavorites.png")));
   }
 
   private final ArrayList<AnAction> myChildren;

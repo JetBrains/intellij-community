@@ -74,7 +74,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FAVORITES_VIEW, getComponent(), ToolWindowAnchor.RIGHT);
-        toolWindow.setIcon(IconLoader.getIcon("/general/favorites.png"));
+        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFavorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
         final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
