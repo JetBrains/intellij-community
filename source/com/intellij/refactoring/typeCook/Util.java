@@ -364,56 +364,6 @@ public class Util {
     return t;
   }
 
-  public static PsiType substituteType(final PsiType type, final PsiSubstitutor subst) {
-    if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wcType = ((PsiWildcardType)type);
-      final PsiType bound = wcType.getBound();
-
-      if (bound != null) {
-        final PsiClass aClass = resolveType(bound).getElement();
-
-        if (aClass != null) {
-          final PsiManager manager = aClass.getManager();
-
-          return wcType.isExtends()
-                 ? PsiWildcardType.createExtends(manager, substituteType(bound, subst))
-                 : PsiWildcardType.createSuper(manager, substituteType(bound, subst));
-        }
-      }
-
-      return type;
-    }
-    else {
-      final int level = getArrayLevel(type);
-      final PsiClassType.ClassResolveResult result = resolveType(type);
-      final PsiClass aClass = result.getElement();
-
-      if (aClass != null) {
-        final PsiSubstitutor aSubst = result.getSubstitutor();
-        final PsiManager manager = aClass.getManager();
-
-        if (aClass instanceof PsiTypeParameter) {
-          final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
-
-          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : sType, level);
-        }
-
-        final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
-        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-        for (int i = 0; i < aParms.length; i++) {
-          PsiTypeParameter aParm = aParms[i];
-
-          theSubst = theSubst.put(aParm, substituteType(aSubst.substitute(aParm), subst));
-        }
-
-        return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
-      }
-
-      return type;
-    }
-  }
-
   public static boolean bindsTypeVariables(final PsiType t) {
     if (t == null) {
       return false;

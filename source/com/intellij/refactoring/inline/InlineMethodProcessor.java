@@ -213,7 +213,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
           if (myMethod.isWritable()) myMethod.delete();
         } else {
-          ArrayList<PsiReferenceExpression> tempRefs = new ArrayList<PsiReferenceExpression>();
+          Set<PsiReferenceExpression> tempRefs = new TreeSet<PsiReferenceExpression>(new Comparator<PsiReferenceExpression>() {
+            //Enforce partial order: descendants in the tree are processed before the ancestors
+            public int compare(final PsiReferenceExpression e1, final PsiReferenceExpression e2) {
+              if (PsiTreeUtil.isAncestor(e2, e1, false)) return 1;
+              return -1;
+            }
+          });
           for (int i = 0; i < usages.length; i++) {
             final UsageInfo usage = usages[i];
             if (usage.getElement() instanceof PsiReferenceExpression) {
