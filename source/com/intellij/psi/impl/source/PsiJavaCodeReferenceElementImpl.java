@@ -71,10 +71,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_NAME_KIND;
     }
     else if (i == NEW_EXPRESSION) {
-      {
-        final TreeElement qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
-        return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
-      }
+      final TreeElement qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+      return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
     }
     else if (i == ANONYMOUS_CLASS) {
       if (getTreeParent().getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
@@ -90,49 +88,41 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return PACKAGE_NAME_KIND;
     }
     else if (i == IMPORT_STATEMENT) {
-      {
-        final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).isOnDemand();
-        return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
-      }
+      final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).isOnDemand();
+      return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
     else if (i == IMPORT_STATIC_STATEMENT) {
-      {
-        return CLASS_FQ_OR_PACKAGE_NAME_KIND;
-      }
+      return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
     else if (i == JSP_IMPORT_VALUE) {
-      {
-        final TreeElement nextNonSpace = TreeUtil.skipElements(getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
-        final boolean isOnDemand = nextNonSpace != null && nextNonSpace.getElementType() == DOT;
-        return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
-      }
+      final TreeElement nextNonSpace = TreeUtil.skipElements(getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final boolean isOnDemand = nextNonSpace != null && nextNonSpace.getElementType() == DOT;
+      return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
     else if (i == JAVA_CODE_REFERENCE) {
-      {
-        final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
-        switch (parentKind) {
-          case CLASS_NAME_KIND:
-            return CLASS_OR_PACKAGE_NAME_KIND;
+      final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
+      switch (parentKind) {
+      case CLASS_NAME_KIND:
+             return CLASS_OR_PACKAGE_NAME_KIND;
 
-          case PACKAGE_NAME_KIND:
-            return PACKAGE_NAME_KIND;
+      case PACKAGE_NAME_KIND:
+             return PACKAGE_NAME_KIND;
 
-          case CLASS_OR_PACKAGE_NAME_KIND:
-            return CLASS_OR_PACKAGE_NAME_KIND;
+      case CLASS_OR_PACKAGE_NAME_KIND:
+             return CLASS_OR_PACKAGE_NAME_KIND;
 
-          case CLASS_FQ_NAME_KIND:
-            return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+      case CLASS_FQ_NAME_KIND:
+             return CLASS_FQ_OR_PACKAGE_NAME_KIND;
 
-          case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-            return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+             return CLASS_FQ_OR_PACKAGE_NAME_KIND;
 
-          case CLASS_IN_QUALIFIED_NEW_KIND:
-            return CLASS_IN_QUALIFIED_NEW_KIND; //??
+      case CLASS_IN_QUALIFIED_NEW_KIND:
+             return CLASS_IN_QUALIFIED_NEW_KIND; //??
 
-          default:
-            LOG.assertTrue(false);
-            return -1;
-        }
+      default:
+             LOG.assertTrue(false);
+             return -1;
       }
     }
     else if (i == CLASS || i == PARAMETER_LIST || i == ERROR_ELEMENT) {

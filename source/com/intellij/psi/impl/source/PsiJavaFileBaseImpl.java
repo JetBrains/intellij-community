@@ -30,7 +30,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private PsiImportListImpl myRepositoryImportList = null;
   private String myCachedPackageName = null;
   protected PsiClass[] myCachedClasses = null;
-  private final Map myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
+  private final Map<PsiJavaFile,Map<String, SoftReference<ResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
 
   private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
 
@@ -416,14 +416,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private ResolveResult[] getGuess(final String name){
-    final Map guessForFile = (Map) myGuessCache.get(this);
+    final Map guessForFile = myGuessCache.get(this);
     final Reference ref = guessForFile != null ? (Reference)guessForFile.get(name) : null;
 
     return ref != null ? (ResolveResult[])ref.get() : null;
   }
 
   private void setGuess(final String name, final ResolveResult[] cached){
-    Map<String,SoftReference<ResolveResult[]>> guessForFile = (Map<String,SoftReference<ResolveResult[]>>) myGuessCache.get(this);
+    Map<String,SoftReference<ResolveResult[]>> guessForFile = myGuessCache.get(this);
     if(guessForFile == null){
       guessForFile = new HashMap<String, SoftReference<ResolveResult[]>>();
       myGuessCache.put(this, guessForFile);

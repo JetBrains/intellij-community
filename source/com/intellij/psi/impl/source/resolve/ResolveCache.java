@@ -11,23 +11,23 @@ import java.lang.ref.SoftReference;
 import java.util.Set;
 
 public class ResolveCache {
-  private static final Key JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
-  private static final Key RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
-  private static final Key JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
-  private static final Key RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
-  private static final Key IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
-  private static final Key VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
+  private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
+  private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
+  private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
+  private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
+  private static final Key<String> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
+  private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   private static final Object NULL = Key.create("NULL");
 
   private final PsiManagerImpl myManager;
 
-  private final WeakHashMap myVarToConstValueMap1;
+  private final WeakHashMap<PsiVariable, Object> myVarToConstValueMap1;
 
   private final WeakHashMap[] myJavaResolveMaps = new WeakHashMap[4];
   private final WeakHashMap[] myResolveMaps = new WeakHashMap[4];
 
-  private final WeakHashMap myVarToConstValueMap2;
+  private final WeakHashMap<PsiVariable,Object> myVarToConstValueMap2;
 
   public static interface GenericsResolver{
     ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode);
@@ -78,7 +78,7 @@ public class ResolveCache {
       boolean physical = ref.getElement().isPhysical();
       final Reference<PsiElement> cached = getCachedResolve(ref, physical, incompleteCode);
       if (cached != null) return cached.get();
-      ;
+
       if (incompleteCode) {
         final PsiElement results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
         if (results != null) {
@@ -103,7 +103,7 @@ public class ResolveCache {
 
   private void setCachedResolve(PsiReference ref, PsiElement results, boolean physical, boolean incompleteCode) {
     int index = getIndex(physical, incompleteCode);
-    myResolveMaps[index].put(ref, new SoftReference(results));
+    myResolveMaps[index].put(ref, new SoftReference<PsiElement>(results));
   }
 
   private Reference<PsiElement> getCachedResolve(PsiReference ref, boolean physical, boolean incompleteCode) {
@@ -124,7 +124,7 @@ public class ResolveCache {
       boolean physical = ref.getElement().isPhysical();
       final ResolveResult[] cached = getCachedJavaResolve(ref, physical, incompleteCode);
       if (cached != null) return cached;
-      ;
+
       if (incompleteCode) {
         final ResolveResult[] results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
         if (results != null && results.length > 0) {
@@ -147,13 +147,13 @@ public class ResolveCache {
     }
   }
 
-  private int getIndex(boolean physical, boolean ic){
+  private static int getIndex(boolean physical, boolean ic){
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
   }
 
   public void setCachedJavaResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean ic){
     int index = getIndex(physical, ic);
-    myJavaResolveMaps[index].put(ref, new SoftReference(result));
+    myJavaResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
   }
 
   private ResolveResult[] getCachedJavaResolve(PsiReference ref, boolean physical, boolean ic){
@@ -181,13 +181,13 @@ public class ResolveCache {
     return result;
   }
 
-  public static WeakHashMap getOrCreateWeakMap(final PsiManagerImpl manager, final Key key, boolean forPhysical) {
-    MapPair pair = (MapPair)manager.getUserData(key);
+  public static <K,V> WeakHashMap<K,V> getOrCreateWeakMap(final PsiManagerImpl manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
+    MapPair<K, V> pair = manager.getUserData(key);
     if (pair == null){
-      pair = new MapPair();
+      pair = new MapPair<K,V>();
       manager.putUserData(key, pair);
 
-      final MapPair _pair = pair;
+      final MapPair<K, V> _pair = pair;
       manager.registerRunnableToRunOnChange(
         new Runnable() {
           public void run() {
@@ -208,13 +208,13 @@ public class ResolveCache {
     return forPhysical ? pair.physicalMap : pair.nonPhysicalMap;
   }
 
-  private static class MapPair{
-    public WeakHashMap physicalMap;
-    public WeakHashMap nonPhysicalMap;
+  private static class MapPair<K,V>{
+    public WeakHashMap<K,V> physicalMap;
+    public WeakHashMap<K,V> nonPhysicalMap;
 
     public MapPair() {
-      physicalMap = new WeakHashMap();
-      nonPhysicalMap = new WeakHashMap();
+      physicalMap = new WeakHashMap<K, V>();
+      nonPhysicalMap = new WeakHashMap<K, V>();
     }
   }
 }
