@@ -162,7 +162,10 @@ public abstract class BaseRefactoringProcessor {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (int i = 0; i < usages.length; i++) {
       final PsiFile file = usages[i].getElement().getContainingFile();
-      files.add(file.getVirtualFile());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        files.add(virtualFile);
+      }
     }
     ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
