@@ -177,7 +177,7 @@ public class HtmlUtil {
         if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
         text = text.substring(offset,text.length() - offset);
 
-        if (text.indexOf("http://") == -1) {
+        if (text.indexOf("http://") == -1 && text.indexOf("mailto:") == -1) {
           refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
         } else {
           refs = PsiReference.EMPTY_ARRAY;
