@@ -70,6 +70,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.EditorAdapter;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.io.File;
@@ -158,7 +159,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                                                                             toolWindowManager.registerToolWindow(ToolWindowId.VCS,
                                                                                                                  myContentManager.getComponent(),
                                                                                                                  ToolWindowAnchor.BOTTOM);
-                                                                            toolWindow.setIcon(IconLoader.getIcon("/general/smallConfigurableVcs.png"));
+                                                                            toolWindow.setIcon(Icons.VCS_SMALL_TAB);
                                                                             toolWindow.installWatcher(myContentManager);
                                                                           }
                                                                         }

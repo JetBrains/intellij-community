@@ -33,6 +33,7 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.util.TreeItem;
+import com.intellij.util.Icons;
 import com.intellij.util.text.LineReader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.IdeaUIManager;
@@ -520,7 +521,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private class MyShowAsTreeAction extends ToggleAction {
     public MyShowAsTreeAction() {
-      super("Show as Tree", null, IconLoader.getIcon("/general/smallConfigurableVcs.png"));
+      super("Show as Tree", null, Icons.SMALL_VCS_CONFIGURABLE);
     }
 
     public boolean isSelected(AnActionEvent e) {

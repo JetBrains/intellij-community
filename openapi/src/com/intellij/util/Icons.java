@@ -101,4 +101,7 @@ public interface Icons {
   Icon PROJECT_ICON = IconLoader.getIcon("/icon_small.png");
   Icon UI_FORM_ICON = IconLoader.getIcon("/fileTypes/uiForm.png");
   Icon JSP_ICON = IconLoader.getIcon("/fileTypes/jsp.png");
+  Icon SMALL_VCS_CONFIGURABLE = IconLoader.getIcon("/general/smallConfigurableVcs.png");
+  Icon VCS_SMALL_TAB = IconLoader.getIcon("/general/vcsSmallTab.png");
+  Icon GROUP_BY_PACKAGES = IconLoader.getIcon("/toolbar/folders.png");
 }
