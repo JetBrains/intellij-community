@@ -968,14 +968,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
   }
 
-  private void addMarkedElements(List<PsiReferenceExpression> array, PsiElement scope) {
-    if (scope.getCopyableUserData(MARK_KEY) != null) {
-      array.add((PsiReferenceExpression)scope);
-      scope.putCopyableUserData(MARK_KEY, null);
-    }
-    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
-      addMarkedElements(array, child);
-    }
+  private void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
+    scope.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        if (element.getCopyableUserData(MARK_KEY) != null) {
+          array.add((PsiReferenceExpression)element);
+          element.putCopyableUserData(MARK_KEY, null);
+        }
+        super.visitElement(element);
+      }
+    });
   }
 
   private void removeAddedBracesWhenPossible() throws IncorrectOperationException {
