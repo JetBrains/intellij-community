@@ -400,7 +400,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                               "        OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 10, 12, 0, "lesya", "method parameter alignment")) {
+    if (IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 15, 12, 0, "lesya", "method parameter alignment")) {
       assertEquals(
         "Replace in constructor",
         expectedResult17,
