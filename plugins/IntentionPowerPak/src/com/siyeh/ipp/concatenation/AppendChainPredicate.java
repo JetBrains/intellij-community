@@ -26,7 +26,8 @@ class AppendChainPredicate implements PsiElementPredicate{
         final PsiElement parent = element.getParent();
         if(parent instanceof PsiExpressionStatement)
             return true;
-        if(parent instanceof PsiLocalVariable && parent.getParent() instanceof PsiDeclarationStatement &&
+        if(parent instanceof PsiLocalVariable &&
+                                parent.getParent() instanceof PsiDeclarationStatement &&
                        ( (PsiDeclarationStatement)(parent.getParent())).getDeclaredElements().length == 1)
             return true;
         if(parent instanceof PsiAssignmentExpression &&

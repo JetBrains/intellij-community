@@ -1,0 +1,10 @@
+public class X {
+  void f(String a, String b) {
+    String[] array = new String[]{"foo", "bar", "baz"};
+    for(int i = 0;i<array.length;i++)
+    {
+       String content = array[i];
+       System.out.println(content);
+    }
+  }
+}

@@ -31,14 +31,14 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             return;
         }
 
-        PsiExpression call =
+        final PsiExpression call =
                 (PsiExpression) findMatchingElement(file, editor);
         final List argsList = new ArrayList();
         PsiExpression currentCall = call;
         while(currentCall instanceof PsiMethodCallExpression &&
                         AppendUtil.isAppend((PsiMethodCallExpression) currentCall)){
             final PsiExpressionList args =
-                    ((PsiMethodCallExpression) currentCall).getArgumentList();
+                    ((PsiCall) currentCall).getArgumentList();
             final String argText = args.getText();
             argsList.add(argText);
             final PsiReferenceExpression methodExpression =
@@ -46,17 +46,15 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             currentCall = methodExpression.getQualifierExpression();
         }
         final String targetText;
-        final String firstTargetText;
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         final PsiStatement statement;
-        final String firstStatementPreamble;
+        final String firstStatement;
         if(call.getParent() instanceof PsiExpressionStatement){
             targetText = currentCall.getText();
-            firstTargetText = currentCall.getText();
             statement = (PsiStatement) call.getParent();
-            firstStatementPreamble = "";
+            firstStatement = null;
         } else if(call.getParent() instanceof PsiAssignmentExpression &&
                                 call.getParent()
                                 .getParent() instanceof PsiExpressionStatement){
@@ -64,10 +62,10 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) call.getParent();
             targetText = assignment.getLExpression().getText();
-            firstTargetText = currentCall.getText();
-            firstStatementPreamble =
+            firstStatement =
                     assignment.getLExpression().getText() +
-                    assignment.getOperationSign().getText();
+                    assignment.getOperationSign().getText() + currentCall.getText() +
+                    ';';
         } else{
             statement = (PsiStatement) call.getParent().getParent();
             final PsiDeclarationStatement declaration =
@@ -75,29 +73,33 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             final PsiVariable variable =
                     (PsiVariable) declaration.getDeclaredElements()[0];
             targetText = variable.getName();
-            firstTargetText = currentCall.getText();
             if(variable.hasModifierProperty(PsiModifier.FINAL)){
-                firstStatementPreamble = "final " +
+                firstStatement = "final " +
                         variable.getType().getPresentableText() +
-                        ' ' + variable.getName() + '=';
+                        ' ' + variable.getName() + '=' + currentCall.getText() +
+                        ';';
             } else{
-                firstStatementPreamble =
+                firstStatement =
                         variable.getType().getPresentableText() +
-                        ' ' + variable.getName() + '=';
+                        ' ' + variable.getName() + '=' + currentCall.getText() +
+                        ';';
             }
         }
 
         for(Iterator iterator = argsList.iterator(); iterator.hasNext();){
             final String arg = (String) iterator.next();
             final String append;
-            if(iterator.hasNext()){
-                append = targetText + ".append" + arg + ';';
-            } else{
-                append = firstStatementPreamble +
-                        firstTargetText + ".append" + arg + ';';
-            }
+            append = targetText + ".append" + arg + ';';
             final PsiStatement newCall =
                     factory.createStatementFromText(append, null);
+            final PsiElement insertedElement = statement.getParent()
+                            .addAfter(newCall, statement);
+            codeStyleManager.reformat(insertedElement);
+        }
+        if(firstStatement!=null)
+        {
+            final PsiStatement newCall =
+                    factory.createStatementFromText(firstStatement, null);
             final PsiElement insertedElement = statement.getParent()
                             .addAfter(newCall, statement);
             codeStyleManager.reformat(insertedElement);

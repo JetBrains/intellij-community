@@ -192,7 +192,7 @@ class CaseUtil{
         final IElementType operation = sign.getTokenType();
         final PsiExpression lOperand = binaryExp.getLOperand();
         final PsiExpression rhs = binaryExp.getROperand();
-        if(!(operation != JavaTokenType.OROR)){
+        if(operation.equals(JavaTokenType.OROR)){
             return canBeMadeIntoCase(lOperand, caseExpression) &&
                            canBeMadeIntoCase(rhs, caseExpression);
         } else if(operation.equals(JavaTokenType.EQEQ)){

@@ -32,7 +32,7 @@ public class BoolUtils{
             final PsiPrefixExpression prefixAncestor =
                     (PsiPrefixExpression) ancestor.getParent();
             final PsiJavaToken sign = prefixAncestor.getOperationSign();
-            if(sign.getTokenType() == JavaTokenType.EXCL){
+            if(JavaTokenType.EXCL.equals(sign.getTokenType())){
                 return prefixAncestor;
             }
         }

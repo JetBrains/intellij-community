@@ -5,7 +5,11 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiClass;
 
-public class AppendUtil{
+class AppendUtil{
+    private AppendUtil(){
+        super();
+    }
+
     public static boolean isAppend(PsiMethodCallExpression call)
     {
         final PsiReferenceExpression methodExpression =
