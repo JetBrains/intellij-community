@@ -13,38 +13,40 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class UnusedCatchParameterInspection extends StatementInspection {
+public class UnusedCatchParameterInspection extends StatementInspection{
     public boolean m_ignoreCatchBlocksWithComments = false;
     public boolean m_ignoreTestCases = false;
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Unused 'catch' parameter";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Unused catch parameter #ref #loc";
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox commentsCheckBox = new JCheckBox("Ignore catch blocks containing comments", m_ignoreCatchBlocksWithComments);
+        final JCheckBox commentsCheckBox =
+                new JCheckBox("Ignore catch blocks containing comments",
+                              m_ignoreCatchBlocksWithComments);
         final ButtonModel commentsModel = commentsCheckBox.getModel();
-        commentsModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        commentsModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreCatchBlocksWithComments = commentsModel.isSelected();
             }
         });
-        final JCheckBox testCaseCheckBox = new JCheckBox("Ignore empty catch blocks in JUnit test cases", m_ignoreTestCases);
+        final JCheckBox testCaseCheckBox =
+                new JCheckBox("Ignore empty catch blocks in JUnit test cases",
+                              m_ignoreTestCases);
         final ButtonModel model = testCaseCheckBox.getModel();
-        model.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        model.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreTestCases = model.isSelected();
             }
         });
@@ -60,44 +62,51 @@ public class UnusedCatchParameterInspection extends StatementInspection {
         return panel;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new EmptyCatchBlockVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
-        private EmptyCatchBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private class EmptyCatchBlockVisitor extends BaseInspectionVisitor{
+        private EmptyCatchBlockVisitor(BaseInspection inspection,
+                                       InspectionManager inspectionManager,
+                                       boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(PsiTryStatement statement){
             super.visitTryStatement(statement);
-            if (m_ignoreTestCases) {
+            if(m_ignoreTestCases){
                 final PsiClass aClass =
                         ClassUtils.getContainingClass(statement);
-                if (aClass != null && ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+                if(aClass != null &&
+                           ClassUtils.isSubclass(aClass,
+                                                 "junit.framework.TestCase")){
                     return;
                 }
             }
 
             PsiCatchSection[] catchSections = statement.getCatchSections();
-            for (int i = 0; i < catchSections.length; i++) {
+            for(int i = 0; i < catchSections.length; i++){
                 final PsiParameter param = catchSections[i].getParameter();
                 final PsiCodeBlock block = catchSections[i].getCatchBlock();
-                if (param == null || block == null) continue;
-                if (m_ignoreCatchBlocksWithComments) {
+                if(param == null || block == null){
+                    continue;
+                }
+                if(m_ignoreCatchBlocksWithComments){
                     final PsiElement[] children = block.getChildren();
-                    for (int j = 0; j < children.length; j++) {
-                        final PsiElement child = children[i];
-                        if (child instanceof PsiComment) {
+                    for(int j = 0; j < children.length; j++){
+                        final PsiElement child = children[j];
+                        if(child instanceof PsiComment){
                             return;
                         }
                     }
                 }
                 final CatchParameterUsedVisitor visitor =
-                      new CatchParameterUsedVisitor(param);
+                        new CatchParameterUsedVisitor(param);
                 block.accept(visitor);
 
-                if (!visitor.isUsed()) {
+                if(!visitor.isUsed()){
                     registerVariableError(param);
                 }
             }
