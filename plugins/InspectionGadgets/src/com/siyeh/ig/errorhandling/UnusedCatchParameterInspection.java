@@ -79,11 +79,11 @@ public class UnusedCatchParameterInspection extends StatementInspection {
                 }
             }
 
-            final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-            final PsiParameter[] params = statement.getCatchBlockParameters();
-            for (int i = 0; i < catchBlocks.length; i++) {
-                final PsiCodeBlock block = catchBlocks[i];
-                final PsiParameter param = params[i];
+            PsiCatchSection[] catchSections = statement.getCatchSections();
+            for (int i = 0; i < catchSections.length; i++) {
+                final PsiParameter param = catchSections[i].getParameter();
+                final PsiCodeBlock block = catchSections[i].getCatchBlock();
+                if (param == null || block == null) continue;
                 if (m_ignoreCatchBlocksWithComments) {
                     final PsiElement[] children = block.getChildren();
                     for (int j = 0; j < children.length; j++) {
@@ -93,14 +93,12 @@ public class UnusedCatchParameterInspection extends StatementInspection {
                         }
                     }
                 }
-                if (block != null && param != null) {
-                    final CatchParameterUsedVisitor visitor =
-                            new CatchParameterUsedVisitor(param);
-                    block.accept(visitor);
+                final CatchParameterUsedVisitor visitor =
+                      new CatchParameterUsedVisitor(param);
+                block.accept(visitor);
 
-                    if (!visitor.isUsed()) {
-                        registerVariableError(param);
-                    }
+                if (!visitor.isUsed()) {
+                    registerVariableError(param);
                 }
             }
         }

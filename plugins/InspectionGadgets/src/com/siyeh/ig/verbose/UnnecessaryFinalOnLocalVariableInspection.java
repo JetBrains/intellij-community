@@ -70,12 +70,11 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
 
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            final PsiParameter[] catchBlockParameters =
-                    statement.getCatchBlockParameters();
-            final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-            for (int i = 0; i < catchBlocks.length; i++) {
-                final PsiCodeBlock catchBlock = catchBlocks[i];
-                final PsiParameter parameter = catchBlockParameters[i];
+            PsiCatchSection[] catchSections = statement.getCatchSections();
+            for (int i = 0; i < catchSections.length; i++) {
+                final PsiParameter parameter = catchSections[i].getParameter();
+                final PsiCodeBlock catchBlock = catchSections[i].getCatchBlock();
+                if (parameter == null || catchBlock == null) continue;
                 if (parameter.hasModifierProperty(PsiModifier.FINAL) &&
                         !variableIsUsedInInnerClass(catchBlock, parameter)) {
                     registerModifierError(PsiModifier.FINAL, parameter);
