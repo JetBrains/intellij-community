@@ -106,6 +106,7 @@ public class ExternalDocumentValidator {
               }
 
               int offset = Math.max(0, document.getLineStartOffset(e.getLineNumber() - 1) + e.getColumnNumber() - 2);
+              if (offset >= document.getTextLength()) return;
               PsiElement currentElement = PsiDocumentManager.getInstance(project).getPsiFile(document).findElementAt(offset);
               PsiElement originalElement = currentElement;
               final String elementText = currentElement.getText();
