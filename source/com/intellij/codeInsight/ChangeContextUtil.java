@@ -38,7 +38,8 @@ public class ChangeContextUtil {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null){
-        final PsiElement refElement = refExpr.resolve();
+        final ResolveResult resolveResult = refExpr.advancedResolve(false);
+        final PsiElement refElement = resolveResult.getElement();
         if (refElement != null){
           if (refElement instanceof PsiClass){
             if (includeRefClasses){
@@ -46,9 +47,11 @@ public class ChangeContextUtil {
             }
           }
           else if (refElement instanceof PsiMember){
-            final PsiClass thisClass = RefactoringUtil.getThisResolveClass(refExpr);
             refExpr.putCopyableUserData(REF_MEMBER_KEY, ( (PsiMember)refElement));
-            refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, thisClass);
+            final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+            if (resolveScope instanceof PsiClass) {
+              refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, ((PsiClass)resolveScope));
+            }
           }
         }
       }
@@ -148,18 +151,17 @@ public class ChangeContextUtil {
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null){
-      PsiElement refMember = refExpr.getCopyableUserData(REF_MEMBER_KEY);
+      PsiMember refMember = refExpr.getCopyableUserData(REF_MEMBER_KEY);
       refExpr.putCopyableUserData(REF_MEMBER_KEY, null);
 
       if (refMember != null && refMember.isValid()){
-        PsiClass parentClass = (PsiClass)refMember.getParent();
-        boolean isStatic = ((PsiModifierListOwner) refMember).hasModifierProperty(PsiModifier.STATIC);
-        if (isStatic){
+        PsiClass containingClass = refMember.getContainingClass();
+        if (refMember.hasModifierProperty(PsiModifier.STATIC)){
           PsiElement refElement = refExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)){
             PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText("q." + refExpr.getText(), null);
             qualifiedExpr = (PsiReferenceExpression)CodeStyleManager.getInstance(project).reformat(qualifiedExpr);
-            PsiExpression newQualifier = factory.createReferenceExpression(parentClass);
+            PsiExpression newQualifier = factory.createReferenceExpression(containingClass);
             qualifiedExpr.getQualifierExpression().replace(newQualifier);
             refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);
           }
@@ -171,11 +173,8 @@ public class ChangeContextUtil {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement)){
-              final PsiClass currentClass = findThisClass(refExpr, refElement);
-              //needQualifier = realParentClass.equals(currentClass) ||
-              //                (currentClass != null && currentClass.isInheritor(realParentClass, true));//parentClass.equals(currentClass);
-
-              if (needQualifier && thisAccessExpr instanceof PsiThisExpression){
+              final PsiClass currentClass = findThisClass(refExpr, refMember);
+              if (thisAccessExpr instanceof PsiThisExpression){
                 PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
                 PsiClass thisExprClass = thisQualifier != null
                   ? (PsiClass)thisQualifier.resolve()
@@ -188,9 +187,7 @@ public class ChangeContextUtil {
 
             if (needQualifier){
               final String text = "q." + refExpr.getText();
-              final PsiExpression expressionFromText = factory.createExpressionFromText(text, null);
-              LOG.assertTrue(expressionFromText instanceof PsiReferenceExpression, text);
-              PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)expressionFromText;
+              final PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText(text, null);
               qualifiedExpr.getQualifierExpression().replace(thisAccessExpr);
               refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);
             }
@@ -218,12 +215,12 @@ public class ChangeContextUtil {
     return refExpr;
   }
 
-  private static PsiClass findThisClass(PsiReferenceExpression refExpr, PsiElement refMember) {
+  private static PsiClass findThisClass(PsiReferenceExpression refExpr, PsiMember refMember) {
     LOG.assertTrue(refExpr.getQualifierExpression() == null);
-    if (!(refMember.getParent() instanceof PsiClass)) return null;
-    final PsiClass refMemberClass = (PsiClass)refMember.getParent();
+    final PsiClass refMemberClass = refMember.getContainingClass();
+    if (refMemberClass == null) return null;
     PsiElement parent = refExpr.getContext();
-    while(true){
+    while(parent != null){
       if (parent instanceof PsiClass){
         if (parent.equals(refMemberClass) || ((PsiClass)parent).isInheritor(refMemberClass, true)){
           return (PsiClass)parent;
@@ -231,6 +228,8 @@ public class ChangeContextUtil {
       }
       parent = parent.getContext();
     }
+
+    return refMemberClass;
   }
 
   private static boolean canRemoveQualifier(PsiReferenceExpression refExpr) {
