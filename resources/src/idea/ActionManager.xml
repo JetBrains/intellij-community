@@ -779,7 +779,7 @@
     </group>
 
     <action id="ModuleSettings" text="Module Settings..." description="Open settings dialog for selected module" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
-    <group id="MoveModuleToGroup" text="Move Module to Group" description="Open settings dialog for selected module" class="com.intellij.ide.projectView.impl.MoveModuleToGroup" popup="true"/>
+    <group id="MoveModuleToGroup" text="Move Module to Group" description="Move module " class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <group id="ProjectViewPopupMenu">
       <reference ref="NewGroup"/>

@@ -6,52 +6,49 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 
 public class MoveModulesToGroupAction extends AnAction {
-  private final Module[] myModules;
-  private final String myGroupName;
+  protected final ModuleGroup myModuleGroup;
 
-  public MoveModulesToGroupAction(Module[] modules, String groupName, String title) {
+  public MoveModulesToGroupAction(ModuleGroup moduleGroup, String title) {
     super(title);
-    myModules = modules;
-    myGroupName = groupName;
+    myModuleGroup = moduleGroup;
+  }
+
+  public void update(AnActionEvent e) {
     Presentation presentation = getTemplatePresentation();
-    String description = groupName == null ? "Create new module group"
-                         : "Move "+whatToMove()+" to the group '"+groupName+"'";
+    final DataContext dataContext = e.getDataContext();
+    final Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+
+    String description = "Move " + whatToMove(modules) + " to the group " + myModuleGroup.presentableText();
     presentation.setDescription(description);
   }
 
-  private String whatToMove() {
-    String what = myModules.length == 1 ? "module '"+myModules[0].getName() +"'" : "modules";
-    return what;
+  protected static String whatToMove(Module[] modules) {
+    return modules.length == 1 ? "module '" + modules[0].getName() + "'" : "modules";
   }
 
   public void actionPerformed(AnActionEvent e) {
-    String group = myGroupName;
-    if (myGroupName == null) {
-      String message = "Specify group the "+whatToMove()+" will be shown under.\n\n" +
-                       "Leave the name blank to move module outside any group."
-                       ;
-      group = Messages.showInputDialog(message, "Module Group", Messages.getQuestionIcon());
-      if (group == null) return;
-    }
-    Project project = myModules[0].getProject();
-    if ("".equals(group.trim())) {
-      group = null;
-    }
-    for (int i = 0; i < myModules.length; i++) {
-      final Module module = myModules[i];
-      ModuleManagerImpl.getInstanceImpl(project).setModuleGroup(module, group);
+    final DataContext dataContext = e.getDataContext();
+    final Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    doMove(modules, myModuleGroup);
+  }
+
+  protected static void doMove(final Module[] modules, final ModuleGroup group) {
+    Project project = modules[0].getProject();
+    for (int i = 0; i < modules.length; i++) {
+      final Module module = modules[i];
+      ModuleManagerImpl.getInstanceImpl(project).setModuleGroupPath(module, group == null ? null : group.getGroupPath());
     }
     ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID).updateFromRoot(true);
-    ProjectView.getInstance(project).getProjectViewPaneById(PackageViewPane.ID).updateFromRoot(true);
     if (group != null) {
-      ProjectView.getInstance(project).selectModuleGroup(new ModuleGroup(group), true);
+      ProjectView.getInstance(project).selectModuleGroup(group, true);
     }
   }
 }

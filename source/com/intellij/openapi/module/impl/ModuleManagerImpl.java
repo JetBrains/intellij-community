@@ -1,8 +1,9 @@
 package com.intellij.openapi.module.impl;
 
+import com.intellij.application.options.PathMacros;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.LoadCancelledException;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.ModuleListener;
@@ -13,8 +14,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.PomModel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -22,8 +25,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.application.options.PathMacros;
-import com.intellij.pom.PomModel;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -39,7 +41,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private final EventDispatcher<ModuleListener> myModuleEventDispatcher = EventDispatcher.create(ModuleListener.class);
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
-  private Map<Module, String> myModuleGroup;
+  private Map<Module, String[]> myModuleGroupPath;
   private PomModel myPomModel;
 
   private final ModuleRootListener myModuleRootListener = new ModuleRootListener() {
@@ -52,6 +54,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   };
   public static final String COMPONENT_NAME = "ProjectModuleManager";
+  private static final String MODULE_GROUP_SEPARATOR = "/";
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -130,9 +133,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             final ModulePath modulePath = paths[idx];
             try {
               final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
-              final String group = modulePath.getModuleGroup();
-              if (group != null) {
-                setModuleGroup(module, group);
+              final String groupPathString = modulePath.getModuleGroup();
+              if (groupPathString != null) {
+                final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+                setModuleGroupPath(module, groupPath);
               }
             }
             catch (final IOException e) {
@@ -212,9 +216,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       // [dsl] support for older builds
       moduleElement.setAttribute("filepath", moduleFilePath);
 
-      String group = getModuleGroup(module);
-      if (group != null) {
-        moduleElement.setAttribute("group", group);
+      String[] groupPath = getModuleGroupPath(module);
+      if (groupPath != null) {
+        final String groupPathString = StringUtil.concatenate(groupPath, MODULE_GROUP_SEPARATOR);
+        moduleElement.setAttribute("group", groupPathString);
       }
 
       modules.addContent(moduleElement);
@@ -363,7 +368,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myModuleModel.projectClosed();
   }
 
-  public void commitModelWithRunnable(ModifiableModuleModel model, Runnable runnable) {
+  public static void commitModelWithRunnable(ModifiableModuleModel model, Runnable runnable) {
     ((ModuleModelImpl)model).commitWithRunnable(runnable);
   }
 
@@ -753,19 +758,19 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  public String getModuleGroup(Module module) {
-    return myModuleGroup == null ? null : myModuleGroup.get(module);
+  public String[] getModuleGroupPath(Module module) {
+    return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
   }
 
-  public void setModuleGroup(Module module, String group) {
-    if (myModuleGroup == null) {
-      myModuleGroup = new HashMap<Module, String>();
+  public void setModuleGroupPath(Module module, String[] groupPath) {
+    if (myModuleGroupPath == null) {
+      myModuleGroupPath = new THashMap<Module, String[]>();
     }
-    if (group == null) {
-      myModuleGroup.remove(module);
+    if (groupPath == null) {
+      myModuleGroupPath.remove(module);
     }
     else {
-      myModuleGroup.put(module, group);
+      myModuleGroupPath.put(module, groupPath);
     }
   }
 }

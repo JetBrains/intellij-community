@@ -42,24 +42,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
-  public AbstractProjectNode(Project project, Project value, ViewSettings viewSettings) {
+  protected AbstractProjectNode(Project project, Project value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
-  public abstract Collection<AbstractTreeNode> getChildren();
-
   protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
-    Map<String, List<Module>> groups = new HashMap<String, List<Module>>();
+    Map<String[], List<Module>> groups = new THashMap<String[], List<Module>>();
     List<Module> nonGroupedModules = new ArrayList<Module>(Arrays.asList(modules));
     for (int i = 0; i < modules.length; i++) {
       final Module module = modules[i];
-      String group = ModuleManager.getInstance(getProject()).getModuleGroup(module);
+      String[] group = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
       if (group != null) {
         List<Module> moduleList = groups.get(group);
         if (moduleList == null) {
@@ -70,11 +68,10 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
         nonGroupedModules.remove(module);
       }
     }
-    String[] groupArray = groups.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (int j = 0; j < groupArray.length; j++) {
-      final String name = groupArray[j];
-      result.add(new ModuleGroupNode(getProject(), new ModuleGroup(name), getSettings(), getModuleNodeClass()));
+    for (Iterator iterator = groups.keySet().iterator(); iterator.hasNext();) {
+      String[] groupPath = (String[])iterator.next();
+      result.add(new ModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath[0]}), getSettings(), getModuleNodeClass()));
     }
     result.addAll(ProjectViewNode.wrap(nonGroupedModules, getProject(), getModuleNodeClass(), getSettings()));
     return result;

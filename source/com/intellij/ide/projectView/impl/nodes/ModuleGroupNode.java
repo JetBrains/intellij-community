@@ -11,8 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
 
@@ -29,16 +28,16 @@ public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   }
 
   public Collection<AbstractTreeNode> getChildren() {
+    final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
+    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    for (Iterator iterator = childGroups.iterator(); iterator.hasNext();) {
+      ModuleGroup moduleGroup = (ModuleGroup)iterator.next();
+      result.add(new ModuleGroupNode(getProject(), moduleGroup, getSettings(), myModuleNodeClass));
+    }
     Module[] modules = getValue().modulesInGroup(getProject());
-    return ProjectViewNode.wrap(Arrays.asList(modules), getProject(), myModuleNodeClass, getSettings());
-  }
-
-  public boolean hasDescription() {
-    return true;
-  }
-
-  public String getDescription() {
-    return "Module Group";
+    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), myModuleNodeClass, getSettings());
+    result.addAll(childModules);
+    return result;
   }
 
   public boolean contains(VirtualFile file) {
@@ -46,12 +45,13 @@ public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   }
 
   public void update(PresentationData presentation) {
-    presentation.setPresentableText(getValue().getName());
+    final String[] groupPath = getValue().getGroupPath();
+    presentation.setPresentableText(groupPath[groupPath.length-1]);
     presentation.setOpenIcon(OPEN_ICON);
     presentation.setClosedIcon(CLOSED_ICON);    
   }
 
   public String getTestPresentation() {
-    return "Group: " + getValue().getName();
+    return "Group: " + getValue().getGroupPath();
   }
 }

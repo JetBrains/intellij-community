@@ -8,7 +8,7 @@ package com.intellij.openapi.actionSystem;
  * Represents a separator.
  */
 public final class Separator extends AnAction {
-  private final static Separator ourInstance = new Separator();
+  private static final Separator ourInstance = new Separator();
 
   private Separator() {
   }

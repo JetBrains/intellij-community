@@ -55,5 +55,5 @@ public abstract class ModuleManager {
 
   public abstract void dispatchPendingEvent(ModuleListener listener);
 
-  public abstract String getModuleGroup(Module module);
+  public abstract String[] getModuleGroupPath(Module module);
 }

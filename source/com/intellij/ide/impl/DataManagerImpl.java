@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.usages.UsageView;
+import gnu.trove.THashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ import java.util.Set;
 
 public class DataManagerImpl extends DataManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
-  private Map<String, GetDataRule> myDataConstantToRuleMap = new java.util.HashMap<String, GetDataRule>();
+  private Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
   private WindowManagerEx myWindowManager;
 
   public DataManagerImpl() {
@@ -73,7 +74,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
   }
 
-  private DataProvider getDataProvider(Component c) {
+  private static DataProvider getDataProvider(Component c) {
     DataProvider dataProvider = null;
     if (c instanceof DataProvider) {
       dataProvider = (DataProvider)c;
