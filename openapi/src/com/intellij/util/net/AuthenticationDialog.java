@@ -1,8 +1,8 @@
 package com.intellij.util.net;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 /**
  * Created by IntelliJ IDEA.

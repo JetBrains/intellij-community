@@ -5,6 +5,8 @@
 package com.intellij.openapi.util.text;
 
 import java.beans.Introspector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.StringTokenizer;
 
 public class StringUtil {
@@ -480,5 +482,43 @@ public class StringUtil {
     for (int i = 0; i < times; i++) {
       buffer.append(symbol);
     }
+  }
+
+  public static boolean isNotEmpty(final String s) {
+    return s != null && s.length() > 0;
+  }
+
+  public static boolean isEmpty(final String s) {
+    return s == null || s.length() == 0;
+  }
+
+  public static String getThrowableText(Throwable aThrowable) {
+    StringWriter stringWriter = new StringWriter();
+    PrintWriter writer = new PrintWriter(stringWriter);
+    aThrowable.printStackTrace(writer);
+    return stringWriter.getBuffer().toString();
+  }
+
+  public static String getMessage(Throwable e) {
+    String result = e.getMessage();
+    final String exceptionPattern = "Exception: ";
+    final String errorPattern = "Error: ";
+
+    while ( (result.indexOf(exceptionPattern) >=0 || result.indexOf(errorPattern) >=0 ) && e.getCause() != null) {
+      e = e.getCause();
+      result = e.getMessage();
+    }
+
+    result = extractMessage(result, exceptionPattern);
+    result = extractMessage(result, errorPattern);
+
+    return result;
+  }
+
+  private static String extractMessage(String result, final String errorPattern) {
+    if (result.lastIndexOf(errorPattern) >= 0 ) {
+      result = result.substring(result.lastIndexOf(errorPattern) + errorPattern.length());
+    }
+    return result;
   }
 }

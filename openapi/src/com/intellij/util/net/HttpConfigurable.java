@@ -1,19 +1,19 @@
 package com.intellij.util.net;
 
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import org.jdom.Element;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.apache.xmlrpc.Base64;
+import org.jdom.Element;
 
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.HttpURLConnection;
+import java.net.PasswordAuthentication;
+import java.net.URL;
 
 /**
  * Created by IntelliJ IDEA.
