@@ -418,7 +418,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return result.toArray(new AbstractVcs[result.size()]);
 
   }
-
+  
   public void addMessageToConsoleWindow(String message, TextAttributes attributes) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       getOrCreateConsoleContent(getContentManager());

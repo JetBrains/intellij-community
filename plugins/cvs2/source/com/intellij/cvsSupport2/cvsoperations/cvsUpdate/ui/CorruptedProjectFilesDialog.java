@@ -1,20 +1,21 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
-import com.intellij.cvsSupport2.actions.InternalMergeAction;
+import com.intellij.cvsSupport2.actions.CvsMergeAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.Options;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
@@ -160,20 +162,22 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       try {
-        VirtualFile currentVirtualFile = getCurrentVirtualFile();
-        InternalMergeAction internalMergeAction = new InternalMergeAction(currentVirtualFile, myProject, null);
-        Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(new String(currentVirtualFile.contentsToCharArray()),
-                                                                                  null);
-        if (conflictWasResolved != null) {
-          saveExternally(currentVirtualFile, conflictWasResolved);
-          onCurrentFileProcessed(false);
+        try {
+          VirtualFile currentVirtualFile = getCurrentVirtualFile();
+          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, null);
+          Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(new String(currentVirtualFile.contentsToCharArray()),
+                                                                                    null);
+          if (conflictWasResolved != null) {
+            saveExternally(currentVirtualFile, conflictWasResolved);
+            onCurrentFileProcessed(false);
+          }
+        }
+        catch (IOException e1) {
+          throw new VcsException(e1);
         }
       }
-      catch (CannotFindCvsRootException e1) {
-        LOG.error(e1);
-      }
-      catch (IOException e1) {
-        LOG.error(e1);
+      catch (VcsException e1) {
+        AbstractVcsHelper.getInstance(myProject).showErrors(new ArrayList<VcsException>(Collections.singleton(e1)), "Merge errors");
       }
     }
 

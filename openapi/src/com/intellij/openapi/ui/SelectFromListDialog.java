@@ -1,7 +1,6 @@
-package com.intellij.cvsSupport2.ui;
+package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -10,9 +9,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-/**
- * author: lesya
- */
+
 public class SelectFromListDialog extends DialogWrapper {
   private final ToStringAspect myToStringAspect;
   private final DefaultListModel myModel = new DefaultListModel();

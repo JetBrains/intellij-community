@@ -31,7 +31,7 @@
  */
 package com.intellij.cvsSupport2;
 
-import com.intellij.cvsSupport2.actions.InternalMergeAction;
+import com.intellij.cvsSupport2.actions.CvsMergeAction;
 import com.intellij.cvsSupport2.actions.update.UpdateSettingsOnCvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -112,7 +112,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       if (virtualFile != null) mergedFiles.add(virtualFile);
     }
 
-    new InternalMergeAction(mergedFiles.get(0), project, mergedFiles).actionPerformed(null);
+    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles).actionPerformed(null);
 
   }
 
