@@ -1592,8 +1592,8 @@ public class HighlightUtil {
       return sameInstanceReferences((PsiReferenceExpression)lQualifier, (PsiReferenceExpression)rQualifier, manager);
     }
     if (Comparing.equal(lQualifier, rQualifier)) return true;
-    final boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression;
-    final boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression;
+    final boolean lThis = lQualifier instanceof PsiThisExpression;
+    final boolean rThis = rQualifier instanceof PsiThisExpression;
     if (lThis && rThis) {
       PsiJavaCodeReferenceElement lThisQualifier = ((PsiThisExpression)lQualifier).getQualifier();
       PsiJavaCodeReferenceElement rThisQualifier = ((PsiThisExpression)rQualifier).getQualifier();
