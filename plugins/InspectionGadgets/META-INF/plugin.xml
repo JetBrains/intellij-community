@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <name>Inspection Gadgets</name>
     <category>inspection</category>
-    <description>Over 390 new automated code inspections for IDEA</description>
+    <description>Over 400 new automated code inspections for IDEA</description>
     <vendor>InspectionGadgets Software</vendor>
     <version>1.0</version>
     <idea-version min="4.0" max="4.1"/>
