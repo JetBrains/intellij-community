@@ -836,9 +836,7 @@ public class SystemBuilder {
         if (p != null) {
           setType(element, definedType = defineType(p));
         }
-        else {
-        continue;
-        }
+        else continue;
       }
       else if (element instanceof PsiMethod) {
         final PsiMethod m = myMethods.get(element);
@@ -846,9 +844,7 @@ public class SystemBuilder {
         if (m != null) {
           system.addSubtypeConstraint(defineType(element), definedType = defineType(m));
         }
-        else {
-        continue;
-        }
+        else continue;
       }
       else {
         definedType = defineType(element);
@@ -863,16 +859,12 @@ public class SystemBuilder {
       if (element instanceof PsiParameter) {
         final PsiParameter p = myParameters.get(element);
 
-        if (p == null) {
-        continue;
-        }
+        if (p == null) continue;
       }
       else if (element instanceof PsiMethod) {
         final PsiMethod m = myMethods.get(element);
 
-        if (m == null) {
-        continue;
-        }
+        if (m == null) continue;
       }
 
       addUsage(system, element);
