@@ -32,9 +32,7 @@ public class _HtmlLexer implements Lexer, Cloneable {
   public final int getState(){
     return myState;
   }
-  public final int getLastState() {
-    return LAST_STATE;
-  }
+
   public final IElementType getTokenType(){
     locateToken();
     return myTokenType;
@@ -74,9 +72,7 @@ public class _HtmlLexer implements Lexer, Cloneable {
     }
     return true;
   }
-  public int getSmartUpdateShift() {
-    return 8; // to handle "</script.."
-  }
+
   public Object clone() {
     try{
       return super.clone();

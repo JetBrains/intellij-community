@@ -46,10 +46,6 @@ public class MergingLexerAdapter implements Lexer, Cloneable{
     return myState;
   }
 
-  public int getLastState() {
-    return myOriginal.getLastState();
-  }
-
   public IElementType getTokenType(){
     locateToken();
     return myTokenType;
@@ -94,7 +90,4 @@ public class MergingLexerAdapter implements Lexer, Cloneable{
     }
   }
 
-  public int getSmartUpdateShift() {
-    return myOriginal.getSmartUpdateShift();
-  }
 }

@@ -75,10 +75,6 @@ public class FilterLexer implements Lexer {
     return myOriginal.getState();
   }
 
-  public int getLastState() {
-    return myOriginal.getLastState();
-  }
-
   public final IElementType getTokenType() {
     return myOriginal.getTokenType();
   }
@@ -107,10 +103,6 @@ public class FilterLexer implements Lexer {
 
   public int getPrevTokenEnd() {
     return myPrevTokenEnd;
-  }
-
-  public int getSmartUpdateShift() {
-    return myOriginal.getSmartUpdateShift();
   }
 
   public final void locateToken(){

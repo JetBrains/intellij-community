@@ -173,10 +173,6 @@ abstract class BaseHtmlLexer implements Lexer {
     return baseLexer.getBufferEnd();
   }
 
-  public int getSmartUpdateShift() {
-    return baseLexer.getSmartUpdateShift();
-  }
-
   public Object clone() {
     try {
       BaseHtmlLexer clone = (BaseHtmlLexer)super.clone();
@@ -197,10 +193,6 @@ abstract class BaseHtmlLexer implements Lexer {
 
   public int getTokenEnd() {
     return baseLexer.getTokenEnd();
-  }
-
-  public int getLastState() {
-    return baseLexer.getLastState() << 4;
   }
 
   public int getState() {

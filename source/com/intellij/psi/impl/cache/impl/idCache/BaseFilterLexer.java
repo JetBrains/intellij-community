@@ -39,10 +39,6 @@ public abstract class BaseFilterLexer implements Lexer {
     return myOriginalLexer.getState();
   }
 
-  public int getLastState() {
-    return myOriginalLexer.getLastState();
-  }
-
   public IElementType getTokenType() {
     return myOriginalLexer.getTokenType();
   }
@@ -61,10 +57,6 @@ public abstract class BaseFilterLexer implements Lexer {
 
   public int getBufferEnd() {
     return myOriginalLexer.getBufferEnd();
-  }
-
-  public int getSmartUpdateShift() {
-    return myOriginalLexer.getSmartUpdateShift();
   }
 
   protected final void advanceTodoItemCounts(char[] chars, int start, int end) {

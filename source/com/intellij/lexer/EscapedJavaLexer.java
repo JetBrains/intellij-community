@@ -64,10 +64,6 @@ public class EscapedJavaLexer implements Lexer, Cloneable{
     return 0;
   }
 
-  public int getLastState() {
-    return 0;
-  }
-
   public IElementType getTokenType() {
     locateToken();
     return myTokenType;
@@ -95,10 +91,6 @@ public class EscapedJavaLexer implements Lexer, Cloneable{
 
   public final int getBufferEnd(){
     return myBufferEnd;
-  }
-
-  public int getSmartUpdateShift() {
-    return myJavaLexer.getSmartUpdateShift();
   }
 
   private void locateToken(){

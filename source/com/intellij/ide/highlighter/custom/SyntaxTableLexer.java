@@ -1,6 +1,5 @@
 package com.intellij.ide.highlighter.custom;
 
-import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -162,11 +161,6 @@ public class SyntaxTableLexer implements Lexer {
     parseToken();
   }
 
-  // Number of characters to shift back from the change start to reparse.
-  public int getSmartUpdateShift() {
-    return 0;
-  }
-
   public char[] getBuffer() {
     return buffer;
   }
@@ -177,10 +171,6 @@ public class SyntaxTableLexer implements Lexer {
 
   public int getState() {
     // No state.
-    return 0;
-  }
-
-  public int getLastState() {
     return 0;
   }
 

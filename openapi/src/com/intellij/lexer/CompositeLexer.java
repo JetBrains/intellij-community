@@ -48,10 +48,6 @@ public abstract class CompositeLexer implements Lexer, Cloneable{
     return 0; // does not work
   }
 
-  public int getLastState() {
-    return 0; // does not work
-  }
-
   public IElementType getTokenType() {
     IElementType type1 = myLexer1.getTokenType();
     if (type1 == null) return null;
@@ -87,11 +83,4 @@ public abstract class CompositeLexer implements Lexer, Cloneable{
     return myLexer1.getBufferEnd();
   }
 
-  public int getSmartUpdateShift() {
-    int shift1 = myLexer1.getSmartUpdateShift();
-    if (shift1 < 0) return -1;
-    int shift2 = myLexer2.getSmartUpdateShift();
-    if (shift2 < 0) return -1;
-    return Math.max(shift1, shift2);
-  }
 }

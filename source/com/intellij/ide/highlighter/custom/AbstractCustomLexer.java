@@ -1,10 +1,10 @@
 package com.intellij.ide.highlighter.custom;
 
-import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.ide.highlighter.custom.tokens.TokenInfo;
 import com.intellij.ide.highlighter.custom.tokens.TokenParser;
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author dsl
@@ -55,10 +55,6 @@ public abstract class AbstractCustomLexer implements Lexer {
     return 0;
   }
 
-  public int getLastState() {
-    return 0;
-  }
-
   public IElementType getTokenType() {
     return myCurrentToken.getType();
   }
@@ -98,10 +94,6 @@ public abstract class AbstractCustomLexer implements Lexer {
 
   public int getBufferEnd() {
     return myEndOffset;
-  }
-
-  public int getSmartUpdateShift() {
-    return mySmartUpdateShift;
   }
 
   public abstract Object clone();

@@ -45,10 +45,6 @@ public class FlexAdapter implements Lexer {
     return myFlex.yystate();
   }
 
-  public int getLastState() {
-    return 0;
-  }
-
   public IElementType getTokenType() {
     locateToken();
     return myTokenType;
@@ -75,10 +71,6 @@ public class FlexAdapter implements Lexer {
 
   public int getBufferEnd() {
     return myEnd;
-  }
-
-  public int getSmartUpdateShift() {
-    return 10;
   }
 
   public Object clone() {

@@ -92,18 +92,12 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     if (hasSeenStyle()) {
       if (styleLexer==null) {
         styleLexer = (ourStyleFileType!=null)? ourStyleFileType.getHighlighter(null).getHighlightingLexer():null;
-        if (styleLexer!=null) {
-          LOG.assertTrue(styleLexer.getLastState() < MAX_EMBEDDED_LEXER_STATE);
-        }
       }
 
       newLexer = styleLexer;
     } else if (hasSeenScript()) {
       if (scriptLexer==null) {
         scriptLexer = (ourScriptFileType!=null)? ourScriptFileType.getHighlighter(null).getHighlightingLexer():null;
-        if (scriptLexer!=null) {
-          LOG.assertTrue(scriptLexer.getLastState() < MAX_EMBEDDED_LEXER_STATE);
-        }
       }
       newLexer = scriptLexer;
     } else if (super.getTokenType() == ELTokenType.JSP_EL_CONTENT) {
@@ -175,10 +169,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   public static void registerScriptFileType(FileType _scriptFileType) {
     ourScriptFileType = _scriptFileType;
-  }
-
-  public int getLastState() {
-    return super.getLastState() << (((hasNoEmbeddments)?0:MAX_EMBEDDED_LEXER_SHIFT) + 1);
   }
 
   public int getState() {

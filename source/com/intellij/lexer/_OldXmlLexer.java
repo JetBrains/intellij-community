@@ -1,7 +1,7 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlTokenType;
 
 
 public class _OldXmlLexer implements Lexer, Cloneable {
@@ -32,9 +32,7 @@ public class _OldXmlLexer implements Lexer, Cloneable {
   public final int getState(){
     return myState;
   }
-  public final int getLastState() {
-    return LAST_STATE;
-  }
+
   public final IElementType getTokenType(){
     locateToken();
     return myTokenType;
@@ -66,9 +64,7 @@ public class _OldXmlLexer implements Lexer, Cloneable {
     if (myTokenType != null) return;
     _locateToken();
   }
-  public int getSmartUpdateShift() {
-    return 10;
-  }
+
   public Object clone() {
     try{
       return super.clone();

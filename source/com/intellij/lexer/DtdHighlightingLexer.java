@@ -40,17 +40,8 @@ public class DtdHighlightingLexer implements Lexer {
     return myLexer.getBufferEnd();
   }
 
-  public int getSmartUpdateShift() // number of characters to shift back from the change start to reparse
-  {
-    return myLexer.getSmartUpdateShift();
-  }
-
   public int getState() {
     return myLexer.getState();
-  }
-
-  public int getLastState() {
-    return myLexer.getLastState();
   }
 
   public int getTokenEnd() {

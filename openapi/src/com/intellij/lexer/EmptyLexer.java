@@ -1,7 +1,6 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.JavaTokenType;
 
 public class EmptyLexer implements Lexer, Cloneable{
   private char[] myBuffer;
@@ -23,10 +22,6 @@ public class EmptyLexer implements Lexer, Cloneable{
   }
 
   public int getState() {
-    return 0;
-  }
-
-  public int getLastState() {
     return 0;
   }
 
@@ -52,10 +47,6 @@ public class EmptyLexer implements Lexer, Cloneable{
 
   public int getBufferEnd() {
     return myEndOffset;
-  }
-
-  public int getSmartUpdateShift() {
-    return 0;
   }
 
   public Object clone() {

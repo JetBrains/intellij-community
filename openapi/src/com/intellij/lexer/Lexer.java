@@ -37,10 +37,6 @@ public interface Lexer {
   void start(char[] buffer, int startOffset, int endOffset, int initialState);
 
   int getState();
-  /**
-   * @return number of states this lexer has.
-   */
-  int getLastState();
 
   IElementType getTokenType();
 
@@ -50,11 +46,6 @@ public interface Lexer {
 
   char[] getBuffer();
   int getBufferEnd();
-
-  /**
-   * @return number of characters to shift back from the change start to reparse
-   */
-  int getSmartUpdateShift();
 
   Object clone();
 }

@@ -50,10 +50,6 @@ public class StringLiteralLexer implements Lexer, Cloneable {
     return myLastState;
   }
 
-  public int getLastState() {
-    return LAST_STATE;
-  }
-
   private static boolean isHexDigit(char c) {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
   }
@@ -175,10 +171,6 @@ public class StringLiteralLexer implements Lexer, Cloneable {
 
   public int getBufferEnd() {
     return myBufferEnd;
-  }
-
-  public int getSmartUpdateShift() {
-    return 6;
   }
 
   public Object clone() {

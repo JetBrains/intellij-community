@@ -153,10 +153,6 @@ public class JavaLexer implements Lexer, Cloneable {
     return 0;
   }
 
-  public int getLastState() {
-    return 0;
-  }
-
   public final IElementType getTokenType() {
     locateToken();
 
@@ -386,7 +382,4 @@ public class JavaLexer implements Lexer, Cloneable {
     }
   }
 
-  public int getSmartUpdateShift() {
-    return 2; // to handle ... correctly
-  }
 }

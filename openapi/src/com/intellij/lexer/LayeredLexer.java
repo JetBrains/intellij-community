@@ -76,10 +76,6 @@ public class LayeredLexer implements Lexer, Cloneable {
     return myState;
   }
 
-  public int getLastState() {
-    return 0;
-  }
-
   public IElementType getTokenType() {
     return isLayerActive() ? myCurrentLayerLexer.getTokenType() : myBaseLexer.getTokenType();
   }
@@ -135,14 +131,6 @@ public class LayeredLexer implements Lexer, Cloneable {
 
   public int getBufferEnd() {
     return myBufferEnd;
-  }
-
-  public int getSmartUpdateShift() {
-    if (!isLayerActive()) return myBaseLexer.getSmartUpdateShift();
-    if (myCurrentLayerLexer.getSmartUpdateShift() == -1) return -1;
-    if (myBaseLexer.getSmartUpdateShift() == -1) return -1;
-    return Math.max(myBaseLexer.getSmartUpdateShift(), myCurrentLayerLexer.getSmartUpdateShift());
-    //return mySmartUpdate;
   }
 
   public Object clone() {
