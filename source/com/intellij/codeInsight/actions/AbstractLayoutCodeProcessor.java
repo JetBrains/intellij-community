@@ -382,4 +382,9 @@ public abstract class AbstractLayoutCodeProcessor {
     };
     new Thread(runnable, myCommandName).start();
   }
+
+  public void testRun() throws IncorrectOperationException {
+    final Runnable runnable = preprocessFile(myFile);
+    runnable.run();
+  }
 }

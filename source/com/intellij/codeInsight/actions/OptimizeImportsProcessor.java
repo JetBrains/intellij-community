@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -45,7 +46,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           try {
             if (newImportList != null) {
               PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
-              if (!oldImportList.getText().equals(newImportList.getText())) {
+              if (!ImportHelper.areListsEquivalent(oldImportList, newImportList)) {
                 oldImportList.replace(newImportList);
               }
             }
