@@ -208,7 +208,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       myStructureViewState = null;
     }
     else {
-      TreeUtil.expand(getTree(), 3);
+      TreeUtil.expand(getTree(), 2);
     }
   }
 
@@ -316,7 +316,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     pathToElement.remove(0);
     DefaultMutableTreeNode result = null;
     while (currentTreeNode != null) {
-      AbstractTreeNode topPathElement = null;
+      AbstractTreeNode topPathElement;
       if (!pathToElement.isEmpty()) {
         topPathElement = pathToElement.get(0);
         pathToElement.remove(0);

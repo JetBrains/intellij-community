@@ -852,7 +852,7 @@
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
       <separator/>
-      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction" text="Remove From Favorites" description="Remove selected node from favorites" internal="true"/>
+      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction" text="Remove From Favorites" description="Remove selected node from favorites"/>
       <reference ref="SendToFavoritesGroup"/>
       <separator />
       <reference ref="FindUsages"/>
