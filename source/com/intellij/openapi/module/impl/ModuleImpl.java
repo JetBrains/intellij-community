@@ -58,7 +58,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     super(false, pathMacros);
     myProject = project;
     myPomModel =  pomModel;
-    Extensions.instantiateArea("MODULE", this, project);
+    Extensions.instantiateArea("IDEA_MODULE", this, project);
     init(filePath);
   }
 

@@ -87,7 +87,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
-    Extensions.instantiateArea("PROJECT", this, null);
+    Extensions.instantiateArea("IDEA_PROJECT", this, null);
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 

@@ -6,7 +6,7 @@
   <idea-version min="4.0" max="4.5"/>
 
   <extensions xmlns="com.intellij.plugins">
-    <component area="PROJECT">
+    <component area="IDEA_PROJECT">
       <implementation>com.intellij.codeInsight.intention.ConditionalOperatorConvertor</implementation>
       <!--<options>-->
       <!--  <option name="internal" value="true"/>-->

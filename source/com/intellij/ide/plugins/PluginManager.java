@@ -117,14 +117,14 @@ public class PluginManager {
 
   private static void configureExtensions() {
     Extensions.setLogProvider(new IdeaLogProvider());
-    Extensions.registerAreaClass("PROJECT", null);
-    Extensions.registerAreaClass("MODULE", "PROJECT");
+    Extensions.registerAreaClass("IDEA_PROJECT", null);
+    Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
 
     Extensions.getRootArea().registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
 
     Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
       public void areaCreated(String areaClass, AreaInstance areaInstance) {
-        if ("PROJECT".equals(areaClass) || "MODULE".equals(areaClass)) {
+        if ("IDEA_PROJECT".equals(areaClass) || "IDEA_MODULE".equals(areaClass)) {
           Extensions.getArea(areaInstance).registerExtensionPoint(COMPONENT_EXTENSION_POINT, ComponentDescriptor.class.getName());
         }
       }
