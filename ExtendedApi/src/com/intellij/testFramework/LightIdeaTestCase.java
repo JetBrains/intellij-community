@@ -192,6 +192,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   }
 
   protected void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
     final IOException[] exception = new IOException[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
