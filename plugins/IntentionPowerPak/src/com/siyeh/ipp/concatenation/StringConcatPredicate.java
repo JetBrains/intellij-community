@@ -2,7 +2,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class StringConcatPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {

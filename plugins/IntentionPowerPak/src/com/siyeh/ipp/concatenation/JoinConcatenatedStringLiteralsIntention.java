@@ -1,16 +1,13 @@
 package com.siyeh.ipp.concatenation;
 
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class JoinConcatenatedStringLiteralsIntention extends Intention {
-    public JoinConcatenatedStringLiteralsIntention(Project project) {
-        super(project);
-    }
 
     protected PsiElementPredicate getElementPredicate() {
         return new StringConcatPredicate();
