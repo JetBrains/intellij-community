@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 
@@ -41,6 +42,18 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
+    final PsiFile[] psiRoots = file.getPsiRoots();
+    if(psiRoots.length > 1){
+      for (int i = 0; i < psiRoots.length; i++) {
+        final PsiFile psiRoot = psiRoots[i];
+        checkResult(targetDataName + "." + i, (PsiElement)psiRoot);
+      }
+    }
+    else{
+      checkResult(targetDataName, (PsiElement)file);
+    }
+  }
+  protected void checkResult(String targetDataName, final PsiElement file) throws Exception {
     String treeText = toParseTreeText(file).trim();
     try{
       String expectedText = loadFile(targetDataName);
@@ -69,7 +82,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     }
   }
 
-  private String toParseTreeText(final PsiFile file) {
+  protected String toParseTreeText(final PsiElement file) {
     return DebugUtil.treeToString(com.intellij.psi.impl.source.SourceTreeToPsiMap.psiElementToTree(file), false);
   }
 
