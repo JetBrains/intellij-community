@@ -4,9 +4,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.ig.*;
 
 public class ForeachStatementInspection extends StatementInspection{
+    private final ForEachFix fix = new ForEachFix();
+
     public String getDisplayName(){
         return "Extended 'for' statement";
     }
@@ -19,52 +22,78 @@ public class ForeachStatementInspection extends StatementInspection{
         return "'Extended #ref' statement #loc";
     }
 
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
     private static class ForEachFix extends InspectionGadgetsFix{
         public String getName(){
             return "Replace with old-style 'for' statement";
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiForeachStatement statement =
-                    (PsiForeachStatement) descriptor.getPsiElement();
+                    (PsiForeachStatement) descriptor.getPsiElement()
+                            .getParent();
 
             StringBuffer newStatement = new StringBuffer();
+            final CodeStyleManager codeStyleManager =
+                    CodeStyleManager.getInstance(project);
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if(iteratedValue.getType() instanceof PsiArrayType){
-                newStatement.append("for(int i = 0;i<")
-                        .append(iteratedValue.getText()).append(".length;i++)");
+                String index = codeStyleManager.suggestUniqueVariableName("i",
+                                                                   statement,
+                                                                   true);
+                newStatement.append("for(int "+index+" = 0;"+index + "<")
+                        .append(iteratedValue.getText()).append(".length;"+index+"++)");
                 newStatement.append("{ ")
                         .append(statement.getIterationParameter().getType()
                                         .getPresentableText())
-                        .append(" ").append(statement.getIterationParameter())
+                        .append(" ").append(statement.getIterationParameter().getName())
                         .append(" = ").append(iteratedValue.getText())
-                        .append("[i];");
+                        .append("["+ index+ "];");
                 final PsiStatement body = statement.getBody();
                 if(body instanceof PsiBlockStatement){
-                    final PsiElement[] children = body.getChildren();
-                    for(int i = 1; i < children.length - 1;
-                        i++){//skip the braces
-                        PsiElement child = children[i];
-                        newStatement.append(child.getText());
+                    final PsiCodeBlock block =
+                            ((PsiBlockStatement) body).getCodeBlock();
+                    final PsiElement[] children =
+                            block.getChildren();
+                    for(int i = 1; i < children.length - 1; i++){
+                        //skip the braces
+                        newStatement.append(children[i].getText());
                     }
                 } else{
                     newStatement.append(body.getText());
                 }
                 newStatement.append("}");
             } else{
-                newStatement.append("for(Iterator it = ")
+
+                String iterator =  codeStyleManager.suggestUniqueVariableName("it", statement,
+                                                                  true);
+                final String typeText = statement.getIterationParameter()
+                                .getType()
+                                .getPresentableText();
+                newStatement.append("for(java.util.Iterator<")
+                         .append(typeText)
+                        .append("> "+ iterator + " = ")
                         .append(iteratedValue.getText())
-                        .append(".iterator;it.hasNext();)");
+                        .append(".iterator();" + iterator+".hasNext();)");
                 newStatement.append("{");
+                newStatement.append(typeText)
+                        .append(" ").append(statement.getIterationParameter().getName())
+                        .append(" = ")
+                        .append( iterator+".next();");
 
                 final PsiStatement body = statement.getBody();
                 if(body instanceof PsiBlockStatement){
-                    final PsiElement[] children = body.getChildren();
-                    for(int i = 1; i < children.length - 1;
-                        i++){//skip the braces
-                        PsiElement child = children[i];
-                        newStatement.append(child.getText());
+                    final PsiCodeBlock block = ((PsiBlockStatement) body).getCodeBlock();
+                    final PsiElement[] children = block.getChildren();
+                    for(int i = 1; i < children.length - 1; i++){
+                        //skip the braces
+                        newStatement.append(children[i].getText());
                     }
                 } else{
                     newStatement.append(body.getText());
@@ -74,6 +103,7 @@ public class ForeachStatementInspection extends StatementInspection{
             replaceStatement(project, statement, newStatement.toString());
         }
     }
+
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                boolean onTheFly){
