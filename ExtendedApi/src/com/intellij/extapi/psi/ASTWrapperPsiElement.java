@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.source;
+package com.intellij.extapi.psi;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
