@@ -1,7 +1,9 @@
 package com.intellij.testFramework;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -115,6 +117,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     setUpProject();
 
     DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(InspectionProfileImpl.EMPTY_PROFILE);
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
   }
 
   protected void setUpProject() throws IOException {

@@ -1,7 +1,9 @@
 package com.intellij.testFramework;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -189,6 +191,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
   }
 
   protected void tearDown() throws Exception {
