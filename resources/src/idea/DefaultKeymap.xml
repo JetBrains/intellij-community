@@ -117,9 +117,69 @@
     <action id="GotoAspect">
       <keyboard-shortcut first-keystroke="control alt A"/>
     </action>
+
     <action id="GotoBookmark0">
       <keyboard-shortcut first-keystroke="control 0"/>
     </action>
+    <action id="GotoBookmark1">
+      <keyboard-shortcut first-keystroke="control 1"/>
+    </action>
+    <action id="GotoBookmark2">
+      <keyboard-shortcut first-keystroke="control 2"/>
+    </action>
+    <action id="GotoBookmark3">
+      <keyboard-shortcut first-keystroke="control 3"/>
+    </action>
+    <action id="GotoBookmark4">
+      <keyboard-shortcut first-keystroke="control 4"/>
+    </action>
+    <action id="GotoBookmark5">
+      <keyboard-shortcut first-keystroke="control 5"/>
+    </action>
+    <action id="GotoBookmark6">
+      <keyboard-shortcut first-keystroke="control 6"/>
+    </action>
+    <action id="GotoBookmark7">
+      <keyboard-shortcut first-keystroke="control 7"/>
+    </action>
+    <action id="GotoBookmark8">
+      <keyboard-shortcut first-keystroke="control 8"/>
+    </action>
+    <action id="GotoBookmark9">
+      <keyboard-shortcut first-keystroke="control 9"/>
+    </action>
+    <action id="ToggleBookmark0">
+      <keyboard-shortcut first-keystroke="shift control 0"/>
+    </action>
+    <action id="ToggleBookmark1">
+      <keyboard-shortcut first-keystroke="shift control 1"/>
+    </action>
+    <action id="ToggleBookmark2">
+      <keyboard-shortcut first-keystroke="shift control 2"/>
+    </action>
+    <action id="ToggleBookmark3">
+      <keyboard-shortcut first-keystroke="shift control 3"/>
+    </action>
+    <action id="ToggleBookmark4">
+      <keyboard-shortcut first-keystroke="shift control 4"/>
+    </action>
+    <action id="ToggleBookmark5">
+      <keyboard-shortcut first-keystroke="shift control 5"/>
+    </action>
+    <action id="ToggleBookmark6">
+      <keyboard-shortcut first-keystroke="shift control 6"/>
+    </action>
+    <action id="ToggleBookmark7">
+      <keyboard-shortcut first-keystroke="shift control 7"/>
+    </action>
+    <action id="ToggleBookmark8">
+      <keyboard-shortcut first-keystroke="shift control 8"/>
+    </action>
+    <action id="ToggleBookmark9">
+      <keyboard-shortcut first-keystroke="shift control 9"/>
+    </action>
+
+
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="control Z"/>
       <keyboard-shortcut first-keystroke="alt BACK_SPACE"/>
@@ -230,21 +290,6 @@
       <keyboard-shortcut first-keystroke="control F4"/>
     </action>
 
-    <action id="SplitVertical">
-      <keyboard-shortcut first-keystroke="control 2"/>
-    </action>
-    <action id="SplitHorisontal">
-      <keyboard-shortcut first-keystroke="control 3"/>
-    </action>
-    <action id="UnsplitAll">
-      <keyboard-shortcut first-keystroke="control 1"/>
-    </action>
-    <action id="Unsplit">
-      <keyboard-shortcut first-keystroke="control 0"/>
-    </action>
-    <action id="ChangeSplitOrientation">
-      <keyboard-shortcut first-keystroke="control 5"/>
-    </action>
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="control TAB"/>
     </action>
@@ -258,9 +303,6 @@
     <action id="ExpandRegion">
       <keyboard-shortcut first-keystroke="control ADD"/>
       <keyboard-shortcut first-keystroke="control EQUALS"/>
-    </action>
-    <action id="ToggleBookmark4">
-      <keyboard-shortcut first-keystroke="shift control 4"/>
     </action>
     <action id="EditorLeftWithSelection">
       <keyboard-shortcut first-keystroke="shift LEFT"/>
@@ -277,12 +319,6 @@
     </action>
     <action id="InsertLiveTemplate">
       <keyboard-shortcut first-keystroke="control J"/>
-    </action>
-    <action id="ToggleBookmark9">
-      <keyboard-shortcut first-keystroke="shift control 9"/>
-    </action>
-    <action id="ToggleBookmark7">
-      <keyboard-shortcut first-keystroke="shift control 7"/>
     </action>
     <action id="EditorDeleteToWordStart">
       <keyboard-shortcut first-keystroke="control BACK_SPACE"/>
@@ -340,9 +376,6 @@
     <action id="EditorToggleCase">
       <keyboard-shortcut first-keystroke="control shift U"/>
     </action>
-    <action id="ToggleBookmark5">
-      <keyboard-shortcut first-keystroke="shift control 5"/>
-    </action>
     <action id="GotoLine">
       <keyboard-shortcut first-keystroke="control G"/>
     </action>
@@ -373,9 +406,6 @@
     <action id="EditorCodeBlockStart">
       <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
     </action>
-    <action id="ToggleBookmark6">
-      <keyboard-shortcut first-keystroke="shift control 6"/>
-    </action>
     <action id="EditorMoveToPageTopWithSelection">
       <keyboard-shortcut first-keystroke="control shift PAGE_UP"/>
     </action>
@@ -384,9 +414,6 @@
     </action>
     <action id="CallHierarchy">
       <keyboard-shortcut first-keystroke="control alt H"/>
-    </action>
-    <action id="ToggleBookmark3">
-      <keyboard-shortcut first-keystroke="shift control 3"/>
     </action>
     <action id="EditorTextEnd">
       <keyboard-shortcut first-keystroke="control END"/>
@@ -418,9 +445,6 @@
     </action>
     <action id="EditorContextInfo">
       <keyboard-shortcut first-keystroke="alt Q"/>
-    </action>
-    <action id="GotoBookmark7">
-      <keyboard-shortcut first-keystroke="control 7"/>
     </action>
     <action id="NextDiff">
       <keyboard-shortcut first-keystroke="F7"/>
@@ -460,9 +484,6 @@
     <action id="EditorPreviousWordWithSelection">
       <keyboard-shortcut first-keystroke="control shift LEFT"/>
     </action>
-    <action id="GotoBookmark3">
-      <keyboard-shortcut first-keystroke="control 3"/>
-    </action>
     <action id="MethodHierarchy.OverrideMethodAction">
       <keyboard-shortcut first-keystroke="control O"/>
     </action>
@@ -474,9 +495,6 @@
     </action>
     <action id="EditorScrollToCenter">
       <keyboard-shortcut first-keystroke="control M"/>
-    </action>
-    <action id="GotoBookmark6">
-      <keyboard-shortcut first-keystroke="control 6"/>
     </action>
     <action id="RunGc"/>
     <action id="$Redo">
@@ -498,9 +516,6 @@
     </action>
     <action id="ImplementMethods">
       <keyboard-shortcut first-keystroke="control I"/>
-    </action>
-    <action id="GotoBookmark9">
-      <keyboard-shortcut first-keystroke="control 9"/>
     </action>
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="alt UP"/>
@@ -533,18 +548,12 @@
     <action id="EditorUnSelectWord">
       <keyboard-shortcut first-keystroke="control shift W"/>
     </action>
-    <action id="ToggleBookmark2">
-      <keyboard-shortcut first-keystroke="shift control 2"/>
-    </action>
     <action id="ValidateXml"/>
     <action id="ToggleLineBreakpoint">
       <keyboard-shortcut first-keystroke="control F8"/>
     </action>
     <action id="Debugger.EditTypeSource">
       <keyboard-shortcut first-keystroke="shift F4"/>
-    </action>
-    <action id="ToggleBookmark8">
-      <keyboard-shortcut first-keystroke="shift control 8"/>
     </action>
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="F11"/>
@@ -554,12 +563,6 @@
     </action>
     <action id="EditorRightWithSelection">
       <keyboard-shortcut first-keystroke="shift RIGHT"/>
-    </action>
-    <action id="ToggleBookmark1">
-      <keyboard-shortcut first-keystroke="shift control 1"/>
-    </action>
-    <action id="GotoBookmark1">
-      <keyboard-shortcut first-keystroke="control 1"/>
     </action>
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="control H"/>
@@ -605,14 +608,8 @@
     <action id="JumpToLastWindow">
       <keyboard-shortcut first-keystroke="F12"/>
     </action>
-    <action id="GotoBookmark5">
-      <keyboard-shortcut first-keystroke="control 5"/>
-    </action>
     <action id="StepOver">
       <keyboard-shortcut first-keystroke="F8"/>
-    </action>
-    <action id="GotoBookmark4">
-      <keyboard-shortcut first-keystroke="control 4"/>
     </action>
     <action id="$SelectAll">
       <keyboard-shortcut first-keystroke="control A"/>
@@ -631,9 +628,6 @@
     </action>
     <action id="HideAllWindows">
       <keyboard-shortcut first-keystroke="control shift F12"/>
-    </action>
-    <action id="ToggleBookmark0">
-      <keyboard-shortcut first-keystroke="shift control 0"/>
     </action>
     <action id="ShowPopupMenu"/>
     <action id="EditorLineStartWithSelection">
@@ -688,9 +682,6 @@
     <action id="ActivateHierarchyToolWindow">
       <keyboard-shortcut first-keystroke="alt 8"/>
     </action>
-    <action id="GotoBookmark8">
-      <keyboard-shortcut first-keystroke="control 8"/>
-    </action>
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="alt INSERT"/>
     </action>
@@ -715,9 +706,6 @@
     </action>
     <action id="ExportToTextFile">
       <keyboard-shortcut first-keystroke="alt O"/>
-    </action>
-    <action id="GotoBookmark2">
-      <keyboard-shortcut first-keystroke="control 2"/>
     </action>
     <action id="EditorLineEnd">
       <keyboard-shortcut first-keystroke="END"/>
@@ -851,15 +839,6 @@
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
     </action>
-    <action id="ToggleBookmark4">
-      <keyboard-shortcut first-keystroke="shift control 4"/>
-    </action>
-    <action id="ToggleBookmark9">
-      <keyboard-shortcut first-keystroke="shift control 9"/>
-    </action>
-    <action id="ToggleBookmark7">
-      <keyboard-shortcut first-keystroke="shift control 7"/>
-    </action>
     <action id="EditorDeleteToWordStart">
       <keyboard-shortcut first-keystroke="alt BACK_SPACE"/>
     </action>
@@ -867,17 +846,8 @@
       <keyboard-shortcut first-keystroke="alt DELETE"/>
     </action>
     <action id="DebugClass"/>
-    <action id="ToggleBookmark5">
-      <keyboard-shortcut first-keystroke="shift control 5"/>
-    </action>
     <action id="EditorStartNewLine">
       <keyboard-shortcut first-keystroke="shift ENTER"/>
-    </action>
-    <action id="ToggleBookmark6">
-      <keyboard-shortcut first-keystroke="shift control 6"/>
-    </action>
-    <action id="ToggleBookmark3">
-      <keyboard-shortcut first-keystroke="shift control 3"/>
     </action>
     <action id="ExternalJavaDoc">
       <keyboard-shortcut first-keystroke="shift F1"/>
@@ -926,19 +896,7 @@
       <keyboard-shortcut first-keystroke="HOME"/>
       <keyboard-shortcut first-keystroke="meta LEFT"/>
     </action>
-    <action id="ToggleBookmark2">
-      <keyboard-shortcut first-keystroke="shift control 2"/>
-    </action>
     <action id="ValidateXml"/>
-    <action id="ToggleBookmark8">
-      <keyboard-shortcut first-keystroke="shift control 8"/>
-    </action>
-    <action id="ToggleBookmark1">
-      <keyboard-shortcut first-keystroke="shift control 1"/>
-    </action>
-    <action id="GotoBookmark1">
-      <keyboard-shortcut first-keystroke="control 1"/>
-    </action>
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="control H"/>
     </action>
@@ -948,9 +906,6 @@
     </action>
     <action id="GotoBookmark4">
       <keyboard-shortcut first-keystroke="control 4"/>
-    </action>
-    <action id="ToggleBookmark0">
-      <keyboard-shortcut first-keystroke="shift control 0"/>
     </action>
     <action id="ShowPopupMenu"/>
     <action id="EditorLineStartWithSelection">
@@ -1031,6 +986,68 @@
       <mouse-shortcut keystroke="meta shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
     </action>
+
+      <action id="GotoBookmark0">
+        <keyboard-shortcut first-keystroke="control 0"/>
+      </action>
+      <action id="GotoBookmark1">
+        <keyboard-shortcut first-keystroke="control 1"/>
+      </action>
+      <action id="GotoBookmark2">
+        <keyboard-shortcut first-keystroke="control 2"/>
+      </action>
+      <action id="GotoBookmark3">
+        <keyboard-shortcut first-keystroke="control 3"/>
+      </action>
+      <action id="GotoBookmark4">
+        <keyboard-shortcut first-keystroke="control 4"/>
+      </action>
+      <action id="GotoBookmark5">
+        <keyboard-shortcut first-keystroke="control 5"/>
+      </action>
+      <action id="GotoBookmark6">
+        <keyboard-shortcut first-keystroke="control 6"/>
+      </action>
+      <action id="GotoBookmark7">
+        <keyboard-shortcut first-keystroke="control 7"/>
+      </action>
+      <action id="GotoBookmark8">
+        <keyboard-shortcut first-keystroke="control 8"/>
+      </action>
+      <action id="GotoBookmark9">
+        <keyboard-shortcut first-keystroke="control 9"/>
+      </action>
+      <action id="ToggleBookmark0">
+        <keyboard-shortcut first-keystroke="shift control 0"/>
+      </action>
+      <action id="ToggleBookmark1">
+        <keyboard-shortcut first-keystroke="shift control 1"/>
+      </action>
+      <action id="ToggleBookmark2">
+        <keyboard-shortcut first-keystroke="shift control 2"/>
+      </action>
+      <action id="ToggleBookmark3">
+        <keyboard-shortcut first-keystroke="shift control 3"/>
+      </action>
+      <action id="ToggleBookmark4">
+        <keyboard-shortcut first-keystroke="shift control 4"/>
+      </action>
+      <action id="ToggleBookmark5">
+        <keyboard-shortcut first-keystroke="shift control 5"/>
+      </action>
+      <action id="ToggleBookmark6">
+        <keyboard-shortcut first-keystroke="shift control 6"/>
+      </action>
+      <action id="ToggleBookmark7">
+        <keyboard-shortcut first-keystroke="shift control 7"/>
+      </action>
+      <action id="ToggleBookmark8">
+        <keyboard-shortcut first-keystroke="shift control 8"/>
+      </action>
+      <action id="ToggleBookmark9">
+        <keyboard-shortcut first-keystroke="shift control 9"/>
+      </action>
+
     <action id="EditorJoinLines">
       <keyboard-shortcut first-keystroke="control shift J"/>
     </action>
@@ -1278,6 +1295,22 @@
       <keyboard-shortcut first-keystroke="control F4"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="K"/>
     </action>
+    <action id="SplitVertical">
+      <keyboard-shortcut first-keystroke="control 2"/>
+    </action>
+    <action id="SplitHorisontal">
+      <keyboard-shortcut first-keystroke="control 3"/>
+    </action>
+    <action id="UnsplitAll">
+      <keyboard-shortcut first-keystroke="control 1"/>
+    </action>
+    <action id="Unsplit">
+      <keyboard-shortcut first-keystroke="control 0"/>
+    </action>
+    <action id="ChangeSplitOrientation">
+      <keyboard-shortcut first-keystroke="control 5"/>
+    </action>
+
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="control X" second-keystrole="O"/>
     </action>
