@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -102,22 +103,56 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
-    myTree.setCellRenderer(new NodeRenderer());
+    myTree.setCellRenderer(new NodeRenderer() {
+      public void customizeCellRenderer(JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+        super.customizeCellRenderer(tree, value, selected, expanded, leaf, row,
+                                    hasFocus);
+        if (value instanceof DefaultMutableTreeNode) {
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+          //only favorites roots to explain
+          if (node.getParent() == null || node.getParent().getParent() != null){
+            return;
+          }
+          Object userObject = node.getUserObject();
+
+          if (userObject instanceof FavoritesTreeNodeDescriptor) {
+            final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = ((FavoritesTreeNodeDescriptor)userObject);
+            AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
+            String locationString = treeNode.getPresentation().getLocationString();
+            if (locationString != null && locationString.length() > 0) {
+              append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+            } else {
+              final String location = favoritesTreeNodeDescriptor.getLocation();
+              if (location != null && location.length() > 0){
+                append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+              }
+            }
+          }
+        }
+      }
+    });
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     PopupHandler.installPopupHandler(myTree, (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
                                      ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
 
 
-   /* mySplitter = new Splitter(true);
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setFirstComponent(myCenterPanel);
-    myStructurePanel = new JPanel(new BorderLayout());
-    myStructureViewWrapper = new MyStructureViewWrapper();
-    myStructureViewWrapper.setFileEditor(null);
-    myStructurePanel.add(myStructureViewWrapper.getComponent());
-    mySplitter.setSecondComponent(myStructurePanel);
+    /* mySplitter = new Splitter(true);
+     mySplitter.setHonorComponentsMinimumSize(true);
+     mySplitter.setFirstComponent(myCenterPanel);
+     myStructurePanel = new JPanel(new BorderLayout());
+     myStructureViewWrapper = new MyStructureViewWrapper();
+     myStructureViewWrapper.setFileEditor(null);
+     myStructurePanel.add(myStructureViewWrapper.getComponent());
+     mySplitter.setSecondComponent(myStructurePanel);
 
-   */ add(scrollPane, BorderLayout.CENTER);
+    */ add(scrollPane,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                BorderLayout.CENTER);
     add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
@@ -232,35 +267,35 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         : myDeletePSIElementProvider;
 
     }
-    if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)){
+    if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
     }
-    if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)){
+    if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)) {
       final List<Form> selectedElements = getSelectedElements(Form.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new Form[selectedElements.size()]);
     }
-    if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
+    if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
     }
-    if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
+    if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)) {
       final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
     }
     return null;
   }
 
-  private <T>List<T> getSelectedElements(Class<T> klass){
+  private <T>List<T> getSelectedElements(Class<T> klass) {
     final Object[] elements = getSelectedNodeElements();
-      ArrayList<T> result = new ArrayList<T>();
-      for (int i = 0; i < elements.length; i++) {
-        Object element = elements[i];
-        if (klass.isAssignableFrom(element.getClass())) {
-          result.add((T)element);
-        }
+    ArrayList<T> result = new ArrayList<T>();
+    for (int i = 0; i < elements.length; i++) {
+      Object element = elements[i];
+      if (klass.isAssignableFrom(element.getClass())) {
+        result.add((T)element);
       }
-     return result;
+    }
+    return result;
   }
 
   private Module[] getSelectedModules() {
@@ -370,6 +405,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     });
     group.add(myAutoScrollToSourceHandler.createToggleAction());
     //group.add(new ShowStructureAction());
+    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.FAVORITES_VIEW_TOOLBAR, group, true).getComponent();
   }
 

@@ -105,6 +105,8 @@ public interface IdeActions {
   String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
 
   String GROUP_FAVORITES_VIEW_POPUP = "FavoritesViewPopupMenu";
+  String ADD_TO_FAVORITES = "AddToFavorites";
+  String REMOVE_FROM_FAVORITES = "RemoveFromFavorites";
 
   String GROUP_J2EE_VIEW_POPUP = "J2EEViewPopupMenu";
   String GROUP_EJB_TRANSACTION_ATTRIBUTES_VIEW_POPUP = "EjbTransactionAttributesViewPopupMenu";

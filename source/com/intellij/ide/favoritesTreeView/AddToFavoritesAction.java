@@ -67,21 +67,35 @@ public class AddToFavoritesAction extends AnAction {
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
+    AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
     if (currentViewId == J2EEProjectViewPane.ID){
-      AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
       J2EENodeDescriptor j2eeNodeDescriptor = (J2EENodeDescriptor)pane.getSelectedDescriptor();
     }
 
     //on psi element
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-    addPsiElementNode(psiElement, project, result, favoritesConfig);
-
+    if (psiElement != null){
+      Module containingModule = null;
+      if (ProjectView.getInstance(project).isShowModules(currentViewId)){
+        AbstractTreeNode abstractTreeNode = ((AbstractTreeNode)pane.getSelectedDescriptor().getElement());
+        while (abstractTreeNode != null && !(abstractTreeNode.getParent() instanceof AbstractModuleNode)){
+          abstractTreeNode = abstractTreeNode.getParent();
+        }
+        if (abstractTreeNode != null){
+          containingModule = (Module)((AbstractModuleNode)abstractTreeNode.getParent()).getValue();
+        }
+      }
+      addPsiElementNode(psiElement, project, result, favoritesConfig, containingModule);
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
+    }
+    
     //on psi elements
     final PsiElement[] psiElements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (int i = 0; i < psiElements.length; i++) {
-        addPsiElementNode(psiElements[i], project, result, favoritesConfig);
+        addPsiElementNode(psiElements[i], project, result, favoritesConfig, (Module)dataContext.getData(DataConstants.MODULE_CONTEXT));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on module node
@@ -93,6 +107,7 @@ public class AddToFavoritesAction extends AnAction {
       else {
         result.add(new ProjectViewModuleNode(project, module, favoritesConfig));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on module nodes
@@ -106,6 +121,7 @@ public class AddToFavoritesAction extends AnAction {
           result.add(new ProjectViewModuleNode(project, modules[i], favoritesConfig));
         }
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on module groups
@@ -123,6 +139,7 @@ public class AddToFavoritesAction extends AnAction {
           result.add(new ProjectViewModuleGroupNode(project, moduleGroup, favoritesConfig));
         }
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on form in editor
@@ -142,6 +159,7 @@ public class AddToFavoritesAction extends AnAction {
         final PsiClass classToBind = psiManager.findClass(container.getClassToBind(), GlobalSearchScope.allScope(project));
         result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on form nodes
@@ -155,6 +173,7 @@ public class AddToFavoritesAction extends AnAction {
         bindClasses.add(classToBind);
         result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on library group node
@@ -164,6 +183,7 @@ public class AddToFavoritesAction extends AnAction {
         LibraryGroupElement libraryGroup = libraryGroups[i];
         result.add(new LibraryGroupNode(project, libraryGroup, favoritesConfig));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
 
     //on named library node
@@ -173,27 +193,25 @@ public class AddToFavoritesAction extends AnAction {
         NamedLibraryElement namedLibrary = namedLibraries[i];
         result.add(new NamedLibraryElementNode(project, namedLibrary, favoritesConfig));
       }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
-    return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
+    return null;
   }
 
   private void addPsiElementNode(final PsiElement psiElement,
-                                final Project project,
-                                final ArrayList<AbstractTreeNode> result,
-                                final FavoritesTreeViewConfiguration favoritesConfig) {
-    final Class <? extends AbstractTreeNode> klass;
-    final Object value;
-    if (psiElement != null) {
-      klass = getPsiElementNodeClass(psiElement);
-      value = getPsiElementNodeValue(psiElement, project);
-      try {
-        if (klass != null && value != null) {
-          result.add(ProjectViewNode.createTreeNode(klass, project, value, favoritesConfig));
-        }
+                                 final Project project,
+                                 final ArrayList<AbstractTreeNode> result,
+                                 final FavoritesTreeViewConfiguration favoritesConfig,
+                                 Module module) {
+    final Class <? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
+    final Object value = getPsiElementNodeValue(psiElement, project, module);
+    try {
+      if (klass != null && value != null) {
+        result.add(ProjectViewNode.createTreeNode(klass, project, value, favoritesConfig));
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -220,13 +238,13 @@ public class AddToFavoritesAction extends AnAction {
     return klass;
   }
 
-  private Object getPsiElementNodeValue(PsiElement psiElement, Project project){
+  private Object getPsiElementNodeValue(PsiElement psiElement, Project project, Module module) {
     if (psiElement instanceof PsiPackage){
       final PsiPackage psiPackage = (PsiPackage)psiElement;
       final PsiDirectory[] directories = psiPackage.getDirectories();
       final VirtualFile firstDir = directories[0].getVirtualFile();
       final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, project);
-      return new PackageElement(null, psiPackage, isLibraryRoot);
+      return new PackageElement(module, psiPackage, isLibraryRoot);
     }
     return psiElement;
   }
