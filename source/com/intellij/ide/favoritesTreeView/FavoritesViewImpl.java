@@ -6,8 +6,6 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -72,7 +70,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectOpened() {
-    if (!((ApplicationEx)ApplicationManager.getApplication()).isInternal()) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -147,9 +144,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectClosed() {
-    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()){
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
-    }
+    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);    
   }
 
   public String getComponentName() {
