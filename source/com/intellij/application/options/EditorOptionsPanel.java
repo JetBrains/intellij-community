@@ -23,7 +23,6 @@ public class EditorOptionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.EditorOptionsPanel");
 
   private JPanel myPanel;
-  private JSeparator mySeparator;
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
   private JCheckBox myCbBlinkCaret;
   private JTextField myBlinkIntervalField;
