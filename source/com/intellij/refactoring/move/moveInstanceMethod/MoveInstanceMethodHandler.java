@@ -130,7 +130,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method) {
     final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
-    Map<PsiClass, String> result = new com.intellij.util.containers.HashMap<PsiClass, String>();
+    Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
     for (int i = 0; i < classes.length; i++) {
       PsiClass aClass = classes[i];
       result.put(aClass, suggestParameterNameForThisClass(aClass));
