@@ -52,8 +52,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
             final boolean oldUseFQNamesInJavadoc = settings.USE_FQ_CLASS_NAMES_IN_JAVADOC;
             final boolean oldUseFQNames = settings.USE_FQ_CLASS_NAMES;
             try {
-                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
-                settings.USE_FQ_CLASS_NAMES = true;
+                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
+                settings.USE_FQ_CLASS_NAMES = false;
                 final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
                 final PsiManager psiManager = reference.getManager();
                 final CodeStyleManager styleManager = psiManager.getCodeStyleManager();

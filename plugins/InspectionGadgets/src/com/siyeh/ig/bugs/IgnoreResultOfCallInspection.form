@@ -1,44 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.bugs.IgnoreResultOfCallInspection.Form">
-  <grid id="9993d" binding="contentPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="b6695" binding="contentPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="92" y="33" width="211" height="192"/>
+      <xy x="92" y="39" width="211" height="226"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="14807">
+      <grid id="f8a05" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="211" height="163"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+          <xy x="0" y="0" width="211" height="199"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="etched" title="Ignored calls to report"/>
         <children>
-          <component id="b0978" class="javax.swing.JTable" binding="table">
-            <constraints/>
-            <properties/>
+          <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
+            <constraints>
+              <xy x="105" y="169" width="100" height="24"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
+            </constraints>
+            <properties>
+              <text value="Delete"/>
+            </properties>
           </component>
+          <component id="52926" class="javax.swing.JButton" binding="addButton">
+            <constraints>
+              <xy x="6" y="169" width="89" height="24"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
+            </constraints>
+            <properties>
+              <text value="Add"/>
+            </properties>
+          </component>
+          <scrollpane id="14807">
+            <constraints>
+              <xy x="6" y="20" width="199" height="144"/>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="b0978" class="javax.swing.JTable" binding="table">
+                <constraints/>
+                <properties/>
+              </component>
+            </children>
+          </scrollpane>
         </children>
-      </scrollpane>
-      <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
+      </grid>
+      <component id="2d492" class="javax.swing.JCheckBox" binding="nonLibraryCheckbox">
         <constraints>
-          <xy x="105" y="168" width="106" height="24"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
+          <xy x="0" y="204" width="188" height="22"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Delete"/>
-        </properties>
-      </component>
-      <component id="52926" class="javax.swing.JButton" binding="addButton">
-        <constraints>
-          <xy x="0" y="168" width="95" height="24"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
-        </constraints>
-        <properties>
-          <text value="Add"/>
+          <text value="Report all ignored non-library calls"/>
         </properties>
       </component>
     </children>

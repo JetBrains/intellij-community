@@ -50,7 +50,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
                         registerFieldError(field);
                     } else {
                         final PsiType type = field.getType();
-                        if (PsiType.LONG.equals(type)) {
+                        if (!PsiType.LONG.equals(type)) {
                             registerFieldError(field);
                         }
                     }
