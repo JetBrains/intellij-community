@@ -11,7 +11,7 @@
     <children>
       <scrollpane id="14807">
         <constraints>
-          <xy x="2" y="2" width="209" height="159"/>
+          <xy x="2" y="2" width="207" height="159"/>
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -19,13 +19,15 @@
         <children>
           <component id="b0978" class="javax.swing.JTable" binding="table">
             <constraints/>
-            <properties/>
+            <properties>
+              <autoResizeMode value="4"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
       <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
         <constraints>
-          <xy x="106" y="166" width="105" height="24"/>
+          <xy x="105" y="166" width="104" height="24"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -34,7 +36,7 @@
       </component>
       <component id="52926" class="javax.swing.JButton" binding="addButton">
         <constraints>
-          <xy x="2" y="166" width="94" height="24"/>
+          <xy x="2" y="166" width="93" height="24"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
         </constraints>
         <properties>

@@ -19,7 +19,9 @@
         <children>
           <component id="b0978" class="javax.swing.JTable" binding="table">
             <constraints/>
-            <properties/>
+            <properties>
+              <autoResizeMode value="4"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
