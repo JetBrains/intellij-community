@@ -355,7 +355,7 @@ public class ForCanBeForeachInspection extends StatementInspection {
             return false;
         }
         final PsiDeclarationStatement declaration = (PsiDeclarationStatement) initialization;
-        if (declaration.getDeclaredElements().length > 1) {
+        if (declaration.getDeclaredElements().length != 1) {
             return false;
         }
         final PsiLocalVariable indexVar = (PsiLocalVariable) declaration.getDeclaredElements()[0];

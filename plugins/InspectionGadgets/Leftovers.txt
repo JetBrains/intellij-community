@@ -37,9 +37,10 @@
     Genericize "StringBuffer.toString() in concatenation"
     Split "Portability Issues" into "Portability Issues" and "JDK issues"
     QuickFix for "Confusing else Branch"
-    QuickFix for "Integer difision in floating point context"
+    QuickFix for "Integer division in floating point context"
     Quickfix for "Non-serializable class with..."
     Quickfix for "Unnecessary default"
+    JUnit test methods should not be marked "may be static"
 
 
     Inheritance as type def (change the EmptyClass inspection)
