@@ -42,7 +42,6 @@ class ExtractMethodDialog extends DialogWrapper {
   private VisibilityPanel myVisibilityPanel;
 
 
-  // TODO : choose visibility?
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
                              PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic, String initialMethodName,
