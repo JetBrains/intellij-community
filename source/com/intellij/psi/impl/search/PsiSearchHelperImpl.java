@@ -118,6 +118,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   static {
     registerCustomSearchHelper(StdFileTypes.HTML,new HtmlCustomSearchHelper());
     registerCustomSearchHelper(StdFileTypes.XHTML,new XHtmlCustomSearchHelper());
+    registerCustomSearchHelper(StdFileTypes.JSPX,new XHtmlCustomSearchHelper());
 
     XmlCustomSearchHelper searchHelper = new XmlCustomSearchHelper();
     registerCustomSearchHelper(StdFileTypes.XML,searchHelper);
