@@ -54,7 +54,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       if (child instanceof CompositeElement) {
-        result.add(childNodeToPsi(child));
+        result.add(child.getPsi());
       }
       child = child.getTreeNext();
     }
@@ -275,10 +275,6 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public ASTNode getNode() {
     return myNode;
-  }
-
-  public PsiElement childNodeToPsi(ASTNode node) {
-    return SourceTreeToPsiMap.treeElementToPsi(node);
   }
 
   public Language getLanguage() {

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -165,5 +166,9 @@ public abstract class LeafElement extends TreeElement {
 
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  }
+
+  public PsiElement getPsi() {
+    return null;
   }
 }

@@ -194,4 +194,8 @@ public class LeafPsiElement extends LeafElementImpl implements PsiElement {
   public ASTNode getNode() {
     return this;
   }
+
+  public PsiElement getPsi() {
+    return this;
+  }
 }
