@@ -47,6 +47,7 @@ import java.util.List;
  * author: lesya
  */
 public class LineStatusTracker implements EditorColorsListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private final Document myDocument;
   private final Document myUpToDateDocument;
   private List<Range> myRanges = new ArrayList<Range>();
@@ -55,9 +56,6 @@ public class LineStatusTracker implements EditorColorsListener {
 
   private EditorColorsListener myListener;
   private final MyDocumentListener myDocumentListener = new MyDocumentListener();
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
-
 
   private boolean myIsReleased = false;
 
@@ -111,6 +109,7 @@ public class LineStatusTracker implements EditorColorsListener {
     highlighter.setGreedyToRight(true);
     highlighter.setLineMarkerRenderer(createRenderer(range));
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+    highlighter.setErrorStripeTooltip("Line changed");
     return highlighter;
   }
 
