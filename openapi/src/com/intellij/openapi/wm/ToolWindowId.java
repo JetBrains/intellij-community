@@ -19,7 +19,6 @@ public interface ToolWindowId {
   String INSPECTION = "Inspection";
   String TODO_VIEW = "TODO";
   String ASPECTS_VIEW = "Aspects";
-  String INTELLIJAC_VIEW = "IntelliJac";
   String HOT_SWAP_VIEW = "Hot Swap";
   String DEPENDENCIES = "Dependency Viewer";
   String VCS = "Version Control";
