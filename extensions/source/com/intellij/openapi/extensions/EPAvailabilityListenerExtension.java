@@ -47,7 +47,7 @@ public class EPAvailabilityListenerExtension implements PluginAware {
   }
 
   public Class loadListenerClass() throws ClassNotFoundException {
-    if (myPluginDescriptor.getPluginClassLoader() != null) {
+    if (myPluginDescriptor != null && myPluginDescriptor.getPluginClassLoader() != null) {
       return Class.forName(getListenerClass(), true, myPluginDescriptor.getPluginClassLoader());
     }
     else {
