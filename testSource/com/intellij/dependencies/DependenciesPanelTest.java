@@ -35,6 +35,7 @@ import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.idea.IdeaTestUtil;
@@ -51,7 +52,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
                                                       return true;
                                                     }
                                                   });
-    final DependenciesBuilder builder = new DependenciesBuilder(myProject, scope);
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
     builder.analyze();
     final DependenciesPanel dependenciesPanel =
      new DependenciesPanel(myProject, builder);
