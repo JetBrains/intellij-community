@@ -1,30 +1,21 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.GenericDebuggerParametersRunnerConfigurable;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 
@@ -63,22 +54,19 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     if (state instanceof JavaCommandLine) {
       FileDocumentManager.getInstance().saveAllDocuments();
       final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
-      if (addLvcsLabel) localVcs.addLabel("Debugging " + runProfile.getName(), "");
+      if (addLvcsLabel) {
+        localVcs.addLabel("Debugging " + runProfile.getName(), "");
+      }
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      contentDescriptor = manager.
-        attachVirtualMachine(runProfile, this, javaCommandLine,
-                            reuseContent,
-                            connection, true);
+      contentDescriptor = manager.attachVirtualMachine(runProfile, this, javaCommandLine, reuseContent, connection, true);
     }
     else if (state instanceof PatchedRunnableState) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      if (addLvcsLabel) localVcs.addLabel("Debugging " + runProfile.getName(), "");
-      final GenericDebuggerRunnerSettings settings = (GenericDebuggerRunnerSettings)state.getRunnerSettings().getData();
-      final JavaParameters javaParameters = new JavaParameters();
-      contentDescriptor = manager.
-        attachVirtualMachine(runProfile, this, state,
-                            reuseContent, DebuggerManagerImpl.createDebugParameters(javaParameters, settings,
-                                                                                    false), true);
+      if (addLvcsLabel) {
+        localVcs.addLabel("Debugging " + runProfile.getName(), "");
+      }
+      final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
+      contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true);
     }
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -113,9 +101,12 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
   }
 
   public void patch(JavaParameters javaParameters, RunnerSettings settings) throws ExecutionException {
-    GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    doPatch(javaParameters, settings);
+  }
 
-    DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
+  private RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
+    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
   }
 
   public AnAction[] createActions(ExecutionResult executionResult) {
