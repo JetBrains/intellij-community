@@ -1,14 +1,11 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -503,7 +500,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testSeveralStatements() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 27, 15, 0, "lesya", "Formatter problem")) return;
     String s1 = "{\n" +
                 "        System.out.println(1);\n" +
                 "        System.out.println(2);\n" +
@@ -1066,7 +1062,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s2 = "<a/>";
     String s3 = "<a><b/></a>";
 
-    String expectedResult = "    <a><b/></a>";
+    String expectedResult = "    <a>\n" +
+                            "        <b/>\n" +
+                            "    </a>";
     String actualResult = replacer.testReplace(s1,s2,s3,xmlOptions);
 
     assertEquals(
@@ -1089,14 +1087,14 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s6 = "<reference ref=\"$Value$\"/>";
 
     actualResult = replacer.testReplace(s4,s5,s6,xmlOptions);
-    expectedResult = "<group id=\"EditorTabPopupMenu\">\n" +
-                     "    <reference ref=\"Compile\"/>\n" +
-                     "    <reference ref=\"RunContextPopupGroup\"/>\n" +
-                     "    <reference ref=\"ValidateXml\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"VersionControlsGroup\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"ExternalToolsGroup\"/>\n" +
+    expectedResult = "    <group id=\"EditorTabPopupMenu\">\n" +
+                     "        <reference ref=\"Compile\"/>\n" +
+                     "        <reference ref=\"RunContextPopupGroup\"/>\n" +
+                     "        <reference ref=\"ValidateXml\"/>\n" +
+                     "        <separator/>\n" +
+                     "        <reference ref=\"VersionControlsGroup\"/>\n" +
+                     "        <separator/>\n" +
+                     "        <reference ref=\"ExternalToolsGroup\"/>\n" +
                      "    </group>";
 
     assertEquals(
