@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,6 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -553,7 +553,7 @@ public class Helper {
     }
   }
 
-  public ASTNode shiftIndentInside(TreeElement element, int indentShift) {
+  public ASTNode shiftIndentInside(ASTNode element, int indentShift) {
     if (indentShift == 0) return element;
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(element);
     String text = element.getText();
