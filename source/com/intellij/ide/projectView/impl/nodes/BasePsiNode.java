@@ -80,12 +80,14 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
     if (value == null || !value.isValid()) {
       setValue(null);
     }
-    if (value == null) return;
+    if (getValue() == null) return;
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
+
+    LOG.assertTrue(value.isValid());
 
     Icon icon = value.getIcon(flags);
     data.setClosedIcon(icon);
