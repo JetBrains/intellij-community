@@ -72,6 +72,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
       clone.lastChild = null;
       clone.myModificationsCount = 0;
       clone.myParentModifications = -1;
+      clone.myWrapper = null;
       for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
         TreeUtil.addChildren(clone, (TreeElement)child.clone());
       }
