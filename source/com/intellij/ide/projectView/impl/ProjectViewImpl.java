@@ -6,10 +6,7 @@ import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -812,7 +809,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }
         final Object userObject = node.getUserObject();
         if (userObject instanceof PsiDirectoryNode ||
-            userObject instanceof ProjectViewModuleNode
+            userObject instanceof AbstractModuleNode
             || userObject instanceof PackageElementNode) {
           break;
         }
@@ -829,8 +826,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           return new PsiDirectory[]{directory};
         }
       }
-      else if (userObject instanceof ProjectViewModuleNode) {
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((ProjectViewModuleNode)userObject).getValue());
+      else if (userObject instanceof AbstractModuleNode) {
+        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
         List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
         final PsiManager psiManager = PsiManager.getInstance(myProject);
