@@ -296,6 +296,15 @@ public class CvsOperationExecutor {
           if (view != null) {
             output.connectToOutputView(tabbedWindow.addOutput(view), myProject);
           }
+        } else {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            public void run() {
+              Editor view = createView(myProject);
+              if (view != null) {
+                output.connectToOutputView(tabbedWindow.addOutput(view), myProject);
+              }              
+            }
+          }, ModalityState.defaultModalityState());
         }
       }
       return tabbedWindow;
