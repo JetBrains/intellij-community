@@ -4,12 +4,9 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.vcs.VcsException;
-
-import java.io.IOException;
 import java.util.Date;
 
-public interface VcsFileRevision {
+public interface VcsFileRevision extends VcsFileContent {
   VcsFileRevision NULL = new VcsFileRevision() {
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
@@ -43,6 +40,5 @@ public interface VcsFileRevision {
   Date getRevisionDate();
   String getAuthor();
   String getCommitMessage();
-  void loadContent() throws VcsException;
-  byte[] getContent() throws IOException;
+
 }

@@ -48,6 +48,10 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       }
       return 0;
     }
+
+    public long getLongValue() {
+      return myValue;
+    }
   }
 
   String asString();

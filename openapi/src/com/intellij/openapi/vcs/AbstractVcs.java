@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 
 public abstract class AbstractVcs {
 
@@ -133,6 +134,10 @@ public abstract class AbstractVcs {
   }
 
   public AnnotationProvider getAnnotationProvider(){
+    return null;
+  }
+
+  public DiffProvider getDiffProvider() {
     return null;
   }
 }
