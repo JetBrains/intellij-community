@@ -45,7 +45,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myModelListener = new ModelListener() {
       public void onModelChanged() {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        addRootToUpdate();
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
@@ -98,7 +98,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       }
     };
   }
-  
+
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
 
     public MyPsiTreeChangeListener() {
@@ -138,20 +138,25 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       myUpdateAlarm.cancelAllRequests();
       myUpdateAlarm.addRequest(new Runnable() {
         public void run() {
-          ((SmartTreeStructure)getTreeStructure()).rebuildTree();
-          myUpdater.addSubtreeToUpdate(myRootNode);
+          addRootToUpdate();
         }
       }, 300);
     }
 
     public void propertyChanged(PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      addRootToUpdate();
     }
   }
 
+  private void addRootToUpdate() {
+    ((SmartTreeStructure)getTreeStructure()).rebuildTree();
+    myUpdater.addSubtreeToUpdate(myRootNode);
+  }
+
+
   private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
     public void contentChanged() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      addRootToUpdate();
     }
   }
 }
