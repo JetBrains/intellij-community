@@ -93,7 +93,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   private void initChunks() {
     int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
     int lineEndOffset = myDocument.getLineEndOffset(myLineNumber);
-    myTextChunks = createTextChunks(myPsiFile.getFileType().getHighlighter(myPsiFile.getProject()), lineStartOffset, lineEndOffset);
+    myTextChunks = createTextChunks(myDocument.getCharsSequence(), myPsiFile.getFileType().getHighlighter(myPsiFile.getProject()), lineStartOffset, lineEndOffset);
   }
 
   public UsagePresentation getPresentation() {
@@ -171,7 +171,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     return project;
   }
 
-  public int compareTo(Usage usage) {
+  public static int compareTo(Usage usage) {
     return 0;
   }
 
@@ -247,14 +247,16 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
   }
 
-  private TextChunk[] createTextChunks(SyntaxHighlighter highlighter, int start, int end) {
+  private TextChunk[] createTextChunks(final CharSequence chars,
+                                       SyntaxHighlighter highlighter,
+                                       int start,
+                                       int end) {
     LOG.assertTrue(start <= end);
     List<TextChunk> result = new ArrayList<TextChunk>();
 
     appendPrefix(result);
 
     Lexer lexer = highlighter.getHighlightingLexer();
-    CharSequence chars = myDocument.getCharsSequence();
     lexer.start(CharArrayUtil.fromSequence(chars));
 
     for (int offset = start; offset < end; offset++) {
@@ -322,7 +324,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     addChunk(chars, Math.min(hiEnd, usageEnd), hiEnd, originalAttrs, false, result);
   }
 
-  private void addChunk(CharSequence chars, int start, int end, TextAttributes originalAttrs, boolean bold, List<TextChunk> result) {
+  private static void addChunk(CharSequence chars, int start, int end, TextAttributes originalAttrs, boolean bold, List<TextChunk> result) {
     if (start >= end) return;
     String rText = chars.subSequence(start, end).toString();
     TextAttributes attrs = bold
