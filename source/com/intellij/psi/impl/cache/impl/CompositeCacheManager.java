@@ -1,17 +1,16 @@
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.ide.startup.CacheUpdater;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -21,12 +20,6 @@ public class CompositeCacheManager implements CacheManager{
 
   public void addCacheManager(CacheManager manager) {
     myManagers.add(manager);
-  }
-
-  public void addProjectComponent(CacheManager cacheManager) {
-    if (cacheManager != null) {
-      addCacheManager(cacheManager);
-    }
   }
 
   public void initialize() {

@@ -141,7 +141,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     mySearchHelper = new PsiSearchHelperImpl(this);
     myResolveHelper = new PsiResolveHelperImpl(this);
     //myMemoryManager = new MemoryManager();
-    CompositeCacheManager cacheManager = new CompositeCacheManager();
+    final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (psiManagerConfiguration.REPOSITORY_ENABLED) {
       myShortNamesCache = new PsiShortNamesCacheImpl(this, projectRootManagerEx);
       cacheManager.addCacheManager(new CacheManagerImpl(this));
@@ -151,6 +151,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       myShortNamesCache = new EmptyRepository.PsiShortNamesCacheImpl();
       cacheManager.addCacheManager(new EmptyRepository.CacheManagerImpl());
       myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(this);
+    }
+    final CacheManager[] managers = myProject.getComponents(CacheManager.class);
+    for (int i = 0; i < managers.length; i++) {
+      cacheManager.addCacheManager(managers[i]);
     }
 
     myCacheManager = cacheManager;
