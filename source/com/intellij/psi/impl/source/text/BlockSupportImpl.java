@@ -69,7 +69,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     // hack
     final int textLength = file.getTextLength() + lengthShift;
 
-    if(fileImpl.getFileType() == StdFileTypes.JSP){
+    if(fileImpl.getFileType() == StdFileTypes.JSP || fileImpl.getFileType() == StdFileTypes.JSPX){
       makeFullParse(fileImpl.getTreeElement(), newFileText, textLength, fileImpl, fileImpl.getFileType());
       return;
     }
