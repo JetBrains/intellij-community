@@ -89,18 +89,18 @@ public class XmlAspectImpl implements XmlAspect {
             final int changeType = changeByChild.getChangeType();
             if (treeElement.getElementType() == XmlTokenType.XML_NAME) {
               if (changeType == ChangeInfo.REMOVED) {
-                oldName = ((TreeElement)treeElement).getText(table);
+                oldName = ((TreeElement)treeElement).getText();
               }
               else if (changeType == ChangeInfo.REPLACE) {
-                oldName = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText(table);
+                oldName = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText();
               }
             }
             if (treeElement.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
               if (changeType == ChangeInfo.REMOVED) {
-                oldValue = ((TreeElement)treeElement).getText(table);
+                oldValue = ((TreeElement)treeElement).getText();
               }
               else if (changeType == ChangeInfo.REPLACE) {
-                oldValue = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText(table);
+                oldValue = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText();
               }
             }
           }

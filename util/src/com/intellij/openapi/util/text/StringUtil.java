@@ -452,6 +452,15 @@ public class StringUtil {
     return h;
   }
 
+  public static int stringHashCodeInsensitive(CharSequence chars) {
+    int h = 0;
+    int to = chars.length();
+    for( int off = 0; off < to; ) {
+      h = 31*h + Character.toLowerCase(chars.charAt(off++));
+    }
+    return h;
+  }
+
   public static String trimEnd(String s, String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.lastIndexOf(suffix));

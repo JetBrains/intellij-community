@@ -1,19 +1,19 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -22,23 +22,19 @@ public class SourceUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SourceUtil");
 
   public static int toBuffer(ASTNode element, char[] buffer, int offset) {
-    return toBuffer(element, buffer, offset, null, SharedImplUtil.findCharTableByTree(element));
+    return toBuffer(element, buffer, offset, null);
   }
 
-  public static int toBuffer(ASTNode element, char[] buffer, int offset, CharTable table) {
-    return toBuffer(element, buffer, offset, null, table);
-  }
-
-  private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes, CharTable table) {
+  private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
     synchronized (PsiLock.LOCK) {
       if (skipTypes != null && skipTypes.isInSet(element.getElementType())) return offset;
       if (element instanceof LeafElement) {
-        return ((LeafElement)element).copyTo(buffer, offset, table);
+        return ((LeafElement)element).copyTo(buffer, offset);
       }
       else {
         int curOffset = offset;
         for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          curOffset = toBuffer(child, buffer, curOffset, skipTypes, table);
+          curOffset = toBuffer(child, buffer, curOffset, skipTypes);
         }
         return curOffset;
       }
@@ -46,10 +42,9 @@ public class SourceUtil implements Constants {
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
-    final CharTable table = SharedImplUtil.findCharTableByTree(element);
-    int length = toBuffer(element, null, 0, WHITE_SPACE_OR_COMMENT_BIT_SET, table);
+    int length = toBuffer(element, null, 0, WHITE_SPACE_OR_COMMENT_BIT_SET);
     char[] buffer = new char[length];
-    toBuffer(element, buffer, 0, WHITE_SPACE_OR_COMMENT_BIT_SET, table);
+    toBuffer(element, buffer, 0, WHITE_SPACE_OR_COMMENT_BIT_SET);
     return new String(buffer);
   }
 

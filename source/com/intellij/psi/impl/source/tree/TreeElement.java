@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -9,7 +10,6 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
@@ -71,8 +71,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public abstract LeafElement findLeafElementAt(int offset);
 
   public abstract String getText();
-
-  public abstract String getText(CharTable table);
 
   public abstract char[] textToCharArray();
 

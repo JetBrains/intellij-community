@@ -17,10 +17,6 @@ public abstract class LeafElement extends TreeElement {
 
   public abstract int copyTo(char[] buffer, int start);
 
-  public int copyTo(char[] buffer, int start, CharTable table) {
-    return copyTo(buffer, start);
-  }
-
   public int getTextLength(CharTable table) {
     return getTextLength();
   }
@@ -34,12 +30,12 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public String getText() {
-    return getText(SharedImplUtil.findCharTableByTree(this));  //To change body of implemented methods use File | Settings | File Templates.
+    return getInternedText().toString();
   }
 
   public abstract int textMatches(CharSequence buffer, int start);
 
-  public void registerInCharTable(CharTable table, CharTable oldCharTab) { }
+  public void registerInCharTable(CharTable table) { }
 
   //boolean isLast = false;
   public synchronized void setState(int state) {
@@ -122,7 +118,7 @@ public abstract class LeafElement extends TreeElement {
     return clone;
   }
 
-  public abstract int getCharTabIndex();
+  public abstract CharSequence getInternedText();
 
   public ASTNode findChildByType(IElementType type) {
     return null;

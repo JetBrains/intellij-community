@@ -28,8 +28,4 @@ public class JspText extends LeafPsiElement {
   public XmlText getFollowingText() {
     return myFollowingText;
   }
-
-  public void setCharTableIndex(int id){
-    super.setCharTableIndex(id);
-  }
 }

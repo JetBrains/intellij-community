@@ -1,12 +1,14 @@
 package com.intellij.pom.tree.events.impl;
 
-import com.intellij.pom.tree.events.TreeChange;
-import com.intellij.pom.tree.events.ChangeInfo;
-import com.intellij.pom.tree.events.ReplaceChangeInfo;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.lang.ASTNode;
+import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.pom.tree.events.ReplaceChangeInfo;
+import com.intellij.pom.tree.events.TreeChange;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
 
 import java.util.*;
@@ -71,7 +73,7 @@ public class TreeChangeImpl implements TreeChange {
 
     if(changeInfo.getChangeType() == ChangeInfo.REMOVED){
       if(child instanceof LeafElement){
-        final int charTabIndex = ((LeafElement)child).getCharTabIndex();
+        final CharSequence charTabIndex = ((LeafElement)child).getInternedText();
         if(checkLeaf(child.getTreeNext(), charTabIndex) || checkLeaf(child.getTreePrev(), charTabIndex)) return;
       }
       addChangeInternal(child, changeInfo);
@@ -114,11 +116,11 @@ public class TreeChangeImpl implements TreeChange {
   }
 
 
-  private boolean checkLeaf(final ASTNode treeNext, final int charTabIndex) {
+  private boolean checkLeaf(final ASTNode treeNext, final CharSequence charTabIndex) {
     if(!(treeNext instanceof LeafElement)) return false;
     final ChangeInfo right = myChanges.get(treeNext);
     if(right != null && right.getChangeType() == ChangeInfo.ADD){
-      if(charTabIndex == ((LeafElement)treeNext).getCharTabIndex()){
+      if(charTabIndex == ((LeafElement)treeNext).getInternedText()){
         removeChangeInternal(treeNext);
         return true;
       }

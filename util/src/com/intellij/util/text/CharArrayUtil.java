@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 public class CharArrayUtil {
-
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
     if (src instanceof CharArrayCharSequence) {
       ((CharArrayCharSequence)src).getChars(dst, dstOffset);
@@ -45,11 +44,11 @@ public class CharArrayUtil {
   }
 
   public static int shiftForward(CharSequence buffer, int offset, String chars) {
-    while(true){
+    while (true) {
       if (offset >= buffer.length()) break;
       char c = buffer.charAt(offset);
       int i;
-      for(i = 0; i < chars.length(); i++) {
+      for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }
       if (i == chars.length()) break;
@@ -58,16 +57,16 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static int shiftForward(char[] buffer, int offset, String chars){
+  public static int shiftForward(char[] buffer, int offset, String chars) {
     return shiftForward(new CharArrayCharSequence(buffer), offset, chars);
   }
 
   public static int shiftBackward(CharSequence buffer, int offset, String chars) {
-    while(true){
+    while (true) {
       if (offset < 0) break;
       char c = buffer.charAt(offset);
       int i;
-      for(i = 0; i < chars.length(); i++) {
+      for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }
       if (i == chars.length()) break;
@@ -76,20 +75,20 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static int shiftBackward(char[] buffer, int offset, String chars){
+  public static int shiftBackward(char[] buffer, int offset, String chars) {
     return shiftBackward(new CharArrayCharSequence(buffer), offset, chars);
   }
 
-  public static int shiftForwardUntil(char[] buffer, int offset, String chars){
+  public static int shiftForwardUntil(char[] buffer, int offset, String chars) {
     return shiftForwardUntil(new CharArrayCharSequence(buffer), offset, chars);
   }
 
-  public static int shiftForwardUntil(CharSequence buffer, int offset, String chars){
-    while(true){
+  public static int shiftForwardUntil(CharSequence buffer, int offset, String chars) {
+    while (true) {
       if (offset >= buffer.length()) break;
       char c = buffer.charAt(offset);
       int i;
-      for(i = 0; i < chars.length(); i++) {
+      for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }
       if (i < chars.length()) break;
@@ -98,16 +97,16 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static int shiftBackwardUntil(char[] buffer, int offset, String chars){
+  public static int shiftBackwardUntil(char[] buffer, int offset, String chars) {
     return shiftBackwardUntil(new CharArrayCharSequence(buffer), offset, chars);
   }
 
-  public static int shiftBackwardUntil(CharSequence buffer, int offset, String chars){
-    while(true){
+  public static int shiftBackwardUntil(CharSequence buffer, int offset, String chars) {
+    while (true) {
       if (offset < 0) break;
       char c = buffer.charAt(offset);
       int i;
-      for(i = 0; i < chars.length(); i++) {
+      for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }
       if (i < chars.length()) break;
@@ -116,10 +115,10 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static boolean regionMatches(CharSequence buffer, int offset, String s) {
+  public static boolean regionMatches(CharSequence buffer, int offset, CharSequence s) {
     if (offset + s.length() > buffer.length()) return false;
     if (offset < 0) return false;
-    for(int i = 0; i < s.length(); i++){
+    for (int i = 0; i < s.length(); i++) {
       if (buffer.charAt(offset + i) != s.charAt(i)) return false;
     }
     return true;
@@ -128,12 +127,12 @@ public class CharArrayUtil {
   public static int indexOf(char[] buffer, String pattern, int fromIndex) {
     char[] chars = pattern.toCharArray();
     int limit = buffer.length - chars.length;
-    if (fromIndex < 0){
+    if (fromIndex < 0) {
       fromIndex = 0;
     }
-  SearchLoop:
-    for(int i = fromIndex; i < limit; i++){
-      for(int j = 0; j < chars.length; j++){
+    SearchLoop:
+    for (int i = fromIndex; i < limit; i++) {
+      for (int j = 0; j < chars.length; j++) {
         if (chars[j] != buffer[i + j]) continue SearchLoop;
       }
       return i;
@@ -144,12 +143,12 @@ public class CharArrayUtil {
   public static int lastIndexOf(CharSequence buffer, String pattern, int fromIndex) {
     char[] chars = pattern.toCharArray();
     int end = buffer.length() - chars.length;
-    if (fromIndex > end){
+    if (fromIndex > end) {
       fromIndex = end;
     }
-  SearchLoop:
-    for(int i = fromIndex; i >= 0; i--){
-      for(int j = 0; j < chars.length; j++){
+    SearchLoop:
+    for (int i = fromIndex; i >= 0; i--) {
+      for (int j = 0; j < chars.length; j++) {
         if (chars[j] != buffer.charAt(i + j)) continue SearchLoop;
       }
       return i;

@@ -474,23 +474,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
-    String qname = name;
     final String prefix = getPrefixByNamespace(namespace);
-    qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + qname : qname;
+    String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
     return getAttribute(qname);
   }
 
   private XmlAttribute getAttribute(String qname){
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(this);
-    final XmlAttribute[] attributes = (XmlAttribute[])getAttributes();
+    final XmlAttribute[] attributes = getAttributes();
 
-    final int charTableIndex = charTableByTree.checkId(qname);
-    if(charTableIndex <= 0) return null;
+    final CharSequence charTableIndex = charTableByTree.intern(qname);
 
     for (int i = 0; i < attributes.length; i++) {
       final XmlAttribute attribute = attributes[i];
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if(attrNameElement.getCharTabIndex() == charTableIndex) return attribute;
+      if(attrNameElement.getInternedText() == charTableIndex) return attribute;
     }
     return null;
   }

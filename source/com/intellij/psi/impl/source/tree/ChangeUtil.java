@@ -103,7 +103,7 @@ public class ChangeUtil implements Constants {
     while (child != null) {
       CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
       if (child instanceof LeafElement) {
-          ((LeafElement)child).registerInCharTable(newCharTab, oldCharTab);
+          ((LeafElement)child).registerInCharTable(newCharTab);
       }
       else {
         registerLeafsInCharTab(newCharTab, child.getFirstChildNode(), charTable != null ? charTable : oldCharTab);
