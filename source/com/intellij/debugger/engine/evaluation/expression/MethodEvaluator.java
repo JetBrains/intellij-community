@@ -64,9 +64,11 @@ class MethodEvaluator implements Evaluator {
 
       if(object instanceof ObjectReference) {
         referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(((ObjectReference)object).referenceType(), className);
-      } else if(object instanceof ClassType) {
+      }
+      else if(object instanceof ClassType) {
         referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType((ClassType)object, className);
-      } else {
+      }
+      else {
         referenceType = debugProcess.findClass(context, className, context.getClassLoader());
       }
 
@@ -75,7 +77,8 @@ class MethodEvaluator implements Evaluator {
           Method jdiMethod;
           if(myMethodSignature != null) {
             jdiMethod = ((ClassType)referenceType).concreteMethodByName(myMethodName, myMethodSignature.getName(debugProcess));
-          } else {
+          }
+          else {
             List list = referenceType.methodsByName(myMethodName);
             jdiMethod = (Method)(list.size() > 0 ? list.get(0) : null);
           }

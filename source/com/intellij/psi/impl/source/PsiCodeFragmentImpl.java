@@ -121,7 +121,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
   /**
    * @fabrique
-   */ 
+   */
   public void setPhysical(boolean physical) {
     myPhysical = physical;
   }
@@ -172,9 +172,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
 
     IElementType i = myContentElementType;
-    if (i instanceof ICodeFragmentElementType) {
-      return true;
-    } else {
+    if (i == STATEMENTS) {
       {
         processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
         if (lastParent == null)
@@ -186,6 +184,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
         return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
       }
     }
+
+    return true;
   }
 
   public String toString() {

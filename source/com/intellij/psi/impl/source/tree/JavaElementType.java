@@ -141,15 +141,6 @@ public interface JavaElementType {
     }
   };
 
-  IElementType STATEMENTS = new IChameleonElementType("STATEMENTS", JavaLanguage.findByID("JAVA")){
-    public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return StatementParsing.parseStatements(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(), chars, 0, chars.length,
-                                              ((LeafElement)chameleon).getState(), SharedImplUtil.findCharTableByTree(chameleon));
-    }
-    public boolean isParsable(CharSequence buffer) {return false;}
-  };
-
   IElementType EXPRESSION_STATEMENT = new IChameleonElementType("EXPRESSION_STATEMENT", JavaLanguage.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
@@ -160,6 +151,15 @@ public interface JavaElementType {
   };
 
   //The following are the children of code fragment
+  IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      return StatementParsing.parseStatements(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(), chars, 0, chars.length,
+                                              ((LeafElement)chameleon).getState(), SharedImplUtil.findCharTableByTree(chameleon));
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
+
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
