@@ -796,8 +796,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     PsiClass parentClass = method.getContainingClass();
     if (method.isConstructor()) {
-      return processConstructorReferences(processor, method, searchScope, !isStrictSignatureSearch,
-                                          isStrictSignatureSearch);
+      if (!processConstructorReferences(processor, method, searchScope, !isStrictSignatureSearch,
+                                          isStrictSignatureSearch)) return false;
     }
 
     if (isStrictSignatureSearch && (parentClass == null
