@@ -9,13 +9,14 @@ public class FormatterImpl {
   private final Stack<BlockInfo> myStack = new Stack<BlockInfo>();
   private FormattingModel myModel;
   private Block myRootBlock;
-  private int myCurrentLine = -1;
   private int myCurrentOffset = -1;
   private int myReparseFromOffset = -1;
 
   private final Map <Block, WhiteSpace> myWhiteSpaceBeforeBlock = new LinkedHashMap<Block, WhiteSpace>();
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private CodeStyleSettings mySettings;
+
+  private final Collection<Alignment> myAlignedAlignments = new HashSet<Alignment>();
 
   public FormatterImpl(FormattingModel model, Block rootBlock, CodeStyleSettings settings, CodeStyleSettings.IndentOptions indentOptions) {
     myModel = model;
@@ -26,10 +27,7 @@ public class FormatterImpl {
 
   public void format() {
     myWhiteSpaceBeforeBlock.putAll(WhiteSpacesBuilder.buildWhiteSpaces(myRootBlock, myModel));
-    myCurrentLine = 0;
     myCurrentOffset  = 0;
-
-
 
     processBlock(myRootBlock, null);
 
@@ -115,7 +113,7 @@ public class FormatterImpl {
 
     final int wsLineFeeds = whiteSpace.getLineFeeds();
     if (wsLineFeeds > 0) {
-      myCurrentLine += wsLineFeeds;
+      myAlignedAlignments.clear();
       myCurrentOffset = whiteSpace.getSpaces();
     } else {
       myCurrentOffset += whiteSpace.getSpaces();
@@ -138,11 +136,11 @@ public class FormatterImpl {
       whiteSpace.arrangeSpaces(spaceProperty);
     }
 
-    setAlignOffset(info.getAlignment(), info.getCurrentIndent(), myCurrentLine);
+    setAlignOffset(info.getAlignment(), info.getCurrentIndent());
 
     final int blockLineFeeds = getLineFeeds(textRange);
     if (blockLineFeeds > 0) {
-      myCurrentLine += blockLineFeeds;
+      myAlignedAlignments.clear();
       myCurrentOffset = getLastLineLength(textRange);
     } else {
       myCurrentOffset += textRange.getLength();
@@ -172,9 +170,12 @@ public class FormatterImpl {
     return myModel.getLineNumber(textRange.getEndOffset()) - myModel.getLineNumber(textRange.getStartOffset());
   }
 
-  private void setAlignOffset(final Alignment alignment, final int currentIndent, final int lineNumber) {
+  private void setAlignOffset(final Alignment alignment, final int currentIndent) {
     if (alignment != null) {
-      alignment.setCurrentOffset(currentIndent, lineNumber);
+      if (!myAlignedAlignments.contains(alignment)) {
+        alignment.setCurrentOffset(currentIndent);
+      }
+      myAlignedAlignments.add(alignment);
     }
   }
 

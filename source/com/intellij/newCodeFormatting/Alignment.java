@@ -10,8 +10,6 @@ public class Alignment {
 
   private final Type myType;
 
-  private int myLastLine = -1;
-
   public Alignment(final Type type) {
     myType = type;
   }
@@ -24,11 +22,8 @@ public class Alignment {
     return myCurrentOffset;
   }
 
-  public void setCurrentOffset(final int currentIndent, final int lineNumber) {
-    if (myLastLine != lineNumber) {
-      myCurrentOffset = currentIndent;
-    }
-    myLastLine = lineNumber;
+  public void setCurrentOffset(final int currentIndent) {
+    myCurrentOffset = currentIndent;
   }
 
 }
