@@ -28,13 +28,20 @@ public class ExtensionPointImpl implements ExtensionPoint {
   private ExtensionsAreaImpl myOwner;
   private final AreaInstance myArea;
   private Class myExtensionClass;
+  private PluginDescriptor myDescriptor;
 
-  public ExtensionPointImpl(String name, String beanClassName, ExtensionsAreaImpl owner, AreaInstance area, LogProvider logger) {
+  public ExtensionPointImpl(String name,
+                            String beanClassName,
+                            ExtensionsAreaImpl owner,
+                            AreaInstance area,
+                            LogProvider logger,
+                            PluginDescriptor descriptor) {
     myName = name;
     myBeanClassName = beanClassName;
     myOwner = owner;
     myArea = area;
     myLogger = logger;
+    myDescriptor = descriptor;
   }
 
   public String getName() {
@@ -247,7 +254,12 @@ public class ExtensionPointImpl implements ExtensionPoint {
   public Class getExtensionClass() {
     if (myExtensionClass == null) {
       try {
-        myExtensionClass = Class.forName(myBeanClassName);
+        if (myDescriptor.getPluginClassLoader() == null) {
+          myExtensionClass = Class.forName(myBeanClassName);
+        }
+        else {
+          myExtensionClass = Class.forName(myBeanClassName, true, myDescriptor.getPluginClassLoader());
+        }
       }
       catch (ClassNotFoundException e) {
         myExtensionClass = Object.class;

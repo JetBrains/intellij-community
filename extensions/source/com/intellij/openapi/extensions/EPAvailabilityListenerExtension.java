@@ -7,11 +7,12 @@ package com.intellij.openapi.extensions;
 /**
  * @author AKireyev
  */
-public class EPAvailabilityListenerExtension {
+public class EPAvailabilityListenerExtension implements PluginAware {
   public static final String EXTENSION_POINT_NAME = "com.intellij.openapi.extensions.epAvailabilityListener";
 
   private String myExtensionPointName;
   private String myListenerClass;
+  private PluginDescriptor myPluginDescriptor;
 
   public EPAvailabilityListenerExtension() {
   }
@@ -35,5 +36,22 @@ public class EPAvailabilityListenerExtension {
 
   public void setListenerClass(String listenerClass) {
     myListenerClass = listenerClass;
+  }
+
+  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
+
+  public PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
+  }
+
+  public Class loadListenerClass() throws ClassNotFoundException {
+    if (myPluginDescriptor.getPluginClassLoader() != null) {
+      return Class.forName(getListenerClass(), true, myPluginDescriptor.getPluginClassLoader());
+    }
+    else {
+      return Class.forName(getListenerClass());
+    }
   }
 }

@@ -4,6 +4,8 @@
  */
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.LoadingOrder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -12,8 +14,6 @@ import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.io.IOException;
 import java.io.StringReader;
-
-import com.intellij.openapi.extensions.LoadingOrder;
 
 /**
  * @author Alexander Kireyev
@@ -30,14 +30,14 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
   public void testUnknownAttributes() {
     final DefaultPicoContainer container = new DefaultPicoContainer();
     final ExtensionComponentAdapter extensionComponentAdapter =
-          new ExtensionComponentAdapter(TestExtensionClassOne.class, readElement("<bean implementation=\"123\"/>"), container, "test");
+          new ExtensionComponentAdapter(TestExtensionClassOne.class, readElement("<bean implementation=\"123\"/>"), container, new DefaultPluginDescriptor("test"));
     extensionComponentAdapter.getComponentInstance(container);
   }
 
   private ExtensionComponentAdapter createAdapter(String text) {
     Element extensionElement = readElement(text);
 
-    ExtensionComponentAdapter adapter = new ExtensionComponentAdapter(Object.class, extensionElement, new DefaultPicoContainer(), "");
+    ExtensionComponentAdapter adapter = new ExtensionComponentAdapter(Object.class, extensionElement, new DefaultPicoContainer(), new DefaultPluginDescriptor(""));
     return adapter;
   }
 

@@ -7,6 +7,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.ReaderConfigurator;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.thoughtworks.xstream.XStream;
 import org.jdom.Element;
 import org.picocontainer.PicoContainer;
@@ -23,13 +24,13 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
   private Object myComponentInstance;
   private Element myExtensionElement;
   private PicoContainer myContainer;
-  private String myPluginName;
+  private PluginDescriptor myPluginDescriptor;
 
-  public ExtensionComponentAdapter(Class implementationClass, Element extensionElement, PicoContainer container, String pluginName) {
+  public ExtensionComponentAdapter(Class implementationClass, Element extensionElement, PicoContainer container, PluginDescriptor pluginDescriptor) {
     super(new Object(), implementationClass);
     myExtensionElement = extensionElement;
     myContainer = container;
-    myPluginName = pluginName;
+    myPluginDescriptor = pluginDescriptor;
   }
 
   public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
@@ -52,7 +53,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
       }
       if (myComponentInstance instanceof PluginAware) {
         PluginAware pluginAware = (PluginAware) myComponentInstance;
-        pluginAware.setPluginName(myPluginName);
+        pluginAware.setPluginDescriptor(myPluginDescriptor);
       }
     }
 
@@ -81,6 +82,6 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
   }
 
   public String getPluginName() {
-    return myPluginName;
+    return myPluginDescriptor.getPluginName();
   }
 }

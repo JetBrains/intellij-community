@@ -5,6 +5,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 
 import java.util.Collection;
 
@@ -59,8 +60,8 @@ public class XMLTestBean implements PluginAware {
     myCollectionProperty = collectionProperty;
   }
 
-  public void setPluginName(String pluginName) {
-    myPluginName = pluginName;
+  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+    myPluginName = pluginDescriptor.getPluginName();
   }
 
   public String getPluginName() {

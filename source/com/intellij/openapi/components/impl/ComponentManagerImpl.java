@@ -353,17 +353,22 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected abstract ComponentManagerImpl getParentComponentManager();
 
-
   public MutablePicoContainer getPicoContainer() {
     if (myPicoContainer == null) {
-      if (getParentComponentManager() != null) {
-        myPicoContainer = new DefaultPicoContainer(new MyComponentAdapterFactory(), getParentComponentManager().getPicoContainer());
-      }
-      else {
-        myPicoContainer = new DefaultPicoContainer(new MyComponentAdapterFactory());
-      }
+      myPicoContainer = createPicoContainer();
     }
     return myPicoContainer;
+  }
+
+  protected MutablePicoContainer createPicoContainer() {
+    MutablePicoContainer result;
+    if (getParentComponentManager() != null) {
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory(), getParentComponentManager().getPicoContainer());
+    }
+    else {
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory());
+    }
+    return result;
   }
 
   protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
@@ -558,7 +563,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  private class MyComponentAdapterFactory implements ComponentAdapterFactory {
+  protected class MyComponentAdapterFactory implements ComponentAdapterFactory {
+    public MyComponentAdapterFactory() {
+    }
+
     public ComponentAdapter createComponentAdapter(final Object componentKey, Class componentImplementation, Parameter[] parameters)
       throws PicoIntrospectionException,
              AssignabilityRegistrationException,

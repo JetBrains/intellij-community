@@ -4,25 +4,27 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.ComponentAdapter;
-import org.picocontainer.Parameter;
-import org.picocontainer.defaults.DefaultPicoContainer;
-import org.picocontainer.defaults.AmbiguousComponentResolutionException;
-import org.picocontainer.defaults.AbstractPicoVisitor;
+import com.intellij.openapi.extensions.AreaPicoContainer;
+import org.picocontainer.*;
 import org.picocontainer.alternatives.AbstractDelegatingMutablePicoContainer;
+import org.picocontainer.defaults.*;
 
 import java.util.*;
 
 /**
  * @author Alexander Kireyev
  */
-public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer implements MutablePicoContainer {
+public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer implements AreaPicoContainer {
   private ExtensionsAreaImpl myArea;
+  private ComponentAdapterFactory myComponentAdapterFactory;
 
-  public AreaPicoContainer(PicoContainer parentPicoContainer, ExtensionsAreaImpl area) {
-    super(new DefaultPicoContainer(parentPicoContainer));
+  public AreaPicoContainerImpl(PicoContainer parentPicoContainer, ExtensionsAreaImpl area) {
+    this(new MyPicoContainer(parentPicoContainer), area);
+  }
+
+  private AreaPicoContainerImpl(MyPicoContainer picoContainer, ExtensionsAreaImpl area) {
+    super(picoContainer);
+    picoContainer.setWrapperContainer(this);
     myArea = area;
   }
 
@@ -82,13 +84,6 @@ public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer im
   }
 
   public Object getComponentInstance(final Object componentKey) {
-    if (getParent() != null) {
-      Object parentInstance = getParent().getComponentInstance(componentKey);
-      if (parentInstance != null) {
-        return parentInstance;
-      }
-    }
-
     final Object[] result = new Object[] { null };
     accept(new EmptyPicoVisitor() {
       public void visitContainer(PicoContainer pico) {
@@ -109,7 +104,16 @@ public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer im
         }
       }
     });
-    return result[0];
+    if (result[0] != null) {
+      return result[0];
+    }
+    if (getParent() != null) {
+      Object parentInstance = getParent().getComponentInstance(componentKey);
+      if (parentInstance != null) {
+        return parentInstance;
+      }
+    }
+    return null;
   }
 
   public ComponentAdapter getComponentAdapterOfType(Class componentType) {
@@ -168,6 +172,14 @@ public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer im
     throw new UnsupportedOperationException("Method makeChildContainer() is not implemented");
   }
 
+  public void setComponentAdapterFactory(ComponentAdapterFactory factory) {
+    myComponentAdapterFactory = factory;
+  }
+
+  public ComponentAdapterFactory getComponentAdapterFactory() {
+    return myComponentAdapterFactory;
+  }
+
   private abstract class EmptyPicoVisitor extends AbstractPicoVisitor {
     public void visitContainer(PicoContainer pico) {
     }
@@ -176,6 +188,29 @@ public class AreaPicoContainer extends AbstractDelegatingMutablePicoContainer im
     }
 
     public void visitParameter(Parameter parameter) {
+    }
+  }
+
+  private static class MyPicoContainer extends DefaultPicoContainer {
+    private AreaPicoContainerImpl myWrapperContainer;
+    private ComponentAdapterFactory myDefault = new DefaultComponentAdapterFactory();
+
+    public MyPicoContainer(final PicoContainer parentPicoContainer) {
+      super(parentPicoContainer);
+    }
+
+    public void setWrapperContainer(AreaPicoContainerImpl wrapperContainer) {
+      myWrapperContainer = wrapperContainer;
+    }
+
+    public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation, Parameter[] parameters) throws PicoRegistrationException {
+        ComponentAdapter componentAdapter = getAdapterFactory().createComponentAdapter(componentKey, componentImplementation, parameters);
+        registerComponent(componentAdapter);
+        return componentAdapter;
+    }
+
+    private ComponentAdapterFactory getAdapterFactory() {
+      return myWrapperContainer.getComponentAdapterFactory() != null ? myWrapperContainer.getComponentAdapterFactory() : myDefault;
     }
   }
 }

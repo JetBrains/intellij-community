@@ -1,20 +1,18 @@
 package com.intellij.mock;
 
-import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.util.ArrayUtil;
+import org.picocontainer.PicoContainer;
 
 import java.awt.*;
 import java.io.IOException;
-
-import org.picocontainer.PicoContainer;
 
 public class MockApplication extends UserDataHolderBase implements ApplicationEx {
   public String getName() {
@@ -33,6 +31,11 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
   }
 
   public void setupIdeQueue(EventQueue queue) {
+  }
+
+  //used in Fabrique
+  public boolean isExceptionalThreadWithReadAccess(Thread thread) {
+    return false;
   }
 
   public String getComponentsDescriptor() {

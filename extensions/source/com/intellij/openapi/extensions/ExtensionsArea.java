@@ -5,7 +5,6 @@
 package com.intellij.openapi.extensions;
 
 import org.jdom.Element;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -27,10 +26,12 @@ public interface ExtensionsArea  {
 
   void addAvailabilityListener(String epName, ExtensionPointAvailabilityListener listener);
 
-  MutablePicoContainer getPicoContainer();
+  AreaPicoContainer getPicoContainer();
 
   void registerExtensionPoint(String pluginName, Element extensionPointElement);
+  void registerExtensionPoint(PluginDescriptor pluginDescriptor, Element extensionPointElement);
   void registerExtension(String pluginName, Element extensionElement);
+  void registerExtension(PluginDescriptor pluginDescriptor, Element extensionElement);
 
   void unregisterExtensionPoint(String pluginName, Element extensionPointElement);
 
@@ -39,4 +40,5 @@ public interface ExtensionsArea  {
   PicoContainer getPluginContainer(String pluginName);
 
   String getAreaClass();
+
 }

@@ -5,8 +5,9 @@
 package com.intellij.openapi.extensions;
 
 /**
- * @author akireyev
+ * @author Alexander Kireyev
  */
-public interface PluginAware {
-  void setPluginDescriptor(PluginDescriptor pluginDescriptor);
+public interface PluginDescriptor {
+  String getPluginName();
+  ClassLoader getPluginClassLoader();
 }

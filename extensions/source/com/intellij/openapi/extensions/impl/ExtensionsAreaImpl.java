@@ -31,7 +31,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static boolean DEBUG_REGISTRATION = true;
 
-  private MutablePicoContainer myPicoContainer;
+  private AreaPicoContainerImpl myPicoContainer;
   private Throwable myCreationTrace = null;
   private Map myExtensionPoints = new HashMap();
   private Map myEPTraces = new HashMap();
@@ -50,10 +50,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
-    myPicoContainer = new AreaPicoContainer(parentPicoContainer, this);
-    if (areaInstance != null) {
-      myPicoContainer.registerComponentInstance(areaInstance);
-    }
+    myPicoContainer = new AreaPicoContainerImpl(parentPicoContainer, this);
+    //if (areaInstance != null) {
+    //  myPicoContainer.registerComponentInstance(areaInstance);
+    //}
     initialize();
     myLogger = logger;
   }
@@ -62,7 +62,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     this(null, null, picoContainer, logger);
   }
 
-  public MutablePicoContainer getPicoContainer() {
+  public AreaPicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 
@@ -75,8 +75,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtensionPoint(String pluginName, Element extensionPointElement) {
-    assert pluginName != null;
-    String epName = pluginName + '.' + extensionPointElement.getAttributeValue("name");
+    registerExtensionPoint(new DefaultPluginDescriptor(pluginName), extensionPointElement);
+  }
+
+  public void registerExtensionPoint(PluginDescriptor pluginDescriptor, Element extensionPointElement) {
+    assert pluginDescriptor.getPluginName() != null;
+    String epName = pluginDescriptor.getPluginName() + '.' + extensionPointElement.getAttributeValue("name");
     String className = extensionPointElement.getAttributeValue("beanClass");
     if (className == null) {
       className = extensionPointElement.getAttributeValue("interface");
@@ -88,6 +92,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtension(final String pluginName, final Element extensionElement) {
+    registerExtension(new DefaultPluginDescriptor(pluginName), extensionElement);
+  }
+
+  public void registerExtension(final PluginDescriptor pluginDescriptor, final Element extensionElement) {
+    final String pluginName = pluginDescriptor.getPluginName();
+
     String epName = extractEPName(extensionElement);
     ExtensionComponentAdapter adapter;
     String implClass;
@@ -100,8 +110,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     if (implClass != null) {
       try {
-        Class implementationClass = Class.forName(implClass);
-        adapter = new ExtensionComponentAdapter(implementationClass, extensionElement, getPluginContainer(pluginName), pluginName);
+        Class implementationClass;
+        if (pluginDescriptor.getPluginClassLoader() == null) {
+          implementationClass = Class.forName(implClass);
+        }
+        else {
+          implementationClass = Class.forName(implClass, true, pluginDescriptor.getPluginClassLoader());
+        }
+        adapter = new ExtensionComponentAdapter(implementationClass, extensionElement, getPluginContainer(pluginName), pluginDescriptor);
       }
       catch (ClassNotFoundException e) {
         myLogger.warn("Extension implementation class not found: " + implClass);
@@ -111,7 +127,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
-      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginName), pluginName);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginName), pluginDescriptor);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer(pluginName).registerComponent(adapter);
@@ -207,7 +223,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         try {
           String epName = epListenerExtension.getExtensionPointName();
 
-          ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) instantiate(Class.forName(epListenerExtension.getListenerClass()));
+          ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) instantiate(epListenerExtension.loadListenerClass());
           addAvailabilityListener(epName, listener);
         }
         catch (Exception e) {
@@ -234,6 +250,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass) {
+    registerExtensionPoint(extensionPointName, extensionPointBeanClass, new UndefinedPluginDescriptor());
+  }
+
+  public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor) {
     if (hasExtensionPoint(extensionPointName)) {
       if (DEBUG_REGISTRATION) {
         myLogger.error((Throwable) myEPTraces.get(extensionPointName));
@@ -241,7 +261,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
     }
 
-    ExtensionPointImpl extensionPoint = new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, this, myAreaInstance, myLogger);
+    ExtensionPointImpl extensionPoint = new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, this, myAreaInstance, myLogger, descriptor);
     myExtensionPoints.put(extensionPointName, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
@@ -360,4 +380,5 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       internalGetPluginContainer(pluginName).unregisterComponent(componentAdapter.getComponentKey());
     }
   }
+
 }
