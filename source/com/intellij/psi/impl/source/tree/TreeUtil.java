@@ -126,7 +126,7 @@ public class TreeUtil {
       first.setTreePrev(null);
       while(true){
         final TreeElement treeNext = first.getTreeNext();
-        if(first instanceof CompositeElement) first.setTreeParent(parent);
+        first.setTreeParent(parent);
         if(treeNext == null) break;
         first = treeNext;
       }
@@ -148,9 +148,7 @@ public class TreeUtil {
       while(true){
         final TreeElement treeNext = firstNew.getTreeNext();
         LOG.assertTrue(treeNext != anchor, "Attempt to create cycle");
-        if(firstNew instanceof CompositeElement){
-          firstNew.setTreeParent(parent);
-        }
+        firstNew.setTreeParent(parent);
         if(treeNext == null) break;
         firstNew = treeNext;
       }
@@ -173,9 +171,7 @@ public class TreeUtil {
     while(true){
       final TreeElement next = firstNew.getTreeNext();
       LOG.assertTrue(next != anchor, "Attempt to create cycle");
-      if(firstNew instanceof CompositeElement){
-        firstNew.setTreeParent(parent);
-      }
+      firstNew.setTreeParent(parent);
       if(next == null) break;
       firstNew = next;
     }
@@ -234,6 +230,8 @@ public class TreeUtil {
     final CompositeElement parent = start.getTreeParent();
     final TreeElement startPrev = start.getTreePrev();
     final TreeElement endPrev = end != null ? end.getTreePrev() : null;
+    LOG.assertTrue(end == null || end.getTreeParent() == parent, "Trying to remove non-child");
+
     if (parent != null){
       if (start == parent.getFirstChildNode()){
         parent.firstChild = end;
