@@ -574,8 +574,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression) ref).getQualifierExpression();
       if (qualifierExpression instanceof PsiSuperExpression) {
 
-        for (Iterator iterator = myMethodsToBeChanged.iterator(); iterator.hasNext();) {
-          PsiElement element = (PsiElement) iterator.next();
+        for (Iterator<PsiMethod> iterator = myMethodsToBeChanged.iterator(); iterator.hasNext();) {
+          PsiElement element = iterator.next();
           if (PsiTreeUtil.isAncestor(element, ref, false)) {
             isSuperCall = true;
             break;
