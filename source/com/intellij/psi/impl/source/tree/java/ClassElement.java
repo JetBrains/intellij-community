@@ -33,22 +33,24 @@ public class ClassElement extends RepositoryTreeElement {
 
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
     if (anchor == null) {
-      if (before == null) {
-        if (first == last) {
-          PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
-          PsiElement psiElement = firstPsi instanceof PsiMember ? CodeEditUtil.getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
-          anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
+      if (first.getElementType() != DOC_COMMENT) {
+        if (before == null) {
+          if (first == last) {
+            PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
+            PsiElement psiElement = firstPsi instanceof PsiMember ? CodeEditUtil.getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
+            anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
+          }
+          else {
+            anchor = findChildByRole(ChildRole.RBRACE);
+          }
+          before = Boolean.TRUE;
+        }
+        else if (!before.booleanValue()) {
+          anchor = findChildByRole(ChildRole.LBRACE);
         }
         else {
           anchor = findChildByRole(ChildRole.RBRACE);
         }
-        before = Boolean.TRUE;
-      }
-      else if (!before.booleanValue()) {
-        anchor = findChildByRole(ChildRole.LBRACE);
-      }
-      else {
-        anchor = findChildByRole(ChildRole.RBRACE);
       }
     }
 
