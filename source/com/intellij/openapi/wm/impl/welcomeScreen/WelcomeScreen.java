@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -34,6 +35,7 @@ public class WelcomeScreen {
 
   private static final Insets ICON_INSETS = new Insets(15, 0, 15, 0);
 
+  // The below 3 array lists are reserved for future use
   private static ArrayList<MyActionButton> ourMainButtons = new ArrayList<MyActionButton>(5);
   private static ArrayList<MyActionButton> ourPluginButtons = new ArrayList<MyActionButton>(5);
   private static ArrayList<PluginDescriptor> ourPluginsWithActions = new ArrayList<PluginDescriptor>();
@@ -49,11 +51,17 @@ public class WelcomeScreen {
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(78, 78);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
   private static final Dimension LEARN_MORE_SIZE = new Dimension(26, 26);
+  private static final Dimension OPEN_PLUGIN_MANAGER_SIZE = new Dimension(166, 31);
 
   private static final String LEARN_MORE_ICON = "/general/learnMore.png";
   private static final String OPEN_PLUGINS_ICON = "/general/openPluginManager.png";
   private static final String CAPTION_IMAGE = "/general/welcomeCaption.png";
   private static final String DEVELOP_SLOGAN = "/general/developSlogan.png";
+  private static final String NEW_PROJECT_ICON = "/general/createNewProject.png";
+  private static final String REOPEN_RECENT_ICON = "/general/reopenRecentProject.png";
+  private static final String FROM_VCS_ICON = "/general/getProjectFromVCS.png";
+  private static final String READ_HELP_ICON = "/general/readHelp.png";
+  private static final String DEFAULT_ICON_PATH = "/general/configurableDefault.png";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -62,6 +70,14 @@ public class WelcomeScreen {
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
   private static final Color PLUGINS_PANEL_COLOR = new Color(229, 229, 229);
   private static final Color MAIN_PANEL_COLOR = new Color(210, 213, 226);
+  private static final Color BUTTON_PUSHED_COLOR = new Color(130, 146, 185);
+  private static final Color BUTTON_POPPED_COLOR = new Color(181, 190, 214);
+  private static final Color MAIN_PANEL_BACKGROUND = new Color(238, 238, 238);
+  private static final Color LEAR_MORE_BUTTON_COLOR = new Color(238, 238, 238);
+  private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
+  private static final Color CAPTION_BACKGROUND = new Color(24, 52, 146);
+  private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
+  private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
 
   private int myQuickStartCount = 0;
   private int myQuickStartIdx = -1;
@@ -92,7 +108,7 @@ public class WelcomeScreen {
 
     //Create the list of installed plugins
     PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
-    if (myInstalledPlugins.length == 0) {
+    if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
       addListItemToPlugins(pluginsListPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null);
     }
     else {
@@ -103,25 +119,25 @@ public class WelcomeScreen {
       }
     }
 
-    GridBagConstraints gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(17, 30, 0, 25), 0, 0);
+    GridBagConstraints gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(17, 25, 0, 25), 0, 0);
     topPluginsPanel.add(pluginsCaption, gBC);
 
-    gBC = new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(13, 25, 0, 10), 0, 0);
+    gBC = new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(13, 20, 0, 10), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(null, OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
         new SingleConfigurableEditor(myPluginsPanel, PluginManagerConfigurable.getInstance(), null).show();
       }
 
       public Dimension getMaximumSize() {
-        return new Dimension(166, 31);
+        return OPEN_PLUGIN_MANAGER_SIZE;
       }
 
       public Dimension getMinimumSize() {
-        return new Dimension(166, 31);
+        return OPEN_PLUGIN_MANAGER_SIZE;
       }
 
       public Dimension getPreferredSize() {
-        return new Dimension(166, 31);
+        return OPEN_PLUGIN_MANAGER_SIZE;
       }
     };
     openPluginManager.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -134,7 +150,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     topPluginsPanel.add(emptyLabel_1, gBC);
 
-    gBC = new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 30, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 25, 0, 0), 0, 0);
     topPluginsPanel.add(installedPluginsCaption, gBC);
 
     JLabel emptyLabel_2 = new JLabel();
@@ -145,7 +161,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(0, 0, 1, 1, 0.5, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     myPluginsPanel.add(topPluginsPanel, gBC);
 
-    gBC = new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 10, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0);
     myPluginsPanel.add(pluginsListPanel, gBC);
 
     JPanel emptyPanel_1 = new JPanel();
@@ -155,7 +171,7 @@ public class WelcomeScreen {
     myPluginsPanel.add(emptyPanel_1, gBC);
 
     JScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
-    myPluginsScrollPane.setBorder(BorderFactory.createLineBorder(new Color(177, 177, 177)));
+    myPluginsScrollPane.setBorder(BorderFactory.createLineBorder(GRAY_BORDER_COLOR));
     myPluginsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myPluginsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
@@ -175,7 +191,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 5, 0), 0, 0);
     quickStartPanel.add(quickStartCaption, gBC);
 
-    MyActionButton newProject = new MyActionButton(null, null, null) {
+    MyActionButton newProject = new MyActionButton(null, NEW_PROJECT_ICON, null) {
       protected void onPress(InputEvent e) {
         ProjectUtil.createNewProject(null);
       }
@@ -183,7 +199,7 @@ public class WelcomeScreen {
     addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "This will start the \"New Project\" Wizard that will lead you through " +
                                                                              "the steps necessary for project creation.");
 
-    MyActionButton openRecentProject = new ButtonWithExtension(null, null, null) {
+    MyActionButton openRecentProject = new ButtonWithExtension(null, REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
         final ActionManager actionManager = ActionManager.getInstance();
         final AnAction action = new RecentProjectsAction();
@@ -200,7 +216,7 @@ public class WelcomeScreen {
     addButtonToQuickStart(quickStartPanel, openRecentProject, "Reopen Recent Project...", "This will open the popup with the list of recent " +
                                                                                           "projects you were working with.");
 
-    MyActionButton getFromVCS = new MyActionButton(null, null, null) {
+    MyActionButton getFromVCS = new MyActionButton(null, FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e) {
         final ActionManager actionManager = ActionManager.getInstance();
         final AnAction action = actionManager.getAction("Cvs.CheckoutProject");
@@ -226,7 +242,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 5, 0), 0, 0);
     docsPanel.add(docsCaption, gBC);
 
-    MyActionButton readHelp = new MyActionButton(null, null, null) {
+    MyActionButton readHelp = new MyActionButton(null, READ_HELP_ICON, null) {
       protected void onPress(InputEvent e) {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
@@ -267,7 +283,7 @@ public class WelcomeScreen {
       public void paint(Graphics g) {
         Icon welcome = IconLoader.getIcon(CAPTION_IMAGE);
         welcome.paintIcon(null, g, 0, 0);
-        g.setColor(new Color(24, 52, 146));
+        g.setColor(CAPTION_BACKGROUND);
         g.fillRect(welcome.getIconWidth(), 0, this.getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
         super.paint(g);
       }
@@ -284,19 +300,19 @@ public class WelcomeScreen {
 
     // Create the base welcome panel
     myWelcomePanel = new JPanel(new GridBagLayout());
-    myWelcomePanel.setBackground(new Color(238, 238, 238));
+    myWelcomePanel.setBackground(MAIN_PANEL_BACKGROUND);
 
     gBC = new GridBagConstraints(0, 0, 3, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
     myWelcomePanel.add(topPanel, gBC);
 
-    gBC = new GridBagConstraints(0, 1, 2, 1, 1.55, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 2, 1, 1.5, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
     myWelcomePanel.add(myMainScrollPane, gBC);
 
     gBC = new GridBagConstraints(2, 1, 1, 1, 0.7, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
     myWelcomePanel.add(myPluginsScrollPane, gBC);
   }
 
-  public static JPanel getWelcomePanel() {
+  public static JPanel createWelcomePanel() {
     return new WelcomeScreen().myWelcomePanel;
   }
 
@@ -405,13 +421,13 @@ public class WelcomeScreen {
 
   public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, final String url) {
 
-    if (name == null || name.trim() == "") return;
+    if (StringUtil.isEmptyOrSpaces(name)) return;
 
     final int y = myPluginsIdx += 2;
     GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 20, 0, 0), 0, 0);
     Icon logoImage;
 
-    if (iconPath == null || iconPath.trim() == "") {
+    if (StringUtil.isEmptyOrSpaces(iconPath)) {
       logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     else {
@@ -423,7 +439,7 @@ public class WelcomeScreen {
     panel.add(logoName, gBC);
 
     String dsc = description;
-    if (dsc != null && dsc.trim() != "") {
+    if (!StringUtil.isEmptyOrSpaces(dsc)) {
 
       if (dsc.length() > 35) {
         String substring_1;
@@ -453,7 +469,7 @@ public class WelcomeScreen {
       panel.add(pluginDescription, gBC);
     }
 
-    if (url != null && url.trim() != "") {
+    if (!StringUtil.isEmptyOrSpaces(url)) {
       gBC = new GridBagConstraints(1, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 15, 0, 0), 0, 0);
       JLabel label = new JLabel("<html><nobr><u>Learn More...</u></nobr></html>");
       label.setFont(TEXT_FONT);
@@ -471,7 +487,7 @@ public class WelcomeScreen {
       label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       panel.add(label, gBC);
 
-      gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 15, 0, 10), 0, 0);
+      gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
       MyActionButton learnMore = new PluginsActionButton(null, LEARN_MORE_ICON, null) {
         protected void onPress(InputEvent e) {
           try {
@@ -503,8 +519,6 @@ public class WelcomeScreen {
     private String myDisplayName;
     private Icon myIcon;
     private KeyStroke myShortcut;
-
-    private static final String DEFAULT_ICON_PATH = "/general/configurableDefault.png";
 
     private MyActionButton(KeyStroke shortcut, String iconPath, String displayName) {
       myShortcut = shortcut;
@@ -551,7 +565,9 @@ public class WelcomeScreen {
     }
 
     protected Icon getIcon() {
-      return myIconPath != null ? IconLoader.getIcon(myIconPath) : IconLoader.getIcon(DEFAULT_ICON_PATH);
+      if (myIconPath == null) myIconPath = DEFAULT_ICON_PATH;
+      Icon icon = IconLoader.getIcon(myIconPath);
+      return icon != null ? icon : IconLoader.getIcon(DEFAULT_ICON_PATH);
     }
 
     protected KeyStroke getShortcut() {
@@ -583,20 +599,20 @@ public class WelcomeScreen {
       int state = getPopState();
       if (state != ActionButtonComponent.NORMAL) {
         if (state == ActionButtonComponent.POPPED) {
-          g.setColor(new Color(181, 190, 214));
+          g.setColor(BUTTON_POPPED_COLOR);
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
         else {
-          g.setColor(new Color(130, 146, 185));
+          g.setColor(BUTTON_PUSHED_COLOR);
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
       }
       else {
-        g.setColor(new Color(201, 205, 217));
+        g.setColor(ACTION_BUTTON_COLOR);
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
       if (state == ActionButtonComponent.PUSHED) {
-        g.setColor(new Color(130, 146, 185));
+        g.setColor(BUTTON_PUSHED_COLOR);
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
     }
@@ -643,6 +659,12 @@ public class WelcomeScreen {
           panel.repaint();
         }
 
+        public void mouseExited(MouseEvent e) {
+          mySelectedColumn = -1;
+          mySelectedRow = -1;
+          mySelectedGroup = -1;
+          panel.repaint();
+        }
       });
 
       addMouseMotionListener(new MouseMotionListener() {
@@ -696,31 +718,31 @@ public class WelcomeScreen {
       int state = getPopState();
       if (state != ActionButtonComponent.NORMAL) {
         if (state == ActionButtonComponent.POPPED) {
-          g.setColor(new Color(181, 190, 214));
+          g.setColor(BUTTON_POPPED_COLOR);
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
         else {
-          g.setColor(new Color(130, 146, 185));
+          g.setColor(BUTTON_PUSHED_COLOR);
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
       }
       else {
-        g.setColor(new Color(238, 238, 238));
+        g.setColor(LEAR_MORE_BUTTON_COLOR);
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
       if (state == ActionButtonComponent.PUSHED) {
-        g.setColor(new Color(130, 146, 185));
+        g.setColor(BUTTON_PUSHED_COLOR);
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
     }
 
     protected void paintBorder(Graphics g) {
       Rectangle rectangle = new Rectangle(getSize());
-      Color color = new Color(255, 255, 255);
+      Color color = WHITE_BORDER_COLOR;
       g.setColor(color);
       g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
       g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-      color = new Color(177, 177, 177);
+      color = GRAY_BORDER_COLOR;
       g.setColor(color);
       g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y + 1, (rectangle.x + rectangle.width) - 1,
         (rectangle.y + rectangle.height) - 1);

@@ -57,7 +57,7 @@ public class IdeRootPane extends JRootPane{
       myWelcomePane = null;
     }
     else {
-      myWelcomePane = WelcomeScreen.getWelcomePanel();
+      myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
     }
   }
@@ -99,7 +99,7 @@ public class IdeRootPane extends JRootPane{
       contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
     }
     else {
-      myWelcomePane = WelcomeScreen.getWelcomePanel();
+      myWelcomePane = WelcomeScreen.createWelcomePanel();
       contentPane.add(myWelcomePane);
     }
   }

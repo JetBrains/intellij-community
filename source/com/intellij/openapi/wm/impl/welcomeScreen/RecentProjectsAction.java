@@ -24,7 +24,7 @@ public class RecentProjectsAction extends QuickSwitchSchemeAction {
 
   protected void fillActions(Project project, final DefaultActionGroup group) {
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
-    if (recentProjectActions.length == 0) {
+    if (recentProjectActions == null || recentProjectActions.length == 0) {
       AnAction action = new AnAction("No recent projects to display.") {
         public void actionPerformed(AnActionEvent e) {
           group.setPopup(false);
