@@ -189,7 +189,6 @@
     </action>
     <action id="EditorScrollUp">
       <keyboard-shortcut first-keystroke="control UP"/>
-      <keyboard-shortcut first-keystroke="control shift UP"/>
     </action>
     <action id="ExpandAll">
       <keyboard-shortcut first-keystroke="control ADD"/>
@@ -229,7 +228,6 @@
     </action>
     <action id="EditorScrollDown">
       <keyboard-shortcut first-keystroke="control DOWN"/>
-      <keyboard-shortcut first-keystroke="control shift DOWN"/>
     </action>
     <action id="MethodHierarchy.ImplementMethodAction">
       <keyboard-shortcut first-keystroke="control I"/>
@@ -557,6 +555,12 @@
     </action>
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="F11"/>
+    </action>
+    <action id="MoveStatementDown">
+      <keyboard-shortcut first-keystroke="control shift DOWN"/>
+    </action>
+    <action id="MoveStatementUp">
+      <keyboard-shortcut first-keystroke="control shift UP"/>
     </action>
     <action id="EditorEnter">
       <keyboard-shortcut first-keystroke="ENTER"/>
