@@ -41,20 +41,20 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
 
   protected void initDescriptors() {
     super.initDescriptors();
-    myDescriptors.add(createDescriptor("Deprecated symbol", HighlightDisplayKey.DEPRECATED_SYMBOL, null, "Local_DeprecatedSymbol.html"));
-    myDescriptors.add(createDescriptor("Unused import", HighlightDisplayKey.UNUSED_IMPORT, null, "Local_UnusedImport.html"));
-    myDescriptors.add(createDescriptor("Unused symbol", HighlightDisplayKey.UNUSED_SYMBOL, null, "Local_UnusedSymbol.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.DEPRECATED_SYMBOL, null, "Local_DeprecatedSymbol.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNUSED_IMPORT, null, "Local_UnusedImport.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNUSED_SYMBOL, null, "Local_UnusedSymbol.html"));
     myDescriptors.add(
-      createDescriptor("Unused throws declaration", HighlightDisplayKey.UNUSED_THROWS_DECL, null, "Local_UnusedThrowsDeclaration.html"));
-    myDescriptors.add(createDescriptor("Silly assignment", HighlightDisplayKey.SILLY_ASSIGNMENT, null, "Local_SillyAssignment.html"));
-    myDescriptors.add(createDescriptor("Access static member via instance reference", HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE,
+      createDescriptor(HighlightDisplayKey.UNUSED_THROWS_DECL, null, "Local_UnusedThrowsDeclaration.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.SILLY_ASSIGNMENT, null, "Local_SillyAssignment.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE,
                                        null, "Local_StaticViaInstance.html"));
     myDescriptors.add(
-      createDescriptor("Wrong package statement", HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, null, "Local_WrongPackage.html"));
+      createDescriptor(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, null, "Local_WrongPackage.html"));
 
-    myDescriptors.add(createDescriptor("Illegal package dependencies", HighlightDisplayKey.ILLEGAL_DEPENDENCY, createDependencyConigurationPanel(),
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.ILLEGAL_DEPENDENCY, createDependencyConigurationPanel(),
                                        "Local_IllegalDependencies.html"));
-    myDescriptors.add(createDescriptor("JavaDoc errors", HighlightDisplayKey.JAVADOC_ERROR, null, "Local_JavaDoc.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.JAVADOC_ERROR, null, "Local_JavaDoc.html"));
 
     myAdditionalTagsField = new FieldPanel("Additional JavaDoc Tags", "Edit Additional JavaDoc Tags", null, null);
     myAdditionalTagsField.setPreferredSize(new Dimension(150, myAdditionalTagsField.getPreferredSize().height));
@@ -68,21 +68,21 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     if (mySelectedProfile != null) {
       myAdditionalTagsField.setText(mySelectedProfile.getAdditionalJavadocTags());
     }
-    myDescriptors.add(createDescriptor("Unknown javadoc tags", HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, myAdditionalTagsField,
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, myAdditionalTagsField,
                                        "Local_UnknownJavaDocTags.html"));
 
-    myDescriptors.add(createDescriptor("EJB errors", HighlightDisplayKey.EJB_ERROR, null, "Local_EJBErrors.html"));
-    myDescriptors.add(createDescriptor("EJB warnings", HighlightDisplayKey.EJB_WARNING, null, "Local_EJBWarnings.html"));
-
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.EJB_ERROR, null, "Local_EJBErrors.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.EJB_WARNING, null, "Local_EJBWarnings.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNCHECKED_ASSIGNMENT, null, "Local_UncheckedAssignment.html"));
   }
 
-  private Descriptor createDescriptor(String displayName, HighlightDisplayKey key, JComponent optionsPanel, String decriptionFileName) {
-    return new Descriptor(displayName, key, optionsPanel, decriptionFileName, mySelectedProfile.getErrorLevel(key),
+  private Descriptor createDescriptor(HighlightDisplayKey key, JComponent optionsPanel, String decriptionFileName) {
+    return new Descriptor(HighlightDisplayKey.getDisplayNameByKey(key), key, optionsPanel, decriptionFileName, mySelectedProfile.getErrorLevel(key),
                           mySelectedProfile.isToolEnabled(key));
   }
 
 
-  private JPanel createDependencyConigurationPanel() {
+  public static JPanel createDependencyConigurationPanel() {
     final JButton editDependencies = new JButton("Configure dependency rules");
     editDependencies.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
