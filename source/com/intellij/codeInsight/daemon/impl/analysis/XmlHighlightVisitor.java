@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -134,10 +135,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
                   localizedMessage.startsWith("Document root element") ||
                   localizedMessage.startsWith("The content of element type")
                   ) {
-                currentElement = addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
+                addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
                 //return;
               } else if (localizedMessage.startsWith("Value ")) {
-                currentElement = addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
+                addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
                 return;
               } else if (localizedMessage.startsWith("Attribute ")) {
                 currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
@@ -166,7 +167,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
                                                                currentElement,
                                                                localizedMessage));
                 } else {
-                  currentElement = addProblemToTagName(originalElement, originalElement, localizedMessage, result, warning);
+                  addProblemToTagName(originalElement, originalElement, localizedMessage, result, warning);
                 }
                 return;
               } else {
@@ -265,7 +266,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
   }
 
   public void visitXmlDocument(XmlDocument document) {
-    if (!(document.getRootTag() instanceof HtmlTag)) {
+    if (!(document.getRootTag() instanceof HtmlTag) &&
+        document.getContainingFile().getFileType() != StdFileTypes.JSPX
+        ) {
       runJaxpValidation(document, myResult);
     }
   }

@@ -519,10 +519,10 @@ public class XmlUtil {
       final FileType fileType = file.getFileType();
 
       if (fileType == StdFileTypes.HTML ||
-          fileType == StdFileTypes.XHTML) {
+          fileType == StdFileTypes.XHTML ||
+          fileType == StdFileTypes.JSPX
+          ) {
         return XHTML_URI;
-      } else if (fileType == StdFileTypes.JSPX) {
-        return JSP_NAMESPACE;
       }
     }
 

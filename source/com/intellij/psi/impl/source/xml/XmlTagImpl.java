@@ -160,6 +160,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                 if(myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) initializeSchema(ns, ns);
               }
             }
+
+            final PsiFile containingFile = getContainingFile();
+            if (containingFile!=null && containingFile.getFileType() == StdFileTypes.JSPX) {
+              initializeSchema(XmlUtil.XHTML_URI,XmlUtil.XHTML_URI);
+            }
           }
         }
 
@@ -526,6 +531,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           else myNamespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), attribute.getValue());
 
         }
+      }
+
+      final PsiFile containingFile = parent.getContainingFile();
+      if (containingFile!=null && containingFile.getFileType() == StdFileTypes.JSPX) {
+        myNamespaceMap.put("",XmlUtil.XHTML_URI);
       }
     }
     if(parent instanceof XmlDocument && myNamespaceMap == null){
