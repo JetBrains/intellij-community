@@ -41,10 +41,13 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public abstract class DialogWrapper {
-
-  /** The default exit code for "OK" action. */
+  /**
+     * The default exit code for "OK" action.
+     */
   public static final int OK_EXIT_CODE = 0;
-  /** The default exit code for "Cancel" action. */
+  /**
+     * The default exit code for "Cancel" action.
+     */
   public static final int CANCEL_EXIT_CODE = 1;
   /**
    * If you use your custom exit codes you have have to start them with
@@ -63,12 +66,16 @@ public abstract class DialogWrapper {
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
 
-  /** The shared instance of default border for dialog's content pane. */
+  /**
+     * The shared instance of default border for dialog's content pane.
+     */
   private static final Border ourDefaultBorder = BorderFactory.createEmptyBorder(8, 8, 8, 8);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
-  /** Defines horizontal alignment of buttons. */
+  /**
+     * Defines horizontal alignment of buttons.
+     */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
   private Insets myButtonMargins = new Insets(2, 16, 2, 16);
@@ -81,6 +88,8 @@ public abstract class DialogWrapper {
   private boolean myClosed = false;
 
   private static Object ourLock = new Object();
+  private Action myYesAction = null;
+  private Action myNoAction = null;
 
 
   /**
@@ -188,9 +197,9 @@ public abstract class DialogWrapper {
 
       }
       panel.add(// left strut
-        Box.createHorizontalGlue(),
-        new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(8, 0, 0, 0), 0, 0));
+                Box.createHorizontalGlue(),
+                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                       new Insets(8, 0, 0, 0), 0, 0));
       if (actions.length > 0) {
         JPanel buttonsPanel = createButtons(actions, buttons);
         panel.add(buttonsPanel,
@@ -199,9 +208,9 @@ public abstract class DialogWrapper {
       }
       if (SwingConstants.CENTER == myButtonAlignment) {
         panel.add(// right strut
-          Box.createHorizontalGlue(),
-          new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                 new Insets(8, 0, 0, 0), 0, 0));
+                  Box.createHorizontalGlue(),
+                  new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                         new Insets(8, 0, 0, 0), 0, 0));
       }
       myButtons = buttons.toArray(new Component[buttons.size()]);
     }
@@ -211,13 +220,18 @@ public abstract class DialogWrapper {
   private JPanel createButtons(Action[] actions, ArrayList<Component> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, 5, 0));
     for (int i = 0; i < actions.length; i++) {
-      JButton button = createJButtonForAction(actions[i]);
-      final Object value = actions[i].getValue(Action.MNEMONIC_KEY);
+      final Action action = actions[i];
+      JButton button = createJButtonForAction(action);
+      final Object value = action.getValue(Action.MNEMONIC_KEY);
       if (value instanceof Integer) {
-        button.setMnemonic(((Integer)value).intValue());
-      }
-      else if (value instanceof Character) {
-        button.setMnemonic(((Character)value).charValue());
+        final int mnemonic = ((Integer)value).intValue();
+        if (mnemonic == 'Y') {
+          myYesAction = action;
+        }
+        else if (mnemonic == 'N') {
+          myNoAction = action;
+        }
+        button.setMnemonic(mnemonic);
       }
 
       buttons.add(button);
@@ -259,6 +273,14 @@ public abstract class DialogWrapper {
         plainText.append(ch);
       }
       button.setText(plainText.toString());
+
+      if (mnemonic == KeyEvent.VK_Y) {
+        myYesAction = action;
+      }
+      else if (mnemonic == KeyEvent.VK_N) {
+        myNoAction = action;
+      }
+
       button.setMnemonic(mnemonic);
     }
     setMargin(button);
@@ -767,6 +789,14 @@ public abstract class DialogWrapper {
       },
                                            KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
                                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
+
+    if (myYesAction != null) {
+      getRootPane().registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    if (myNoAction != null) {
+      getRootPane().registerKeyboardAction(myNoAction, KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
   }
 

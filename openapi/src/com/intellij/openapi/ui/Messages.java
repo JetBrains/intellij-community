@@ -4,10 +4,10 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
@@ -116,14 +116,14 @@ public class Messages {
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{"Yes", "No"}, 0, icon);
+    return showDialog(project, message, title, new String[]{"&Yes", "&No"}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{"Yes", "No"}, 0, icon);
+    return showDialog(parent, message, title, new String[]{"&Yes", "&No"}, 0, icon);
   }
 
   /**
@@ -134,7 +134,7 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   public static int showYesNoDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{"Yes", "No"}, 0, icon);
+    return showDialog(message, title, new String[]{"&Yes", "&No"}, 0, icon);
   }
 
   public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
@@ -192,11 +192,11 @@ public class Messages {
   }
 
   public static int showYesNoCancelDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{"Yes", "No", "Cancel"}, 0, icon);
+    return showDialog(project, message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
   }
 
   public static int showYesNoCancelDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{"Yes", "No", "Cancel"}, 0, icon);
+    return showDialog(parent, message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
   }
 
   /**
@@ -206,7 +206,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
   public static int showYesNoCancelDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{"Yes", "No", "Cancel"}, 0, icon);
+    return showDialog(message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
   }
 
   /**
@@ -376,10 +376,10 @@ public class Messages {
 
     private void assignMnemonic(String option, Action action) {
       int mnemoPos = option.indexOf("&");
-      if (mnemoPos > 0 && mnemoPos < option.length() - 2) {
-        String mnemoChar = option.substring(mnemoPos + 1, mnemoPos + 3).trim();
+      if (mnemoPos >= 0 && mnemoPos < option.length() - 2) {
+        String mnemoChar = option.substring(mnemoPos + 1, mnemoPos + 2).trim();
         if (mnemoChar.length() == 1) {
-          action.putValue(Action.MNEMONIC_KEY, mnemoChar);
+          action.putValue(Action.MNEMONIC_KEY, new Integer(mnemoChar.charAt(0)));
         }
       }
     }
