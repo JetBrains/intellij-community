@@ -28,8 +28,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
   public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit");
-  private static final String VM_EXE_NAME = "java";
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit"); 
 
   private ProjectJdk myInternalJavaSdk;
 
@@ -85,7 +84,13 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (myInternalJavaSdk != null){
       return myInternalJavaSdk;
     }
-    return JavaSdk.getInstance().createJdk("", sdkHome + File.separator + "jre");
+    String jreHome;
+    if (SystemInfo.isLinux || SystemInfo.isWindows){
+      jreHome = sdkHome + File.separator + "jre";
+    } else {
+      jreHome = System.getProperty("java.home");
+    }
+    return JavaSdk.getInstance().createJdk("", jreHome);
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
