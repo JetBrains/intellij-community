@@ -77,16 +77,27 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         toolWindow.setIcon(IconLoader.getIcon("/general/favorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
+        final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
+        favoritesActionsGroup.removeAll();
+        favoritesActionsGroup.add(new AddToNewFavoritesListAction());
+        favoritesActionsGroup.addSeparator();                  
         if (myName2FavoritesListSet.isEmpty()){
           final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myProject, null, myProject.getName());
           final Content favoritesContent = contentFactory.createContent(panel, myProject.getName(), false);
           addContent(favoritesContent);
-          myName2FavoritesListSet.put(myProject.getName(), favoritesContent);
-          myCurrentFavoritesList = myProject.getName();
+          final String key = myProject.getName();
+          myName2FavoritesListSet.put(key, favoritesContent);
+          myCurrentFavoritesList = key;
           panel.getFavoritesTreeStructure().initFavoritesList();
+          final AddToFavoritesAction addAction = new AddToFavoritesAction(key);
+          myActions.put(key, addAction);
+          favoritesActionsGroup.add(addAction);
         } else {
           for (Iterator<String> iterator = myName2FavoritesListSet.keySet().iterator(); iterator.hasNext();) {
             final String key = iterator.next();
+            final AddToFavoritesAction addAction = new AddToFavoritesAction(key);
+            myActions.put(key, addAction);
+            favoritesActionsGroup.add(addAction);
             final Content content = myName2FavoritesListSet.get(key);
             addContent(content);
             ((FavoritesTreeViewPanel)content.getComponent()).getFavoritesTreeStructure().initFavoritesList();
@@ -160,8 +171,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public void readExternal(Element element) throws InvalidDataException {
     final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
-    favoritesActionsGroup.removeAll();
-    favoritesActionsGroup.add(new AddToNewFavoritesListAction());
     favoritesActionsGroup.addSeparator();
     for (Iterator<Element> iterator = element.getChildren("favorites_list").iterator(); iterator.hasNext();) {
       Element el = iterator.next();
@@ -169,9 +178,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
       final FavoritesTreeViewPanel favoritesPanel = new FavoritesTreeViewPanel(myProject, null, name);
       myName2FavoritesListSet.put(name, contentFactory.createContent(favoritesPanel, name, false));
-      final AddToFavoritesAction addAction = new AddToFavoritesAction(name);
-      myActions.put(name, addAction);
-      favoritesActionsGroup.add(addAction);
       favoritesPanel.getFavoritesTreeStructure().readExternal(el);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
