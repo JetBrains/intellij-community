@@ -29,12 +29,12 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
 
-  public PsiCodeFragmentImpl(Project manager,
+  public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
                              boolean isPhysical,
                              String name,
                              CharSequence text) {
-    super(manager, CODE_FRAGMENT, contentElementType, name, text);
+    super(project, CODE_FRAGMENT, contentElementType, name, text);
     myPhysical = isPhysical;
   }
 
@@ -171,13 +171,9 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
 
     IElementType i = myContentElementType;
-    if (i == ElementType.TYPE_TEXT) {
+    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_TEXT || i == ElementType.REFERENCE_TEXT) {
       return true;
-    }
-    else if (i == ElementType.EXPRESSION_TEXT) {
-      return true;
-    }
-    else {
+    } else {
       {
         processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
         if (lastParent == null)

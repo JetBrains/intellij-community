@@ -109,6 +109,10 @@ public interface PsiElementFactory {
 
   XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException;
 
+  PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
+                                                               PsiElement context,
+                                                               boolean isPhysical);
+
   PsiTypeCodeFragment createTypeCodeFragment(String text,
                                                 PsiElement context,
                                                 boolean isVoidValid,

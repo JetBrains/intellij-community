@@ -45,7 +45,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private EditorMouseListener myEditorMouseListener;
   private DocumentListener myDocumentListener;
 
-  private ArrayList myListeners = new ArrayList();
+  private ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
   private HashMap myUserMap = new HashMap();
 
   private boolean myCanceled = true;
@@ -186,7 +186,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   void updateList(){
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
-    ArrayList array = new ArrayList();
+    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     String prefix = myPrefix.toLowerCase();
     for(int i = 0; i < myItems.length; i++){
       LookupItem item = myItems[i];
@@ -220,7 +220,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
       }
     }
 
-    LookupItem[] items = (LookupItem[])array.toArray(new LookupItem[array.size()]);
+    LookupItem[] items = array.toArray(new LookupItem[array.size()]);
     int maxWidth = myCellRenderer.getMaximumWidth(items);
     myList.setFixedCellWidth(maxWidth);
   }
@@ -247,8 +247,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
       layeredPanePoint.x += wshift;
     }
     if (myPositionedAbove == null){
-      int hshift = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
-      myPositionedAbove = hshift < 0 ? Boolean.TRUE : Boolean.FALSE;
+      int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
+      int shiftHigh = layeredPanePoint.y - dim.height;
+      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
     }
     if (myPositionedAbove.booleanValue()){
       layeredPanePoint.y -= dim.height + myEditor.getLineHeight();
@@ -402,7 +403,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, item, completionChar);
-      LookupListener[] listeners = (LookupListener[])myListeners.toArray(new LookupListener[myListeners.size()]);
+      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for(int i = 0; i < listeners.length; i++){
         listeners[i].itemSelected(event);
       }
@@ -412,7 +413,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private void fireLookupCanceled(){
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, null);
-      LookupListener[] listeners = (LookupListener[])myListeners.toArray(new LookupListener[myListeners.size()]);
+      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for(int i = 0; i < listeners.length; i++){
         listeners[i].lookupCanceled(event);
       }
@@ -422,7 +423,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private void fireCurrentItemChanged(LookupItem item){
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, item);
-      LookupListener[] listeners = (LookupListener[])myListeners.toArray(new LookupListener[myListeners.size()]);
+      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for(int i = 0; i < listeners.length; i++){
         listeners[i].currentItemChanged(event);
       }

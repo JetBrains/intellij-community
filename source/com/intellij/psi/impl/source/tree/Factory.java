@@ -4,7 +4,6 @@ import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
@@ -16,7 +15,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspTokenType;
-import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -97,6 +95,9 @@ public class Factory implements Constants {
     }
     else if (type == TYPE_TEXT) {
       element = new TypeChameleonElement(buffer, startOffset, endOffset, lexerState, table);
+    }
+    else if (type == REFERENCE_TEXT) {
+      element = new ReferenceChameleonElement(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == PLAIN_TEXT) {
       element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState, table);

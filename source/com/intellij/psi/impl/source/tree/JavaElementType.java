@@ -13,6 +13,7 @@ public interface JavaElementType {
   IElementType TYPE_PARAMETER = new IJavaElementType("TYPE_PARAMETER");
   IElementType TYPE_PARAMETER_LIST = new IJavaElementType("TYPE_PARAMETER_LIST");
   IElementType STATEMENTS = new IJavaElementType("STATEMENTS");
+  IElementType REFERENCE_TEXT = new IJavaElementType("REFERENCE_TEXT");
   IElementType TYPE_TEXT = new IJavaElementType("TYPE_TEXT");
 
   IElementType ERROR_ELEMENT = new IJavaElementType("ERROR_ELEMENT");

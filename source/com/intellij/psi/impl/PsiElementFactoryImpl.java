@@ -353,6 +353,15 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
         "<implicit-properties-ant-declaration-tag-for-intellij-idea xmlns=\"" + XmlUtil.ANT_URI + "\"/>");
   }
 
+  public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
+                                                                      PsiElement context,
+                                                                      boolean isPhysical) {
+    final PsiJavaCodeReferenceCodeFragmentImpl result =
+      new PsiJavaCodeReferenceCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text);
+    result.setContext(context);
+    return result;
+  }
+
   public PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =

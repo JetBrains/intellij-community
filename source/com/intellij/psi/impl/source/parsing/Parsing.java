@@ -1,18 +1,16 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.FilterLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
@@ -24,14 +22,15 @@ public class Parsing implements Constants{
   }
 
   public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, char[] buffer, CharTable table) {
-    return parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table);
+    return parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table, false);
   }
 
   public static CompositeElement parseJavaCodeReferenceText(PsiManager manager,
                                                             char[] buffer,
                                                             int startOffset,
                                                             int endOffset,
-                                                            CharTable table) {
+                                                            CharTable table,
+                                                            boolean eatAll) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
@@ -39,11 +38,20 @@ public class Parsing implements Constants{
     ParsingContext context = new ParsingContext(table);
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false);
     if (ref == null) return null;
-    new DummyHolder(manager, ref, null, table);
-    if (lexer.getTokenType() != null) return null;
+    final FileElement dummyRoot = new DummyHolder(manager, ref, null, table).getTreeElement();
+    if (lexer.getTokenType() != null) {
+      if (!eatAll) return null;
+      final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
+      while (lexer.getTokenType() != null) {
+        final TreeElement token = ParseUtil.createTokenElement(lexer, context.getCharTable());
+        TreeUtil.addChildren(errorElement, token);
+        lexer.advance();
+      }
+      TreeUtil.addChildren(dummyRoot, errorElement);
+    }
 
-    ParseUtil.insertMissingTokens(ref, originalLexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return ref;
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    return (CompositeElement)dummyRoot.getFirstChildNode();
   }
 
   public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete) {

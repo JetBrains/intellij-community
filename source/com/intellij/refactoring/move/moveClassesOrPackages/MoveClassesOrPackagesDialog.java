@@ -4,11 +4,11 @@ import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.DirectoryChooserModuleTreeView;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -16,7 +16,7 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,7 +42,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private final JLabel myNameLabel;
   private final JLabel myPromptTo;
-  private final TextFieldWithBrowseButton myTextFieldWithBrowseButton;
+  private final ReferenceEditorWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchInNonJavaFiles;
   private JCheckBox myCbPreserveSourceFolders;
@@ -68,14 +67,14 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
     myNameLabel = new JLabel();
     myPromptTo = new JLabel("To package: ");
-    myTextFieldWithBrowseButton = new TextFieldWithBrowseButton();
+    myManager = PsiManager.getInstance(myProject);
+    myWithBrowseButtonReference = new ReferenceEditorWithBrowseButton(null, "", myManager);
 
     init();
-    myManager = PsiManager.getInstance(myProject);
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myTextFieldWithBrowseButton.getTextField();
+    return myWithBrowseButtonReference.getEditorTextField();
   }
 
   protected JComponent createCenterPanel() {
@@ -100,15 +99,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     gbConstraints.anchor = GridBagConstraints.CENTER;
-    myTextFieldWithBrowseButton.addActionListener(
+    myWithBrowseButtonReference.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
-          chooser.selectPackage(myTextFieldWithBrowseButton.getText());
+          chooser.selectPackage(myWithBrowseButtonReference.getText());
           chooser.show();
           PsiPackage aPackage = chooser.getSelectedPackage();
           if (aPackage != null) {
-            myTextFieldWithBrowseButton.setText(aPackage.getQualifiedName());
+            myWithBrowseButtonReference.setText(aPackage.getQualifiedName());
             validateOKButton();
           }
         }
@@ -116,7 +115,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     );
     JPanel _panel = new JPanel(new BorderLayout(4, 0));
     _panel.add(myPromptTo, BorderLayout.WEST);
-    _panel.add(myTextFieldWithBrowseButton, BorderLayout.CENTER);
+    _panel.add(myWithBrowseButtonReference, BorderLayout.CENTER);
     panel.add(_panel, gbConstraints);
 
     gbConstraints.gridx = 0;
@@ -153,8 +152,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     panel.add(myCbPreserveSourceFolders, gbConstraints);
 
 
-    myTextFieldWithBrowseButton.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+    myWithBrowseButtonReference.getEditorTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         validateOKButton();
       }
     });
@@ -192,8 +191,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     else if (psiElements.length > 1) {
       myNameLabel.setText((psiElements[0] instanceof PsiClass) ? "Move specified classes" : "Move specified packages");
     }
-    myTextFieldWithBrowseButton.setText(targetPackageName);
-    //myTextFieldWithBrowseButton.setEnabled(!myTargetDirectoryFixed);
+    myWithBrowseButtonReference.setText(targetPackageName);
+    //myWithBrowseButtonReference.setEnabled(!myTargetDirectoryFixed);
 
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchInNonJavaFiles.setSelected(searchInNonJavaFiles);
@@ -220,7 +219,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void validateOKButton() {
-    String name = myTextFieldWithBrowseButton.getText().trim();
+    String name = myWithBrowseButtonReference.getText().trim();
     if (name.length() == 0) {
       setOKActionEnabled(true);
     }
@@ -295,7 +294,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private MoveDestination selectDestination() {
-    final String packageName = myTextFieldWithBrowseButton.getText();
+    final String packageName = myWithBrowseButtonReference.getText();
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
       final int ret = Messages.showYesNoDialog(myProject, "Package " + packageName + " does not exist.\n" +

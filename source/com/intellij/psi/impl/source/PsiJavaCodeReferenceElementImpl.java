@@ -136,6 +136,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     else if (i == DOC_TAG || i == DOC_INLINE_TAG) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
+    else if (i == CODE_FRAGMENT) {
+      return CLASS_OR_PACKAGE_NAME_KIND;
+    }
     else {
       LOG.error("Unknown parent for java code reference:" + getTreeParent());
       return CLASS_NAME_KIND;

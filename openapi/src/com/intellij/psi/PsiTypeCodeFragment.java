@@ -13,10 +13,9 @@ public interface PsiTypeCodeFragment extends PsiCodeFragment {
 
   boolean isVoidValid();
 
-  static class IncorrectTypeException extends Exception {}
+  class IncorrectTypeException extends Exception {}
 
-  static class TypeSyntaxException extends IncorrectTypeException {}
+  class TypeSyntaxException extends IncorrectTypeException {}
 
-  static class NoTypeException extends IncorrectTypeException {}
-
+  class NoTypeException extends IncorrectTypeException {}
 }
