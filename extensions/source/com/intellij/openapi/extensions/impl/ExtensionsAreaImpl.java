@@ -350,4 +350,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void killPendingInteractions() {
     mySuspendedListenerActions.clear();
   }
+
+  public MutablePicoContainer[] getPluginContainers() {
+    return (MutablePicoContainer[])myPluginName2picoContainer.values().toArray(new MutablePicoContainer[myPluginName2picoContainer.values().size()]);
+  }
 }

@@ -5,12 +5,12 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import org.jdom.Element;
+import org.picocontainer.MutablePicoContainer;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
 import java.util.*;
-
-import org.jdom.Element;
 
 /**
  * @author AKireyev
@@ -160,10 +160,15 @@ public class ExtensionPointImpl implements ExtensionPoint {
     return myExtensions.contains(extension);
   }
 
-  public void unregisterExtension(Object extension) {
+  public void unregisterExtension(final Object extension) {
     assert (extension != null) : "Extension cannot be null";
 
     myOwner.getMutablePicoContainer().unregisterComponentByInstance(extension);
+    final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
+    for (int i = 0; i < pluginContainers.length; i++) {
+      MutablePicoContainer pluginContainer = pluginContainers[i];
+      pluginContainer.unregisterComponentByInstance(extension);
+    }
 
     processAdapters();
 
