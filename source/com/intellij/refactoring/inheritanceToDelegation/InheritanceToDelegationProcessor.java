@@ -417,11 +417,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           else {
             qualifier = myFieldName;
           }
-          final PsiExpression template = myFactory.createExpressionFromText(qualifier + ".new C()", parent);
-          final PsiElement qual = template.getFirstChild ();
-          final PsiElement dot  = qual.getNextSibling();
-          parent.addBefore(dot,  parent.getFirstChild());
-          parent.addBefore(qual, parent.getFirstChild());
+          newExpr.replace(myFactory.createExpressionFromText(qualifier + "." + newExpr.getText(), parent));
         }
       }
       else {
