@@ -50,14 +50,13 @@ public class DetailExceptionsIntention extends Intention
         final PsiElementFactory factory = mgr.getElementFactory();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown, factory);
 
-        final PsiParameter[] params = tryStatement.getCatchBlockParameters();
-        final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         final HeirarchicalTypeComparator comparator = new HeirarchicalTypeComparator();
+        PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+        for (int i = 0; i < catchSections.length; i++) {
+            final PsiParameter param = catchSections[i].getParameter();
+            final PsiCodeBlock block = catchSections[i].getCatchBlock();
+            if (param == null || block == null) continue;
 
-        for(int i = 0; i < catchBlocks.length; i++)
-        {
-            final PsiParameter param = params[i];
-            final PsiCodeBlock block = catchBlocks[i];
             final PsiType caughtType = param.getType();
             final List exceptionsToExpand = new ArrayList(10);
             for(Iterator iterator = exceptionsThrown.iterator(); iterator.hasNext();)
