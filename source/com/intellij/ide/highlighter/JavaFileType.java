@@ -68,8 +68,30 @@ public class JavaFileType extends LanguageFileType {
     return ICON;
   }
 
+  private FileTypeSupportCapabilities capabilities = new FileTypeSupportCapabilities() {
+    public boolean hasCompletion() {
+      return true;
+    }
+
+    public boolean hasValidation() {
+      return true;
+    }
+
+    public boolean hasFindUsages() {
+      return true;
+    }
+
+    public boolean hasNavigation() {
+      return true;
+    }
+
+    public boolean hasRename() {
+      return true;
+    }
+  };
+
   public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
+    return capabilities;
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
