@@ -9,15 +9,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix");
@@ -49,11 +51,10 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         break;
         default: message = null;
     }
-    final String text = MessageFormat.format(message,
+    return MessageFormat.format(message,
             new Object[]{
               myVariable.getName(),
             });
-    return text;
   }
 
   public String getFamilyName() {
@@ -71,7 +72,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         && !inOwnInitializer (myVariable, myClass);
   }
 
-  private boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {
+  private static boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {
     return PsiTreeUtil.isAncestor(variable, aClass, false);
   }
 
@@ -137,7 +138,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     final String newName = suggestNewName(psiManager.getProject(), myVariable);
     final PsiType type = myVariable.getType();
     final PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
-    PsiVariable newVariable = ((PsiVariable) copyDecl.getDeclaredElements()[0]);
+    PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
     newVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
     PsiElement statement = PsiUtil.getEnclosingStatement(myClass);
     if (statement != null && statement.getParent() != null) {
@@ -221,8 +222,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean canBeFinal(PsiVariable variable, List<PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    final HashMap<PsiElement, List<PsiReferenceExpression>> uninitializedVarProblems = new HashMap<PsiElement, List<PsiReferenceExpression>>();
-    final HashMap<PsiElement, List<PsiElement>> finalVarProblems = new HashMap<PsiElement, List<PsiElement>>();
+    final Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
+    final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
     for (int i = 0; i < references.size(); i++) {
       PsiReferenceExpression expression = references.get(i);
 
@@ -237,7 +238,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean writtenInside(PsiVariable variable, PsiElement element) {
     if (element instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = ((PsiAssignmentExpression) element);
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
       final PsiExpression lExpression = assignmentExpression.getLExpression();
       if (lExpression instanceof PsiReferenceExpression
           && ((PsiReferenceExpression) lExpression).resolve() == variable)

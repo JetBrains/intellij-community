@@ -14,6 +14,8 @@ public interface CodeInsightColors {
   TextAttributesKey DEPRECATED_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("DEPRECATED_ATTRIBUTES");
 
   TextAttributesKey LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("LOCAL_VARIABLE_ATTRIBUTES");
+  TextAttributesKey MUTABLE_LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MUTABLE_LOCAL_VARIABLE_ATTRIBUTES");
+  TextAttributesKey MUTABLE_PARAMETER_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MUTABLE_PARAMETER_ATTRIBUTES");
   TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INSTANCE_FIELD_ATTRIBUTES");
   TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
   TextAttributesKey PARAMETER_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PARAMETER_ATTRIBUTES");
@@ -35,6 +37,6 @@ public interface CodeInsightColors {
   TextAttributesKey BLINKING_HIGHLIGHTS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("BLINKING_HIGHLIGHTS_ATTRIBUTES");
   TextAttributesKey HYPERLINK_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("HYPERLINK_ATTRIBUTES");
 
-  // Colors
+// Colors
   ColorKey METHOD_SEPARATORS_COLOR = ColorKey.createColorKey("METHOD_SEPARATORS_COLOR");
 }

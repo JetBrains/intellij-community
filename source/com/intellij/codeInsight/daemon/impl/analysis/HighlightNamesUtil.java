@@ -58,8 +58,9 @@ public class HighlightNamesUtil {
   }
 
   private static HighlightInfoType getVariableNameHighlightType(PsiVariable var) {
-    if (var instanceof PsiLocalVariable || (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement)) {
-      return HighlightInfoType.LOCAL_VAR;
+    if (var instanceof PsiLocalVariable
+      || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
+      return HighlightInfoType.LOCAL_VARIABLE;
     }
     else if (var instanceof PsiField) {
       return var.hasModifierProperty(PsiModifier.STATIC)
@@ -87,5 +88,15 @@ public class HighlightNamesUtil {
     return null;
   }
 
-
+  public static HighlightInfo highlightMutableVariable(PsiVariable variable, final PsiElement elementToHighlight) {
+    if (variable instanceof PsiLocalVariable) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.MUTABLE_LOCAL_VARIABLE, elementToHighlight, null);
+    }
+    else if (variable instanceof PsiParameter) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.MUTABLE_PARAMETER, elementToHighlight, null);
+    }
+    else {
+      return null;
+    }
+  }
 }

@@ -440,8 +440,9 @@ public class ControlFlowUtil {
                   PsiUtil.isAccessedForWriting((PsiReferenceExpression)scope)) {
                 return false;
               }
-              if (!array.contains(refElement)) {
-                array.add((PsiVariable)refElement);
+              PsiVariable variable = (PsiVariable)refElement;
+              if (!array.contains(variable)) {
+                array.add(variable);
               }
             }
             else {
@@ -449,14 +450,6 @@ public class ControlFlowUtil {
             }
           }
         }
-        /*
-        if (scope instanceof PsiExpression) {
-          ResolveResult result = PsiUtil.getAccessObjectClass ((PsiExpression)scope);
-          if (result != null) {
-            return false;
-          }
-        }
-        */
       }
     }
     else if (scope instanceof PsiThisExpression) {
@@ -1120,11 +1113,11 @@ public class ControlFlowUtil {
       return newList;
     }
   }
-  private static class VariableInfo {
+  public static class VariableInfo {
     private final PsiVariable variable;
-    private final PsiElement expression;
+    public final PsiElement expression;
 
-    private VariableInfo(PsiVariable variable, PsiElement expression) {
+    public VariableInfo(PsiVariable variable, PsiElement expression) {
       this.variable = variable;
       this.expression = expression;
     }
@@ -1268,12 +1261,12 @@ public class ControlFlowUtil {
     return visitor.getResult().intValue();
   }
 
-  public static List<PsiElement> getInitializedTwice(final ControlFlow flow) {
-    InstructionClientVisitor<List<PsiElement>> visitor = new InitializedTwiceClientVisitor(flow);
+  public static Collection<VariableInfo> getInitializedTwice(final ControlFlow flow) {
+    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow);
     depthFirstSearch(flow, visitor);
     return visitor.getResult();
   }
-  private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<List<PsiElement>> {
+  private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<Collection<VariableInfo>> {
     // map of variable->PsiReferenceExpressions for all read and not written variables for this point and below in control flow
     private final CopyOnWriteList[] writtenVariables;
     private final CopyOnWriteList[] writtenTwiceVariables;
@@ -1338,25 +1331,17 @@ public class ControlFlowUtil {
       merge(offset, writeTwiceVars, writtenTwiceVariables);
     }
 
-    public List<PsiElement> getResult() {
-      List<PsiElement> problemsFound = new ArrayList<PsiElement>();
+    public Collection<VariableInfo> getResult() {
       CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[0];
-      if (writtenTwiceVariable == null) return problemsFound;
-      List<VariableInfo> list = writtenTwiceVariable.getList();
-      for (Iterator<VariableInfo> iterator = list.iterator(); iterator.hasNext();) {
-        final VariableInfo variableInfo = iterator.next();
-        final PsiElement problem = variableInfo.expression;
-        if (!problemsFound.contains(problem)) problemsFound.add(problem);
-      }
-      return problemsFound;
+      if (writtenTwiceVariable == null) return Collections.EMPTY_LIST;
+      return writtenTwiceVariable.getList();
     }
   }
 
   /**
    * @return true if instruction at 'instructionOffset' is reachable from offset 'startOffset'
    */
-  public static boolean isInstructionReachable(final ControlFlow flow, final int instructionOffset,
-                                               final int startOffset) {
+  public static boolean isInstructionReachable(final ControlFlow flow, final int instructionOffset, final int startOffset) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       boolean reachable;
 

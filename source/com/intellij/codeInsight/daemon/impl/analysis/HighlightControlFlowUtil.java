@@ -13,19 +13,17 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.psi.tree.IElementType;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HighlightControlFlowUtil {
   private static final String VARIABLE_NOT_INITIALIZED = "Variable ''{0}'' might not have been initialized";
@@ -38,11 +36,10 @@ public class HighlightControlFlowUtil {
         || PsiType.VOID == method.getReturnType()) {
       return null;
     }
-    final PsiCodeBlock codeFragment = body;
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment,
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
       if (!ControlFlowUtil.returnPresent(controlFlow)) {
@@ -270,7 +267,7 @@ public class HighlightControlFlowUtil {
   //@top
   public static HighlightInfo checkVariableInitializedBeforeUsage(PsiReferenceExpression expression,
                                                                   PsiElement element,
-                                                                  Map<PsiElement, List<PsiReferenceExpression>> uninitializedVarProblems) {
+                                                                  Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems) {
     if (!(element instanceof PsiVariable) || element instanceof ImplicitVariable) return null;
     PsiVariable variable = (PsiVariable)element;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
@@ -380,14 +377,14 @@ public class HighlightControlFlowUtil {
       }
     }
     if (topBlock == null) return null;
-    List<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
+    Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
     if (codeBlockProblems == null) {
       try {
         final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
-        codeBlockProblems = new ArrayList<PsiReferenceExpression>();
+        codeBlockProblems = Collections.EMPTY_LIST;
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
     }
@@ -411,19 +408,59 @@ public class HighlightControlFlowUtil {
     return false;
   }
 
+  public static boolean isMutable(PsiVariable variable,
+                                  Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
+                                  Map<PsiParameter, Boolean> parameterIsMutable) {
+    if (variable instanceof PsiLocalVariable) {
+      final PsiElement declarationScope = variable.getParent().getParent();
+      Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
+      return codeBlockProblems.contains(new ControlFlowUtil.VariableInfo(variable, null));
+    }
+    else if (variable instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)variable;
+      final Boolean isMutable = parameterIsMutable.get(parameter);
+      if (isMutable != null) return isMutable.booleanValue();
+      boolean isAssigned = isAssigned(parameter);
+      parameterIsMutable.put(parameter, Boolean.valueOf(isAssigned));
+      return isAssigned;
+    }
+    else {
+      return false;
+    }
+  }
+
+  private static boolean isAssigned(final PsiParameter parameter) {
+    final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
+    final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true);
+    for (int i = 0; i < references.length; i++) {
+      PsiReference reference = references[i];
+      if (!(reference.getElement() instanceof PsiReferenceExpression)) continue;
+      final PsiExpression expression = (PsiExpression)reference.getElement();
+      if (PsiUtil.isAccessedForWriting(expression)) return true;
+    }
+    return false;
+  }
+
   //@top
   public static HighlightInfo checkFinalVariableMightAlreadyHaveBeenAssignedTo(PsiVariable variable,
                                                                                PsiReferenceExpression expression,
-                                                                               Map<PsiElement, List<PsiElement>> finalVarProblems) {
+                                                                               Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!PsiUtil.isAccessedForWriting(expression)) return null;
 
     final PsiElement scope = variable instanceof PsiField ? variable.getParent() :
                              variable.getParent() == null ? null : variable.getParent().getParent();
     PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
     if (codeBlock == null) return null;
-    List<PsiElement> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
+    Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
 
-    boolean alreadyAssigned = codeBlockProblems.contains(expression);
+    boolean alreadyAssigned = false;
+    for (Iterator<ControlFlowUtil.VariableInfo> iterator = codeBlockProblems.iterator(); iterator.hasNext();) {
+      ControlFlowUtil.VariableInfo variableInfo = iterator.next();
+      if (variableInfo.expression == expression) {
+        alreadyAssigned = true;
+        break;
+      }
+    }
 
     if (!alreadyAssigned) {
       if (!(variable instanceof PsiField)) return null;
@@ -450,7 +487,9 @@ public class HighlightControlFlowUtil {
         // field can get assigned in class initializers
         final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
         if (enclosingConstructorOrInitializer == null
-            || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getParent(), aClass)) return null;
+            || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getParent(), aClass)) {
+          return null;
+        }
         final PsiClassInitializer[] initializers = aClass.getInitializers();
         for (int i = 0; i < initializers.length; i++) {
           PsiClassInitializer initializer = initializers[i];
@@ -508,15 +547,15 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  private static List<PsiElement> getFinalVariableProblemsInBlock(Map<PsiElement, List<PsiElement>> finalVarProblems, PsiElement codeBlock) {
-    List<PsiElement> codeBlockProblems = finalVarProblems.get(codeBlock);
+  private static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(Map<PsiElement,Collection<ControlFlowUtil.VariableInfo>> finalVarProblems, PsiElement codeBlock) {
+    Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
         final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
-        codeBlockProblems = new ArrayList<PsiElement>();
+        codeBlockProblems = Collections.EMPTY_LIST;
       }
       finalVarProblems.put(codeBlock, codeBlockProblems);
     }

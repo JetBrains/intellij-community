@@ -160,7 +160,8 @@ class ExpectedHighlightingData {
             "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
             " :'" +
             s +
-            "'" + (desc == null ? "" : " (" + desc + ")"),
+            "'" + (desc == null ? "" : " (" + desc + ")")
+            + " ["+info.type+"]",
             false);
       }
     }

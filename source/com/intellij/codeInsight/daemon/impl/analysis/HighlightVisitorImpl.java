@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -40,6 +41,7 @@ import gnu.trove.THashMap;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -63,9 +65,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private Boolean runEjbHighlighting;
   private AspectHighlighter myAspectHighlightVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
-  private final HashMap<PsiElement, List<PsiReferenceExpression>> myUninitializedVarProblems = new HashMap<PsiElement, List<PsiReferenceExpression>>();
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
-  private final Map<PsiElement, List<PsiElement>> myFinalVarProblems = new THashMap<PsiElement, List<PsiElement>>();
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+  private final Map<PsiParameter, Boolean> myParameterIsMutable = new THashMap<PsiParameter, Boolean>();
   public static final String UNKNOWN_SYMBOL = "Cannot resolve symbol ''{0}''";
 
   private final Map<PsiMethod, PsiClass[]> myUnhandledExceptionsForMethod = new HashMap<PsiMethod, PsiClass[]>();
@@ -143,6 +146,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     mySingleImportedMethods.clear();
+    myParameterIsMutable.clear();
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -733,7 +737,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     if (!myHolder.hasErrorResults()) {
       if (resolved instanceof PsiVariable) {
-        myHolder.add(HighlightNamesUtil.highlightVariable((PsiVariable)resolved, ref.getReferenceNameElement()));
+        final PsiVariable variable = (PsiVariable)resolved;
+        if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isMutable(variable, myFinalVarProblems, myParameterIsMutable)) {
+          myHolder.add(HighlightNamesUtil.highlightMutableVariable(variable, ref));
+        }
+        else {
+          myHolder.add(HighlightNamesUtil.highlightVariable(variable, ref.getReferenceNameElement()));
+        }
         myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref));
       }
       else {
@@ -793,7 +803,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, resolved, myUninitializedVarProblems));
       }
       final PsiVariable variable = (PsiVariable)resolved;
-      if (variable.hasModifierProperty(PsiModifier.FINAL) && !variable.hasInitializer()) {
+      final boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
+      if (isFinal && !variable.hasInitializer()) {
         if (!myHolder.hasErrorResults()) {
           myHolder.add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
         }
@@ -900,7 +911,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitVariable(PsiVariable variable) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
 
-    myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
+    if (HighlightControlFlowUtil.isMutable(variable, myFinalVarProblems, myParameterIsMutable)) {
+      myHolder.add(HighlightNamesUtil.highlightMutableVariable(variable, variable.getNameIdentifier()));
+    }
+    else {
+      myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
+    }
   }
 
   public void visitXmlElement(final XmlElement element) {

@@ -104,7 +104,7 @@ public class HighlightInfo {
     if (myNeedsUpdateOnTyping != null) return myNeedsUpdateOnTyping.booleanValue();
     
     if (type == HighlightInfoType.TODO) return false;
-    if (type == HighlightInfoType.LOCAL_VAR) return false;
+    if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
     if (type == HighlightInfoType.INSTANCE_FIELD) return false;
     if (type == HighlightInfoType.STATIC_FIELD) return false;
     if (type == HighlightInfoType.PARAMETER) return false;

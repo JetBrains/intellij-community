@@ -79,6 +79,8 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor("Class", CodeInsightColors.CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor("Interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
     new AttributesDescriptor("Local variable", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor("Mutable local variable", CodeInsightColors.MUTABLE_LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor("Mutable parameter", CodeInsightColors.MUTABLE_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor("Instance field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
     new AttributesDescriptor("Static field", CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
     new AttributesDescriptor("Parameter", CodeInsightColors.PARAMETER_ATTRIBUTES),
@@ -104,13 +106,15 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
   };
 
   private final static Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
-  {
+  static {
     ourTags.put("field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
     ourTags.put("error", CodeInsightColors.ERRORS_ATTRIBUTES);
     ourTags.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ourTags.put("localVar", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
+    ourTags.put("mutableLocalVar", CodeInsightColors.MUTABLE_LOCAL_VARIABLE_ATTRIBUTES);
+    ourTags.put("mutableParameter", CodeInsightColors.MUTABLE_PARAMETER_ATTRIBUTES);
     ourTags.put("static", CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
     ourTags.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
     ourTags.put("constructorCall", CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
@@ -163,12 +167,14 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "  private int[] <field>array</field> = new int[] {1, 2, 3};\n" +
       "  public static int <static>staticField</static> = 0;\n" +
       "\n" +
-      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>) {\n" +
+      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int <mutableParameter>mutableParam</mutableParameter>) {\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <field>field</field> + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
-      "    int <localVar>value</localVar> = this.<warning>staticField</warning>; \n" +
+      "    int <mutableLocalVar>mutableValue</mutableLocalVar> = this.<warning>staticField</warning>; \n" +
+      "    <mutableLocalVar>mutableValue</mutableLocalVar> ++; \n" +
       "    new <constructorCall>SomeClass</constructorCall>();\n" +
+      "    <mutableParameter>mutableParam</mutableParameter> = 0;\n" +
       "  }\n" +
       "}\n" +
       "\n" +
