@@ -23,9 +23,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -269,7 +270,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private void collectDependencyProblems(final List<HighlightInfo> list) {
     if (myUpdateAll && myFile instanceof PsiJavaFile && myFile.isPhysical() && myFile.getVirtualFile() != null &&
         mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.ILLEGAL_DEPENDENCY)) {
-      DependenciesBuilder builder = new DependenciesBuilder(myProject, new AnalysisScope(myFile, AnalysisScope.SOURCE_JAVA_FILES));
+      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile, AnalysisScope.SOURCE_JAVA_FILES));
       final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {

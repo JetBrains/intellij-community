@@ -70,12 +70,7 @@ public class DependencyValidationManager extends NamedScopesHolder implements Pr
     });
   }
 
-  public void addContent(DependenciesBuilder builder) {
-    DependenciesPanel panel = new DependenciesPanel(myProject, builder);
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                  "Dependencies of " + builder.getScope().getDisplayName(),
-                                                                                  false);
-    panel.setContent(content);
+  public void addContent(Content content) {    
     myContentManager.addContent(content);
     myContentManager.setSelectedContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);

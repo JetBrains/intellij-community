@@ -12,30 +12,29 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.DependencyRule;
-import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.*;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
+import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Icons;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 public class DependenciesPanel extends JPanel {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
@@ -64,7 +63,7 @@ public class DependenciesPanel extends JPanel {
     myBuilder = builder;
     myIllegalDependencies = myBuilder.getIllegalDependencies();
     myProject = project;
-    myUsagesPanel = new UsagesPanel(myProject);
+    myUsagesPanel = new UsagesPanel(myProject, myBuilder);
 
     Splitter treeSplitter = new Splitter();
     treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
@@ -76,8 +75,8 @@ public class DependenciesPanel extends JPanel {
     add(splitter, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.NORTH);
 
-    myRightTreeExpantionMonitor = TreeExpantionMonitor.install(myRightTree);
-    myLeftTreeExpantionMonitor = TreeExpantionMonitor.install(myLeftTree);
+    myRightTreeExpantionMonitor = TreeExpantionMonitor.install(myRightTree, myProject);
+    myLeftTreeExpantionMonitor = TreeExpantionMonitor.install(myLeftTree, myProject);
 
     myRightTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
@@ -100,7 +99,7 @@ public class DependenciesPanel extends JPanel {
         final StringBuffer denyRules = new StringBuffer();
         final StringBuffer allowRules = new StringBuffer();
         final TreePath selectionPath = myLeftTree.getSelectionPath();
-        if (selectionPath == null){
+        if (selectionPath == null) {
           return;
         }
         PackageDependenciesNode selectedNode = (PackageDependenciesNode)selectionPath.getLastPathComponent();
@@ -108,10 +107,10 @@ public class DependenciesPanel extends JPanel {
         final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         if (denyRules.length() + allowRules.length() > 0) {
           statusBar.setInfo("The following rule" +
-                                          ((denyRules.length() == 0 || allowRules.length() == 0) ? " is " : "s are ") +
-                                          "violated: " +
-                                          (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ")  +
-                                          (allowRules.length() > 0 ? allowRules.toString() : " "));
+                            ((denyRules.length() == 0 || allowRules.length() == 0) ? " is " : "s are ") +
+                            "violated: " +
+                            (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
+                            (allowRules.length() > 0 ? allowRules.toString() : " "));
 
         }
         else {
@@ -130,7 +129,7 @@ public class DependenciesPanel extends JPanel {
               myUsagesPanel.setToInitialPosition();
             }
             else {
-              myUsagesPanel.findUsages(builder, searchIn, searchFor);
+              myUsagesPanel.findUsages(searchIn, searchFor);
             }
           }
         });
@@ -150,23 +149,24 @@ public class DependenciesPanel extends JPanel {
   }
 
   private void traverseToLeaves(final PackageDependenciesNode treeNode, final StringBuffer denyRules, final StringBuffer allowRules) {
-    for (int i = 0; i < treeNode.getChildCount(); i++) {
-      traverseToLeaves((PackageDependenciesNode)treeNode.getChildAt(i), denyRules, allowRules);
-    }
-    if (myIllegalDependencies.containsKey(treeNode.getPsiElement())) {
-      final Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(treeNode.getPsiElement());
-      for (Iterator<DependencyRule> iterator = illegalDeps.keySet().iterator(); iterator.hasNext();) {
-        final DependencyRule rule = iterator.next();
-        if (rule.isDenyRule()) {
-          if (denyRules.indexOf(rule.getDisplayText()) == -1) {
-            denyRules.append(rule.getDisplayText());
-            denyRules.append("\n");
+    final Enumeration enumeration = treeNode.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      PsiElement childPsiElement = ((PackageDependenciesNode)enumeration.nextElement()).getPsiElement();
+      if (myIllegalDependencies.containsKey(childPsiElement)) {
+        final Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(childPsiElement);
+        for (Iterator<DependencyRule> iterator = illegalDeps.keySet().iterator(); iterator.hasNext();) {
+          final DependencyRule rule = iterator.next();
+          if (rule.isDenyRule()) {
+            if (denyRules.indexOf(rule.getDisplayText()) == -1) {
+              denyRules.append(rule.getDisplayText());
+              denyRules.append("\n");
+            }
           }
-        }
-        else {
-          if (allowRules.indexOf(rule.getDisplayText()) == -1) {
-            allowRules.append(rule.getDisplayText());
-            allowRules.append("\n");
+          else {
+            if (allowRules.indexOf(rule.getDisplayText()) == -1) {
+              allowRules.append(rule.getDisplayText());
+              allowRules.append("\n");
+            }
           }
         }
       }
@@ -448,7 +448,12 @@ public class DependenciesPanel extends JPanel {
       DependencyValidationManager.getInstance(myProject).closeContent(myContent);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          new AnalyzeDependenciesHandler(myProject, myBuilder.getScope()).analyze();
+          if (myBuilder.isBackward()) {
+            new BackwardDependenciesHandler(myProject, myBuilder.getScope()).analyze();
+          }
+          else {
+            new AnalyzeDependenciesHandler(myProject, myBuilder.getScope()).analyze();
+          }
         }
       });
     }

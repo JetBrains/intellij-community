@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
@@ -1027,7 +1028,7 @@ public class CompileDriver {
                                  final TranslatingCompilerStateCache cache,
                                  VfsSnapshot snapshot,
                                  Set<String> sourcesWithOutputRemoved) {
-    final DependenciesBuilder builder = new DependenciesBuilder(myProject, new AnalysisScope(psiFile, AnalysisScope.SOURCE_JAVA_FILES));
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile, AnalysisScope.SOURCE_JAVA_FILES));
     builder.analyze();
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     final Set<PsiFile> dependentFiles = dependencies.get(psiFile);

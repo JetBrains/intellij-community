@@ -9,8 +9,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
+import com.intellij.packageDependencies.BackwardDependenciesBuilder;
+import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -24,23 +25,24 @@ public class UsagesPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
 
   private Project myProject;
-
+  private DependenciesBuilder myBuilder;
   private ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public UsagesPanel(Project project) {
+  public UsagesPanel(Project project, DependenciesBuilder builder) {
     super(new BorderLayout());
     myProject = project;
+    myBuilder = builder;
     setToInitialPosition();
   }
 
   public void setToInitialPosition() {
     cancelCurrentFindRequest();
-    setToComponent(createLabel("Select where to search in left tree and what to search in right tree."));
+    setToComponent(createLabel(myBuilder.getInitialUsagesPosition()));
   }
 
-  public void findUsages(final DependenciesBuilder builder, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
+  public void findUsages(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
     cancelCurrentFindRequest();
 
     myAlarm.cancelAllRequests();
@@ -56,7 +58,11 @@ public class UsagesPanel extends JPanel {
                   public void run() {
                     UsageInfo[] usages = new UsageInfo[0];
                     try {
-                      usages = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);
+                      if (myBuilder.isBackward()){
+                        usages = FindDependencyUtil.findBackwardDependencies(myBuilder, searchFor, searchIn);
+                      } else {
+                        usages = FindDependencyUtil.findDependencies(myBuilder, searchIn, searchFor);
+                      }
                     }
                     catch (ProcessCanceledException e) {
                     }
@@ -93,7 +99,7 @@ public class UsagesPanel extends JPanel {
     try {
       Usage[] usages = UsageInfoToUsageConverter.convert(usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
-      presentation.setCodeUsagesString("Usages of the right tree scope selection in the left tree scope selection");
+      presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
       UsageView usageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],
                                                                                            usages, presentation);
       setToComponent(usageView.getComponent());

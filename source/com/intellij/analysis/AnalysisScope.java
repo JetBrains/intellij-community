@@ -10,17 +10,19 @@ package com.intellij.analysis;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.*;
 
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
@@ -38,6 +40,7 @@ public class AnalysisScope {
   private final PsiElement myElement;
   private final int myType;
   private HashSet myFilesSet;
+
 
   public interface PsiFileFilter {
     boolean accept(PsiFile file);
@@ -143,21 +146,92 @@ public class AnalysisScope {
     }
   }
 
+  public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
+    if (myType == PROJECT) {
+      return new AnalysisScope[]{new AnalysisScope(defaultProject, SOURCE_JAVA_FILES)};
+    }
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
+    final HashSet<Module> modules = new HashSet<Module>();
+    if (myType == FILE) {
+      if (myElement instanceof PsiJavaFile) {
+        PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
+        final PsiClass[] classes = psiJavaFile.getClasses();
+        boolean onlyPackLocalClasses = true;
+        for (int i = 0; i < classes.length; i++) {
+          final PsiClass aClass = classes[i];
+          if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+            onlyPackLocalClasses = false;
+          }
+        }
+        if (onlyPackLocalClasses) {
+          return new AnalysisScope[]{new AnalysisScope(psiJavaFile.getContainingDirectory().getPackage(), SOURCE_JAVA_FILES)};
+        }
+      }
+      final VirtualFile vFile = ((PsiFile)myElement).getVirtualFile();
+      modules.addAll(getAllInterstingModules(fileIndex, vFile));
+    }
+    else if (myType == DIRECTORY) {
+      final VirtualFile vFile = ((PsiDirectory)myElement).getVirtualFile();
+      modules.addAll(getAllInterstingModules(fileIndex, vFile));
+    }
+    else if (myType == PACKAGE) {
+      final PsiDirectory[] directories = ((PsiPackage)myElement).getDirectories();
+      for (int idx = 0; idx < directories.length; idx++) {
+        modules.addAll(getAllInterstingModules(fileIndex, directories[idx].getVirtualFile()));
+      }
+    }
+    else if (myType == MODULE) {
+      modules.add(myModule);
+    }
+
+    if (modules.isEmpty()) {
+      return new AnalysisScope[]{new AnalysisScope(defaultProject, SOURCE_JAVA_FILES)};
+    }
+    HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
+    final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
+    for (int i = 0; i < allModules.length; i++) {
+      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
+        final Module module = iterator.next();
+        if (allModules[i].equals(module)) {
+          result.add(new AnalysisScope(allModules[i], SOURCE_JAVA_FILES));
+          continue;
+        }
+        if (ModuleManager.getInstance(defaultProject).isModuleDependent(allModules[i], module)) {
+          result.add(new AnalysisScope(allModules[i], SOURCE_JAVA_FILES));
+        }
+      }
+    }
+    return result.toArray(new AnalysisScope[result.size()]);
+  }
+
+  private HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
+    final HashSet<Module> modules = new HashSet<Module>();
+    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+      final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      for (int j = 0; j < orderEntries.length; j++) {
+        modules.add(orderEntries[j].getOwnerModule());
+      }
+    }
+    else {
+      modules.add(fileIndex.getModuleForFile(vFile));
+    }
+    return modules;
+  }
+
+
   public void accept(final PsiElementVisitor visitor) {
     if (myProject != null) {
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      projectFileIndex.iterateContent(
-        new ContentIterator() {
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (projectFileIndex.isContentJavaSourceFile(fileOrDir)) {
-              PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
-              LOG.assertTrue(psiFile != null);
-              psiFile.accept(visitor);
-            }
-            return true;
+      projectFileIndex.iterateContent(new ContentIterator() {
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (projectFileIndex.isContentJavaSourceFile(fileOrDir)) {
+            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
+            LOG.assertTrue(psiFile != null);
+            psiFile.accept(visitor);
           }
+          return true;
         }
-      );
+      });
     }
     else if (myModule != null) {
       final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();

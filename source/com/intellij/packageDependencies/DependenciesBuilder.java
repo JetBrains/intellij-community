@@ -1,76 +1,59 @@
 package com.intellij.packageDependencies;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.project.Project;
 
 import java.util.*;
 
-public class DependenciesBuilder {
+/**
+ * User: anna
+ * Date: Jan 19, 2005
+ */
+public abstract class DependenciesBuilder {
   private Project myProject;
   private final AnalysisScope myScope;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
-  private final int myTotalFileCount;
-  private int myFileCount = 0;
+  protected int myTotalFileCount;
+  protected int myFileCount = 0;
 
-  public DependenciesBuilder(Project project, AnalysisScope scope) {
+  protected DependenciesBuilder(final Project project, final AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myTotalFileCount = scope.getFileCount();
   }
 
-  public AnalysisScope getScope() {
-    return myScope;
+  protected void setInitialFileCount(final int fileCount) {
+    myFileCount = fileCount;
   }
 
-  public void analyze() {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    psiManager.startBatchFilesProcessingMode();
-    try {
-      myScope.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-        }
-
-        public void visitFile(final PsiFile file) {
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          if (indicator != null) {
-            if (indicator.isCanceled()) {
-              throw new ProcessCanceledException();
-            }
-            indicator.setText("Analyzing package dependencies");
-            indicator.setText2(file.getVirtualFile().getPresentableUrl());
-            indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
-          }
-
-          final Set<PsiFile> fileDeps = new HashSet<PsiFile>();
-          myDependencies.put(file, fileDeps);
-          analyzeFileDependencies(file, new DependencyProcessor() {
-            public void process(PsiElement place, PsiElement dependency) {
-              PsiFile dependencyFile = dependency.getContainingFile();
-              if (dependencyFile != null && dependencyFile.isPhysical()) {
-                fileDeps.add(dependencyFile);
-              }
-            }
-          });
-          psiManager.dropResolveCaches();
-        }
-      });
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+  protected void setTotalFileCount(final int totalFileCount) {
+    myTotalFileCount = totalFileCount;
   }
 
   public Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
   }
 
-  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies() {
+  public AnalysisScope getScope() {
+    return myScope;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public abstract String getRootNodeNameInUsageView();
+
+  public abstract String getInitialUsagesPosition();
+
+  public abstract boolean isBackward();
+
+  public abstract void analyze();
+
+  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
     Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
     for (Iterator<PsiFile> iterator = myDependencies.keySet().iterator(); iterator.hasNext();) {
@@ -79,7 +62,8 @@ public class DependenciesBuilder {
       Map<DependencyRule, Set<PsiFile>> illegal = null;
       for (Iterator<PsiFile> depsIterator = deps.iterator(); depsIterator.hasNext();) {
         PsiFile dependency = depsIterator.next();
-        final DependencyRule rule = validator.getViolatorDependencyRule(file, dependency);
+        final DependencyRule rule = isBackward() ? validator.getViolatorDependencyRule(dependency, file) :
+                                                   validator.getViolatorDependencyRule(file, dependency);
         if (rule != null) {
           if (illegal == null) {
             illegal = new HashMap<DependencyRule, Set<PsiFile>>();

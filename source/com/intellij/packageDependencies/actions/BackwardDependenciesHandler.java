@@ -1,37 +1,43 @@
 package com.intellij.packageDependencies.actions;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.peer.PeerFactory;
 
-public class AnalyzeDependenciesHandler {
+/**
+ * User: anna
+ * Date: Jan 16, 2005
+ */
+public class BackwardDependenciesHandler {
   private Project myProject;
   private AnalysisScope myScope;
 
-  public AnalyzeDependenciesHandler(Project project, AnalysisScope scope) {
+  public BackwardDependenciesHandler(Project project, AnalysisScope scope) {
     myProject = project;
     myScope = scope;
   }
 
   public void analyze() {
-    final DependenciesBuilder forwardBuilder = new ForwardDependenciesBuilder(myProject, myScope);
+    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope);
+
     if (ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        forwardBuilder.analyze();
+        builder.analyze();
       }
-    }, "Analyzing Dependencies", true, myProject)) {
-      DependenciesPanel panel = new DependenciesPanel(myProject, forwardBuilder);
+    }, "Analyzing Backward Dependencies", true, myProject)) {
+      DependenciesPanel panel = new DependenciesPanel(myProject, builder);
       Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                  "Dependencies of " + forwardBuilder.getScope().getDisplayName(),
+                                                                                  "Backward Dependencies of " + builder.getScope().getDisplayName(),
                                                                                   false);
       panel.setContent(content);
       DependencyValidationManager.getInstance(myProject).addContent(content);
+
     }
   }
 }

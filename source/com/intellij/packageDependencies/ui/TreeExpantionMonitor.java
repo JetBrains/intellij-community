@@ -1,34 +1,39 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiManager;
+
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 public class TreeExpantionMonitor {
-  public static TreeExpantionMonitor install(JTree tree) {
-    return new TreeExpantionMonitor(tree);
+  public static TreeExpantionMonitor install(JTree tree, Project project) {
+    return new TreeExpantionMonitor(tree, project);
   }
 
   private Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
-  private List<TreePath> mySelectionPath = new ArrayList<TreePath>();
+  private List<PackageDependenciesNode> mySelectionNodes = new ArrayList<PackageDependenciesNode>();
   private JTree myTree;
   private boolean myFrozen = false;
+  private Project myProject;
 
-
-  private TreeExpantionMonitor(JTree tree) {
+  private TreeExpantionMonitor(JTree tree, Project project) {
     myTree = tree;
+    myProject = project;
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (myFrozen) return;
-        mySelectionPath = new ArrayList<TreePath>();
+        mySelectionNodes = new ArrayList<PackageDependenciesNode>();
         TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (int i = 0; i < paths.length; i++) {
-            mySelectionPath.add(paths[i]);
+            mySelectionNodes.add((PackageDependenciesNode)paths[i].getLastPathComponent());
           }
         }
       }
@@ -63,15 +68,28 @@ public class TreeExpantionMonitor {
     myFrozen = true;
   }
 
+
   public void restore() {
-    freeze();
-    for (int i = 0; i < mySelectionPath.size(); i++) {
-      TreePath treePath = mySelectionPath.get(i);
-      myTree.getSelectionModel().addSelectionPath(treePath);
-    }
-    for (Iterator<TreePath> iterator = myExpandedPaths.iterator(); iterator.hasNext();) {
-      myTree.expandPath(iterator.next());
-    }
-    myFrozen = false;
+      freeze();
+      for (int i = 0; i < mySelectionNodes.size(); i++) {
+        myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNodes.get(i)));
+      }
+      for (Iterator<TreePath> iterator = myExpandedPaths.iterator(); iterator.hasNext();) {
+        myTree.expandPath(iterator.next());
+      }
+      myFrozen = false;
+  }
+
+
+  private TreePath findPathByNode(final PackageDependenciesNode node) {
+      PsiManager manager = PsiManager.getInstance(myProject);
+      Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).breadthFirstEnumeration();
+      while (enumeration.hasMoreElements()) {
+        PackageDependenciesNode child = (PackageDependenciesNode)enumeration.nextElement();
+        if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
+          return new TreePath(child.getPath());
+        }
+      }
+      return null;
   }
 }
