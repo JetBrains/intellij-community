@@ -371,7 +371,7 @@ public class TypedHandler implements TypedActionHandler {
     PsiElement elementAt = file.findElementAt(offset-1);
 
     // TODO: handle it with insertAfterRParen(...)
-    if (!JspxCompletionData.isJavaContext(elementAt)) {
+    if (elementAt!=null && !JspxCompletionData.isJavaContext(elementAt)) {
       while(!elementAt.getText().startsWith("${")) {
         elementAt = elementAt.getPrevSibling();
         if (elementAt==null) break;
