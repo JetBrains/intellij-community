@@ -559,14 +559,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
 
     public void doComment(int offset, int line, LineCommenter.LineCommenterContext context) {
       final Document myDocument = context.getDocument();
-
-      if (!initialized) {
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-
-        initialize(context);
-
-        initialized = true;
-      }
+      initialize(context);
 
       if (myJavaComment) {
         myDocument.insertString(offset, "//");
@@ -577,6 +570,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
     }
 
     private void initialize(final LineCommenterContext context) {
+      if (initialized) return;
+      PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
       Document myDocument = context.getDocument();
       myJavaComment = false;
 
@@ -589,12 +584,14 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
           myJavaComment = true;
         }
       }
+      initialized = true;
     }
 
     public void doUncomment(int offset1, int offset2, LineCommenterContext context) {
       final Document myDocument = context.getDocument();
+      initialize(context);
 
-      if (CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset1, "//")) {
+      if (myJavaComment && CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset1, "//")) {
         myDocument.deleteString(offset1, offset1 + "//".length());
       }
       else {
@@ -605,8 +602,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
     public int getCommentStart(int offset, LineCommenterContext context) {
       final Document myDocument = context.getDocument();
       if (offset > myDocument.getTextLength() - "//".length()) return -1;
+      initialize(context);
 
-      if (CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset, "//")) {
+      if (myJavaComment && CharArrayUtil.regionMatches(myDocument.getCharsSequence(), offset, "//")) {
         PsiDocumentManager.getInstance(context.getProject()).commitDocument(myDocument);
         PsiElement element = context.getFile().findElementAt(offset);
         if (element instanceof PsiComment && element.getTextRange().getStartOffset() == offset) {
@@ -622,9 +620,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
 
     public int getCommentEnd(int offset, LineCommenterContext context) {
       if (offset < 0) return -1;
-      if (!initialized) {
-        initialize(context);
-      }
+      initialize(context);
+
       if (myJavaComment) return offset;
       return super.getCommentEnd(offset, context);
     }

@@ -188,7 +188,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler, B
     private BlockCommenter javaCommenter = new JavaBlockCommenter();
 
     private boolean isJavaCommentInsideXml(PsiElement element) {
-      boolean javaComment = !(element instanceof XmlToken);
+      boolean javaComment = false;
 
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
 
