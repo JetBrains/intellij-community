@@ -34,6 +34,20 @@ public class TrivialIfInspection
         }
     }
 
+    public boolean foo2()
+    {
+        boolean x;
+        x = true;
+        if(bar())
+        {
+            x = false;
+        }
+        if(bar())
+        {
+            return true;
+        }
+        return false;
+    }
     private boolean bar()
     {
         return true;

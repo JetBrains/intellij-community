@@ -28,9 +28,9 @@
     Encapsulatable use of field
     While loop replaceable by for-each
     Acceptable name for type (Exceptions always e, Iterators always i)
-    Expand "Trivial If" inspection to cover same cases as the intention
     Flag inspections with default on-off and default warning level
     Inheritance as type def (change the EmptyClass inspection)
+    Fix damn "Instanceof Incompatible Interface" inspection
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
     SerialVersionUID calculation

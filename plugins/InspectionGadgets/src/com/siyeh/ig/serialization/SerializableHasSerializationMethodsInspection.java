@@ -13,7 +13,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class SerializableHasSerializationMethodsInspection extends ClassInspection {
-    public boolean m_ignoreSerializableDueToInheritance = false;
+    public boolean m_ignoreSerializableDueToInheritance = true;
 
     public String getDisplayName() {
         return "Serializable class without 'readObject()' and 'writeObject()'";
@@ -67,7 +67,7 @@ public class SerializableHasSerializationMethodsInspection extends ClassInspecti
             }
             final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
             final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
-   
+
             if (hasWriteObject && hasReadObject) {
                 return;
             }

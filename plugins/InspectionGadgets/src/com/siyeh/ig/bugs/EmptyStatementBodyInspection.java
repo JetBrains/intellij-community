@@ -104,7 +104,6 @@ public class EmptyStatementBodyInspection extends StatementInspection {
                 if (isEmpty(elseBranch)) {
                     final PsiElement elseToken = statement.getElseElement();
                     registerError(elseToken);
-                    return;
                 }
             }
         }

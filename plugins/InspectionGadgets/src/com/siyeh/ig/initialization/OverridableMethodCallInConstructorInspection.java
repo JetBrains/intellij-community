@@ -3,6 +3,7 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -44,6 +45,11 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
             if (methodExpression == null) {
                 return;
             }
+            if (methodExpression.isQualified() &&
+                !(methodExpression.getQualifierExpression() instanceof PsiThisExpression))
+            {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) {
                 return;
@@ -59,7 +65,8 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
                 return;
             }
             final PsiClass calledMethodClass = calledMethod.getContainingClass();
-            if (!calledMethodClass.equals(containingClass)) {
+            if (!InheritanceUtil.isInheritorOrSelf(containingClass, calledMethodClass, true))
+            {
                 return;
             }
             registerMethodCallError(call);
