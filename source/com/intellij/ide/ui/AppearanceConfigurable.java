@@ -79,7 +79,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
 
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
-    Dictionary dictionary = new Hashtable();
+    Dictionary<Integer,JLabel> dictionary = new Hashtable<Integer, JLabel>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));
@@ -111,7 +111,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     int _fontSize = -1;
     if (temp != null && temp.trim().length() > 0) {
       try {
-        _fontSize = new Integer(temp).intValue();
+        _fontSize = Integer.parseInt(temp);
       }
       catch (NumberFormatException ex) {
       }
@@ -133,7 +133,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
     boolean update = settings.SHOW_WINDOW_SHORTCUTS != myComponent.myWindowShortcutsCheckBox.isSelected();
     settings.SHOW_WINDOW_SHORTCUTS = myComponent.myWindowShortcutsCheckBox.isSelected();
-    update |= settings.HIDE_TOOL_STRIPES != (!myComponent.myShowToolStripesCheckBox.isSelected());
+    update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
     settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
     update |= settings.ALWAYS_SHOW_WINDOW_BUTTONS != myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected();
     settings.ALWAYS_SHOW_WINDOW_BUTTONS = myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected();
