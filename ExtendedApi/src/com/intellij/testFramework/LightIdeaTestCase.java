@@ -1,9 +1,7 @@
 package com.intellij.testFramework;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -12,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -88,11 +85,6 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private void initApplication() throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
-    if (Extensions.getAllAreas().length < 2) {
-      Extensions.registerAreaClass("IDEA_PROJECT", null);
-      Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
-      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
-    }
     cleanupApplicationCaches();
   }
 
