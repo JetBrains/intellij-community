@@ -136,8 +136,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   private PsiElement getScope(){
     ChameleonTransforming.transformChildren(this);
-    if (getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE || getFirstChildNode().getElementType() == ElementType.REFERENCE_EXPRESSION) {
-      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode());
+    if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
+      if(referenceElement == null) return null;
       final PsiElement referencedElement = referenceElement.resolve();
       if (referencedElement instanceof PsiClass) {
         return referencedElement;

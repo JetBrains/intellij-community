@@ -64,12 +64,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return myKindWhenDummy;
     }
     else if (i == TYPE || i == EXTENDS_LIST || i == IMPLEMENTS_LIST || i == EXTENDS_BOUND_LIST || i == THROWS_LIST ||
-      i == THIS_EXPRESSION ||
-      i == SUPER_EXPRESSION ||
-      i == DOC_METHOD_OR_FIELD_REF ||
-      i == DOC_TAG_VALUE_TOKEN ||
-      i == REFERENCE_PARAMETER_LIST ||
-      i == ANNOTATION) {
+             i == THIS_EXPRESSION ||
+             i == SUPER_EXPRESSION ||
+             i == DOC_METHOD_OR_FIELD_REF ||
+             i == DOC_REFERENCE_HOLDER ||
+             i == DOC_TYPE_HOLDER ||
+             i == DOC_TAG_VALUE_TOKEN ||
+             i == REFERENCE_PARAMETER_LIST ||
+             i == ANNOTATION) {
       return CLASS_NAME_KIND;
     }
     else if (i == NEW_EXPRESSION) {
@@ -133,7 +135,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     else if (i == IMPORT_STATIC_REFERENCE) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == DOC_TAG || i == DOC_INLINE_TAG) {
+    else if (i == DOC_TAG || i == DOC_INLINE_TAG || i == DOC_REFERENCE_HOLDER || i == DOC_TYPE_HOLDER) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
     else if (i == CODE_FRAGMENT) {

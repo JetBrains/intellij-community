@@ -40,6 +40,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -101,7 +102,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     //ourMap1[JavaTokenType.BOOLEAN_LITERAL] = HighlighterColors.JAVA_KEYWORD;
     //ourMap1[JavaTokenType.NULL_LITERAL] = HighlighterColors.JAVA_KEYWORD;
     ourMap1.put(JavaTokenType.C_STYLE_COMMENT, HighlighterColors.JAVA_BLOCK_COMMENT);
-    ourMap1.put(JavaTokenType.DOC_COMMENT, HighlighterColors.JAVA_DOC_COMMENT);
+    ourMap1.put(JavaDocElementType.DOC_COMMENT, HighlighterColors.JAVA_DOC_COMMENT);
     ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, HighlighterColors.JAVA_LINE_COMMENT);
     ourMap1.put(JavaTokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 

@@ -74,6 +74,6 @@ public interface XmlTokenType {
   IElementType XML_CHAR_ENTITY_REF = new IXmlLeafElementType("XML_CHAR_ENTITY_REF");
 
   IElementType XML_BAD_CHARACTER = new IXmlLeafElementType("XML_BAD_CHARACTER");
-  IElementType XML_MARKUP = XmlElementType.XML_MARKUP_DECL; //chameleon
-  IElementType XML_EMBEDDED_CHAMELEON = XmlElementType.XML_EMBEDDED_CHAMELEON; //chameleon
+  IElementType XML_EMBEDDED_CHAMELEON = new IXmlLeafElementType("XML_EMBEDDED_CONTENT");
+  IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 }

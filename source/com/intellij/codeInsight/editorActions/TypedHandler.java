@@ -783,7 +783,7 @@ public class TypedHandler implements TypedActionHandler {
 
     IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
     if (tokenType instanceof IJavaElementType) {
-      if (!TokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
+      if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
           && tokenType != JavaTokenType.SEMICOLON
           && tokenType != JavaTokenType.COMMA
           && tokenType != JavaTokenType.RPARENTH
@@ -873,7 +873,7 @@ public class TypedHandler implements TypedActionHandler {
       IElementType tokenType = iterator.getTokenType();
       if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP){
         if (tokenType instanceof IJavaElementType){
-          if (!TokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
+          if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
               && tokenType != JavaTokenType.SEMICOLON
               && tokenType != JavaTokenType.COMMA
               && tokenType != JavaTokenType.RPARENTH

@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.lang.ASTNode;
 
@@ -34,12 +35,10 @@ public class ParseUtil implements Constants {
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
-    if (tokenType == DOC_COMMENT) {
-      CompositeElement element = Factory.createCompositeElement(tokenType);
-      LeafElement chameleon = Factory.createLeafElement(DOC_COMMENT_TEXT, lexer.getBuffer(), lexer.getTokenStart(),
+    if (tokenType == JavaTokenType.DOC_COMMENT) {
+      LeafElement chameleon = Factory.createLeafElement(JavaDocElementType.DOC_COMMENT, lexer.getBuffer(), lexer.getTokenStart(),
                                                         lexer.getTokenEnd(), lexer.getState(), table);
-      TreeUtil.addChildren(element, chameleon);
-      return element;
+      return chameleon;
     }
     else {
       final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(),
@@ -222,10 +221,12 @@ public class ParseUtil implements Constants {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = gt ? GTTokens.getTokenType(lexer) : lexer.getTokenType();
       final TreeElement next;
-      if(tokenType instanceof IChameleonElementType)
+      if (tokenType instanceof IChameleonElementType) {
         next = nextLeaf(leaf, commonParents, tokenType);
-      else
+      }
+      else {
         next = nextLeaf(leaf, commonParents, null);
+      }
 
       if (next == null || tokenType == null || next == endToken) break;
       if (tokenType != next.getElementType() && processor.isTokenValid(tokenType)) {
@@ -269,7 +270,7 @@ public class ParseUtil implements Constants {
   }
 
   private static void passTokenOrChameleon(final ASTNode next, Lexer lexer, boolean gtUse) {
-    if (next instanceof ChameleonElement) {
+    if (next instanceof LeafElement && ((LeafElement)next).isChameleon()) {
       final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
       while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
         lexer.advance();
@@ -295,8 +296,9 @@ public class ParseUtil implements Constants {
     }
     TreeElement nextTree = start;
     while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
-      if(nextTree.getElementType() == searchedType)
+      if (nextTree.getElementType() == searchedType) {
         return nextTree;
+      }
       next = findFirstLeaf(nextTree, searchedType, commonParent);
     }
     if(next != null){
@@ -336,8 +338,9 @@ public class ParseUtil implements Constants {
   public static LeafElement prevLeaf(TreeElement start, CommonParentState commonParent) {
     LeafElement prev = null;
     if(commonParent != null){
-      if(commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)
+      if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
         commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
+      }
       commonParent.startLeafBranchStart = start;
     }
     ASTNode prevTree = start;
@@ -356,7 +359,7 @@ public class ParseUtil implements Constants {
   static void bindComments(ASTNode root) {
     TreeElement child = (TreeElement)root.getFirstChildNode();
     while (child != null) {
-      if (child.getElementType() == DOC_COMMENT) {
+      if (child.getElementType() == JavaDocElementType.DOC_COMMENT) {
         if (bindDocComment(child)) {
           child = child.getTreeParent();
           continue;

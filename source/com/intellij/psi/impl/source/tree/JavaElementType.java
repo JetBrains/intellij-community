@@ -1,20 +1,23 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lexer.Lexer;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.ParsingContext;
+import com.intellij.psi.impl.source.parsing.FileTextParsing;
+import com.intellij.psi.impl.source.parsing.StatementParsing;
+import com.intellij.psi.impl.source.parsing.Parsing;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.util.text.CharArrayUtil;
 
 public interface JavaElementType {
   //chameleons
-  IElementType JAVA_FILE_TEXT = new IJavaElementType("JAVA_FILE_TEXT");
-  IElementType IMPORT_LIST_TEXT = new IJavaElementType("IMPORT_LIST_TEXT");
-  IElementType CODE_BLOCK_TEXT = new IJavaElementType("CODE_BLOCK_TEXT");
-  IElementType EXPRESSION_TEXT = new IJavaElementType("EXPRESSION_TEXT");
-  IElementType JAVA_FILE = new IJavaElementType("JAVA_FILE");
   IElementType TYPE_PARAMETER = new IJavaElementType("TYPE_PARAMETER");
   IElementType TYPE_PARAMETER_LIST = new IJavaElementType("TYPE_PARAMETER_LIST");
-  IElementType STATEMENTS = new IJavaElementType("STATEMENTS");
-  IElementType REFERENCE_TEXT = new IJavaElementType("REFERENCE_TEXT");
-  IElementType TYPE_TEXT = new IJavaElementType("TYPE_TEXT");
 
   IElementType ERROR_ELEMENT = new IJavaElementType("ERROR_ELEMENT");
 
@@ -24,14 +27,12 @@ public interface JavaElementType {
   IElementType CLASS = new IJavaElementType("CLASS");
   IElementType ANONYMOUS_CLASS = new IJavaElementType("ANONYMOUS_CLASS");
   IElementType ENUM_CONSTANT_INITIALIZER = new IJavaElementType("ENUM_CONSTANT_INITIALIZER");
-  IElementType IMPORT_LIST = new IJavaElementType("IMPORT_LIST");
   IElementType IMPORT_STATEMENT = new IJavaElementType("IMPORT_STATEMENT");
   IElementType IMPORT_STATIC_STATEMENT = new IJavaElementType("IMPORT_STATIC_STATEMENT");
   IElementType IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
   IElementType MODIFIER_LIST = new IJavaElementType("MODIFIER_LIST");
   IElementType EXTENDS_LIST = new IJavaElementType("EXTENDS_LIST");
   IElementType IMPLEMENTS_LIST = new IJavaElementType("IMPLEMENTS_LIST");
-  IElementType CODE_BLOCK = new IJavaElementType("CODE_BLOCK");
   IElementType FIELD = new IJavaElementType("FIELD");
   IElementType ENUM_CONSTANT = new IJavaElementType("ENUM_CONSTANT");
   IElementType METHOD = new IJavaElementType("METHOD");
@@ -67,7 +68,6 @@ public interface JavaElementType {
 
   IElementType EMPTY_STATEMENT = new IJavaElementType("EMPTY_STATEMENT");
   IElementType BLOCK_STATEMENT = new IJavaElementType("BLOCK_STATEMENT");
-  IElementType EXPRESSION_STATEMENT = new IJavaElementType("EXPRESSION_STATEMENT");
   IElementType EXPRESSION_LIST_STATEMENT = new IJavaElementType("EXPRESSION_LIST_STATEMENT");
   IElementType DECLARATION_STATEMENT = new IJavaElementType("DECLARATION_STATEMENT");
   IElementType IF_STATEMENT = new IJavaElementType("IF_STATEMENT");
@@ -93,4 +93,85 @@ public interface JavaElementType {
   IElementType ANNOTATION = new IJavaElementType("ANNOTATION");
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
+
+  IElementType JAVA_FILE = new IChameleonElementType("JAVA_FILE_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+
+      return FileTextParsing.parseFileText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+                                           chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+    }
+    public boolean isParsable(CharSequence buffer) {return true;}
+  };
+
+  IElementType IMPORT_LIST = new IChameleonElementType("IMPORT_LIST_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
+      return context.getImportsTextParsing().parseImportsText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+                                                              chars, 0, chars.length, ((LeafElement)chameleon).getState());
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
+
+  IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      return StatementParsing.parseCodeBlockText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),
+                                                 chars, 0, chars.length, ((LeafElement)chameleon).getState(),
+                                                 SharedImplUtil.findCharTableByTree(chameleon)).getFirstChildNode();
+    }
+    public int getErrorsCount(CharSequence seq) {
+      final Lexer lexer = getLanguage().getParserDefinition().createLexer();
+      final char[] chars = CharArrayUtil.fromSequence(seq);
+      lexer.start(chars, 0, chars.length);
+      int balance = 0;
+      while(true){
+        IElementType type = lexer.getTokenType();
+        if (type == null) break;
+        if (type == JavaTokenType.LBRACE) {
+          balance++;
+        }
+        else if (type == JavaTokenType.RBRACE) {
+          balance--;
+        }
+        lexer.advance();
+      }
+      return balance;
+    }
+  };
+
+  IElementType EXPRESSION_STATEMENT = new IChameleonElementType("EXPRESSION_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
+      return context.getExpressionParsing().parseExpressionTextFragment(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, ((LeafElement)chameleon).getState());
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
+
+  IElementType REFERENCE_TEXT = new IChameleonElementType("REFERENCE_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      return Parsing.parseJavaCodeReferenceText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), true);
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
+
+  IElementType TYPE_TEXT = new IChameleonElementType("TYPE_TEXT", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      return Parsing.parseTypeText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
+
+  IElementType STATEMENTS = new IChameleonElementType("STATEMENTS", JavaLanguage.findByID("JAVA")){
+    public ASTNode parseContents(ASTNode chameleon) {
+      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      return StatementParsing.parseStatements(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(), chars, 0, chars.length,
+                                              ((LeafElement)chameleon).getState(), SharedImplUtil.findCharTableByTree(chameleon));
+    }
+    public boolean isParsable(CharSequence buffer) {return false;}
+  };
 }

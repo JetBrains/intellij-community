@@ -171,4 +171,8 @@ public abstract class LeafElement extends TreeElement {
   public PsiElement getPsi() {
     return null;
   }
+
+  public boolean isChameleon(){
+    return false;
+  }
 }

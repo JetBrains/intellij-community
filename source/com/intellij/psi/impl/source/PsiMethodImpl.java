@@ -182,7 +182,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
           if (i == LBRACKET) {
             arrayCount++;
           }
-          else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == DOC_COMMENT || i == END_OF_LINE_COMMENT) {
+          else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT || i == END_OF_LINE_COMMENT) {
           }
           else {
             break Loop;

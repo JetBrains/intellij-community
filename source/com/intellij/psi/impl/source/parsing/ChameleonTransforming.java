@@ -15,7 +15,9 @@ import com.intellij.psi.impl.source.tree.*;
 public class ChameleonTransforming implements Constants {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.parsing.ChameleonTransforming");
 
-  public static TreeElement transform(ChameleonElement chameleon) {
+  public static ASTNode transform(LeafElement leaf) {
+    if(!(leaf instanceof ChameleonElement)) return leaf;
+    final ChameleonElement chameleon = (ChameleonElement)leaf;
     synchronized (PsiLock.LOCK) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");

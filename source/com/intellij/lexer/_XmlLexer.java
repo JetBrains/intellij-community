@@ -792,7 +792,7 @@
          }
        case 47: break;
        case 23:
-         { myTokenType = XmlTokenType.XML_MARKUP; return;
+         { myTokenType = XmlElementType.XML_MARKUP; return;
          }
        case 48: break;
        case 9:

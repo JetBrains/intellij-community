@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
@@ -14,7 +13,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
-import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -53,51 +52,11 @@ public class Factory implements Constants {
 
   public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     LeafElement element = null;
-    if (type == JAVA_FILE_TEXT) {
-      element = new JavaFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
+    if (type instanceof IChameleonElementType) {
+      element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState);
     }
     else if (type instanceof IXmlLeafElementType) {
       element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == JSP_FILE_TEXT) {
-      element = new JspFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == XML_FILE_TEXT) {
-      element = new XmlFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    } else if (type == XHTML_FILE_TEXT) {
-      element = new XHtmlFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    } else if (type == JSPX_FILE_TEXT) {
-      element = new JspxFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == HTML_FILE_TEXT) {
-      element = new HTMLFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == DTD_FILE_TEXT) {
-      element = new DTDFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == IMPORT_LIST_TEXT) {
-      element = new ImportListChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == CODE_BLOCK_TEXT) {
-      element = new CodeBlockChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == DOC_COMMENT_TEXT) {
-      element = new DocCommentChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == ASPECT_FILE_TEXT) {
-      element = new AspectFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == EXPRESSION_TEXT) {
-      element = new ExpressionChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == STATEMENTS) {
-      element = new StatementsChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == TYPE_TEXT) {
-      element = new TypeChameleonElement(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == REFERENCE_TEXT) {
-      element = new ReferenceChameleonElement(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == PLAIN_TEXT) {
       element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState, table);
@@ -110,18 +69,6 @@ public class Factory implements Constants {
     }
     else if (type == IDENTIFIER) {
       element = new PsiIdentifierImpl(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == JavaDocTokenType.DOC_TYPE_TEXT) {
-      element = new JavaDocReferenceChameleon(type, buffer, startOffset, endOffset, true, lexerState, table);
-    }
-    else if (type == JavaDocTokenType.DOC_REFERENCE_TEXT) {
-      element = new JavaDocReferenceChameleon(type, buffer, startOffset, endOffset, false, lexerState, table);
-    }
-    else if (type == JspTokenType.JSP_IMPORT_ATTRIBUTE_CHAMELEON) {
-      element = new JspImportAttributeChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == JspElementType.JSP_DECLARATION_TEXT) {
-      element = new JspDeclarationChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
       element = new JspText(null, buffer, startOffset, endOffset, table);
@@ -174,7 +121,8 @@ public class Factory implements Constants {
     }
     else if (type == XML_TAG) {
       element = new XmlTagImpl();
-    } else if (type == HTML_TAG) {
+    }
+    else if (type == HTML_TAG) {
       element = new HtmlTagImpl();
     }
     else if (type == XML_TEXT) {
@@ -202,8 +150,18 @@ public class Factory implements Constants {
       element = new JspFileElement();
     }
     else if (type == XML_FILE) {
-      element = new XmlFileElement();
-    } else if (type == HTML_FILE) {
+      element = new XmlFileElement(type);
+    }
+    else if (type == DTD_FILE) {
+      element = new XmlFileElement(type);
+    }
+    else if (type == XHTML_FILE) {
+      element = new XmlFileElement(type);
+    }
+    else if (type == JSPX_FILE) {
+      element = new XmlFileElement(type);
+    }
+    else if (type == HTML_FILE) {
       element = new HtmlFileElement();
     }
     else if (type == CODE_FRAGMENT) {
@@ -215,7 +173,7 @@ public class Factory implements Constants {
     else if (type == ASPECT_FILE) {
       element = new AspectFileElement();
     }
-    else if (type == DOC_COMMENT) {
+    else if (type == JavaDocElementType.DOC_COMMENT) {
       element = new PsiDocCommentImpl();
     }
     else if (type == DOC_TAG) {

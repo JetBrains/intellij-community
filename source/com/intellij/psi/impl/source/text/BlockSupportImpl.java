@@ -19,6 +19,8 @@ import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
@@ -80,34 +82,40 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     ASTNode parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
 
     int minErrorLevel = Integer.MAX_VALUE;
-    Reparseable bestReparseable = null;
-    Reparseable prevReparseable = null;
+    ASTNode bestReparseable = null;
+    ASTNode prevReparseable = null;
     boolean theOnlyReparseable = false;
+
     while(parent != null && !(parent instanceof FileElement)){
-      if(parent instanceof Reparseable){
+      if(parent.getElementType() instanceof IChameleonElementType){
         final TextRange textRange = parent.getTextRange();
-        final Reparseable reparseable = (Reparseable)parent;
-        boolean lexerChanged = false;
+        final IChameleonElementType reparseable = (IChameleonElementType)parent.getElementType();
+        boolean languageChanged = false;
         if(prevReparseable != null){
-          lexerChanged = prevReparseable.getLexerClass().equals(reparseable.getLexerClass());
+          languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
         }
 
-        int currentErrorLevel = reparseable.getErrorsCount(newFileText, textRange.getStartOffset(), textRange.getEndOffset(), lengthShift);
-        if(currentErrorLevel == Reparseable.NO_ERRORS){
+        final String newTextStr = StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
+        if(reparseable.isParsable(newTextStr)){
           final FileElement treeElement = new DummyHolder(((TreeElement)parent).getManager(), null, treeFileElement.getCharTable()).getTreeElement();
-          final ChameleonElement chameleon = reparseable.createChameleon(newFileText, textRange.getStartOffset(), textRange.getEndOffset() + lengthShift);
+          final ChameleonElement chameleon =
+            (ChameleonElement)Factory.createLeafElement(reparseable, newFileText, textRange.getStartOffset(),
+                                                        textRange.getEndOffset() + lengthShift, -1, treeFileElement.getCharTable());
           TreeUtil.addChildren(treeElement, chameleon);
           parent.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
           return;
         }
-        else if(currentErrorLevel == Reparseable.FATAL_ERROR){
-          prevReparseable = reparseable;
-        }
-        else if(Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)){
-          theOnlyReparseable = bestReparseable == null;
-          bestReparseable = reparseable;
-          minErrorLevel = currentErrorLevel;
-          if (lexerChanged) break;
+        else if(reparseable instanceof IErrorCounterChameleonElementType){
+          int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr);
+          if(currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR){
+            prevReparseable = parent;
+          }
+          else if(Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)){
+            theOnlyReparseable = bestReparseable == null;
+            bestReparseable = parent;
+            minErrorLevel = currentErrorLevel;
+            if (languageChanged) break;
+          }
         }
         // invalid content;
       }
@@ -116,9 +124,11 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
     if(bestReparseable != null && !theOnlyReparseable){
       // best reparseable available
-      final ASTNode treeElement = ((ASTNode)bestReparseable);
+      final ASTNode treeElement = bestReparseable;
       final TextRange textRange = treeElement.getTextRange();
-      final ChameleonElement chameleon = bestReparseable.createChameleon(newFileText, textRange.getStartOffset(), textRange.getEndOffset() + lengthShift);
+      final ChameleonElement chameleon =
+        (ChameleonElement)Factory.createLeafElement(bestReparseable.getElementType(), newFileText, textRange.getStartOffset(),
+                                                    textRange.getEndOffset() + lengthShift, -1, treeFileElement.getCharTable());
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
       treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());

@@ -10,7 +10,6 @@ import com.intellij.psi.tree.xml.IDTDElementType;
  * To change this template use File | Settings | File Templates.
  */
 public interface DTDElementType {
-  IDTDElementType DTD_FILE = new IDTDElementType("DTD_FILE");
   IDTDElementType DTD_DOCUMENT = new IDTDElementType("DTD_DOCUMENT");
   IDTDElementType DTD_ELEMENT_DECL = new IDTDElementType("DTD_ELEMENT_DECL");
   IDTDElementType DTD_ATTLIST_DECL = new IDTDElementType("DTD_ATTLIST_DECL");

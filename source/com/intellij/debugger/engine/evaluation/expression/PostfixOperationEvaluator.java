@@ -2,7 +2,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.Value;
 
@@ -33,7 +33,7 @@ public class PostfixOperationEvaluator implements Evaluator{
     myValue = (Value)myOperandEvaluator.evaluate(context);
     myModifier = myOperandEvaluator.getModifier();
 
-    IElementType opType = myOpType == TokenType.PLUSPLUS ? TokenType.PLUS : TokenType.MINUS;
+    IElementType opType = myOpType == TokenTypeEx.PLUSPLUS ? TokenTypeEx.PLUS : TokenTypeEx.MINUS;
     Object operationResult = BinaryExpressionEvaluator.evaluateOperation((Value)myValue, opType, myRightEvaluator, myExpectedType, context);
     AssignmentEvaluator.assign(myModifier, operationResult, context);
     return myValue;

@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.ASTNode;
+import com.intellij.util.CharTable;
 
 public class JavadocParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.JavadocParsing");
@@ -35,6 +36,33 @@ public class JavadocParsing extends Parsing {
 
   public JavadocParsing(ParsingContext context) {
     super(context);
+  }
+
+  public static TreeElement parseJavaDocReference(char[] myBuffer, CharTable charTable, Lexer originalLexer, int state, boolean isType) {
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(myBuffer, 0, myBuffer.length, state);
+    ParsingContext context = new ParsingContext(charTable);
+
+    final FileElement dummyRoot = new DummyHolder(null, null, context.getCharTable()).getTreeElement();
+    final CompositeElement element;
+
+    if (isType){
+      element = context.getJavadocParsing().parseTypeWithEllipsis(lexer, true, false);
+    }
+    else{
+      element = context.getStatementParsing().parseJavaCodeReference(lexer, true);
+    }
+
+    if (element != null){
+      TreeUtil.addChildren(dummyRoot, element);
+    }
+    while(lexer.getTokenType() != null){
+      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, context.getCharTable()));
+      lexer.advance();
+    }
+
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   public TreeElement parseDocCommentText(PsiManager manager, char[] buffer, int startOffset, int endOffset) {
@@ -262,7 +290,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private LeafElement parseReferenceOrType(char[] buffer, int startOffset, int endOffset, boolean isType, int lexerState) {
-    return Factory.createLeafElement(isType ? JavaDocTokenType.DOC_TYPE_TEXT : JavaDocTokenType.DOC_REFERENCE_TEXT, buffer, startOffset,
+    return Factory.createLeafElement(isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER, buffer, startOffset,
                                      endOffset, lexerState, myContext.getCharTable());
   }
 

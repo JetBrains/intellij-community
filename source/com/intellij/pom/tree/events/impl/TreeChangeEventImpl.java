@@ -21,6 +21,7 @@ import java.util.*;
  */
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private final Map<ASTNode, TreeChange> myChangedElements = new HashMap<ASTNode, TreeChange>();
+  private final List<ASTNode> myChangedInOrder = new ArrayList<ASTNode>();
   private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<Set<ASTNode>>(10);
   private final PomModelAspect myAspect;
   private final FileElement myFileElement;
@@ -36,7 +37,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   public TreeElement[] getChangedElements() {
     final TreeElement[] ret = new TreeElement[myChangedElements.size()];
-    final Iterator<ASTNode> iterator = myChangedElements.keySet().iterator();
+    final Iterator<ASTNode> iterator = myChangedInOrder.iterator();
     int index = 0;
     while (iterator.hasNext()) {
       ret[index++] = (TreeElement)iterator.next();
@@ -72,8 +73,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       prevParent = currentParent;
       currentParent = currentParent.getTreeParent();
     }
-    processElementaryChange(parent, element, change, depth - 1);
     compactChanges(parent, depth - 1);
+    processElementaryChange(parent, element, change, depth - 1);
   }
 
   private int getDepth(ASTNode element) {
@@ -92,6 +93,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     if(treeChange == null){
       treeChange = new TreeChangeImpl(parent);
       myChangedElements.put(parent, treeChange);
+      insertAtList(parent);
+
       final int index = depth >= 0 ? depth : getDepth(parent);
       Set<ASTNode> treeElements = index < myOfEqualDepth.size() ? myOfEqualDepth.get(index) : null;
       if(treeElements == null){
@@ -133,7 +136,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
           compactedChange.compactChange(treeElement, getChangesByElement(treeElement));
 
           iterator.remove();
-          myChangedElements.remove(treeElement);
+          removeAssociatedChanges(treeElement, currentDepth);
           final CompositeElement treeParent = treeElement.getTreeParent();
           final TreeChange changesByElement = getChangesByElement(treeParent);
           if (changesByElement != null) {
@@ -154,14 +157,64 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   private void removeAssociatedChanges(ASTNode treeElement, int depth) {
-    if(myChangedElements.remove(treeElement) != null){
-      if(depth < 0) depth = getDepth(treeElement);
+    if(myChangedElements.remove(treeElement) != null) {
+      myChangedInOrder.remove(treeElement);
+      if (depth < 0) depth = getDepth(treeElement);
       if (depth < myOfEqualDepth.size()) {
         myOfEqualDepth.get(depth < 0 ? getDepth(treeElement) : depth).remove(treeElement);
       }
     }
   }
 
+  private void insertAtList(ASTNode node){
+    final int[] nodeRoute = getRoute(node);
+    int index = 0;
+    while(index < myChangedInOrder.size()){
+      final ASTNode current = myChangedInOrder.get(index++);
+      final int[] route = getRoute(current);
+      if(compareRouts(nodeRoute, route) < 0) {
+        myChangedInOrder.add(index, node);
+        return;
+      }
+    }
+    myChangedInOrder.add(node);
+  }
+
+  private int[] getRoute(ASTNode node){
+    final List<ASTNode> parents = new ArrayList<ASTNode>(20);
+    while(node != null){
+      parents.add(node);
+      node = node.getTreeParent();
+    }
+    final int[] root = new int[parents.size() - 1];
+    for(int i = 0; i < root.length; i++){
+      final ASTNode parent = parents.get(root.length - i - 1);
+      int rootIndex = 0;
+      ASTNode current = parent.getTreeParent().getFirstChildNode();
+      while(current != parent){
+        current = current.getTreeNext();
+        rootIndex++;
+      }
+      root[i] = rootIndex;
+    }
+    return root;
+  }
+
+  private int compareRouts(int[] root1, int[] root2){
+    final int depth = Math.min(root1.length, root2.length);
+    for(int i = 0; i < depth; i++){
+      if(root1[i] == root2[i]) continue;
+      if(root1[i] > root2[i]){
+        return 1;
+      }
+      else if(root2[i] > root1[i]){
+        return -1;
+      }
+    }
+    if(root1.length == root2.length) return 0;
+    if(root1.length < root2.length) return 1;
+    return -1;
+  }
 
   public PomModelAspect getAspect() {
     return myAspect;

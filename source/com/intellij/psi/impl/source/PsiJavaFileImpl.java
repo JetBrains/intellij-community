@@ -10,11 +10,11 @@ import com.intellij.psi.PsiManager;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(Project project, VirtualFile file) {
-    super(project, JAVA_FILE, JAVA_FILE_TEXT, file);
+    super(project, JAVA_FILE, JAVA_FILE, file);
   }
 
   public PsiJavaFileImpl(Project project, String name, CharSequence text) {
-    super(project, JAVA_FILE, JAVA_FILE_TEXT, name, text);
+    super(project, JAVA_FILE, JAVA_FILE, name, text);
   }
 
   public String toString(){

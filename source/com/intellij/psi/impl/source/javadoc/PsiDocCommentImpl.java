@@ -2,9 +2,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaDocLexer;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -22,7 +20,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType, Reparseable, PsiJavaToken {
+public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(new IElementType[]{DOC_TAG});
@@ -35,7 +33,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
 
 
   public PsiDocCommentImpl() {
-    super(DOC_COMMENT);
+    super(JavaDocElementType.DOC_COMMENT);
   }
 
   public PsiElement[] getDescriptionElements() {
@@ -56,7 +54,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   public PsiDocTag findTagByName(String name) {
-    if (getFirstChildNode().getElementType() == DOC_COMMENT_TEXT) {
+    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
       if (getFirstChildNode().getText().indexOf(name) < 0) return null;
     }
 
@@ -246,7 +244,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     if (i == DOC_TAG) {
       return ChildRole.DOC_TAG;
     }
-    else if (i == DOC_COMMENT_TEXT || i == DOC_INLINE_TAG) {
+    else if (i == JavaDocElementType.DOC_COMMENT || i == DOC_INLINE_TAG) {
       return ChildRole.DOC_CONTENT;
     }
     else if (i == DOC_COMMENT_LEADING_ASTERISKS) {
@@ -269,19 +267,6 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
 
   public String toString() {
     return "PsiDocComment";
-  }
-
-  public ChameleonElement createChameleon(char[] buffer, int start, int end) {
-    return new DocCommentChameleonElement(buffer, start, end, -1, SharedImplUtil.findCharTableByTree(this));
-  }
-
-  public int getErrorsCount(char[] buffer, int start, int end, int lengthShift) {
-    final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);
-    lexer.start(buffer, start, end);
-    if(lexer.getTokenType() != DOC_COMMENT_TEXT) return -1;
-    lexer.advance();
-    if(lexer.getTokenType() != null) return -1;
-    return 0;
   }
 
   public Class getLexerClass() {

@@ -12,21 +12,15 @@ import java.io.IOException;
 
 public class JavaLexer implements Lexer, Cloneable {
 
-  private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15, boolean escapeTokensInXml) {
+  private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
     myTable = isAssertKeywordEnabled ?
               (isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert) :
               (isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert);
-    myJLexlexer = escapeTokensInXml ?
-      (Lexer)new _XmlEscapedJavaLexer(isAssertKeywordEnabled, isJDK15) :
-      new _JavaLexer(isAssertKeywordEnabled, isJDK15);
-  }
-
-  public JavaLexer(LanguageLevel level, boolean escapeTokensInXml) {
-    this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing(), escapeTokensInXml);
+    myJLexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
   }
 
   public JavaLexer(LanguageLevel level) {
-    this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing(), false);
+    this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
   }
 
   private char[] myBuffer;

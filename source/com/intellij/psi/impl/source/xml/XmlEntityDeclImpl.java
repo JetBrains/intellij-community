@@ -205,7 +205,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e.getElementType() instanceof IXmlLeafElementType) {
         XmlToken token = (XmlToken)SourceTreeToPsiMap.treeElementToPsi(e);
-        if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC || token.getTokenType() == XmlToken.XML_DOCTYPE_SYSTEM) {
+        if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC || token.getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM) {
           return false;
         }
       }

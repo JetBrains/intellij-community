@@ -12,7 +12,6 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CharTable;
 
@@ -699,11 +698,9 @@ public class XmlParsing implements ElementType {
     lexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
 
     final FileElement dummyRoot = new DummyHolder(null, null, myContext.getCharTable()).getTreeElement();
-    CompositeElement markupDecl = Factory.createCompositeElement(XmlElementType.XML_MARKUP_DECL);
-    TreeUtil.addChildren(dummyRoot, markupDecl);
-    parseMarkupContent(lexer, markupDecl);
+    parseMarkupContent(lexer, dummyRoot);
     while (lexer.getTokenType() != null) {
-      TreeUtil.addChildren(markupDecl, ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable()));
+      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable()));
       lexer.advance();
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);

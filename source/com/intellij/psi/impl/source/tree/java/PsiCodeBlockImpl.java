@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -11,14 +11,12 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock, Reparseable {
+public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
 
   public PsiCodeBlockImpl() {
@@ -167,29 +165,6 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
         return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
     }
     return true;
-  }
-
-  public ChameleonElement createChameleon(char[] buffer, int start, int end) {
-    LeafElement firstLeaf = TreeUtil.findFirstLeaf(this);
-    return new CodeBlockChameleonElement(buffer, start, end, firstLeaf != null ? firstLeaf.getState() : -1, SharedImplUtil.findCharTableByTree(this));
-  }
-
-  public int getErrorsCount(char[] buffer, int start, int end, int lengthShift) {
-    final JavaLexer lexer = new JavaLexer(getManager().getEffectiveLanguageLevel());
-    lexer.start(buffer, start, end + lengthShift);
-    int balance = 0;
-    while(true){
-      IElementType type = lexer.getTokenType();
-      if (type == null) break;
-      if (type == LBRACE) {
-        balance++;
-      }
-      else if (type == RBRACE) {
-        balance--;
-      }
-      lexer.advance();
-    }
-    return balance;
   }
 
   public Class getLexerClass() {

@@ -5,7 +5,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.scope.packageSet.*;
 
@@ -37,7 +37,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     private PackageSet parseUnion() throws ParsingException {
       PackageSet result = parseIntersection();
       while (true) {
-        if (myLexer.getTokenType() != TokenType.OROR) break;
+        if (myLexer.getTokenType() != TokenTypeEx.OROR) break;
         myLexer.advance();
         result = new UnionPackageSet(result, parseIntersection());
       }
@@ -47,7 +47,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     private PackageSet parseIntersection() throws ParsingException {
       PackageSet result = parseTerm();
       while (true) {
-        if (myLexer.getTokenType() != TokenType.ANDAND) break;
+        if (myLexer.getTokenType() != TokenTypeEx.ANDAND) break;
         myLexer.advance();
         result = new IntersectionPackageSet(result, parseTerm());
       }
@@ -55,13 +55,13 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private PackageSet parseTerm() throws ParsingException {
-      if (myLexer.getTokenType() == TokenType.EXCL) {
+      if (myLexer.getTokenType() == TokenTypeEx.EXCL) {
         myLexer.advance();
         return new ComplementPackageSet(parseTerm());
       }
 
-      if (myLexer.getTokenType() == TokenType.LPARENTH) return parseParenthesized();
-      if (myLexer.getTokenType() == TokenType.IDENTIFIER && myLexer.getBuffer()[myLexer.getTokenStart()] == '$') {
+      if (myLexer.getTokenType() == TokenTypeEx.LPARENTH) return parseParenthesized();
+      if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER && myLexer.getBuffer()[myLexer.getTokenStart()] == '$') {
         NamedPackageSetReference namedPackageSetReference = new NamedPackageSetReference(getTokenText());
         myLexer.advance();
         return namedPackageSetReference;
@@ -73,7 +73,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       String scope = parseScope();
       String modulePattern = parseModulePattern();
 
-      if (myLexer.getTokenType() == TokenType.COLON) {
+      if (myLexer.getTokenType() == TokenTypeEx.COLON) {
         if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
           error("(test|lib|src)[modulename] expected before :");
         }
@@ -86,7 +86,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private String parseScope() {
-      if (myLexer.getTokenType() != TokenType.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
+      if (myLexer.getTokenType() != TokenTypeEx.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
       String id = getTokenText();
       String scope = PatternPackageSet.SCOPE_ANY;
       if (PatternPackageSet.SCOPE_SOURCE.equals(id)) {
@@ -116,15 +116,15 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       StringBuffer pattern = new StringBuffer();
       boolean wasIdentifier = false;
       while (true) {
-        if (myLexer.getTokenType() == TokenType.DOT) {
+        if (myLexer.getTokenType() == TokenTypeEx.DOT) {
           pattern.append('.');
           wasIdentifier = false;
         }
-        else if (myLexer.getTokenType() == TokenType.ASTERISK) {
+        else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
           pattern.append('*');
           wasIdentifier = false;
         }
-        else if (myLexer.getTokenType() == TokenType.IDENTIFIER) {
+        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
           if (wasIdentifier) error("Unexpected " + getTokenText());
           wasIdentifier = true;
           pattern.append(getTokenText());
@@ -149,16 +149,16 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private String parseModulePattern() throws ParsingException {
-      if (myLexer.getTokenType() != TokenType.LBRACKET) return null;
+      if (myLexer.getTokenType() != TokenTypeEx.LBRACKET) return null;
       myLexer.advance();
       StringBuffer pattern = new StringBuffer();
       while (true) {
-        if (myLexer.getTokenType() == TokenType.RBRACKET) {
+        if (myLexer.getTokenType() == TokenTypeEx.RBRACKET) {
           myLexer.advance();
           break;
         }
 
-        if (myLexer.getTokenType() == TokenType.IDENTIFIER || myLexer.getTokenType() == TokenType.ASTERISK) {
+        if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER || myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
           pattern.append(getTokenText());
           myLexer.advance();
         }
@@ -170,11 +170,11 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private PackageSet parseParenthesized() throws ParsingException {
-      LOG.assertTrue(myLexer.getTokenType() == TokenType.LPARENTH);
+      LOG.assertTrue(myLexer.getTokenType() == TokenTypeEx.LPARENTH);
       myLexer.advance();
 
       PackageSet result = parseUnion();
-      if (myLexer.getTokenType() != TokenType.RPARENTH) error("')' expected");
+      if (myLexer.getTokenType() != TokenTypeEx.RPARENTH) error("')' expected");
       myLexer.advance();
 
       return result;

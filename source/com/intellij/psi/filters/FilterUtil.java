@@ -3,6 +3,7 @@ package com.intellij.psi.filters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspToken;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.filters.classes.AnyInnerFilter;
 import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
@@ -177,7 +178,7 @@ public class FilterUtil{
       if (offset < 0) return null;
       element = element.getContainingFile().findElementAt(offset);
       if (element == null) return null;
-      if(element instanceof JspToken && ((JspToken)element).getTokenType() == JspToken.JSP_DIRECTIVE_WHITE_SPACE) continue;
+      if(element instanceof JspToken && ((JspToken)element).getTokenType() == JspTokenType.JSP_DIRECTIVE_WHITE_SPACE) continue;
       if (!(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) return element;
     }
   }

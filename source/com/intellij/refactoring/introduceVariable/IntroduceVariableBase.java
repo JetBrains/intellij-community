@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.JspExpression;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspToken;
+import com.intellij.psi.jsp.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -350,11 +347,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       PsiElement prev = child.getPrevSibling();
       if (prev instanceof PsiStatement) break;
       if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
-      if (prev instanceof JspToken && ((JspToken) prev).getTokenType() == JspToken.JSP_SCRIPTLET_START) break;
+      if (prev instanceof JspToken && ((JspToken) prev).getTokenType() == JspTokenType.JSP_SCRIPTLET_START) break;
       child = prev;
-      if (child instanceof JspToken && ((JspToken) child).getTokenType() == JspToken.JSP_SCRIPTLET_END) break;
+      if (child instanceof JspToken && ((JspToken) child).getTokenType() == JspTokenType.JSP_SCRIPTLET_END) break;
     }
-    if (!(child instanceof JspToken && ((JspToken) child).getTokenType() == JspToken.JSP_SCRIPTLET_END)) {
+    if (!(child instanceof JspToken && ((JspToken) child).getTokenType() == JspTokenType.JSP_SCRIPTLET_END)) {
       while (true) {
         if (!(child instanceof PsiWhiteSpace)
                 && !(child instanceof PsiComment)

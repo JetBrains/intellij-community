@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -272,7 +273,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       if (lexer.getTokenEnd() == commentText.length()) {
         return (lexer.getTokenEnd() - lexer.getTokenStart() == 1);
       }
-      if (tokenType == JavaTokenType.DOC_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT) {
+      if (tokenType == JavaDocElementType.DOC_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT) {
         return false;
       }
       lexer.advance();

@@ -121,7 +121,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
               result.add(element);
             }
           }
-          else if (token.getTokenType() == XmlToken.XML_CONTENT_ANY) {
+          else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
             XmlElementDescriptor[] elements = ((XmlNSDescriptorImpl) NSDescriptor).getElements();
             result.addAll(Arrays.asList(elements));
           }

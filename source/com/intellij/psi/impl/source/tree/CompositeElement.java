@@ -123,9 +123,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
       while (child != null) {
         final int textLength = child.getTextLength(table);
         if (textLength > offset) {
-          if (child instanceof ChameleonElement) {
-            child = ChameleonTransforming.transform((ChameleonElement)child);
-          continue;
+          if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
+            child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
+            continue;
           }
           return child.findLeafElementAt(offset);
         }
@@ -178,6 +178,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
   public final PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
+    if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
+      element = ChameleonTransforming.transform((LeafElement)element);
+    }
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 

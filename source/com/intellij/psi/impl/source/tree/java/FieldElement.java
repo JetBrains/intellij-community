@@ -37,6 +37,9 @@ public class FieldElement extends RepositoryTreeElement{
         if (getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
           return getFirstChildNode();
         }
+        else if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT){
+          return getFirstChildNode();
+        }
         else{
           return null;
         }
@@ -64,7 +67,7 @@ public class FieldElement extends RepositoryTreeElement{
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == JavaTokenType.DOC_COMMENT) {
+    if (i == JavaTokenType.DOC_COMMENT || i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {

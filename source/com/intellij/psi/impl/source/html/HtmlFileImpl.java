@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlElementType;
  */
 public class HtmlFileImpl extends XmlFileImpl {
   public HtmlFileImpl(Project project, VirtualFile file) {
-    super(project, file, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE_TEXT);
+    super(project, file, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
   }
 
   public HtmlFileImpl(Project project, String name, CharSequence text, FileType fileType) {

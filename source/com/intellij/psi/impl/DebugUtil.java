@@ -76,7 +76,7 @@ public class DebugUtil {
       buffer.append(' ');
     }
     if (root instanceof CompositeElement) {
-      final PsiElement psiElement = treeElementToPsi(root);
+      final PsiElement psiElement = root.getPsi();
       if (psiElement != null) {
         buffer.append(psiElement.toString());
       }
@@ -130,7 +130,7 @@ public class DebugUtil {
     }
     buffer.append(root.getUserDataString());
     buffer.append("\n");
-    if (root instanceof CompositeElement || root instanceof ChameleonElement) {
+    if (root instanceof CompositeElement || ((LeafElement)root).isChameleon()) {
       PsiElement[] children = SourceTreeToPsiMap.treeElementToPsi(root).getChildren();
 
       for (int i = 0; i < children.length; i++) {

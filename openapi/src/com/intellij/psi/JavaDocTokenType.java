@@ -26,6 +26,4 @@ public interface JavaDocTokenType {
   IElementType DOC_TAG_VALUE_SHARP_TOKEN = new IJavaDocElementType("DOC_TAG_VALUE_SHARP_TOKEN");
 
   IElementType DOC_COMMENT_BAD_CHARACTER = new IJavaDocElementType("DOC_COMMENT_BAD_CHARACTER");
-  IElementType DOC_REFERENCE_TEXT = new IJavaDocElementType("DOC_REFERENCE_TEXT");
-  IElementType DOC_TYPE_TEXT = new IJavaDocElementType("DOC_TYPE_TEXT");
 }

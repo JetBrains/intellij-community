@@ -3,11 +3,13 @@ package com.intellij.lang.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
@@ -24,7 +26,7 @@ import com.intellij.psi.tree.TokenSet;
  */
 public class JavaParserDefinition implements ParserDefinition {
   public Lexer createLexer() {
-    return null;
+    return new JavaLexer(LanguageLevel.HIGHEST);
   }
 
   public IElementType getFileNodeType() {

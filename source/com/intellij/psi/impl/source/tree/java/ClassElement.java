@@ -146,7 +146,7 @@ public class ClassElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == DOC_COMMENT) {
+        if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
           return getFirstChildNode();
         }
         else {
@@ -240,7 +240,7 @@ public class ClassElement extends RepositoryTreeElement {
     else if (i == TYPE_PARAMETER_LIST) {
       return ChildRole.TYPE_PARAMETER_LIST;
     }
-    else if (i == DOC_COMMENT) {
+    else if (i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {

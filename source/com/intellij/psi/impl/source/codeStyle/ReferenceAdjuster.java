@@ -49,7 +49,7 @@ class ReferenceAdjuster implements Constants {
         }
 
         if (rightKind) {
-          boolean isInsideDocComment = TreeUtil.findParent(element, ElementType.DOC_COMMENT) != null;
+          boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT) != null;
           boolean isShort = !((SourceJavaCodeReference)element).isQualified();
           if (!makeFQ(isInsideDocComment)) {
             if (isShort) return element; // short name already, no need to change

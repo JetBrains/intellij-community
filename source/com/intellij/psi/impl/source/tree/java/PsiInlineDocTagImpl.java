@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -8,13 +9,12 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl");
@@ -33,7 +33,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
 
   public PsiDocComment getContainingComment() {
     ASTNode scope = getTreeParent();
-    while (scope.getElementType() != DOC_COMMENT) {
+    while (scope.getElementType() != JavaDocElementType.DOC_COMMENT) {
       scope = scope.getTreeParent();
     }
     return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(scope);
@@ -63,7 +63,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     if (i == DOC_TAG_NAME) {
       return ChildRole.DOC_TAG_NAME;
     }
-    else if (i == DOC_COMMENT_TEXT || i == DOC_INLINE_TAG) {
+    else if (i == JavaDocElementType.DOC_COMMENT || i == DOC_INLINE_TAG) {
       return ChildRole.DOC_CONTENT;
     }
     else if (i == DOC_INLINE_TAG_START) {

@@ -2,8 +2,8 @@ package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.JavaWithJspTemplateDataLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -14,7 +14,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
@@ -77,7 +76,7 @@ public class StatementParsing extends Parsing {
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  public CompositeElement parseCodeBlock(Lexer lexer, boolean deep) {
+  public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
     if (lexer.getTokenType() != LBRACE) return null;
     if (lexer instanceof FilterLexer){
       if (((FilterLexer)lexer).getOriginal() instanceof JspStep1Lexer ||
@@ -86,7 +85,6 @@ public class StatementParsing extends Parsing {
       }
     }
 
-    CompositeElement codeBlock = Factory.createCompositeElement(CODE_BLOCK);
     if (!deep){
       int start = lexer.getTokenStart();
       lexer.advance();
@@ -111,17 +109,17 @@ public class StatementParsing extends Parsing {
         }
         lexer.advance();
       }
+      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBuffer(), start, end, lexer.getState(), myContext.getCharTable());
       if (braceCount != 0){
-        codeBlock.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+        chameleon.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
-      TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK_TEXT, lexer.getBuffer(), start, end, lexer.getState(), myContext.getCharTable());
-      TreeUtil.addChildren(codeBlock, chameleon);
+      return chameleon;
     }
     else{
+      CompositeElement codeBlock = Factory.createCompositeElement(CODE_BLOCK);
       parseCodeBlockDeep(codeBlock, lexer, false);
+      return codeBlock;
     }
-
-    return codeBlock;
   }
 
   private void parseCodeBlockDeep(CompositeElement elementToAdd,
@@ -623,7 +621,7 @@ public class StatementParsing extends Parsing {
       return element;
     }
 
-    CompositeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
+    TreeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
     if (codeBlock == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("'{' expected"));
       return element;
@@ -733,7 +731,7 @@ public class StatementParsing extends Parsing {
       return element;
     }
 
-    CompositeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
+    TreeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
     if (codeBlock == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("'{' expected"));
       return element;
@@ -751,7 +749,7 @@ public class StatementParsing extends Parsing {
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
-    CompositeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
+    TreeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
     if (codeBlock == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("'{' expected"));
       return element;
@@ -785,7 +783,7 @@ public class StatementParsing extends Parsing {
   }
 
   private CompositeElement parseCatchSection(Lexer lexer) {
-    CompositeElement codeBlock;
+    TreeElement codeBlock;
     CompositeElement catchSection = Factory.createCompositeElement(CATCH_SECTION);
     TreeUtil.addChildren(catchSection, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
@@ -857,7 +855,7 @@ public class StatementParsing extends Parsing {
   private CompositeElement parseBlockStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == LBRACE);
     CompositeElement element = Factory.createCompositeElement(BLOCK_STATEMENT);
-    CompositeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
+    TreeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
     TreeUtil.addChildren(element, codeBlock);
     return element;
   }

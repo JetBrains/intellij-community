@@ -2,7 +2,8 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.TokenTypeEx;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.xml.dtd.DTDElementType;
 import com.intellij.psi.tree.IElementType;
@@ -10,7 +11,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 
 public interface ElementType extends
-                             TokenType,
+                             TokenTypeEx,
                              DTDElementType,
                              JavaElementType,
                              JavaDocElementType,
@@ -21,11 +22,10 @@ public interface ElementType extends
   IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", null);
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", null);
   IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", null);
-  IElementType GRAMMAR_CHAMELEON = new IElementType("GRAMMAR_CHAMELEON", null);
 
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, JSP_DIRECTIVE_WHITE_SPACE, JSP_ACTION_WHITE_SPACE});
 
-  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT, JSP_COMMENT,
+  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaTokenType.DOC_COMMENT, JSP_COMMENT,
                                                                 XML_COMMENT});
 
   TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(WHITE_SPACE_BIT_SET, COMMENT_BIT_SET);

@@ -16,6 +16,9 @@ import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
@@ -42,4 +45,6 @@ public abstract class PeerFactory {
   public abstract VcsContextFactory getVcsContextFactory();
 
   public abstract StructureViewFactory getStructureViewFactory();
+
+  public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq);
 }

@@ -1,20 +1,11 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
 package com.intellij.psi;
 
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.DTDTokenType;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.lang.Language;
 
-public interface TokenType extends
-                           JavaTokenType,
-                           JavaDocTokenType,
-                           JspTokenType,
-                           XmlTokenType,
-                           DTDTokenType,
-                           com.intellij.aspects.psi.gen.TokenType {
-  IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", null);
+public interface TokenType {
+  IElementType WHITE_SPACE = new IElementType("WHITE_SPACE", Language.ANY);
+  IElementType BAD_CHARACTER = new IElementType("BAD_CHARACTER", Language.ANY);
+
+  IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", Language.ANY);
 }

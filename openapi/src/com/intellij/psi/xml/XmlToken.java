@@ -10,6 +10,6 @@ import com.intellij.psi.tree.IElementType;
 /**
  * @author Mike
  */
-public interface XmlToken extends XmlElement, XmlTokenType, DTDTokenType{
+public interface XmlToken extends XmlElement{
   IElementType getTokenType();
 }

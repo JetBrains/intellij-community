@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -101,11 +100,11 @@ public class LowLevelSearchUtil {
     synchronized (PsiLock.LOCK) {
       ASTNode child = scope.getFirstChildNode();
       while (child != null) {
-        if (child instanceof ChameleonElement) {
+        if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
           LeafElement leaf = (LeafElement)child;
           if (leaf.searchWord(0, searcher) >= 0) {
             ASTNode next = child.getTreeNext();
-            child = ChameleonTransforming.transform((ChameleonElement)child);
+            child = ChameleonTransforming.transform((LeafElement)child);
             if (child == null) {
               child = next;
             }
@@ -120,7 +119,7 @@ public class LowLevelSearchUtil {
     while (true) {
       synchronized (PsiLock.LOCK) {
         child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
-        while (child instanceof ChameleonElement) {
+        while (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
           child = child.getTreeNext();
         }
         if (child == null) break;

@@ -23,7 +23,7 @@ import com.intellij.psi.xml.XmlFile;
  */
 public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   public XmlFileImpl(Project project, VirtualFile file) {
-    super(project, XML_FILE, getChameleonTypeByFile(file), file);
+    super(project, getElementType(file.getFileType()), getChameleonTypeByFile(file), file);
   }
 
   public XmlFileImpl(Project project, VirtualFile file, IElementType elementType, IElementType contentElementType) {
@@ -36,15 +36,15 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   }
 
   private static IElementType getElementType(final FileType fileTypeByFile) {
-    if (fileTypeByFile == StdFileTypes.XML)   return XML_FILE_TEXT;
-    if (fileTypeByFile == StdFileTypes.XHTML) return XHTML_FILE_TEXT;
-    if (fileTypeByFile == StdFileTypes.HTML)  return HTML_FILE_TEXT;
-    if (fileTypeByFile == StdFileTypes.DTD)   return DTD_FILE_TEXT;
+    if (fileTypeByFile == StdFileTypes.XML) return XML_FILE;
+    if (fileTypeByFile == StdFileTypes.XHTML) return XHTML_FILE;
+    if (fileTypeByFile == StdFileTypes.HTML) return HTML_FILE;
+    if (fileTypeByFile == StdFileTypes.DTD) return DTD_FILE;
     return null;
   }
 
   public XmlFileImpl(Project project, String name, CharSequence text, FileType fileType) {
-    super(project, XML_FILE, getElementType(fileType), name, text);
+    super(project, getElementType(fileType), getElementType(fileType), name, text);
   }
 
   public XmlFileImpl(Project project, String name, CharSequence text, FileType fileType, IElementType elementType) {

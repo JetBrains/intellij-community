@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.lang.ASTNode;
 
 public class MethodElement extends RepositoryTreeElement{
@@ -47,7 +48,8 @@ public class MethodElement extends RepositoryTreeElement{
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == DOC_COMMENT){
+        if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT
+            || getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
           return getFirstChildNode();
         }
         else{
@@ -83,7 +85,7 @@ public class MethodElement extends RepositoryTreeElement{
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == DOC_COMMENT) {
+    if (i == JavaTokenType.DOC_COMMENT || i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {

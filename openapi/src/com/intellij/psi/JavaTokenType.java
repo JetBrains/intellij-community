@@ -10,8 +10,8 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
 
-public interface JavaTokenType {
-  IElementType WHITE_SPACE = new IJavaElementType("WHITE_SPACE");
+public interface JavaTokenType extends TokenType{
+  //IElementType WHITE_SPACE = new IJavaElementType("WHITE_SPACE");
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");
   IElementType C_STYLE_COMMENT = new IJavaElementType("C_STYLE_COMMENT");
   IElementType END_OF_LINE_COMMENT = new IJavaElementType("END_OF_LINE_COMMENT");
@@ -133,8 +133,6 @@ public interface JavaTokenType {
   IElementType GTGTGTEQ = new IJavaElementType("GTGTGTEQ");
 
   IElementType FALSE_KEYWORD = new IKeywordElementType("FALSE_KEYWORD");
-
-  IElementType BAD_CHARACTER = new IJavaElementType("BAD_CHARACTER");
 
   TokenSet OPERATION_BIT_SET = TokenSet.create(new IElementType[]{
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,

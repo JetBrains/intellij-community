@@ -162,7 +162,7 @@ public class DeclarationParsing extends Parsing {
         return first;
       }
 
-      CompositeElement codeBlock = myContext.getStatementParsing().parseCodeBlock(lexer, false);
+      TreeElement codeBlock = myContext.getStatementParsing().parseCodeBlock(lexer, false);
       LOG.assertTrue(codeBlock != null);
 
       CompositeElement initializer = Factory.createCompositeElement(CLASS_INITIALIZER);
@@ -810,7 +810,7 @@ public class DeclarationParsing extends Parsing {
       lexer.advance();
     }
     else if (lexer.getTokenType() == LBRACE){
-      CompositeElement codeBlock = myContext.getStatementParsing().parseCodeBlock(lexer, false);
+      TreeElement codeBlock = myContext.getStatementParsing().parseCodeBlock(lexer, false);
       TreeUtil.addChildren(method, codeBlock);
     }
   }

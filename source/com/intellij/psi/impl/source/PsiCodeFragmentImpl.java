@@ -171,7 +171,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
 
     IElementType i = myContentElementType;
-    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_TEXT || i == ElementType.REFERENCE_TEXT) {
+    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
       return true;
     } else {
       {

@@ -96,8 +96,8 @@ public class FileTextParsing extends Parsing {
         lastPos = lexer.getTokenEnd();
         lexer.advance();
       }
-      LeafElement chameleon = Factory.createLeafElement(IMPORT_LIST_TEXT, lexer.getBuffer(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
-      TreeUtil.addChildren(importList, chameleon);
+      LeafElement chameleon = Factory.createLeafElement(IMPORT_LIST, lexer.getBuffer(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
+      return chameleon;
     }
 
     return importList;

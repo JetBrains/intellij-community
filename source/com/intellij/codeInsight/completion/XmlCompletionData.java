@@ -280,7 +280,7 @@ public class XmlCompletionData extends CompletionData {
     }
 
     private PsiElement getEndTagStart(PsiElement tag) {
-      return XmlUtil.getTokenOfType(tag, XmlToken.XML_END_TAG_START);
+      return XmlUtil.getTokenOfType(tag, XmlTokenType.XML_END_TAG_START);
     }
 
     private String getTagText(PsiElement tag) {
