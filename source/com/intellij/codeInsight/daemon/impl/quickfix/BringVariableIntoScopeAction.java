@@ -102,7 +102,6 @@ public class BringVariableIntoScopeAction implements IntentionAction {
 
     myOutOfScopeVariable.delete();
     manager.getCodeStyleManager().reformat(commonParent);
-    QuickFixAction.spoilDocument(project, file);
     DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
   }
 
