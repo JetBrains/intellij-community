@@ -22,33 +22,34 @@ import java.awt.event.InputEvent;
  * Author: msk
  */
 public class PasteFromX11Action extends EditorAction {
-    public PasteFromX11Action() {
-      super(new Handler());
-    }
+  public PasteFromX11Action() {
+    super(new Handler());
+  }
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
-    if (editor == null) {
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    if (editor == null || !SystemInfo.isUnix) {
       presentation.setEnabled(false);
-    } else {
+    }
+    else {
       boolean rightPlace = true;
       final InputEvent inputEvent = e.getInputEvent();
       if (inputEvent instanceof MouseEvent) {
         rightPlace = editor.getMouseEventArea((MouseEvent)inputEvent) == EditorMouseEventArea.EDITING_AREA;
       }
-      presentation.setEnabled(SystemInfo.isUnix && rightPlace);
+      presentation.setEnabled(rightPlace);
     }
   }
 
   public static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-        final Clipboard clip = editor.getComponent ().getToolkit ().getSystemSelection();
-        if (clip != null) {
-          final Transferable res = clip.getContents(null);
-          editor.putUserData(EditorEx.LAST_PASTED_REGION, EditorModificationUtil.pasteFromTransferrable(res, editor));
-        }
+      final Clipboard clip = editor.getComponent().getToolkit().getSystemSelection();
+      if (clip != null) {
+        final Transferable res = clip.getContents(null);
+        editor.putUserData(EditorEx.LAST_PASTED_REGION, EditorModificationUtil.pasteFromTransferrable(res, editor));
+      }
     }
   }
 }
