@@ -127,6 +127,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     synchronized (mySessions) {
       mySessions.put(processHandler, session);
     }
+    /*
     processHandler.addProcessListener(new ProcessAdapter() {
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
         final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
@@ -141,6 +142,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
 
     });
+    */
     myDispatcher.getMulticaster().sessionCreated(session);
     return session;
   }

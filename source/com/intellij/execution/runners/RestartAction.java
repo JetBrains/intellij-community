@@ -27,7 +27,6 @@ public class RestartAction extends AnAction {
   private final RunContentDescriptor myDescriptor;
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
-  private final CachingDataContext myCachedOriginContext;
 
   public RestartAction(final JavaProgramRunner runner,
                        final RunProfile configuration,
@@ -35,8 +34,7 @@ public class RestartAction extends AnAction {
                        final Icon icon,
                        final RunContentDescriptor descritor,
                        RunnerSettings runnerSettings,
-                       ConfigurationPerRunnerSettings configurationSettings,
-                       final DataContext originContext) {
+                       ConfigurationPerRunnerSettings configurationSettings) {
     super(null, null, icon);
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
@@ -46,7 +44,6 @@ public class RestartAction extends AnAction {
     myRunner = runner;
     myDescriptor = descritor;
     // see IDEADEV-698
-    myCachedOriginContext = (originContext instanceof CachingDataContext)? (CachingDataContext)originContext : new CachingDataContext(originContext);
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -56,7 +53,7 @@ public class RestartAction extends AnAction {
       RunStrategy.getInstance().execute(myProfile, new DataContext() {
         public Object getData(final String dataId) {
           if (RunStrategy.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
-          return myCachedOriginContext.getData(dataId);
+          return dataContext.getData(dataId);
         }
       }, myRunner, myRunnerSettings, myConfigurationSettings);
     }
@@ -72,7 +69,7 @@ public class RestartAction extends AnAction {
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated
     }
-    presentation.setEnabled(!isRunning && myCachedOriginContext.isValid() && RunStrategy.getInstance().canExecute(myProfile, myRunner));
+    presentation.setEnabled(!isRunning && RunStrategy.getInstance().canExecute(myProfile, myRunner));
   }
 
   public void registerShortcut(final JComponent component) {

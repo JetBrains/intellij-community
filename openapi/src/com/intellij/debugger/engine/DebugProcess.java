@@ -74,4 +74,7 @@ public interface DebugProcess {
 
   boolean isAttached();
 
+  boolean isDetached();
+
+  boolean isDetaching();
 }

@@ -68,8 +68,7 @@ public class DebuggerPanelsManager implements ProjectComponent{
                                                    RunProfileState state,
                                                    RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
-                                                   boolean pollConnection,
-                                                   final DataContext originContext) throws ExecutionException {
+                                                   boolean pollConnection) throws ExecutionException {
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
 
     DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
@@ -78,7 +77,7 @@ public class DebuggerPanelsManager implements ProjectComponent{
         runner,
         runProfile,
         state.getRunnerSettings(),
-        state.getConfigurationSettings(), originContext);
+        state.getConfigurationSettings());
 
     mySessionTabs.put(runContentDescriptor.getProcessHandler(), sessionTab);
     return runContentDescriptor;

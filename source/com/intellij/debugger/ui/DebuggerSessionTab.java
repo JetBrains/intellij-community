@@ -205,7 +205,7 @@ public class DebuggerSessionTab {
     return myWatchPanel;
   }  
   
-  private RunContentDescriptor initUI(ExecutionResult executionResult, final DataContext originContext) {
+  private RunContentDescriptor initUI(ExecutionResult executionResult) {
 
     myConsole = executionResult.getExecutionConsole();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myContentPanel, getSessionName());
@@ -235,7 +235,7 @@ public class DebuggerSessionTab {
       myContentPanel.remove(myToolBarPanel);
     }
 
-    myFirstToolbar  = createFirstToolbar(myRunContentDescriptor, myContentPanel, originContext);
+    myFirstToolbar  = createFirstToolbar(myRunContentDescriptor, myContentPanel);
     mySecondToolbar = createSecondToolbar();
 
     myToolBarPanel = new JPanel(new GridLayout(1, 2));
@@ -293,16 +293,14 @@ public class DebuggerSessionTab {
     return (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
-  private ActionToolbarEx createFirstToolbar(RunContentDescriptor contentDescriptor,
-                                             JComponent component,
-                                             final DataContext originContext) {
+  private ActionToolbarEx createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
 
     // first toolbar
 
     RestartAction restarAction = new RestartAction(myRunner, myConfiguration, contentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
-                                                   contentDescriptor, myRunnerSettings, myConfigurationSettings, originContext);
+                                                   contentDescriptor, myRunnerSettings, myConfigurationSettings);
     group.add(restarAction);
     restarAction.registerShortcut(component);
     AnAction action = actionManager.getAction(DebuggerActions.RESUME);
@@ -421,8 +419,7 @@ public class DebuggerSessionTab {
     final JavaProgramRunner runner,
     final RunProfile runProfile,
     final RunnerSettings runnerSettings,
-    final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
-    final DataContext originContext) throws ExecutionException {
+    final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
     myRunner = runner;
@@ -434,7 +431,7 @@ public class DebuggerSessionTab {
         myStateManager.fireStateChanged(newContext, event);
       }
     });
-    return initUI(getDebugProcess().getExecutionResult(), originContext);
+    return initUI(getDebugProcess().getExecutionResult());
   }
 
   public DebuggerSession getSession() {

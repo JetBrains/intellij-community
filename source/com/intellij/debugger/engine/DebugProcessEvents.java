@@ -302,7 +302,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     cancelRunToCursorBreakpoint();
 
-    closeProcess(true);
+    closeProcess();
 
     if(event != null) {
       showStatusText(this, event);

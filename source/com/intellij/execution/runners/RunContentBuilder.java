@@ -62,13 +62,19 @@ public class RunContentBuilder {
   }
 
   public void addAction(final AnAction action) {
-    if (action == null) throw new IllegalArgumentException("action");
+    if (action == null) {
+      throw new IllegalArgumentException("action");
+    }
     myRunnerActions.add(action);
   }
 
-  public RunContentDescriptor createDescriptor(final DataContext originalContext) {
-    if (myExecutionResult == null) throw new IllegalStateException("Missing ExecutionResult");
-    if (myRunProfile == null) throw new IllegalStateException("Missing RunProfile");
+  public RunContentDescriptor createDescriptor() {
+    if (myExecutionResult == null) {
+      throw new IllegalStateException("Missing ExecutionResult");
+    }
+    if (myRunProfile == null) {
+      throw new IllegalStateException("Missing RunProfile");
+    }
 
     final JPanel panel = new JPanel(new BorderLayout(2, 0));
     panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -77,21 +83,23 @@ public class RunContentBuilder {
     if(!ApplicationManager.getApplication().isUnitTestMode()) {
       if (myComponent == null) {
         final ExecutionConsole console = myExecutionResult.getExecutionConsole();
-        if (console != null) myComponent = console.getComponent();
+        if (console != null) {
+          myComponent = console.getComponent();
+        }
       }
 
-      if (myComponent != null) panel.add(myComponent, BorderLayout.CENTER);
-      panel.add(createActionToolbar(contentDescriptor, panel, originalContext), BorderLayout.WEST);
+      if (myComponent != null) {
+        panel.add(myComponent, BorderLayout.CENTER);
+      }
+      panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
     }
 
     return contentDescriptor;
   }
 
-  private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor,
-                                         final JComponent component,
-                                         final DataContext originalContext) {
+  private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings, originalContext);
+    final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
     action.registerShortcut(component);
     actionGroup.add(action);
 
@@ -120,8 +128,8 @@ public class RunContentBuilder {
   /**
    * @param reuseContent see {@link RunContentDescriptor#myContent}
    */
-  public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent, final DataContext originalContext) {
-    final RunContentDescriptor descriptor = createDescriptor(originalContext);
+  public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent) {
+    final RunContentDescriptor descriptor = createDescriptor();
     if(reuseContent != null) descriptor.setAttachedContent(reuseContent.getAttachedContent());
     return descriptor;
   }
