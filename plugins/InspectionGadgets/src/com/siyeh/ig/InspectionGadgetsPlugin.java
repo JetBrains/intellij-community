@@ -44,6 +44,14 @@ import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.jdk.*;
+import com.siyeh.ig.jdk.AssertAsNameInspection;
+import com.siyeh.ig.jdk.VarargParameterInspection;
+import com.siyeh.ig.jdk.AssertStatementInspection;
+import com.siyeh.ig.jdk.AnnotationClassInspection;
+import com.siyeh.ig.jdk.EnumClassInspection;
+import com.siyeh.ig.jdk.ForeachStatementInspection;
+import com.siyeh.ig.jdk.EnumAsNameInspection;
+import com.siyeh.ig.jdk.AnnotationInspection;
 
 import java.io.*;
 import java.util.ArrayList;
