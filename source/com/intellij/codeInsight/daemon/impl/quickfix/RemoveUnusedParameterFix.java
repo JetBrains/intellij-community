@@ -59,7 +59,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
       processor.testRun();
     }
     else {
-      processor.run(null);
+      processor.run();
     }
   }
 

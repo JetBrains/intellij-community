@@ -80,7 +80,7 @@ public class MethodParameterFix implements IntentionAction {
         processor.testRun();
       }
       else {
-        processor.run(null);
+        processor.run();
       }
 
 

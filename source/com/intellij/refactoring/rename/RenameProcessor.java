@@ -96,7 +96,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myElement instanceof PsiVariable;
   }
 
-  public void run(Object markerId) {
+  public void run() {
     String message = null;
     prepareRenaming();
     try {
@@ -114,7 +114,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    super.run(markerId);
+    super.run();
   }
 
   public void prepareRenaming() {

@@ -129,7 +129,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         processor.testRun();
       }
       else {
-        processor.run(null);
+        processor.run();
       }
       
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

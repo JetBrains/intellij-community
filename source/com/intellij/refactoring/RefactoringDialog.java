@@ -166,6 +166,6 @@ public abstract class RefactoringDialog extends DialogWrapper {
     };
     processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
     processor.setPreviewUsages(isPreviewUsages());
-    processor.run(null);
+    processor.run();
   }
 }

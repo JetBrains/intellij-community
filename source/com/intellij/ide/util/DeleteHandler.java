@@ -89,7 +89,7 @@ public class DeleteHandler {
             public void run() {
               dialog.close(DeleteDialog.CANCEL_EXIT_CODE);
             }
-          }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run(null);
+          }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
         }
       }
       );

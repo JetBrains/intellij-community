@@ -19,6 +19,6 @@ public class MigrationManager {
     MigrationMap migrationMap = migrationDialog.getMigrationMap();
     if (migrationMap == null) return;
 
-    new MigrationProcessor(myProject, migrationMap).run(null);
+    new MigrationProcessor(myProject, migrationMap).run();
   }
 }

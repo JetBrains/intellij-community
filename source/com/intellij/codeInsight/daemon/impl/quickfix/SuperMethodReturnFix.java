@@ -66,7 +66,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       processor.testRun();
     } else {
-      processor.run(null);
+      processor.run();
     }
   }
 

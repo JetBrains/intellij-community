@@ -53,7 +53,7 @@ public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implem
   }
 
   public void run() {
-    myProcessor.run(null);
+    myProcessor.run();
   }
 
 

@@ -5,15 +5,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,7 +21,6 @@ import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.RefactoringChangeMarker;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
@@ -40,7 +39,6 @@ public abstract class BaseRefactoringProcessor {
   public static final Runnable EMPTY_CALLBACK = EmptyRunnable.getInstance();
   protected final Project myProject;
 
-  private Object myMarkerId;
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
   protected Runnable myPrepareSuccessfulSwingThreadCallback = EMPTY_CALLBACK;
@@ -120,8 +118,7 @@ public abstract class BaseRefactoringProcessor {
 
   protected abstract String getCommandName();
 
-  public void run(Object markerId) {
-    myMarkerId = markerId;
+  public void run() {
 
     final UsageInfo[][] usages = new UsageInfo[1][];
 
@@ -297,11 +294,7 @@ public abstract class BaseRefactoringProcessor {
 
     try {
       final UsageInfo[] _usages = usages;
-      ApplicationManager.getApplication().runWriteAction(new RefactoringChangeMarker() {
-        public Object getId() {
-          return myMarkerId;
-        }
-
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           RefactoringListenerManagerImpl listenerManager =

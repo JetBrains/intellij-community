@@ -368,7 +368,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     setup(innerClass, className, passOuterClass, parameterName, previewUsages,
           dialog.isSearchInComments(), dialog.isSearchInNonJavaFiles());
 
-    run((Object)null);
+    run();
   }
 
   public void setup(final PsiClass innerClass,

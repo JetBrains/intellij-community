@@ -86,7 +86,7 @@ public class MoveFilesOrDirectoriesUtil {
               public void run() {
                 moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
               }
-            }).run(null);
+            }).run();
         }
         catch (IncorrectOperationException e) {
           String helpId = HelpID.getMoveHelpID(elements[0]);

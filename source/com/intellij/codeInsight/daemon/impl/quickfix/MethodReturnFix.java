@@ -65,7 +65,7 @@ public class MethodReturnFix implements IntentionAction {
       processor.testRun();
     }
     else {
-      processor.run(null);
+      processor.run();
     }
     if (method.getContainingFile() != file) {
       QuickFixAction.spoilDocument(project, file);

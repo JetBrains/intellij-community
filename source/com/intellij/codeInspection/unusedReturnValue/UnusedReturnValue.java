@@ -133,7 +133,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
         PsiType.VOID,
         infos);
 
-      csp.run(null);
+      csp.run();
     }
   }
 }

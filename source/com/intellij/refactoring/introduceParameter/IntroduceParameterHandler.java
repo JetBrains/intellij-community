@@ -213,7 +213,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         myParameterInitializer, myExpressionToSearchFor,
         myLocalVar, isDeleteLocalVariable,
         parameterName, replaceAllOccurences,
-        IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null).run(null);
+        IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null).run();
     }
     return true;
   }
