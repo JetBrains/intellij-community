@@ -49,11 +49,6 @@ class MoveStatementHandler extends EditorActionHandler {
     final int selectionEnd = selectionModel.getSelectionEnd();
     final boolean hasSelection = selectionModel.hasSelection();
 
-    final PsiElement guard =
-      PsiTreeUtil.getParentOfType(file.findElementAt(caretModel.getOffset()), new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
-    // move operation should not go out of method
-    if (guard != null && !guard.getTextRange().contains(insertOffset)) return;
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         document.deleteString(start, end);
@@ -115,6 +110,14 @@ class MoveStatementHandler extends EditorActionHandler {
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     if (result.startLine <= 1 && !isDown) return null;
     if (result.endLine >= maxLine - 1 && isDown) return null;
+
+    final PsiElement guard =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), new Class[]{PsiMethod.class, PsiClassInitializer.class,
+                                      PsiClass.class});
+    // move operation should not go out of method
+    final int insertOffset = editor.logicalPositionToOffset(new LogicalPosition(isDown ? result.endLine + 2 : result.startLine - 1, 0));
+    if (guard != null && !guard.getTextRange().contains(insertOffset)) return null;
+    
     return result;
   }
 
