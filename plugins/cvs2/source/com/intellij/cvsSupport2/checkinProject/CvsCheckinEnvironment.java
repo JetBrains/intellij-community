@@ -51,7 +51,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  public DifferencesProvider createDifferencesProviderOn(Project project, VirtualFile virtualFile) {
+  public DifferencesProvider createDifferencesProviderOn(Project project, FilePath virtualFile) {
     return new CvsDifferencesProvider(project, virtualFile);
   }
 
