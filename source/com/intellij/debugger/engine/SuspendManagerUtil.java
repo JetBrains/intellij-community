@@ -88,7 +88,7 @@ public class SuspendManagerUtil {
 
     Set<SuspendContextImpl> result = new HashSet<SuspendContextImpl>();
 
-    for (Iterator<SuspendContextImpl> iterator = ((SuspendManagerImpl) suspendManager).getEventContexts().iterator(); iterator.hasNext();) {
+    for (Iterator<SuspendContextImpl> iterator = suspendManager.getEventContexts().iterator(); iterator.hasNext();) {
       SuspendContextImpl suspendContext = iterator.next();
       if(suspendContext.suspends(thread)) {
         ThreadReferenceProxyImpl contextThread = suspendContext.getThread();
