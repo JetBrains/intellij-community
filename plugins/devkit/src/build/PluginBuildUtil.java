@@ -7,11 +7,14 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * User: anna
@@ -38,6 +41,17 @@ public class PluginBuildUtil {
         }
       }
     }
+
+  public static Module [] getWrongSetDependencies(Module module){
+    ArrayList<Module> result = new ArrayList<Module>();
+    final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
+    for(int i = 0; i < projectModules.length; i++){
+      if (ArrayUtil.find(ModuleRootManager.getInstance(projectModules[i]).getDependencies(), module) > -1){
+        result.add(projectModules[i]);
+      }
+    }
+    return result.toArray(new Module[result.size()]);
+  }
 
     public static void getLibraries(Module module, Set<Library> libs) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();

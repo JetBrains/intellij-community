@@ -26,7 +26,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public String getJarPath() {
-    return PluginBuildUtil.getPluginExPath(myModule) + "/lib/" + myModule.getName() + ".jar";
+    return PluginBuildUtil.getPluginExPath(myModule) != null ? PluginBuildUtil.getPluginExPath(myModule) + "/lib/" + myModule.getName() + ".jar" : null;
   }
 
   public String getExplodedPath() {
