@@ -7,6 +7,7 @@ import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -102,10 +103,13 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
       try {
         String tagText = object.toString();
-        String namespace = xmlTag.getNamespace();
+        String namespacePrefix = XmlUtil.findPrefixByQualifiedName(tagText);
+        String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
         if (namespace!=null && namespace.length() > 0) {
-          tagText+=" xmlns=\""+namespace+"\"";
+          tagText+=" xmlns";
+          if (namespacePrefix.length() > 0) tagText += ":" + namespacePrefix;
+          tagText +="=\""+namespace+"\"";
         }
 
         tagText = "<" + tagText +"/>";
@@ -120,6 +124,10 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
           }
         }
 
+        if (elementDescriptor instanceof AnyXmlElementDescriptor) {
+          elementDescriptor = tagFromText.getDescriptor();
+        }
+        
         if (elementDescriptor!=null) {
           PsiElement declaration = elementDescriptor.getDeclaration();
           declaration.putUserData(DESCRIPTOR_KEY,elementDescriptor);
