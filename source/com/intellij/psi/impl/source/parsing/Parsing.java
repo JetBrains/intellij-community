@@ -25,7 +25,8 @@ public class Parsing implements Constants{
     return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table, false);
   }
 
-  //Since we are to parse greedily (up to the end), we are not guaranteed to return reference actually
+  //Since we are to parse greedily (up to the end) in case eatAll=true,
+  //  we are not guaranteed to return reference actually
   public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
                                                             char[] buffer,
                                                             int startOffset,
