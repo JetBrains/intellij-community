@@ -35,13 +35,13 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final LineRange lineRange = getRangeToMove(editor,file);
     final int startLine = lineRange.startLine;
     final int endLine = lineRange.endLine;
-    final int insertOffset = editor.logicalPositionToOffset(new LogicalPosition(isDown ? endLine + 2 : startLine - 1, 0));
+    final int insertOffset = calcInsertOffset(editor, startLine, endLine);
 
     final int start = editor.logicalPositionToOffset(new LogicalPosition(startLine, 0));
     final int end = editor.logicalPositionToOffset(new LogicalPosition(endLine+1, 0));
     final String toInsert = document.getCharsSequence().subSequence(start, end).toString();
     final int insStart = isDown ? insertOffset - toInsert.length() : insertOffset;
-    final int insEnd = isDown ? insertOffset : insertOffset + toInsert.length();
+    final int insEnd = insStart + toInsert.length();
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     final int selectionStart = selectionModel.getSelectionStart();
@@ -55,7 +55,6 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     document.insertString(insStart, toInsert);
     documentManager.commitDocument(document);
 
-    caretModel.moveToLogicalPosition(new LogicalPosition(caretLine + (isDown ? 1 : -1), caretColumn));
     if (hasSelection) {
       restoreSelection(editor, selectionStart, selectionEnd, start, insStart);
     }
@@ -64,6 +63,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
       final int line1 = editor.offsetToLogicalPosition(insStart).line;
       final int line2 = editor.offsetToLogicalPosition(insEnd).line;
+      caretModel.moveToLogicalPosition(new LogicalPosition(line1, caretColumn));
+
       for (int line = line1; line <= line2; line++) {
         int lineStart = document.getLineStartOffset(line);
         codeStyleManager.adjustLineIndent(file, lineStart);
@@ -74,6 +75,39 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private int calcInsertOffset(final Editor editor, final int startLine, final int endLine) {
+    int line = isDown ? endLine + 2 : startLine - 1;
+    final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
+    if (!(file instanceof PsiJavaFile)) {
+      return editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+    }
+    while (true) {
+      final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+      PsiElement element = file.findElementAt(offset);
+      if (element instanceof PsiWhiteSpace) {
+        element = element.getNextSibling();
+      }
+      while (true) {
+        if (element == null) break;
+        if ((element instanceof PsiStatement || element instanceof PsiComment) && element.getParent() instanceof PsiCodeBlock) {
+          return offset;
+        }
+        if (element instanceof PsiJavaToken
+        && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
+        && element.getParent() instanceof PsiCodeBlock) {
+          return offset;
+        }
+        element = element.getParent();
+        if (!isDown && element.getTextOffset() < offset) break;
+        if (isDown && element.getTextRange().getEndOffset() >= editor.logicalPositionToOffset(new LogicalPosition(line+1, 0))) break;
+      }
+      line += isDown ? 1 : -1;
+      if (line == 0 || line >= editor.getDocument().getLineCount()) {
+        return 0;
+      }
+    }
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
@@ -122,7 +156,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (elementAt == null) return null;
     final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
     // move operation should not go out of method
-    final int insertOffset = editor.logicalPositionToOffset(new LogicalPosition(isDown ? result.endLine + 2 : result.startLine - 1, 0));
+    final int insertOffset = calcInsertOffset(editor, result.startLine, result.endLine);
     if (guard != null && !guard.getTextRange().shiftRight(1).grown(-1).contains(insertOffset)) return null;
     
     return result;
@@ -176,3 +210,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
   }
 }
+//todo
+   // no move inside/outside class/method/initializer/comment
+   // create codeblock when moving inside statement
+   // moving declarations
