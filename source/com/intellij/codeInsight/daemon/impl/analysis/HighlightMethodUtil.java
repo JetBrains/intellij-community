@@ -199,8 +199,9 @@ public class HighlightMethodUtil {
     return null;
   }
 
+  //used by Fabrique 
   //@top
-  static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
+  public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                      List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                      boolean includeRealPositionInfo) {
     final PsiMethod method = methodSignature.getMethod();
