@@ -125,6 +125,8 @@ public final class SwingCleanuper implements ApplicationComponent{
                       }
                       try {
                         fixJTextComponentMemoryLeak();
+                      } catch(NoSuchFieldException e) {
+                        // JDK 1.5
                       } catch(Exception e) {
                         LOG.error(e);
                       }
