@@ -153,10 +153,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (hideByTextChange) {
       flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = null;
-    if (attributes.getBackgroundColor() != null) {
-      scrollmarkColor = attributes.getBackgroundColor().darker();
-    }
+    Color scrollmarkColor = getScrollMarkColor(attributes);
 
     for (int i = 0; i < occurrences.length; i++) {
       PsiReference occurrence = occurrences[i];
@@ -177,10 +174,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (hideByTextChange) {
       flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = null;
-    if (attributes.getBackgroundColor() != null) {
-      scrollmarkColor = attributes.getBackgroundColor().darker();
-    }
+    Color scrollmarkColor = getScrollMarkColor(attributes);
 
     for (int i = 0; i < elements.length; i++) {
       final PsiElement element = elements[i];
@@ -213,10 +207,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (hideByTextChange) {
       flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = null;
-    if (attributes.getBackgroundColor() != null) {
-      scrollmarkColor = attributes.getBackgroundColor().darker();
-    }
+
+    Color scrollmarkColor = getScrollMarkColor(attributes);
 
     addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
   }
@@ -229,10 +221,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (hideByTextChange) {
       flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = null;
-    if (attributes.getBackgroundColor() != null) {
-      scrollmarkColor = attributes.getBackgroundColor().darker();
-    }
+
+    Color scrollmarkColor = getScrollMarkColor(attributes);
 
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
@@ -241,6 +231,12 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       int end = range.getEndOffset();
       addOccurrenceHighlight(editor, start, end, attributes, flags, highlightersVector, scrollmarkColor);
     }
+  }
+
+  private Color getScrollMarkColor(final TextAttributes attributes) {
+    if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
+    if (attributes.getBackgroundColor() != null) return attributes.getBackgroundColor().darker();
+    return null;
   }
 
   public boolean hideHighlights(Editor editor, int mask) {
