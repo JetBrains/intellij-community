@@ -52,7 +52,9 @@ public class CompletionProcessor extends BaseScopeProcessor
       PsiExpression qualifier = ((PsiReferenceExpression)elementParent).getQualifierExpression();
       if (qualifier instanceof PsiSuperExpression) {
         myQualifierClass = ResolveUtil.getContextClass(myElement);
-        myQualifierType = myElement.getManager().getElementFactory().createType(myQualifierClass);
+        if (myQualifierClass != null) {
+          myQualifierType = myElement.getManager().getElementFactory().createType(myQualifierClass);
+        }
       }
       else if (qualifier != null) {
           myQualifierType = qualifier.getType();
