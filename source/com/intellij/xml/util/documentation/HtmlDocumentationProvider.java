@@ -22,7 +22,7 @@ import com.intellij.xml.util.XmlUtil;
  */
 public class HtmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
   private static String baseHtmlExtDocUrl;
-  private static JavaDocManager.DocumentationProvider styleProvider;
+  private JavaDocManager.DocumentationProvider styleProvider;
   protected Project myProject;
 
   public HtmlDocumentationProvider(Project project) {
