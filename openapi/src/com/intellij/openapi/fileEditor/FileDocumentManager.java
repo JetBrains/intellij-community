@@ -6,8 +6,9 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class FileDocumentManager {
   public static FileDocumentManager getInstance() {
@@ -31,4 +32,21 @@ public abstract class FileDocumentManager {
   public abstract void reloadFromDisk(Document document);
 
   public abstract String getLineSeparator(VirtualFile file, Project project);
+
+  public static boolean fileForDocumentCheckedOutSuccessfully(final Document document, final Project project) {
+    if (project != null) {
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null) {
+        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file});
+        return !operationStatus.hasReadonlyFiles();
+      } else {
+        document.fireReadOnlyModificationAttempt();
+        return false;
+      }
+    } else {
+      document.fireReadOnlyModificationAttempt();
+      return false;
+    }
+
+  }
 }

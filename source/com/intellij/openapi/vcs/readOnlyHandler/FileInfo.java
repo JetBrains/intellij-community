@@ -31,13 +31,13 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 
@@ -96,7 +96,7 @@ class FileInfo {
       myEditFileProvider.editFiles(new VirtualFile[]{file});
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          file.refresh(false, false);
+          file.refresh(true, false);
         }
       });
     }

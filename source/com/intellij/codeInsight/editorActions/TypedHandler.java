@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
@@ -243,8 +244,9 @@ public class TypedHandler implements TypedActionHandler {
     if (editor.isViewer()) return;
 
     if (!editor.getDocument().isWritable()) {
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
+        return;
+      }
     }
 
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);

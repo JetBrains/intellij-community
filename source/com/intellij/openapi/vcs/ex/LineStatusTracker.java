@@ -30,8 +30,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder2;
@@ -518,12 +518,11 @@ public class LineStatusTracker implements EditorColorsListener {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              if (!myLineStatusTracker.getDocument().isWritable()) {
-                VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(new VirtualFile[]{myLineStatusTracker.getVirtualFile()});
+              if(!myLineStatusTracker.getDocument().isWritable()) {
+                final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myLineStatusTracker.getProject()).ensureFilesWritable(new VirtualFile[]{myLineStatusTracker.getVirtualFile()});
+                if (operationStatus.hasReadonlyFiles()) return;
               }
-              else {
-                myLineStatusTracker.rollbackChanges(myRange);
-              }
+              myLineStatusTracker.rollbackChanges(myRange);
             }
           });
         }

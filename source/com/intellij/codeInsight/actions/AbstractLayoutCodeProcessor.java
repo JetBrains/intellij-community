@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -123,15 +123,16 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private void runProcessFile(final PsiFile file) {
     if (!file.isWritable()){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(PsiDocumentManager.getInstance(myProject).getDocument(file),
+                                                                     myProject)) {
       Messages.showMessageDialog(
         myProject,
         "Cannot modify a read-only file.",
         "File Is Read-Only",
         Messages.getErrorIcon()
       );
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      document.fireReadOnlyModificationAttempt();
       return;
+      }
     }
 
     final Runnable[] resultRunnable = new Runnable[1];

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
@@ -37,8 +38,9 @@ public class TypedAction {
 
       Document doc = editor.getDocument();
       if (!doc.isWritable()) {
-        doc.fireReadOnlyModificationAttempt();
-        return;
+        if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(doc, (Project)dataContext.getData(DataConstants.PROJECT))) {
+          return;
+        }
       }
 
       Project project = editor.getProject();

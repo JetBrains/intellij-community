@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -480,9 +481,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       PsiElement psiElement = element.getElement();
       if (psiElement != null && psiElement.isValid()) {
         if (!psiElement.isWritable()) {
-          VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-            new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
-          return;
+          final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
+          if (operationStatus.hasReadonlyFiles()) {
+            return;
+          }
         }
 
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.PopupHandler;
@@ -550,21 +550,8 @@ public class UsageViewImpl implements UsageView {
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
     if (!readOnlyUsages.isEmpty()) {
-      String readOnlyWarning = "Occurrences found in read-only files.\n" +
-                               "The operation will not affect them.\n" +
-                               "Continue anyway?";
-      int result = Messages.showOkCancelDialog(
-        myProject,
-        readOnlyWarning,
-        "Read-Only Files Found",
-        Messages.getWarningIcon());
-      if (result != 0) {
-        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-          readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()])
-        );
-        return;
+        ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages.toArray(new VirtualFile[readOnlyUsages.size()]));      
       }
-    }
   }
 
   private Set<Usage> getReadOnlyUsages() {

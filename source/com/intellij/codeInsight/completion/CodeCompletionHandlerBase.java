@@ -13,9 +13,9 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.text.BlockSupport;
@@ -37,8 +37,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public final void invoke(final Project project, final Editor editor, final PsiFile file) {
     if (!file.isWritable()){
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
     }
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();

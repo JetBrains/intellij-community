@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -47,8 +48,9 @@ public class PasteHandler extends EditorActionHandler {
     if (editor.isViewer()) return;
 
     if (!editor.getDocument().isWritable()) {
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      return;
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), (Project)dataContext.getData(DataConstants.PROJECT))){
+        return;
+      }
     }
 
     final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(

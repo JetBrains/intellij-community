@@ -61,7 +61,7 @@ public abstract class ReadonlyStatusHandler {
     }
   }
 
-  public abstract OperationStatus ensureFilesWriteable(VirtualFile[] files);
+  public abstract OperationStatus ensureFilesWritable(VirtualFile[] files);
 
   public static ReadonlyStatusHandler getInstance(Project project) {
     return project.getComponent(ReadonlyStatusHandler.class);

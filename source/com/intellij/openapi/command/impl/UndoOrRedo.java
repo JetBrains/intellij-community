@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,8 +95,16 @@ abstract class UndoOrRedo {
 
     Collection<VirtualFile> readOnlyFiles = collectReadOnlyAffectedFiles();
     if (!readOnlyFiles.isEmpty()) {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
-      return;
+      final Project project = myManager.getProject();
+      final VirtualFile[] files = readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]);
+
+      if (project == null) {
+        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(files);
+        return;
+      }
+
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      if (operationStatus.hasReadonlyFiles()) return;
     }
 
     Collection<Document> readOnlyDocuments = collectReadOnlyDocuments();

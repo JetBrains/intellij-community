@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -357,22 +358,23 @@ public class CodeInsightUtil {
     }
     else if (!file.isWritable()) {
       final Project project = file.getProject();
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(
                   new OpenFileDescriptor(project, file.getVirtualFile()), true);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (editor != null && editor.getComponent().isDisplayable()){
-                HintManager.getInstance().showErrorHint(
-                  editor,
-                  "File " + file.getVirtualFile().getPresentableUrl() + " is read-only");
+
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)){
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+
+                if (editor != null && editor.getComponent().isDisplayable()){
+                  HintManager.getInstance().showErrorHint(
+                    editor,
+                    "File " + file.getVirtualFile().getPresentableUrl() + " is read-only");
+                }
               }
-
-              document.fireReadOnlyModificationAttempt();
-            }
-          });
-
-      return false;
+        });
+    }
     }
 
     return true;

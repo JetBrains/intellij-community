@@ -13,8 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 
@@ -116,57 +116,55 @@ public abstract class QuickFixAction extends AnAction {
       }
     }
 
-    if (readOnlyFiles.isEmpty()) {
+    if (!readOnlyFiles.isEmpty()) {
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+      if (operationStatus.hasReadonlyFiles()) return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            for (int i = 0; i < descriptors.length; i++) {
+              ProblemDescriptor descriptor = descriptors[i];
+              if (descriptor.getPsiElement() != null && descriptor.getFix() != null) {
+                descriptor.getFix().applyFix(project, descriptor);
+                tool.ignoreProblem(descriptor);
+              }
+            }
+          }
+        });
+      }
+    }, getTemplatePresentation().getText(), null);
+    ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
+  }
+
+  public void doApplyFix(final RefElement[] refElements) {
+    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
+    if (!readOnlyFiles.isEmpty()) {
+      final Project project = refElements[0].getRefManager().getProject();
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+      if (operationStatus.hasReadonlyFiles()) return;
+    }
+    if (refElements.length > 0) {
+      final Project project = refElements[0].getRefManager().getProject();
+      final boolean[] refreshNeeded = new boolean[1];
+
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              for (int i = 0; i < descriptors.length; i++) {
-                ProblemDescriptor descriptor = descriptors[i];
-                if (descriptor.getPsiElement() != null && descriptor.getFix() != null) {
-                  descriptor.getFix().applyFix(project, descriptor);
-                  tool.ignoreProblem(descriptor);
-                }
-              }
+              refreshNeeded[0] = applyFix(refElements);
             }
           });
         }
       }, getTemplatePresentation().getText(), null);
-      ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
-    }
-    else {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-        readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
-    }
-  }
 
-  public void doApplyFix(final RefElement[] refElements) {
-    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
-    if (readOnlyFiles.isEmpty()) {
-      if (refElements.length > 0) {
-        final Project project = refElements[0].getRefManager().getProject();
-        final boolean[] refreshNeeded = new boolean[1];
-
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                refreshNeeded[0] = applyFix(refElements);
-              }
-            });
-          }
-        }, getTemplatePresentation().getText(), null);
-
-        if (refreshNeeded[0]) {
-          ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
-        }
+      if (refreshNeeded[0]) {
+        ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
       }
-    }
-    else {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-        readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
     }
   }
 

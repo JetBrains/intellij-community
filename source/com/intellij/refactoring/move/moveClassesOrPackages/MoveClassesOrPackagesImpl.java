@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.MoveDestination;
@@ -31,10 +32,9 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class MoveClassesOrPackagesImpl {
   private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
+                                      "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
 
   public static void doMove(final Project project,
                             PsiElement[] elements,
@@ -56,7 +56,7 @@ public class MoveClassesOrPackagesImpl {
         if (element == null) return;
       }
       else if (element instanceof PsiPackage) {
-        element = checkMovePackage(project, (PsiPackage) element, readOnly);
+        element = checkMovePackage(project, (PsiPackage)element, readOnly);
         if (element == null) return;
       }
       else if (element instanceof PsiClass) {
@@ -82,10 +82,10 @@ public class MoveClassesOrPackagesImpl {
     }
 
     if (!readOnly.isEmpty()) {
-      Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-        (VirtualFile[])readOnly.toArray(new VirtualFile[readOnly.size()]));
-      return;
+      if (!successfullyCheckedOut(project, readOnly)) {
+        Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
+        return;
+      }
     }
 
     final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, psiElements);
@@ -165,13 +165,19 @@ public class MoveClassesOrPackagesImpl {
     moveDialog.show();
   }
 
+  private static boolean successfullyCheckedOut(final Project project, final List<VirtualFile> readOnly) {
+    final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable((VirtualFile[])readOnly.toArray(new VirtualFile[readOnly.size()]));
+    return !operationStatus.hasReadonlyFiles();
+  }
+
   private static String verifyDestinationForElement(final PsiElement element, final MoveDestination moveDestination) {
     final String message;
     if (element instanceof PsiDirectory) {
-      message = moveDestination.verify((PsiDirectory) element);
+      message = moveDestination.verify((PsiDirectory)element);
     }
     else if (element instanceof PsiPackage) {
-      message = moveDestination.verify((PsiPackage) element);
+      message = moveDestination.verify((PsiPackage)element);
     }
     else {
       message = moveDestination.verify(element.getContainingFile());
@@ -311,7 +317,8 @@ public class MoveClassesOrPackagesImpl {
         PsiDirectory directory = directories[i];
         checkMove(directory, readOnly);
       }
-    } else if (elementToMove instanceof PsiDirectory) {
+    }
+    else if (elementToMove instanceof PsiDirectory) {
       final PsiFile[] files = ((PsiDirectory)elementToMove).getFiles();
       if (!elementToMove.isWritable()) {
         readOnly.add(((PsiDirectory)elementToMove).getVirtualFile());
@@ -326,7 +333,8 @@ public class MoveClassesOrPackagesImpl {
         PsiDirectory subdirectory = subdirectories[i];
         checkMove(subdirectory, readOnly);
       }
-    } else if (elementToMove instanceof PsiFile) {
+    }
+    else if (elementToMove instanceof PsiFile) {
       if (!elementToMove.isWritable()) {
         readOnly.add(((PsiFile)elementToMove).getVirtualFile());
         return;
@@ -356,10 +364,10 @@ public class MoveClassesOrPackagesImpl {
       checkMove(directory, readOnly);
     }
     if (!readOnly.isEmpty()) {
-      Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(
-        (VirtualFile[])readOnly.toArray(new VirtualFile[readOnly.size()]));
-      return;
+      if (!successfullyCheckedOut(project, readOnly)) {
+        Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
+        return;
+      }
     }
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
@@ -374,19 +382,20 @@ public class MoveClassesOrPackagesImpl {
     Runnable runnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final LvcsAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(project, commandDescription);
-            try {
-              rearrangeDirectoriesToTarget(directories, selectedTarget);
-            }
-            catch (IncorrectOperationException e) {
-              ex.set(e);
-            }
-            finally{
-              LvcsIntegration.checkinFilesAfterRefactoring(project, lvcsAction);
-            }
-          }
-        });
+                                                             public void run() {
+                                                               final LvcsAction lvcsAction =
+                                                               LvcsIntegration.checkinFilesBeforeRefactoring(project, commandDescription);
+                                                               try {
+                                                                 rearrangeDirectoriesToTarget(directories, selectedTarget);
+                                                               }
+                                                               catch (IncorrectOperationException e) {
+                                                                 ex.set(e);
+                                                               }
+                                                               finally {
+                                                                 LvcsIntegration.checkinFilesAfterRefactoring(project, lvcsAction);
+                                                               }
+                                                             }
+                                                           });
       }
     };
     CommandProcessor.getInstance().executeCommand(project, runnable, commandDescription, null);
@@ -403,8 +412,8 @@ public class MoveClassesOrPackagesImpl {
       final VirtualFile sourceRoot = sourceRoots[i];
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
       if (sourceRootDirectory == null) {
-        LOG.error("Cannot find PsiDirectory for: " + sourceRoot.getPresentableUrl());
-        continue sourceRoots;
+               LOG.error("Cannot find PsiDirectory for: " + sourceRoot.getPresentableUrl());
+      continue sourceRoots;
       }
       final PsiPackage aPackage = sourceRootDirectory.getPackage();
       if (aPackage == null) continue;
@@ -413,7 +422,7 @@ public class MoveClassesOrPackagesImpl {
         final PsiDirectory directory = directories[j];
         String qualifiedName = directory.getPackage().getQualifiedName();
         if (!qualifiedName.startsWith(packagePrefix)) {
-          continue sourceRoots;
+        continue sourceRoots;
         }
       }
       sourceRootDirectories.add(sourceRootDirectory);

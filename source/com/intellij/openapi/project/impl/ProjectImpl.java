@@ -432,7 +432,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
       module.collectReadonlyFiles(module.getConfigurationFiles(), readonlyFiles);
     }
 
-    return ReadonlyStatusHandler.getInstance(this).ensureFilesWriteable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
+    return ReadonlyStatusHandler.getInstance(this).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
   }
 
   public Element saveToXml(Element targetRoot, VirtualFile configFile) {
