@@ -7,7 +7,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 
 public class ExpectedTypeUtils{
-
     private ExpectedTypeUtils(){
         super();
     }
@@ -20,21 +19,21 @@ public class ExpectedTypeUtils{
             wrappedExp = (PsiExpression) context;
             context = context.getParent();
         }
-        if (context instanceof PsiField) {
-          final PsiField field = (PsiField)context;
-          final PsiExpression initializer = field.getInitializer();
-          if (wrappedExp.equals(initializer)) {
-            return field.getType();
-          }
-        }
-        else if (context instanceof PsiVariable){
+        if(context instanceof PsiField){
+            final PsiField field = (PsiField) context;
+            final PsiExpression initializer = field.getInitializer();
+            if(wrappedExp.equals(initializer)){
+                return field.getType();
+            }
+        } else if(context instanceof PsiVariable){
             final PsiVariable psiVariable = (PsiVariable) context;
             return psiVariable.getType();
         } else if(context instanceof PsiReferenceExpression){
             final PsiReferenceExpression ref = (PsiReferenceExpression) context;
             final PsiElement parent = ref.getParent();
             if(parent instanceof PsiMethodCallExpression){
-                final PsiMethod psiMethod = ((PsiMethodCallExpression) parent).resolveMethod();
+                final PsiMethod psiMethod =
+                        ((PsiMethodCallExpression) parent).resolveMethod();
                 if(psiMethod == null){
                     return null;
                 }
@@ -42,33 +41,39 @@ public class ExpectedTypeUtils{
                 final PsiElementFactory factory = manager.getElementFactory();
                 return factory.createType(aClass);
             } else if(parent instanceof PsiReferenceExpression){
-                final PsiElement elt = ((PsiReferenceExpression) parent).resolve();
+                final PsiElement elt =
+                        ((PsiReferenceExpression) parent).resolve();
                 if(elt instanceof PsiField){
-                    final PsiClass aClass = ((PsiField) elt).getContainingClass();
-                    final PsiElementFactory factory = manager.getElementFactory();
+                    final PsiClass aClass =
+                            ((PsiField) elt).getContainingClass();
+                    final PsiElementFactory factory =
+                            manager.getElementFactory();
                     return factory.createType(aClass);
                 } else{
                     return null;
                 }
             }
-
         } else if(context instanceof PsiArrayInitializerExpression){
-            final PsiArrayInitializerExpression initializer = (PsiArrayInitializerExpression) context;
+            final PsiArrayInitializerExpression initializer =
+                    (PsiArrayInitializerExpression) context;
             final PsiArrayType arrayType = (PsiArrayType) initializer.getType();
             if(arrayType != null){
                 return arrayType.getComponentType();
             }
         } else if(context instanceof PsiArrayAccessExpression){
-            final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression) context;
+            final PsiArrayAccessExpression accessExpression =
+                    (PsiArrayAccessExpression) context;
             if(wrappedExp.equals(accessExpression.getIndexExpression())){
                 return PsiType.INT;
             }
         } else if(context instanceof PsiAssignmentExpression){
-            final PsiAssignmentExpression assignment = (PsiAssignmentExpression) context;
+            final PsiAssignmentExpression assignment =
+                    (PsiAssignmentExpression) context;
             final PsiExpression rExpression = assignment.getRExpression();
             if(rExpression != null){
                 if(rExpression.equals(wrappedExp)){
-                    final PsiExpression lExpression = assignment.getLExpression();
+                    final PsiExpression lExpression =
+                            assignment.getLExpression();
                     PsiType lType = lExpression.getType();
                     if(lType == null){
                         return null;
@@ -76,19 +81,24 @@ public class ExpectedTypeUtils{
                     // e.g. String += any type
                     if(TypeUtils.isJavaLangString(lType) &&
                             JavaTokenType.PLUSEQ.equals(
-                                    assignment.getOperationSign().getTokenType())){
+                                    assignment.getOperationSign()
+                                            .getTokenType())){
                         return rExpression.getType();
                     }
                     return lType;
                 }
             }
         } else if(context instanceof PsiDeclarationStatement){
-            final PsiDeclarationStatement assignment = (PsiDeclarationStatement) context;
-            final PsiElement[] declaredElements = assignment.getDeclaredElements();
+            final PsiDeclarationStatement assignment =
+                    (PsiDeclarationStatement) context;
+            final PsiElement[] declaredElements =
+                    assignment.getDeclaredElements();
             for(int i = 0; i < declaredElements.length; i++){
                 if(declaredElements[i] instanceof PsiVariable){
-                    final PsiVariable declaredElement = (PsiVariable) declaredElements[i];
-                    final PsiExpression initializer = declaredElement.getInitializer();
+                    final PsiVariable declaredElement =
+                            (PsiVariable) declaredElements[i];
+                    final PsiExpression initializer =
+                            declaredElement.getInitializer();
                     if(wrappedExp.equals(initializer)){
                         return declaredElement.getType();
                     }
@@ -129,10 +139,12 @@ public class ExpectedTypeUtils{
             final PsiPrefixExpression prefixExp = (PsiPrefixExpression) context;
             return prefixExp.getType();
         } else if(context instanceof PsiPostfixExpression){
-            final PsiPostfixExpression postfixExp = (PsiPostfixExpression) context;
+            final PsiPostfixExpression postfixExp =
+                    (PsiPostfixExpression) context;
             return postfixExp.getType();
         } else if(context instanceof PsiConditionalExpression){
-            final PsiConditionalExpression conditional = (PsiConditionalExpression) context;
+            final PsiConditionalExpression conditional =
+                    (PsiConditionalExpression) context;
             final PsiExpression condition = conditional.getCondition();
             if(condition.equals(wrappedExp)){
                 return PsiType.BOOLEAN;
@@ -140,7 +152,8 @@ public class ExpectedTypeUtils{
             return conditional.getType();
         } else if(context instanceof PsiExpressionList){
             final PsiExpressionList expList = (PsiExpressionList) context;
-            final PsiMethod method = ExpectedTypeUtils.findCalledMethod(expList);
+            final PsiMethod method =
+                    ExpectedTypeUtils.findCalledMethod(expList);
             if(method == null){
                 return null;
             }
@@ -149,7 +162,8 @@ public class ExpectedTypeUtils{
             return ExpectedTypeUtils.getTypeOfParemeter(method,
                                                         parameterPosition);
         } else if(context instanceof PsiReturnStatement){
-            final PsiReturnStatement psiReturnStatement = (PsiReturnStatement) context;
+            final PsiReturnStatement psiReturnStatement =
+                    (PsiReturnStatement) context;
             final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(
                     psiReturnStatement, PsiMethod.class);
             if(method == null){
@@ -225,7 +239,8 @@ public class ExpectedTypeUtils{
     private static PsiMethod findCalledMethod(PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiMethodCallExpression){
-            final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
+            final PsiMethodCallExpression methodCall =
+                    (PsiMethodCallExpression) parent;
             return methodCall.resolveMethod();
         } else if(parent instanceof PsiNewExpression){
             final PsiNewExpression psiNewExpression = (PsiNewExpression) parent;
@@ -233,5 +248,4 @@ public class ExpectedTypeUtils{
         }
         return null;
     }
-
 }

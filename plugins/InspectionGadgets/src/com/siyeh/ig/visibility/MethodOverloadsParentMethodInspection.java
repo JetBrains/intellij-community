@@ -51,6 +51,11 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection {
                 return;
             }
 
+            final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+            if(superMethods!=null && superMethods.length!=0)
+            {
+                return;
+            }
             PsiClass ancestorClass = aClass.getSuperClass();
             final Set visitedClasses = new HashSet();
             while (ancestorClass != null) {

@@ -64,9 +64,15 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             final PsiMethod method =
                     (PsiMethod) PsiTreeUtil.getParentOfType(statement,
                                                             PsiMethod.class);
-            final PsiType returnType = method.getReturnType();
-            if(!method.isConstructor() && !returnType.equals(PsiType.VOID)){
+            if(method == null)
+            {
                 return;
+            }
+            if(!method.isConstructor()){
+                final PsiType returnType = method.getReturnType();
+                if(!PsiType.VOID.equals(returnType)){
+                    return;
+                }
             }
             final PsiCodeBlock body = method.getBody();
             if(body == null){

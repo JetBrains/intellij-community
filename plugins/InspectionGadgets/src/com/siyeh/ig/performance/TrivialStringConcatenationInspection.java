@@ -10,10 +10,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TrivialStringConcatenationInspection extends ExpressionInspection {
+public class TrivialStringConcatenationInspection extends ExpressionInspection{
     private static final Map s_typeToWrapperMap = new HashMap(6);
 
-    static {
+    static{
         s_typeToWrapperMap.put("short", "Short");
         s_typeToWrapperMap.put("int", "Integer");
         s_typeToWrapperMap.put("long", "Long");
@@ -23,97 +23,125 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection {
         s_typeToWrapperMap.put("byte", "Byte");
     }
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Concatenation with empty string";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String replacementString = calculateReplacementExpression(location);
+    public String buildErrorString(PsiElement location){
+        final String replacementString =
+                calculateReplacementExpression(location);
         return "#ref can be simplified to " + replacementString + " #loc";
     }
 
-    private static String calculateReplacementExpression(PsiElement location) {
+    private static String calculateReplacementExpression(PsiElement location){
         final PsiBinaryExpression expression = (PsiBinaryExpression) location;
         final PsiExpression lOperand = expression.getLOperand();
         final PsiExpression rOperand = expression.getROperand();
         final PsiExpression replacement;
-        if (isEmptyString(lOperand)) {
+        if(isEmptyString(lOperand)){
             replacement = rOperand;
-        } else {
+        } else{
 
             replacement = lOperand;
         }
         final PsiType type = replacement.getType();
         final String text = type.getCanonicalText();
-        if (s_typeToWrapperMap.containsKey(text)) {
-            return s_typeToWrapperMap.get(text) + ".toString(" + replacement.getText() + ')';
-        } else {
+        if(s_typeToWrapperMap.containsKey(text)){
+            return s_typeToWrapperMap.get(text) + ".toString(" +
+                    replacement.getText() + ')';
+        } else if("java.lang.String".equals(text)){
             return replacement.getText();
+        } else{
+            return replacement.getText() + ".toString()";
         }
-
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression) location);
     }
 
-    private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+    private static class UnnecessaryTemporaryObjectFix
+            extends InspectionGadgetsFix{
         private final String m_name;
 
-        private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression) {
+        private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression){
             super();
-            m_name = "Replace  with " + calculateReplacementExpression(expression);
+            m_name = "Replace  with " +
+                    calculateReplacementExpression(expression);
         }
 
-        public String getName() {
+        public String getName(){
             return m_name;
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
-            final String newExpression = calculateReplacementExpression(expression);
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            final PsiBinaryExpression expression =
+                    (PsiBinaryExpression) descriptor.getPsiElement();
+            final String newExpression =
+                    calculateReplacementExpression(expression);
             replaceExpression(project, expression, newExpression);
         }
-
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TrivialStringConcatenationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
+        return new TrivialStringConcatenationVisitor(this, inspectionManager,
+                                                     onTheFly);
     }
 
-    private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
-        private TrivialStringConcatenationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private class TrivialStringConcatenationVisitor
+            extends BaseInspectionVisitor{
+        private TrivialStringConcatenationVisitor(BaseInspection inspection,
+                                                  InspectionManager inspectionManager,
+                                                  boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression exp) {
+        public void visitBinaryExpression(PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
-            if (!TypeUtils.expressionHasType("java.lang.String", exp)) {
+            if(!TypeUtils.expressionHasType("java.lang.String", exp)){
                 return;
             }
             final PsiExpression lhs = exp.getLOperand();
-            if (lhs == null) {
+            if(lhs == null){
                 return;
             }
             final PsiExpression rhs = exp.getROperand();
-            if (rhs == null) {
+            if(rhs == null){
                 return;
             }
-            if (!isEmptyString(lhs) && !isEmptyString(rhs)) {
-                return;
+            if(isEmptyString(lhs)){
+                if(isStringLiteral(rhs)){
+                    return;
+                }
+                registerError(exp);
+            } else if(isEmptyString(rhs)){
+                if(isStringLiteral(lhs)){
+                    return;
+                }
+                registerError(exp);
             }
-            registerError(exp);
         }
     }
 
-    private static boolean isEmptyString(PsiExpression exp) {
+    private static boolean isStringLiteral(PsiExpression expression){
+        if(!(expression instanceof PsiLiteralExpression)){
+            return false;
+        }
+        final PsiType type = expression.getType();
+        if(type == null){
+            return false;
+        }
+        return "java.lang.String".equals(type.getCanonicalText());
+    }
+
+    private static boolean isEmptyString(PsiExpression exp){
 
         final String text = exp.getText();
         return "\"\"".equals(text);
     }
-
 }

@@ -79,10 +79,10 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final PsiThrowStatement throwStatement = (PsiThrowStatement) location.getParent();
-        final PsiExpression exception = throwStatement.getException();
-        final PsiType type = exception.getType();
-        final String exceptionName = type.getPresentableText();
+        final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) location;
+        final PsiClass referredClass = (PsiClass) reference.resolve();
+
+        final String exceptionName = referredClass.getName();
         return "Prohibitted exception '" + exceptionName + "' declared. #loc ";
     }
 
@@ -162,7 +162,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
             });
         }
 
-        public JComponent getContentPanel() {
+        public JComponent getContentPanel(){
             return contentPanel;
         }
     }

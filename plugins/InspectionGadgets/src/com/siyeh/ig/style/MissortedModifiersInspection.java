@@ -72,12 +72,40 @@ public class MissortedModifiersInspection extends ClassInspection {
             Collections.sort(simpleModifiers, new ModifierComparator());
             clearModifiers(simpleModifiers, modifierList);
             addModifiersInOrder(simpleModifiers, modifierList);
+
         }
 
+        private static Map NAME_TO_KEYWORD_TYPE_MAP =
+                new HashMap();
+
+        static{
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PUBLIC, JavaTokenType.PUBLIC_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PROTECTED,
+                                         JavaTokenType.PROTECTED_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PRIVATE,
+                                         JavaTokenType.PRIVATE_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.STATIC,
+                                         JavaTokenType.STATIC_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.ABSTRACT,
+                                         JavaTokenType. ABSTRACT_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.FINAL,
+                                         JavaTokenType.FINAL_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.NATIVE,
+                                         JavaTokenType.NATIVE_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.SYNCHRONIZED,
+                                         JavaTokenType.SYNCHRONIZED_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.STRICTFP,
+                                         JavaTokenType.STRICTFP_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.TRANSIENT,
+                                         JavaTokenType.TRANSIENT_KEYWORD);
+            NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.VOLATILE,
+                                         JavaTokenType.VOLATILE_KEYWORD);
+        }
         private static void addModifiersInOrder(List modifiers,
                                                 PsiModifierList modifierList) {
             for (Iterator iterator = modifiers.iterator(); iterator.hasNext();) {
                 final String modifier = (String) iterator.next();
+                final JavaTokenType keyword = (JavaTokenType) NAME_TO_KEYWORD_TYPE_MAP.get(modifier);
                 try {
                     modifierList.setModifierProperty(modifier, true);
                 } catch (IncorrectOperationException e) {

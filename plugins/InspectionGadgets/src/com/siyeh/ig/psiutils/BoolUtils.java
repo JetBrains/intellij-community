@@ -8,7 +8,7 @@ public class BoolUtils {
         super();
     }
 
-    private static boolean isNegation(PsiExpression exp) {
+    public static boolean isNegation(PsiExpression exp) {
         if (!(exp instanceof PsiPrefixExpression)) {
             return false;
         }

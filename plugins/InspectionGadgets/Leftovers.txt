@@ -35,7 +35,6 @@
     Split "Portability Issues" into "Portability Issues" and "JDK issues"
     QuickFix for "Confusing else Branch"
     QuickFix for "Integer division in floating point context"
-    Quickfix for "Non-serializable class with..."
     Quickfix for "Unnecessary default"
     More detectors and quickfixes for "Simplifiable JUnit Assertion"
 

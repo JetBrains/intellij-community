@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.BoolUtils;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
     private final StringEqualsEmptyStringFix fix = new StringEqualsEmptyStringFix();
@@ -37,7 +38,15 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
             final PsiExpression call = (PsiExpression) expression.getParent();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String qualifierText = qualifier.getText();
-            replaceExpression(project, call, qualifierText + ".length()==0");
+            final PsiElement parent = call.getParent();
+            if(parent instanceof PsiExpression && BoolUtils.isNegation( (PsiExpression) parent))
+            {
+                replaceExpression(project, (PsiExpression) parent, qualifierText + ".length()!=0");
+            }
+            else
+            {
+                replaceExpression(project, call, qualifierText + ".length()==0");
+            }
         }
     }
 

@@ -4,13 +4,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
+    private MakeSerializableFix fix = new MakeSerializableFix();
 
     public String getDisplayName() {
         return "Non-serializable class with serialVersionUID";
@@ -24,6 +23,10 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
         return "Non-serializable class #ref defines a serialVersionUID field #loc";
     }
 
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+    
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new NonSerializableWithSerialVersionUIDVisitor(this, inspectionManager, onTheFly);
     }

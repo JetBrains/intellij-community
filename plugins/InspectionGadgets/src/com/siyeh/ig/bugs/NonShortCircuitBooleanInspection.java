@@ -46,15 +46,10 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
             if (tokenType.equals(JavaTokenType.AND)) {
                 return "&&";
             }
-            if (tokenType.equals(JavaTokenType.ANDEQ)) {
-                return "&&=";
-            }
-            if (tokenType.equals(JavaTokenType.OR)) {
+            else {
                 return "||";
             }
-            return "||=";
         }
-
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
