@@ -73,13 +73,20 @@ public abstract class ChooseByNameBase{
   private static final String CHECK_BOX_CARD = "chkbox";
   static final int REBUILD_DELAY = 100;
 
-  private static class IgnoreCaseComparator implements Comparator<String> {
-    public int compare(String a, String b) {
+  private static class MatchesComparator implements Comparator<String> {
+    private String myOriginalPattern;
+
+    public MatchesComparator(final String originalPattern) {
+      myOriginalPattern = originalPattern;
+    }
+
+    public int compare(final String a, final String b) {
+      if (a.startsWith(myOriginalPattern) && b.startsWith(myOriginalPattern)) return a.compareToIgnoreCase(b);
+      if (a.startsWith(myOriginalPattern) && !b.startsWith(myOriginalPattern)) return -1;
+      if (b.startsWith(myOriginalPattern) && a.startsWith(myOriginalPattern)) return 1;
       return a.compareToIgnoreCase(b);
     }
   }
-
-  private static final Comparator<String> UCS_COMPARATOR = new IgnoreCaseComparator();
 
   /**
    * @param initialText initial text which will be in the lookup text field
@@ -756,7 +763,7 @@ public abstract class ChooseByNameBase{
       if (myCancelled[0]) {
         throw new ProcessCanceledException();
       }
-      Collections.sort(namesList, UCS_COMPARATOR);
+      Collections.sort(namesList, new MatchesComparator(pattern));
 
       All:
       for (int i = 0; i < namesList.size(); i++) {
