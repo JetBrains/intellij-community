@@ -60,6 +60,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
   private String oldCodeStyleSettings;
+  private static boolean myRegisterExtensionPoints;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -92,7 +93,10 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
       Extensions.registerAreaClass("IDEA_PROJECT", null);
       Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
     }
-    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+    if (!myRegisterExtensionPoints){
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+      myRegisterExtensionPoints = true;
+    }
     cleanupApplicationCaches();
   }
 

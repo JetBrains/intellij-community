@@ -71,7 +71,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
-
+  private static boolean myRegisterExtensionPoints = false;
   protected long getTimeRequired() {
     return DEFAULT_TEST_TIME;
   }
@@ -93,7 +93,10 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
       Extensions.registerAreaClass("IDEA_PROJECT", null);
       Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
     }
-    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());    
+    if (!myRegisterExtensionPoints){
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
+      myRegisterExtensionPoints = true;
+    }
   }
 
   protected void setUp() throws Exception {
