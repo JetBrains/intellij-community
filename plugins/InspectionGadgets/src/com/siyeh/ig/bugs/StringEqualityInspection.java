@@ -19,6 +19,10 @@ public class StringEqualityInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "String values are compared using '#ref', not '.equals()' #loc";
     }

@@ -21,6 +21,9 @@ public class BooleanConstructorInspection extends ExpressionInspection {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Boolean constructor call #ref #loc";
     }

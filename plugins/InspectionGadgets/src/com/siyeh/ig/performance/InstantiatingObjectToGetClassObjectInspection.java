@@ -17,6 +17,10 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Instantiating object to get Class object #loc";
     }

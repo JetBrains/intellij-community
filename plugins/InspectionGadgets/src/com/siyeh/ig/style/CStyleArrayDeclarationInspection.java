@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
 public class CStyleArrayDeclarationInspection extends ClassInspection {
-    private final CStyleArrayDeclarationFix cStyleArrayDeclarationFix = new CStyleArrayDeclarationFix();
+    private final CStyleArrayDeclarationFix fix = new CStyleArrayDeclarationFix();
 
     public String getDisplayName() {
         return "C-style array declaration";
@@ -23,8 +23,12 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
         return "C-style array declaration #ref #loc";
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return cStyleArrayDeclarationFix;
+        return fix;
     }
 
     private static class CStyleArrayDeclarationFix extends InspectionGadgetsFix {

@@ -19,6 +19,9 @@ public class EmptyTryBlockInspection extends StatementInspection {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Empty #ref block #loc";
     }

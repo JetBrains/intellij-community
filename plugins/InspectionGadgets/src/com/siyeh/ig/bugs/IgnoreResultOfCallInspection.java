@@ -30,13 +30,13 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     public boolean m_reportAllNonLibraryCalls = false;
 
     public String callCheckString = "java.io.InputStream,read," +
-            "java.io.InputStream,skip," +
-            "java.lang.StringBuffer,toString," +
-            "java.lang.StringBuilder,toString," +
-            "java.lang.String,.*," +
-            "java.math.BigInteger,.*," +
-            "java.math.BigDecimal,.*," +
-            "java.net.InetAddress,.*";
+        "java.io.InputStream,skip," +
+        "java.lang.StringBuffer,toString," +
+        "java.lang.StringBuilder,toString," +
+        "java.lang.String,.*," +
+        "java.math.BigInteger,.*," +
+        "java.math.BigDecimal,.*," +
+        "java.net.InetAddress,.*";
 
     private final List callsToCheck = new ArrayList(32);
 
@@ -88,6 +88,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     public String getID(){
         return "ResultOfMethodCallIgnored";
     }
+
     public String getDisplayName(){
         return "Result of method call ignored";
     }
@@ -101,9 +102,14 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         return form.getContentPanel();
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location){
         final PsiElement parent = location.getParent();
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) parent.getParent();
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) parent.getParent();
         final PsiMethod method = methodCallExpression.resolveMethod();
         final PsiClass containingClass = method.getContainingClass();
         final String className = containingClass.getName();
@@ -127,7 +133,8 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             if(!(statement.getExpression() instanceof PsiMethodCallExpression)){
                 return;
             }
-            final PsiMethodCallExpression call = (PsiMethodCallExpression) statement.getExpression();
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression) statement.getExpression();
             final PsiMethod method = call.resolveMethod();
             if(method == null){
                 return;
@@ -144,21 +151,23 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
                 return;
             }
             if(m_reportAllNonLibraryCalls &&
-                    !LibraryUtil.classIsInLibrary(aClass)){
+                       !LibraryUtil.classIsInLibrary(aClass)){
                 registerMethodCallError(call);
                 return;
             }
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             if(methodName == null){
                 return;
             }
             for(Iterator iterator = callsToCheck.iterator();
                 iterator.hasNext();){
-                final ReturnCheckSpecification spec = (ReturnCheckSpecification) iterator.next();
+                final ReturnCheckSpecification spec =
+                        (ReturnCheckSpecification) iterator.next();
                 final Pattern methodNamePattern = spec.getMethodNamePattern();
                 if(methodNamePattern != null &&
-                        methodNamesMatch(methodName, methodNamePattern)){
+                           methodNamesMatch(methodName, methodNamePattern)){
                     final String classNameToCompare = spec.getClassName();
                     if(ClassUtils.isSubclass(aClass, classNameToCompare)){
                         registerMethodCallError(call);
@@ -166,7 +175,6 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
                     }
                 }
             }
-
         }
 
         private boolean methodNamesMatch(String methodName,
@@ -174,7 +182,6 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             final Matcher matcher = methodNamePattern.matcher(methodName);
             return matcher.matches();
         }
-
     }
 
     public class Form{
@@ -230,7 +237,6 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
     private class ReturnCheckSpecificationTableModel
             extends AbstractTableModel{
-
         public int getRowCount(){
             return callsToCheck.size();
         }
@@ -255,8 +261,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
 
         public Object getValueAt(int rowIndex, int columnIndex){
-            final ReturnCheckSpecification spec = (ReturnCheckSpecification) callsToCheck.get(
-                    rowIndex);
+            final ReturnCheckSpecification spec =
+                    (ReturnCheckSpecification) callsToCheck.get(
+                            rowIndex);
             if(columnIndex == 0){
                 return spec.getClassName();
             } else{
@@ -265,8 +272,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex){
-            final ReturnCheckSpecification spec = (ReturnCheckSpecification) callsToCheck.get(
-                    rowIndex);
+            final ReturnCheckSpecification spec =
+                    (ReturnCheckSpecification) callsToCheck.get(
+                            rowIndex);
             if(columnIndex == 0){
                 spec.setClassName((String) aValue);
             } else{
@@ -274,5 +282,4 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             }
         }
     }
-
 }

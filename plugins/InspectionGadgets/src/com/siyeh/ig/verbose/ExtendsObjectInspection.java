@@ -9,77 +9,86 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ig.*;
 
-public class ExtendsObjectInspection extends ClassInspection {
+public class ExtendsObjectInspection extends ClassInspection{
     private final ExtendsObjectFix fix = new ExtendsObjectFix();
 
     public String getID(){
         return "ClassExplicitlyExtendsObject";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Class explicitly extends java.lang.Object";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
+    public String buildErrorString(PsiElement location){
         return "Class '#ref' explicitly extends java.lang.Object #loc";
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class ExtendsObjectFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class ExtendsObjectFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Remove redundant 'extends Object'";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
-            final PsiClass element = (PsiClass) extendClassIdentifier.getParent();
+            final PsiClass element =
+                    (PsiClass) extendClassIdentifier.getParent();
             final PsiReferenceList extendsList = element.getExtendsList();
-            final PsiJavaCodeReferenceElement[] elements = extendsList.getReferenceElements();
-            for (int i = 0; i < elements.length; i++) {
+            final PsiJavaCodeReferenceElement[] elements =
+                    extendsList.getReferenceElements();
+            for(int i = 0; i < elements.length; i++){
                 deleteElement(elements[i]);
             }
         }
-
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new ExtendsObjectVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ExtendsObjectVisitor extends BaseInspectionVisitor {
-
-        private ExtendsObjectVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ExtendsObjectVisitor extends BaseInspectionVisitor{
+        private ExtendsObjectVisitor(BaseInspection inspection,
+                                     InspectionManager inspectionManager,
+                                     boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+        public void visitClass(PsiClass aClass){
+            if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;
             }
             final PsiReferenceList extendsList = aClass.getExtendsList();
-            if (extendsList != null) {
-                final PsiJavaCodeReferenceElement[] elements = extendsList.getReferenceElements();
-                for (int i = 0; i < elements.length; i++) {
+            if(extendsList != null){
+                final PsiJavaCodeReferenceElement[] elements =
+                        extendsList.getReferenceElements();
+                for(int i = 0; i < elements.length; i++){
                     final PsiJavaCodeReferenceElement element = elements[i];
                     final PsiElement referent = element.resolve();
-                    if(referent instanceof PsiClass)
-                    {
-                        final String className = ((PsiClass) referent).getQualifiedName();
-                        if ( "java.lang.Object".equals(className)) {
+                    if(referent instanceof PsiClass){
+                        final String className =
+                                ((PsiClass) referent).getQualifiedName();
+                        if("java.lang.Object".equals(className)){
                             registerClassError(aClass);
                         }
                     }
                 }
-
             }
         }
-
     }
 }

@@ -3,7 +3,6 @@
     Public method without logging
     Logger constructed without the current class name as argument.
     Incorrect lazy initialization of static field
-    setter or getter with non-standard name
     Avoid repeated casting
     arithmetic operations on volatile types
     Class name with forbidden name component

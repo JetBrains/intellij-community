@@ -14,8 +14,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class EmptyCatchBlockInspection extends StatementInspection {
-    public boolean m_includeComments = false;
-    public boolean m_ignoreTestCases = false;
+    public boolean m_includeComments = true;
+    public boolean m_ignoreTestCases = true;
 
     public String getDisplayName() {
         return "Empty 'catch' block";
@@ -25,6 +25,9 @@ public class EmptyCatchBlockInspection extends StatementInspection {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Empty #ref block #loc";
     }

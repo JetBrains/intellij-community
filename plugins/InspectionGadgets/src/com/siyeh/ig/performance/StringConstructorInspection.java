@@ -20,6 +20,9 @@ public class StringConstructorInspection extends ExpressionInspection {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "#ref is redundant #loc";
     }

@@ -19,6 +19,10 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Non-final field #ref accessed in hashCode()  #loc";
     }

@@ -22,6 +22,10 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassI
         return GroupNames.THREADING_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     protected String buildErrorString(PsiElement location) {
         return "Field #ref is accessed in both synchronized and unsynchronized contexts #loc";
     }

@@ -9,49 +9,57 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
-public class OctalLiteralInspection extends ExpressionInspection {
+public class OctalLiteralInspection extends ExpressionInspection{
     public String getID(){
         return "OctalInteger";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Octal integer";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.CONFUSING_GROUP_NAME;
     }
 
-    protected String buildErrorString(PsiElement location) {
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
+    protected String buildErrorString(PsiElement location){
         return "Octal integer #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new OctalLiteralVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class OctalLiteralVisitor extends BaseInspectionVisitor {
-        private OctalLiteralVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class OctalLiteralVisitor extends BaseInspectionVisitor{
+        private OctalLiteralVisitor(BaseInspection inspection,
+                                    InspectionManager inspectionManager,
+                                    boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression literal) {
+        public void visitLiteralExpression(PsiLiteralExpression literal){
             super.visitLiteralExpression(literal);
             final PsiType type = literal.getType();
-            if (type == null) {
+            if(type == null){
                 return;
             }
-            if (!(type.equals(PsiType.INT)
-                    || type.equals(PsiType.LONG))) {
+            if(!(type.equals(PsiType.INT)
+                    || type.equals(PsiType.LONG))){
                 return;
             }
             final String text = literal.getText();
-            if ("0".equals(text)||"0L".equals(text)) {
+            if("0".equals(text) || "0L".equals(text)){
                 return;
             }
-            if (text.charAt(0) != '0') {
+            if(text.charAt(0) != '0'){
                 return;
             }
-            if (text.startsWith("0x") || text.startsWith("0X")) {
+            if(text.startsWith("0x") || text.startsWith("0X")){
                 return;
             }
             registerError(literal);

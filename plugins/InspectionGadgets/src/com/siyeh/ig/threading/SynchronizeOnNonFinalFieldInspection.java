@@ -13,6 +13,10 @@ public class SynchronizeOnNonFinalFieldInspection extends MethodInspection {
         return "Synchronization on a non-final field";
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
     }
