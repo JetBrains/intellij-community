@@ -196,7 +196,7 @@ public class DebuggerTreeBase extends Tree {
   private String getTipText(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
     if (descriptor instanceof ValueDescriptorImpl) {
-      String text = ((ValueDescriptorImpl)descriptor).getLabel();
+      String text = ((ValueDescriptorImpl)descriptor).getValueLabel();
       if (text != null) {
         if(StringUtil.startsWithChar(text, '{') && text.indexOf('}') > 0) {
           int idx = text.indexOf('}');
@@ -205,10 +205,12 @@ public class DebuggerTreeBase extends Tree {
           }
         }
 
-        if(StringUtil.startsWithChar(text, '\"') && StringUtil.endsWithChar(text, '\"')) text = text.substring(1, text.length() - 1);
+        if(StringUtil.startsWithChar(text, '\"') && StringUtil.endsWithChar(text, '\"')) {
+          text = text.substring(1, text.length() - 1);
+        }
 
-        if (text.length() > 0 && (text.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
-          String tipText = prepareToolTipText(text);
+        final String tipText = prepareToolTipText(text);
+        if (tipText.length() > 0 && (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
           return tipText;
         }
       }
