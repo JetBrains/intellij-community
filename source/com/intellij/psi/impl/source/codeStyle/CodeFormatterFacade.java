@@ -16,6 +16,12 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.wrappers.PsiEventWrapperAspect;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  *
@@ -104,8 +110,8 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  public ASTNode processRange(ASTNode element, int startOffset, int endOffset) {
-    FileType fileType = myHelper.getFileType();
+  public ASTNode processRange(ASTNode element, final int startOffset, final int endOffset) {
+    final FileType fileType = myHelper.getFileType();
     if (useNewFormatter(fileType)) {
       PseudoTextBuilder pseudoTextBuilder = ((LanguageFileType)fileType).getLanguage().getFormatter();
       if (pseudoTextBuilder == null) {
@@ -113,8 +119,16 @@ public class CodeFormatterFacade implements Constants {
       }
       else {
         try {
-          PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
-          GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset).format();
+          final PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
+          final PomModel model = myHelper.getProject().getModel();
+          model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(element)) {
+            public PomModelEvent run() throws IncorrectOperationException {
+              final PomModelEvent result = new PomModelEvent(model);
+              GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, result).format();
+              return result;
+            }
+          }, new PsiEventWrapperAspect(model, new TreeAspect(model)));
+
 
         }
         catch (ProcessCanceledException processCanceledException) {

@@ -3,10 +3,7 @@ package com.intellij.pom.event;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PomModelEvent extends EventObject {
   private Map<PomModelAspect, PomChangeSet> myChangeSets;
@@ -16,7 +13,11 @@ public class PomModelEvent extends EventObject {
   }
 
   public Set<PomModelAspect> getChangedAspects(){
-    return myChangeSets.keySet();
+    if (myChangeSets != null) {
+      return myChangeSets.keySet();
+    } else {
+      return null;
+    }
   }
 
   public void registerChangeSet(PomModelAspect aspect, PomChangeSet set) {
