@@ -307,7 +307,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         fillParameterList(constructor);
         createAssignmentStatements(constructor);
 
-        appendClassInitializers(constructor);
+        appendInitializers(constructor);
       }
 
       constructor = (PsiMethod) codeStyleManager.reformat(constructor);
@@ -325,7 +325,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     return aClass;
   }
 
-  private void appendClassInitializers(final PsiMethod constructor) throws IncorrectOperationException {
+  private void appendInitializers(final PsiMethod constructor) throws IncorrectOperationException {
     final PsiClassInitializer[] initializers = myAnonClass.getInitializers();
     for (int i = 0; i < initializers.length; i++) {
       PsiClassInitializer initializer = initializers[i];
@@ -339,20 +339,36 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
       }
     }
+    final PsiField[] fields = myAnonClass.getFields();
+    for (int i = 0; i < fields.length; i++) {
+      PsiField field = fields[i];
+      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null) {
+        final PsiExpressionStatement statement = (PsiExpressionStatement)myManager.getElementFactory().createStatementFromText(field.getName() + "= 0;", null);
+        ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(field.getInitializer());
+        constructor.getBody().add(statement);
+      }
+    }
   }
 
   private static void copyClassBody(PsiClass sourceClass,
                                   PsiClass targetClass,
-                                  boolean appendClassInitializersToConstructor) throws IncorrectOperationException {
+                                  boolean appendInitializersToConstructor) throws IncorrectOperationException {
     PsiElement lbrace = sourceClass.getLBrace();
     PsiElement rbrace = sourceClass.getRBrace();
     if (lbrace != null) {
       targetClass.addRange(lbrace.getNextSibling(), rbrace != null ? rbrace.getPrevSibling() : sourceClass.getLastChild());
-      if (appendClassInitializersToConstructor) {  //see SCR 41692
+      if (appendInitializersToConstructor) {  //see SCR 41692
         final PsiClassInitializer[] initializers = targetClass.getInitializers();
         for (int i = 0; i < initializers.length; i++) {
           PsiClassInitializer initializer = initializers[i];
           if (!initializer.hasModifierProperty(PsiModifier.STATIC)) initializer.delete();
+        }
+        final PsiField[] fields = targetClass.getFields();
+        for (int i = 0; i < fields.length; i++) {
+          PsiField field = fields[i];
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null) {
+            field.getInitializer().delete();
+          }
         }
       }
     }
