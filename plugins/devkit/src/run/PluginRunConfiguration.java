@@ -78,6 +78,9 @@ public class PluginRunConfiguration extends RunConfigurationBase {
                                   RunnerInfo runnerInfo,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+    if (myModule == null){
+      throw new ExecutionException("No module specified for configuration");
+    }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
     final ProjectJdk jdk = rootManager.getJdk();
     if (jdk == null) {
