@@ -190,7 +190,7 @@ public class GenericsUtil {
         }
         else {
           final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-          final PsiClass[] bSubs = helper.findInheritors(bClass, helper.getAccessScope(bClass), true);
+          final PsiClass[] bSubs = helper.findInheritors(bClass, helper.getUseScope(bClass), true);
           for (int i = 0; i < bSubs.length; i++) {
             getLeastUpperClassesInner(bSubs[i], aClass, descendants);
           }
