@@ -18,6 +18,11 @@ class CanBeStaticVisitor extends PsiRecursiveElementVisitor {
                 m_canBeStatic = false;
             }
         }
+        else if (element instanceof PsiVariable) {
+            //can happen with initializers of inner classes referencing
+            //local variables or parameters from outer class
+            m_canBeStatic = false;
+        }
     }
 
     public boolean canBeStatic() {
