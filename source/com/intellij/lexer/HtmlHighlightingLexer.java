@@ -54,7 +54,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   public HtmlHighlightingLexer() {
-    this(new FlexAdapter(new _HtmlLexer()),true);
+    this(new _HtmlLexer(),true);
   }
 
   protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive) {

@@ -80,7 +80,7 @@ public class HtmlLexer extends BaseHtmlLexer {
   }
 
   public HtmlLexer() {
-    this(new FlexAdapter(new _HtmlLexer()),true);
+    this(new _HtmlLexer(),true);
   }
 
   protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {
