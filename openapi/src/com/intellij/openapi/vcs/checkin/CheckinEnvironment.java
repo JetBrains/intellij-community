@@ -21,9 +21,9 @@ import java.util.List;
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();
 
-  DifferencesProvider createDifferencesProviderOn(Project project, FilePath filePath);
+  DifferencesProvider createDifferencesProviderOn(FilePath filePath);
 
-  RollbackProvider createRollbackProviderOn(DataContext provider);
+  RollbackProvider createRollbackProviderOn(Revisions[] selectedRevisions);
 
   DifferenceType[] getAdditionalDifferenceTypes();
 

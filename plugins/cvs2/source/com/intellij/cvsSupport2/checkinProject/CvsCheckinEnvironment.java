@@ -14,15 +14,11 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
-import com.intellij.openapi.vcs.checkin.RevisionsFactory;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
+import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,12 +47,12 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  public DifferencesProvider createDifferencesProviderOn(Project project, FilePath virtualFile) {
-    return new CvsDifferencesProvider(project, virtualFile);
+  public DifferencesProvider createDifferencesProviderOn(FilePath virtualFile) {
+    return new CvsDifferencesProvider(myProject, virtualFile);
   }
 
-  public RollbackProvider createRollbackProviderOn(DataContext provider) {
-    return new CvsRollbackProvider(provider);
+  public RollbackProvider createRollbackProviderOn(Revisions[] selectedRevisions) {
+    return new CvsRollbackProvider(myProject, selectedRevisions);
   }
 
   public DifferenceType[] getAdditionalDifferenceTypes() {
