@@ -457,9 +457,6 @@
       <keyboard-shortcut first-keystroke="control V"/>
       <keyboard-shortcut first-keystroke="shift INSERT"/>
     </action>
-    <action id="PasteReference">
-      <keyboard-shortcut first-keystroke="control alt shift V"/>
-    </action>
     <action id="CopyReference">
       <keyboard-shortcut first-keystroke="control alt shift C"/>
     </action>
