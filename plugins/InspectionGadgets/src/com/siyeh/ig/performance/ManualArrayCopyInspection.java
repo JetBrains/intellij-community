@@ -114,7 +114,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return;
             }
             final PsiDeclarationStatement declaration = (PsiDeclarationStatement) initialization;
-            if (declaration.getDeclaredElements().length > 1) {
+            if (declaration.getDeclaredElements().length!= 1) {
                 return;
             }
             final PsiLocalVariable var = (PsiLocalVariable) declaration.getDeclaredElements()[0];
