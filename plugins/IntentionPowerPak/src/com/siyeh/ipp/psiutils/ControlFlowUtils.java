@@ -52,6 +52,7 @@ public class ControlFlowUtils{
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             final PsiStatement body = labeledStatement.getStatement();
+
             return statementMayCompleteNormally(body)
                            || statementIsBreakTarget(body);
         } else if(statement instanceof PsiIfStatement){
@@ -137,12 +138,19 @@ public class ControlFlowUtils{
     }
 
     private static boolean statementIsBreakTarget(PsiStatement statement){
+        if(statement == null)
+        {
+            return false;
+        }
         final BreakTargetFinder breakFinder = new BreakTargetFinder(statement);
         statement.accept(breakFinder);
         return breakFinder.breakFound();
     }
 
     public static boolean statementContainsExitingBreak(PsiStatement statement){
+        if(statement == null){
+            return false;
+        }
         final ExitingBreakFinder breakFinder = new ExitingBreakFinder();
         statement.accept(breakFinder);
         return breakFinder.breakFound();
