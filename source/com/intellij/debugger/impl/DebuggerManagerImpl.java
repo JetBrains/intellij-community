@@ -18,12 +18,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PathUtil;
 import com.sun.tools.jdi.TransportService;
@@ -31,9 +30,6 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -274,36 +270,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
-  public static TransportService getTransportService(boolean forceSocketTransport) throws ExecutionException {
-    TransportService transport = null;
-    try {
-      try {
-        if (forceSocketTransport) {
-          transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
-        }
-        else {
-          transport = createTransport(Class.forName("com.sun.tools.jdi.SharedMemoryTransport"));
-        }
-      }
-      catch (UnsatisfiedLinkError e) {
-        transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
-      }
-    }
-    catch (Exception e) {
-      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
-    }
-    return transport;
-  }
-
-  private static TransportService createTransport(final Class aClass) throws NoSuchMethodException,
-                                                                             InstantiationException,
-                                                                             IllegalAccessException,
-                                                                             InvocationTargetException {
-    final Constructor constructor = aClass.getDeclaredConstructor(new Class[0]);
-    constructor.setAccessible(true);
-    return (TransportService)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-  }
-
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean serverMode,
                                                        int transport, final String debugPort,
@@ -315,32 +281,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
     final boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
 
-    TransportService transportService = getTransportService(useSockets);
-
     String address  = "";
-    String listenTo = null;
-
     if (debugPort == null || "".equals(debugPort)) {
-      if(useSockets) {
-        try {
-          final int freePort = DebuggerUtils.getInstance().findAvailablePort();
-          address = Integer.toString(freePort);
-        }
-        catch (ExecutionException e) {
-          if (checkValidity) {
-            throw e;
-          }
-        }
+      try {
+        address = DebuggerUtils.getInstance().findAvailableDebugAddress(useSockets);
       }
-      else {
-        try {
-          address  = transportService.startListening();
-          transportService.stopListening(address);
-        }
-        catch (IOException e) {
-          if (checkValidity) {
-            throw new ExecutionException(DebugProcessImpl.processError(e));
-          }
+      catch (ExecutionException e) {
+        if (checkValidity) {
+          throw e;
         }
       }
     }
@@ -348,6 +296,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       address = debugPort;
     }
 
+    String listenTo = null;
     if(serverMode && useSockets) {
       try {
         listenTo = InetAddress.getLocalHost().getHostName() + ":" + address;
@@ -376,6 +325,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     });
 
+    final TransportService transportService = DebuggerUtilsEx.getTransportService(useSockets);
     String xrun = "transport=" + transportService.name() + ",address=" + listenTo;
     if(serverMode) {
       xrun += ",suspend=y,server=n";

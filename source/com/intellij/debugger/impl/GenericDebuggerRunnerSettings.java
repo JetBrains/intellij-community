@@ -1,10 +1,8 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.DebuggingRunnerData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,8 +16,8 @@ import org.jdom.Element;
  */
 
 public class GenericDebuggerRunnerSettings implements JDOMExternalizable, DebuggingRunnerData {
-  public String  DEBUG_PORT = "";
-  public int     TRANSPORT  = DebuggerSettings.SOCKET_TRANSPORT;
+  public String DEBUG_PORT = "";
+  public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
 
   public GenericDebuggerRunnerSettings() {
@@ -36,35 +34,23 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
   private void updateDefaultAddress() {
     boolean useDefaultPort = "".equals(DEBUG_PORT);
 
-    if(getTransport() == DebuggerSettings.SOCKET_TRANSPORT) {
+    if (getTransport() == DebuggerSettings.SOCKET_TRANSPORT) {
       try {
         Integer.parseInt(DEBUG_PORT);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         useDefaultPort = true;
       }
     }
 
     if (useDefaultPort) {
-      DEBUG_PORT = getDefaultPort(getTransport());
-    }
-  }
-
-  public static String getDefaultPort(int transport) {
-    try {
-      RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(new JavaParameters(), true, transport, "", false);
-      String address = debugParameters.getAddress();
-      int colon = address.indexOf(':');
-      if (colon != -1) {
-        return address.substring(colon + 1);
+      try {
+        DEBUG_PORT = DebuggerUtils.getInstance().findAvailableDebugAddress(getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
       }
-      else {
-        return address;
+      catch (ExecutionException e) {
+        DEBUG_PORT = "";
       }
     }
-    catch (ExecutionException e) {
-    }
-
-    return "";
   }
 
   public void setDebugPort(String port) {
@@ -73,7 +59,7 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
   }
 
   public void setTransport(int transport) {
-    if(getTransport() != transport) {
+    if (getTransport() != transport) {
       setDebugPort("");
     }
     TRANSPORT = transport;
@@ -90,9 +76,11 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
   }
 
   public int getTransport() {
-    if(LOCAL)
+    if (LOCAL) {
       return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
-    else
+    }
+    else {
       return TRANSPORT;
+    }
   }
 }

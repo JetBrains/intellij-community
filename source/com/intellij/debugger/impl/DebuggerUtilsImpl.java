@@ -17,11 +17,15 @@ import com.intellij.psi.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.execution.ExecutionException;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Value;
+import com.sun.tools.jdi.TransportService;
 import org.jdom.Element;
 
 import java.net.ServerSocket;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Constructor;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -110,7 +114,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return new DebuggerExpressionComboBox(project, context, recentsId);
   }
 
-  public final int findAvailablePort() throws ExecutionException {
+  private static final int findAvailableSocketPort() throws ExecutionException {
     int port;
     try {
       final ServerSocket serverSocket = new ServerSocket(0);
@@ -131,5 +135,23 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       throw new ExecutionException(DebugProcessImpl.processError(e));
     }
     return port;
+  }
+
+  public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
+    final TransportService transportService = getTransportService(useSockets);
+
+    if(useSockets) {
+      final int freePort = findAvailableSocketPort();
+      return Integer.toString(freePort);
+    }
+
+    try {
+      String address  = transportService.startListening();
+      transportService.stopListening(address);
+      return address;
+    }
+    catch (IOException e) {
+      throw new ExecutionException(DebugProcessImpl.processError(e));
+    }
   }
 }

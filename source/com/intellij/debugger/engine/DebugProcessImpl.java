@@ -685,7 +685,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected void closeProcess(boolean fireDetached) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (isDetached() || isDetaching()) return;
+    if (isDetached() || isDetaching()) {
+      return;
+    }
 
     setIsDetaching();
     myVirtualMachineProxy = null;

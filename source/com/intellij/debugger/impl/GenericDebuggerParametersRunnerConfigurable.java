@@ -2,10 +2,12 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.execution.ExecutionException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +37,13 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
         SingleConfigurableEditor editor = new SingleConfigurableEditor(project, debuggerConfigurable);
         editor.show();
         if("".equals(getPort())) {
-          setPort(GenericDebuggerRunnerSettings.getDefaultPort(getTransport()));
+          try {
+            String address = DebuggerUtils.getInstance().findAvailableDebugAddress(getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
+            setPort(address);
+          }
+          catch (ExecutionException e1) {
+            setPort("");
+          }
         }
         updateUI();
       }

@@ -303,7 +303,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     }
   }
 
-  public abstract int findAvailablePort() throws ExecutionException;
+  public abstract String findAvailableDebugAddress(boolean useSockets) throws ExecutionException;
 
   protected static class ArrayClass {
     public String className;

@@ -24,13 +24,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.execution.ExecutionException;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
+import com.sun.tools.jdi.TransportService;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Constructor;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
@@ -344,6 +349,36 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
   public abstract CompletionEditor createEditor(Project project, PsiElement context, String recentsId);
+
+  public static TransportService getTransportService(boolean forceSocketTransport) throws ExecutionException {
+    TransportService transport = null;
+    try {
+      try {
+        if (forceSocketTransport) {
+          transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
+        }
+        else {
+          transport = createTransport(Class.forName("com.sun.tools.jdi.SharedMemoryTransport"));
+        }
+      }
+      catch (UnsatisfiedLinkError e) {
+        transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
+      }
+    }
+    catch (Exception e) {
+      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
+    }
+    return transport;
+  }
+
+  private static TransportService createTransport(final Class aClass) throws NoSuchMethodException,
+                                                                             InstantiationException,
+                                                                             IllegalAccessException,
+                                                                             InvocationTargetException {
+    final Constructor constructor = aClass.getDeclaredConstructor(new Class[0]);
+    constructor.setAccessible(true);
+    return (TransportService)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+  }
 
   private static class SigReader {
     final String buffer;
