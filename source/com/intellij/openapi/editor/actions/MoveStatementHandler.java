@@ -112,6 +112,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
     if (file instanceof PsiJavaFile) {
       result = expandLineRangeToStatement(result, editor,file);
+      if (result == null) return null;
     }
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     if (result.startLine <= 1 && !isDown) return null;
@@ -130,9 +131,11 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   private static LineRange expandLineRangeToStatement(final LineRange range, Editor editor, final PsiFile file) {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
+    if (startingElement == null) return null;
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine+1, 0)) -1;
 
     PsiElement endingElement = firstNonWhiteElement(endOffset, file, false);
+    if (endingElement == null) return null;
     final PsiElement element = PsiTreeUtil.findCommonParent(startingElement, endingElement);
     Pair<PsiElement, PsiElement> elementRange = getElementRange(element, startingElement, endingElement);
     return new LineRange(editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line,
