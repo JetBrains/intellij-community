@@ -197,7 +197,19 @@ public class ReplacerImpl {
                       elementParent.addBefore(replacement,element);
                     }
                   } else if (statements.length > 0) {
-                    PsiElement replacement = getMatchExpr(statements[0]);
+                    int i = 0;
+                    while( true ) {
+                      if (!(statements[i] instanceof PsiComment ||
+                            statements[i] instanceof PsiWhiteSpace
+                           )
+                         ) break;
+                      ++i;
+                    }
+
+                    if (i != 0) {
+                      elementParent.addRangeBefore(statements[0],statements[i-1],el);
+                    }
+                    PsiElement replacement = getMatchExpr(statements[i]);
 
                     if (replacement instanceof PsiStatement &&
                         !(replacement.getLastChild() instanceof PsiJavaToken)

@@ -106,8 +106,43 @@ public class StructuralReplaceTest extends IdeaTestCase {
     //);
   }
 
+  public void testReplace2() {
+    String s1 = "package com.www.xxx.yyy;\n" +
+                "\n" +
+                "import javax.swing.*;\n" +
+                "\n" +
+                "public class Test {\n" +
+                "  public static void main(String[] args) {\n" +
+                "    if (1==1)\n" +
+                "      JOptionPane.showMessageDialog(null, \"MESSAGE\");\n" +
+                "  }\n" +
+                "}";
+    String s2 = "JOptionPane.'showDialog(null, 'msg);";
+    String s3 = "//FIXME provide a parent frame\n" +
+                "JOptionPane.$showDialog$(null, $msg$);";
+
+    String expectedResult = "package com.www.xxx.yyy;\n" +
+                            "\n" +
+                            "import javax.swing.*;\n" +
+                            "\n" +
+                            "public class Test {\n" +
+                            "  public static void main(String[] args) {\n" +
+                            "    if (1==1)\n" +
+                            "//FIXME provide a parent frame\n" +
+                            "        JOptionPane.showMessageDialog(null, \"MESSAGE\");\n" +
+                            "  }\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+    assertEquals(
+      "adding comment to statement inside the if body",
+      expectedResult,
+      actualResult
+    );
+  }
+
   public void testReplace() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 10, 12, 0, "lesya", "method parameter alignment")) return;
+    //if (!IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 10, 12, 0, "lesya", "method parameter alignment")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
@@ -357,11 +392,13 @@ public class StructuralReplaceTest extends IdeaTestCase {
                               "        OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
-    assertEquals(
-      "Replace in constructor",
-      expectedResult17,
-      actualResult
-    );
+    if (IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 10, 12, 0, "lesya", "method parameter alignment")) {
+      assertEquals(
+        "Replace in constructor",
+        expectedResult17,
+        actualResult
+      );
+    }
 
     String s49 = "class A {}\n" +
                  "class B extends A {}\n" +
@@ -370,7 +407,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s51 = "A $b$ = new $B$(\"$b$\");";
     String expectedResult18 = "class A {}\n" +
                               "class B extends A {}\n" +
-                              "    A a = new B(\"a\");";
+                              "A a = new B(\"a\");";
 
     actualResult = replacer.testReplace(s49,s50,s51,options);
 
@@ -1028,6 +1065,54 @@ public class StructuralReplaceTest extends IdeaTestCase {
       expectedResult12,
       actualResult
     );
+
+    // testcase for http://www.jetbrains.net/jira/browse/IDEADEV-298
+    // we have correct results, pending for more info from the user
+    //String s34 = "/**\n" +
+    //             " * Some javadocs\n" +
+    //             " */\n" +
+    //             "public interface Test {\n" +
+    //             "    public static final String A = \"HELLO\";\n" +
+    //             "    public static final int B = 1;\n" +
+    //             "}\n" +
+    //             "/**\n" +
+    //             " * Some javadocs2\n" +
+    //             " */\n" +
+    //             "public interface Test2 {\n" +
+    //             "    public static final String C = \"HELLO2\";\n" +
+    //             "    public static final int D = 2;\n" +
+    //             "} ";
+    //
+    //String s35 = "public interface 'MessageInterface {\n" +
+    //             "    public static final String 'X = 'VALUE;\n" +
+    //             "    'blah*" +
+    //             "}";
+    //String s36 = "public interface $MessageInterface$ {\n" +
+    //             "    public static final String HEADER = $VALUE$;\n" +
+    //             "    $blah$\n" +
+    //             "}";
+    //
+    //String expectedResult13 = "/**\n" +
+    //                          " * Some javadocs\n" +
+    //                          " */\n" +
+    //                          "public interface Test {\n" +
+    //                          "    public static final String HEADER = \"HELLO\";\n" +
+    //                          "    public static final int B = 1;\n" +
+    //                          "}\n" +
+    //                          "/**\n" +
+    //                          " * Some javadocs\n" +
+    //                          " */\n" +
+    //                          "public interface Test2 {\n" +
+    //                          "    public static final String HEADER = \"HELLO2\";\n" +
+    //                          "    public static final int D = 2;\n" +
+    //                          "} ";
+    //actualResult = replacer.testReplace(s34,s35,s36,options);
+    //
+    //assertEquals(
+    //  "Replacing comments with javadoc for fields",
+    //  expectedResult13,
+    //  actualResult
+    //);
   }
 
   public void testReplaceExceptions() {
@@ -1118,5 +1203,34 @@ public class StructuralReplaceTest extends IdeaTestCase {
     //  expectedResult,
     //  actualResult
     //);
+  }
+
+  /** comment */
+  public void testRemove() {
+    if (true) return;
+    String s1 = "class b {\n" +
+                "  /* comment */\n" +
+                "  int c;\n" +
+                "  /* aaa */\n" +
+                "  void  d() {}\n" +
+                "  /* class */\n" +
+                "  class e {}\n" +
+                "}";
+    String s2 = "/* 'a:[regex( .* )] */";
+    String s3 = "";
+
+    /** comment */
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+    String expectedResult = "class b {\n" +
+                            "  int c;\n" +
+                            "  void d() {}\n" +
+                            "  class e {}\n" +
+                            "}";
+
+    assertEquals(
+      "Removing comment",
+      expectedResult,
+      actualResult
+    );
   }
 }
