@@ -173,5 +173,5 @@ public abstract class CallerChooser extends DialogWrapper {
     super.doOKAction();
   }
 
-  abstract protected void callersChosen(Set<PsiMethod> allCallers);
+  abstract protected void callersChosen(Set<PsiMethod> callers);
 }
