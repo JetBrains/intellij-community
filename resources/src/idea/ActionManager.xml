@@ -399,8 +399,8 @@
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction" text="Comment with _Block Comment" description="Comment/uncomment code with block comments"/>
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction" text="_Auto-Indent Lines" description="Indent current line or selected block according to the code style settings"/>
         <separator/>
-        <action id="MoveStatementDown" class="com.intellij.openapi.editor.actions.MoveStatementDownAction" text="Move Statement Do_wn" description="Move selected statements one line down"/>
-        <action id="MoveStatementUp" class="com.intellij.openapi.editor.actions.MoveStatementUpAction" text="Move Statement _Up" description="Move selected statements one line up"/>
+        <action id="MoveStatementDown" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementDownAction" text="Move Statement Do_wn" description="Move selected statements one line down"/>
+        <action id="MoveStatementUp" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementUpAction" text="Move Statement _Up" description="Move selected statements one line up"/>
       </group>
 
       <group id="AnalyzeMenu" text="Analy_ze" popup="true">

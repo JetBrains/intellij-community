@@ -6,9 +6,10 @@
  * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.openapi.editor.actions;
+package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actions.moveUpDown.MoveStatementHandler;
 
 public class MoveStatementUpAction extends EditorAction {
   public MoveStatementUpAction() {
