@@ -51,7 +51,7 @@
       <action id="Subversion.Update" class="com.qintsoft.svn4idea.actions.UpdateAction" text="Update file" description="Update the file from Subversion"/>
       -->
       <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert file" description="Revert file to repository state"/>
-      <!--<action id="Subversion.Resolved" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolved confilct" description="Tell Subversion that the conflict has been resolved"/>-->
+      <action id="Subversion.Resolved" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolved confilct" description="Tell Subversion that the conflict has been resolved"/>
       <separator/>
       <reference id="Subversion.ShowDiffAction"/>
       <!--
