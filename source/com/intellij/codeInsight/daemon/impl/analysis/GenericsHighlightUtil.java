@@ -437,6 +437,15 @@ public abstract class GenericsHighlightUtil {
       return isUncheckedTypeCast(((PsiArrayType)castType).getComponentType(), ((PsiArrayType)exprType).getComponentType());
     }
     if (exprType instanceof PsiArrayType || castType instanceof PsiArrayType) return false;
+
+    if (exprType instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)exprType).getConjuncts();
+      for (int i = 0; i < conjuncts.length; i++) {
+        if (isUncheckedTypeCast(castType, conjuncts[i])) return true;
+      }
+      return false;
+    }
+
     LOG.assertTrue(exprType instanceof PsiClassType && castType instanceof PsiClassType, "Invalid types: castType =" + castType + ", exprType=" + exprType);
     PsiClassType.ClassResolveResult resolveResult1 = ((PsiClassType)exprType).resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = ((PsiClassType)castType).resolveGenerics();
@@ -451,11 +460,18 @@ public abstract class GenericsHighlightUtil {
       if (aClass.isInheritor(bClass, true)) {
         base = bClass;
         substitutor1 = TypeConversionUtil.getSuperClassSubstitutor(bClass, aClass, substitutor1);
-      } else if (bClass.isInheritor(aClass, true)) {
+      }
+      else if (bClass.isInheritor(aClass, true)) {
         base = aClass;
         substitutor2 = TypeConversionUtil.getSuperClassSubstitutor(aClass, bClass, substitutor2);
-      } else return false;
-    } else base = aClass;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      base = aClass;
+    }
 
     LOG.assertTrue(substitutor1 != null && substitutor2 != null);
     Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(base);

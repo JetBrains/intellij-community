@@ -91,7 +91,14 @@ public class TypeConversionUtil {
     }
     //Done with array types
 
-    if (fromType instanceof PsiIntersectionType || toType instanceof PsiIntersectionType) return false;
+    if (fromType instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)fromType).getConjuncts();
+      for (int i = 0; i < conjuncts.length; i++) {
+        if (isNarrowingReferenceConversionAllowed(conjuncts[i], toType)) return true;
+      }
+      return false;
+    } else if (toType instanceof PsiIntersectionType) return false;
+
     if (fromType instanceof PsiWildcardType || toType instanceof PsiWildcardType) return false;
 
     if (toType instanceof PsiCapturedWildcardType) return false;
