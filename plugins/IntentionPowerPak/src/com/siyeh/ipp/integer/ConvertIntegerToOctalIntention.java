@@ -2,6 +2,8 @@ package com.siyeh.ipp.integer;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
@@ -25,6 +27,8 @@ public class ConvertIntegerToOctalIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+
         final PsiLiteralExpression exp =
                 (PsiLiteralExpression) findMatchingElement(file, editor);
         String textString = exp.getText();

@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.psiutils.*;
+import com.siyeh.ipp.psiutils.BoolUtils;
+import com.siyeh.ipp.psiutils.ComparisonUtils;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public abstract class Intention implements IntentionAction{
     private final PsiElementPredicate predicate;
@@ -25,8 +27,7 @@ public abstract class Intention implements IntentionAction{
             throws IncorrectOperationException{
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
-        final PsiExpression newCall =
-                factory.createExpressionFromText(newExpression, null);
+        final PsiExpression newCall = factory.createExpressionFromText(newExpression, null);
         final PsiElement insertedElement = exp.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
@@ -97,8 +98,7 @@ public abstract class Intention implements IntentionAction{
             throws IncorrectOperationException{
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
-        final PsiStatement newCall =
-                factory.createStatementFromText(newStatement, null);
+        final PsiStatement newCall = factory.createStatementFromText(newStatement, null);
         final PsiElement insertedElement = statement.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
@@ -109,7 +109,7 @@ public abstract class Intention implements IntentionAction{
         final int position = caretModel.getOffset();
         PsiElement element = file.findElementAt(position);
         while(element != null){
-            if(element.isWritable() && predicate.satisfiedBy(element)){
+            if(predicate.satisfiedBy(element)){
                 return element;
             } else{
                 element = element.getParent();

@@ -2,6 +2,8 @@ package com.siyeh.ipp.decls;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
@@ -23,6 +25,7 @@ public class SimplifyVariableIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
         final PsiVariable var = (PsiVariable) findMatchingElement(file, editor);
         var.normalizeDeclaration();
     }
