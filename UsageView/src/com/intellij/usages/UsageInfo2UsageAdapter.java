@@ -145,7 +145,9 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public void navigate(boolean focus) {
-    openTextEditor(focus);
+    if (canNavigate()) {
+      openTextEditor(focus);
+    }
   }
 
   private Editor openTextEditor(boolean focus) {
@@ -154,7 +156,8 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public boolean canNavigate() {
-    return getDescriptor().canNavigate();
+    final OpenFileDescriptor descriptor = getDescriptor();
+    return descriptor != null ? descriptor.canNavigate() : false;
   }
 
 
@@ -210,7 +213,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
         }
       }
     }
-    
+
     return null;
   }
 
