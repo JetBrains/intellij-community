@@ -599,21 +599,6 @@ public class TypeConversionUtil {
     }
   }
 
-  public static boolean isDirectlyAssignableFromClassType(PsiClassType from, PsiClassType to) {
-    final PsiClassType.ClassResolveResult fromResolveResult = from.resolveGenerics();
-    final PsiClassType.ClassResolveResult toResolveResult = to.resolveGenerics();
-    final PsiClass fromClass = fromResolveResult.getElement();
-    final PsiClass toClass = toResolveResult.getElement();
-    if (fromClass == null || toClass == null) {
-      return false;
-    }
-    if (!fromClass.isInheritor(toClass, true)) {
-      return toClass.getManager().areElementsEquivalent(fromClass, toClass) && to.equals(from);
-    }
-    final PsiSubstitutor toClassSubstitutor = getSuperClassSubstitutor(toClass, fromClass, fromResolveResult.getSubstitutor());
-    return to.equals(toClass.getManager().getElementFactory().createType(toClass, toClassSubstitutor));
-  }
-
   private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType) {
     return isAssignable(left, rightWildcardType.getExtendsBound());
   }

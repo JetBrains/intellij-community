@@ -1,12 +1,12 @@
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -64,9 +64,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-    final PsiElement staticParentElement = HighlightUtil.getPossibleStaticParentElement(expr, parentClass);
-    boolean declareStatic = staticParentElement instanceof PsiModifierListOwner
-                            && ((PsiModifierListOwner)staticParentElement).hasModifierProperty(PsiModifier.STATIC);
+    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(expr, parentClass);
+    boolean declareStatic = staticParentElement != null;
 
     boolean isInSuperOrThis = false;
     if (!declareStatic) {

@@ -3,7 +3,6 @@ package com.intellij.refactoring.util;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,10 +70,7 @@ public class RefactoringUtil {
   }
 
   public static boolean isInStaticContext(PsiElement element) {
-    final PsiElement staticParentElement = HighlightUtil.getPossibleStaticParentElement(element, null);
-    if (staticParentElement == null) return false;
-    return staticParentElement instanceof PsiModifierListOwner
-      && ((PsiModifierListOwner)staticParentElement).hasModifierProperty(PsiModifier.STATIC);
+    return PsiUtil.getEnclosingStaticElement(element, null) != null;
   }
 
   public static boolean isResolvableType(PsiType type) {

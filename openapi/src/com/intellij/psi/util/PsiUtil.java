@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.jsp.JspElement;
@@ -27,6 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 
 public final class PsiUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
   public static final int ACCESS_LEVEL_PACKAGE_LOCAL = 2;
@@ -44,14 +46,6 @@ public final class PsiUtil {
   public static boolean isAccessibleFromPackage(PsiModifierListOwner element, PsiPackage aPackage) {
     if (element.hasModifierProperty(PsiModifier.PUBLIC)) return true;
     if (element.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    return element.getManager().isInPackage(element, aPackage);
-  }
-
-  /**
-   * @deprecated Use {@link PsiManager#isInPackage(com.intellij.psi.PsiElement, com.intellij.psi.PsiPackage)}
-   * instead.
-   */
-  public static boolean isInPackage(PsiElement element, PsiPackage aPackage) {
     return element.getManager().isInPackage(element, aPackage);
   }
 
@@ -149,20 +143,6 @@ public final class PsiUtil {
       if (!(type instanceof PsiClassType || type instanceof PsiArrayType)) return ResolveResult.EMPTY;
       return PsiUtil.resolveGenericsClassInType(type);
     }
-  }
-
-  public static PsiModifierList getModifierList(PsiElement element) {
-    if (element instanceof PsiModifierListOwner) {
-      return ((PsiModifierListOwner) element).getModifierList();
-    }
-    else {
-      return null;
-    }
-  }
-
-  public static boolean hasModifierProperty(PsiModifierListOwner owner, String property) {
-    final PsiModifierList modifierList = owner.getModifierList();
-    return modifierList == null ? false : modifierList.hasModifierProperty(property);
   }
 
   public static boolean isConstantExpression(PsiExpression expression) {
@@ -756,6 +736,22 @@ public final class PsiUtil {
         PsiClass aClass = classes[i];
         if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
       }
+    }
+    return null;
+  }
+
+  /**
+   * @return element with static modifier enclosing place and enclosed by aClass (if not null)
+   */
+  public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, PsiClass aClass) {
+    LOG.assertTrue(aClass == null || PsiTreeUtil.isAncestor(aClass, place, false));
+    PsiElement parent = place;
+    while (parent != aClass) {
+      if (parent instanceof PsiFile) break;
+      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
+        return (PsiModifierListOwner)parent;
+      }
+      parent = parent.getParent();
     }
     return null;
   }

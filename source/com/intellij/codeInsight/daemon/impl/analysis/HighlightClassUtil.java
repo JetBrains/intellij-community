@@ -826,19 +826,18 @@ public class HighlightClassUtil {
   public static HighlightInfo reportIllegalEnclosingUsage(final PsiElement place,
                                                           PsiClass aClass, final PsiClass outerClass,
                                                           PsiElement elementToHighlight) {
-    final PsiElement staticParent = HighlightUtil.getPossibleStaticParentElement(place, outerClass);
-    if (staticParent == null) {
+    if (!PsiTreeUtil.isAncestor(outerClass, place, false)) {
       String description = MessageFormat.format("''{0}'' is not an enclosing class",
                                                 new Object[]{outerClass == null ? "" : HighlightUtil.formatClass(outerClass)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
     }
-    final PsiModifierList modifierList = PsiUtil.getModifierList(staticParent);
-    if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+    final PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, outerClass);
+    if (staticParent != null && staticParent.hasModifierProperty(PsiModifier.STATIC)) {
       String description = MessageFormat.format(REFERENCED_FROM_STATIC_CONTEXT,
                                                 new Object[]{outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + ".this"});
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
       // make context not static or referenced class static
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(modifierList, PsiModifier.STATIC, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(staticParent, PsiModifier.STATIC, false));
       if (aClass != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, aClass.getModifierList()) == null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(aClass, PsiModifier.STATIC, true));
       }

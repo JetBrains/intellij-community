@@ -20,7 +20,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -37,8 +36,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon getIcon(PsiElement element, int flags, boolean elementWritable) {
     RowIcon baseIcon;
     boolean showReadStatus = (flags & ICON_FLAG_READ_STATUS) != 0;
-    PsiModifierList modifierList = PsiUtil.getModifierList(element);
-
     if (element instanceof PsiDirectory) {
       Icon symbolIcon;
       final PsiDirectory psiDirectory = (PsiDirectory)element;
@@ -82,8 +79,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
           symbolIcon = Icons.ENUM_ICON;
         }
         else if (aClass.isInterface()) {
-          symbolIcon =
-          modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)
+          symbolIcon = aClass.hasModifierProperty(PsiModifier.STATIC)
           ? Icons.STATIC_INTERFACE_ICON
           : Icons.INTERFACE_ICON;
         }
@@ -91,8 +87,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
           symbolIcon = Icons.JSP_ICON;
         }
         else {
-          symbolIcon =
-          modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)
+          symbolIcon = aClass.hasModifierProperty(PsiModifier.STATIC)
           ? Icons.STATIC_CLASS_ICON
           : Icons.CLASS_ICON;
         }
@@ -111,9 +106,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = createLockableExcludableIcon(symbolIcon, showReadStatus && !elementWritable, isExcluded);
     }
     else if (element instanceof PsiMethod) {
-      final EjbMethodRole role = J2EERolesUtil.getEjbRole((PsiMethod)element);
+      final PsiMethod method = (PsiMethod)element;
+      final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
       Icon methodIcon = role == null
-                        ? modifierList.hasModifierProperty(PsiModifier.STATIC) ? Icons.STATIC_METHOD_ICON : Icons.METHOD_ICON
+                        ? method.hasModifierProperty(PsiModifier.STATIC) ? Icons.STATIC_METHOD_ICON : Icons.METHOD_ICON
                         : role.getIcon();
       baseIcon = createLockableIcon(methodIcon, false);
     }
@@ -155,6 +151,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return null;
     }
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
+      PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
       IconUtilEx.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;

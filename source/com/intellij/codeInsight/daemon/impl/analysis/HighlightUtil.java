@@ -286,7 +286,7 @@ public class HighlightUtil {
           final PsiField field = (PsiField)resolved;
           final PsiClass aClass = field.getContainingClass();
           if (aClass != null
-              && PsiUtil.hasModifierProperty(aClass, PsiModifier.PACKAGE_LOCAL)
+              && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
               && !aClass.getManager().arePackagesTheSame(aClass, place)) {
 
             return aClass;
@@ -991,25 +991,6 @@ public class HighlightUtil {
     return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
   }
 
-  /**
-   * @return element with static modifier if this() or super() expression is in static context with respect to class aClass,
-   *         not static element if not, and null if aClass is not an enclosing class of context
-   */
-  public static PsiElement getPossibleStaticParentElement(PsiElement context, PsiClass aClass) {
-    PsiElement staticElement = context;
-    PsiElement parent = context;
-    if (aClass != null && !PsiTreeUtil.isAncestor(aClass, context, false)) return null;
-    while (parent != aClass) {
-      if (parent instanceof PsiFile) break;
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
-        staticElement = parent;
-        break;
-      }
-      parent = parent.getParent();
-    }
-    return staticElement;
-  }
-
   static String buildProblemWithStaticDescription(PsiElement refElement) {
     String prefix = "";
     if (refElement instanceof PsiVariable) {
@@ -1038,39 +1019,39 @@ public class HighlightUtil {
                                             new ModifierFix(modifierList, PsiModifier.STATIC, true));
     }
     // make context non static
-    final PsiElement staticParent = getPossibleStaticParentElement(place, null);
-    if (staticParent instanceof PsiModifierListOwner
-        && PsiUtil.hasModifierProperty((PsiModifierListOwner)staticParent, PsiModifier.STATIC)) {
-      QuickFixAction.registerQuickFixAction(errorResult,
-                                            new ModifierFix((PsiModifierListOwner)staticParent, PsiModifier.STATIC, false));
+    final PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
+    if (staticParent != null) {
+      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(staticParent, PsiModifier.STATIC, false));
     }
   }
 
   static String buildProblemWithAccessDescription(PsiElement refElement, PsiJavaCodeReferenceElement reference, ResolveResult result) {
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
-    if (PsiUtil.hasModifierProperty((PsiModifierListOwner)refElement, PsiModifier.PRIVATE)) {
+    if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PRIVATE)) {
       String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
       return MessageFormat.format(SYMBOL_IS_PRIVATE, new Object[]{symbolName, containerName});
     }
-    else if (PsiUtil.hasModifierProperty((PsiModifierListOwner)refElement, PsiModifier.PROTECTED)) {
-      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-      return MessageFormat.format(SYMBOL_IS_PROTECTED, new Object[]{symbolName, containerName});
-    }
     else {
-      final PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
-      if (packageLocalClass != null) {
-        refElement = packageLocalClass;
-        symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
-      }
-      if (PsiUtil.hasModifierProperty((PsiModifierListOwner)refElement, PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
+      if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PROTECTED)) {
         String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-        return MessageFormat.format(SYMBOL_IS_PACKAGE_LOCAL, new Object[]{symbolName, containerName});
+        return MessageFormat.format(SYMBOL_IS_PROTECTED, new Object[]{symbolName, containerName});
       }
       else {
-        String containerName = HighlightMessageUtil.getSymbolName(
-          refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent(), result.getSubstitutor());
-        return MessageFormat.format("Cannot access ''{0}'' in ''{1}''", new Object[]{symbolName, containerName});
+        final PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
+        if (packageLocalClass != null) {
+          refElement = packageLocalClass;
+          symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
+        }
+        if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
+          String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+          return MessageFormat.format(SYMBOL_IS_PACKAGE_LOCAL, new Object[]{symbolName, containerName});
+        }
+        else {
+          String containerName = HighlightMessageUtil.getSymbolName(
+            refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent(), result.getSubstitutor());
+          return MessageFormat.format("Cannot access ''{0}'' in ''{1}''", new Object[]{symbolName, containerName});
+        }
       }
     }
   }
@@ -1313,10 +1294,10 @@ public class HighlightUtil {
     final PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
     // instance initializers may access static fields
-    boolean isStaticClassInitializer = classInitializer != null && PsiUtil.hasModifierProperty(classInitializer, PsiModifier.STATIC);
-    boolean isStaticInitField = initField != null && PsiUtil.hasModifierProperty(initField, PsiModifier.STATIC);
+    boolean isStaticClassInitializer = classInitializer != null && classInitializer.hasModifierProperty(PsiModifier.STATIC);
+    boolean isStaticInitField = initField != null && initField.hasModifierProperty(PsiModifier.STATIC);
     boolean inStaticContext = isStaticInitField || isStaticClassInitializer;
-    if (!inStaticContext && PsiUtil.hasModifierProperty(referencedField, PsiModifier.STATIC)) return null;
+    if (!inStaticContext && referencedField.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (PsiUtil.isOnAssignmentLeftHand(expression) && !PsiUtil.isAccessedForReading(expression)) return null;
     if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) return null;
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
@@ -1430,7 +1411,7 @@ public class HighlightUtil {
       }
       else if (resolved instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)resolved;
-        if (PsiUtil.hasModifierProperty(aClass, PsiModifier.STATIC)) return null;
+        if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
         referencedClass = aClass.getContainingClass();
         if (referencedClass == null) return null;
         resolvedName = PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME);
