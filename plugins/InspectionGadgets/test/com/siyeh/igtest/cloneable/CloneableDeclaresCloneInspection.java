@@ -6,5 +6,10 @@ public class CloneableDeclaresCloneInspection  implements Cloneable
     {
 
     }
+    
+    public void barangus()
+    {
+
+    }
 
 }

@@ -9,7 +9,7 @@
     Avoid repeated casting
     arithmetic operations on volatile types
     Field has setter but no getter
-    Name with forbidden component
+    Class name with forbidden component
     Paired open/close for Sockets
     Paired open/close for Channels
     Paired acquire/release for Locks
@@ -19,10 +19,12 @@
     Non-Boolean method name cannot begin with
     Equals methods that do not check parameter type
     Call to simple getter or setter from within class
+    Copyright comment
 
     Inheritance as type def (change the EmptyClass inspection)
     changing multiply/divide to shift may change precedence!
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
     SerialVersionUID calculation
+    Filter resource management inspection for in-memory streams
 

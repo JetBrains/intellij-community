@@ -278,6 +278,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MethodNameSameAsClassNameInspection.class);
         inspectionClasses.add(MethodNameSameAsParentNameInspection.class);
         inspectionClasses.add(StandardVariableNamesInspection.class);
+        inspectionClasses.add(QuestionableNameInspection.class);
         inspectionClasses.add(ConfusingMainMethodInspection.class);
         inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
         inspectionClasses.add(DollarSignInNameInspection.class);
