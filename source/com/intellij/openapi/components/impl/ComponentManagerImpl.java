@@ -576,7 +576,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       DecoratingComponentAdapter initializingAdapter = new DecoratingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true)) {
         public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
           Object componentInstance = super.getComponentInstance(picoContainer);
-          initComponent((BaseComponent)componentInstance, (Class)componentKey);
+          if (componentInstance instanceof BaseComponent) {
+            initComponent((BaseComponent)componentInstance, (Class)componentKey);
+          }
           return componentInstance;
         }
       };

@@ -282,7 +282,15 @@ public class ExtensionPointImpl implements ExtensionPoint {
       return true;
     }
     else if (myLoadedAdapters.contains(componentAdapter)) {
-      unregisterExtension(componentAdapter.getExtension());
+      final Object componentKey = componentAdapter.getComponentKey();
+      myOwner.getMutablePicoContainer().unregisterComponent(componentKey);
+      final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
+      for (int i = 0; i < pluginContainers.length; i++) {
+        MutablePicoContainer pluginContainer = pluginContainers[i];
+        pluginContainer.unregisterComponent(componentKey);
+      }
+
+      internalUnregisterExtension(componentAdapter.getExtension());
       return true;
     }
     return false;
