@@ -102,6 +102,7 @@ public class PositionHighlighter {
         HighlighterLayer.SELECTION - 1,
         scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES)
       );
+      myHighlighter.setErrorStripeTooltip("Execution line");
     }
 
     public void remove() {

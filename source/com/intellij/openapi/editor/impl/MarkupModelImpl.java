@@ -101,13 +101,13 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
                                               int layer,
-                                              TextAttributes textProperties,
+                                              TextAttributes textAttributes,
                                               HighlighterTargetArea targetArea,
                                               boolean isPersistent) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     RangeHighlighterImpl segmentHighlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea,
-                                                                       textProperties, isPersistent);
+                                                                       textAttributes, isPersistent);
     myHighlighters.add(segmentHighlighter);
     myCachedHighlighters = null;
     myHighlighterList.addSegmentHighlighter(segmentHighlighter);
@@ -119,9 +119,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
                                               int layer,
-                                              TextAttributes textProperties,
+                                              TextAttributes textAttributes,
                                               HighlighterTargetArea targetArea) {
-    return addRangeHighlighter(startOffset, endOffset, layer, textProperties, targetArea, false);
+    return addRangeHighlighter(startOffset, endOffset, layer, textAttributes, targetArea, false);
   }
 
   public void removeHighlighter(RangeHighlighter segmentHighlighter) {

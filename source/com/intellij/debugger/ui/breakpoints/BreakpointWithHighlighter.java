@@ -440,6 +440,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if (!highlighter.isValid()) {
       return null;
     }
+    highlighter.setErrorStripeTooltip("Breakpoint at line "+lineIndex);
     return highlighter;
   }
 

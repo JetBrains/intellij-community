@@ -40,6 +40,9 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     myTargetArea = target;
     myLayer = layer;
     myModel = (MarkupModelImpl)model;
+    if (textAttributes != null) {
+      myErrorStripeColor = textAttributes.getErrorStripeColor();
+    }
   }
 
   public TextAttributes getTextAttributes() {
