@@ -241,6 +241,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
 
   public LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent) {
+    if (System.getProperty("idea.ignore.changemarkers") != null) return null;
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
       result = LineStatusTracker.createOn(document, lastUpToDateContent, getProject());
