@@ -246,6 +246,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
 
     PsiManager manager = ref.getManager();
+    if (manager == null) return false;
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     PsiShortNamesCache cache = manager.getShortNamesCache();

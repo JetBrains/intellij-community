@@ -102,13 +102,11 @@ public class IconUtilEx {
         icon = Icons.PRIVATE_ICON;
         break;
       default:
-        {
-          if (Icons.PUBLIC_ICON != null) {
-            icon = EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
-          }
-          else {
-            return;
-          }
+        if (Icons.PUBLIC_ICON != null) {
+          icon = EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+        }
+        else {
+          return;
         }
     }
     baseIcon.setIcon(icon, 1);
