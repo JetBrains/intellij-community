@@ -67,9 +67,8 @@ public class TreeModelBuilder {
   public static final String TEST_NAME = "Test Classes";
   public static final String LIBRARY_NAME = "Library Classes";
 
-  private TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker) {
+  private TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
-    DependencyUISettings settings = DependencyUISettings.getInstance();
     myShowModules = settings.UI_SHOW_MODULES;
     myGroupByScopeType = settings.UI_GROUP_BY_SCOPE_TYPE;
     myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
@@ -125,14 +124,14 @@ public class TreeModelBuilder {
     boolean isMarked(PsiFile file);
   }
 
-  public static TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker) {
-    return new TreeModelBuilder(project, true, marker).build(files, showProgress);
+  public static TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+    return new TreeModelBuilder(project, true, marker, settings).build(files, showProgress);
   }
 
   public static TreeModel createTreeModel(Project project, boolean showProgress,
                                           boolean showIndividualLibs,
                                           Marker marker) {
-    return new TreeModelBuilder(project, showIndividualLibs, marker).build(project, showProgress);
+    return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project, showProgress);
   }
 
   private VirtualFile[] getLibraryRoots(Project project) {

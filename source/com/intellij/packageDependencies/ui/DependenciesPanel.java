@@ -54,7 +54,7 @@ public class DependenciesPanel extends JPanel {
   private Project myProject;
   private DependenciesBuilder myBuilder;
   private Content myContent;
-
+  private DependencyPanelSettings mySettings = new DependencyPanelSettings();
 
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder) {
@@ -260,7 +260,7 @@ public class DependenciesPanel extends JPanel {
   }
 
   private TreeModelBuilder.TreeModel buildTreeModel(Set<PsiFile> deps, TreeModelBuilder.Marker marker) {
-    return TreeModelBuilder.createTreeModel(myProject, false, deps, marker);
+    return TreeModelBuilder.createTreeModel(myProject, false, deps, marker, mySettings);
   }
 
   private void updateLeftTreeModel() {
@@ -342,6 +342,7 @@ public class DependenciesPanel extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      mySettings.copyToApplicationDependencySettings();
     }
   }
 
@@ -351,11 +352,12 @@ public class DependenciesPanel extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES;
+      return mySettings.UI_FLATTEN_PACKAGES;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
+      mySettings.UI_FLATTEN_PACKAGES = flag;
       rebuild();
     }
   }
@@ -366,11 +368,12 @@ public class DependenciesPanel extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_SHOW_FILES;
+      return mySettings.UI_SHOW_FILES;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
+      mySettings.UI_SHOW_FILES = flag;
       rebuild();
     }
   }
@@ -381,11 +384,12 @@ public class DependenciesPanel extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_SHOW_MODULES;
+      return mySettings.UI_SHOW_MODULES;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
+      mySettings.UI_SHOW_MODULES = flag;
       rebuild();
     }
   }
@@ -396,11 +400,12 @@ public class DependenciesPanel extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE;
+      return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
+      mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
       rebuild();
     }
   }
@@ -412,11 +417,12 @@ public class DependenciesPanel extends JPanel {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
+      return mySettings.UI_FILTER_LEGALS;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
+      mySettings.UI_FILTER_LEGALS = flag;
       rebuild();
     }
   }
@@ -446,6 +452,7 @@ public class DependenciesPanel extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myBuilder.isBackward()) {
@@ -572,6 +579,7 @@ public class DependenciesPanel extends JPanel {
         PsiElement elt = node.getPsiElement();
         if (elt != null) {
           DependencyUISettings.getInstance().UI_FILTER_LEGALS = false;
+          mySettings.UI_FILTER_LEGALS = false;
           selectElementInLeftTree(elt);
 
         }
@@ -590,6 +598,32 @@ public class DependenciesPanel extends JPanel {
         myLeftTree.setSelectionPath(new TreePath(((DefaultTreeModel)myLeftTree.getModel()).getPathToRoot(child)));
         break;
       }
+    }
+  }
+
+  public static class DependencyPanelSettings {
+    public boolean UI_FLATTEN_PACKAGES = true;
+    public boolean UI_SHOW_FILES = false;
+    public boolean UI_SHOW_MODULES = true;
+    public boolean UI_FILTER_LEGALS = false;
+    public boolean UI_GROUP_BY_SCOPE_TYPE = true;
+
+    public DependencyPanelSettings() {
+      final DependencyUISettings settings = DependencyUISettings.getInstance();
+      UI_FLATTEN_PACKAGES = settings.UI_FLATTEN_PACKAGES;
+      UI_SHOW_FILES = settings.UI_SHOW_FILES;
+      UI_SHOW_MODULES = settings.UI_SHOW_MODULES;
+      UI_FILTER_LEGALS = settings.UI_FILTER_LEGALS;
+      UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
+    }
+
+    public void copyToApplicationDependencySettings(){
+      final DependencyUISettings settings = DependencyUISettings.getInstance();
+      settings.UI_FLATTEN_PACKAGES = UI_FLATTEN_PACKAGES;
+      settings.UI_SHOW_FILES = UI_SHOW_FILES;
+      settings.UI_SHOW_MODULES = UI_SHOW_MODULES;
+      settings.UI_FILTER_LEGALS = UI_FILTER_LEGALS;
+      settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
     }
   }
 }
