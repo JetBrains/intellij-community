@@ -30,5 +30,11 @@ public interface ASTNode extends UserDataHolder {
 
   ASTNode[] getChildren(TokenSet filter);
 
+  void addChild(ASTNode child, ASTNode anchorBefore);
+  void removeChild(ASTNode child);
+  void replaceChild(ASTNode oldChild, ASTNode newChild);
+  void replaceAllChildrenToChildrenOf(ASTNode anotherParent);
+  void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore);
+
   Object clone();
 }

@@ -3,8 +3,10 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.lang.ASTNode;
+import sun.plugin.dom.exception.InvalidStateException;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
@@ -127,5 +129,25 @@ public abstract class LeafElement extends TreeElement {
 
   public ASTNode[] getChildren(TokenSet filter) {
     return TreeElement.EMPTY_ARRAY;
-  }  
+  }
+
+  public void addChild(ASTNode child, ASTNode anchorBefore) {
+    throw new InvalidStateException("Leaf elements cannot have children.");
+  }
+
+  public void removeChild(ASTNode child) {
+    throw new InvalidStateException("Leaf elements cannot have children.");
+  }
+
+  public void replaceChild(ASTNode oldChild, ASTNode newChild) {
+    throw new InvalidStateException("Leaf elements cannot have children.");
+  }
+
+  public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
+    throw new InvalidStateException("Leaf elements cannot have children.");
+  }
+
+  public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+    throw new InvalidStateException("Leaf elements cannot have children.");
+  }
 }

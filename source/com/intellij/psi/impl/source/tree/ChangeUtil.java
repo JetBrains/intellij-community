@@ -1,18 +1,17 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -22,10 +21,11 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 public class ChangeUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
+
+  private ChangeUtil() {}
 
   public static void addChild(final CompositeElement parent, final TreeElement child, TreeElement anchorBefore) {
     LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
@@ -93,7 +93,7 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  public static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
+  private static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
     if(newCharTab == oldCharTab) return;
     while(child != null){
       CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
