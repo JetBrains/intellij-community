@@ -217,7 +217,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void commitTransaction(Document document){
     final DocumentChangeTransaction documentChangeTransaction = myTransactionsMap.get(document);
     if(documentChangeTransaction == null) return;
-    if(documentChangeTransaction.getTransactionRange() == null) return; // Nothing to do
+    if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
     try{
       final PsiElement changeScope = documentChangeTransaction.getChangeScope();
       final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
@@ -276,8 +276,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public class DocumentChangeTransaction{
     List<Pair<TextRange,StringBuffer>> myAffectedFragments = new ArrayList<Pair<TextRange, StringBuffer>>();
-    private TextRange myTransactionRange = null;
-    private final StringBuffer myTransactionBuffer = new StringBuffer();
     private final Document myDocument;
     private final PsiElement myChangeScope;
 
@@ -286,20 +284,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       myChangeScope = scope;
     }
 
-    public TextRange getTransactionRange() {
-      return myTransactionRange;
-    }
-
     public List<Pair<TextRange, StringBuffer>> getAffectedFragments() {
       return myAffectedFragments;
     }
 
     public PsiElement getChangeScope() {
       return myChangeScope;
-    }
-
-    public StringBuffer getTransactionBuffer() {
-      return myTransactionBuffer;
     }
 
     public void replace(int start, int length, String str){
