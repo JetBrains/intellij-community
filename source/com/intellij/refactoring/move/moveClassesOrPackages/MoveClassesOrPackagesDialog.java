@@ -260,9 +260,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement psiElement = myElementsToMove[idx];
         if (psiElement instanceof PsiClass) {
+          final PsiClass aClass = ((PsiClass)psiElement);
+          PsiElement toAdd;
+          if (aClass.getContainingFile() instanceof PsiJavaFile && ((PsiJavaFile)aClass.getContainingFile()).getClasses().length > 1) {
+            toAdd = aClass;
+          } else toAdd = aClass.getContainingFile();
+
           final PsiDirectory targetDirectory = destination.getTargetIfExists(psiElement.getContainingFile());
           if (targetDirectory != null) {
-            manager.checkMove(psiElement, targetDirectory);
+            manager.checkMove(toAdd, targetDirectory);
           }
         }
       }
