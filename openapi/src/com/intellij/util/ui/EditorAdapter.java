@@ -1,4 +1,4 @@
-package com.intellij.cvsSupport2.consoleView;
+package com.intellij.util.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -16,10 +16,6 @@ import com.intellij.util.Alarm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-
-/**
- * author: lesya
- */
 
 class Line {
   private final String myValue;
@@ -41,7 +37,7 @@ class Line {
 
 public class EditorAdapter {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.consoleView.EditorAdapter");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.EditorAdapter");
 
   private final Editor myEditor;
 

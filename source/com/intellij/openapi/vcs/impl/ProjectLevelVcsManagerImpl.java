@@ -33,13 +33,16 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.localVcs.LocalVcs;
@@ -62,13 +65,17 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.EditorAdapter;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent {
-
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
   private final Project myProject;
   private final Map<AbstractVcs, Boolean> myVcsToStatus = new HashMap<AbstractVcs, Boolean>();
@@ -80,7 +87,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
   private final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
   private ContentManager myContentManager;
-
+  private EditorAdapter myEditorAdapter;
 
   public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;
@@ -136,16 +143,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) { // Can be null in tests
-          ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.VCS, myContentManager.getComponent(),
-                                                                       ToolWindowAnchor.BOTTOM);
-          toolWindow.setIcon(IconLoader.getIcon("/_cvs/cvs.png"));
-          toolWindow.installWatcher(myContentManager);
-        }
-      }
-    });
+                                                                        public void run() {
+                                                                          ToolWindowManager toolWindowManager =
+                                                                          ToolWindowManager.getInstance(myProject);
+                                                                          if (toolWindowManager != null) { // Can be null in tests
+                                                                            ToolWindow toolWindow =
+                                                                            toolWindowManager.registerToolWindow(ToolWindowId.VCS,
+                                                                                                                 myContentManager.getComponent(),
+                                                                                                                 ToolWindowAnchor.BOTTOM);
+                                                                            toolWindow.setIcon(IconLoader.getIcon("/_cvs/cvs.png"));
+                                                                            toolWindow.installWatcher(myContentManager);
+                                                                          }
+                                                                        }
+                                                                      });
   }
 
   public void projectClosed() {
@@ -272,26 +282,26 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public synchronized void resetTracker(final LineStatusTracker tracker) {
     if (tracker != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myIsDisposed) return;
-          if (releaseTracker(tracker.getDocument())) {
-            installTracker(tracker.getVirtualFile(), tracker.getDocument());
-          }
-        }
-      });
+                                                        public void run() {
+                                                          if (myIsDisposed) return;
+                                                          if (releaseTracker(tracker.getDocument())) {
+                                                            installTracker(tracker.getVirtualFile(), tracker.getDocument());
+                                                          }
+                                                        }
+                                                      });
     }
   }
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      if (myIsDisposed) return;
-      synchronized (this) {
-        List<LineStatusTracker> trackers = new ArrayList<LineStatusTracker>(myLineStatusTrackers.values());
-        for (Iterator<LineStatusTracker> i = trackers.iterator(); i.hasNext();) {
-          LineStatusTracker tracker = i.next();
-          resetTracker(tracker);
-        }
+                 if (myIsDisposed) return;
+    synchronized (this) {
+      List<LineStatusTracker> trackers = new ArrayList<LineStatusTracker>(myLineStatusTrackers.values());
+      for (Iterator<LineStatusTracker> i = trackers.iterator(); i.hasNext();) {
+        LineStatusTracker tracker = i.next();
+        resetTracker(tracker);
       }
+    }
     }
 
     public void fileStatusChanged(VirtualFile virtualFile) {
@@ -356,25 +366,27 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        Module module = fileIndex.getModuleForFile(file);
-        VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
-        if (module == null) return file.getPresentableUrl();
-        StringBuffer result = new StringBuffer();
-        result.append("<");
-        result.append(module.getName());
-        result.append(">");
-        result.append(File.separatorChar);
-        result.append(contentRoot.getName());
-        String relativePath = VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
-        if (relativePath.length() > 0) {
-          result.append(File.separatorChar);
-          result.append(relativePath);
-        }
-        return result.toString();
-      }
-    });
+                                                               public String compute() {
+                                                                 ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject)
+                                                                   .getFileIndex();
+                                                                 Module module = fileIndex.getModuleForFile(file);
+                                                                 VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
+                                                                 if (module == null) return file.getPresentableUrl();
+                                                                 StringBuffer result = new StringBuffer();
+                                                                 result.append("<");
+                                                                 result.append(module.getName());
+                                                                 result.append(">");
+                                                                 result.append(File.separatorChar);
+                                                                 result.append(contentRoot.getName());
+                                                                 String relativePath =
+                                                                 VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
+                                                                 if (relativePath.length() > 0) {
+                                                                   result.append(File.separatorChar);
+                                                                   result.append(relativePath);
+                                                                 }
+                                                                 return result.toString();
+                                                               }
+                                                             });
   }
 
   public DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile) {
@@ -406,5 +418,49 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return result.toArray(new AbstractVcs[result.size()]);
 
   }
+
+  public void addMessageToConsoleWindow(String message, TextAttributes attributes) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      getOrCreateConsoleContent(getContentManager());
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+                                                          public void run() {
+                                                            getOrCreateConsoleContent(getContentManager());
+                                                          }
+                                                        }, ModalityState.defaultModalityState());
+    }
+
+    myEditorAdapter.appendString(message, attributes);
+  }
+
+  private Content getOrCreateConsoleContent(final ContentManager contentManager) {
+    final String displayName = "Console";
+    Content content = contentManager.findContent(displayName);
+    if (content == null) {
+      final EditorFactory editorFactory = EditorFactory.getInstance();
+      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""));
+      EditorSettings editorSettings = editor.getSettings();
+      editorSettings.setLineMarkerAreaShown(false);
+      editorSettings.setLineNumbersShown(false);
+      editorSettings.setFoldingOutlineShown(false);
+
+      myEditorAdapter = new EditorAdapter(editor, myProject);
+      final JComponent panel = editor.getComponent();
+      content = PeerFactory.getInstance().getContentFactory().createContent(panel, displayName, true);
+      contentManager.addContent(content);
+
+      contentManager.addContentManagerListener(new ContentManagerAdapter() {
+                                                 public void contentRemoved(ContentManagerEvent event) {
+                                                   if (event.getContent().getComponent() == panel) {
+                                                     editorFactory.releaseEditor(editor);
+                                                     contentManager.removeContentManagerListener(this);
+                                                   }
+                                                 }
+                                               });
+    }
+    return content;
+  }
+
 
 }

@@ -417,10 +417,18 @@ public class CodeEditUtil {
     final int startOffset = first.getStartOffset();
     final int endOffset = second.getStartOffset();
 
-    final PseudoText pseudoText = pseudoTextBuilder.build(project,
-                                                          settings,
-                                                          file);
+    final boolean oldValue = settings.XML_KEEP_LINE_BREAKS;
+    settings.XML_KEEP_LINE_BREAKS = false;
 
-    return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, fileType, startOffset, endOffset);
+    try {
+      final PseudoText pseudoText = pseudoTextBuilder.build(project,
+                                                            settings,
+                                                            file);
+
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, fileType, startOffset, endOffset);
+    }
+    finally {
+      settings.XML_KEEP_LINE_BREAKS = oldValue;
+    }
   }
 }

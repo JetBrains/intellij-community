@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.markup.TextAttributes;
 
 public abstract class ProjectLevelVcsManager {
   public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
@@ -61,5 +62,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract Module[] getAllModulesUnder(AbstractVcs vcs);
 
   public abstract AbstractVcs[] getAllActiveVcss();
+
+  public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
 
 }

@@ -1,12 +1,13 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
-import com.intellij.cvsSupport2.consoleView.EditorAdapter;
+import com.intellij.util.ui.EditorAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.MessageEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.EditorAdapter;
 
 import java.awt.*;
 
@@ -16,9 +17,9 @@ import java.awt.*;
 public class CvsMessagesConsole extends CvsMessagesAdapter {
 
   private EditorAdapter myOutput;
-  private static final TextAttributes USER_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-  private static final TextAttributes PROGRESS_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.ITALIC);
-  private static final TextAttributes COMMAND = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.BOLD);
+  public static final TextAttributes USER_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+  public static final TextAttributes PROGRESS_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.ITALIC);
+  public static final TextAttributes COMMAND = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.BOLD);
 
   public void connectToOutputView(Editor editor, Project project) {
     myOutput = new EditorAdapter(editor, project);
