@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.JavaWithJspTemplateDataLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -165,7 +166,7 @@ public class ParseUtil implements Constants {
       lexer.start(lexer.getBuffer(), startOffset, endOffset, state);
     }
 
-    boolean gt = lexer instanceof JavaLexer || lexer instanceof JspStep1Lexer;
+    boolean gt = lexer instanceof JavaLexer || lexer instanceof JspStep1Lexer || lexer instanceof JavaWithJspTemplateDataLexer;
     LeafElement leaf = TreeUtil.findFirstLeaf(root);
     if (leaf == null) {
       final TreeElement firstMissing = processor.process(lexer, context);
