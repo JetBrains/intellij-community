@@ -204,9 +204,12 @@ public class ExternalDocumentValidator {
                                      final String localizedMessage,
                                      final boolean warning) {
     currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
+    if (currentElement==null) {
+      currentElement = PsiTreeUtil.getParentOfType(originalElement,XmlElementDecl.class,false);
+    }
     assertValidElement(currentElement, originalElement,localizedMessage);
 
-    if (currentElement instanceof XmlTag) {
+    if (currentElement!=null) {
       myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
     }
 
