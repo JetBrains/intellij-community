@@ -197,7 +197,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("showTipsOnStartup".equals(name)) {
         try {
-          myShowTipsOnStartup = new Boolean(value).booleanValue();
+          myShowTipsOnStartup = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myShowTipsOnStartup = true;
@@ -205,7 +205,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("showOccupiedMemory".equals(name)) {
         try {
-          myShowOccupiedMemory = new Boolean(value).booleanValue();
+          myShowOccupiedMemory = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myShowOccupiedMemory = false;
@@ -213,7 +213,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("reopenLastProject".equals(name)) {
         try {
-          myReopenLastProject = new Boolean(value).booleanValue();
+          myReopenLastProject = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myReopenLastProject = true;
@@ -221,7 +221,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("autoSyncFiles".equals(name)) {
         try {
-          mySyncOnFrameActivation = new Boolean(value).booleanValue();
+          mySyncOnFrameActivation = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           mySyncOnFrameActivation = true;
@@ -229,7 +229,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("autoSaveFiles".equals(name)) {
         try {
-          mySaveOnFrameDeactivation = new Boolean(value).booleanValue();
+          mySaveOnFrameDeactivation = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           mySaveOnFrameDeactivation = true;
@@ -260,7 +260,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
       }
       if ("UTFGuessing".equals(name)) {
         try {
-          myUseUTFGuessing = new Boolean(value).booleanValue();
+          myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myUseUTFGuessing = true;
@@ -269,7 +269,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
       if ("useDefaultBrowser".equals(name)){
         try {
-          myUseDefaultBrowser = new Boolean(value).booleanValue();
+          myUseDefaultBrowser = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myUseDefaultBrowser = true;
@@ -278,7 +278,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
       if ("useCyclicBuffer".equals(name)){
         try {
-          myUseCyclicBuffer = new Boolean(value).booleanValue();
+          myUseCyclicBuffer = Boolean.valueOf(value).booleanValue();
         }
         catch (Exception ex) {
           myUseCyclicBuffer = false;
@@ -315,32 +315,32 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
     Element optionElement = new Element("option");
     optionElement.setAttribute("name", "lastTip");
-    optionElement.setAttribute("value", "" + myLastTip);
+    optionElement.setAttribute("value", Integer.toString(myLastTip));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "showTipsOnStartup");
-    optionElement.setAttribute("value", "" + myShowTipsOnStartup);
+    optionElement.setAttribute("value", Boolean.toString(myShowTipsOnStartup));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "showOccupiedMemory");
-    optionElement.setAttribute("value", "" + myShowOccupiedMemory);
+    optionElement.setAttribute("value", Boolean.toString(myShowOccupiedMemory));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "reopenLastProject");
-    optionElement.setAttribute("value", "" + myReopenLastProject);
+    optionElement.setAttribute("value", Boolean.toString(myReopenLastProject));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "autoSyncFiles");
-    optionElement.setAttribute("value", "" + mySyncOnFrameActivation);
+    optionElement.setAttribute("value", Boolean.toString(mySyncOnFrameActivation));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "autoSaveFiles");
-    optionElement.setAttribute("value", "" + mySaveOnFrameDeactivation);
+    optionElement.setAttribute("value", Boolean.toString(mySaveOnFrameDeactivation));
     parentNode.addContent(optionElement);
 
     // AutoSave if inactive
@@ -364,22 +364,22 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "UTFGuessing");
-    optionElement.setAttribute("value", "" + myUseUTFGuessing);
+    optionElement.setAttribute("value", Boolean.toString(myUseUTFGuessing));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "useDefaultBrowser");
-    optionElement.setAttribute("value", "" + myUseDefaultBrowser);
+    optionElement.setAttribute("value", Boolean.toString(myUseDefaultBrowser));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "useCyclicBuffer");
-    optionElement.setAttribute("value", "" + myUseCyclicBuffer);
+    optionElement.setAttribute("value", Boolean.toString(myUseCyclicBuffer));
     parentNode.addContent(optionElement);
 
     optionElement = new Element("option");
     optionElement.setAttribute("name", "cyclicBufferSize");
-    optionElement.setAttribute("value", "" + myCyclicBufferSize);
+    optionElement.setAttribute("value", Integer.toString(myCyclicBufferSize));
     parentNode.addContent(optionElement);
 
     if (myLastProjectLocation != null) {
