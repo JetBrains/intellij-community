@@ -91,6 +91,11 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     myFavorites.add(element);
   }
 
+  //for tests only
+  public Set<AbstractTreeNode> getFavorites() {
+    return myFavorites;
+  }
+
   public Object[] getChildElements(Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -236,7 +241,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return myFavoritesConfiguration;
   }
 
-  private AbstractUrl createUrlByElement(Object element) {
+  private static AbstractUrl createUrlByElement(Object element) {
     for (Iterator<AbstractUrl> iterator = ourAbstractUrlProviders.iterator(); iterator.hasNext();) {
       AbstractUrl urlProvider = iterator.next();
       AbstractUrl url = urlProvider.createUrlByElement(element);
@@ -245,7 +250,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return null;
   }
 
-  private AbstractUrl readUrlFromElement(Element element) {
+  private static AbstractUrl readUrlFromElement(Element element) {
     final String type = element.getAttributeValue("type");
     final String urlValue = element.getAttributeValue("url");
     final String moduleName = element.getAttributeValue("module");
@@ -259,6 +264,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
 
   public void readExternal(Element element) throws InvalidDataException {
+    myAbstractUrls.clear();
     for (Iterator<Element> iterator = element.getChildren("favorite_root").iterator(); iterator.hasNext();) {
       Element favorite = iterator.next();
       final String klass = favorite.getAttributeValue("klass");

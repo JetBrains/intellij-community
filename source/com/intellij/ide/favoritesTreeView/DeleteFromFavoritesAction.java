@@ -1,6 +1,5 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -28,13 +27,13 @@ public class DeleteFromFavoritesAction extends AnAction {
     }
   }
 
-  public void removeNodes(final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors, final Project project, String favoritesViewPane) {
+  public static void removeNodes(final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors, final Project project, String favoritesViewPane) {
     final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
     for (int i = 0; selectedNodeDescriptors != null && i < selectedNodeDescriptors.length; i++) {
       FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
       selectedNodeDescriptor = FavoritesTreeNodeDescriptor.getFavoritesRoot(selectedNodeDescriptor, project, favoritesViewPane);
       if (selectedNodeDescriptor != null) {
-        favoritesTreeViewPanel.removeFromFavorites((AbstractTreeNode)selectedNodeDescriptor.getElement());
+        favoritesTreeViewPanel.removeFromFavorites(selectedNodeDescriptor.getElement());
       }
     }
   }

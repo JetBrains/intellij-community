@@ -27,7 +27,7 @@ public class AddNewFavoritesListAction extends AnAction{
     }
   }
 
-  public FavoritesTreeViewPanel doAddNewFavoritesList(final Project project) {
+  public static FavoritesTreeViewPanel doAddNewFavoritesList(final Project project) {
     final String s =
       Messages.showInputDialog(project, "Input new favorites list name", "Add New Favorites List", Messages.getInformationIcon(), "new",
                                new InputValidator() {
@@ -37,7 +37,7 @@ public class AddNewFavoritesListAction extends AnAction{
 
                                      public boolean canClose(String inputString) {
                                        final boolean alreadyContains = ArrayUtil.find(FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists(), inputString.trim()) == -1;
-                                       return inputString != null && inputString.trim().length() > 0 && alreadyContains;
+                                       return inputString.trim().length() > 0 && alreadyContains;
                       }
                     });
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);

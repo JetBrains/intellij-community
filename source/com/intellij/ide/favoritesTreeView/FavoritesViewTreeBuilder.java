@@ -6,11 +6,17 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.projectView.impl.nodes.Form;
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.IndexComparator;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -18,9 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,7 +37,41 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private MyCopyPasteListener myCopyPasteListener;
 
   public FavoritesViewTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure) {
-    super(project, tree, treeModel, treeStructure, IndexComparator.INSTANCE);
+    super(project, tree, treeModel, treeStructure, null);
+    setNodeDescriptorComparator(new AlphaComparator(){
+      protected int getWeight(NodeDescriptor descriptor) {
+        FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;
+        final Object value = favoritesTreeNodeDescriptor.getElement().getValue();
+        if (value instanceof ModuleGroup){
+          return 0;
+        }
+        if (value instanceof Module){
+          return 1;
+        }
+        if (value instanceof PsiDirectory || value instanceof PackageElement){
+          return 2;
+        }
+        if (value instanceof PsiClass){
+          return 4;
+        }
+        if (value instanceof PsiFile){
+          return 5;
+        }
+        if (value instanceof PsiElement){
+          return 6;
+        }
+        if (value instanceof Form){
+          return 7;
+        }
+        if (value instanceof LibraryGroupElement){
+          return 8;
+        }
+        if (value instanceof NamedLibraryElement){
+          return 9;
+        }
+        return 10;
+      }
+    });
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
       protected DefaultMutableTreeNode getRootNode() {
         return myRootNode;
@@ -88,7 +126,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object[] childElements = ((FavoritesTreeStructure)myTreeStructure).getChildElements(nodeDescriptor);
+    final Object[] childElements = myTreeStructure.getChildElements(nodeDescriptor);
     return childElements != null ? childElements.length > 0 : false;
   }
 

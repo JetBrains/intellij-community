@@ -40,10 +40,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.*;
 import java.util.*;
 import java.util.List;
 
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
+  public static final String ABSTRACT_TREE_NODE_TRANSFERABLE = "AbstractTransferable";
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
 
@@ -72,11 +75,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private String myName;
   private IdeView myIdeView = new MyIdeView();
+
   public FavoritesTreeViewPanel(Project project, String helpId, String name) {
+    super(new BorderLayout());
     myProject = project;
     myHelpId = helpId;
     myName = name;
-    setLayout(new BorderLayout());
 
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
@@ -122,7 +126,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         if (value instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
           //only favorites roots to explain
-          if (node.getParent() == null || node.getParent().getParent() != null){
+          if (node.getParent() == null || node.getParent().getParent() != null) {
             return;
           }
           Object userObject = node.getUserObject();
@@ -133,9 +137,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             String locationString = treeNode.getPresentation().getLocationString();
             if (locationString != null && locationString.length() > 0) {
               append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-            } else {
+            }
+            else {
               final String location = favoritesTreeNodeDescriptor.getLocation();
-              if (location != null && location.length() > 0){
+              if (location != null && location.length() > 0) {
                 append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
               }
             }
@@ -165,9 +170,23 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
+    myTree.setTransferHandler(new TransferHandler() {
+      public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+        for (int i = 0; i < transferFlavors.length; i++) {
+          DataFlavor transferFlavor = transferFlavors[i];
+          if (transferFlavor.getHumanPresentableName().equals(ABSTRACT_TREE_NODE_TRANSFERABLE)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+    new DropTarget(myTree, new MyDropTargetListener());
+
+    //DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
   }
 
-  public void selectElement(final Object selector, final VirtualFile file){
+  public void selectElement(final Object selector, final VirtualFile file) {
     myBuilder.select(selector, file, true, myBuilder);
   }
 
@@ -219,11 +238,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return myHelpId;
     }
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      final PsiElement psiElement;
       Object[] elements = getSelectedNodeElements();
       if (elements == null || elements.length != 1) {
         return null;
       }
+      final PsiElement psiElement;
       if (elements[0] instanceof PsiElement) {
         psiElement = (PsiElement)elements[0];
       }
@@ -231,7 +250,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         psiElement = ((PackageElement)elements[0]).getPackage();
       }
       else {
-        psiElement = null;
+        return null;
       }
       return psiElement != null && psiElement.isValid() ? psiElement : null;
     }
@@ -250,7 +269,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
-    if (DataConstantsEx.IDE_VIEW.equals(dataId) ){
+    if (DataConstantsEx.IDE_VIEW.equals(dataId)) {
       return myIdeView;
     }
 
@@ -269,8 +288,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       final Object[] elements = getSelectedNodeElements();
       return elements != null && elements.length >= 1 && elements[0] instanceof Module
-        ? (DeleteProvider)myDeleteModuleProvider
-        : myDeletePSIElementProvider;
+             ? (DeleteProvider)myDeleteModuleProvider
+             : myDeletePSIElementProvider;
 
     }
     if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
@@ -328,7 +347,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     if (selectedNodeDescriptors == null) {
       return null;
     }
-    ArrayList result = new ArrayList();
+    ArrayList<Object> result = new ArrayList<Object>();
     for (int i = 0; i < selectedNodeDescriptors.length; i++) {
       FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
       if (selectedNodeDescriptor != null) {
@@ -411,7 +430,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     group.add(myAutoScrollToSourceHandler.createToggleAction());
     //group.add(new ShowStructureAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
-    
+
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FAVORITES_LIST));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.FAVORITES_VIEW_TOOLBAR, group, true).getComponent();
   }
@@ -566,7 +585,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             final String path = virtualFile.getPath();
             if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) { // if is jar-file root
               final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(
-                path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
+                  path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
               if (vFile != null) {
                 final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
                 if (psiFile != null) {
@@ -600,28 +619,81 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
       if (selectedNodeDescriptors == null || selectedNodeDescriptors.length != 1) return null;
       final FavoritesTreeNodeDescriptor currentDescriptor = selectedNodeDescriptors[0];
-      if (currentDescriptor != null && currentDescriptor.getElement() instanceof AbstractTreeNode){
-        final AbstractTreeNode currentNode = ((AbstractTreeNode)currentDescriptor.getElement());
-        if (currentNode.getValue() instanceof PsiDirectory){
-          return (PsiDirectory)currentNode.getValue();
+      if (currentDescriptor != null) {
+        if (currentDescriptor.getElement() != null) {
+          final AbstractTreeNode currentNode = currentDescriptor.getElement();
+          if (currentNode.getValue() instanceof PsiDirectory) {
+            return (PsiDirectory)currentNode.getValue();
+          }
         }
-      }
-      final NodeDescriptor parentDescriptor = currentDescriptor.getParentDescriptor();
-      if (parentDescriptor != null) {
-        final Object parentElement = parentDescriptor.getElement();
-        if (parentElement instanceof AbstractTreeNode) {
-          final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
-          if (parentNode.getValue() instanceof PsiDirectory){
-            return (PsiDirectory)parentNode.getValue();
+        final NodeDescriptor parentDescriptor = currentDescriptor.getParentDescriptor();
+        if (parentDescriptor != null) {
+          final Object parentElement = parentDescriptor.getElement();
+          if (parentElement instanceof AbstractTreeNode) {
+            final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
+            if (parentNode.getValue() instanceof PsiDirectory) {
+              return (PsiDirectory)parentNode.getValue();
+            }
           }
         }
       }
+
       return null;
     }
 
     public PsiDirectory[] getDirectories() {
       PsiDirectory directory = getDirectory();
-      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[] {directory};
+      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
+    }
+  }
+
+  //---------- DnD -------------
+  private AbstractTreeNode myDraggableObject;
+  public void setDraggableObject(final AbstractTreeNode draggableObject) {
+    myDraggableObject = draggableObject;
+  }
+  private class MyDropTargetListener implements DropTargetListener {
+    public void dragEnter(DropTargetDragEvent dtde) {
+      DataFlavor[] flavors = dtde.getCurrentDataFlavors();
+      JComponent c = (JComponent)dtde.getDropTargetContext().getComponent();
+      TransferHandler importer = c.getTransferHandler();
+      int dropAction = dtde.getDropAction();
+      if (importer != null && importer.canImport(c, flavors)) {
+        dtde.acceptDrag(dropAction);
+      }
+      else {
+        dtde.rejectDrag();
+      }
+    }
+
+    public void dragOver(DropTargetDragEvent dtde) {
+    }
+
+    public void dropActionChanged(DropTargetDragEvent dtde) {
+    }
+
+    public void drop(DropTargetDropEvent dtde) {
+      if (myDraggableObject != null) {
+        int dropAction = dtde.getDropAction();
+        if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
+          final Collection<AbstractTreeNode> children = ((AbstractTreeNode)myFavoritesTreeStructure.getRootElement()).getChildren();
+          for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
+            AbstractTreeNode abstractTreeNode = iterator.next();
+            if (abstractTreeNode.getValue() == null
+                ? myDraggableObject.getValue() == null
+                : abstractTreeNode.getValue().equals(myDraggableObject.getValue())) {
+              return;
+            }
+          }
+          addToFavorites(myDraggableObject);
+          dtde.dropComplete(true);
+          return;
+        }
+      }
+      dtde.rejectDrop();
+    }
+
+    public void dragExit(DropTargetEvent dte) {
     }
   }
 }

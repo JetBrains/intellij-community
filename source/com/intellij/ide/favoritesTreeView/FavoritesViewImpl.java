@@ -23,17 +23,17 @@ import org.jdom.Element;
 import java.util.*;
 
 public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComponent, JDOMExternalizable {
-  private Project myProject;
   private Map<String, Content> myName2FavoritesListSet = new HashMap<String, Content>();
   public String myCurrentFavoritesList;
   private Map<String, AddToFavoritesAction> myActions = new HashMap<String, AddToFavoritesAction>();
+  private Project myCurrentProject;
   public static FavoritesViewImpl getInstance(Project project) {
     return project.getComponent(FavoritesViewImpl.class);
   }
 
   public FavoritesViewImpl(Project project, ProjectManager projectManager) {
     super(new TabbedPaneContentUI(), true, project, projectManager);
-    myProject = project;
+    myCurrentProject = project;
     addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(ContentManagerEvent event) {
       }
@@ -55,12 +55,12 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         }
       }
     });
-    SelectInManager selectInManager = SelectInManager.getInstance(myProject);
+    SelectInManager selectInManager = SelectInManager.getInstance(myCurrentProject);
     selectInManager.addTarget(createSelectInTarget());
   }
 
   private SelectInTarget createSelectInTarget() {
-    return new FavoritesViewSelectInTarget(myProject);
+    return new FavoritesViewSelectInTarget(myCurrentProject);
   }
 
   public void initComponent() {
@@ -71,9 +71,9 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myCurrentProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myCurrentProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FAVORITES_VIEW, getComponent(), ToolWindowAnchor.RIGHT);
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFavorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
@@ -81,10 +81,10 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
         favoritesActionsGroup.removeAll();        
         if (myName2FavoritesListSet.isEmpty()){
-          final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myProject, null, myProject.getName());
-          final Content favoritesContent = contentFactory.createContent(panel, myProject.getName(), false);
+          final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myCurrentProject, null, myCurrentProject.getName());
+          final Content favoritesContent = contentFactory.createContent(panel, myCurrentProject.getName(), false);
           addContent(favoritesContent);
-          final String key = myProject.getName();
+          final String key = myCurrentProject.getName();
           myName2FavoritesListSet.put(key, favoritesContent);
           myCurrentFavoritesList = key;
           panel.getFavoritesTreeStructure().initFavoritesList();
@@ -126,7 +126,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public FavoritesTreeViewPanel addNewFavoritesList(String name){
     final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
-    final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myProject, null, name);
+    final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myCurrentProject, null, name);
     final Content favoritesContent = contentFactory.createContent(panel, name, false);
     addContent(favoritesContent);
     myName2FavoritesListSet.put(name, favoritesContent);
@@ -153,7 +153,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
+    ToolWindowManager.getInstance(myCurrentProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
   }
 
   private void dispose() {
@@ -175,7 +175,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       Element el = iterator.next();
       final String name = el.getAttributeValue("name");
       final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
-      final FavoritesTreeViewPanel favoritesPanel = new FavoritesTreeViewPanel(myProject, null, name);
+      final FavoritesTreeViewPanel favoritesPanel = new FavoritesTreeViewPanel(myCurrentProject, null, name);
       myName2FavoritesListSet.put(name, contentFactory.createContent(favoritesPanel, name, false));
       favoritesPanel.getFavoritesTreeStructure().readExternal(el);
     }

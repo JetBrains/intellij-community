@@ -96,7 +96,7 @@ public class AddToFavoritesAction extends AnAction {
             abstractTreeNode = abstractTreeNode.getParent();
           }
           if (abstractTreeNode != null){
-            containingModule = (Module)((AbstractModuleNode)abstractTreeNode.getParent()).getValue();
+            containingModule = ((AbstractModuleNode)abstractTreeNode.getParent()).getValue();
           }
         }
       }
@@ -164,7 +164,7 @@ public class AddToFavoritesAction extends AnAction {
       if (StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)) {
         final PsiFile formFile = psiManager.findFile(vFile);
         String text = formFile.getText();
-        LwRootContainer container = null;
+        LwRootContainer container;
         try {
           container = Utils.getRootContainer(text, null);
         }
@@ -231,7 +231,7 @@ public class AddToFavoritesAction extends AnAction {
   }
 
 
-  private Class<? extends AbstractTreeNode> getPsiElementNodeClass(PsiElement psiElement) {
+  private static Class<? extends AbstractTreeNode> getPsiElementNodeClass(PsiElement psiElement) {
     Class<? extends AbstractTreeNode> klass = null;
     if (psiElement instanceof PsiClass) {
       klass = ClassTreeNode.class;
@@ -253,7 +253,7 @@ public class AddToFavoritesAction extends AnAction {
     return klass;
   }
 
-  private Object getPsiElementNodeValue(PsiElement psiElement, Project project, Module module) {
+  private static Object getPsiElementNodeValue(PsiElement psiElement, Project project, Module module) {
     if (psiElement instanceof PsiPackage){
       final PsiPackage psiPackage = (PsiPackage)psiElement;
       final PsiDirectory[] directories = psiPackage.getDirectories();

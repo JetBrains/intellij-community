@@ -6,15 +6,15 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInManager;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
+import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.ide.util.treeView.TreeBuilderUtil;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -38,6 +38,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -176,6 +180,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
+    DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
     myComponent = new JScrollPane(myTree);
     myComponent.setBorder(BorderFactory.createEmptyBorder());
     myTreeStructure = createStructure();
@@ -264,4 +269,84 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public JComponent getComponent() {
     return myComponent;
   }
+
+   //------------- DnD for Favorites View -------------------
+
+  private static final DataFlavor[] FLAVORS;
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
+
+  static {
+    DataFlavor[] flavors;
+    try {
+      final Class<AbstractTreeNode> aClass = AbstractTreeNode.class;
+      flavors = new DataFlavor[]{new DataFlavor(
+                      DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(), FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,
+                                                                                            aClass.getClassLoader()
+                    )};
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);  // should not happen
+      flavors = new DataFlavor[0];
+    }
+    FLAVORS = flavors;
+  }
+    private class MyDragGestureListener implements DragGestureListener {
+      public void dragGestureRecognized(DragGestureEvent dge) {
+        if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
+        final Point dragOrigin = dge.getDragOrigin();
+        final AbstractTreeNode draggableObject = findAbstractTreeNodeByLocation(dragOrigin);
+        if (draggableObject != null) {
+          try {
+            FavoritesViewImpl.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject);
+            final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
+            dge.startDrag(DragSource.DefaultMoveNoDrop, new Transferable() {
+              public DataFlavor[] getTransferDataFlavors() {
+                return FLAVORS;
+              }
+
+              public boolean isDataFlavorSupported(DataFlavor flavor) {
+                DataFlavor[] flavors = getTransferDataFlavors();
+                for (int i = 0; i < flavors.length; i++) {
+                  if (flavor.equals(flavors[i])) {
+                    return true;
+                  }
+                }
+                return false;
+              }
+
+              public Object getTransferData(DataFlavor flavor) {
+                return null;
+              }
+            }, dragSourceListener);
+          }
+          catch (InvalidDnDOperationException idoe) {
+          }
+        }
+      }
+    }
+
+    private AbstractTreeNode findAbstractTreeNodeByLocation(final Point point) {
+      final int row = myTree.getRowForLocation(point.x, point.y);
+      final TreePath treePath = myTree.getPathForRow(row);
+      if (treePath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+        return (AbstractTreeNode)((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
+      }
+      return null;
+    }
+
+    private class MyDragSourceListener implements DragSourceListener {
+      public void dragEnter(DragSourceDragEvent dsde) {
+        dsde.getDragSourceContext().setCursor(null);
+      }
+
+      public void dragOver(DragSourceDragEvent dsde) {
+      }
+
+      public void dropActionChanged(DragSourceDragEvent dsde) {
+        dsde.getDragSourceContext().setCursor(null);
+      }
+      public void dragDropEnd(DragSourceDropEvent dsde) { }
+
+      public void dragExit(DragSourceEvent dse) { }
+    }
 }
