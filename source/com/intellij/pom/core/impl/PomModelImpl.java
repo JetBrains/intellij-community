@@ -31,19 +31,22 @@
  */
 package com.intellij.pom.core.impl;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.pom.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.PomProject;
+import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
@@ -127,7 +130,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     try{
     synchronized(PsiLock.LOCK){
       if(transaction.getChangeScope().getContainingFile() != null) {
-        document = manager.getDocument(transaction.getChangeScope().getContainingFile());
+        document = manager.getCachedDocument(transaction.getChangeScope().getContainingFile());
       }
       myBlockedAspects.push(aspect);
       if(document != null) synchronizer.startTransaction(document, transaction.getChangeScope());
