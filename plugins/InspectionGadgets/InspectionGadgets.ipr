@@ -18,8 +18,17 @@
   </component>
   <component name="BattleSpaces" />
   <component name="CodeStyleSettingsManager">
-    <option name="PER_PROJECT_SETTINGS" />
-    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <option name="GENERATE_FINAL_LOCALS" value="true" />
+        <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
+        <option name="IF_BRACE_FORCE" value="3" />
+        <option name="DOWHILE_BRACE_FORCE" value="3" />
+        <option name="WHILE_BRACE_FORCE" value="3" />
+        <option name="FOR_BRACE_FORCE" value="3" />
+      </value>
+    </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
@@ -27,6 +36,7 @@
     <option name="DEPLOY_AFTER_MAKE" value="0" />
     <excludeFromCompile>
       <directory url="file://$PROJECT_DIR$/test" includeSubdirectories="true" />
+      <file url="file://$PROJECT_DIR$/src/com/siyeh/ig/confusing/Iterator.java" />
     </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
@@ -197,7 +207,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgets.iml" filepath="$PROJECT_DIR$/InspectionGadgets.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="java version &quot;1.5.0-beta2&quot;" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3144" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
@@ -206,16 +216,17 @@
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
   <component name="com.siyeh.metrics.MetricsReloaded">
-    <option name="selectedProfile" value="Default" />
+    <option name="selectedProfile" value="TODOs" />
     <option name="autoscroll" value="false" />
     <option name="includeTestClasses" value="false" />
     <option name="flattenInnerClasses" value="false" />
-    <option name="cycleTableSpecificationString" value="" />
+    <option name="cycleTableSpecificationString" value="120,341,82,81,83,83,83,83" />
   </component>
   <component name="libraryTable" />
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />
     <option name="COPY_FORMS_RUNTIME_TO_OUTPUT" value="true" />
   </component>
+  <UsedPathMacros />
 </project>
 
