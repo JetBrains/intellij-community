@@ -217,6 +217,10 @@ public abstract class ChooseByNameBase{
     actionMap.setParent(myTextField.getActionMap());
     actionMap.put(DefaultEditorKit.copyAction, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        if (myTextField.getSelectedText() != null) {
+          actionMap.getParent().get(DefaultEditorKit.copyAction).actionPerformed(e);
+          return;
+        }
         final Object chosenElement = getChosenElement();
         if (chosenElement instanceof PsiElement) {
           CopyReferenceAction.doCopy((PsiElement)chosenElement, myProject);
