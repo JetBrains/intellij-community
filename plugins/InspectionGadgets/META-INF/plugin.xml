@@ -1,3 +1,4 @@
+
 <idea-plugin>
     <name>Inspection Gadgets</name>
     <category>inspection</category>
@@ -11,10 +12,5 @@
             <implementation-class>com.siyeh.ig.InspectionGadgetsPlugin</implementation-class>
         </component>
     </application-components>
-    <!--project-components>
-        <component>
-            <implementation-class>com.siyeh.ig.dependency.DependencyMap</implementation-class>
-        </component>
-    </project-components-->
 
 </idea-plugin>

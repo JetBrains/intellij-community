@@ -3,7 +3,7 @@
 <project name="InspectionGadgets" default="compile">
     <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpathref="project.class.path"/>
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/IntelliJ-IDEA-3193"/>
+    <property name="idea.dir" value="c:/IntelliJ-IDEA-3212/IntelliJ IDEA"/>
     <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea\config\plugins"/>
     <property name="debug" value="true"/>
     <property name="optimize" value="off"/>
@@ -17,6 +17,7 @@
         <pathelement location="${idea.dir}/lib/openAPI.jar"/>
         <pathelement location="${idea.dir}/lib/idea.jar"/>
         <pathelement location="${idea.dir}/lib/jdom.jar"/>
+        <pathelement location="${idea.dir}/lib/extensions.jar"/>
     </path>
 
     <target name="init">
@@ -64,7 +65,7 @@
                 <include name="**/*"/>
             </fileset>
         </zip>
-    </target>                 
+    </target>
 
     <target name="sync" depends="clean" description="Dump it to the watch">
         <sync todir="E:\InspectionGadgets">

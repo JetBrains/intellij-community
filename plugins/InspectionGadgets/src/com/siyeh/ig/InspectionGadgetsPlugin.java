@@ -14,7 +14,6 @@ import com.siyeh.ig.cloneable.CloneCallsSuperCloneInspection;
 import com.siyeh.ig.cloneable.CloneDeclaresCloneNotSupportedInspection;
 import com.siyeh.ig.cloneable.CloneableImplementsCloneInspection;
 import com.siyeh.ig.confusing.*;
-import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
 import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
@@ -31,9 +30,6 @@ import com.siyeh.ig.logging.NonStaticFinalLoggerInspection;
 import com.siyeh.ig.maturity.*;
 import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.naming.*;
-import com.siyeh.ig.packaging.PackageEncapsulationInspection;
-import com.siyeh.ig.packaging.PackageSizeInspection;
-import com.siyeh.ig.packaging.PackageTangleInspection;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
 import com.siyeh.ig.resources.IOResourceInspection;
@@ -189,7 +185,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerNamingInspections();
         registerBugInspections();
         registerCloneInspections();
-        //registerDependencyInspections();
         registerConfusingInspections();
         registerAbstractionInspections();
         registerClassLayoutInspections();
@@ -213,7 +208,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerLoggingInspections();
         registerSecurityInspections();
         registerResourceManagementInspections();
-        // registerPackagingInspections();
         Collections.sort(m_inspectionClasses, new InspectionComparator());
     }
 
@@ -223,29 +217,12 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(JDBCResourceInspection.class);
     }
 
-    private void registerDependencyInspections(){
-        final List inspectionClasses = m_inspectionClasses;
-        inspectionClasses.add(LocalButterflyInspection.class);
-        inspectionClasses.add(LocalBreakableInspection.class);
-        inspectionClasses.add(LocalHubInspection.class);
-        inspectionClasses.add(GlobalButterflyInspection.class);
-        inspectionClasses.add(GlobalBreakableInspection.class);
-        inspectionClasses.add(GlobalHubInspection.class);
-        inspectionClasses.add(TangleInspection.class);
-    }
 
     private void registerLoggingInspections(){
         final List inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ClassWithoutLoggerInspection.class);
         inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
         inspectionClasses.add(NonStaticFinalLoggerInspection.class);
-    }
-
-    private void registerPackagingInspections(){
-        final List inspectionClasses = m_inspectionClasses;
-        inspectionClasses.add(PackageSizeInspection.class);
-        inspectionClasses.add(PackageEncapsulationInspection.class);
-        inspectionClasses.add(PackageTangleInspection.class);
     }
 
     private void registerSecurityInspections(){
