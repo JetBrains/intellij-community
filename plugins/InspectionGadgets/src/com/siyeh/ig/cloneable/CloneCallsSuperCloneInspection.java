@@ -36,6 +36,10 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
             if (!"clone".equals(methodName)) {
                 return;
             }
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT))
+            {
+                return;
+            }
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList.getParameters().length != 0) {
                 return;
