@@ -19,6 +19,7 @@ import java.util.List;
  *
  */
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
+
   public CodeStyleSettings() {
     initTypeToName();
     initImports();
@@ -761,6 +762,10 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean XML_SPACE_AROUND_TAG_NAME = false;
 
   // ---------------------------------------------------------------------------------------
+
+  //-----------------------------------JSPX formatting settings-----------------------------
+  public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
+  //----------------------------------------------------------------------------------------
   private CodeStyleSettings myParentSettings;
 
   public void readExternal(org.jdom.Element element) throws InvalidDataException {
