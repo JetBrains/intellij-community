@@ -5,8 +5,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class MethodOverridesStaticMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();

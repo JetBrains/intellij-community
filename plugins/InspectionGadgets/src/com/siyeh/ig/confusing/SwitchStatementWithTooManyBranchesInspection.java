@@ -1,7 +1,9 @@
 package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;

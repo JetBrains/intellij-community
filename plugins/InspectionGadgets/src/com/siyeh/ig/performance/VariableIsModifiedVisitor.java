@@ -34,8 +34,8 @@ public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor {
 			return;
 		}
 		final String canonicalText = returnType.getCanonicalText();
-		if (!(canonicalText.equals("java.lang.StringBuffer") ||
-		        canonicalText.equals("java.lang.StringBuilder")))
+		if (!"java.lang.StringBuffer".equals(canonicalText) &&
+                    !"java.lang.StringBuilder".equals(canonicalText))
 		{
 			return;
 		}
@@ -51,7 +51,6 @@ public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor {
         if (variable.equals(referent)) {
             appendedTo = true;
         }
-
     }
 
 

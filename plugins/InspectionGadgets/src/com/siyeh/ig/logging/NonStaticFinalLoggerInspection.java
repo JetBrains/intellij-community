@@ -9,7 +9,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.text.NumberFormat;
 
 public class NonStaticFinalLoggerInspection extends ClassInspection {
 

@@ -3,14 +3,12 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection {
     private final MultiplyByPowerOfTwoFix fix = new MultiplyByPowerOfTwoFix();
@@ -90,7 +88,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementShift(expression);
             replaceExpression(project, expression, newExpression);

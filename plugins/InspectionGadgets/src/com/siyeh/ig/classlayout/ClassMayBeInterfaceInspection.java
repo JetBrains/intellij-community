@@ -4,8 +4,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -38,7 +36,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiIdentifier classNameIdentifier = (PsiIdentifier) descriptor.getPsiElement();
             final PsiClass interfaceClass = (PsiClass) classNameIdentifier.getParent();
             try {
@@ -56,7 +54,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
         private static void changeClassToInterface(PsiClass aClass)
                 throws IncorrectOperationException {
             final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-            final PsiKeyword classKeyword = (PsiKeyword)PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class); 
+            final PsiKeyword classKeyword = (PsiKeyword)PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
             final PsiManager manager = aClass.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
             final PsiKeyword interfaceKeyword = factory.createKeyword("interface");

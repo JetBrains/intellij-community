@@ -2,9 +2,9 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 

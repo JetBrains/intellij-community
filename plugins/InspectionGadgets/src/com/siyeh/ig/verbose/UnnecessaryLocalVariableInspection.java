@@ -4,8 +4,9 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.fixes.InlineVariableFix;
+import com.siyeh.ig.psiutils.VariableAssignedVisitor;
+import com.siyeh.ig.psiutils.VariableUsedVisitor;
 
 public class UnnecessaryLocalVariableInspection extends StatementInspection {
     private final InlineVariableFix fix = new InlineVariableFix();

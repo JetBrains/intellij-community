@@ -1,8 +1,8 @@
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
 import com.siyeh.ig.psiutils.LibraryUtil;
 
 import java.util.HashSet;

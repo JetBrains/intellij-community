@@ -2,8 +2,8 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

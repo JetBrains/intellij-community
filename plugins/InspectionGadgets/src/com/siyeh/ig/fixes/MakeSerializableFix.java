@@ -1,10 +1,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,13 +17,13 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(nameElement, PsiClass.class);
         final PsiManager psiManager = containingClass.getManager();
         final PsiElementFactory elementFactory = psiManager.getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        PsiJavaCodeReferenceElement ref = elementFactory.createReferenceElementByFQClassName("java.io.Serializable", scope);
+        final PsiJavaCodeReferenceElement ref = elementFactory.createReferenceElementByFQClassName("java.io.Serializable", scope);
         try{
             containingClass.getImplementsList().add(ref);
         } catch(IncorrectOperationException e){

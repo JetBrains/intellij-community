@@ -3,8 +3,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 
 public class MismatchedArrayReadWriteInspection extends VariableInspection {
 

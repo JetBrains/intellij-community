@@ -2,8 +2,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
     private static final Set queryNames = new HashSet(10);

@@ -8,8 +8,8 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class SerializableWithUnconstructableAncestorInspection extends ClassInspection {
 

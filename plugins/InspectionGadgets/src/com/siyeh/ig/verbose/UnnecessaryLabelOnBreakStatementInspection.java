@@ -2,10 +2,8 @@ package com.siyeh.ig.verbose;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.siyeh.ig.*;
 
 public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspection {
@@ -33,7 +31,7 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiElement breakKeywordElement = descriptor.getPsiElement();
             final PsiBreakStatement breakStatement =
                     (PsiBreakStatement) breakKeywordElement.getParent();

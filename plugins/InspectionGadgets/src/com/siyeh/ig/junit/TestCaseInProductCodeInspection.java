@@ -1,11 +1,12 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.fixes.MoveClassFix;
-import com.siyeh.ig.*;
 
 public class TestCaseInProductCodeInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();

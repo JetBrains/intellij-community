@@ -2,10 +2,7 @@ package com.siyeh.ig;
 
 import com.intellij.openapi.ui.Messages;
 
-import javax.swing.InputVerifier;
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import java.text.ParseException;
 
 /**

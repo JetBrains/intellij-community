@@ -2,8 +2,8 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.HashMap;
@@ -52,7 +52,7 @@ public class ComparisonUtils {
         final String operation = sign.getText();
         return s_comparisonStrings.contains(operation);
     }
-    
+
     public static boolean isComparison(String str) {
         return s_comparisonStrings.contains(str);
     }

@@ -1,7 +1,7 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 
 public class ContainsAssertionVisitor extends PsiRecursiveElementVisitor {

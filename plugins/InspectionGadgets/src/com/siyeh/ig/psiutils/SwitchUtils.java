@@ -1,9 +1,9 @@
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchStatement;
 
 public class SwitchUtils{
     private SwitchUtils(){

@@ -1,7 +1,10 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 

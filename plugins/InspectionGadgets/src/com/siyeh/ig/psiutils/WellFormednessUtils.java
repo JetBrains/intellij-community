@@ -1,9 +1,9 @@
 package com.siyeh.ig.psiutils;
 
+import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiAssignmentExpression;
 
 public class WellFormednessUtils{
     private WellFormednessUtils(){

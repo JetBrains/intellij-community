@@ -3,11 +3,14 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
 
 import javax.swing.*;

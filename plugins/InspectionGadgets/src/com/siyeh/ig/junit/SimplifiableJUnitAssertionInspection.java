@@ -3,8 +3,6 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.*;
@@ -35,8 +33,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
-
+            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression) methodNameIdentifier.getParent()

@@ -1,7 +1,7 @@
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
 
 import java.util.HashSet;
 import java.util.Set;
