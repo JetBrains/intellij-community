@@ -184,11 +184,14 @@ public class ExternalDocumentValidator {
     addAllInfos(host,results);
   }
 
+  private static Class[] parentClasses = new Class[]{XmlTag.class, XmlProcessingInstruction.class, XmlElementDecl.class};
+
   private XmlElement getNodeForMessage(final PsiElement currentElement) {
-    XmlElement parentOfType = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class, false);
-    if (parentOfType==null) {
-      parentOfType = PsiTreeUtil.getParentOfType(currentElement, XmlProcessingInstruction.class, false);
-    }
+    XmlElement parentOfType = (XmlElement)PsiTreeUtil.getParentOfType(
+        currentElement,
+        parentClasses,
+        false
+    );
     return parentOfType;
   }
 
