@@ -57,12 +57,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerImpl myManager;
   private final JoinPointSearchHelper myJoinPointSearchHelper;
-  private static final TokenSet XML_ATTRIBUTE_VALUE_TOKEN_BIT_SET = TokenSet.create(new IElementType[]{ElementType.XML_ATTRIBUTE_VALUE_TOKEN});
-  private static final TokenSet FILE_NAME_TOKEN_BIT_SET = TokenSet.create(new IElementType[]{ElementType.XML_ATTRIBUTE_VALUE_TOKEN, ElementType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_TOKEN});
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-  private static final short DEFAULT_SEARCH_CONTEXT = UsageSearchContext.IN_CODE |
-                   UsageSearchContext.IN_ALIEN_LANGUAGES |
-                   UsageSearchContext.IN_COMMENTS;
 
   public SearchScope getUseScope(PsiElement element) {
     final GlobalSearchScope maximalUseScope = myManager.getFileManager().getUseScope(element);
@@ -200,16 +195,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public interface CustomSearchHelper {
-    TokenSet getElementTokenSet();
     boolean caseInsensitive();
   }
 
   public static class XmlCustomSearchHelper implements CustomSearchHelper {
     private TokenSet myTokenSet = TokenSet.create(new IElementType[] { XmlTokenType.XML_NAME});
-
-    public TokenSet getElementTokenSet() {
-      return myTokenSet;
-    }
 
     public boolean caseInsensitive() {
       return false;
@@ -217,16 +207,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public static class HtmlCustomSearchHelper implements CustomSearchHelper {
-    private TokenSet myTokenSet = XML_ATTRIBUTE_VALUE_TOKEN_BIT_SET;
-
-    public final void registerStyleCustomSearchHelper(CustomSearchHelper helper) {
-      myTokenSet = TokenSet.orSet(myTokenSet,helper.getElementTokenSet());
-    }
-
-    public TokenSet getElementTokenSet() {
-      return myTokenSet;
-    }
-
     public boolean caseInsensitive() {
       return true;
     }
@@ -239,9 +219,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   static class JspxCustomSearchHelper extends XHtmlCustomSearchHelper {
-    public TokenSet getElementTokenSet() {
-      return TokenSet.orSet(super.getElementTokenSet(), IDENTIFIER_OR_DOC_VALUE_OR_JSP_ATTRIBUTE_VALUE_BIT_SET);
-    }
   }
 
   private static final HashMap<FileType,CustomSearchHelper> CUSTOM_SEARCH_HELPERS = new HashMap<FileType, CustomSearchHelper>();
@@ -383,28 +360,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       searchContext = UsageSearchContext.IN_PLAIN_TEXT;
     }
     else {
-      searchContext = DEFAULT_SEARCH_CONTEXT;
-    }
-
-    TokenSet elementTypes;
-    if (customSearchHelper!=null) {
-      elementTypes = customSearchHelper.getElementTokenSet();
-    } else if (refElement instanceof XmlAttributeValue) {
-      elementTypes = XML_ATTRIBUTE_VALUE_TOKEN_BIT_SET;
-    }
-    else {
-      elementTypes = IDENTIFIER_OR_DOC_VALUE_OR_JSP_ATTRIBUTE_VALUE_BIT_SET;
-    }
-
-    if (refElement instanceof PsiFileSystemItem) {
-      elementTypes = FILE_NAME_TOKEN_BIT_SET;
+      searchContext = UsageSearchContext.IN_CODE |
+                      UsageSearchContext.IN_ALIEN_LANGUAGES |
+                      UsageSearchContext.IN_COMMENTS;
     }
 
     if (!processElementsWithWord(
           processor1,
           searchScope,
           text,
-          elementTypes,
           searchContext,
           customSearchHelper!=null && customSearchHelper.caseInsensitive()
        )) {
@@ -419,7 +383,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           if (!processElementsWithWord(processor1,
                                        searchScope,
                                        propertyName,
-                                       IDENTIFIER_OR_ATTRIBUTE_VALUE_BIT_SET,
                                        UsageSearchContext.IN_ALIEN_LANGUAGES,
                                        false)) {
             return false;
@@ -817,7 +780,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     boolean toContinue = processElementsWithWord(processor1,
                                                  searchScope,
                                                  text,
-                                                 IDENTIFIER_OR_DOC_VALUE_BIT_SET,
                                                  searchContext, false);
     if (!toContinue) return false;
 
@@ -827,7 +789,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         toContinue = processElementsWithWord(processor1,
                                              searchScope,
                                              propertyName,
-                                             IDENTIFIER_OR_ATTRIBUTE_VALUE_BIT_SET,
                                              UsageSearchContext.IN_ALIEN_LANGUAGES, false);
         if (!toContinue) return false;
       }
@@ -1013,12 +974,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processElementsWithWord(processor,
                             searchScope,
                             name,
-                            JSP_DIRECTIVE_ATTRIBUTE_BIT_SET,
                             UsageSearchContext.IN_ALIEN_LANGUAGES, false);
     return directives.toArray(new JspDirective[directives.size()]);
   }
-
-  private static final TokenSet JSP_DIRECTIVE_ATTRIBUTE_BIT_SET = TokenSet.create(new IElementType[]{ElementType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_TOKEN});
 
   public PsiFile[] findFilesWithTodoItems() {
     return myManager.getCacheManager().getFilesWithTodoItems();
@@ -1171,7 +1129,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return true;
       }
     };
-    return processElementsWithWord(processor1, searchScope, identifier, IDENTIFIER_BIT_SET, searchContext, false);
+    return processElementsWithWord(processor1, searchScope, identifier, searchContext, false);
   }
 
 
@@ -1181,14 +1139,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
 
   private static final TokenSet IDENTIFIER_BIT_SET = TokenSet.create(new IElementType[]{ElementType.IDENTIFIER});
-
-  private static final TokenSet IDENTIFIER_OR_DOC_VALUE_BIT_SET = TokenSet.create(new IElementType[]{ElementType.IDENTIFIER, ElementType.DOC_TAG_VALUE_TOKEN});
-
-  private static final TokenSet IDENTIFIER_OR_ATTRIBUTE_VALUE_BIT_SET = TokenSet.create(new IElementType[]{ElementType.IDENTIFIER,
-                                                                                      ElementType.JSP_ACTION_ATTRIBUTE_VALUE_TOKEN});
-
-  private static final TokenSet IDENTIFIER_OR_DOC_VALUE_OR_JSP_ATTRIBUTE_VALUE_BIT_SET = TokenSet.create(new IElementType[]{
-    ElementType.IDENTIFIER, ElementType.JSP_ACTION_ATTRIBUTE_VALUE_TOKEN, ElementType.DOC_TAG_VALUE_TOKEN});
 
   public PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
@@ -1202,15 +1152,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return true;
       }
     };
-    processElementsWithWord(processor, searchScope, identifier, COMMENT_BIT_SET, UsageSearchContext.IN_COMMENTS, false);
+    processElementsWithWord(processor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, false);
     return results.toArray(new PsiElement[results.size()]);
   }
-
-  private static final TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
-    ElementType.DOC_COMMENT_DATA,
-    ElementType.DOC_TAG_VALUE_TOKEN,
-    ElementType.C_STYLE_COMMENT,
-    ElementType.END_OF_LINE_COMMENT});
 
   public PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
@@ -1227,7 +1171,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processElementsWithWord(processor,
                             searchScope,
                             identifier,
-                            LITERAL_EXPRESSION_BIT_SET,
                             UsageSearchContext.IN_STRINGS,
                             false);
     return results.toArray(new PsiLiteralExpression[results.size()]);
@@ -1406,12 +1349,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return myJoinPointSearchHelper.processJoinPointsByPointcut(processor, pointcut, searchScope);
   }
 
-  private static final TokenSet LITERAL_EXPRESSION_BIT_SET = TokenSet.create(new IElementType[]{ElementType.LITERAL_EXPRESSION});
-
   private boolean processElementsWithWord(PsiElementProcessorEx processor,
                                           SearchScope searchScope,
                                           String word,
-                                          TokenSet elementTypes,
                                           short searchContext,
                                           boolean caseInsensitive) {
     LOG.assertTrue(searchScope != null);
@@ -1423,7 +1363,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return processElementsWithWordInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
-                                                  elementTypes,
                                                   searchContext);
     }
     else {
@@ -1432,7 +1371,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       for (int i = 0; i < scopeElements.length; i++) {
         final PsiElement scopeElement = scopeElements[i];
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, word, elementTypes, caseInsensitive, searchContext)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, word, caseInsensitive, searchContext)) return false;
       }
       return true;
     }
@@ -1441,7 +1380,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processElementsWithWordInScopeElement(PsiElement scopeElement,
                                                                PsiElementProcessorEx processor,
                                                                String word,
-                                                               TokenSet elementTypes,
                                                                boolean caseInsensitive,
                                                                final short searchContext) {
     if (SourceTreeToPsiMap.hasTreeElement(scopeElement)) {
@@ -1451,7 +1389,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return LowLevelSearchUtil.processElementsContainingWordInElement(processor,
                                                                        scopeElement,
                                                                        searcher,
-                                                                       elementTypes,
                                                                        null, searchContext);
     }
     else {
@@ -1462,7 +1399,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private boolean processElementsWithWordInGlobalScope(PsiElementProcessorEx processor,
                                                        GlobalSearchScope scope,
                                                        StringSearcher searcher,
-                                                       TokenSet elementTypes,
                                                        short searchContext) {
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1486,7 +1422,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiFile[] psiRoots = file.getPsiRoots();
         for (int j = 0; j < psiRoots.length; j++) {
           PsiFile psiRoot = psiRoots[j];
-          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, elementTypes, progress, searchContext)) {
+          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, progress, searchContext)) {
             return false;
           }
         }

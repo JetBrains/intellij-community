@@ -9,6 +9,9 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.xml.XmlCommenter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,5 +40,10 @@ public class DTDLanguage extends Language {
 
   public Commenter getCommenter() {
     return new XmlCommenter();
+  }
+
+  public boolean mayHaveReferences(IElementType token, short searchContext) {
+    if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
+    return false;
   }
 }

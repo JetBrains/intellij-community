@@ -11,7 +11,11 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
+import com.intellij.psi.impl.source.tree.ElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,5 +48,21 @@ public class JavaLanguage extends Language {
 
   public Commenter getCommenter() {
     return new JavaCommenter();
+  }
+
+  private static class Inner {
+    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
+      ElementType.DOC_COMMENT_DATA,
+      ElementType.DOC_TAG_VALUE_TOKEN,
+      ElementType.C_STYLE_COMMENT,
+      ElementType.END_OF_LINE_COMMENT});
+  }
+
+  public boolean mayHaveReferences(IElementType token, final short searchContext) {
+    if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
+    if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.isInSet(token)) return true;
+    if ((searchContext & UsageSearchContext.IN_CODE) != 0 &&
+        (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) return true;
+    return false;
   }
 }

@@ -19,22 +19,20 @@ public class LowLevelSearchUtil {
   public static boolean processElementsContainingWordInElement(PsiElementProcessorEx processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher,
-                                                               TokenSet elementTypes,
                                                                ProgressIndicator progress,
                                                                final short searchContext) {
-    return processElementsContainingWordInElement(processor, SourceTreeToPsiMap.psiElementToTree(scope), searcher, elementTypes, progress, searchContext);
+    return processElementsContainingWordInElement(processor, SourceTreeToPsiMap.psiElementToTree(scope), searcher, progress, searchContext);
   }
 
 
   private static boolean processElementsContainingWordInElement(PsiElementProcessorEx processor,
                                                                 ASTNode scope,
                                                                 StringSearcher searcher,
-                                                                TokenSet elementTypes,
                                                                 ProgressIndicator progress,
                                                                 final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
-    if (elementTypes.isInSet(scope.getElementType()) || (scopePsi.getLanguage() != null && scopePsi.getLanguage().mayHaveReferences(scope.getElementType(), searchContext))) {
+    if (scopePsi.getLanguage() == null || scopePsi.getLanguage().mayHaveReferences(scope.getElementType(), searchContext)) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {
@@ -88,7 +86,7 @@ public class LowLevelSearchUtil {
     }
 
     if (scope instanceof CompositeElement) {
-      return processChildren(scope, searcher, processor, elementTypes, progress, searchContext);
+      return processChildren(scope, searcher, processor, progress, searchContext);
     }
 
     return true;
@@ -97,7 +95,6 @@ public class LowLevelSearchUtil {
   private static boolean processChildren(ASTNode scope,
                                          StringSearcher searcher,
                                          PsiElementProcessorEx processor,
-                                         TokenSet elementTypes,
                                          ProgressIndicator progress,
                                          final short searchContext) {
     synchronized (PsiLock.LOCK) {
@@ -128,7 +125,7 @@ public class LowLevelSearchUtil {
         if (child == null) break;
       }
 
-      if (!processElementsContainingWordInElement(processor, child, searcher, elementTypes, progress, searchContext)) {
+      if (!processElementsContainingWordInElement(processor, child, searcher, progress, searchContext)) {
         return false;
       }
     }
