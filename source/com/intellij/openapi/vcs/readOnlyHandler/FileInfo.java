@@ -91,14 +91,20 @@ class FileInfo {
   }
 
   public void handle(){
+    final VirtualFile file = getFile();
     if (getUseVersionControl()){
-      myEditFileProvider.editFiles(new VirtualFile[]{getFile()});
-      getFile().refresh(false, false);
-    } else {
+      myEditFileProvider.editFiles(new VirtualFile[]{file});
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          file.refresh(false, false);
+        }
+      });
+    }
+    else {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            ReadOnlyAttributeUtil.setReadOnlyAttribute(getFile(), false);
+            ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
           }
           catch (IOException e) {
             //ignore
