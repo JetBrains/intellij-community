@@ -139,7 +139,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     else if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
       final PsiClass memberClass = member.getContainingClass();
       if (accessObjectClass != null) {
-        if (!manager.areElementsEquivalent(memberClass, accessObjectClass)) return false;
+        PsiClass topMemberClass = getPlaceTopLevelClass(memberClass, accessObjectClass, false);
+        PsiClass topAccessClass = getPlaceTopLevelClass(accessObjectClass, memberClass, false);
+        if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
       }
 
       boolean isConstructor = member instanceof PsiMethod && ((PsiMethod)member).isConstructor();
@@ -177,16 +179,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     }
   }
 
-  private PsiClass getPlaceTopLevelClass(PsiElement place, PsiClass memberClass, boolean isPrivateConstructor) {
+  private PsiClass getPlaceTopLevelClass(PsiElement place, PsiClass memberClass, boolean ignoreBaseClassCheck) {
     PsiManager manager = place.getManager();
     PsiClass lastClass = null;
     for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-      if (placeParent instanceof PsiClass) {
+      if (placeParent instanceof PsiClass && !(placeParent instanceof PsiTypeParameter)) {
         PsiClass aClass = (PsiClass)placeParent;
 
         //what we see is the member from the base class rather than enclosing one
-        //Private constructors are the exceptions: they ARE accessible from decendants
-        if (!isPrivateConstructor && manager.areElementsEquivalent(memberClass, aClass.getSuperClass())) return aClass;
+        if (!ignoreBaseClassCheck && manager.areElementsEquivalent(memberClass, aClass.getSuperClass())) return aClass;
+
         lastClass = aClass;
       }
     }
