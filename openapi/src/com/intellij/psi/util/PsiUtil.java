@@ -83,23 +83,9 @@ public final class PsiUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link PsiResolveHelper#isAccessible(com.intellij.psi.PsiMember, com.intellij.psi.PsiElement, com.intellij.psi.PsiClass)}
-   */
   public static boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
     return place.getManager().getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
-
-  /**
-   * @deprecated Use {@link PsiResolveHelper#isAccessible(com.intellij.psi.PsiMember, com.intellij.psi.PsiModifierList, com.intellij.psi.PsiElement, com.intellij.psi.PsiClass)}
-   */
-  public static boolean isAccessible(PsiMember member, PsiModifierList modifierList,
-                                     PsiElement place, PsiClass accessObjectClass) {
-    return place.getManager().getResolveHelper().isAccessible(member, modifierList, place, accessObjectClass);
-  }
-
-
-
 
   public static ResolveResult getAccessObjectClass(PsiExpression accessObject) {
     if (accessObject instanceof PsiSuperExpression) {

@@ -4,6 +4,8 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -61,8 +63,9 @@ class InlineMethodHandler {
     }
 
     final boolean invokedOnReference = reference != null;
-    if (!invokedOnReference && !method.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
+    if (!invokedOnReference) {
+      final VirtualFile vFile = method.getContainingFile().getVirtualFile();
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {vFile});
     }
     PsiJavaCodeReferenceElement refElement = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor);

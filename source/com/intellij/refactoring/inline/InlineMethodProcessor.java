@@ -200,8 +200,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           myReference = addBracesWhenNeeded(new PsiReferenceExpression[]{(PsiReferenceExpression)myReference})[0];
           inlineMethodCall((PsiReferenceExpression)myReference);
         }
-      }
-      else {
+      } else {
         if (myMethod.isConstructor()) {
           for (int i = 0; i < usages.length; i++) {
             PsiElement element = usages[i].getElement();
@@ -212,9 +211,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
           }
-          myMethod.delete();
-        }
-        else {
+          if (myMethod.isWritable()) myMethod.delete();
+        } else {
           ArrayList<PsiReferenceExpression> tempRefs = new ArrayList<PsiReferenceExpression>();
           for (int i = 0; i < usages.length; i++) {
             final UsageInfo usage = usages[i];
@@ -228,7 +226,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           for (int i = 0; i < refs.length; i++) {
             inlineMethodCall(refs[i]);
           }
-          myMethod.delete();
+          if (myMethod.isWritable()) myMethod.delete();
         }
       }
       removeAddedBracesWhenPossible();
@@ -389,7 +387,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private void substituteMethodTypeParams(PsiCodeBlock block, PsiMethodCallExpression methodCall) {
     ResolveResult resolveResult = methodCall.getMethodExpression().advancedResolve(false);
-    LOG.assertTrue (resolveResult.getElement() == myMethod);
+    LOG.assertTrue (myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
     if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
       PsiTypeParameter[] oldTypeParameters = myMethod.getTypeParameterList().getTypeParameters();
       PsiTypeParameter[] newTypeParameters = myMethodCopy.getTypeParameterList().getTypeParameters();

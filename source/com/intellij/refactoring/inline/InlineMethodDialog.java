@@ -61,7 +61,8 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Inline"));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
-    myRbInlineAll = new JRadioButton("All invocations and remove the method", true);
+    final String inlineAllText = myMethod.isWritable() ? "All invocations and remove the method" : "All invocations in project";
+    myRbInlineAll = new JRadioButton(inlineAllText, true);
     myRbInlineAll.setMnemonic('A');
     myRbInlineThisOnly = new JRadioButton("This invocation only and keep the method");
     myRbInlineThisOnly.setMnemonic('t');
@@ -74,19 +75,16 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     final boolean writable = myMethod.isWritable();
-    myRbInlineAll.setEnabled(writable);
     if(myInvokedOnReference) {
       if (writable) {
         final boolean inline_method_this = RefactoringSettings.getInstance().INLINE_METHOD_THIS;
         myRbInlineThisOnly.setSelected(inline_method_this);
         myRbInlineAll.setSelected(!inline_method_this);
-      }
-      else {
+      } else {
         myRbInlineAll.setSelected(false);
         myRbInlineThisOnly.setSelected(true);
       }
-    }
-    else {
+    } else {
       myRbInlineAll.setSelected(true);
       myRbInlineThisOnly.setSelected(false);
     }
