@@ -5,6 +5,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.UnsupportedPatternException;
@@ -468,33 +469,35 @@ public class ReplacerImpl {
         }
       }
 
-      PsiElement[] statements = MatcherImplUtil.createTreeFromText(search, false, fileType, project);
-      boolean searchIsExpression = false;
+      if (fileType==StdFileTypes.JAVA) {
+        PsiElement[] statements = MatcherImplUtil.createTreeFromText(search, false, fileType, project);
+        boolean searchIsExpression = false;
 
-      for (int i = 0; i < statements.length; i++) {
-        PsiElement statement = statements[i];
-        if (statement.getLastChild() instanceof PsiErrorElement) {
-          searchIsExpression = true;
-          break;
+        for (int i = 0; i < statements.length; i++) {
+          PsiElement statement = statements[i];
+          if (statement.getLastChild() instanceof PsiErrorElement) {
+            searchIsExpression = true;
+            break;
+          }
         }
-      }
 
-      PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(replacement, false, fileType, project);
-      boolean replaceIsExpression = false;
+        PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(replacement, false, fileType, project);
+        boolean replaceIsExpression = false;
 
-      for (int i = 0; i < statements2.length; i++) {
-        PsiElement statement = statements2[i];
-        if (statement.getLastChild() instanceof PsiErrorElement) {
-          replaceIsExpression = true;
-          break;
+        for (int i = 0; i < statements2.length; i++) {
+          PsiElement statement = statements2[i];
+          if (statement.getLastChild() instanceof PsiErrorElement) {
+            replaceIsExpression = true;
+            break;
+          }
         }
-      }
 
-      if (searchIsExpression!=replaceIsExpression) {
-        throw new UnsupportedPatternException(
-          (searchIsExpression)?"Search query is expression,but replacement query isn't":
-          "Search query is not expression,but replacement query is"
-        );
+        if (searchIsExpression!=replaceIsExpression) {
+          throw new UnsupportedPatternException(
+            (searchIsExpression)?"Search query is expression,but replacement query isn't":
+            "Search query is not expression,but replacement query is"
+          );
+        }
       }
     } catch(IncorrectOperationException ex) {
       throw new UnsupportedPatternException("Incorrect pattern");
