@@ -179,20 +179,22 @@ public class ReplacerImpl {
                         final List<PsiParameter> unmatchedCatchParams = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY);
                         final PsiCatchSection catches[] = ((PsiTryStatement)replacement).getCatchSections();
 
-                        for(int i = unmatchedCatchBlocks.size()-1; i >= 0; --i) {
-                          final PsiParameter parameter = unmatchedCatchParams.get(i);
-                          final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
-                            (PsiClassType)parameter.getType(),
-                            parameter.getName(),
-                            null
-                          );
+                        if (unmatchedCatchBlocks!=null && unmatchedCatchParams!=null) {
+                          for(int i = unmatchedCatchBlocks.size()-1; i >= 0; --i) {
+                            final PsiParameter parameter = unmatchedCatchParams.get(i);
+                            final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
+                              (PsiClassType)parameter.getType(),
+                              parameter.getName(),
+                              null
+                            );
 
-                          catchSection.getCatchBlock().replace(
-                            unmatchedCatchBlocks.get(i)
-                          );
-                          replacement.addAfter(
-                            catchSection, catches[catches.length-1]
-                          );
+                            catchSection.getCatchBlock().replace(
+                              unmatchedCatchBlocks.get(i)
+                            );
+                            replacement.addAfter(
+                              catchSection, catches[catches.length-1]
+                            );
+                          }
                         }
                       }
 
