@@ -12,8 +12,11 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -26,6 +29,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -146,10 +150,21 @@ public abstract class BaseRefactoringProcessor {
       };
       UsageViewDescriptor descriptor = createUsageViewDescriptor(usages[0], findUsagesCommand);
       showUsageView(descriptor, isVariable(), isVariable());
+      ensureFilesWritable(usages[0]);
     } else {
       final UsageInfo[] usages1 = usages[0];
+      ensureFilesWritable(usages[0]);
       execute(usages1);
     }
+  }
+
+  private void ensureFilesWritable(UsageInfo[] usages) {
+    Set<VirtualFile> files = new HashSet<VirtualFile>();
+    for (int i = 0; i < usages.length; i++) {
+      final PsiFile file = usages[i].getElement().getContainingFile();
+      files.add(file.getVirtualFile());
+    }
+    ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
 
   void execute(final UsageInfo[] usages) {
