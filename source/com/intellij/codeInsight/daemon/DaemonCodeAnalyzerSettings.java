@@ -34,6 +34,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
 
   public boolean SHOW_METHOD_SEPARATORS = false;
+  public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
 
   private InspectionProfileImpl myInspectionProfile;
 
@@ -135,5 +136,13 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public void setImportHintEnabled(boolean isImportHintEnabled) {
     SHOW_ADD_IMPORT_HINTS = isImportHintEnabled;
+  }
+
+  public void setErrorStripeMarkMinHeight(final int errorStripeMarkMinHeight) {
+    ERROR_STRIPE_MARK_MIN_HEIGHT = errorStripeMarkMinHeight;
+  }
+
+  public int getErrorStripeMarkMinHeight() {
+    return ERROR_STRIPE_MARK_MIN_HEIGHT;
   }
 }
