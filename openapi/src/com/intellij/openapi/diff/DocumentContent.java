@@ -31,6 +31,14 @@ public class DocumentContent extends DiffContent {
     myOverridenType = type;
   }
 
+  public DocumentContent(Document document) {
+    this(null, document, null);
+  }
+
+  public DocumentContent(Document document, FileType type) {
+    this(null, document, type);
+  }
+
   public Document getDocument() {
     return myDocument;
   }
@@ -38,6 +46,7 @@ public class DocumentContent extends DiffContent {
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     VirtualFile file = getFile();
     if (file == null) return null;
+    if (myProject == null) return null;
     return new OpenFileDescriptor(myProject, file, offset);
   }
 
