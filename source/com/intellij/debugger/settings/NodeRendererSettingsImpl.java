@@ -3,8 +3,8 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.render.ArrayRenderer;
 import com.intellij.debugger.ui.impl.watch.render.ClassRenderer;
-import com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.impl.watch.render.DefaultRendererProvider;
+import com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -30,11 +30,6 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
 
   private EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private List<AutoRendererNode> myRepresentationNodes = new ArrayList<AutoRendererNode>();
-  private final DefaultRendererProvider myDefaultRendererProvider;
-
-  public NodeRendererSettingsImpl(DefaultRendererProvider defaultRendererProvider) {
-    myDefaultRendererProvider = defaultRendererProvider;
-  }
 
   public String getComponentName() {
     return "NodeRendererSettings";
@@ -141,17 +136,19 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
       AutoRendererNode autoRendererNode = iterator.next();
       result.add(autoRendererNode.getRenderer());
     }
-    result.add(myDefaultRendererProvider.getArrayRenderer());
-    result.add(myDefaultRendererProvider.getClassRenderer());
-    result.add(myDefaultRendererProvider.getPrimitiveRenderer());
+    final DefaultRendererProvider defaultRendererProvider = DefaultRendererProvider.getInstance();
+    result.add(defaultRendererProvider.getArrayRenderer());
+    result.add(defaultRendererProvider.getClassRenderer());
+    result.add(defaultRendererProvider.getPrimitiveRenderer());
 
     return result;
   }
 
   public boolean isDefault(Renderer renderer) {
-    return renderer == myDefaultRendererProvider.getArrayRenderer() ||
-           renderer == myDefaultRendererProvider.getClassRenderer() ||
-           renderer == myDefaultRendererProvider.getPrimitiveRenderer();
+    final DefaultRendererProvider defaultRendererProvider = DefaultRendererProvider.getInstance();
+    return renderer == defaultRendererProvider.getArrayRenderer() ||
+           renderer == defaultRendererProvider.getClassRenderer() ||
+           renderer == defaultRendererProvider.getPrimitiveRenderer();
   }
 
   public List<AutoRendererNode> getAutoNodes() {
@@ -188,15 +185,15 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
   }
 
   public PrimitiveRenderer getPrimitiveRenderer() {
-    return myDefaultRendererProvider.getPrimitiveRenderer();
+    return DefaultRendererProvider.getInstance().getPrimitiveRenderer();
   }
 
   public ArrayRenderer getArrayRenderer() {
-    return myDefaultRendererProvider.getArrayRenderer();
+    return DefaultRendererProvider.getInstance().getArrayRenderer();
   }
 
   public ClassRenderer getClassRenderer() {
-    return myDefaultRendererProvider.getClassRenderer();
+    return DefaultRendererProvider.getInstance().getClassRenderer();
   }
 
   public void fireRenderersChanged() {
