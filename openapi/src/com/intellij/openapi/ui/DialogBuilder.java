@@ -1,0 +1,305 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.openapi.ui;
+
+import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+public class DialogBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
+
+  public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
+
+  private JComponent myCenterPanel;
+  private String myTitle;
+  private JComponent myPreferedFocusComponent;
+  private String myDimensionServiceKey;
+  private ArrayList<ActionDescriptor> myActions = null;
+  private final MyDialogWrapper myDialogWrapper;
+  private final ArrayList<Disposeable> myDisposables = new ArrayList<Disposeable>();
+  private Runnable myCancelOperation = null;
+
+  public int show() {
+    return showImpl(true).getExitCode();
+  }
+
+  public void showNotModal() {
+    showImpl(false);
+  }
+
+  public DialogBuilder(Project project) {
+    myDialogWrapper = new MyDialogWrapper(project, true);
+  }
+
+  public DialogBuilder(Component parent) {
+    myDialogWrapper = new MyDialogWrapper(parent, true);
+  }
+
+  private MyDialogWrapper showImpl(boolean isModal) {
+    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0, String.valueOf(myTitle));
+    myDialogWrapper.setTitle(myTitle);
+    myDialogWrapper.init();
+    myDialogWrapper.setModal(isModal);
+    myDialogWrapper.show();
+    return myDialogWrapper;
+  }
+
+  public void setCenterPanel(JComponent centerPanel) { myCenterPanel = centerPanel; }
+  public void setTitle(String title) { myTitle = title; }
+  public void setPreferedFocusComponent(JComponent component) { myPreferedFocusComponent = component; }
+  public void setDimensionServiceKey(String dimensionServiceKey) { myDimensionServiceKey = dimensionServiceKey; }
+
+  public void addAction(Action action) {
+    addActionDescriptor(new CustomActionDescriptor(action));
+  }
+
+  public <T extends ActionDescriptor> T addActionDescriptor(T actionDescriptor) {
+    getActionDescriptors().add(actionDescriptor);
+    return actionDescriptor;
+  }
+
+  private ArrayList<ActionDescriptor> getActionDescriptors() {
+    if (myActions == null) removeAllActions();
+    return myActions;
+  }
+
+  public void setActionDescriptors(ActionDescriptor[] descriptors) {
+    removeAllActions();
+    for (int i = 0; i < descriptors.length; i++) {
+      ActionDescriptor descriptor = descriptors[i];
+      myActions.add(descriptor);
+    }
+  }
+
+  public void removeAllActions() {
+    myActions = new ArrayList<ActionDescriptor>();
+  }
+
+  public Window getWindow() {
+    return myDialogWrapper.getWindow();
+  }
+
+  public CustomizableAction addOkAction() {
+    return addActionDescriptor(new OkActionDescriptor());
+  }
+
+  public CustomizableAction addCancelAction() {
+    return addActionDescriptor(new CancelActionDescriptor());
+  }
+
+  public CustomizableAction addCloseButton() {
+    CustomizableAction closeAction = addOkAction();
+    closeAction.setText("&Close");
+    return closeAction;
+  }
+
+  public void addDisposable(Disposeable disposeable) {
+    myDisposables.add(disposeable);
+  }
+
+  public void setButtonsAlignment(int alignment) {
+    myDialogWrapper.setButtonsAlignment1(alignment);
+  }
+
+  public DialogWrapper getDialogWrapper() {
+    return myDialogWrapper;
+  }
+
+  public void showModal(boolean modal) {
+    if (modal) show();
+    else showNotModal();
+  }
+
+  public void setHelpId(String helpId) {
+    myDialogWrapper.setHelpId(helpId);
+  }
+
+  public void setCancelOperation(Runnable runnable) {
+    myCancelOperation = runnable;
+  }
+
+  public interface ActionDescriptor {
+    Action getAction(MyDialogWrapper dialogWrapper);
+  }
+
+  public static abstract class DialogActionDescriptor implements ActionDescriptor {
+    private final String myName;
+    private final Object myMnemonicChar;
+    private boolean myIsDeafult = false;
+
+    protected DialogActionDescriptor(String name, int mnemonicChar) {
+      myName = name;
+      myMnemonicChar = mnemonicChar != -1 ? new Integer(mnemonicChar) : null;
+    }
+
+    public Action getAction(MyDialogWrapper dialogWrapper) {
+      Action action = createAction(dialogWrapper);
+      action.putValue(Action.NAME, myName);
+      if (myMnemonicChar != null) action.putValue(Action.MNEMONIC_KEY, myMnemonicChar);
+      if (myIsDeafult) action.putValue(Action.DEFAULT, Boolean.TRUE);
+      return action;
+    }
+
+    public void setDefault(boolean isDefault) {
+      myIsDeafult = isDefault;
+    }
+
+    protected abstract Action createAction(DialogWrapper dialogWrapper);
+  }
+
+  public static class CloseDialogAction extends DialogActionDescriptor {
+    private final int myExitCode;
+
+    public CloseDialogAction(String name, int mnemonicChar, int exitCode) {
+      super(name, mnemonicChar);
+      myExitCode = exitCode;
+    }
+
+    public static CloseDialogAction createDefault(String name, int mnemonicChar, int exitCode) {
+      CloseDialogAction closeDialogAction = new CloseDialogAction(name, mnemonicChar, exitCode);
+      closeDialogAction.setDefault(true);
+      return closeDialogAction;
+    }
+
+    protected Action createAction(final DialogWrapper dialogWrapper) {
+      return new AbstractAction(){
+        public void actionPerformed(ActionEvent e) {
+          dialogWrapper.close(myExitCode);
+        }
+      };
+    }
+  }
+
+  public interface CustomizableAction {
+    void setText(String text);
+  }
+
+  public static class CustomActionDescriptor implements ActionDescriptor {
+    private final Action myAction;
+
+    public CustomActionDescriptor(Action action) {
+      myAction = action;
+    }
+
+    public Action getAction(MyDialogWrapper dialogWrapper) {
+      return myAction;
+    }
+  }
+
+  private static abstract class BuiltinAction implements ActionDescriptor, CustomizableAction {
+    protected String myText = null;
+
+    public void setText(String text) {
+      myText = text;
+    }
+
+    public Action getAction(MyDialogWrapper dialogWrapper) {
+      Action builtinAction = getBuiltinAction(dialogWrapper);
+      if (myText != null) builtinAction.putValue(Action.NAME, myText);
+      return builtinAction;
+    }
+
+    protected abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
+  }
+
+  public static class OkActionDescriptor extends BuiltinAction {
+    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+      return dialogWrapper.getOKAction();
+    }
+  }
+
+  public static class CancelActionDescriptor extends BuiltinAction {
+    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+      return dialogWrapper.getCancelAction();
+    }
+  }
+
+  private class MyDialogWrapper extends DialogWrapper {
+    private String myHelpId = null;
+    public MyDialogWrapper(Project project, boolean canBeParent) {
+      super(project, canBeParent);
+    }
+
+    public MyDialogWrapper(Component parent, boolean canBeParent) {
+      super(parent, canBeParent);
+    }
+
+    public void setHelpId(String helpId) {
+      myHelpId = helpId;
+    }
+
+    public void init() { super.init(); }
+    public Action getOKAction() { return super.getOKAction(); } // Make it public
+    public Action getCancelAction() { return super.getCancelAction(); } // Make it public
+    public void setButtonsAlignment1(int alignment) { setButtonsAlignment(alignment);}
+    protected JComponent createCenterPanel() { return myCenterPanel; }
+
+    protected void dispose() {
+      for (Iterator<Disposeable> iterator = myDisposables.iterator(); iterator.hasNext();) {
+        Disposeable disposeable = iterator.next();
+        disposeable.dispose();
+      }
+      super.dispose();
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      if (myPreferedFocusComponent != null) return myPreferedFocusComponent;
+      FocusTraversalPolicy focusTraversalPolicy = null;
+      Container container = myCenterPanel;
+      while (container != null && (focusTraversalPolicy = container.getFocusTraversalPolicy()) == null && !(container instanceof Window))
+        container = container.getParent();
+      if (focusTraversalPolicy == null) return null;
+      Component component = focusTraversalPolicy.getDefaultComponent(myCenterPanel);
+      while (!(component instanceof JComponent) && component != null)
+        component = focusTraversalPolicy.getComponentAfter(myCenterPanel, component);
+      return (JComponent)component;
+    }
+
+    protected String getDimensionServiceKey() {
+      return myDimensionServiceKey;
+    }
+
+    protected JButton createJButtonForAction(Action action) {
+      JButton button = super.createJButtonForAction(action);
+      Object value = action.getValue(REQUEST_FOCUS_ENABLED);
+      if (value instanceof Boolean) button.setRequestFocusEnabled(((Boolean)value).booleanValue());
+      return button;
+    }
+
+    public void doCancelAction() {
+      if (!getCancelAction().isEnabled()) return;
+      if (myCancelOperation != null) myCancelOperation.run();
+      else super.doCancelAction();
+    }
+
+    protected void doHelpAction() {
+      if (myHelpId == null) {
+        super.doHelpAction();
+        return;
+      }
+
+      HelpManager.getInstance().invokeHelp(myHelpId);
+    }
+
+    protected Action[] createActions() {
+      if (myActions == null) return super.createActions();
+      ArrayList<Action> actions = new ArrayList<Action>(myActions.size());
+      for (Iterator<ActionDescriptor> iterator = myActions.iterator(); iterator.hasNext();) {
+        ActionDescriptor actionDescriptor = iterator.next();
+        actions.add(actionDescriptor.getAction(this));
+      }
+      if (myHelpId != null) actions.add(getHelpAction());
+      return actions.toArray(new Action[actions.size()]);
+    }
+  }
+}

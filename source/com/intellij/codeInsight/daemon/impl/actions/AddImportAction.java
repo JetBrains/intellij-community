@@ -1,0 +1,141 @@
+
+package com.intellij.codeInsight.daemon.impl.actions;
+
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.ListPopup;
+import com.intellij.util.IncorrectOperationException;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class AddImportAction implements QuestionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
+
+  private Project myProject;
+  private PsiJavaCodeReferenceElement myReference;
+  private PsiClass[] myTargetClasses;
+  private Editor myEditor;
+
+  public AddImportAction(Project project, PsiJavaCodeReferenceElement ref, PsiClass[] targetClasses, Editor editor) {
+    myProject = project;
+    myReference = ref;
+    myTargetClasses = targetClasses;
+    myEditor = editor;
+  }
+
+  public boolean execute() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    if (!myReference.isWritable()){
+      return false;
+    }
+    if (!myReference.isValid()){
+      return false;
+    }
+    for(int i = 0; i < myTargetClasses.length; i++){
+      if (!myTargetClasses[i].isValid()){
+        return  false;
+      }
+    }
+
+    if (myTargetClasses.length == 1){
+      addImport(myReference, myTargetClasses[0]);
+    }
+    else{
+      chooseClassAndImport();
+    }
+    return true;
+  }
+
+  private void chooseClassAndImport() {
+    final JList list = new JList(myTargetClasses);
+    list.setCellRenderer(new FQNameCellRenderer());
+    Runnable runnable = new Runnable() {
+      public void run() {
+        int index = list.getSelectedIndex();
+        if (index < 0) return;
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        addImport(myReference, myTargetClasses[index]);
+      }
+    };
+    ListPopup listPopup = new ListPopup("Class to Import", list, runnable, myProject);
+    Point caretLocation = myEditor.logicalPositionToXY(myEditor.getCaretModel().getLogicalPosition());
+    Point location = myEditor.getContentComponent().getLocationOnScreen();
+    listPopup.show(caretLocation.x + location.x, caretLocation.y + location.y);
+  }
+
+  private void addImport(final PsiJavaCodeReferenceElement ref, final PsiClass targetClass) {
+    StatisticsManager.getInstance().incMemberUseCount(null, targetClass);
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        final Runnable action = new Runnable() {
+          public void run() {
+            _addImport(ref, targetClass);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+    },
+        "Add Import",
+        null);
+  }
+
+  private void _addImport(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {
+    if (ref.isValid() && targetClass.isValid()){
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      RangeMarker caretMarker = (myEditor.getDocument()).createRangeMarker(caretOffset, caretOffset);
+      int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;
+      int col = myEditor.getCaretModel().getLogicalPosition().column;
+      int virtualSpace = col != colByOffset ? col - colByOffset : 0;
+      int line = myEditor.getCaretModel().getLogicalPosition().line;
+      LogicalPosition pos = new LogicalPosition(line, 0);
+      myEditor.getCaretModel().moveToLogicalPosition(pos);
+
+      try{
+        if (!(ref instanceof PsiImportStaticReferenceElement)) {
+          ref.bindToElement(targetClass);
+        }
+        else {
+          ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
+        }
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+      }
+
+      line = myEditor.getCaretModel().getLogicalPosition().line;
+      LogicalPosition pos1 = new LogicalPosition(line, col);
+      myEditor.getCaretModel().moveToLogicalPosition(pos1);
+      if (caretMarker.isValid()){
+        LogicalPosition pos2 = myEditor.offsetToLogicalPosition(caretMarker.getStartOffset());
+        int newCol = pos2.column + virtualSpace;
+        myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(pos2.line, newCol));
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+          if (daemonCodeAnalyzer != null) {
+            daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
+          }
+        }
+      });
+  }
+}

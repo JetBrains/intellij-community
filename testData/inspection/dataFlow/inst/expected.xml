@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Inst.java</file>
+    <line>16</line>
+    <description>Condition 'a instanceof A' is always true</description>
+  </problem>
+</problems>
+

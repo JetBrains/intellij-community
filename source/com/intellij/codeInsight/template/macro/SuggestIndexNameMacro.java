@@ -1,0 +1,64 @@
+package com.intellij.codeInsight.template.macro;
+
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+
+public class SuggestIndexNameMacro implements Macro{
+  public String getName() {
+    return "suggestIndexName";
+  }
+
+  public String getDescription() {
+    return "suggestIndexName()";
+  }
+
+  public String getDefaultValue() {
+    return "a";
+  }
+
+  public Result calculateResult(Expression[] params, final ExpressionContext context) {
+    if (params.length != 0) return null;
+
+    final Project project = context.getProject();
+    final int offset = context.getStartOffset();
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiElement place = file.findElementAt(offset);
+    PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
+  ChooseLetterLoop:
+    for(char letter = 'i'; letter <= 'z'; letter++){
+      for(int i = 0; i < vars.length; i++) {
+        PsiVariable var = vars[i];
+        PsiIdentifier identifier = var.getNameIdentifier();
+        if (place.equals(identifier)) continue;
+        if (var instanceof PsiLocalVariable) {
+          PsiElement parent = var.getParent();
+          if (parent instanceof PsiDeclarationStatement) {
+            if (PsiTreeUtil.isAncestor(parent, place, false) &&
+                var.getTextRange().getStartOffset() > place.getTextRange().getStartOffset()) continue;
+          }
+        }
+        String name = identifier.getText();
+        if (name.length() == 1 && name.charAt(0) == letter){
+          continue ChooseLetterLoop;
+        }
+      }
+      return new TextResult("" + letter);
+    }
+
+    return null;
+  }
+
+  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+    return null;
+  }
+
+  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+    return null;
+  }
+}

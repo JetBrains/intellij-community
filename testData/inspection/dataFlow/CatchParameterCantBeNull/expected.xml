@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>8</line>
+    <description>Condition 'e == null' is always false</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <description>Condition 'e instanceof FileNotFoundException' is always false</description>
+  </problem>
+</problems>

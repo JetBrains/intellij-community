@@ -1,0 +1,146 @@
+package com.intellij.compiler.ant;
+
+import com.intellij.compiler.ant.taskdefs.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Mar 19, 2004
+ */
+public class ModuleSources extends CompositeGenerator{
+  private VirtualFile[] mySourceRoots = VirtualFile.EMPTY_ARRAY;
+  private VirtualFile[] myTestSourceRoots = VirtualFile.EMPTY_ARRAY;
+
+  public ModuleSources(Module module, File baseDir, final GenerationOptions genOptions) {
+    /*
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();
+
+    final List<VirtualFile> sourceRootFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> testSourceRootFiles = new ArrayList<VirtualFile>();
+
+    final Path sourcepath = new Path(BuildProperties.getSourcepathProperty(module.getName()));
+    final Path testSourcepath = new Path(BuildProperties.getTestSourcepathProperty(module.getName()));
+    final PatternSet excludedFromModule = new PatternSet(BuildProperties.getExcludedFromModuleProperty(module.getName()));
+
+    final ContentEntry[] contentEntries = rootManager.getContentEntries();
+    for (int idx = 0; idx < contentEntries.length; idx++) {
+      final ContentEntry contentEntry = contentEntries[idx];
+      final VirtualFile file = contentEntry.getFile();
+      if (file == null) {
+        continue; // filter invalid entries
+      }
+      if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+        continue; // skip content roots inside jar and zip archives
+      }
+      final VirtualFile dirSetRoot = getDirSetRoot(contentEntry);
+
+      final String dirSetRootRelativeToBasedir = GenerationUtils.toRelativePath(dirSetRoot, baseDir, BuildProperties.getModuleChunkBasedirProperty(module), genOptions, !module.isSavePathsRelative());
+      final DirSet sourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
+      final DirSet testSourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
+
+      final VirtualFile[] sourceRoots = contentEntry.getSourceFolderFiles();
+      for (int i = 0; i < sourceRoots.length; i++) {
+        final VirtualFile root = sourceRoots[i];
+        if (!moduleFileIndex.isInContent(root)) {
+          continue; // skip library sources
+        }
+
+        addExcludePatterns(module, root, root, excludedFromModule, true);
+
+        final Include include = new Include(VfsUtil.getRelativePath(root, dirSetRoot, '/'));
+        if (moduleFileIndex.isInTestSourceContent(root)) {
+          testSourcesDirSet.add(include);
+          testSourceRootFiles.add(root);
+        }
+        else {
+          sourcesDirSet.add(include);
+          sourceRootFiles.add(root);
+        }
+      }
+      if (sourcesDirSet.getGeneratorCount() > 0) {
+        sourcepath.add(sourcesDirSet);
+      }
+      if (testSourcesDirSet.getGeneratorCount() > 0) {
+        testSourcepath.add(testSourcesDirSet);
+      }
+    }
+
+    mySourceRoots = sourceRootFiles.toArray(new VirtualFile[sourceRootFiles.size()]);
+    myTestSourceRoots = testSourceRootFiles.toArray(new VirtualFile[testSourceRootFiles.size()]);
+
+    final String moduleName = module.getName();
+
+    add(excludedFromModule);
+
+    final PatternSet excludedFromCompilation = new PatternSet(BuildProperties.getExcludedFromCompilationProperty(moduleName));
+    excludedFromCompilation.add(new PatternSetRef(BuildProperties.getExcludedFromModuleProperty(moduleName)));
+    excludedFromCompilation.add(new PatternSetRef(BuildProperties.PROPERTY_COMPILER_EXCLUDES));
+    add(excludedFromCompilation, 1);
+
+    if (sourcepath.getGeneratorCount() > 0) {
+      add(sourcepath, 1);
+    }
+    if (testSourcepath.getGeneratorCount() != 0) {
+      add(testSourcepath, 1);
+    }
+    */
+  }
+
+  private VirtualFile getDirSetRoot(final ContentEntry contentEntry) {
+    final VirtualFile contentRoot = contentEntry.getFile();
+    final VirtualFile[] sourceFolderFiles = contentEntry.getSourceFolderFiles();
+    for (int idx = 0; idx < sourceFolderFiles.length; idx++) {
+      VirtualFile sourceFolderFile = sourceFolderFiles[idx];
+      if (contentRoot.equals(sourceFolderFile)) {
+        return contentRoot.getParent();
+      }
+    }
+    return contentRoot;
+  }
+
+  private void addExcludePatterns(Module module, final VirtualFile root, VirtualFile dir, CompositeGenerator generator, final boolean parentIncluded) {
+    final boolean isIncluded = ModuleRootManager.getInstance(module).getFileIndex().isInContent(dir);
+    if (isIncluded != parentIncluded) {
+      final String relativePath = VfsUtil.getRelativePath(dir, root, '/');
+      if (isIncluded) {
+        generator.add(new Include(relativePath + "/**"));
+      }
+      else {
+        if (!isExcludedByDefault(dir.getName())) {
+          generator.add(new Exclude(relativePath + "/**"));
+        }
+      }
+    }
+    final VirtualFile[] children = dir.getChildren();
+    for (int idx = 0; idx < children.length; idx++) {
+      VirtualFile child = children[idx];
+      if (child.isDirectory()) {
+        addExcludePatterns(module, root, child, generator, isIncluded);
+      }
+    }
+  }
+
+  private boolean isExcludedByDefault(String name) {
+    return "CVS".equals(name) || "SCCS".equals(name) || ".DS_Store".equals(name);
+  }
+
+  public VirtualFile[] getSourceRoots() {
+    return mySourceRoots;
+  }
+
+  public VirtualFile[] getTestSourceRoots() {
+    return myTestSourceRoots;
+  }
+
+}

@@ -1,0 +1,77 @@
+package com.intellij.codeInsight.daemon.impl.quickfix;
+
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
+
+import java.text.MessageFormat;
+
+public class MoveClassToSeparateFileFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix");
+
+  private final PsiClass myClass;
+
+  public MoveClassToSeparateFileFix(PsiClass aClass) {
+    myClass = aClass;
+  }
+
+  public String getText() {
+    final String text = MessageFormat.format("Move class ''{0}'' to ''{0}.java''",
+        new Object[]{
+          myClass.getName(),
+        });
+    return text;
+  }
+
+  public String getFamilyName() {
+    return "Move Class to Separate File";
+  }
+
+  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    if  (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
+    PsiDirectory dir = file.getContainingDirectory();
+    if (dir == null) return false;
+    try {
+      if (myClass.isInterface()) {
+        dir.checkCreateInterface(myClass.getName());
+      } else {
+        dir.checkCreateClass(myClass.getName());
+      }
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public void invoke(Project project, Editor editor, PsiFile file) {
+    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
+
+    PsiDirectory dir = file.getContainingDirectory();
+    try{
+      PsiClass placeHolder = myClass.isInterface() ? dir.createInterface(myClass.getName()) : dir.createClass(myClass.getName());
+      PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
+      myClass.delete();
+
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
+      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    }
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+    }
+  }
+
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Finally.java</file>
+    <line>9</line>
+    <description>Method invocation 'o.hashCode()' may produce java.lang.NullPointerException</description>
+  </problem>
+</problems>
+

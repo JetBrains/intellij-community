@@ -1,0 +1,91 @@
+<html> 
+<title>Readme</title>
+<style type="text/css">
+.S0 {
+	font-family: Verdana;
+	color: #000000;
+	font-size: 10pt;
+}
+.S1 {
+	color: #000080;
+}
+.S3 {
+	color: #008080;
+}
+.S6 {
+	color: #7F007F;
+}
+.S8 {
+	color: #800080;
+}
+.S9 {
+	color: #808000;
+}
+.S11 {
+	color: #000080;
+}
+span {
+	font-family: Verdana;
+	font-size: 10pt;
+}
+</style>
+<body bgcolor="#FFFFFF">
+<h1>Installation</h1>
+<p>Every plugin should be placed to the IDEA_HOME\plugins folder. It may be in 
+  jar or just a folder.<br>
+</p>
+<p>Plugin is in jar:</p>
+<pre>IDEA_HOME<br>	Plugins
+		Sample.jar/
+			com.intellij.....
+				...
+				...
+			META-INF
+				plugin.xml
+</pre>
+<p><br>
+  Plugin is a folder: </p>
+<pre>IDEA_HOME<br>	Plugins
+		Sample
+			lib
+			classes			
+				com.intellij.....
+				...
+				...
+			META-INF
+				plugin.xml
+</pre>
+<p>Classes and lib folders are automatically added to the classpath.</p>
+<h1>Plugin configuration (plugin.xml)</h1>
+<p><span><span class="S1">&lt;idea-plugin&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- plugin name --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;name&gt;</span><span class="S0">Sample</span><span class="S1">&lt;/name&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- description --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;description&gt;</span><span class="S0">SamplePlugin</span><span class="S1">&lt;/description&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- plugin versuin --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;version&gt;</span><span class="S0">1.0</span><span class="S1">&lt;/version&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;vendor&gt;</span><span class="S0">IntelliJ</span><span class="S1">&lt;/vendor&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- minimum and maximum IDEA version plugin is 
+  supposed to work with --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;idea-version</span><span class="S8"> 
+  </span><span class="S3">min</span><span class="S8">=</span><span class="S6">"3.0"</span><span class="S8"> 
+  </span><span class="S3">max</span><span class="S8">=</span><span class="S6">"3.1"</span><span class="S11">/&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- application components of the plugin --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;application-components&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;component&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- component implementation class --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;implementation-class&gt;</span><span class="S0">com.intellij.openapi.samples.SampleApplicationPlugin</span><span class="S1">&lt;/implementation-class&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- component interface class --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;interface-class&gt;</span><span class="S0">com.intellij.openapi.samples.SampleApplicationPlugin</span><span class="S1">&lt;/interface-class&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;/component&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;/application-components&gt;</span><span class="S0"><br />
+  </span> <span class="S9">&lt;!-- project components of the plugin --&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;project-components&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;component&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;implementation-class&gt;</span><span class="S0">com.intellij.openapi.samples.SampleProjectPlugin</span><span class="S1">&lt;/implementation-class&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;interface-class&gt;</span><span class="S0">com.intellij.openapi.samples.SampleProjectPlugin</span><span class="S1">&lt;/interface-class&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="S1">&lt;/component&gt;</span><span class="S0"><br />
+  </span> <span class="S0">&nbsp;&nbsp;</span><span class="S1">&lt;/project-components&gt;</span><span class="S0"><br />
+  </span> <span class="S1">&lt;/idea-plugin&gt;</span></span> </p>
+</body>
+</html>

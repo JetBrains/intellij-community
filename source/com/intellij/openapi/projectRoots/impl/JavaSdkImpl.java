@@ -1,0 +1,451 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.openapi.projectRoots.impl;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.jar.JarFileSystemEx;
+import org.jdom.Element;
+
+import javax.swing.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Sep 17, 2004
+ */
+public class JavaSdkImpl extends JavaSdk {
+  // do not use javaw.exe for Windows because of issues with encoding
+  private static final String VM_EXE_NAME = "java";
+  private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
+  public static final Icon ICON = IconLoader.getIcon("/nodes/ppJdkClosed.png");
+  private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
+  private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
+  private final JarFileSystem myJarFileSystem;
+
+  public JavaSdkImpl(JarFileSystem jarFileSystem) {
+    super("JavaSDK");
+    myJarFileSystem = jarFileSystem;
+  }
+
+  public String getPresentableName() {
+    return "JSDK";
+  }
+
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  public Icon getIconForExpandedTreeNode() {
+    return JDK_ICON_EXPANDED;
+  }
+
+  public Icon getIconForAddAction() {
+    return ADD_ICON;
+  }
+
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
+    return null;
+  }
+
+  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  }
+
+  public SdkAdditionalData loadAdditionalData(Element additional) {
+    return null;
+  }
+
+  public String getBinPath(Sdk sdk) {
+    return getConvertedHomePath(sdk) + "bin";
+  }
+
+  public String getToolsPath(Sdk sdk) {
+    final String versionString = sdk.getVersionString();
+    final boolean isJdk1_x = versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1;
+    return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
+  }
+
+  public String getVMExecutablePath(Sdk sdk) {
+    /*
+    if ("64".equals(System.getProperty("sun.arch.data.model"))) {
+      return getBinPath(sdk) + File.separator + System.getProperty("os.arch") + File.separator + VM_EXE_NAME;
+    }
+    */
+    return getBinPath(sdk) + File.separator + VM_EXE_NAME;
+  }
+
+  public String getRtLibraryPath(Sdk sdk) {
+    return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + "rt.jar";
+  }
+
+  private String getConvertedHomePath(Sdk sdk) {
+    String path = sdk.getHomePath().replace('/', File.separatorChar);
+    if (!path.endsWith(File.separator)) {
+      path = path + File.separator;
+    }
+    return path;
+  }
+
+  public boolean isValidSdkHome(String path) {
+    return checkForJdk(new File(path));
+  }
+
+  public String suggestSdkName(String currentSdkName, String sdkHome) {
+    final String suggestedName;
+    if (currentSdkName != null && currentSdkName.length() > 0) {
+      final Matcher matcher = myVersionStringPattern.matcher(currentSdkName);
+      final boolean replaceNameWithVersion = matcher.matches();
+      if (replaceNameWithVersion){
+        // user did not change name -> set it automatically
+        final String versionString = getVersionString(sdkHome);
+        suggestedName = (versionString == null)? currentSdkName : matcher.replaceFirst("$1" + versionString + "$3");
+      }
+      else {
+        suggestedName = currentSdkName;
+      }
+    }
+    else {
+      final String versionString = getVersionString(sdkHome);
+      suggestedName = (versionString == null)? "Unknown" : versionString;
+    }
+    return suggestedName;
+  }
+
+  public void setupSdkPaths(Sdk sdk) {
+    final File jdkHome = new File(sdk.getHomePath());
+    VirtualFile[] classes = findClasses(jdkHome, false, JarFileSystem.getInstance());
+    VirtualFile sources = findSources(jdkHome);
+    VirtualFile docs = findDocs(jdkHome);
+
+    final SdkModificator sdkModificator = sdk.getSdkModificator();
+    for (int i = 0; i < classes.length; i++){
+      sdkModificator.addRoot(classes[i], ProjectRootType.CLASS);
+    }
+    if(sources != null){
+      sdkModificator.addRoot(sources, ProjectRootType.SOURCE);
+    }
+    if(docs != null){
+      sdkModificator.addRoot(docs, ProjectRootType.JAVADOC);
+    }
+    sdkModificator.commitChanges();
+  }
+
+  public final String getVersionString(final String sdkHome) {
+    String versionString = getVersionStringImpl(sdkHome);
+    if (versionString != null && versionString.length() == 0) {
+      versionString = null;
+    }
+    if (versionString == null){
+      Messages.showMessageDialog("Probably JDK installed in '" + sdkHome + "' is corrupt", "Cannot Detect JDK Version", Messages.getErrorIcon());
+    }
+    return versionString;
+  }
+
+
+  public String getComponentName() {
+    return getName();
+  }
+
+  public void initComponent() { }
+
+  public void disposeComponent() {
+  }
+
+  private static String getVersionStringImpl(String homePath){
+    if (homePath == null || !new File(homePath).exists()) {
+      return null;
+    }
+    final String[] versionString = new String[1];
+    try {
+      Process process = Runtime.getRuntime().exec(new String[] {homePath + File.separator + "bin" + File.separator + "java",  "-version"});
+      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString);
+      parsingThread.start();
+      ReadStreamThread readThread = new ReadStreamThread(process.getInputStream());
+      readThread.start();
+      try {
+        try {
+          process.waitFor();
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+          process.destroy();
+        }
+      }
+      finally {
+        try {
+          parsingThread.join();
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    catch (IOException ex) {
+      ex.printStackTrace();
+    }
+    return versionString[0];
+  }
+
+  public ProjectJdk createJdk(final String jdkName, String jdkHome) {
+    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
+    SdkModificator sdkModificator = jdk.getSdkModificator();
+
+    String path = jdkHome.replace(File.separatorChar, '/');
+    sdkModificator.setHomePath(path);
+    jdk.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
+
+    File jdkHomeFile = new File(jdkHome);
+    addClasses(jdkHomeFile, sdkModificator, true, myJarFileSystem);
+    addSources(jdkHomeFile, sdkModificator);
+    addDocs(jdkHomeFile, sdkModificator);
+    sdkModificator.commitChanges();
+    return jdk;
+  }
+
+  public static ProjectJdk getMockJdk(String versionName) {
+    final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
+    String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
+    return createMockJdk(jdkHome, versionName, getInstance());
+  }
+
+  public static ProjectJdk getMockJdk15(String versionName) {
+    String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
+    return createMockJdk(jdkHome, versionName, getInstance());
+  }
+
+  private static ProjectJdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {
+    File jdkHomeFile = new File(jdkHome);
+    if (!jdkHomeFile.exists()) return null;
+
+    final ProjectJdk jdk = new ProjectJdkImpl(versionName, javaSdk);
+    final SdkModificator sdkModificator = jdk.getSdkModificator();
+
+    String path = jdkHome.replace(File.separatorChar, '/');
+    sdkModificator.setHomePath(path);
+    sdkModificator.setVersionString(versionName); // must be set after home path, otherwise setting home path clears the version string
+
+    addSources(jdkHomeFile, sdkModificator);
+    addClasses(jdkHomeFile, sdkModificator, false, JarFileSystem.getInstance());
+    addClasses(jdkHomeFile, sdkModificator, true, JarFileSystem.getInstance());
+    sdkModificator.commitChanges();
+
+    return jdk;
+  }
+
+  private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre, JarFileSystem jarFileSystem) {
+    VirtualFile[] classes = findClasses(file, isJre, jarFileSystem);
+    for (int i = 0; i < classes.length; i++) {
+      VirtualFile virtualFile = classes[i];
+      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
+    }
+  }
+
+  public static VirtualFile[] findClasses(File file, boolean isJre, JarFileSystem jarFileSystem) {
+    FileFilter jarFileFilter = new FileFilter(){
+      public boolean accept(File f){
+        if (f.isDirectory()) return false;
+        if (f.getName().endsWith(".jar")) return true;
+        return false;
+      }
+    };
+
+    File[] jarDirs;
+    if(SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode()){
+      File libFile = new File(file, "lib");
+      File classesFile = new File(file, "../Classes");
+      File libExtFile = new File(libFile, "ext");
+      jarDirs = new File[]{libFile, classesFile, libExtFile};
+    }
+    else{
+      File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, "jre"), "lib");
+      File jreLibExtFile = new File(jreLibFile, "ext");
+      jarDirs = new File[]{jreLibFile, jreLibExtFile};
+    }
+
+    ArrayList childrenList = new ArrayList();
+    for (int i = 0; i < jarDirs.length; i++){
+      File jarDir = jarDirs[i];
+      if ((jarDir != null) && jarDir.isDirectory()){
+        File[] files = jarDir.listFiles(jarFileFilter);
+        for (int j = 0; j < files.length; j++){
+          childrenList.add(files[j]);
+        }
+      }
+    }
+
+    ArrayList result = new ArrayList();
+    for (int i = 0; i < childrenList.size(); i++){
+      File child = (File)childrenList.get(i);
+      String path = child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
+      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      if (vFile != null){
+        result.add(vFile);
+      }
+    }
+
+    File classesZipFile = new File(new File(file, "lib"), "classes.zip");
+    if((!classesZipFile.isDirectory()) && classesZipFile.exists()){
+      String path = classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
+      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      if (vFile != null){
+        result.add(vFile);
+      }
+    }
+
+    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+  }
+
+  private static void addSources(File file, SdkModificator sdkModificator) {
+    VirtualFile vFile = findSources(file);
+    if (vFile != null) {
+      sdkModificator.addRoot(vFile, ProjectRootType.SOURCE);
+    }
+  }
+
+  public static VirtualFile findSources(File file) {
+    File srcfile = new File(file, "src");
+    File jarfile = new File(file, "src.jar");
+    if (!jarfile.exists()) {
+      jarfile = new File(file, "src.zip");
+    }
+
+    if (jarfile.exists()) {
+      JarFileSystemEx jarFileSystem = (JarFileSystemEx)JarFileSystem.getInstance();
+      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "src";
+      jarFileSystem.setNoCopyJarForPath(path);
+      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      if (vFile != null) return vFile;
+      // try 1.4 format
+      path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      jarFileSystem.setNoCopyJarForPath(path);
+      vFile = jarFileSystem.findFileByPath(path);
+      return vFile;
+    }
+    else {
+      if (!srcfile.exists() || !srcfile.isDirectory()) return null;
+      String path = srcfile.getAbsolutePath().replace(File.separatorChar, '/');
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
+      return vFile;
+    }
+  }
+
+  private static void addDocs(File file, SdkModificator rootContainer) {
+    VirtualFile vFile = findDocs(file);
+    if (vFile != null) {
+      rootContainer.addRoot(vFile, ProjectRootType.JAVADOC);
+    }
+  }
+
+  public static VirtualFile findDocs(File file) {
+    file = new File(file.getAbsolutePath() + File.separator + "docs" + File.separator + "api");
+    if (!file.exists() || !file.isDirectory()) return null;
+    String path = file.getAbsolutePath().replace(File.separatorChar, '/');
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
+    return vFile;
+  }
+
+  public static boolean checkForJdk(File file) {
+    file = new File(file.getAbsolutePath() + File.separator + "bin");
+    if (!file.exists()) return false;
+    FileFilter fileFilter = new FileFilter() {
+      public boolean accept(File f) {
+        if (f.isDirectory()) return false;
+        if (f.getName().startsWith("javac")) return true;
+        if (f.getName().startsWith("javah")) return true;
+        return false;
+      }
+    };
+    File[] children = file.listFiles(fileFilter);
+    return (children != null && children.length >= 2);
+  }
+
+  private static class ReadStreamThread extends Thread {
+    private InputStream myStream;
+
+    protected ReadStreamThread(InputStream stream) {
+      myStream = stream;
+    }
+
+    public void run() {
+      try {
+        while (true) {
+          int b = myStream.read();
+          if (b == -1) break;
+        }
+      }
+      catch (IOException e) {
+      }
+    }
+  }
+
+  private static class VersionParsingThread extends Thread {
+    private Reader myReader;
+    private boolean mySkipLF = false;
+    private String[] myVersionString;
+
+    protected VersionParsingThread(InputStream input, String[] versionString) {
+      myReader = new InputStreamReader(input);
+      myVersionString = versionString;
+    }
+
+    public void run() {
+      try {
+        while (true) {
+          String line = readLine();
+          if (line == null) return;
+          if (line.indexOf("version") >= 0) {
+            myVersionString[0] = line;
+          }
+        }
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    private String readLine() throws IOException {
+      boolean first = true;
+      StringBuffer buffer = new StringBuffer();
+      while (true) {
+        int c = myReader.read();
+        if (c == -1) break;
+        first = false;
+        if (c == '\n') {
+          if (mySkipLF) {
+            mySkipLF = false;
+            continue;
+          }
+          break;
+        }
+        else if (c == '\r') {
+          mySkipLF = true;
+          break;
+        }
+        else {
+          mySkipLF = false;
+          buffer.append((char)c);
+        }
+      }
+      if (first) return null;
+      String s = buffer.toString();
+      //if (Diagnostic.TRACE_ENABLED){
+      //  Diagnostic.trace(s);
+      //}
+      return s;
+    }
+  }
+}

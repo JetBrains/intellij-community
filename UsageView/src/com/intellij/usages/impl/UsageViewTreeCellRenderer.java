@@ -1,0 +1,122 @@
+package com.intellij.usages.impl;
+
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageTreeColors;
+import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.usages.*;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: max
+ * Date: Dec 22, 2004
+ * Time: 4:56:41 PM
+ * To change this template use File | Settings | File Templates.
+ */
+class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+  private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
+  private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
+
+  private SimpleTextAttributes myNumberOfUsagesAttribute;
+  private UsageViewPresentation myPresentation;
+  private UsageView myView;
+
+  public UsageViewTreeCellRenderer(UsageView view) {
+    myView = view;
+    myPresentation = view.getPresentation();
+    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+    myNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
+  }
+
+  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    boolean showAsReadOnly = false;
+    if (value instanceof Node && value != tree.getModel().getRoot()) {
+      Node node = (Node)value;
+      if (!node.isValid()) {
+        append("INVALID ", ourInvalidAttributes);
+      }
+      if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
+        showAsReadOnly = true;
+      }
+    }
+
+    if (value instanceof DefaultMutableTreeNode) {
+      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+      Object userObject = treeNode.getUserObject();
+
+      if (userObject instanceof UsageTarget) {
+        UsageTarget usageTarget = (UsageTarget)userObject;
+        ItemPresentation presentation = usageTarget.getPresentation();
+        if (showAsReadOnly) {
+          append("Read-only ", ourReadOnlyAttributes);
+        }
+        append(presentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        setIcon(presentation.getIcon(expanded));
+      }
+      else if (treeNode instanceof GroupNode) {
+        GroupNode node = (GroupNode)treeNode;
+
+        if (node.isRoot()) {
+          append("Usages", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+        }
+        else {
+          append(node.getGroup().getText(myView),
+                 patchAttrs(node, showAsReadOnly ? ourReadOnlyAttributes : SimpleTextAttributes.REGULAR_ATTRIBUTES));
+          setIcon(node.getGroup().getIcon(expanded));
+        }
+
+        int count = node.getRecursiveUsageCount();
+        append(" (" + StringUtil.pluralize(count + " usage", count) + ")", patchAttrs(node, myNumberOfUsagesAttribute));
+      }
+      else if (treeNode instanceof UsageNode) {
+        UsageNode node = (UsageNode)treeNode;
+        setIcon(node.getUsage().getPresentation().getIcon());
+        if (showAsReadOnly) {
+          append("Read-only ", patchAttrs(node, ourReadOnlyAttributes));
+        }
+
+        TextChunk[] text = node.getUsage().getPresentation().getText();
+        for (int i = 0; i < text.length; i++) {
+          TextChunk textChunk = text[i];
+          append(textChunk.getText(), patchAttrs(node, SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes())));
+        }
+      }
+      else if (userObject instanceof String) {
+        append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+      else {
+        append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    }
+    else {
+      append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+  }
+
+  private SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {
+    if (node.isExcluded()) {
+      original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, original.getFgColor(), original.getWaveColor());
+    }
+    if (node instanceof GroupNode) {
+      UsageGroup group = ((GroupNode)node).getGroup();
+      FileStatus fileStatus = group != null ? group.getFileStatus() : null;
+      if (fileStatus != null && fileStatus != FileStatus.NOT_CHANGED) {
+        original = new SimpleTextAttributes(original.getStyle(), fileStatus.getColor(), original.getWaveColor());
+      }
+
+      DefaultMutableTreeNode parent = ((DefaultMutableTreeNode)node.getParent());
+      if (parent != null && parent.isRoot()) {
+        original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_BOLD, original.getFgColor(), original.getWaveColor());
+      }
+    }
+    return original;
+  }
+}

@@ -1,0 +1,16 @@
+<components>
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.wm.WindowManager</interface-class>
+      <implementation-class>com.intellij.openapi.wm.impl.WindowManagerImpl</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.wm.ToolWindowManager</interface-class>
+      <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </project-components>
+</components>

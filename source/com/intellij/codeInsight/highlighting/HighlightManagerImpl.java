@@ -1,0 +1,290 @@
+package com.intellij.codeInsight.highlighting;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.HashMap;
+
+import java.awt.*;
+import java.util.*;
+
+public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
+
+  public static final int HIDE_BY_ESCAPE = 0x01;
+  public static final int HIDE_BY_ANY_KEY = 0x02;
+  public static final int HIDE_BY_TEXT_CHANGE = 0x04;
+
+  private AnActionListener myAnActionListener;
+  private DocumentListener myDocumentListener;
+
+  private final Key<Map<RangeHighlighter, HighlightInfo>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+
+  static class HighlightInfo {
+    final Editor editor;
+    final int flags;
+
+    public HighlightInfo(Editor editor, int flags) {
+      this.editor = editor;
+      this.flags = flags;
+    }
+  }
+
+  public HighlightManagerImpl() {
+  }
+
+  public String getComponentName() {
+    return "HighlightManager";
+  }
+
+  public void initComponent() { }
+
+  public void disposeComponent() {
+  }
+
+  public void projectOpened() {
+    myAnActionListener = new MyAnActionListener();
+    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
+
+    myDocumentListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent event) {
+        ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
+
+        Document document = event.getDocument();
+        Editor[] editors = EditorFactory.getInstance().getEditors(document);
+        for (int i = 0; i < editors.length; i++) {
+          Editor editor = editors[i];
+          Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+          if (map == null) return;
+
+          for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
+            RangeHighlighter highlighter = iterator.next();
+            HighlightInfo info = map.get(highlighter);
+            if (!info.editor.getDocument().equals(document)) continue;
+            if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
+              highlightersToRemove.add(highlighter);
+            }
+          }
+
+          for (int j = 0; j < highlightersToRemove.size(); j++) {
+            RangeHighlighter highlighter = highlightersToRemove.get(j);
+            removeSegmentHighlighter(editor, highlighter);
+          }
+        }
+      }
+    };
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
+  }
+
+  public void projectClosed() {
+    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
+    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
+  }
+
+  public Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(Editor editor, boolean toCreate) {
+    Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
+    if (map == null && toCreate) {
+      map = new HashMap<RangeHighlighter, HighlightInfo>();
+      editor.putUserData(HIGHLIGHT_INFO_MAP_KEY, map);
+    }
+    return map;
+  }
+
+  public RangeHighlighter[] getHighlighters(Editor editor) {
+    Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
+    if (highlightersMap == null) return new RangeHighlighter[0];
+    Set<RangeHighlighter> set = new HashSet<RangeHighlighter>();
+    for (Iterator<Map.Entry<RangeHighlighter, HighlightInfo>> it = highlightersMap.entrySet().iterator();
+         it.hasNext();) {
+      Map.Entry<RangeHighlighter, HighlightInfo> entry = it.next();
+      HighlightInfo info = entry.getValue();
+      if (info.editor.equals(editor)) set.add(entry.getKey());
+    }
+    return set.toArray(new RangeHighlighter[set.size()]);
+  }
+
+  public RangeHighlighter addSegmentHighlighter(Editor editor,
+                                                int startOffset,
+                                                int endOffset,
+                                                TextAttributes attributes,
+                                                int flags) {
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset,
+                                                                               HighlighterLayer.SELECTION - 1,
+                                                                               attributes,
+                                                                               HighlighterTargetArea.EXACT_RANGE);
+    HighlightInfo info = new HighlightInfo(editor, flags);
+    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
+    map.put(highlighter, info);
+    return highlighter;
+  }
+
+  public boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter) {
+    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    if (map == null) return false;
+    HighlightInfo info = map.get(highlighter);
+    if (info == null) return false;
+    info.editor.getMarkupModel().removeHighlighter(highlighter);
+    map.remove(highlighter);
+    return true;
+  }
+
+  public void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
+                                      TextAttributes attributes, boolean hideByTextChange,
+                                      ArrayList highlightersVector) {
+    if (occurrences.length == 0) return;
+    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    if (hideByTextChange) {
+      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+    }
+    Color scrollmarkColor = null;
+    if (attributes.getBackgroundColor() != null) {
+      scrollmarkColor = attributes.getBackgroundColor().darker();
+    }
+
+    for (int i = 0; i < occurrences.length; i++) {
+      PsiReference occurrence = occurrences[i];
+      PsiElement element = occurrence.getElement();
+      int startOffset = element.getTextRange().getStartOffset();
+      int start = startOffset + occurrence.getRangeInElement().getStartOffset();
+      int end = startOffset + occurrence.getRangeInElement().getEndOffset();
+
+      addOccurrenceHighlight(editor, start, end, attributes, flags, highlightersVector, scrollmarkColor);
+    }
+  }
+
+  public void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
+                                      TextAttributes attributes, boolean hideByTextChange,
+                                      ArrayList highlightersVector) {
+    if (elements.length == 0) return;
+    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    if (hideByTextChange) {
+      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+    }
+    Color scrollmarkColor = null;
+    if (attributes.getBackgroundColor() != null) {
+      scrollmarkColor = attributes.getBackgroundColor().darker();
+    }
+
+    for (int i = 0; i < elements.length; i++) {
+      final PsiElement element = elements[i];
+      final TextRange range = element.getTextRange();
+      addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, flags, highlightersVector, scrollmarkColor);
+    }
+  }
+
+  protected void addOccurrenceHighlight(Editor editor,
+                                      int start,
+                                      int end,
+                                      TextAttributes attributes,
+                                      int flags,
+                                      ArrayList highlightersVector,
+                                      Color scrollmarkColor) {
+    RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
+    if (highlightersVector != null) {
+      highlightersVector.add(highlighter);
+    }
+    highlighter.setErrorStripeMarkColor(scrollmarkColor);
+  }
+
+  public void addRangeHighlight(Editor editor,
+                                int startOffset,
+                                int endOffset,
+                                TextAttributes attributes,
+                                boolean hideByTextChange,
+                                ArrayList highlighters) {
+    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    if (hideByTextChange) {
+      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+    }
+    Color scrollmarkColor = null;
+    if (attributes.getBackgroundColor() != null) {
+      scrollmarkColor = attributes.getBackgroundColor().darker();
+    }
+
+    addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
+  }
+
+  public void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
+                                      TextAttributes attributes, boolean hideByTextChange,
+                                      ArrayList highlightersVector) {
+    if (elements.length == 0) return;
+    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    if (hideByTextChange) {
+      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+    }
+    Color scrollmarkColor = null;
+    if (attributes.getBackgroundColor() != null) {
+      scrollmarkColor = attributes.getBackgroundColor().darker();
+    }
+
+    for (int i = 0; i < elements.length; i++) {
+      PsiElement element = elements[i];
+      TextRange range = element.getTextRange();
+      int start = range.getStartOffset();
+      int end = range.getEndOffset();
+      addOccurrenceHighlight(editor, start, end, attributes, flags, highlightersVector, scrollmarkColor);
+    }
+  }
+
+  public boolean hideHighlights(Editor editor, int mask) {
+    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
+
+    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    if (map == null) return false;
+
+    boolean done = false;
+    for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
+      RangeHighlighter highlighter = iterator.next();
+      HighlightInfo info = map.get(highlighter);
+      if (!info.editor.equals(editor)) continue;
+      if ((info.flags & mask) != 0) {
+        highlightersToRemove.add(highlighter);
+        done = true;
+      }
+    }
+
+    for (int i = 0; i < highlightersToRemove.size(); i++) {
+      RangeHighlighter highlighter = highlightersToRemove.get(i);
+      removeSegmentHighlighter(editor, highlighter);
+    }
+
+    return done;
+  }
+
+  private class MyAnActionListener implements AnActionListener {
+    public void beforeActionPerformed(AnAction action, final DataContext dataContext) {
+      requestHideHighlights(dataContext);
+    }
+
+    public void beforeEditorTyping(char c, DataContext dataContext) {
+      requestHideHighlights(dataContext);
+    }
+
+    private void requestHideHighlights(final DataContext dataContext) {
+      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      if (editor == null) return;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              hideHighlights(editor, HIDE_BY_ANY_KEY);
+            }
+          });
+    }
+  }
+}

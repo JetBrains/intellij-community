@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="3" relativePaths="true">
+  <component name="ProjectRootManager" version="2">
+    <jdk name="java version &quot;1.4.1&quot;" />
+    <projectPath>
+      <root type="composite">
+        <root type="simple" url="file://$PROJECT_DIR$" />
+      </root>
+    </projectPath>
+    <sourcePath>
+      <root type="composite">
+        <root type="jdk" rootType="sourcePath" name="java version &quot;1.4.1&quot;" />
+        <root type="simple" url="file://$PROJECT_DIR$/src" />
+      </root>
+    </sourcePath>
+    <classPath>
+      <root type="composite">
+        <root type="jdk" rootType="classPath" name="java version &quot;1.4.1&quot;" />
+        <root type="output" />
+        <root type="simple" url="jar://$PROJECT_DIR$/../../../../../../idea_current/lib/idea.jar!/" />
+      </root>
+    </classPath>
+    <excludePath>
+      <root type="composite">
+        <root type="excludedOutput" />
+      </root>
+    </excludePath>
+    <javadocPath>
+      <root type="composite">
+        <root type="jdk" rootType="javadocPath" name="java version &quot;1.4.1&quot;" />
+        <root type="simple" url="file://$PROJECT_DIR$/../../../../../../jdk131/docs/api" />
+      </root>
+    </javadocPath>
+    <assert_keyword enabled="no" />
+    <exclude_output enabled="yes" />
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <option name="SYNCHRONIZE_OUTPUT_DIRECTORY" value="true" />
+    <option name="DEFAULT_OUTPUT_PATH" value="$PROJECT_DIR$/classes" />
+    <option name="OUTPUT_MODE" value="single" />
+    <resourceExtensions>
+      <entry name="properties" />
+      <entry name="gif" />
+      <entry name="png" />
+      <entry name="jpeg" />
+    </resourceExtensions>
+  </component>
+  <component name="JavacSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="DEPRECATION" value="true" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="JikesSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="DEPRECATION" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="GENERATE_MAKE_FILE_DEPENDENCIES" value="false" />
+    <option name="DO_FULL_DEPENDENCE_CHECK" value="false" />
+    <option name="IS_INCREMENTAL_MODE" value="false" />
+    <option name="IS_EMACS_ERRORS_MODE" value="true" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="AntConfiguration">
+    <buildFile url="file://$PROJECT_DIR$/build/build.xml">
+      <useEmacsModeOutput value="true" />
+      <useCustomJdk value="false" />
+      <treeView value="true" />
+      <useJavaw value="false" />
+      <verbose value="true" />
+      <includeProjectClasspath value="false" />
+      <includeParser value="true" />
+      <maximumHeapSize value="128" />
+      <properties>
+        <property name="project.path" value="$ProjectFileDir$" />
+      </properties>
+      <targetFilters>
+        <filter targetName="jar_plugin" isVisible="true" />
+      </targetFilters>
+    </buildFile>
+    <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
+    <option name="FILTER_TARGETS" value="false" />
+  </component>
+  <component name="CvsConfiguration">
+    <Checkout>
+      <option name="DATE_TAG" value="" />
+      <option name="REVISION_TAG" value="" />
+      <option name="PRUNE_EMPTY_DIRS" value="true" />
+      <option name="RESET_STICKY_TAGS" value="false" />
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="CREATE_WORKING_DIR" value="" />
+      <option name="ADDITIONAL_OPTIONS" value="" />
+    </Checkout>
+    <Update>
+      <option name="DATE_TAG" value="" />
+      <option name="REVISION_TAG" value="" />
+      <option name="PRUNE_EMPTY_DIRS" value="true" />
+      <option name="RESET_STICKY_TAGS" value="false" />
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="CREATE_MISSING_DIRECTORIES" value="true" />
+      <option name="DONT_CHANGE_FILES" value="false" />
+      <option name="QUIET_MODE" value="false" />
+      <option name="ADDITIONAL_OPTIONS" value="" />
+    </Update>
+    <Commit>
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="REVISION_TAG" />
+      <option name="LOG_MESSAGE" />
+      <option name="ADDITIONAL_OPTIONS" />
+    </Commit>
+    <Diff>
+      <option name="REVISION_TAG" value="HEAD" />
+      <option name="DATE_TAG" value="" />
+      <option name="IGNORE_WHITESPACE" value="false" />
+    </Diff>
+    <Add>
+      <option name="ADD_AS_BINARY" value="false" />
+      <option name="LOG_MESSAGE" />
+    </Add>
+    <Status>
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="INCLUDE_TAGS" value="false" />
+    </Status>
+    <Edit>
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="FORCE_RECURSIVE" value="false" />
+      <option name="EDIT" value="false" />
+      <option name="UNEDIT" value="false" />
+      <option name="COMMIT" value="false" />
+      <option name="ALL" value="true" />
+      <option name="NONE" value="false" />
+    </Edit>
+    <Remove>
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="FORCE_RECURSIVE" value="false" />
+      <option name="DELETE_FILE" value="false" />
+    </Remove>
+    <Log>
+      <option name="DEFAULT_BRANCH" value="false" />
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="QUIET_MODE" value="true" />
+      <option name="ADDITIONAL_OPTIONS" value="" />
+    </Log>
+    <Editors>
+      <option name="NON_RECURSIVE" value="false" />
+      <option name="FORCE_RECURSIVE" value="false" />
+    </Editors>
+    <option name="CLIENT_PATH" value="" />
+    <option name="EXTERNAL_DIFF_PATH" />
+    <option name="USE_EXTERNAL_DIFF" value="false" />
+    <option name="WORKING_FILES_READONLY" value="false" />
+    <option name="COMPRESSION_LEVEL" value="0" />
+    <option name="ADDITIONAL_OPTIONS" value="" />
+    <option name="BINARY_FILES_EXTENSIONS" />
+    <option name="REUSE_LAST_LOG_MESSAGE" value="false" />
+    <option name="PUT_FOCUS_INTO_LOG_MESSAGE" value="false" />
+    <option name="SHOW_PROJECT_ROOTS" value="true" />
+    <option name="SHOW_UPDATE_OPTIONS" value="true" />
+    <option name="SHOW_COMMIT_OPTIONS" value="true" />
+    <option name="SHOW_DIFF_OPTIONS" value="true" />
+    <option name="SHOW_ADD_OPTIONS" value="true" />
+    <option name="SHOW_STATUS_OPTIONS" value="true" />
+    <option name="SHOW_EDIT_OPTIONS" value="true" />
+    <option name="SHOW_UNEDIT_OPTIONS" value="true" />
+    <option name="SHOW_REMOVE_OPTIONS" value="true" />
+    <option name="SHOW_LOG_OPTIONS" value="true" />
+    <option name="SHOW_EDITORS_OPTIONS" value="true" />
+    <option name="HIDE_UNKNOWN_FILES" value="false" />
+    <option name="HIDE_MISSING_FILES" value="false" />
+    <option name="HIDE_UP_TO_DATE_FILES" value="false" />
+  </component>
+  <component name="CvsManager">
+    <expanded_paths />
+  </component>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/javadoc" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_USE_1_1" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" />
+    <option name="HEAP_SIZE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="WebManager">
+    <option enabled="false" />
+  </component>
+  <component name="WebRootContainer" />
+  <component name="EjbManager" enabled="false" />
+  <component name="JUnitProjectSettings">
+    <option name="TEST_RUNNER" value="UI" />
+  </component>
+  <component name="EntryPointsManager">
+    <entry_points />
+  </component>
+  <component name="EjbActionsConfiguration">
+    <option name="NEW_MESSAGE_BEAN_LAST_PACKAGE" value="" />
+    <option name="NEW_ENTITY_BEAN_LAST_PACKAGE" value="" />
+    <option name="NEW_SESSION_BEAN_LAST_PACKAGE" value="" />
+  </component>
+  <component name="GeneralProjectProperties">
+    <option name="USE_DEFAULT_CODE_STYLE_SCHEME" value="true" />
+    <option name="CODE_STYLE_SCHEME" value="" />
+  </component>
+  <component name="ExportToHTMLSettings">
+    <option name="PRINT_LINE_NUMBERS" value="false" />
+    <option name="OPEN_IN_BROWSER" value="false" />
+    <option name="OUTPUT_DIRECTORY" />
+  </component>
+</project>
+

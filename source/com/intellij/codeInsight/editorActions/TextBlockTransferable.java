@@ -1,0 +1,162 @@
+package com.intellij.codeInsight.editorActions;
+
+import com.intellij.openapi.util.text.StringUtil;
+
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.StringReader;
+
+class TextBlockTransferable implements Transferable {
+  private final ReferenceData[] myReferenceDatas;
+  private final FoldingData[] myFoldingData;
+  private final String myText;
+
+  public static class ReferenceData implements Cloneable, Serializable {
+    public static final DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+ReferenceData.class.getName(), "ReferenceData");
+
+    public int startOffset;
+    public int endOffset;
+    public final String qClassName;
+    public final String staticMemberName;
+
+    public ReferenceData(int startOffset, int endOffset, String qClassName, String staticMemberDescriptor) {
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+      this.qClassName = qClassName;
+      this.staticMemberName = staticMemberDescriptor;
+    }
+
+    public Object clone() {
+      try{
+        return super.clone();
+      }
+      catch(CloneNotSupportedException e){
+        throw new RuntimeException();
+      }
+    }
+  }
+
+  public static class FoldingData implements Cloneable, Serializable {
+    public static final DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+FoldingData.class.getName(), "FoldingData");
+
+    public int startOffset;
+    public int endOffset;
+    public final boolean isExpanded;
+
+    public FoldingData(int startOffset, int endOffset, boolean expanded){
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+      isExpanded = expanded;
+    }
+
+    public Object clone() {
+      try{
+        return super.clone();
+      }
+      catch(CloneNotSupportedException e){
+        throw new RuntimeException();
+      }
+    }
+  }
+
+  public TextBlockTransferable(String text, ReferenceData[] referenceDatas, FoldingData[] foldingData) {
+    myText = text;
+    myReferenceDatas = referenceDatas;
+    myFoldingData = foldingData;
+  }
+
+  public DataFlavor[] getTransferDataFlavors() {
+    return new DataFlavor[]{
+      DataFlavor.stringFlavor,
+      DataFlavor.plainTextFlavor,
+      ReferenceData.FLAVOR,
+      FoldingData.FLAVOR
+    };
+  }
+
+  public boolean isDataFlavorSupported(DataFlavor flavor) {
+    DataFlavor[] flavors = getTransferDataFlavors();
+    for(int i = 0; i < flavors.length; i++){
+      if (flavor.equals(flavors[i])){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+    if (ReferenceData.FLAVOR.equals(flavor)){
+      return myReferenceDatas;
+    }
+    else if (FoldingData.FLAVOR.equals(flavor)){
+      return myFoldingData;
+    }
+    else if (DataFlavor.stringFlavor.equals(flavor)) {
+      return myText;
+    }
+    else if (DataFlavor.plainTextFlavor.equals(flavor)) {
+      return new StringReader(myText);
+    }
+    else {
+      throw new UnsupportedFlavorException(flavor);
+    }
+  }
+
+  public static String convertLineSeparators(String text,
+                                             String newSeparator,
+                                             ReferenceData[] referenceData,
+                                             FoldingData[] foldingData) {
+    if (referenceData != null || foldingData != null){
+      int size = 0;
+      if (referenceData != null){
+        size += referenceData.length * 2;
+      }
+      if (foldingData != null){
+        size += foldingData.length * 2;
+      }
+
+      int[] offsets = new int[size];
+      int index = 0;
+      if (referenceData != null){
+        for(int i = 0; i < referenceData.length; i++){
+          ReferenceData data = referenceData[i];
+          offsets[index++] = data.startOffset;
+          offsets[index++] = data.endOffset;
+        }
+      }
+      if (foldingData != null){
+        for(int i = 0; i < foldingData.length; i++){
+          FoldingData data = foldingData[i];
+          offsets[index++] = data.startOffset;
+          offsets[index++] = data.endOffset;
+        }
+      }
+
+      text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
+
+      index = 0;
+      if (referenceData != null){
+        for(int i = 0; i < referenceData.length; i++){
+          ReferenceData data = referenceData[i];
+          data.startOffset = offsets[index++];
+          data.endOffset = offsets[index++];
+        }
+      }
+      if (foldingData != null){
+        for(int i = 0; i < foldingData.length; i++){
+          FoldingData data = foldingData[i];
+          data.startOffset = offsets[index++];
+          data.endOffset = offsets[index++];
+        }
+      }
+
+      return text;
+    }
+    else{
+      return StringUtil.convertLineSeparators(text, newSeparator);
+    }
+  }
+}

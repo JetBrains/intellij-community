@@ -1,0 +1,94 @@
+*******************************************************************************
+Changing keyword substitution mode to "o"
+*******************************************************************************
+
+=== To server ===
+Valid-responses ok error Valid-requests Checked-in New-entry Checksum Copy-file Updated Created Update-existing Merged Patched Rcs-diff Mode Mod-time Removed Remove-entry Set-static-directory Clear-static-directory Set-sticky Clear-sticky Template Notified Module-expansion Wrapper-rcsOption EntriesExtra M Mbinary E F MT
+valid-requests
+UseUnchanged
+Root F:/repository
+Case
+Utf8
+read-cvsrc
+Argument -ko
+Argument --
+Directory .
+F:/repository/swt/src/de/regnis/swt
+Entry /Main.java/1.2//-ko/
+EntryExtra /Main.java///
+Unchanged Main.java
+admin
+
+=== From server ===
+Valid-requests Root Valid-responses valid-requests Repository Directory Max-dotdot Static-directory Sticky Entry EntryExtra Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify NotifyUser Questionable Case Utf8 Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set expand-modules ci co chown setowner setperm chacl setacl listperm lsacl setpass passwd update diff log rlog add remove update-patches gzip-file-contents status ls rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors init annotate rannotate noop version Rootless-stream-modification Kerberos-encrypt Gssapi-encrypt Protocol-encrypt Gssapi-authenticate Protocol-authenticate read-cvsrc Error-If-Reader
+ok
+end-cvsrc
+E cvs server: Administrating .
+M RCS file: F:/repository/swt/src/de/regnis/swt/Main.java,v
+M done
+ok
+
+
+*******************************************************************************
+Locking
+*******************************************************************************
+
+=== To server ===
+Valid-responses ok error Valid-requests Checked-in New-entry Checksum Copy-file Updated Created Update-existing Merged Patched Rcs-diff Mode Mod-time Removed Remove-entry Set-static-directory Clear-static-directory Set-sticky Clear-sticky Template Notified Module-expansion Wrapper-rcsOption EntriesExtra M Mbinary E F MT
+valid-requests
+UseUnchanged
+Root F:/repository
+Case
+Utf8
+read-cvsrc
+Argument -l
+Argument --
+Directory .
+F:/repository/swt/src/de/regnis/swt
+Entry /Main.java/1.2//-ko/
+EntryExtra /Main.java///
+Unchanged Main.java
+admin
+
+=== From server ===
+Valid-requests Root Valid-responses valid-requests Repository Directory Max-dotdot Static-directory Sticky Entry EntryExtra Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify NotifyUser Questionable Case Utf8 Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set expand-modules ci co chown setowner setperm chacl setacl listperm lsacl setpass passwd update diff log rlog add remove update-patches gzip-file-contents status ls rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors init annotate rannotate noop version Rootless-stream-modification Kerberos-encrypt Gssapi-encrypt Protocol-encrypt Gssapi-authenticate Protocol-authenticate read-cvsrc Error-If-Reader
+ok
+end-cvsrc
+E cvs server: Administrating .
+M RCS file: F:/repository/swt/src/de/regnis/swt/Main.java,v
+M 1.2 locked
+M done
+ok
+
+
+*******************************************************************************
+Unlocking
+*******************************************************************************
+
+=== To server ===
+Valid-responses ok error Valid-requests Checked-in New-entry Checksum Copy-file Updated Created Update-existing Merged Patched Rcs-diff Mode Mod-time Removed Remove-entry Set-static-directory Clear-static-directory Set-sticky Clear-sticky Template Notified Module-expansion Wrapper-rcsOption EntriesExtra M Mbinary E F MT
+valid-requests
+UseUnchanged
+Root F:/repository
+Case
+Utf8
+read-cvsrc
+Argument -u
+Argument --
+Directory .
+F:/repository/swt/src/de/regnis/swt
+Entry /Main.java/1.2//-ko/
+EntryExtra /Main.java///
+Unchanged Main.java
+admin
+
+=== From server ===
+Valid-requests Root Valid-responses valid-requests Repository Directory Max-dotdot Static-directory Sticky Entry EntryExtra Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify NotifyUser Questionable Case Utf8 Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set expand-modules ci co chown setowner setperm chacl setacl listperm lsacl setpass passwd update diff log rlog add remove update-patches gzip-file-contents status ls rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors init annotate rannotate noop version Rootless-stream-modification Kerberos-encrypt Gssapi-encrypt Protocol-encrypt Gssapi-authenticate Protocol-authenticate read-cvsrc Error-If-Reader
+ok
+end-cvsrc
+E cvs server: Administrating .
+M RCS file: F:/repository/swt/src/de/regnis/swt/Main.java,v
+M 1.2 unlocked
+M done
+ok
+

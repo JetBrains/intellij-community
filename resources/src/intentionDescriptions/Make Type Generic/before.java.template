@@ -1,0 +1,8 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class X {
+  void f() {
+    List list <spot>=</spot> new ArrayList<String>();
+  }
+}

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.ui.experts.importToCvs.ImportSettingsStep">
+  <grid id="f97d8" binding="myPanel" row-count="3" column-count="2" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="22" y="16" width="539" height="330"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <hspacer id="4b140">
+        <constraints>
+          <xy x="513" y="75" width="26" height="11"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+        </constraints>
+      </hspacer>
+      <grid id="72aee" row-count="5" column-count="3" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="0" width="513" height="161"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="4cdd4" class="javax.swing.JLabel" binding="myNameLabel">
+            <constraints>
+              <xy x="0" y="3" width="93" height="15"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Name in repository:"/>
+            </properties>
+          </component>
+          <component id="f678a" class="javax.swing.JTextField" binding="myModuleName">
+            <constraints>
+              <xy x="103" y="0" width="150" height="22"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="162a8" class="javax.swing.JLabel" binding="myVendorLabel">
+            <constraints>
+              <xy x="0" y="30" width="39" height="15"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Vendor:"/>
+            </properties>
+          </component>
+          <component id="8dece" class="javax.swing.JTextField" binding="myVendor">
+            <constraints>
+              <xy x="103" y="27" width="150" height="22"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="35c86" class="javax.swing.JLabel" binding="myReleaseTagLabel">
+            <constraints>
+              <xy x="0" y="57" width="60" height="15"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Release tag:"/>
+            </properties>
+          </component>
+          <component id="a5341" class="javax.swing.JTextField" binding="myReleaseTag">
+            <constraints>
+              <xy x="103" y="54" width="150" height="22"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="22e23" class="javax.swing.JLabel" binding="myModuleErrorMessage">
+            <constraints>
+              <xy x="263" y="3" width="250" height="15"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                <minimum-size width="250" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="XXXXXXXXXXXXXXXXXXXXXXXX"/>
+            </properties>
+          </component>
+          <component id="d6392" class="javax.swing.JLabel" binding="myVendorErrorMessage">
+            <constraints>
+              <xy x="263" y="30" width="250" height="15"/>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                <minimum-size width="250" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="XXXXXXXXXXXXXXXXXXXXXXXX"/>
+            </properties>
+          </component>
+          <component id="8968c" class="javax.swing.JLabel" binding="myReleaseTagErrorMessage">
+            <constraints>
+              <xy x="263" y="57" width="250" height="15"/>
+              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                <minimum-size width="250" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="XXXXXXXXXXXXXXXXXXXXXXXX"/>
+            </properties>
+          </component>
+          <scrollpane id="ec15a">
+            <constraints>
+              <xy x="103" y="81" width="410" height="80"/>
+              <grid row="3" column="1" row-span="2" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="d94ca" class="javax.swing.JTextArea" binding="myLogMessage">
+                <constraints/>
+                <properties>
+                  <rows value="5"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+          <component id="60457" class="javax.swing.JLabel" binding="myLogMessageLabel">
+            <constraints>
+              <xy x="0" y="83" width="68" height="15"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Log message:"/>
+            </properties>
+          </component>
+          <vspacer id="566bf">
+            <constraints>
+              <xy x="41" y="101" width="11" height="60"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+            </constraints>
+          </vspacer>
+        </children>
+      </grid>
+      <grid id="15750" row-count="1" column-count="3" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="166" width="513" height="23"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="4780e" class="javax.swing.JCheckBox" binding="myCheckoutAfterImport">
+            <constraints>
+              <xy x="0" y="0" width="128" height="23"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Checkout &amp;after import"/>
+            </properties>
+          </component>
+          <component id="bd722" class="javax.swing.JCheckBox" binding="myMakeCheckedOutFilesReadOnly">
+            <constraints>
+              <xy x="138" y="0" width="184" height="23"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Make checked out files read-&amp;only"/>
+            </properties>
+          </component>
+          <hspacer id="dcb4a">
+            <constraints>
+              <xy x="322" y="6" width="191" height="11"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
+      <vspacer id="3d271">
+        <constraints>
+          <xy x="251" y="189" width="11" height="141"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+    </children>
+  </grid>
+</form>

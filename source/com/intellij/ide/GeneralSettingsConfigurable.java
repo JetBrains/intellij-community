@@ -1,0 +1,275 @@
+package com.intellij.ide;
+
+import com.intellij.ide.updates.UpdateSettings;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.SortedMap;
+import java.util.Vector;
+
+public class GeneralSettingsConfigurable extends BaseConfigurable implements ApplicationComponent {
+  private DiffOptionsForm myDiffOptions;
+  private MyComponent myComponent;
+
+  public static GeneralSettingsConfigurable getInstance() {
+    return ApplicationManager.getApplication().getComponent(GeneralSettingsConfigurable.class);
+  }
+
+  public void initComponent() { }
+
+  public void disposeComponent() { }
+
+  public void apply() {
+    GeneralSettings settings = GeneralSettings.getInstance();
+
+    settings.setBrowserPath(myComponent.myBrowserPathField.getText());
+    settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
+    settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
+    settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
+    settings.setUseUTFGuessing(myComponent.myChkUTFGuessing.isSelected());
+    settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
+
+    // AutoSave in inactive
+
+    settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
+    try {
+      int newInactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
+      if (newInactiveTimeout > 0) {
+        settings.setInactiveTimeout(newInactiveTimeout);
+      }
+    }
+    catch (NumberFormatException e) {
+    }
+
+    //
+
+    settings.setCharsetName((String)myComponent.myCharsetNameCombo.getSelectedItem());
+    if (!FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText())) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          FileTypeManagerEx.getInstanceEx().setIgnoredFilesList(myComponent.myIgnoreFilesField.getText());
+        }
+      });
+    }
+    getDiffOptions().apply();
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+
+    if (myComponent.myRbCheckAutomatically.isSelected()) {
+      updateSettings.CHECK_UPDATES = true;
+      updateSettings.ASK_USER = false;
+    }
+    else if (myComponent.myRbAskBeforeCheck.isSelected()) {
+      updateSettings.CHECK_UPDATES = true;
+      updateSettings.ASK_USER = true;
+    }
+    else {
+      updateSettings.CHECK_UPDATES = false;
+      updateSettings.ASK_USER = false;
+    }
+  }
+
+  public boolean isModified() {
+    boolean isModified = false;
+    GeneralSettings settings = GeneralSettings.getInstance();
+    isModified |= !compareStrings(settings.getBrowserPath(), myComponent.myBrowserPathField.getText());
+    isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
+    isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
+    isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
+    isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
+    isModified |= settings.isUseUTFGuessing() != myComponent.myChkUTFGuessing.isSelected();
+    isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
+
+    int inactiveTimeout = -1;
+    try {
+      inactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
+    }
+    catch (NumberFormatException e) {
+    }
+    isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
+
+    isModified |= !compareStrings(settings.getCharsetName(), (String)myComponent.myCharsetNameCombo.getSelectedItem());
+    isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+    isModified |= updateSettings.CHECK_UPDATES == myComponent.myRbNeverCheck.isSelected();
+    isModified |= updateSettings.ASK_USER != myComponent.myRbAskBeforeCheck.isSelected();
+
+    return isModified || getDiffOptions().isModified();
+  }
+
+  private static boolean compareStrings(String string1, String string2) {
+    if (string1 == null) {
+      string1 = "";
+    }
+    if (string2 == null) {
+      string2 = "";
+    }
+    return string1.equals(string2);
+  }
+//----------------------------------------------
+  public JComponent createComponent() {
+
+//    optionGroup.add(getDiffOptions().getPanel());
+    myComponent = new MyComponent();
+    myComponent.myDiffOptionsPanel.setLayout(new BorderLayout());
+    myComponent.myDiffOptionsPanel.add(getDiffOptions().createComponent(), BorderLayout.CENTER);
+
+    // AutoSave if inactive
+
+    myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
+      }
+    });
+
+
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    myComponent.myBrowserPathField.addBrowseFolderListener("Select Path to Browser", null, null, descriptor);
+
+    myComponent.myIgnoreFilesField.setText("skdjf arfgvkbdfugbvr");
+    Vector charsets = new Vector();
+    charsets.add("System Default");
+    SortedMap avaliableCharsets = Charset.availableCharsets();
+    for (Iterator iterator = avaliableCharsets.keySet().iterator(); iterator.hasNext();) {
+      String name = (String)iterator.next();
+      if (!name.startsWith("UTF-16")) {
+        charsets.add(name);
+      }
+    }
+
+    myComponent.myCharsetNameCombo.setModel(new DefaultComboBoxModel(charsets));
+
+    return myComponent.myPanel;
+  }
+//--------------------------------------------------------
+  public String getDisplayName() {
+    return "General";
+  }
+
+  public Icon getIcon() {
+    return IconLoader.getIcon("/general/configurableGeneral.png");
+  }
+
+  public void reset() {
+    GeneralSettings settings = GeneralSettings.getInstance();
+    myComponent.myBrowserPathField.setText(settings.getBrowserPath());
+    myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
+    myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
+    myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
+
+    myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
+    myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
+    myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
+
+    myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
+    myComponent.myCharsetNameCombo.setSelectedItem(settings.getCharsetName());
+    myComponent.myChkUTFGuessing.setSelected(settings.isUseUTFGuessing());
+    getDiffOptions().reset();
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+    if (updateSettings.CHECK_UPDATES) {
+      if (updateSettings.ASK_USER) {
+        myComponent.myRbAskBeforeCheck.setSelected(true);
+      }
+      else {
+        myComponent.myRbCheckAutomatically.setSelected(true);
+      }
+    }
+    else {
+      myComponent.myRbNeverCheck.setSelected(true);
+    }
+
+    if (settings.isUseDefaultBrowser()) {
+      myComponent.myUseSystemDefaultBrowser.setSelected(true);
+    }
+    else {
+      myComponent.myUseUserDefinedBrowser.setSelected(true);
+    }
+    myComponent.updateBrowserField();
+  }
+
+  public void disposeUIResources() {
+    myComponent = null;
+  }
+
+  public String getHelpTopic() {
+    return "preferences.general";
+  }
+
+  public String getComponentName() {
+    return "GeneralSettingsConfigurable";
+  }
+
+  private static class MyComponent {
+    JPanel myPanel;
+    private TextFieldWithBrowseButton myBrowserPathField;
+    private JTextField myIgnoreFilesField;
+    private JCheckBox myChkReopenLastProject;
+    private JCheckBox myChkSyncOnFrameActivation;
+    private JCheckBox myChkSaveOnFrameDeactivation;
+    private JCheckBox myChkAutoSaveIfInactive;
+    private JTextField myTfInactiveTimeout;
+    private JComboBox myCharsetNameCombo;
+    private JCheckBox myChkUTFGuessing;
+    private JPanel myDiffOptionsPanel;
+    private JRadioButton myRbAskBeforeCheck;
+    private JRadioButton myRbCheckAutomatically;
+    private JRadioButton myRbNeverCheck;
+    private JRadioButton myUseSystemDefaultBrowser;
+    private JRadioButton myUseUserDefinedBrowser;
+
+    public MyComponent() {
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(myRbAskBeforeCheck);
+      buttonGroup.add(myRbCheckAutomatically);
+      buttonGroup.add(myRbNeverCheck);
+
+      ButtonGroup browserGroup = new ButtonGroup();
+      browserGroup.add(myUseSystemDefaultBrowser);
+      browserGroup.add(myUseUserDefinedBrowser);
+
+      if (BrowserUtil.canStartDefaultBrowser()) {
+        ActionListener actionListener = new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            updateBrowserField();
+          }
+        };
+        myUseSystemDefaultBrowser.addActionListener(actionListener);
+        myUseUserDefinedBrowser.addActionListener(actionListener);
+      }
+      else {
+        myUseSystemDefaultBrowser.setVisible(false);
+        myUseUserDefinedBrowser.setVisible(false);
+      }
+    }
+
+    private void updateBrowserField() {
+      if (!BrowserUtil.canStartDefaultBrowser()) {
+        return;
+      }
+      myBrowserPathField.getTextField().setEnabled(myUseUserDefinedBrowser.isSelected());
+      myBrowserPathField.getButton().setEnabled(myUseUserDefinedBrowser.isSelected());
+    }
+
+  }
+
+
+  private DiffOptionsForm getDiffOptions() {
+    if (myDiffOptions == null) myDiffOptions = new DiffOptionsForm();
+    return myDiffOptions;
+  }
+
+}

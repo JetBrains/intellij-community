@@ -1,0 +1,12 @@
+<component selected-index="0">
+  <todo-panel id="selected-file">
+    <are-packages-shown value="false"/>
+    <flattern-packages value="false"/>
+    <is-autoscroll-to-source value="true"/>
+  </todo-panel>
+  <todo-panel id="all">
+    <are-packages-shown value="true"/>
+    <flattern-packages value="false"/>
+    <is-autoscroll-to-source value="true"/>
+  </todo-panel>
+</component>

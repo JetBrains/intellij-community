@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>10</line>
+    <description>Condition 'o instanceof B' is always false</description>
+  </problem>
+</problems>
+

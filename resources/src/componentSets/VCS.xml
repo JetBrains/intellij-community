@@ -1,0 +1,79 @@
+<components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.vfs.VcsFileSystem</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.vcs.impl.EditorIntegration</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.EditorIntegration</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.vssSupport.VssVcs</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelState</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelStateImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.vssSupport.VssConfiguration</interface-class>
+      <implementation-class>com.intellij.vssSupport.VssConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.AbstractVcsHelper</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.fileView.FileViewConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.FileViewManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.VcsManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.vfs.ReadonlyStatusHandler</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <module-components>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.ModuleLevelVcsManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.ModuleLevelVcsManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.VersionControlPerModuleConfigurable</implementation-class>
+    </component>
+  </module-components>
+
+</components>

@@ -1,0 +1,127 @@
+package com.intellij.refactoring.extractMethod;
+
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.*;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
+import com.intellij.util.IncorrectOperationException;
+
+public class ExtractMethodHandler implements RefactoringActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
+
+  public static final String REFACTORING_NAME = "Extract Method";
+
+  public void invoke(final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    if (!editor.getSelectionModel().hasSelection()) {
+      editor.getSelectionModel().selectLineAtCaret();
+    }
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    int endOffset = editor.getSelectionModel().getSelectionEnd();
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    
+    PsiElement[] elements;
+    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+    if (expr != null) {
+      elements = new PsiElement[]{expr};
+    } else {
+      elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+    }
+
+    if (elements == null || elements.length == 0) {
+      String message = "Cannot perform the refactoring.\n" +
+              "Selected block should represent a set of statements or an expression.";
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+      return;
+    }
+
+    if (!file.isWritable()) {
+      RefactoringMessageUtil.showReadOnlyElementRefactoringMessage(project, file);
+      return;
+    }
+
+
+    for (int i = 0; i < elements.length; i++) {
+      PsiElement element = elements[i];
+      if(element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement) element, true, true)) {
+        String message =
+                "Cannot perform the refactoring.\n" +
+                "Selected block contains invocation of another class constructor.";
+                RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+        return;
+      }
+    }
+
+    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, file, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
+
+    try {
+      if (!processor.prepare()) return;
+
+
+      if (processor.showDialog()) {
+        CommandProcessor.getInstance().executeCommand(
+            project, new Runnable() {
+                  public void run() {
+                    final Runnable action = new Runnable() {
+                      public void run() {
+                        try {
+                          processor.doRefactoring();
+                        } catch (IncorrectOperationException e) {
+                          LOG.error(e);
+                        }
+                      }
+                    };
+                    ApplicationManager.getApplication().runWriteAction(action);
+                  }
+                },
+                REFACTORING_NAME,
+                null
+        );
+
+        DuplicatesImpl.processDuplicates(processor, project, editor, REFACTORING_NAME);
+      }
+    }
+    catch (PrepareFailedException e) {
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
+      highlightPrepareError(e, file, editor, project);
+    }
+  }
+
+  public static void highlightPrepareError(PrepareFailedException e,
+                                                     PsiFile file,
+                                                     Editor editor,
+                                                     final Project project) {
+    if (e.getFile() == file) {
+      final TextRange textRange = e.getTextRange();
+      final HighlightManager highlightManager = HighlightManager.getInstance(project);
+      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(),
+                                         attributes, true, null);
+      final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
+      editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+      WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+    }
+  }
+
+  public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+  }
+}

@@ -1,0 +1,3 @@
+<spot>public abstract class X</spot> {
+  protected abstract void f();
+}

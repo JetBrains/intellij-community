@@ -1,0 +1,27 @@
+<components>
+  <include name="componentSets/Lvcs"/>
+  <include name="componentSets/Core"/>
+  <include name="componentSets/UILaf"/>
+  <include name="componentSets/UICore"/>
+  <include name="componentSets/WindowManagement"/>
+  <include name="componentSets/Configurables"/>
+  <include name="componentSets/Toolwindows"/>
+  <include name="componentSets/Editor"/>
+  <include name="componentSets/CodeInsight"/>
+  <include name="componentSets/CodeInspection"/>
+  <include name="componentSets/Refactoring"/>
+  <include name="componentSets/Misc"/>
+  <include name="componentSets/Debugger"/>
+  <include name="componentSets/Compiler"/>
+  <include name="componentSets/Execution"/>
+  <include name="componentSets/VCS"/>
+  <include name="componentSets/J2EE"/>
+  <include name="componentSets/Help"/>
+  <include name="componentSets/ErrorReport"/>
+  <include name="componentSets/Http"/>
+  <include name="componentSets/GuiDesigner"/>
+  <include name="componentSets/Util"/>
+  <include name="componentSets/StructuralSearch"/>
+  <include name="componentSets/Css"/>
+  <include name="componentSets/JavaScript"/>
+</components>

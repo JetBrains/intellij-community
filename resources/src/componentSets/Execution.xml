@@ -1,0 +1,38 @@
+<components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.execution.application.ApplicationConfigurationType</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.execution.applet.AppletConfigurationType</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.execution.junit.JUnitConfigurationType</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.execution.remote.RemoteConfigurationType</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.execution.filters.TextConsoleBuidlerFactory</interface-class>
+      <implementation-class>com.intellij.execution.filters.TextConsoleBuidlerFactoryImpl</implementation-class>
+    </component>
+
+    <!--execution-->
+    <component>
+      <interface-class>com.intellij.execution.ExecutionRegistry</interface-class>
+      <implementation-class>com.intellij.execution.impl.ExecutionRegistryImpl</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.execution.RunManager</interface-class>
+      <implementation-class>com.intellij.execution.impl.RunManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.execution.ExecutionManager</interface-class>
+      <implementation-class>com.intellij.execution.impl.ExecutionManagerImpl</implementation-class>
+    </component>
+  </project-components>
+</components>

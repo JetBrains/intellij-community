@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.CodeStyleXmlPanel">
+  <grid id="de990" binding="myPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="4" y="11" width="402" height="193"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <xy id="3dbb2" binding="myPreviewPanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="194" y="0" width="208" height="193"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="Preview"/>
+        <children/>
+      </xy>
+      <grid id="d7d61" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="0" width="184" height="182"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="1" fill="0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f230c" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="0" y="3" width="80" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Keep blank lines:"/>
+            </properties>
+          </component>
+          <component id="18182" class="javax.swing.JTextField" binding="myKeepBlankLines">
+            <constraints>
+              <xy x="124" y="0" width="40" height="20"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                <preferred-size width="40" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <columns value="3"/>
+            </properties>
+          </component>
+          <component id="d4efa" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="0" y="29" width="80" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Wrap attributes:"/>
+            </properties>
+          </component>
+          <component id="8a13c" class="javax.swing.JCheckBox" binding="myAlignAttributes">
+            <constraints>
+              <xy x="0" y="53" width="98" height="22"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Align attributes"/>
+            </properties>
+          </component>
+          <component id="959da" class="javax.swing.JCheckBox" binding="myKeepWhiteSpaces">
+            <constraints>
+              <xy x="0" y="80" width="114" height="22"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Keep white spaces"/>
+            </properties>
+          </component>
+          <component id="8bb88" class="javax.swing.JComboBox" binding="myWrapAttributes">
+            <constraints>
+              <xy x="124" y="25" width="60" height="23"/>
+              <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+            </constraints>
+            <properties>
+              <enabled value="true"/>
+            </properties>
+          </component>
+          <hspacer id="b6d89">
+            <constraints>
+              <xy x="164" y="4" width="20" height="11"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
+          <grid id="6063" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="107" width="164" height="75"/>
+              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Spaces:"/>
+            <children>
+              <component id="f4575" class="javax.swing.JCheckBox" binding="mySpacesAroundEquality">
+                <constraints>
+                  <xy x="6" y="20" width="135" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Around &quot;=&quot; in attribute"/>
+                </properties>
+              </component>
+              <component id="8f9a9" class="javax.swing.JCheckBox" binding="mySpacesAroundTagName">
+                <constraints>
+                  <xy x="6" y="47" width="108" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Around tag name"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

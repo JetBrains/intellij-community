@@ -1,0 +1,27 @@
+<idea-plugin>
+  <!-- Plugin name -->
+  <name>SimpleToolWindow</name>
+
+  <!-- Description -->
+  <description>An example on installing a tool window</description>
+
+  <!-- Plugin version -->
+  <version>1.0</version>
+
+  <!-- Plugin's vendor -->
+  <vendor>IntelliJ</vendor>
+
+  <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
+  <idea-version min="3.0" max="3.1"/>
+
+  <!-- Plugin's application components -->
+  <project-components>
+    <component>
+      <!-- Component's implementation class -->
+      <implementation-class>com.intellij.openapi.samples.SimpleToolWindowPlugin</implementation-class>
+
+      <!-- Component's interface class -->
+      <interface-class>com.intellij.openapi.samples.SimpleToolWindowPlugin</interface-class>
+    </component>
+  </project-components>
+</idea-plugin>

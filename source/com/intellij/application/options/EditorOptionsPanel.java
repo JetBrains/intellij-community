@@ -1,0 +1,545 @@
+package com.intellij.application.options;
+
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class EditorOptionsPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.EditorOptionsPanel");
+
+  private JPanel myPanel;
+  private JSeparator mySeparator;
+  private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
+  private JCheckBox myCbBlinkCaret;
+  private JTextField myBlinkIntervalField;
+  private JCheckBox myCbRightMargin;
+  private JCheckBox myCbShowMethodSeparators;
+  private JCheckBox myCbHighlightBraces;
+  private JCheckBox myCbShowLineNumbers;
+
+  private static final String STRIP_CHANGED = "Modified Lines";
+  private static final String STRIP_ALL = "All";
+  private static final String STRIP_NONE = "None";
+  private JComboBox myStripTrailingSpacesCombo;
+
+  private static final String INSERT_IMPORTS_ALWAYS = "All";
+  private static final String INSERT_IMPORTS_ASK = "Ask";
+  private static final String INSERT_IMPORTS_NONE = "None";
+  private JComboBox mySmartPasteCombo;
+
+  private static final String NO_REFORMAT = "None";
+  private static final String INDENT_BLOCK = "Indent Block";
+  private static final String INDENT_EACH_LINE = "Indent Each Line";
+  private static final String REFORMAT_BLOCK = "Reformat Block";
+  private JComboBox myReformatOnPasteCombo;
+
+  private JCheckBox myCbSmartHome;
+  private JCheckBox myCbSmartEnd;
+  private JCheckBox myCbSmartIndentOnEnter;
+
+  private JCheckBox myCbVirtualSpace;
+  private JCheckBox myCbCaretInsideTabs;
+
+  private JTextField myEditorTabLimitField;
+  private JTextField myRecentFilesLimitField;
+  private JCheckBox myCloseNonModifiedFilesFirstCheckBox;
+
+  private JCheckBox myCbHighlightScope;
+  private JCheckBox myCbFolding;
+  private JCheckBox myCbBlockCursor;
+  private JCheckBox myCbInsertPairCurlyBraceOnEnter;
+  private JCheckBox myCbInsertScriptletEndOnEnter;
+  private JCheckBox myCbInsertJavadocStubOnEnter;
+  private JCheckBox myCbInsertPairBracket;
+  private JCheckBox myCbInsertPairQuote;
+  private JCheckBox myCbCollapseImports;
+  private JCheckBox myCbCollapseJavadocComments;
+  private JCheckBox myCbCollapseMethodBodies;
+  private JCheckBox myCbCollapseInnerClasses;
+  private JCheckBox myCbCollapseXMLTags;
+  private JCheckBox myCbCollapseAnonymousClasses;
+  private JCheckBox myCbCollapseFileHeader;
+  private JTextField myClipboardContentLimitTextField;
+  private JCheckBox myCbCollapseAccessors;
+  private JCheckBox myCbShowWhitespaces;
+  private JCheckBox myCbSmoothScrolling;
+  private JCheckBox myCbCamelWords;
+  private JCheckBox myCbVirtualPageAtBottom;
+  private JCheckBox myCbOptimizeImports;
+  private JCheckBox myCbAddUnabmigiousImports;
+  private JCheckBox myCbEnableDnD;
+  private JCheckBox myCbEnableWheelFontChange;
+  private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
+
+  public JPanel getPanel() {
+    return myPanel;
+  }
+
+  public EditorOptionsPanel(){
+
+      myCbBlinkCaret.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent event) {
+          myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected());
+        }
+      }
+    );
+
+    myReformatOnPasteCombo.addItem(NO_REFORMAT);
+    myReformatOnPasteCombo.addItem(INDENT_BLOCK);
+    myReformatOnPasteCombo.addItem(INDENT_EACH_LINE);
+    myReformatOnPasteCombo.addItem(REFORMAT_BLOCK);
+
+    mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
+    mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
+    mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
+
+    myCbCollapseMethodBodies.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myCbCollapseAccessors.setSelected(myCbCollapseMethodBodies.isSelected());
+      }
+    });
+
+    myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
+    myStripTrailingSpacesCombo.addItem(STRIP_ALL);
+    myStripTrailingSpacesCombo.addItem(STRIP_NONE);
+  }
+
+
+
+  public void reset() {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
+    UISettings uiSettings=UISettings.getInstance();
+
+    // Display
+
+    myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
+    myCbBlinkCaret.setSelected(editorSettings.isBlinkCaret());
+    myBlinkIntervalField.setText(""+editorSettings.getBlinkPeriod());
+    myBlinkIntervalField.setEnabled(editorSettings.isBlinkCaret());
+
+    myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
+
+    myCbRightMargin.setSelected(editorSettings.isRightMarginShown());
+
+    myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
+
+    myCbShowMethodSeparators.setSelected(daemonSettings.SHOW_METHOD_SEPARATORS);
+    myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
+    myCbSmoothScrolling.setSelected(editorSettings.isSmoothScrolling());
+
+    // Brace highlighting
+
+    myCbHighlightBraces.setSelected(codeInsightSettings.HIGHLIGHT_BRACES);
+    myCbHighlightScope.setSelected(codeInsightSettings.HIGHLIGHT_SCOPE);
+
+    // Virtual space
+
+    myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
+    myCbCaretInsideTabs.setSelected(editorSettings.isCaretInsideTabs());
+    myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
+
+    // Limits
+
+    myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
+    myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
+    myCloseNonModifiedFilesFirstCheckBox.setSelected(uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
+
+    // Paste
+
+    switch(codeInsightSettings.REFORMAT_ON_PASTE){
+      case CodeInsightSettings.NO_REFORMAT:
+        myReformatOnPasteCombo.setSelectedItem(NO_REFORMAT);
+      break;
+
+      case CodeInsightSettings.INDENT_BLOCK:
+        myReformatOnPasteCombo.setSelectedItem(INDENT_BLOCK);
+      break;
+
+      case CodeInsightSettings.INDENT_EACH_LINE:
+        myReformatOnPasteCombo.setSelectedItem(INDENT_EACH_LINE);
+      break;
+
+      case CodeInsightSettings.REFORMAT_BLOCK:
+        myReformatOnPasteCombo.setSelectedItem(REFORMAT_BLOCK);
+      break;
+    }
+
+    switch(codeInsightSettings.ADD_IMPORTS_ON_PASTE){
+      case CodeInsightSettings.YES:
+        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ALWAYS);
+      break;
+
+      case CodeInsightSettings.NO:
+        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_NONE);
+      break;
+
+      case CodeInsightSettings.ASK:
+        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
+      break;
+    }
+
+    // Strip trailing spaces on save
+
+    String stripTrailingSpaces = editorSettings.getStripTrailingSpaces();
+    if(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripTrailingSpaces)) {
+      myStripTrailingSpacesCombo.setSelectedItem(STRIP_NONE);
+    }
+    else if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED.equals(stripTrailingSpaces)) {
+      myStripTrailingSpacesCombo.setSelectedItem(STRIP_CHANGED);
+    }
+    else if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(stripTrailingSpaces)) {
+      myStripTrailingSpacesCombo.setSelectedItem(STRIP_ALL);
+    }
+
+    // Smart Keys
+
+    myCbSmartHome.setSelected(editorSettings.isSmartHome());
+    myCbSmartEnd.setSelected(codeInsightSettings.SMART_END_ACTION);
+
+    myCbSmartIndentOnEnter.setSelected(codeInsightSettings.SMART_INDENT_ON_ENTER);
+    myCbInsertPairCurlyBraceOnEnter.setSelected(codeInsightSettings.INSERT_BRACE_ON_ENTER);
+    myCbInsertScriptletEndOnEnter.setSelected(codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
+    myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
+
+    myCbInsertPairBracket.setSelected(codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
+    myCbInsertPairQuote.setSelected(codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
+    myCbCamelWords.setSelected(editorSettings.isCamelWords());
+
+    // Code Folding
+
+    myCbFolding.setSelected(editorSettings.isFoldingOutlineShown());
+
+    myCbCollapseImports.setSelected(codeFoldingSettings.COLLAPSE_IMPORTS);
+    myCbCollapseJavadocComments.setSelected(codeFoldingSettings.COLLAPSE_JAVADOCS);
+    myCbCollapseMethodBodies.setSelected(codeFoldingSettings.COLLAPSE_METHODS);
+    myCbCollapseAccessors.setSelected(codeFoldingSettings.COLLAPSE_ACCESSORS);
+    myCbCollapseInnerClasses.setSelected(codeFoldingSettings.COLLAPSE_INNER_CLASSES);
+    myCbCollapseXMLTags.setSelected(codeFoldingSettings.COLLAPSE_XML_TAGS);
+    myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES);
+    myCbCollapseFileHeader.setSelected(codeFoldingSettings.COLLAPSE_FILE_HEADER);
+
+    // optmiza imports
+    myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    myCbAddUnabmigiousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+
+    // Advanced mouse
+    myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
+    myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
+    myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
+  }
+
+  public void apply() {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
+    UISettings uiSettings=UISettings.getInstance();
+
+    // Display
+
+    boolean uiSettingsChanged = uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK != myCbModifiedTabsMarkedWithAsterisk.isSelected();
+    uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK = myCbModifiedTabsMarkedWithAsterisk.isSelected();
+
+    editorSettings.setBlinkCaret(myCbBlinkCaret.isSelected());
+    try {
+      editorSettings.setBlinkPeriod(Integer.parseInt(myBlinkIntervalField.getText()));
+    }
+    catch (NumberFormatException e) {
+    }
+
+    editorSettings.setBlockCursor(myCbBlockCursor.isSelected());
+
+    editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
+
+    editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
+    daemonSettings.SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
+    editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
+    editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
+
+
+    // Brace Highlighting
+
+    codeInsightSettings.HIGHLIGHT_BRACES = myCbHighlightBraces.isSelected();
+    codeInsightSettings.HIGHLIGHT_SCOPE = myCbHighlightScope.isSelected();
+
+    // Virtual space
+
+    editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
+    editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
+    editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
+
+    // Limits
+
+    String temp = myEditorTabLimitField.getText();
+    if(temp.trim().length() > 0){
+      try {
+        int newEditorTabLimit = new Integer(temp).intValue();
+        if(newEditorTabLimit>0&&newEditorTabLimit!=uiSettings.EDITOR_TAB_LIMIT){
+          uiSettings.EDITOR_TAB_LIMIT=newEditorTabLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    temp=myRecentFilesLimitField.getText();
+    if(temp.trim().length() > 0){
+      try {
+        int newRecentFilesLimit=new Integer(temp).intValue();
+        if(newRecentFilesLimit>0&&uiSettings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
+          uiSettings.RECENT_FILES_LIMIT=newRecentFilesLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST=myCloseNonModifiedFilesFirstCheckBox.isSelected();
+
+    int maxClipboardContents = getMaxClipboardContents();
+    if (uiSettings.MAX_CLIPBOARD_CONTENTS != maxClipboardContents) {
+      uiSettings.MAX_CLIPBOARD_CONTENTS = maxClipboardContents;
+      uiSettingsChanged = true;
+    }
+
+    if(uiSettingsChanged){
+      uiSettings.fireUISettingsChanged();
+    }
+
+    // Paste
+
+    codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
+    codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
+
+    // Strip trailing spaces on save
+
+    if(STRIP_NONE.equals(myStripTrailingSpacesCombo.getSelectedItem())) {
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    }
+    else if(STRIP_CHANGED.equals(myStripTrailingSpacesCombo.getSelectedItem())){
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
+    }
+    else {
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    }
+
+    // smart keys
+
+    editorSettings.setSmartHome(myCbSmartHome.isSelected());
+    codeInsightSettings.SMART_END_ACTION = myCbSmartEnd.isSelected();
+
+    codeInsightSettings.SMART_INDENT_ON_ENTER = myCbSmartIndentOnEnter.isSelected();
+    codeInsightSettings.INSERT_BRACE_ON_ENTER = myCbInsertPairCurlyBraceOnEnter.isSelected();
+    codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER = myCbInsertScriptletEndOnEnter.isSelected();
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
+
+    codeInsightSettings.AUTOINSERT_PAIR_BRACKET = myCbInsertPairBracket.isSelected();
+    codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
+    editorSettings.setCamelWords(myCbCamelWords.isSelected());
+
+    // Code folding
+
+    editorSettings.setFoldingOutlineShown(myCbFolding.isSelected());
+
+    codeFoldingSettings.COLLAPSE_IMPORTS = myCbCollapseImports.isSelected();
+    codeFoldingSettings.COLLAPSE_JAVADOCS = myCbCollapseJavadocComments.isSelected();
+    codeFoldingSettings.COLLAPSE_METHODS = myCbCollapseMethodBodies.isSelected();
+    codeFoldingSettings.COLLAPSE_ACCESSORS = myCbCollapseAccessors.isSelected();
+    codeFoldingSettings.COLLAPSE_INNER_CLASSES = myCbCollapseInnerClasses.isSelected();
+    codeFoldingSettings.COLLAPSE_XML_TAGS = myCbCollapseXMLTags.isSelected();
+    codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES = myCbCollapseAnonymousClasses.isSelected();
+    codeFoldingSettings.COLLAPSE_FILE_HEADER = myCbCollapseFileHeader.isSelected();
+
+    // optmize imports
+    codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
+    codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
+
+    editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
+    editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
+    editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
+
+    Editor[] editors = EditorFactory.getInstance().getAllEditors();
+    for(int i = 0; i < editors.length; i++){
+      ((EditorEx)editors[i]).reinitSettings();
+    }
+
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for(int i = 0; i < projects.length; i++){
+      DaemonCodeAnalyzer.getInstance(projects[i]).settingsChanged();
+    }
+  }
+
+  private int getMaxClipboardContents(){
+    int maxClipboardContents = -1;
+    try {
+      maxClipboardContents = Integer.parseInt(myClipboardContentLimitTextField.getText());
+    } catch (NumberFormatException ignored) {}
+    if (maxClipboardContents <= 0) {
+      maxClipboardContents = 1;
+    }
+    return maxClipboardContents;
+  }
+
+  public boolean isModified() {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
+    UISettings uiSettings=UISettings.getInstance();
+
+    boolean isModified = false;
+
+    // Display
+    isModified |= isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
+    isModified |= isModified(myCbBlinkCaret, editorSettings.isBlinkCaret());
+    isModified |= isModified(myBlinkIntervalField, editorSettings.getBlinkPeriod());
+
+    isModified |= isModified(myCbBlockCursor, editorSettings.isBlockCursor());
+
+    isModified |= isModified(myCbRightMargin, editorSettings.isRightMarginShown());
+
+    isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
+    isModified |= isModified(myCbShowMethodSeparators, daemonSettings.SHOW_METHOD_SEPARATORS);
+    isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
+    isModified |= isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
+
+    // Brace highlighting
+    isModified |= isModified(myCbHighlightBraces, codeInsightSettings.HIGHLIGHT_BRACES);
+    isModified |= isModified(myCbHighlightScope, codeInsightSettings.HIGHLIGHT_SCOPE);
+
+    // Virtual space
+    isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
+    isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
+    isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
+
+    // Limits
+    isModified |= isModified(myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
+    isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
+    isModified |= isModified(myCloseNonModifiedFilesFirstCheckBox, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    isModified |= getMaxClipboardContents() != uiSettings.MAX_CLIPBOARD_CONTENTS;
+
+    // Paste
+    isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
+    isModified |= getReformatPastedBlockValue() != codeInsightSettings.REFORMAT_ON_PASTE;
+
+    // Strip trailing spaces on save
+    isModified |= !getStripTrailingSpacesValue().equals(editorSettings.getStripTrailingSpaces());
+
+    // Smart keys
+
+    isModified |= isModified(myCbSmartHome, editorSettings.isSmartHome());
+    isModified |= isModified(myCbSmartEnd, codeInsightSettings.SMART_END_ACTION);
+
+    isModified |= isModified(myCbSmartIndentOnEnter, codeInsightSettings.SMART_INDENT_ON_ENTER);
+    isModified |= isModified(myCbInsertPairCurlyBraceOnEnter, codeInsightSettings.INSERT_BRACE_ON_ENTER);
+    isModified |= isModified(myCbInsertScriptletEndOnEnter, codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
+    isModified |= isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
+
+    isModified |= isModified(myCbInsertPairBracket, codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
+    isModified |= isModified(myCbInsertPairQuote, codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
+    isModified |= isModified(myCbCamelWords, editorSettings.isCamelWords());
+
+    // Code folding
+
+    isModified |= isModified(myCbFolding, editorSettings.isFoldingOutlineShown());
+
+    isModified |= isModified(myCbCollapseImports, codeFoldingSettings.COLLAPSE_IMPORTS);
+    isModified |= isModified(myCbCollapseJavadocComments, codeFoldingSettings.COLLAPSE_JAVADOCS);
+    isModified |= isModified(myCbCollapseMethodBodies, codeFoldingSettings.COLLAPSE_METHODS);
+    isModified |= isModified(myCbCollapseAccessors, codeFoldingSettings.COLLAPSE_ACCESSORS);
+    isModified |= isModified(myCbCollapseInnerClasses, codeFoldingSettings.COLLAPSE_INNER_CLASSES);
+    isModified |= isModified(myCbCollapseXMLTags, codeFoldingSettings.COLLAPSE_XML_TAGS);
+    isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES);
+    isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.COLLAPSE_FILE_HEADER);
+
+    // optimize imports
+    isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbAddUnabmigiousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+
+    // advanced mouse
+    isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
+    isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
+    isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
+
+    return isModified;
+  }
+
+  private static boolean isModified(JCheckBox checkBox, boolean value) {
+    return checkBox.isSelected() != value;
+  }
+
+  private static boolean isModified(JTextField textField, int value) {
+    try {
+      int fieldValue = Integer.parseInt(textField.getText().trim());
+      return fieldValue != value;
+    }
+    catch(NumberFormatException e) {
+      return false;
+    }
+  }
+
+  private String getStripTrailingSpacesValue() {
+    Object selectedItem = myStripTrailingSpacesCombo.getSelectedItem();
+    if(STRIP_NONE.equals(selectedItem)) {
+      return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE;
+    }
+    else if(STRIP_CHANGED.equals(selectedItem)){
+      return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED;
+    }
+    else {
+      return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
+    }
+  }
+
+
+  private int getSmartPasteValue() {
+    Object selectedItem = mySmartPasteCombo.getSelectedItem();
+    if(INSERT_IMPORTS_ALWAYS.equals(selectedItem)) {
+      return CodeInsightSettings.YES;
+    }
+    else if(INSERT_IMPORTS_NONE.equals(selectedItem)) {
+      return CodeInsightSettings.NO;
+    }
+    else {
+      return CodeInsightSettings.ASK;
+    }
+  }
+
+  private int getReformatPastedBlockValue(){
+    Object selectedItem = myReformatOnPasteCombo.getSelectedItem();
+    if (NO_REFORMAT.equals(selectedItem)){
+      return CodeInsightSettings.NO_REFORMAT;
+    }
+    else if (INDENT_BLOCK.equals(selectedItem)){
+      return CodeInsightSettings.INDENT_BLOCK;
+    }
+    else if (INDENT_EACH_LINE.equals(selectedItem)){
+      return CodeInsightSettings.INDENT_EACH_LINE;
+    }
+    else if (REFORMAT_BLOCK.equals(selectedItem)){
+      return CodeInsightSettings.REFORMAT_BLOCK;
+    }
+    else{
+      LOG.assertTrue(false);
+      return -1;
+    }
+  }
+
+
+}

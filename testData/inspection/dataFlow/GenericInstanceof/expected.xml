@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>GenericInstanceof.java</file>
+    <line>8</line>
+    <description>Condition is always true</description>
+  </problem>
+</problems>
+

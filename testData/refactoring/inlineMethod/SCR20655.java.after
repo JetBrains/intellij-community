@@ -1,0 +1,8 @@
+class Super {
+}
+
+class Sub extends Super {
+  public void message() {
+      System.out.println(this);
+  }
+}

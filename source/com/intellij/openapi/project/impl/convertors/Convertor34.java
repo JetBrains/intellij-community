@@ -1,0 +1,739 @@
+package com.intellij.openapi.project.impl.convertors;
+
+import com.intellij.j2ee.DeploymentDescriptorsConstants;
+import com.intellij.j2ee.j2eeDom.web.WebRoot;
+import com.intellij.j2ee.module.J2EEDeploymentDescriptorBase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+/**
+ * @author max, dsl
+ */
+public class Convertor34 {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.impl.convertors.Convertor34");
+
+  public static final String PROJECT_ROOT_MANAGER = "ProjectRootManager";
+  public static final String PROJECT_ROOT_MANAGER_CLASS = "com.intellij.openapi.projectRoots.ProjectRootManager";
+
+  private static final String SOURCE_ROOTS_NOT_UNDER_PROJECT_ROOTS = "There are source roots that are not under project roots.";
+  private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = "JavaDoc paths cannot be converted.";
+  private static final String MULTIPLE_OUTPUT_PATHS = "The project uses multiple output paths.";
+
+  public static void execute(Element root, String filePath, ArrayList<String> conversionProblems) {
+    if (filePath == null) return;
+
+    if (conversionProblems == null) {
+      conversionProblems = new ArrayList<String>();
+    }
+    convertProjectFile(root, filePath, conversionProblems);
+  }
+
+  public static String convertLibraryTable34(Element root, String filePath) {
+    if (filePath == null) return null;
+    final Element libraryTable = findNamedChild(root, "component", "ProjectLibraryTable");
+    if (libraryTable == null) return null;
+
+    final Element applicationLibraryTable = new Element("component");
+    applicationLibraryTable.setAttribute("name", "libraryTable");
+
+    final List oldLibraries = libraryTable.getChildren("library");
+    for (int i = 0; i < oldLibraries.size(); i++) {
+      Element oldLibrary = (Element)oldLibraries.get(i);
+      Element newLibrary = convertLibrary(oldLibrary);
+      applicationLibraryTable.addContent(newLibrary);
+    }
+
+    final String ioFilePath = filePath.replace('/', File.separatorChar);
+    String parentPath = new File(ioFilePath).getParent();
+    if (parentPath == null) parentPath = ".";
+    parentPath += "/applicationLibraries.xml";
+    final Element newRoot = new Element("application");
+    newRoot.addContent(applicationLibraryTable);
+    final Document libraryTableDocument = new Document(newRoot);
+    try {
+      JDOMUtil.writeDocument(libraryTableDocument, parentPath, "\n");
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+    return parentPath;
+  }
+
+  private static Element convertLibrary(Element oldLibrary) {
+    final Element library = new Element("library");
+    final Element nameChild = oldLibrary.getChild("name");
+    LOG.assertTrue(nameChild != null);
+    library.setAttribute("name", nameChild.getAttributeValue("value"));
+
+    processLibraryRootContainer(oldLibrary, library, "CLASSES", "classPath");
+    processLibraryRootContainer(oldLibrary, library, "JAVADOC", "javadocPath");
+    processLibraryRootContainer(oldLibrary, library, "SOURCES", "sourcePath");
+    return library;
+  }
+
+  private static void processLibraryRootContainer(Element oldLibrary,
+                                                  final Element library,
+                                                  String newElementType,
+                                                  String oldElementType) {
+    final Element elementCLASSES = new Element(newElementType);
+    final Element rootsElement = oldLibrary.getChild("roots");
+    final Element classPath = rootsElement.getChild(oldElementType);
+    if (classPath != null) {
+      processRootTypeElement(classPath, new SimpleRootProcessor(elementCLASSES));
+    }
+    library.addContent(elementCLASSES);
+  }
+
+  private static void convertProjectFile(Element root, String filePath, ArrayList<String> conversionProblems) {
+    Element rootComponent = null;
+    List components = root.getChildren("component");
+    for (Iterator iterator = components.iterator(); iterator.hasNext();) {
+      Element component = (Element)iterator.next();
+      if (isProjectRootManager(component)) rootComponent = component;
+    }
+
+    if (rootComponent == null) return;
+
+    Element module = createModule(root);
+
+    final String moduleFilePath = filePath.substring(0, filePath.lastIndexOf('.')) + ".iml";
+
+    Element moduleRootComponent = convertProjectRootManager(rootComponent, conversionProblems);
+    module.addContent(moduleRootComponent);
+
+    Document moduleDoc = new Document(module);
+
+    try {
+      JDOMUtil.writeDocument(moduleDoc, moduleFilePath, "\n");
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(moduleFilePath));
+      }
+    });
+
+    rootComponent.setAttribute("name", "ProjectRootManager");
+    rootComponent.setAttribute("version", "4");
+
+    Element moduleManager = new Element("component");
+    moduleManager.setAttribute("name", "ProjectModuleManager");
+    addModule(moduleFilePath, moduleManager);
+
+    String moduleFile = new File(moduleFilePath).getName();
+    convertWebApps(moduleManager, root, rootComponent, moduleFile.substring(0, moduleFile.lastIndexOf('.')));
+    root.addContent(moduleManager);
+  }
+
+  private static Element createModule(Element root) {
+    Element module = new Element("module");
+    module.setAttribute("version", "4");
+    String relativePaths = root.getAttributeValue("relativePaths");
+    if (relativePaths != null) {
+      module.setAttribute("relativePaths", relativePaths);
+    }
+    return module;
+  }
+
+  private static void convertWebApps(Element moduleManager, Element projectElement, Element projectRootManager, String mainModule) {
+    Element webRootContainer = findNamedChild(projectElement, "component", "WebRootContainer");
+    if(webRootContainer == null) return;
+    List roots = webRootContainer.getChildren("root");
+
+    for (Iterator iterator = roots.iterator(); iterator.hasNext();) {
+      Element root = (Element)iterator.next();
+      String name = root.getAttributeValue("name");
+      String url = root.getAttributeValue("url");
+
+      if(name == null || url == null) continue;
+
+      String filepath = VirtualFileManager.extractPath(url);
+
+      VirtualFile moduleDirectory = LocalFileSystem.getInstance().findFileByPath(filepath);
+      if(moduleDirectory != null) {
+        Element module = createModule(projectElement);
+        module.setAttribute("type", "J2EE_WEB_MODULE");
+
+        Element rootManager = createWebModuleRootManager(module, moduleDirectory, projectRootManager, mainModule);
+        module.addContent(rootManager);
+
+        Element buildComponent = createWebModuleBuildComponent();
+        module.addContent(buildComponent);
+
+        Element moduleProperties = createWebModuleProperties(moduleDirectory);
+        module.addContent(moduleProperties);
+
+        Document moduleDocument = new Document(module);
+        String moduleName = (!"".equals(name) ? name : moduleDirectory.getName());
+        if(moduleName.equals(mainModule)) moduleName = "web" + moduleName;
+        try {
+          final String modulePath = moduleDirectory.getPath() + "/" + moduleName + ".iml";
+          JDOMUtil.writeDocument(moduleDocument, modulePath, "\n");
+          addModule(modulePath, moduleManager);
+
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(modulePath));
+            }
+          });
+
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
+  private static void addSetting(Element parent, String name, String value){
+    Element option = new Element("setting");
+    option.setAttribute("name", name);
+    option.setAttribute("value", value);
+    parent.addContent(option);
+  }
+
+  private static Element createWebModuleProperties(VirtualFile moduleDirectory) {
+    Element component = new Element("component");
+    component.setAttribute("name", "WebModuleProperties");
+
+    J2EEDeploymentDescriptorBase webXml = new J2EEDeploymentDescriptorBase(null, DeploymentDescriptorsConstants.WEB_XML_DEPLOYMENT_DESCRIPTOR);
+    webXml.setUrl("file://$MODULE_DIR$/WEB-INF/web.xml");
+    try {
+      webXml.writeExternal(component);
+      webXml.dispose();
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+
+    Element webRoots = new Element("webroots");
+    component.addContent(webRoots);
+    Element root  = new Element("root");
+    webRoots.addContent(root);
+    try {
+      new WebRoot(moduleDirectory, "/").writeExternal(root);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return component;
+  }
+
+  private static Element createWebModuleBuildComponent() {
+    Element component = new Element("component");
+    component.setAttribute("name", "WebModuleBuildComponent");
+
+    addSetting(component, "EXPLODED_URL", "file://$MODULE_DIR$");
+    addSetting(component, "EXPLODED_ENABLED", "true");
+
+    return component;
+  }
+
+  private static Element createWebModuleRootManager(Element module, VirtualFile moduleDirectory, Element projectRootManager, String mainModule) {
+    Element newModuleRootManager = new Element("component");
+    newModuleRootManager.setAttribute("name", "NewModuleRootManager");
+
+    Element jdk = projectRootManager.getChild("jdk");
+    if(jdk != null) {
+      String jdkName = jdk.getAttributeValue("name");
+      if (jdkName != null) {
+        Element orderEntry = new Element("orderEntry");
+        orderEntry.setAttribute("type", "jdk");
+        orderEntry.setAttribute("jdkName", jdkName);
+        newModuleRootManager.addContent(orderEntry);
+      }
+    }
+
+    Element orderEntry = new Element("orderEntry");
+    orderEntry.setAttribute("type", "module");
+    orderEntry.setAttribute("module-name", mainModule);
+    newModuleRootManager.addContent(orderEntry);
+
+    Element output = new Element("output");
+    output.setAttribute("url", "file://" + getModulePath("classes", module, moduleDirectory.getPath()));
+    newModuleRootManager.addContent(output);
+
+    Element content = new Element("content");
+    content.setAttribute("url", "file://" + getModulePath("", module,  moduleDirectory.getPath()));
+    newModuleRootManager.addContent(content);
+
+    VirtualFile classesDir = moduleDirectory.findFileByRelativePath("WEB-INF/classes");
+    if(classesDir != null) {
+      Element classes = createLibraryEntry(classesDir, module, moduleDirectory);
+      newModuleRootManager.addContent(classes);
+    }
+
+    VirtualFile lib = moduleDirectory.findFileByRelativePath("WEB-INF/lib");
+    if(lib != null) {
+      String modulePath = moduleDirectory.getPath();
+      VirtualFile[] libs = lib.getChildren();
+      for (int i = 0; i < libs.length; i++) {
+        VirtualFile virtualFile = libs[i];
+        Element libEntry = createLibraryEntry(virtualFile, module, moduleDirectory);
+        newModuleRootManager.addContent(libEntry);
+      }
+    }
+
+    return newModuleRootManager;
+  }
+
+  private static Element createLibraryEntry(VirtualFile file, Element module, VirtualFile moduleDirectory) {
+    String path = file.getPath().substring(moduleDirectory.getPath().length() + 1);
+    if(file.getFileSystem() instanceof JarFileSystem) {
+      path = path + "!/";
+    }
+
+    Element orderEntry = new Element("orderEntry");
+    orderEntry.setAttribute("type", "module-library");
+    Element library = new Element("library");
+    orderEntry.addContent(library);
+    Element classes = new Element("CLASSES");
+    library.addContent(classes);
+    Element root = new Element("root");
+    root.setAttribute("url", "file://" + getModulePath(path, module, moduleDirectory.getPath()));
+    classes.addContent(root);
+    return orderEntry;
+  }
+
+  private static String getModulePath(String path, Element module, String moduleDirectory) {
+    return "".equals(path) ? moduleDirectory  : moduleDirectory + "/" + path;
+  }
+
+  private static void addModule(final String moduleFilePath, Element moduleManager) {
+    Element moduleEntry = new Element("module");
+    final String moduleVfsPath = moduleFilePath.replace(File.separatorChar, '/');
+    moduleEntry.setAttribute("filepath", moduleVfsPath);
+    moduleEntry.setAttribute("fileurl", "file://" +moduleVfsPath);
+    Element modulesEntry = moduleManager.getChild("modules");
+    if(modulesEntry == null) {
+      modulesEntry = new Element("modules");
+      moduleManager.addContent(modulesEntry);
+    }
+    modulesEntry.addContent(moduleEntry);
+  }
+
+  private static Element convertProjectRootManager(Element projectRootManager, ArrayList<String> conversionProblems) {
+    return new ProjectToModuleConverter(projectRootManager, conversionProblems).getModuleRootManager();
+  }
+
+  private static interface RootElementProcessor {
+    void processSimpleRoot(Element root);
+
+    void processJdkRoot(Element root);
+
+    void processOutputRoot(Element root);
+
+    void processExcludedOutputRoot(Element root);
+
+    void processLibraryRoot(Element root);
+
+    void processEjbRoot(Element root);
+  }
+
+  private static abstract class EmptyRootProcessor implements RootElementProcessor {
+    public void processSimpleRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    public void processJdkRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    public void processOutputRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    public void processExcludedOutputRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    public void processLibraryRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    public void processEjbRoot(Element root) {
+      cannotProcess(root);
+    }
+
+    protected void cannotProcess(Element root) {
+      LOG.error("Cannot process roots of type " + root.getAttributeValue("type") + " in " + classId());
+    }
+
+    abstract protected String classId();
+
+  }
+
+  private static void processRoot(Element root, RootElementProcessor processor) {
+    LOG.assertTrue("root".equals(root.getName()));
+    final String type = root.getAttributeValue("type");
+    LOG.assertTrue(type != null);
+    if (ProjectRootUtil.SIMPLE_ROOT.equals(type)) {
+      processor.processSimpleRoot(root);
+    }
+    else if (ProjectRootUtil.OUTPUT_ROOT.equals(type)) {
+      processor.processOutputRoot(root);
+    }
+    else if (ProjectRootUtil.JDK_ROOT.equals(type)) {
+      processor.processJdkRoot(root);
+    }
+    else if (ProjectRootUtil.EXCLUDED_OUTPUT.equals(type)) {
+      processor.processExcludedOutputRoot(root);
+    }
+    else if (ProjectRootUtil.LIBRARY_ROOT.equals(type)) {
+      processor.processLibraryRoot(root);
+    }
+    else if (ProjectRootUtil.EJB_ROOT.equals(type)) {
+      processor.processEjbRoot(root);
+    }
+    else if (ProjectRootUtil.COMPOSITE_ROOT.equals(type)) {
+      final List children = root.getChildren("root");
+      for (int i = 0; i < children.size(); i++) {
+        Element element = (Element)children.get(i);
+        processRoot(element, processor);
+      }
+    }
+    else {
+      LOG.error("Unknown root type: " + type);
+    }
+  }
+
+  private static void processRootTypeElement(Element rootTypeElement, RootElementProcessor rootProcessor) {
+    if (rootTypeElement == null) return;
+    final List children = rootTypeElement.getChildren("root");
+    for (int i = 0; i < children.size(); i++) {
+      Element element = (Element)children.get(i);
+      processRoot(element, rootProcessor);
+    }
+  }
+
+
+  private static class ProjectToModuleConverter {
+    private final Element myProjectRootManager;
+    private final Element myModuleRootManager;
+    private final ArrayList<String> myProjectRoots;
+    private final List<String> mySourceFolders;
+    private final ArrayList<String> myExcludeFolders;
+    private final ArrayList<String> myDetectedProblems;
+
+    private ProjectToModuleConverter(Element projectRootManager, ArrayList<String> problems) {
+      myProjectRootManager = projectRootManager;
+      myModuleRootManager = new Element("component");
+      myModuleRootManager.setAttribute("name", "NewModuleRootManager");
+      myProjectRoots = new ArrayList<String>();
+      myDetectedProblems = problems;
+
+      final Element projectPath = projectRootManager.getChild("projectPath");
+      if(projectPath != null) {
+        processRootTypeElement(projectPath, new ProjectRootProcessor());
+      }
+      Collections.sort(myProjectRoots);
+      for (int i = 0; i < myProjectRoots.size(); i++) {
+        String path = myProjectRoots.get(i);
+        final int next = i + 1;
+        while (next < myProjectRoots.size() && myProjectRoots.get(next).startsWith(path)) {
+          myProjectRoots.remove(next);
+        }
+      }
+
+      final Element sourcePath = projectRootManager.getChild("sourcePath");
+      mySourceFolders = new ArrayList<String>();
+      processRootTypeElement(sourcePath, new SourceRootProcessor());
+
+      final Element excludePath = projectRootManager.getChild("excludePath");
+      myExcludeFolders = new ArrayList<String>();
+      processRootTypeElement(excludePath, new ExcludeRootsProcessor());
+
+      Element javadocPath = projectRootManager.getChild("javadocPath");
+      processRootTypeElement(javadocPath, new JavaDocRootProcessor());
+
+      final Element patternExcludeFolder = new Element("excludeFolder");
+      final Element patternSourceFolder = new Element("sourceFolder");
+      patternSourceFolder.setAttribute("isTestSource", "false");
+      Map<String, List<String>> contentToSource = dispatchFolders(myProjectRoots, mySourceFolders);
+      final Map<String, List<String>> contentToExclude = dispatchFolders(myProjectRoots, myExcludeFolders);
+
+      for (Iterator<String> iterator = myProjectRoots.iterator(); iterator.hasNext();) {
+        String root = iterator.next();
+        final Element contentElement = new Element("content");
+        contentElement.setAttribute("url", root);
+        createFolders(contentElement, patternSourceFolder, contentToSource.get(root));
+        createFolders(contentElement, patternExcludeFolder, contentToExclude.get(root));
+        myModuleRootManager.addContent(contentElement);
+      }
+
+      final Element classPath = projectRootManager.getChild("classPath");
+      processRootTypeElement(classPath, new ClassPathRootProcessor());
+
+      final Element projectElement = myProjectRootManager.getParent();
+      final Element compilerConfigurationElement = findNamedChild(projectElement, "component", "CompilerConfiguration");
+      if (compilerConfigurationElement != null) {
+        final Element option = findNamedChild(compilerConfigurationElement, "option", "DEFAULT_OUTPUT_PATH");
+        final String path = option == null ? null : option.getAttributeValue("value");
+
+        if (path != null) {
+          final String url = "file://" + path;
+          final Element outputElement = new Element("output");
+          outputElement.setAttribute("url", url);
+          myModuleRootManager.addContent(outputElement);
+          final Element outputTestElement = new Element("output-test");
+          outputTestElement.setAttribute("url", url);
+          myModuleRootManager.addContent(outputTestElement);
+        }
+        // check for multiple outputs
+        {
+          final Element outputMode = findNamedChild(compilerConfigurationElement, "option", "OUTPUT_MODE");
+          final String attributeValue = outputMode != null ? outputMode.getAttributeValue("value") : "";
+          if ("multiple".equals(attributeValue)) {
+            addProblem(MULTIPLE_OUTPUT_PATHS);
+          }
+        }
+      }
+
+      final Element excludeOutput = myProjectRootManager.getChild("exclude_output");
+      if (excludeOutput != null) {
+        final String enabled = excludeOutput.getAttributeValue("enabled");
+        if ("yes".equals(enabled) || "true".equals(enabled)) {
+          myModuleRootManager.addContent(new Element("exclude-output"));
+        }
+      }
+    }
+
+    private void createFolders(final Element contentElement,
+                               final Element patternFolderElement,
+                               final List<String> folders) {
+      for (Iterator<String> iterator1 = folders.iterator(); iterator1.hasNext();) {
+        String folder = iterator1.next();
+
+        Element folderElement = (Element)patternFolderElement.clone();
+        folderElement.setAttribute("url", folder);
+        contentElement.addContent(folderElement);
+      }
+    }
+
+    private Map<String, List<String>> dispatchFolders(ArrayList<String> projectRoots, List<String> folders) {
+      final Map<String, List<String>> result = new HashMap<String, List<String>>();
+      for (Iterator<String> iterator = projectRoots.iterator(); iterator.hasNext();) {
+        String root = iterator.next();
+        final ArrayList<String> foldersForRoot = new ArrayList<String>();
+        result.put(root, foldersForRoot);
+        for (Iterator<String> iterator1 = folders.iterator(); iterator1.hasNext();) {
+          String folder = iterator1.next();
+          if (folder.startsWith(root)) {
+            foldersForRoot.add(folder);
+          }
+        }
+        Collections.sort(foldersForRoot);
+      }
+      return result;
+    }
+
+    public Element getModuleRootManager() { return myModuleRootManager; }
+
+    private class JavaDocRootProcessor extends EmptyRootProcessor {
+
+      protected void cannotProcess(Element root) {
+        addProblem(JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED);
+      }
+
+      protected String classId() {
+        return "JavaDocRootProcessor";
+      }
+    }
+
+    private class ProjectRootProcessor extends EmptyRootProcessor {
+      public void processSimpleRoot(Element root) {
+        final String value = root.getAttributeValue("url");
+        myProjectRoots.add(value);
+      }
+
+      public void processEjbRoot(Element root) {
+        // todo[cdr,dsl] implement conversion of EJB roots
+      }
+
+      protected String classId() {
+        return "ProjectRootProcessor";
+      }
+    }
+
+    private void addProblem(final String description) {
+      if (!myDetectedProblems.contains(description)) {
+        myDetectedProblems.add(description);
+      }
+    }
+
+    private class SourceRootProcessor extends EmptyRootProcessor {
+
+      public void processSimpleRoot(Element root) {
+        final String url = root.getAttributeValue("url");
+        boolean found = false;
+        for (int i = 0; i < myProjectRoots.size(); i++) {
+          String projectPath = myProjectRoots.get(i);
+          if (url.startsWith(projectPath)) {
+            mySourceFolders.add(url);
+            found = true;
+            break;
+          }
+          else if (projectPath.startsWith(url)) {
+            myProjectRoots.remove(i);
+            myProjectRoots.add(i, url);
+            mySourceFolders.add(url);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          addProblem(SOURCE_ROOTS_NOT_UNDER_PROJECT_ROOTS);
+        }
+      }
+
+      public void processJdkRoot(Element root) {
+      }
+
+      public void processLibraryRoot(Element root) {
+      }
+
+      public void processEjbRoot(Element root) {
+        // todo[cdr,dsl] implement conversion of EJB roots
+      }
+
+      protected String classId() {
+        return "SourceRootProcessor";
+      }
+    }
+
+    private class ExcludeRootsProcessor extends EmptyRootProcessor {
+      public void processSimpleRoot(Element root) {
+        final String url = root.getAttributeValue("url");
+        for (int i = 0; i < myProjectRoots.size(); i++) {
+          String projectRoot = myProjectRoots.get(i);
+          if (url.startsWith(projectRoot)) {
+            myExcludeFolders.add(url);
+          }
+        }
+      }
+
+      public void processEjbRoot(Element root) {
+        // todo[cdr,dsl] implement conversion of EJB roots
+      }
+
+      protected String classId() {
+        return "ExcludeRootsProcessor";
+      }
+
+      public void processJdkRoot(Element root) {
+        // [dsl]: fix for SCR24517
+        // [dsl]: I have no idea how such project can be configured in Ariadna,
+        // [dsl]: and what does it mean, but such projects do exist....
+      }
+
+      public void processExcludedOutputRoot(Element root) {
+      }
+    }
+
+    private class ClassPathRootProcessor extends EmptyRootProcessor {
+      public void processSimpleRoot(Element root) {
+        final Element orderEntry = new Element("orderEntry");
+        orderEntry.setAttribute("type", "module-library");
+        final Element libraryElement = new Element("library");
+        final Element classesElement = new Element("CLASSES");
+        final Element rootElement = new Element("root");
+        rootElement.setAttribute((Attribute)root.getAttribute("url").clone());
+        classesElement.addContent(rootElement);
+        libraryElement.addContent(classesElement);
+        orderEntry.addContent(libraryElement);
+        myModuleRootManager.addContent(orderEntry);
+      }
+
+      public void processJdkRoot(Element root) {
+        final Element orderEntry = new Element("orderEntry");
+        orderEntry.setAttribute("type", "jdk");
+        orderEntry.setAttribute("jdkName", root.getAttributeValue("name"));
+        myModuleRootManager.addContent(orderEntry);
+      }
+
+      public void processLibraryRoot(Element root) {
+        final String libraryName = root.getAttributeValue("name");
+        final Element orderEntry = new Element("orderEntry");
+        orderEntry.setAttribute("type", "library");
+        orderEntry.setAttribute("name", libraryName);
+        orderEntry.setAttribute("level", LibraryTablesRegistrar.APPLICATION_LEVEL);
+        myModuleRootManager.addContent(orderEntry);
+      }
+
+      public void processEjbRoot(Element root) {
+        // todo[cdr,dsl] implement conversion of EJB roots
+      }
+
+      protected String classId() {
+        return "ClassPathProcessor";
+      }
+
+      public void processOutputRoot(Element root) {
+        final Element orderEntry = new Element("orderEntry");
+        orderEntry.setAttribute("type", "sourceFolder");
+        myModuleRootManager.addContent(orderEntry);
+      }
+    }
+  }
+
+  private static boolean isProjectRootManager(Element component) {
+    String compName = component.getAttributeValue("name");
+    String compClass = component.getAttributeValue("class");
+    return compName != null && compName.equals(PROJECT_ROOT_MANAGER) ||
+           compClass != null && compClass.equals(PROJECT_ROOT_MANAGER_CLASS);
+  }
+
+  private static Element findNamedChild(Element root, String name, String nameAttributeValue) {
+    final List children = root.getChildren(name);
+    for (int i = 0; i < children.size(); i++) {
+      Element e = (Element)children.get(i);
+      if (nameAttributeValue.equals(e.getAttributeValue("name"))) {
+        return e;
+      }
+    }
+    return null;
+  }
+
+  private static class SimpleRootProcessor extends EmptyRootProcessor {
+    private final Element myTargetElement;
+
+    public SimpleRootProcessor(Element targetElement) {
+      myTargetElement = targetElement;
+    }
+
+    public void processSimpleRoot(Element root) {
+      final String url = root.getAttributeValue("url");
+      final Element newRoot = new Element("root");
+      newRoot.setAttribute("url", url);
+      myTargetElement.addContent(newRoot);
+    }
+
+    public void processEjbRoot(Element root) {
+      // todo[cdr,dsl] implement conversion of EJB roots
+    }
+
+    protected String classId() {
+      return "SimpleRootProcessor";
+    }
+
+  }
+}

@@ -1,0 +1,96 @@
+<components>
+  <application-components>
+    <component>
+      <interface-class>com.intellij.find.FindSettings</interface-class>
+      <implementation-class>com.intellij.find.impl.FindSettingsImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.tools.ToolManager</interface-class>
+      <implementation-class>com.intellij.tools.ToolManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.macro.MacroManager</interface-class>
+      <implementation-class>com.intellij.ide.macro.MacroManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.updates.UpdateSettings</interface-class>
+      <implementation-class>com.intellij.ide.updates.UpdateSettings</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.featureStatistics.ProductivityFeaturesRegistry</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.featureStatistics.FeatureUsageTracker</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.updates.UpdateManager</interface-class>
+      <implementation-class>com.intellij.ide.updates.UpdateManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.diff.DiffManager</interface-class>
+      <implementation-class>com.intellij.openapi.diff.impl.external.DiffManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ant.impl.GlobalAntConfiguration</interface-class>
+      <implementation-class>com.intellij.ant.impl.GlobalAntConfiguration</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.usages.rules.UsageGroupingRuleProvider</interface-class>
+      <implementation-class>com.intellij.usages.impl.UsageGroupingRuleProviderImpl</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
+      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.intellijac.IntelliJacManager</implementation-class>
+      <option name="internal" value="true"/>
+    </component>
+    <component>
+      <interface-class>com.intellij.find.FindManager</interface-class>
+      <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.usages.UsageViewManager</interface-class>
+      <implementation-class>com.intellij.usages.impl.UsageViewManagerImpl</implementation-class>      
+    </component>
+    <component>
+      <implementation-class>com.intellij.find.findInProject.FindInProjectManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.find.replaceInProject.ReplaceInProjectManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
+      <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ant.AntConfiguration</interface-class>
+      <implementation-class>com.intellij.ant.impl.AntConfigurationImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ant.impl.AntWorkspaceConfiguration</interface-class>
+      <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+
+  </project-components>
+
+  <module-components>
+    <component>
+      <interface-class>com.intellij.openapi.roots.impl.OldModuleRootsKeeper</interface-class>
+      <implementation-class>com.intellij.openapi.roots.impl.OldModuleRootsKeeper</implementation-class>
+    </component>
+  </module-components>
+</components>

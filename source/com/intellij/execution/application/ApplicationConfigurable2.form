@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.application.ApplicationConfigurable2">
+  <grid id="93687" binding="myWholePanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="53" y="36" width="470" height="391"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <vspacer id="eeb03">
+        <constraints>
+          <xy x="234" y="237" width="11" height="154"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+      <component id="50b09" class="com.intellij.execution.junit2.configuration.CommonJavaParameters" binding="myCommonJavaParameters">
+        <constraints>
+          <xy x="10" y="49" width="460" height="137"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <programParametersText value="Program pa&amp;rameters:"/>
+        </properties>
+      </component>
+      <component id="50d08" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClass">
+        <constraints>
+          <xy x="10" y="0" width="460" height="39"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+          <text value="Main &amp;class:"/>
+        </properties>
+      </component>
+      <component id="c45d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
+        <constraints>
+          <xy x="10" y="196" width="460" height="41"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <componentClass value="javax.swing.JComboBox"/>
+          <text value="Use classpath and JDK of m&amp;odule:"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

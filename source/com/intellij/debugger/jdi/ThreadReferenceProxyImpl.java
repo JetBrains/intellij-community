@@ -1,0 +1,186 @@
+/*
+ * @author Eugene Zhuravlev
+ */
+package com.intellij.debugger.jdi;
+
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.StackFrame;
+import com.sun.jdi.ThreadReference;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Comparator;
+
+public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadReferenceProxyImpl");
+  // cached data
+  private String myName;
+  private int                       myFrameCount = -1;
+  // stackframes, 0 - bottom
+  private List<StackFrameProxyImpl> myFramesFromBottom     = new ArrayList<StackFrameProxyImpl>();
+  //cache build on the base of myFramesFromBottom
+  //0 - top
+  private List<StackFrameProxyImpl> myFrames               = new ArrayList<StackFrameProxyImpl>();
+
+  private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
+
+  public static Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
+    public int compare(ThreadReferenceProxyImpl th1, ThreadReferenceProxyImpl th2) {
+      return th1.name().compareTo(th2.name());
+    }
+  };
+
+  public ThreadReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ThreadReference threadReference) {
+    super(virtualMachineProxy, threadReference);
+    LOG.assertTrue(threadReference != null);
+  }
+
+  public ThreadReference getThreadReference() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return (ThreadReference)getObjectReference();
+  }
+
+  public VirtualMachineProxyImpl getVirtualMachine() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return (VirtualMachineProxyImpl) myTimer;
+  }
+
+  public String name() {
+    checkValid();
+    if (myName == null) {
+      myName = getThreadReference().name();
+    }
+    return myName;
+  }
+
+  public int getSuspendCount() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    //LOG.assertTrue((mySuspendCount > 0) == suspends());
+    return getThreadReference().suspendCount();
+  }
+
+  public void suspend() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    getThreadReference().suspend();
+    clearCaches();
+  }
+
+  public String toString() {
+    return "ThreadReferenceProxyImpl: " + getThreadReference().toString() + " " + super.toString();
+  }
+
+  public void resume() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    //JDI clears all caches on thread resume !!
+    if(LOG.isDebugEnabled()) {
+      LOG.debug("before resume" + getThreadReference());      
+    }
+    getVirtualMachineProxy().clearCaches();
+    getThreadReference().resume();
+  }
+
+  protected void clearCaches() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    myFrames = null;
+    myFrameCount = -1;
+    super.clearCaches();
+  }
+
+  public int suspendCount() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return getThreadReference().suspendCount();
+  }
+
+  public int status() {
+    return getThreadReference().status();
+  }
+
+  public ThreadGroupReferenceProxyImpl threadGroupProxy() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    checkValid();
+    if(myThreadGroupProxy == null) {
+      myThreadGroupProxy = getVirtualMachineProxy().getThreadGroupReferenceProxy(getThreadReference().threadGroup());      
+    }
+    return myThreadGroupProxy;
+  }
+
+  public int frameCount() throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    checkValid();
+    if (myFrameCount == -1) {
+      try {
+        myFrameCount = getThreadReference().frameCount();
+      }
+      catch (IncompatibleThreadStateException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+    }
+    return myFrameCount;
+  }
+
+  public List<StackFrameProxyImpl> frames() throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    LOG.assertTrue(getThreadReference().isSuspended());
+    checkValid();
+
+    if(myFrames == null) {
+      checkFrames();
+
+      myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
+      for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
+        StackFrameProxyImpl stackFrameProxy = iterator.previous();
+        myFrames.add(stackFrameProxy);
+      }
+    }
+    return myFrames;
+  }
+
+  private void checkFrames() throws EvaluateException {
+    if (myFramesFromBottom.size() < frameCount()) {
+      int count = frameCount();
+      List<StackFrame> frames = null;
+      try {
+        frames = getThreadReference().frames(0, count - myFramesFromBottom.size());
+      }
+      catch (IncompatibleThreadStateException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+
+      int index = myFramesFromBottom.size() + 1;
+      for (ListIterator<StackFrame> iterator = frames.listIterator(count - myFramesFromBottom.size()); iterator.hasPrevious();) {
+        StackFrame stackFrame = iterator.previous();
+        myFramesFromBottom.add(new StackFrameProxyImpl(this, stackFrame, index));
+        index++;
+      }
+    }
+  }
+
+  public StackFrameProxyImpl frame(int i) throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if(!getThreadReference().isSuspended()) return null;
+    checkFrames();
+    return myFramesFromBottom.get(frameCount() - i  - 1);
+  }
+
+  public void popFrames(StackFrameProxyImpl stackFrame) throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      getThreadReference().popFrames(stackFrame.getStackFrame());
+    }
+    catch (IncompatibleThreadStateException e) {
+      throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
+    clearCaches();
+  }
+
+  public boolean isSuspended() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return getThreadReference().isSuspended();
+  }
+}

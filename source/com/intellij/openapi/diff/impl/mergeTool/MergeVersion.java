@@ -1,0 +1,98 @@
+package com.intellij.openapi.diff.impl.mergeTool;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.impl.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.NonUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.util.DocumentUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.IOException;
+
+public interface MergeVersion {
+  Document createWorkingDocument(Project project);
+
+  void applyText(String text, Project project);
+
+  VirtualFile getFile();
+
+  byte[] getBytes() throws IOException;
+
+  FileType getContentType();
+
+  class MergeDocumentVersion implements MergeVersion {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeVersion.MergeDocumentVersion");
+    private final Document myDocument;
+    private final String myOriginalText;
+
+    public MergeDocumentVersion(Document document, String originalText) {
+      LOG.assertTrue(originalText != null);
+      LOG.assertTrue(document != null);
+      LOG.assertTrue(document.isWritable());
+      myDocument = document;
+      myOriginalText = originalText;
+    }
+
+    public Document createWorkingDocument(final Project project) {
+      final Document workingDocument = DocumentUtil.createCopy(myDocument, project);
+      LOG.assertTrue(workingDocument != myDocument);
+      workingDocument.setReadOnly(false);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          setDocumentText(workingDocument, myOriginalText, "initMergeContent", project);
+          UndoManager.getInstance(project).undoableActionPerformed(new NonUndoableAction() {
+            public boolean isComplex() {
+              return false;
+            }
+
+            public DocumentReference[] getAffectedDocuments() {
+              return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(workingDocument)};
+            }
+          });
+        }
+      });
+      return workingDocument;
+    }
+
+    public void applyText(final String text, final Project project) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          setDocumentText(myDocument, text, "Merge", project);
+        }
+      });
+    }
+
+    public VirtualFile getFile() {
+      return FileDocumentManager.getInstance().getFile(myDocument);
+    }
+
+    public byte[] getBytes() throws IOException {
+      VirtualFile file = getFile();
+      if (file != null) return file.contentsToByteArray();
+      return myDocument.getText().getBytes();
+    }
+
+    public FileType getContentType() {
+      VirtualFile file = getFile();
+      if (file == null) return StdFileTypes.PLAIN_TEXT;
+      return FileTypeManager.getInstance().getFileTypeByFile(file);
+    }
+
+    private void setDocumentText(final Document document, final String startingText, String name, Project project) {
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        public void run() {
+          document.replaceString(0, document.getTextLength(), startingText);
+        }
+      }, name, null);
+    }
+  }
+}

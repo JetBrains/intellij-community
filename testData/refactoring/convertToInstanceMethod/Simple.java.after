@@ -1,0 +1,17 @@
+public class Y {
+    public void foo() {
+    }
+
+    void method() {
+        System.out.println(this);
+        foo();
+    }
+}
+public class X {
+
+    {
+      Y y = new Y();
+      y.method();
+      new Y().method();
+    }
+}

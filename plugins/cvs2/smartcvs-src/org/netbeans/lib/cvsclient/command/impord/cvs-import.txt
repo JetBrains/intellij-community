@@ -1,0 +1,40 @@
+Importing an empty directory
+============================
+
+Command line (in empty directory "empty"):
+  set CVSROOT=:pserver:tom@localhost:f:\repository
+  cvs import -m "initial import" empty vendor-tag release-tag
+
+Sent to CVS Server
+------------------
+Valid-responses ok error Valid-requests Checked-in New-entry Checksum Copy-file Updated Created Update-existing Merged Patched Rcs-diff Mode Mod-time Removed Remove-entry Set-static-directory Clear-static-directory Set-sticky Clear-sticky Template Notified Module-expansion Wrapper-rcsOption EntriesExtra M Mbinary E F MT
+valid-requests
+UseUnchanged
+Root f:/repository
+wrapper-sendme-rcsOptions
+Case
+Utf8
+read-cvsrc2
+Argument -b
+Argument 1.1.1
+Argument -m
+Argument initial import
+Argumentx 
+Argument empty
+Argument vendor-tag
+Argument release-tag
+Directory .
+f:/repository/empty
+import
+
+Got from CVS Server
+-------------------
+Valid-requests Root Valid-responses valid-requests Directory Max-dotdot Static-directory Sticky Entry EntryExtra Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify NotifyUser Questionable Case Utf8 Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set expand-modules ci co chown setowner setperm chacl setacl listperm lsacl setpass passwd update diff log rlog add remove update-patches status ls rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors init annotate rannotate noop version Module-Prefix Current-Module Rootless-stream-modification Kerberos-encrypt Gssapi-encrypt Protocol-encrypt Gssapi-authenticate Protocol-authenticate read-cvsrc read-cvsrc2 Error-If-Reader      
+ok
+ok
+0
+M 
+M No conflicts created by this import
+M 
+ok
+

@@ -1,0 +1,719 @@
+package com.intellij.refactoring;
+
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.typeCook.Kitchen;
+import com.intellij.refactoring.typeCook.Settings;
+import com.intellij.refactoring.typeCook.deductive.builder.*;
+import junit.textui.TestRunner;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.lang.System;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: db
+ * Date: 22.07.2003
+ * Time: 22:46:44
+ * To change this template use Options | File Templates.
+ */
+
+public class TypeCookTest extends MultiFileTestCase {
+  public String getTestRoot() {
+    return "/refactoring/typeCook/";
+  }
+
+  public void testT01() throws Exception {
+    start();
+  }
+
+  public void testT02() throws Exception {
+    start();
+  }
+
+  public void testT03() throws Exception {
+    start();
+  }
+
+  public void testT04() throws Exception {
+    start();
+  }
+
+  public void testT05() throws Exception {
+    start();
+  }
+
+  public void testT06() throws Exception {
+    start();
+  }
+
+  public void testT07() throws Exception {
+    start();
+  }
+
+  public void testT08() throws Exception {
+    start();
+  }
+
+  public void testT09() throws Exception {
+    start();
+  }
+
+  public void testT10() throws Exception {
+    start();
+  }
+
+  public void testT11() throws Exception {
+    start();
+  }
+
+  public void testT12() throws Exception {
+    start();
+  }
+
+
+  public void testT13() throws Exception {
+    start();
+  }
+
+  public void testT14() throws Exception {
+    start();
+  }
+
+  public void testT15() throws Exception {
+    start();
+  }
+
+  public void testT16() throws Exception {
+    start();
+  }
+
+  public void testT17() throws Exception {
+    start();
+  }
+
+  public void testT18() throws Exception {
+    start();
+  }
+
+  public void testT19() throws Exception {
+    start();
+  }
+
+  public void testT20() throws Exception {
+    start();
+  }
+
+  public void testT21() throws Exception {
+    start();
+  }
+
+  public void testT22() throws Exception {
+    start();
+  }
+
+  public void testT23() throws Exception {
+    start();
+  }
+
+  public void testT24() throws Exception {
+    start();
+  }
+
+  public void testT25() throws Exception {
+    start();
+  }
+
+  public void testT26() throws Exception {
+    start();
+  }
+
+  public void testT27() throws Exception {
+    start();
+  }
+
+  public void testT28() throws Exception {
+    start();
+  }
+
+  public void testT29() throws Exception {
+    start();
+  }
+
+  public void testT30() throws Exception {
+    start();
+  }
+
+  public void testT31() throws Exception {
+    start();
+  }
+
+  // Waits for correct NCA...
+  //public void testT32() throws Exception {
+  // start();
+  //}
+
+  public void testT33() throws Exception {
+    start();
+  }
+
+  public void testT34() throws Exception {
+    start();
+  }
+
+  public void testT35() throws Exception {
+    start();
+  }
+
+  public void testT36() throws Exception {
+    start();
+  }
+
+  public void testT37() throws Exception {
+    start();
+  }
+
+  public void testT38() throws Exception {
+    start();
+  }
+
+  public void testT39() throws Exception {
+    start();
+  }
+
+  public void testT40() throws Exception {
+    start();
+  }
+
+  public void testT41() throws Exception {
+    start();
+  }
+
+  public void testT42() throws Exception {
+    start();
+  }
+
+  public void testT43() throws Exception {
+    start();
+  }
+
+  public void testT44() throws Exception {
+    start();
+  }
+
+  public void testT45() throws Exception {
+    start();
+  }
+
+  public void testT46() throws Exception {
+    start();
+  }
+
+  public void testT47() throws Exception {
+    start();
+  }
+
+  public void testT48() throws Exception {
+    start();
+  }
+
+  public void testT49() throws Exception {
+    start();
+  }
+
+  public void testT50() throws Exception {
+    start();
+  }
+
+  public void testT51() throws Exception {
+    start();
+  }
+
+  public void testT52() throws Exception {
+    start();
+  }
+
+  public void testT53() throws Exception {
+    start();
+  }
+
+  public void testT54() throws Exception {
+    start();
+  }
+
+  public void testT55() throws Exception {
+    start();
+  }
+
+  public void testT56() throws Exception {
+    start();
+  }
+
+  public void testT57() throws Exception {
+    start();
+  }
+
+  public void testT58() throws Exception {
+    start();
+  }
+
+  public void testT59() throws Exception {
+    start();
+  }
+
+  public void testT60() throws Exception {
+    start();
+  }
+
+  public void testT61() throws Exception {
+    start();
+  }
+
+  public void testT62() throws Exception {
+    start();
+  }
+
+  public void testT63() throws Exception {
+    start();
+  }
+
+  public void testT64() throws Exception {
+    start();
+  }
+
+  public void testT65() throws Exception {
+    start();
+  }
+
+  public void testT66() throws Exception {
+    start();
+  }
+
+  public void testT67() throws Exception {
+    start();
+  }
+
+  public void testT68() throws Exception {
+    start();
+  }
+
+  public void testT69() throws Exception {
+    start();
+  }
+
+  public void testT70() throws Exception {
+    start();
+  }
+
+  public void testT71() throws Exception {
+    start();
+  }
+
+  public void testT72() throws Exception {
+    start();
+  }
+
+  public void testT73() throws Exception {
+    start();
+  }
+
+  public void testT74() throws Exception {
+    start();
+  }
+
+  public void testT75() throws Exception {
+    start();
+  }
+
+  public void testT76() throws Exception {
+    start();
+  }
+
+  public void testT77() throws Exception {
+    start();
+  }
+
+  public void testT78() throws Exception {
+    start();
+  }
+
+  public void testT79() throws Exception {
+    start();
+  }
+
+  public void testT80() throws Exception {
+    start();
+  }
+
+  // Too conservative.... Waiting for better times
+  //public void testT81() throws Exception {
+  //  start();
+  //}
+
+  public void testT82() throws Exception {
+    start();
+  }
+
+  public void testT83() throws Exception {
+    start();
+  }
+
+  public void testT84() throws Exception {
+    start();
+  }
+
+  public void testT85() throws Exception {
+    start();
+  }
+
+  public void testT86() throws Exception {
+    start();
+  }
+
+  public void testT87() throws Exception {
+    start();
+  }
+
+  public void testT88() throws Exception {
+    start();
+  }
+
+  public void testT89() throws Exception {
+    start();
+  }
+
+  public void testT90() throws Exception {
+    start();
+  }
+
+  public void testT91() throws Exception {
+    start();
+  }
+
+  public void testT92() throws Exception {
+    start();
+  }
+
+  public void testT93() throws Exception {
+    start();
+  }
+
+  public void testT94() throws Exception {
+    start();
+  }
+
+  public void testT95() throws Exception {
+    start();
+  }
+
+  public void testT96() throws Exception {
+    start();
+  }
+
+  public void testT97() throws Exception {
+    start();
+  }
+
+  // Wrong: inner class
+  //public void testT98() throws Exception {
+  //  start();
+  //}
+
+  // Wrong: anonymous
+  //public void testT99() throws Exception {
+  //  start();
+  //}
+
+  public void testT100() throws Exception {
+    start();
+  }
+
+  public void testT101() throws Exception {
+    start();
+  }
+
+  public void testT102() throws Exception {
+    start();
+  }
+
+  public void testT103() throws Exception {
+    start();
+  }
+
+  public void testT104() throws Exception {
+    start();
+  }
+
+  public void testT105() throws Exception {
+    start();
+  }
+
+  public void testT106() throws Exception {
+    start();
+  }
+
+  public void testT107() throws Exception {
+    start();
+  }
+
+  public void testT108() throws Exception {
+    start();
+  }
+
+  public void testT109() throws Exception {
+    start();
+  }
+
+  public void testT110() throws Exception {
+    start();
+  }
+
+  public void testT111() throws Exception {
+    start();
+  }
+
+  public void testT112() throws Exception {
+    start();
+  }
+
+  public void testT113() throws Exception {
+    start();
+  }
+
+  public void testT114() throws Exception {
+    start();
+  }
+
+  public void testT115() throws Exception {
+    start();
+  }
+
+  public void testT116() throws Exception {
+    start();
+  }
+
+  public void testT117() throws Exception {
+    start();
+  }
+
+  public void testT118() throws Exception {
+    start();
+  }
+
+  public void testT119() throws Exception {
+    start();
+  }
+
+  public void testT120() throws Exception {
+    start();
+  }
+
+  public void testT121() throws Exception {
+    start();
+  }
+
+  public void testT122() throws Exception {
+    start();
+  }
+
+  public void testT123() throws Exception {
+    start();
+  }
+
+  public void testT124() throws Exception {
+    start();
+  }
+
+  public void testT125() throws Exception {
+    start();
+  }
+
+  public void testT126() throws Exception {
+    start();
+  }
+
+  public void testT127() throws Exception {
+    start();
+  }
+
+  public void testT128() throws Exception {
+    start();
+  }
+
+  public void testT129() throws Exception {
+    start();
+  }
+
+  public void testT130() throws Exception {
+    start();
+  }
+
+  public void testT131() throws Exception {
+    start();
+  }
+
+  public void testT132() throws Exception {
+    start();
+  }
+
+  public void testT133() throws Exception {
+    start();
+  }
+
+  public void testT134() throws Exception {
+    start();
+  }
+
+  public void testT135() throws Exception {
+    start();
+  }
+
+  public void testT136() throws Exception {
+    start();
+  }
+
+  public void testT137() throws Exception {
+    start();
+  }
+
+  //public void testT138() throws Exception {
+  //   start();
+  // }
+
+  public void testT139() throws Exception {
+    start();
+  }
+
+  public void testT140() throws Exception {
+    start();
+  }
+
+  //public void testT141() throws Exception {
+  //  start();
+  //}
+  //
+  //public void testT142() throws Exception {
+  //  start();
+  //}
+  //
+  //public void testT143() throws Exception {
+  //    start();
+  //}
+  //
+  //public void testT144() throws Exception {
+  //      start();
+  //}
+  //
+  //public void testT145() throws Exception {
+  //      start();
+  //}
+
+  public void start() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        TypeCookTest.this.performAction("Test", rootDir.getName());
+      }
+    });
+  }
+
+  private void performAction(String className, String rootDir) throws Exception {
+    PsiClass aClass = myPsiManager.findClass(className);
+
+    assertNotNull("Class " + className + " not found", aClass);
+
+    SystemBuilder b = new SystemBuilder(aClass.getManager(),
+                                        new Settings() {
+                                          public boolean dropObsoleteCasts() {
+                                            return true;
+                                          }
+
+                                          public boolean preserveRawArrays() {
+                                            return false;
+                                          }
+
+                                          public boolean leaveObjectParameterizedTypesRaw() {
+                                            return false;
+                                          }
+                                        });
+
+    //final com.intellij.refactoring.typeCook.deductive.builder.System system = b.build(b.collect(new PsiElement[]{aClass}));
+    //
+    //System.out.println("" + system);
+    //
+    //if (system != null) return;
+
+    Kitchen d = new Kitchen(aClass.getManager());
+
+    d.buildGraph(new PsiElement[]{aClass});
+
+    String itemRepr = d.resultString();
+    String itemName = className + ".items";
+    String patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
+
+    File patternFile = new File(patternName);
+
+    if (!patternFile.exists()) {
+      PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile));
+      writer.print(itemRepr);
+      writer.close();
+
+      System.out.println("Pattern not found, file " + patternName + " created.");
+
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
+    }
+
+    File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
+
+    PrintWriter writer = new PrintWriter(new FileOutputStream(graFile));
+
+    writer.print(itemRepr);
+
+    writer.close();
+
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
+
+    d.analyze();
+    d.relax();
+
+    itemRepr = d.resultString();
+
+    itemName = className + ".1.items";
+    patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
+
+    patternFile = new File(patternName);
+
+    if (!patternFile.exists()) {
+      writer = new PrintWriter(new FileOutputStream(patternFile));
+      writer.print(itemRepr);
+      writer.close();
+
+      System.out.println("Pattern not found, file " + patternName + " created.");
+
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
+    }
+
+    graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
+
+    writer = new PrintWriter(new FileOutputStream(graFile));
+
+    writer.print(itemRepr);
+
+    writer.close();
+
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
+    FileDocumentManager.getInstance().saveAllDocuments();
+  }
+
+  public static void main(String[] args) {
+    final TypeCookTest typeCookTest = new TypeCookTest();
+    typeCookTest.setName("testT26");
+    TestRunner.run(typeCookTest);
+  }
+}

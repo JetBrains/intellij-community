@@ -1,0 +1,3 @@
+List<java.lang.Object>\nPsiLocalVariable:requests
+List<java.lang.Object>\nPsiTypeCastExpression:(ArrayList)requestMap.get(new A())
+Map\nparameter 0 of f

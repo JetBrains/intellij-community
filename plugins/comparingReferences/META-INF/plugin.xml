@@ -1,0 +1,13 @@
+<idea-plugin>
+  <name>ComparingRerencesInspection</name>
+  <description>Inspection for (probably) inapporpriate use of equality relation operation</description>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+  <idea-version min="3.0" max="3.0"/>
+
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.codeInspection.ComparingReferencesProvider</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

@@ -1,0 +1,19 @@
+<component>
+  <exception_breakpoints>
+    <breakpoint_any>
+      <option name="ENABLED" value="false" />
+      <option name="SUSPEND_VM" value="true" />
+      <option name="COUNT_FILTER_ENABLED" value="false" />
+      <option name="COUNT_FILTER" value="0" />
+      <option name="CONDITION_ENABLED" value="false" />
+      <option name="CONDITION" />
+      <option name="LOG_ENABLED" value="false" />
+      <option name="LOG_EXPRESSION_ENABLED" value="false" />
+      <option name="LOG_MESSAGE" />
+      <option name="CLASS_FILTERS_ENABLED" value="false" />
+      <option name="INVERSE_CLASS_FILLTERS" value="false" />
+      <option name="NOTIFY_CAUGHT" value="false" />
+      <option name="NOTIFY_UNCAUGHT" value="true" />
+    </breakpoint_any>
+  </exception_breakpoints>
+</component>

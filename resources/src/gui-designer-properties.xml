@@ -1,0 +1,131 @@
+<component>
+  <class name="javax.swing.JComponent">
+    <expert-properties>
+      <property name="autoscrolls"/>
+      <property name="name"/>
+      <property name="opaque"/>
+      <property name="focusable"/>
+      <property name="focusCycleRoot"/>
+      <property name="debugGraphicsOptions"/>
+      <property name="doubleBuffered"/>
+      <property name="verifyInputWhenFocusTarget"/>
+      <property name="requestFocusEnabled"/>
+      <property name="visible"/>
+    </expert-properties>
+  </class>
+  
+  <class name="javax.swing.AbstractButton">  
+    <expert-properties>
+      <property name="actionCommand"/>
+      <property name="label"/>
+      <property name="margin"/>
+      <property name="focusPainted"/>
+      <property name="iconTextGap"/>
+      <property name="borderPainted"/>
+      <property name="contentAreaFilled"/>
+      <property name="rolloverEnabled"/>
+    </expert-properties>
+    <inplace-property name="text"/>
+  </class>
+
+  <class name="javax.swing.JButton">
+    <expert-properties>
+      <property name="selected"/>
+      <property name="defaultCapable"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JCheckBox">
+    <expert-properties>
+      <property name="borderPaintedFlat"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JLabel">
+    <inplace-property name="text"/>
+  </class>
+  
+  <class name="javax.swing.text.JTextComponent">
+    <inplace-property name="text"/>
+    <expert-properties>
+      <property name="caretPosition"/>
+      <property name="dragEnabled"/>
+      <property name="selectionEnd"/>
+      <property name="selectionStart"/>
+      <property name="margin"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JTextField">
+    <expert-properties>
+      <property name="scrollOffset"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JTextArea">
+    <expert-properties>
+      <property name="tabSize"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JComboBox">
+    <expert-properties>
+      <property name="popupVisible"/>
+      <property name="lightWeightPopupEnabled"/>
+      <property name="selectedIndex"/>
+      <property name="actionCommand"/>
+      <property name="maximumRowCount"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JSplitPane">
+    <expert-properties>
+      <property name="lastDividerLocation"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JTable">
+    <expert-properties>
+      <property name="editingColumn"/>
+      <property name="editingRow"/>
+      <property name="surrendersFocusOnKeystroke"/>
+      <property name="rowHeight"/>
+      <property name="rowMargin"/>
+      <property name="cellSelectionEnabled"/>
+      <property name="columnSelectionAllowed"/>
+      <property name="rowSelectionAllowed"/>
+      <property name="autoCreateColumnsFromModel"/>
+      <property name="dragEnabled"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JTree">
+    <expert-properties>
+      <property name="invokesStopCellEditing"/>
+      <property name="largeModel"/>
+      <property name="rowHeight"/>
+      <property name="toggleClickCount"/>
+      <property name="visibleRowCount"/>
+      <property name="dragEnabled"/>
+      <property name="expandsSelectedPaths"/>
+      <property name="scrollsOnExpand"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JList">
+    <expert-properties>
+      <property name="dragEnabled"/>
+      <property name="visibleRowCount"/>
+      <property name="valueIsAdjusting"/>
+      <property name="fixedCellHeight"/>
+      <property name="fixedCellWidth"/>
+      <property name="selectedIndex"/>
+    </expert-properties>
+  </class>
+
+  <class name="javax.swing.JScrollPane">
+    <expert-properties>
+      <property name="wheelScrollingEnabled"/>
+    </expert-properties>
+  </class>
+</component>

@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.CodeStyleGeneralConfigurable">
+  <grid id="8505a" binding="myPanel" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="18" y="29" width="514" height="443"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="e2209" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+        <margin top="5" left="5" bottom="5" right="5"/>
+        <constraints>
+          <xy x="0" y="0" width="295" height="212"/>
+          <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="Naming"/>
+        <children>
+          <component id="c217b" class="javax.swing.JCheckBox" binding="myCbPreferLongerNames">
+            <constraints>
+              <xy x="11" y="25" width="122" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Prefer longer names"/>
+            </properties>
+          </component>
+          <grid id="dc5b7" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="11" y="57" width="273" height="144"/>
+              <grid row="1" column="0" row-span="2" col-span="1" vsize-policy="3" hsize-policy="0" anchor="1" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="d864f" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="15" y="95" width="54" height="14"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Parameter:"/>
+                </properties>
+              </component>
+              <component id="2a76f" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="15" y="64" width="54" height="14"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Static field:"/>
+                </properties>
+              </component>
+              <component id="f50a3" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="43" y="33" width="26" height="14"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Field:"/>
+                </properties>
+              </component>
+              <component id="426b6" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="0" y="126" width="69" height="14"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Local variable:"/>
+                </properties>
+              </component>
+              <component id="db01f" class="javax.swing.JTextField" binding="myFieldPrefixField">
+                <constraints>
+                  <xy x="79" y="30" width="93" height="21"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value=""/>
+                </properties>
+              </component>
+              <component id="3cdda" class="javax.swing.JTextField" binding="myStaticFieldPrefixField">
+                <constraints>
+                  <xy x="79" y="61" width="93" height="21"/>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="e7a21" class="javax.swing.JTextField" binding="myParameterPrefixField">
+                <constraints>
+                  <xy x="79" y="92" width="93" height="21"/>
+                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="79e6c" class="javax.swing.JTextField" binding="myLocalVariablePrefixField">
+                <constraints>
+                  <xy x="79" y="123" width="93" height="21"/>
+                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="16f1d" class="javax.swing.JTextField" binding="myFieldSuffixField">
+                <constraints>
+                  <xy x="182" y="30" width="91" height="21"/>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="d4f0f" class="javax.swing.JTextField" binding="myStaticFieldSuffixField">
+                <constraints>
+                  <xy x="182" y="61" width="91" height="21"/>
+                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="fb9b2" class="javax.swing.JTextField" binding="myParameterSuffixField">
+                <constraints>
+                  <xy x="182" y="92" width="91" height="21"/>
+                  <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="193" class="javax.swing.JTextField" binding="myLocalVariableSuffixField">
+                <constraints>
+                  <xy x="182" y="123" width="91" height="21"/>
+                  <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <preferred-size width="60" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="bf532" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="182" y="3" width="61" height="14"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Name suffix:"/>
+                </properties>
+              </component>
+              <component id="54552" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="79" y="3" width="62" height="14"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Name prefix:"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="81c32" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="0">
+        <margin top="5" left="5" bottom="5" right="5"/>
+        <constraints>
+          <xy x="305" y="177" width="209" height="246"/>
+          <grid row="1" column="1" row-span="4" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="Order of Members"/>
+        <children>
+          <grid id="32fc8" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="3">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="108" y="25" width="90" height="51"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="8fbd6" class="javax.swing.JButton" binding="myMoveUpButton">
+                <constraints>
+                  <xy x="0" y="0" width="90" height="24"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="90" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <label value="Move Up"/>
+                  <text value="Move &amp;Up"/>
+                </properties>
+              </component>
+              <component id="50fed" class="javax.swing.JButton" binding="myMoveDownButton">
+                <constraints>
+                  <xy x="0" y="27" width="90" height="24"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="90" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Move &amp;Down"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <scrollpane id="4c5ed" binding="myMembersListScroll">
+            <constraints>
+              <xy x="11" y="25" width="92" height="210"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </scrollpane>
+        </children>
+      </grid>
+      <vspacer id="91133">
+        <constraints>
+          <xy x="142" y="423" width="11" height="20"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+      <grid id="44068" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="305" y="0" width="209" height="156"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="Keep When Reformatting"/>
+        <children>
+          <component id="657c6" class="javax.swing.JCheckBox" binding="myCbKeepControlStatementInOneLine">
+            <constraints>
+              <xy x="6" y="128" width="163" height="22"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Control statement in one line"/>
+            </properties>
+          </component>
+          <component id="cafa4" class="javax.swing.JCheckBox" binding="myCbKeepLineBreaks">
+            <constraints>
+              <xy x="6" y="20" width="79" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Line breaks"/>
+            </properties>
+          </component>
+          <component id="93969" class="javax.swing.JCheckBox" binding="myCbKeepFirstColumnComment">
+            <constraints>
+              <xy x="6" y="47" width="141" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Comment at first column"/>
+            </properties>
+          </component>
+          <component id="ffdc4" class="javax.swing.JCheckBox" binding="myCbKeepSimpleBlocksInOneLine">
+            <constraints>
+              <xy x="6" y="101" width="138" height="22"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Simple blocks in one line"/>
+            </properties>
+          </component>
+          <component id="680da" class="javax.swing.JCheckBox" binding="myCbKeepSimpleMethodsInOneLine">
+            <constraints>
+              <xy x="6" y="74" width="150" height="22"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Simple methods in one line"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="5a70" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+        <margin top="0" left="8" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="302" width="295" height="67"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="84fe6" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="3" width="75" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Comment code:"/>
+            </properties>
+          </component>
+          <component id="da6e1" class="javax.swing.JCheckBox" binding="myCbLineCommentAtFirstColumn">
+            <constraints>
+              <xy x="8" y="20" width="169" height="25"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <label value="Line comment at first column"/>
+              <margin top="5" left="10" bottom="2" right="2"/>
+              <text value="Line comment at first column"/>
+            </properties>
+          </component>
+          <component id="841a8" class="javax.swing.JCheckBox" binding="myCbBlockCommentAtFirstColumn">
+            <constraints>
+              <xy x="8" y="45" width="174" height="22"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <label value="Block comment at first column"/>
+              <margin top="2" left="10" bottom="2" right="2"/>
+              <text value="Block comment at first column"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="d058f" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="8" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="374" width="295" height="49"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f2f64" class="javax.swing.JComboBox" binding="myLineSeparatorCombo">
+            <constraints>
+              <xy x="161" y="0" width="134" height="23"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
+                <preferred-size width="100" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="5d1c5" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="31" width="113" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Right margin (columns):"/>
+            </properties>
+          </component>
+          <component id="48074" class="javax.swing.JTextField" binding="myRightMarginField">
+            <constraints>
+              <xy x="161" y="28" width="50" height="21"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="50" height="-1"/>
+                <maximum-size width="50" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="26e4c" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="4" width="143" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Line separator (for new files):"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="83565" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+        <margin top="0" left="8" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="217" width="295" height="80"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="a987" class="javax.swing.JCheckBox" binding="myCbGenerateFinalLocals">
+            <constraints>
+              <xy x="8" y="25" width="204" height="25"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <margin top="5" left="10" bottom="2" right="2"/>
+              <text value="Make generated local variables final"/>
+            </properties>
+          </component>
+          <component id="dff46" class="javax.swing.JCheckBox" binding="myCbGenerateFinalParameters">
+            <constraints>
+              <xy x="8" y="55" width="192" height="25"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <margin top="5" left="10" bottom="2" right="2"/>
+              <text value="Make generated parameters final"/>
+            </properties>
+          </component>
+          <component id="2b0a" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="3" width="67" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Final modifier:"/>
+              <verticalAlignment value="0"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

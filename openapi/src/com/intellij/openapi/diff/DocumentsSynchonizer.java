@@ -1,0 +1,112 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.openapi.diff;
+
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.project.Project;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+abstract class DocumentsSynchonizer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DocumentsSynchonizer");
+  private Document myOriginal = null;
+  private Document myCopy = null;
+  private final Project myProject;
+
+  private boolean myDuringModification = false;
+  private int myAssignedCount = 0;
+
+  private final DocumentAdapter myOriginalListener = new DocumentAdapter() {
+    public void documentChanged(DocumentEvent e) {
+      if (myDuringModification) return;
+      onOriginalChanged(e, getCopy());
+    }
+  };
+
+  private final DocumentAdapter myCopyListener = new DocumentAdapter() {
+    public void documentChanged(DocumentEvent e) {
+      if (myDuringModification) return;
+      onCopyChanged(e, getOriginal());
+    }
+  };
+  private final PropertyChangeListener myROListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (Document.PROP_WRITABLE.equals(evt.getPropertyName()))
+            getCopy().setReadOnly(!getOriginal().isWritable());
+        }
+      };
+
+  protected DocumentsSynchonizer(Project project) {
+    myProject = project;
+  }
+
+  protected abstract void onCopyChanged(DocumentEvent event, Document original);
+  protected abstract void onOriginalChanged(DocumentEvent event, Document copy);
+  protected abstract void beforeListenersAttached(Document original, Document copy);
+  protected abstract Document createOriginal();
+  protected abstract Document createCopy();
+
+  protected void replaceString(final Document document, final int startOffset, final int endOffset, final String newText) {
+    LOG.assertTrue(!myDuringModification);
+    try {
+      myDuringModification = true;
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          LOG.assertTrue(endOffset <= document.getTextLength());
+          document.replaceString(startOffset, endOffset, newText);
+        }
+      }, "Merge", null);
+    } finally {
+      myDuringModification = false;
+    }
+  }
+
+  public void listenDocuments(boolean startListen) {
+    int prevAssignedCount = myAssignedCount;
+    if (startListen) myAssignedCount++;
+    else myAssignedCount--;
+    LOG.assertTrue(myAssignedCount >= 0);
+    if (prevAssignedCount == 0 && myAssignedCount > 0) startListen();
+    if (myAssignedCount == 0 && prevAssignedCount > 0) stopListen();
+  }
+
+  private void startListen() {
+    final Document original = getOriginal();
+    final Document copy = getCopy();
+    if (original == null || copy == null) return;
+    beforeListenersAttached(original, copy);
+    original.addDocumentListener(myOriginalListener);
+    copy.addDocumentListener(myCopyListener);
+    original.addPropertyChangeListener(myROListener);
+  }
+
+
+  private void stopListen() {
+    if (myOriginal != null) {
+      myOriginal.removeDocumentListener(myOriginalListener);
+      myOriginal.removePropertyChangeListener(myROListener);
+      myOriginal = null;
+    }
+    if (myCopy != null) {
+      myCopy.removeDocumentListener(myCopyListener);
+      myCopy = null;
+    }
+  }
+
+  public Document getOriginal() {
+    if (myOriginal == null) myOriginal = createOriginal();
+    return myOriginal;
+  }
+
+  public Document getCopy() {
+    if (myCopy == null) myCopy = createCopy();
+    return myCopy;
+  }
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.compiler.actions.GenerateAntBuildDialog">
+  <grid id="3d49c" binding="myPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="52" y="58" width="686" height="107"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="770dc" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="0" width="686" height="53"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="7d65" class="javax.swing.JRadioButton" binding="myGenerateMultipleFilesBuild">
+            <constraints>
+              <xy x="0" y="0" width="430" height="24"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Generate multiple-file ant build (requires ant 1.6 or later to execute)"/>
+            </properties>
+          </component>
+          <component id="f1821" class="javax.swing.JRadioButton" binding="myGenerateSingleFileBuild">
+            <constraints>
+              <xy x="0" y="29" width="196" height="24"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Generate single-file ant build"/>
+            </properties>
+          </component>
+          <component id="81381" class="javax.swing.JRadioButton" binding="myCbBackupFiles">
+            <constraints>
+              <xy x="444" y="0" width="221" height="24"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Backup previously generated files"/>
+            </properties>
+          </component>
+          <component id="a019e" class="javax.swing.JRadioButton" binding="myCbOverwriteFiles">
+            <constraints>
+              <xy x="444" y="29" width="238" height="24"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Overwrite previously generated files"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <component id="ec5e9" class="javax.swing.JCheckBox" binding="myEnableUIFormsCompilation">
+        <constraints>
+          <xy x="0" y="58" width="491" height="24"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0"/>
+        </constraints>
+        <properties>
+          <text value="Enable UI forms compilation (requires &quot;javac2&quot; ant task from IDEA distribution)"/>
+        </properties>
+      </component>
+      <xy id="6f3e8" binding="myChunksPanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="87" width="686" height="20"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
+    </children>
+  </grid>
+</form>

@@ -1,0 +1,35 @@
+/*
+ * @author ven
+ */
+package com.intellij.codeInsight.daemon.impl.quickfix;
+
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+
+public class CreateConstructorFromSuperAction extends CreateConstructorFromThisOrSuperAction {
+
+  public CreateConstructorFromSuperAction(PsiMethodCallExpression methodCall) {
+    super(methodCall);
+  }
+
+  protected String getSyntheticMethodName() {
+    return "super";
+  }
+
+  protected PsiClass[] getTargetClasses(PsiElement element) {
+    do {
+      element = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    } while (element instanceof PsiTypeParameter);
+    PsiClass curClass = (PsiClass) element;
+    if (curClass == null || curClass instanceof PsiAnonymousClass) return null;
+    PsiClassType[] extendsTypes = curClass.getExtendsListTypes();
+    if (extendsTypes == null || extendsTypes.length == 0) return null;
+    PsiClass aClass = extendsTypes[0].resolve();
+    if (aClass instanceof PsiTypeParameter) return null;
+    return aClass != null && aClass.isValid() && aClass.getManager().isInProject(aClass) ? new PsiClass[]{aClass} : null;
+  }
+
+  public String getFamilyName() {
+    return "Create Constructor From super() Call";
+  }
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>7</line>
+    <description>The value changed is never used</description>
+  </problem>
+</problems>
+

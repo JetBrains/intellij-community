@@ -1,0 +1,315 @@
+package com.intellij.ide.highlighter.custom.impl;
+
+import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.ui.DialogButtonGroup;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.TabbedPaneWrapper;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+
+/**
+ * @author Yura Cangea, dsl
+ */
+public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
+  private JTextField myFileTypeName = new JTextField(26);
+  private JTextField myFileTypeDescr = new JTextField(26);
+  private JCheckBox myIgnoreCase = new JCheckBox("Ignore case");
+
+  private JCheckBox mySupportBraces = new JCheckBox("Support paired braces");
+  private JCheckBox mySupportBrackets = new JCheckBox("Support paired brackets");
+  private JCheckBox mySupportParens = new JCheckBox("Support paired parens");
+
+  private JTextField myLineComment = new JTextField(20);
+  private JTextField myBlockCommentStart = new JTextField(20);
+  private JTextField myBlockCommentEnd = new JTextField(20);
+  private JTextField myHexPrefix = new JTextField(20);
+  private JTextField myNumPostfixes = new JTextField(20);
+
+  private JList[] myKeywordsLists = new JList[]{new JList(), new JList(), new JList(), new JList()};
+  private DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
+  private JButton[] myAddKeywordButtons = new JButton[4];
+  private JButton[] myRemoveKeywordButtons = new JButton[4];
+
+  public CustomFileTypeEditor() {
+  }
+
+  public void resetEditorFrom(CustomFileType fileType) {
+    myFileTypeName.setText(fileType.getName());
+    myFileTypeDescr.setText(fileType.getDescription());
+
+    SyntaxTable table = fileType.getSyntaxTable();
+
+    if (table != null) {
+      myLineComment.setText(table.getLineComment());
+      myBlockCommentEnd.setText(table.getEndComment());
+      myBlockCommentStart.setText(table.getStartComment());
+      myHexPrefix.setText(table.getHexPrefix());
+      myNumPostfixes.setText(table.getNumPostfixChars());
+      myIgnoreCase.setSelected(table.isIgnoreCase());
+
+      mySupportBraces.setSelected(table.isHasBraces());
+      mySupportBrackets.setSelected(table.isHasBrackets());
+      mySupportParens.setSelected(table.isHasParens());
+
+      for (Iterator i = table.getKeywords1().iterator(); i.hasNext();) {
+        myKeywordModels[0].addElement(i.next());
+      }
+      for (Iterator i = table.getKeywords2().iterator(); i.hasNext();) {
+        myKeywordModels[1].addElement(i.next());
+      }
+      for (Iterator i = table.getKeywords3().iterator(); i.hasNext();) {
+        myKeywordModels[2].addElement(i.next());
+      }
+      for (Iterator i = table.getKeywords4().iterator(); i.hasNext();) {
+        myKeywordModels[3].addElement(i.next());
+      }
+    }
+  }
+
+  public void applyEditorTo(CustomFileType type) throws ConfigurationException {
+    if (myFileTypeName.getText().trim().length() == 0) {
+      throw new ConfigurationException("Name cannot be empty", "Error");
+    } else if (myFileTypeDescr.getText().trim().length() == 0) {
+      myFileTypeDescr.setText(myFileTypeName.getText());
+    }
+    type.setName(myFileTypeName.getText());
+    type.setDescription(myFileTypeDescr.getText());
+    type.setSyntaxTable(getSyntaxTable());
+  }
+
+  public JComponent createEditor() {
+    JComponent panel = createCenterPanel();
+    initGui();
+    for (int i = 0; i < myKeywordsLists.length; i++) {
+      myKeywordsLists[i].setModel(myKeywordModels[i]);
+    }
+    return panel;
+  }
+
+  public void disposeEditor() {
+  }
+
+
+  protected JComponent createCenterPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    JPanel fileTypePanel = new JPanel(new BorderLayout());
+    JPanel _panel0 = new JPanel(new BorderLayout());
+    JPanel info = new JPanel(new GridBagLayout());
+    GridBagConstraints gc = new GridBagConstraints();
+    gc.gridx = 0;
+    gc.gridy = 0;
+    gc.anchor = GridBagConstraints.WEST;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    info.add(new JLabel("Name: "), gc);
+    gc.gridx = 1;
+    gc.gridy = 0;
+    info.add(myFileTypeName);
+    gc.gridx = 0;
+    gc.gridy = 2;
+    info.add(new JLabel("Description: "), gc);
+    gc.gridx = 1;
+    gc.gridy = 2;
+    info.add(myFileTypeDescr, gc);
+    gc.gridx = 0;
+    gc.gridy = 3;
+    _panel0.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    _panel0.add(info, BorderLayout.WEST);
+    fileTypePanel.add(_panel0, BorderLayout.NORTH);
+
+    JPanel panel1 = new JPanel();
+    panel1.setBorder(IdeBorderFactory.createTitledBorder("Syntax Highlighting"));
+    JPanel highlighterPanel = panel1;
+    highlighterPanel.setLayout(new BorderLayout());
+    JPanel panel2 = new JPanel();
+    panel2.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    JPanel commentsAndNumbersPanel = panel2;
+    commentsAndNumbersPanel.setLayout(new GridBagLayout());
+
+    JPanel _panel1 = new JPanel(new BorderLayout());
+    gc = new GridBagConstraints();
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.anchor = GridBagConstraints.WEST;
+    gc.gridx = 0;
+    gc.gridy = 0;
+    commentsAndNumbersPanel.add(new JLabel("Line comment: "), gc);
+    gc.gridx = 1;
+    commentsAndNumbersPanel.add(myLineComment, gc);
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(new JLabel("Block comment start: "), gc);
+    gc.gridx = 1;
+    commentsAndNumbersPanel.add(myBlockCommentStart, gc);
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(new JLabel("Block comment end: "), gc);
+    gc.gridx = 1;
+    commentsAndNumbersPanel.add(myBlockCommentEnd, gc);
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(new JLabel("Hex prefix: "), gc);
+    gc.gridx = 1;
+    commentsAndNumbersPanel.add(myHexPrefix, gc);
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(new JLabel("Number postfixes: "), gc);
+    gc.gridx = 1;
+    commentsAndNumbersPanel.add(myNumPostfixes, gc);
+
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(mySupportBraces, gc);
+
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(mySupportBrackets, gc);
+
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(mySupportParens, gc);
+
+    _panel1.add(commentsAndNumbersPanel, BorderLayout.WEST);
+
+
+    highlighterPanel.add(_panel1, BorderLayout.NORTH);
+
+    TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper();
+    tabbedPaneWrapper.addTab("1", createKeywordsPanel(0));
+    tabbedPaneWrapper.addTab("2", createKeywordsPanel(1));
+    tabbedPaneWrapper.addTab("3", createKeywordsPanel(2));
+    tabbedPaneWrapper.addTab("4", createKeywordsPanel(3));
+
+    highlighterPanel.add(tabbedPaneWrapper.getComponent(), BorderLayout.CENTER);
+    highlighterPanel.add(myIgnoreCase, BorderLayout.SOUTH);
+
+    fileTypePanel.add(highlighterPanel, BorderLayout.CENTER);
+
+    panel.add(fileTypePanel);
+
+    for (int i = 0; i < myKeywordsLists.length; i++) {
+      final int idx = i;
+      myKeywordsLists[i].addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2) edit(idx);
+        }
+      });
+    }
+
+
+    return panel;
+  }
+
+  private JPanel createKeywordsPanel(final int index) {
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Keywords"));
+    JPanel keywordsPanel = panel;
+    keywordsPanel.setLayout(new BorderLayout());
+
+    keywordsPanel.add(new JScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
+
+    DialogButtonGroup buttonGroup = new DialogButtonGroup();
+    buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));
+
+    myAddKeywordButtons[index] = new JButton("Add...");
+    myAddKeywordButtons[index].setMnemonic('A');
+    myAddKeywordButtons[index].addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ModifyKeywordDialog dialog = new ModifyKeywordDialog(myAddKeywordButtons[index], "");
+        dialog.show();
+        if (dialog.isOK()) {
+          String keywordName = dialog.getKeywordName();
+          if (!myKeywordModels[index].contains(keywordName)) myKeywordModels[index].addElement(keywordName);
+        }
+      }
+    });
+    buttonGroup.addButton(myAddKeywordButtons[index]);
+
+    myRemoveKeywordButtons[index] = new JButton("Remove");
+    myRemoveKeywordButtons[index].setMnemonic('R');
+    myRemoveKeywordButtons[index].addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ListUtil.removeSelectedItems(myKeywordsLists[index]);
+      }
+    });
+
+    buttonGroup.addButton(myRemoveKeywordButtons[index]);
+
+    keywordsPanel.add(buttonGroup, BorderLayout.EAST);
+    return keywordsPanel;
+  }
+
+  private void edit(int index) {
+    if (myKeywordsLists[index].getSelectedIndex() == -1) return;
+    ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], (String) myKeywordsLists[index].getSelectedValue());
+    dialog.show();
+    if (dialog.isOK()) {
+      myKeywordModels[index].setElementAt(dialog.getKeywordName(), myKeywordsLists[index].getSelectedIndex());
+    }
+  }
+
+  public SyntaxTable getSyntaxTable() {
+    SyntaxTable syntaxTable = new SyntaxTable();
+    syntaxTable.setLineComment(myLineComment.getText());
+    syntaxTable.setStartComment(myBlockCommentStart.getText());
+    syntaxTable.setEndComment(myBlockCommentEnd.getText());
+    syntaxTable.setHexPrefix(myHexPrefix.getText());
+    syntaxTable.setNumPostfixChars(myNumPostfixes.getText());
+
+    boolean ignoreCase = myIgnoreCase.isSelected();
+    syntaxTable.setIgnoreCase(ignoreCase);
+
+    syntaxTable.setHasBraces(mySupportBraces.isSelected());
+    syntaxTable.setHasBrackets(mySupportBrackets.isSelected());
+    syntaxTable.setHasParens(mySupportParens.isSelected());
+
+    for (int i = 0; i < myKeywordModels[0].size(); i++) {
+      if (ignoreCase) {
+        syntaxTable.addKeyword1(((String) myKeywordModels[0].getElementAt(i)).toLowerCase());
+      } else {
+        syntaxTable.addKeyword1((String) myKeywordModels[0].getElementAt(i));
+      }
+    }
+    for (int i = 0; i < myKeywordModels[1].size(); i++) {
+      if (ignoreCase) {
+        syntaxTable.addKeyword2(((String) myKeywordModels[1].getElementAt(i)).toLowerCase());
+      } else {
+        syntaxTable.addKeyword2((String) myKeywordModels[1].getElementAt(i));
+      }
+    }
+    for (int i = 0; i < myKeywordModels[2].size(); i++) {
+      if (ignoreCase) {
+        syntaxTable.addKeyword3(((String) myKeywordModels[2].getElementAt(i)).toLowerCase());
+      } else {
+        syntaxTable.addKeyword3((String) myKeywordModels[2].getElementAt(i));
+      }
+    }
+    for (int i = 0; i < myKeywordModels[3].size(); i++) {
+      if (ignoreCase) {
+        syntaxTable.addKeyword4(((String) myKeywordModels[3].getElementAt(i)).toLowerCase());
+      } else {
+        syntaxTable.addKeyword4((String) myKeywordModels[3].getElementAt(i));
+      }
+    }
+    return syntaxTable;
+  }
+
+  // -------------------------------------------------------------------------
+  // Helper methods
+  // -------------------------------------------------------------------------
+
+  private void initGui() {
+    myIgnoreCase.setMnemonic('I');
+    mySupportBraces.setMnemonic('r');
+    mySupportBrackets.setMnemonic('c');
+    mySupportParens.setMnemonic('p');
+  }
+}

@@ -1,0 +1,6 @@
+class MyReluctantClassLoader extends ClassLoader {
+    <spot>public Class<?> loadClass(String name)
+    throws ClassNotFoundException</spot> {
+        return null;
+    }
+}

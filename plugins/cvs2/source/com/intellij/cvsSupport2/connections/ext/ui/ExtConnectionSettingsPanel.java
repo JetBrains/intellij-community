@@ -1,0 +1,48 @@
+package com.intellij.cvsSupport2.connections.ext.ui;
+
+import com.intellij.cvsSupport2.config.ExtConfiguration;
+import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+
+import javax.swing.*;
+
+/**
+ * author: lesya
+ */
+public class ExtConnectionSettingsPanel {
+  private TextFieldWithBrowseButton myPathToPrivateKeyFile;
+  private TextFieldWithBrowseButton myPathToRsh;
+  private JPanel myPanel;
+  private JTextField myAdditionalParameters;
+  private JLabel myRshLabel;
+  private JLabel myAdditionalParametersLabel;
+  private JLabel myPathToPPKLabel;
+
+  public ExtConnectionSettingsPanel() {
+    CvsConfigurationPanel.addBrowseHandler(myPathToRsh, "Select Path to External Rsh");
+    CvsConfigurationPanel.addBrowseHandler(myPathToPrivateKeyFile, "Select Path to Ssh Private Key");
+    myRshLabel.setLabelFor(myPathToRsh.getTextField());
+    myAdditionalParametersLabel.setLabelFor(myAdditionalParameters);
+    myPathToPPKLabel.setLabelFor(myPathToPrivateKeyFile.getTextField());
+  }
+
+  public void updateFrom(ExtConfiguration ext_configuration) {
+    myPathToPrivateKeyFile.setText(ext_configuration.PRIVATE_KEY_FILE);
+    myPathToPrivateKeyFile.getTextField().selectAll();
+    myPathToRsh.setText(ext_configuration.CVS_RSH);
+    myPathToRsh.getTextField().selectAll();
+    myAdditionalParameters.setText(ext_configuration.ADDITIONAL_PARAMETERS);
+    myAdditionalParameters.selectAll();
+  }
+
+  public void saveTo(ExtConfiguration ext_configuration) {
+    ext_configuration.CVS_RSH = myPathToRsh.getText();
+    ext_configuration.PRIVATE_KEY_FILE = myPathToPrivateKeyFile.getText();
+    ext_configuration.ADDITIONAL_PARAMETERS = myAdditionalParameters.getText();
+  }
+
+  public JComponent getPanel() {
+    return myPanel;
+  }
+
+}

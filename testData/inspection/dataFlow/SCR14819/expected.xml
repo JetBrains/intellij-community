@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>3</line>
+    <description>Condition 't instanceof Test' is redundant</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>9</line>
+    <description>Condition 't instanceof Test' always true</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <description>Condition 'foo(null) instanceof Test' is redundant</description>
+  </problem>
+</problems>
+

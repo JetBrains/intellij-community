@@ -1,0 +1,134 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.openapi.compiler;
+
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+
+import java.io.File;
+
+/**
+ * A set of utility methods for working with paths
+ */
+public class CompilerPaths {
+  /**
+   * Returns a directory
+   * @param project
+   * @param compiler
+   * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
+   */
+  public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
+    File dir = new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
+    dir.mkdirs();
+    return dir;
+  }
+
+  /**
+   * @param project
+   * @return a root directory where generated files for various compilers are stored
+   */
+  public static File getGeneratedDataDirectory(Project project) {
+    File dir = new File(getCompilerSystemDirectory(project), ".generated");
+    dir.mkdirs();
+    return dir;
+  }
+
+  /**
+   * @param project
+   * @return a root directory where compiler caches for the given project are stored
+   */
+  public static File getCacheStoreDirectory(final Project project) {
+    final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".dependency-info");
+    cacheStoreDirectory.mkdirs();
+    return cacheStoreDirectory;
+  }
+
+  /**
+   * @param project
+   * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
+   */
+  public static File getCompilerSystemDirectory(Project project) {
+    String projectDirName;
+    projectDirName = project.getName() + "." + Integer.toHexString(project.getProjectFilePath().replace(File.separatorChar, '/').hashCode());
+
+    final File compilerSystemDir = new File(PathManager.getSystemPath(), "/compiler/" + projectDirName);
+    compilerSystemDir.mkdirs();
+    return compilerSystemDir;
+  }
+
+  /**
+   * @param module
+   * @param forTestClasses true if directory for test sources, false - for sources.
+   * @return a directory to which the sources (or test sources depending on the second partameter) should be compiled.
+   * Null is returned if output directory is not specified or is not valid
+   */
+  public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    VirtualFile outPath;
+    if (forTestClasses) {
+      final VirtualFile path = moduleRootManager.getCompilerOutputPathForTests();
+      if (path != null) {
+        outPath = path;
+      }
+      else {
+        outPath = moduleRootManager.getCompilerOutputPath();
+      }
+    }
+    else {
+      outPath = moduleRootManager.getCompilerOutputPath();
+    }
+    if (outPath != null && !outPath.isValid()) {
+      return null;
+    }
+    return outPath;
+  }
+
+  /**
+   * The same as {@link #getModuleOutputDirectory} but returns String.
+   * The method still returns a non-null value if the output path is specified in Settings but does not exist on disk.
+   */
+  public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    final String outPathUrl;
+    final Application application = ApplicationManager.getApplication();
+    if (forTestClasses) {
+      if (application.isDispatchThread()) {
+        final String url = moduleRootManager.getCompilerOutputPathForTestsUrl();
+        outPathUrl = (url != null) ? url : moduleRootManager.getCompilerOutputPathUrl();
+      }
+      else {
+        outPathUrl = application.runReadAction(new Computable<String>() {
+          public String compute() {
+            final String url = moduleRootManager.getCompilerOutputPathForTestsUrl();
+            return (url != null) ? url : moduleRootManager.getCompilerOutputPathUrl();
+          }
+        });
+      }
+    }
+    else { // for ordinary classes
+      if (application.isDispatchThread()) {
+        outPathUrl = moduleRootManager.getCompilerOutputPathUrl();
+      }
+      else {
+        outPathUrl = application.runReadAction(new Computable<String>() {
+          public String compute() {
+            return moduleRootManager.getCompilerOutputPathUrl();
+          }
+        });
+      }
+    }
+    if (outPathUrl != null) {
+      return VirtualFileManager.extractPath(outPathUrl);
+    }
+    return null;
+  }
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" bind-to-class="com.intellij.internal.encodings.EncodingViewer">
+  <grid id="cb3c8" binding="myPanel" row-count="2" column-count="1" vgap="-1" hgap="-1">
+    <margin top="0" left="0" bottom="0" right="0" />
+    <constraints>
+      <xy x="31" y="65" width="267" height="160" />
+    </constraints>
+    <properties />
+    <border type="none" />
+    <children>
+      <grid id="c1bfc" row-count="1" column-count="2" vgap="-1" hgap="-1">
+        <margin top="0" left="0" bottom="0" right="0" />
+        <properties />
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" />
+        </constraints>
+        <border type="none" />
+        <children>
+          <component id="25e1d" binding="myLoadFile" class="javax.swing.JButton">
+            <bounds x="0" y="0" width="70" height="28" />
+            <properties>
+              <text value="Button" />
+            </properties>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" />
+            </constraints>
+          </component>
+          <component id="e614" binding="myEncoding" class="javax.swing.JComboBox">
+            <bounds x="80" y="0" width="179" height="27" />
+            <properties />
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+            </constraints>
+          </component>
+        </children>
+      </grid>
+      <scrollpane id="e9f31">
+        <bounds x="0" y="37" width="263" height="119" />
+        <properties />
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" />
+        </constraints>
+        <border type="none" />
+        <children>
+          <component id="588d1" binding="myText" class="javax.swing.JTextField">
+            <bounds x="0" y="0" width="259" height="115" />
+            <properties />
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="150" height="-1" />
+              </grid>
+            </constraints>
+          </component>
+        </children>
+      </scrollpane>
+    </children>
+  </grid>
+</form>
+

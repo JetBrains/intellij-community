@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NotUsedTest.java</file>
+    <line>3</line>
+    <description>Variable is never used</description>
+  </problem>
+  <problem>
+    <file>NotUsedTest.java</file>
+    <line>4</line>
+    <description>The value assigned is never used</description>
+  </problem>
+  <problem>
+    <file>NotUsedTest.java</file>
+    <line>5</line>
+    <description>The value assigned is never used</description>
+  </problem>
+
+</problems>
+

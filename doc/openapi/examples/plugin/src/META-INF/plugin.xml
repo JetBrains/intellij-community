@@ -1,0 +1,27 @@
+<idea-plugin>
+<!-- plugin name -->
+  <name>Sample</name>
+<!-- description -->
+  <description>SamplePlugin</description>
+<!-- plugin versuin -->
+  <version>1.0</version>
+  <vendor>IntelliJ</vendor>
+<!-- minimum and maximum IDEA version plugin is supposed to work with -->
+  <idea-version min="3.0" max="3.1"/>
+<!-- application components of the plugin -->
+  <application-components>
+    <component>
+<!-- component implementation class -->
+      <implementation-class>com.intellij.openapi.samples.SampleApplicationPlugin</implementation-class>
+<!-- component interface class -->
+      <interface-class>com.intellij.openapi.samples.SampleApplicationPlugin</interface-class>
+    </component>
+  </application-components>
+<!-- project components of the plugin -->
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.samples.SampleProjectPlugin</implementation-class>
+      <interface-class>com.intellij.openapi.samples.SampleProjectPlugin</interface-class>
+    </component>
+  </project-components>
+</idea-plugin>

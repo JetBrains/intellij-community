@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Cce.java</file>
+    <line>12</line>
+    <description>may produce ClassCastException</description>
+  </problem>
+</problems>
+

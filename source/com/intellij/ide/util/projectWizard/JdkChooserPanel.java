@@ -1,0 +1,194 @@
+package com.intellij.ide.util.projectWizard;
+
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
+import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import gnu.trove.TIntArrayList;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+public class JdkChooserPanel extends JPanel {
+  private JList myList = null;
+  private DefaultListModel myListModel = null;
+  private ProjectJdk myCurrentJdk;
+
+  public JdkChooserPanel() {
+    super(new BorderLayout());
+    myListModel = new DefaultListModel();
+    myList = new JList(myListModel);
+    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myList.setCellRenderer(new ProjectJdkRenderer());
+    myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    fillList();
+
+    myList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
+      }
+    });
+    myList.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          editJdkTable();
+        }
+      }
+    });
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JScrollPane(myList), BorderLayout.CENTER);
+    add(panel, BorderLayout.CENTER);
+    if (myListModel.getSize() > 0) {
+      myList.setSelectedIndex(0);
+    }
+  }
+
+  public ProjectJdk getChosenJdk() {
+    return myCurrentJdk;
+  }
+
+  public void editJdkTable() {
+    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(), myList);
+    editor.show();
+    if (editor.isOK()) {
+      ProjectJdk selectedJdk = editor.getSelectedJdk();
+      Object[] selectedValues = selectedJdk != null ? new Object[]{selectedJdk} : myList.getSelectedValues();
+      fillList();
+      // restore selection
+      TIntArrayList list = new TIntArrayList();
+      for (int i = 0; i < selectedValues.length; i++) {
+        int idx = myListModel.indexOf(selectedValues[i]);
+        if (idx >= 0) {
+          list.add(idx);
+        }
+      }
+      final int[] indicesToSelect = list.toNativeArray();
+      if (indicesToSelect.length > 0) {
+        myList.setSelectedIndices(indicesToSelect);
+      }
+      else if (myList.getModel().getSize() > 0) {
+        myList.setSelectedIndex(0);
+      }
+
+      myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
+    }
+  }
+
+  public JList getPreferredFocusedComponent() {
+    return myList;
+  }
+
+  void fillList() {
+    myListModel.clear();
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+    ProjectJdk[] jdks = jdkTable.getAllJdks();
+    for (int i = 0; i < jdks.length; i++) {
+      ProjectJdk projectJdk = jdks[i];
+      myListModel.addElement(projectJdk);
+    }
+  }
+
+  public JComponent getDefaultFocusedComponent() {
+    return myList;
+  }
+
+  public void selectJdk(ProjectJdk defaultJdk) {
+    final int index = myListModel.indexOf(defaultJdk);
+    if (index >= 0) {
+      myList.setSelectedIndex(index);
+    }
+  }
+
+  public static class ProjectJdkRenderer extends ColoredListCellRenderer {
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      if (value instanceof ProjectJdk) {
+        CellAppearanceUtils.forJdk((ProjectJdk)value, false).customize(this);
+      }
+      else if (value != null) {
+        final String str = value.toString();
+        if (str != null) {
+          append(str, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        }
+      }
+    }
+  }
+
+  public static ProjectJdk showDialog(final Component parent) {
+    return showDialog(null, parent, null);
+  }
+
+  public static ProjectJdk showDialog(String title, final Component parent, ProjectJdk jdkToSelect) {
+    final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel();
+    final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
+    if (title != null) {
+      dialog.setTitle(title);
+    }
+    if (jdkToSelect != null) {
+      jdkChooserPanel.selectJdk(jdkToSelect);
+    }
+    dialog.show();
+    return dialog.isOK() ? jdkChooserPanel.getChosenJdk() : null;
+  }
+
+  public class MyDialog extends DialogWrapper implements ListSelectionListener {
+
+    public MyDialog(Component parent) {
+      super(parent, true);
+      setTitle("Select JDK");
+      init();
+      myList.addListSelectionListener(this);
+      updateOkButton();
+    }
+
+    protected String getDimensionServiceKey() {
+      return "#com.intellij.ide.util.projectWizard.JdkChooserPanel.MyDialog";
+    }
+
+    public void valueChanged(ListSelectionEvent e) {
+      updateOkButton();
+    }
+
+    private void updateOkButton() {
+      setOKActionEnabled(myList.getSelectedValue() != null);
+    }
+
+    protected void dispose() {
+      myList.removeListSelectionListener(this);
+      super.dispose();
+    }
+
+    protected JComponent createCenterPanel() {
+      return JdkChooserPanel.this;
+    }
+
+    protected Action[] createActions() {
+      return new Action[]{new ConfigureAction(), getOKAction(), getCancelAction()};
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myList;
+    }
+
+    private final class ConfigureAction extends AbstractAction {
+      public ConfigureAction() {
+        super("Configure...");
+        putValue(Action.MNEMONIC_KEY, new Integer('E'));
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        editJdkTable();
+      }
+    }
+  }
+
+
+}

@@ -1,0 +1,16 @@
+class A {
+
+    Integer f(int i) {
+        Integer result1;
+        if (i > 0) {
+            result1 = new Integer(i);
+        }
+        else {
+            Integer result;
+            result = new Integer(0);
+            result1 = result;
+        }
+        return result1;
+    }
+
+}

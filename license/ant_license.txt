@@ -1,0 +1,1 @@
+Apache Ant 1.6.1 license is located in Ant distribution root folder lib/ant under IntelliJ IDEA installation home.

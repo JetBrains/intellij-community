@@ -1,0 +1,5 @@
+class Computer {
+    void f() {
+        double pi = Math.<spot>PI</spot>;
+    }
+}

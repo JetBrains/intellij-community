@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <description>'s.equals(s)' may produce NullPointerException</description>
+  </problem>
+</problems>
+

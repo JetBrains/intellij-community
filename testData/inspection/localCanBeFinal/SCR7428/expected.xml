@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Junk.java</file>
+    <line>5</line>
+    <description>bar final</description>
+  </problem>
+  <problem>
+    <file>Junk.java</file>
+    <line>8</line>
+    <description>i final</description>
+  </problem>
+  <problem>
+    <file>Junk.java</file>
+    <line>9</line>
+    <description>foo final</description>
+  </problem>
+  <problem>
+    <file>Junk.java</file>
+    <line>15</line>
+    <description>j final</description>
+  </problem>
+</problems>
+

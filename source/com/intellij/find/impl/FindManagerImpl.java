@@ -1,0 +1,474 @@
+
+package com.intellij.find.impl;
+
+import com.intellij.aspects.psi.PsiPointcut;
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.SearchScopeCache;
+import com.intellij.ui.LightweightHint;
+import com.intellij.util.text.StringSearcher;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+public class FindManagerImpl extends FindManager implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
+
+  private FindUsagesManager myFindUsagesManager;
+  private boolean isFindWasPerformed = false;
+  private Point myReplaceInFilePromptPos = new Point(-1, -1);
+  private Point myReplaceInProjectPromptPos = new Point(-1, -1);
+  private FindModel myFindInProjectModel = new FindModel();
+  private FindModel myFindInFileModel = new FindModel();
+  private FindModel myFindNextModel = null;
+  private static FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
+  private Project myProject;
+  private com.intellij.usages.UsageViewManager myAnotherManager;
+  private Key HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
+
+  public FindManagerImpl(Project project, FindSettings findSettings, SearchScopeCache searchScopeCache, com.intellij.usages.UsageViewManager anotherManager) {
+    myProject = project;
+    myAnotherManager = anotherManager;
+    findSettings.initModelBySetings(myFindInFileModel);
+    findSettings.initModelBySetings(myFindInProjectModel);
+
+    myFindUsagesManager = new FindUsagesManager(myProject, searchScopeCache, myAnotherManager);
+    myFindInProjectModel.setMultipleFiles(true);
+  }
+
+  public void disposeComponent() {
+  }
+
+  public void initComponent() { }
+
+  public void projectClosed() {
+  }
+
+  public void projectOpened() {
+  }
+
+  public int showPromptDialog(final FindModel model, String title) {
+    PromptDialog promptDialog = new PromptDialog(model, title, myProject) {
+      public Point getInitialLocation() {
+        if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0){
+          return myReplaceInProjectPromptPos;
+        }
+        if (!model.isMultipleFiles() && myReplaceInFilePromptPos.x >= 0 && myReplaceInFilePromptPos.y >= 0){
+          return myReplaceInFilePromptPos;
+        }
+        return null;
+      }
+    };
+
+    promptDialog.show();
+
+    if (model.isMultipleFiles()){
+      myReplaceInProjectPromptPos = promptDialog.getLocation();
+    }
+    else{
+      myReplaceInFilePromptPos = promptDialog.getLocation();
+    }
+    return promptDialog.getExitCode();
+  }
+
+  public boolean showFindDialog(FindModel model) {
+    FindDialog findDialog = new FindDialog(myProject, model);
+    findDialog.show();
+    if (!findDialog.isOK()){
+      return false;
+    }
+
+    findDialog.apply();
+    String stringToFind = model.getStringToFind();
+    if (stringToFind == null || stringToFind.length() == 0){
+      return false;
+    }
+    FindSettings.getInstance().addStringToFind(stringToFind);
+    if (!model.isMultipleFiles()){
+      setFindWasPerformed();
+    }
+    if (model.isReplaceState()){
+      FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
+    }
+    if (model.isMultipleFiles() && !model.isProjectScope()){
+      FindSettings.getInstance().addDirectory(model.getDirectoryName());
+    }
+    return true;
+  }
+
+  public FindModel getFindInFileModel() {
+    return myFindInFileModel;
+  }
+
+  public FindModel getFindInProjectModel() {
+    myFindInProjectModel.setFromCursor(false);
+    myFindInProjectModel.setForward(true);
+    myFindInProjectModel.setGlobal(true);
+    return myFindInProjectModel;
+  }
+
+  public boolean findWasPerformed() {
+    return isFindWasPerformed;
+  }
+
+  public void setFindWasPerformed() {
+    isFindWasPerformed = true;
+    myFindUsagesManager.clearFindingNextUsageInFile();
+  }
+
+  public FindModel getFindNextModel() {
+    return myFindNextModel;
+  }
+
+  public void setFindNextModel(FindModel findNextModel) {
+    myFindNextModel = findNextModel;
+  }
+
+  public FindResult findString(CharSequence text, int offset, FindModel model){
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("offset="+offset);
+      LOG.debug("textlength="+text.length());
+      LOG.debug(model.toString());
+    }
+
+    while(true){
+      FindResult result = doFindString(text, offset, model);
+
+      if (!model.isWholeWordsOnly()) {
+        return result;
+      }
+      if (!result.isStringFound()){
+        return result;
+      }
+      if (isWholeWord(text, result.getStartOffset(), result.getEndOffset())){
+        return result;
+      }
+
+      if(model.isForward()) offset = result.getStartOffset() + 1; else offset = result.getEndOffset() - 1;
+    }
+  }
+
+  private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
+    boolean isWordStart = startOffset == 0  || !Character.isJavaIdentifierPart(text.charAt(startOffset - 1));
+    boolean isWordEnd   = endOffset == text.length() || !Character.isJavaIdentifierPart(text.charAt(endOffset)) ||
+                          (endOffset > 0 && !Character.isJavaIdentifierPart(text.charAt(endOffset - 1)));
+
+    return isWordStart && isWordEnd;
+  }
+
+  private static FindResult doFindString(CharSequence text, int offset, FindModel model) {
+    String toFind = model.getStringToFind();
+    if (toFind == null || toFind.length() == 0){
+      return NOT_FOUND_RESULT;
+    }
+
+    if (model.isRegularExpressions()){
+      return findStringByRegularExpression(text, offset, model);
+    }
+
+    StringSearcher searcher = new StringSearcher(toFind);
+    searcher.setCaseSensitive(model.isCaseSensitive());
+    searcher.setForwardDirection(model.isForward());
+    int index;
+    if (model.isForward()){
+      final int res = searcher.scan(text.subSequence(offset, text.length()));
+      index = res < 0 ? -1 : res + offset;
+    }
+    else{
+      index = searcher.scan(text.subSequence(0, offset));
+    }
+    if (index < 0){
+      return NOT_FOUND_RESULT;
+    }
+    else{
+      return new FindResultImpl(index, index + toFind.length());
+    }
+  }
+
+  private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
+    String toFind = model.getStringToFind();
+
+    Pattern pattern;
+    try{
+      if (model.isCaseSensitive()){
+        pattern = Pattern.compile(toFind, Pattern.MULTILINE);
+      }
+      else{
+        pattern = Pattern.compile(toFind, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+      }
+    }
+    catch(PatternSyntaxException e){
+      LOG.error(e);
+      return null;
+    }
+
+    Matcher matcher = pattern.matcher(text);
+
+    if (model.isForward()){
+      if (matcher.find(startOffset)) {
+        if (matcher.end() <= text.length()) {
+          return new FindResultImpl(matcher.start(), matcher.end());
+        }
+      }
+      return NOT_FOUND_RESULT;
+    }
+    else{
+      int start = -1, end = -1;
+      while(matcher.find() && matcher.end() < startOffset){
+        start = matcher.start();
+        end = matcher.end();
+      }
+      if (start < 0){
+        return NOT_FOUND_RESULT;
+      }
+      else{
+        return new FindResultImpl(start, end);
+      }
+    }
+  }
+
+  public String getStringToReplace(String foundString, FindModel model) {
+    if (model == null)
+      return null;
+    String toReplace = model.getStringToReplace();
+    if (!model.isRegularExpressions()) {
+      if (model.isPreserveCase()) {
+        return replaceWithCaseRespect (toReplace, foundString);
+      }
+      return toReplace;
+    }
+
+    String toFind = model.getStringToFind();
+
+    Pattern pattern;
+    try{
+      int flags = Pattern.MULTILINE;
+      if (!model.isCaseSensitive()) {
+        flags |= Pattern.CASE_INSENSITIVE;
+      }
+      pattern = Pattern.compile(toFind, flags);
+    }
+    catch(PatternSyntaxException e){
+      return toReplace;
+    }
+
+    Matcher matcher = pattern.matcher(foundString);
+    if (matcher.matches()) {
+      try {
+        return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
+      }
+      catch (Exception e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                Messages.showErrorDialog(myProject, "You have entered malformed replacement string", "Replace Error");
+              }
+            });
+        return null;
+      }
+    } else {
+      //Seems like a bug in JDK 1.4
+      Messages.showErrorDialog("Unknown Error in Replace", "Internal Error");
+      return toReplace;
+    }
+  }
+
+  private String replaceWithCaseRespect(String toReplace, String foundString) {
+    if (foundString.length() == 0 || toReplace.length() == 0) return toReplace;
+    StringBuffer buffer = new StringBuffer();
+
+    if (Character.isUpperCase(foundString.charAt(0))) {
+      buffer.append(Character.toUpperCase(toReplace.charAt(0)));
+    } else {
+      buffer.append(Character.toLowerCase(toReplace.charAt(0)));
+    }
+    if (toReplace.length() == 1) return buffer.toString();
+
+    if (foundString.length() == 1) {
+      buffer.append(toReplace.substring(1));
+      return buffer.toString();
+    }
+
+    boolean isTailUpper = true;
+    boolean isTailLower = true;
+    for (int i = 1; i < foundString.length(); i++) {
+      isTailUpper &= Character.isUpperCase(foundString.charAt(i));
+      isTailLower &= Character.isLowerCase(foundString.charAt(i));
+      if (!isTailUpper && !isTailLower) break;
+    }
+
+    if (isTailUpper) {
+      buffer.append(toReplace.substring(1).toUpperCase());
+    } else if (isTailLower) {
+      buffer.append(toReplace.substring(1).toLowerCase());
+    } else {
+      buffer.append(toReplace.substring(1));
+    }
+    return buffer.toString();
+  }
+
+  public boolean canFindUsages(PsiElement element) {
+    return myFindUsagesManager.canFindUsages(element);
+  }
+
+  public void findUsages(PsiElement element) {
+    myFindUsagesManager.findUsages(element, null, null);
+  }
+
+  public void findUsagesInEditor(PsiElement element, FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      TextEditor textEditor = (TextEditor)fileEditor;
+      Editor editor = textEditor.getEditor();
+      Document document = editor.getDocument();
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+
+      myFindUsagesManager.findUsages(element, psiFile, fileEditor);
+    }
+  }
+
+  public void findJoinpointsByPointcut(PsiPointcut pointcut) {
+    myFindUsagesManager.findPointcutApplications(pointcut);
+  }
+
+  public boolean findNextUsageInEditor(FileEditor fileEditor) {
+    LOG.assertTrue(fileEditor != null);
+
+    if (fileEditor instanceof TextEditor) {
+      TextEditor textEditor = (TextEditor)fileEditor;
+      Editor editor = textEditor.getEditor();
+
+      FindModel model = getFindNextModel();
+      if (model != null && model.searchHighlighters()) {
+        RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
+        if (highlighters.length > 0) {
+          return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), true, false);
+        }
+      }
+    }
+
+    return myFindUsagesManager.findNextUsageInFile(fileEditor);
+  }
+
+  private boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
+    RangeHighlighter highlighterToSelect = null;
+    Object wasNotFound = editor.getUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY);
+    for (int i = 0; i < highlighters.length; i++) {
+      RangeHighlighter highlighter = highlighters[i];
+      int start = highlighter.getStartOffset();
+      int end = highlighter.getEndOffset();
+      if (highlighter.isValid() && start < end) {
+        if (isForward && (start > offset || (start == offset && secondPass))) {
+          if (highlighterToSelect == null || highlighterToSelect.getStartOffset() > start) highlighterToSelect = highlighter;
+        }
+        if (!isForward && (end < offset || (end == offset && secondPass))) {
+          if (highlighterToSelect == null || highlighterToSelect.getEndOffset() < end) highlighterToSelect = highlighter;
+        }
+      }
+    }
+    if (highlighterToSelect != null) {
+      editor.getSelectionModel().setSelection(highlighterToSelect.getStartOffset(), highlighterToSelect.getEndOffset());
+      editor.getCaretModel().moveToOffset(highlighterToSelect.getStartOffset());
+      ScrollType scrollType;
+      if (!secondPass) {
+        scrollType = isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+      }
+      else {
+        scrollType = !isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+      }
+      editor.getScrollingModel().scrollToCaret(scrollType);
+      editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, null);
+      return true;
+    }
+
+    if (wasNotFound == null) {
+      editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, Boolean.TRUE);
+      String message = "No more highlights found";
+      if (isForward) {
+        AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
+        String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
+        if (shortcutsText.length() > 0) {
+          message += ", press " + shortcutsText;
+        }
+        else{
+          message += ", perform \"Find Next\" again ";
+        }
+        message += " to search from the top";
+      }
+      else {
+        AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS);
+        String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
+        if (shortcutsText.length() > 0) {
+          message += ", press " + shortcutsText;
+        }
+        else{
+          message += ", perform \"Find Previous\" again ";
+        }
+        message += " to search from the bottom";
+      }
+      HintManager hintManager = HintManager.getInstance();
+      JComponent component = HintUtil.createInformationLabel(message);
+      final LightweightHint hint = new LightweightHint(component);
+      hintManager.showEditorHint(hint, editor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
+      return true;
+    } else if (!secondPass) {
+      offset = isForward ? 0 : editor.getDocument().getTextLength();
+      return highlightNextHighlighter(highlighters, editor, offset, isForward, true);
+    }
+
+    return false;
+  }
+
+  public boolean findPreviousUsageInEditor(FileEditor fileEditor) {
+    LOG.assertTrue(fileEditor != null);
+
+    if (fileEditor instanceof TextEditor) {
+      TextEditor textEditor = (TextEditor)fileEditor;
+      Editor editor = textEditor.getEditor();
+
+      FindModel model = getFindNextModel();
+      if (model != null && model.searchHighlighters()) {
+        RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
+        if (highlighters.length > 0) {
+          return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), false, false);
+        }
+      }
+    }
+
+    return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
+  }
+
+  public String getComponentName() {
+    return "FindManager";
+  }
+
+}
+

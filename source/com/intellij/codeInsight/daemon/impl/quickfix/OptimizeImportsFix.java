@@ -1,0 +1,43 @@
+package com.intellij.codeInsight.daemon.impl.quickfix;
+
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
+
+public class OptimizeImportsFix implements IntentionAction{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.OptimizeImportsFix");
+
+  public String getText() {
+    return "Optimize Imports";
+  }
+
+  public String getFamilyName() {
+    return getText();
+  }
+
+  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    return file.getManager().isInProject(file) && file instanceof PsiJavaFile;
+  }
+
+  public void invoke(Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return;
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
+    try{
+      CodeStyleManager.getInstance(project).optimizeImports(file);
+    }
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+    }
+  }
+
+  public boolean startInWriteAction() {
+    return true;
+  }
+}

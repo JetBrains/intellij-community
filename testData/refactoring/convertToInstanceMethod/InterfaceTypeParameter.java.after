@@ -1,0 +1,15 @@
+interface Intf<T> {
+    T get();
+
+    X<T> method(T value);
+}
+
+class Impl<V> implements Intf<V> {
+    public X<V> method(V value) {
+        V v = get();
+        return new X<V>(v,value);
+    }
+}
+
+class X {
+}

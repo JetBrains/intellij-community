@@ -1,0 +1,341 @@
+<component>
+  <group id="navigation" name="Navigation">
+    <feature
+      id="navigation.popup.class"
+      tip-file="GoToClass.html"
+      name="Go to class"
+      min-usage-count="3"
+      first-show="1"
+      successive-show="5"/>
+    <feature
+      id="navigation.popup.file"
+      tip-file="GoToClass.html"
+      name="Go to file"
+      min-usage-count="2"
+      first-show="3"
+      successive-show="5"/>
+    <feature
+      id="navigation.popup.symbol"
+      tip-file="GoToSymbol.html"
+      name="Go to symbol"
+      first-show="5"
+      successive-show="8"/>
+    <feature
+      id="navigation.popup.camelprefix"
+      tip-file="CamelPrefixesInNavigationPopups.html"
+      name="Using camel words prefixes in navigation popups"
+      min-usage-count="3"
+      first-show="4"
+      successive-show="7">
+      <dependency id="navigation.popup.class"/>
+      <dependency id="navigation.popup.file"/>
+      <dependency id="navigation.popup.symbol"/>
+    </feature>
+    <feature
+      id="navigation.popup.wildcards"
+      tip-file="WildcardsInNavigationPopups.html"
+      name="Using wildcards in go to class, file or symbol"
+      min-usage-count="2"
+      first-show="3"
+      successive-show="5">
+      <dependency id="navigation.popup.class"/>
+      <dependency id="navigation.popup.file"/>
+      <dependency id="navigation.popup.symbol"/>
+    </feature>
+    <feature
+      id="navigation.popup.file.structure"
+      tip-file="FileStructurePopup.html"
+      name="File structure popup"
+      min-usage-count="3"
+      first-show="2"
+      successive-show="5"
+      />
+    <feature
+      id="navigation.recent.files"
+      tip-file="RecentFiles.html"
+      name="Recent files popup"
+      min-usage-count="3"
+      first-show="3"
+      successive-show="5"
+      />
+    <feature
+      id="navigation.select.in"
+      tip-file="SelectIn.html"
+      name="Select In popup"
+      min-usage-count="3"
+      first-show="4"
+      successive-show="7"
+      />
+    <feature
+      id="navigation.goto.declaration"
+      tip-file="GoToDeclaration.html"
+      name="Go to declaration"
+      min-usage-count="15"
+      first-show="1"
+      successive-show="4"
+      />
+    <feature
+      id="navigation.goto.implementation"
+      tip-file="GoToImplementation.html"
+      name="Go to implementation"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="5"
+      />
+  </group>
+
+  <group id="completion" name="Code Completion">
+    <feature
+      id="editing.completion.basic"
+      tip-file="CodeCompletion.html"
+      name="Basic code completion"
+      min-usage-count="15"
+      first-show="1"
+      successive-show="3"/>
+    <feature
+      id="editing.completion.classname"
+      tip-file="ClassNameCompletion.html"
+      name="Class name completion"
+      min-usage-count="7"
+      first-show="3"
+      successive-show="5"/>
+    <feature
+      id="editing.completion.smarttype.general"
+      tip-file="SmartTypeCompletion.html"
+      name="Smart type completion"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="3"/>
+    <feature
+      id="editing.completion.smarttype.anonymous"
+      tip-file="SmartTypeAnonymous.html"
+      name="Smart anonymous class instantiation"
+      min-usage-count="7"
+      first-show="3"
+      successive-show="4"/>
+    <feature
+      id="editing.completion.smarttype.afternew"
+      tip-file="SmartTypeAfterNew.html"
+      name="Smart type completion after new"
+      min-usage-count="7"
+      first-show="3"
+      successive-show="4"/>
+    <feature
+      id="editing.completion.smarttype.casting"
+      tip-file="SmartTypeCasting.html"
+      name="Smart type casting"
+      min-usage-count="5"
+      first-show="5"
+      successive-show="7"/>
+    <feature
+      id="editing.completion.variable.name"
+      tip-file="VariableNameCompletion.html"
+      name="Variable name completion"
+      min-usage-count="7"
+      first-show="5"
+      successive-show="3"
+      />
+    <feature
+      id="editing.completion.replace"
+      tip-file="TabInLookups.html"
+      name="Replace By when using lookup"
+      min-usage-count="10"
+      first-show="6"
+      successive-show="8"
+      />
+    <feature
+      id="editing.completion.finishByDotEtc"
+      tip-file="DotEtcInLookups.html"
+      name="Finish lookup by special characters"
+      min-usage-count="7"
+      first-show="4"
+      successive-show="8"
+      />
+  </group>
+  
+  <group id="editing" name="Code Editing">
+    <feature
+      id="editing.select.word"
+      name="Syntax aware selection"
+      tip-file="CtrlW.html"
+      min-usage-count="10"
+      first-show="2"
+      successive-show="4"/>
+    <feature
+      id="editing.incremental.search"
+      name="Editor incremental search"
+      tip-file="IncrementalSearch.html"
+      min-usage-count="13"
+      first-show="2"
+      successive-show="6"
+    />
+  </group>
+
+  <group id="codeassists" name="Code Assistants">
+    <feature
+      id="codeassists.quickjavadoc"
+      name="Quick JavaDoc popup" 
+      tip-file="QuickJavaDoc.html" 
+      min-usage-count="3" 
+      first-show="3" 
+      successive-show="5" 
+    />
+    <feature
+      id="codeassists.quickjavadoc.lookup"
+      name="Quick JavaDoc in lookups"
+      tip-file="QuickJavaDocInLookups.html"
+      min-usage-count="1" 
+      first-show="5" 
+      successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+    <feature
+      id="codeassists.quickjavadoc.ctrln"
+      name="Quick JavaDoc in goto class or symbol"
+      tip-file="QuickJavaDocInLookups.html"
+      min-usage-count="1"
+      first-show="5"
+      successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+    <feature
+      id="codeassists.javadoc.external"
+      name="Browse external javadoc"
+      tip-file="ExternalJavaDoc.html"
+      min-usage-count="1"
+      first-show="5"
+      successive-show="7">
+    </feature>
+    <feature
+      id="codeassists.surroundwith.statement"
+      name="Surround statements with"
+      tip-file="SurroundWith.html"
+      first-show="5"
+      successive-show="5"
+      min-usage-count="4"
+      />
+    <feature
+      id="codeassists.surroundwith.expression"
+      name="Surround expression with"
+      tip-file="SurroundWith.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    <feature
+      id="codeassists.comment.block"
+      name="Comment/Uncomment block"
+      tip-file="CommentCode.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    <feature
+      id="codeassists.comment.line"
+      name="Comment/Uncomment current line"
+      tip-file="CommentCode.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    <feature
+      id="codeassists.overrideimplement"
+      name="Override/Implement methods"
+      tip-file="OverrideImplementMethods.html"
+      first-show="3"
+      successive-show="6"
+      min-usage-count="7" 
+      />
+    <feature
+      id="codeassists.complete.statement"
+      name="Complete Statement"
+      tip-file="CompleteStatement.html" 
+      first-show="3"
+      successive-show="5"
+      min-usage-count="10"
+      />
+  </group>
+  <group id="refactoring" name="Refactoring">
+    <feature 
+      id="refactoring.move.moveInner" 
+      name="Move inner class to upper level"
+      tip-file="MoveInnerToUpper.html"
+      min-usage-count="2"
+      first-show="5"
+      successive-show="10"
+    />
+    <feature
+      id="refactoring.introduceVariable.incompleteStatement"
+      name="Use Introduce Variable to quickly declare variables"
+      tip-file="IntroduceVariableIncompleteCode.html"
+      min-usage-count="5"
+      first-show="3"
+      successive-show="7"
+      />
+
+    <feature
+      id="refactoring.introduceVariable"
+      name="Introduce Variable refactoring"
+      tip-file="IntroduceVariable.html"
+      min-usage-count="5"
+      first-show="1"
+      successive-show="3"
+      />
+    
+    <feature
+      id="refactoring.rename"
+      name="Rename"
+      tip-file="Rename.html"
+      min-usage-count="2"
+      first-show="1"
+      successive-show="3"
+      />
+
+    <feature
+      id="refactoring.copyClass"
+      name="Copy Class refactoring"
+      tip-file="CopyClass.html"
+      min-usage-count="2"
+      first-show="10"
+      successive-show="8"
+      />
+  </group>
+  
+
+  <group id="ui" name="UI Usability Features">
+    <feature
+      id="ui.tree.speedsearch"
+      name="Speed search in trees"
+      tip-file="SpeedSearch.html"
+      first-show="5"
+      successive-show="4"
+      min-usage-count="6"
+      />
+    <!-- TODO: Uncomment usage in InsertPathAction when FeatureUsageTracker goes to OpenApi
+    <feature
+      id="ui.commandLine.insertPath"
+      name="Insert path in command line"
+      tip-file="InsertPathShortcut.html"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+      />
+    -->
+  </group>
+  <group id="ant" name="Ant support features">
+    <feature
+      id="ant.quickfix.CreateProperty"
+      name="Create property tag"
+      tip-file="CreatePropertyTag.html"
+      first-show="6"
+      successive-show="10"
+      min-usage-count="1"/>
+    <feature
+      id="ant.quickfix.CreateTarget"
+      name="Create target tag"
+      tip-file="CreateTargetTag.html"
+      first-show="6"
+      successive-show="10"
+      min-usage-count="1"/>
+  </group> 
+</component>

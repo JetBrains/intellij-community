@@ -1,0 +1,120 @@
+package com.intellij.cvsSupport2.cvshandlers;
+
+import com.intellij.cvsSupport2.actions.update.UpdateSettings;
+import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsoperations.common.FindAllRoots;
+import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
+import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
+import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Options;
+import com.intellij.util.containers.HashSet;
+import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
+/**
+ * author: lesya
+ */
+public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity {
+  private final FilePath[] myFiles;
+  private final Collection<VirtualFile> myRoots = new ArrayList<VirtualFile>();
+  private final Collection<File> myNotProcessedRepositories = new HashSet<File>();
+  private double myDirectoriesToBeProcessedCount;
+
+  private final static CvsMessagePattern UPDATE_PATTERN = new CvsMessagePattern(new String[]{"cvs server: Updating ", "*"}, 2);
+  private final Project myProject;
+  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
+  private final UpdatedFiles myUpdatedFiles;
+
+  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, UpdatedFiles updatedFiles) {
+    super("Update", new UpdateOperation(new FilePath[0], updateSettings, project),
+          FileSetToBeUpdated.selectedFiles(files));
+    myFiles = files;
+    myProject = project;
+    myUpdatedFiles = updatedFiles;
+  }
+
+  public void beforeLogin() {
+    try {
+      super.beforeLogin();
+      FindAllRoots findAllRoots = new FindAllRoots(myProject);
+      myRoots.addAll(findAllRoots.executeOn(myFiles));
+      myNotProcessedRepositories.addAll(findAllRoots.getDirectoriesToBeUpdated());
+      myDirectoriesToBeProcessedCount = myNotProcessedRepositories.size();
+      ((UpdateOperation)myCvsOperation).addAllFiles(myRoots.toArray(new VirtualFile[myRoots.size()]));
+    }
+    catch (ProcessCanceledException ex) {
+      myIsCanceled = true;
+    }
+
+  }
+
+  public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
+    super.addFileMessage(message, cvsFileSystem);
+    ProgressIndicator progress = getProgress();
+    if (progress == null) return;
+    if (UPDATE_PATTERN.matches(message)) {
+      String relativeFileName = UPDATE_PATTERN.getRelativeFileName(message);
+      myNotProcessedRepositories.remove(cvsFileSystem.getLocalFileSystem().getFile(relativeFileName));
+      int notProcessedSize = myNotProcessedRepositories.size();
+      progress.setFraction(0.5 + (double)(myDirectoriesToBeProcessedCount - notProcessedSize) / (2 * myDirectoriesToBeProcessedCount));
+    }
+  }
+
+  public Collection<VirtualFile> getRoots() {
+    return myRoots;
+  }
+
+  public void registerCorruptedProjectOrModuleFile(MergedWithConflictProjectOrModuleFile mergedWithConflictProjectOrModuleFile) {
+    myCorruptedFiles.add(mergedWithConflictProjectOrModuleFile);
+  }
+
+  protected void onOperationFinished(ModalityContext modalityContext) {
+    if (!myCorruptedFiles.isEmpty()) {
+      int showOptions = CvsConfiguration.getInstance(myProject).SHOW_CORRUPTED_PROJECT_FILES;
+
+      if (showOptions == Options.PERFORM_ACTION_AUTOMATICALLY) {
+        for (Iterator iterator = myCorruptedFiles.iterator(); iterator.hasNext();) {
+          MergedWithConflictProjectOrModuleFile file = (MergedWithConflictProjectOrModuleFile)iterator.next();
+          file.setShouldBeCheckedOut();
+        }
+      }
+      else if (showOptions == Options.SHOW_DIALOG){
+        modalityContext.runInDispatchThread(new Runnable() {
+          public void run() {
+            new CorruptedProjectFilesDialog(myProject, myCorruptedFiles).show();
+          }
+        });
+
+      }
+
+      for (Iterator iterator = myCorruptedFiles.iterator(); iterator.hasNext();) {
+        MergedWithConflictProjectOrModuleFile file = (MergedWithConflictProjectOrModuleFile)iterator.next();
+        if (file.shouldBeCheckedOut()) {
+          addFileToCheckout(file.getOriginal());
+        }
+        else {
+          myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID).add(file.getOriginal().getPath());
+        }
+      }
+
+    }
+
+  }
+
+  protected PostCvsActivity getPostActivityHandler() {
+    return this;
+  }
+}

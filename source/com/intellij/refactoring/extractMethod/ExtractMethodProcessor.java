@@ -1,0 +1,877 @@
+package com.intellij.refactoring.extractMethod;
+
+import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowAnalyzer;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
+import com.intellij.psi.impl.source.jsp.JspFileImpl;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.text.BlockSupport;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
+import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
+import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.MatchProvider;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.IntArrayList;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class ExtractMethodProcessor implements MatchProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
+
+  private final Project myProject;
+  private final Editor myEditor;
+  private final PsiFile myFile;
+  private final PsiElement[] myElements;
+  private final PsiBlockStatement myEnclosingBlockStatement;
+  private final PsiType myForcedReturnType;
+  private final String myRefactoringName;
+  private final String myInitialMethodName;
+  private final String myHelpId;
+
+  private final PsiManager myManager;
+  private final PsiElementFactory myElementFactory;
+  private final CodeStyleManager myStyleManager;
+
+  private PsiExpression myExpression;
+
+  private PsiElement myCodeFragment; // "code fragment" (code block or expression) containing the code to extract
+  private PsiElement myCodeFragementMember; // parent of myCodeFragment
+
+  private String myMethodName; // name for extracted method
+  private PsiType myReturnType; // return type for extracted method
+  private PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
+  private ParameterTablePanel.VariableData[] myVariableDatas; // parameter data for extracted method
+  private PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
+  private boolean myStatic; // whether to declare extracted method static
+
+  private PsiClass myTargetClass; // class to create the extracted method in
+  private PsiElement myAnchor; // anchor to insert extracted method after it
+
+  private ControlFlow myControlFlow; // control flow of myCodeFragment
+  private int myFlowStart; // offset in control flow corresponding to the start of the code to be extracted
+  private int myFlowEnd; // offset in control flow corresponding to position just after the end of the code to be extracted
+
+  private PsiVariable[] myInputVariables; // input variables
+  private PsiVariable[] myOutputVariables; // output variables
+  private PsiVariable myOutputVariable; // the only output variable
+  private int myExitPoint;
+  private List<PsiStatement> myExitStatements;
+
+  private boolean myHasReturnStatement; // there is a return statement
+  private boolean myHasReturnStatementOutput; // there is a return statement and its type is not void
+  private boolean myHasExpressionOutput; // extracted code is an expression with non-void type
+  private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
+
+  private boolean myShowErrorDialogs = true;
+  private boolean myCanBeStatic;
+  private List<Match> myDuplicates;
+  private DuplicatesFinder myDuplicatesFinder;
+  private String myMethodVisibility = PsiModifier.PRIVATE;
+
+  public ExtractMethodProcessor(Project project, Editor editor, PsiFile file, PsiElement[] elements,
+                                PsiType forcedReturnType, String refactoringName,
+                                String initialMethodName, String helpId) {
+    myProject = project;
+    myEditor = editor;
+    myFile = file;
+    if (elements.length != 1 || (elements.length == 1 && !(elements[0] instanceof PsiBlockStatement))) {
+      myElements = elements;
+      myEnclosingBlockStatement = null;
+    }
+    else {
+      myEnclosingBlockStatement = (PsiBlockStatement)elements[0];
+      PsiElement[] codeBlockChildren = myEnclosingBlockStatement.getCodeBlock().getChildren();
+      myElements = processCodeBlockChildren(codeBlockChildren);
+    }
+    myForcedReturnType = forcedReturnType;
+    myRefactoringName = refactoringName;
+    myInitialMethodName = initialMethodName;
+    myHelpId = helpId;
+
+    myManager = PsiManager.getInstance(myProject);
+    myElementFactory = myManager.getElementFactory();
+    myStyleManager = CodeStyleManager.getInstance(myProject);
+  }
+
+  private static PsiElement[] processCodeBlockChildren(PsiElement[] codeBlockChildren) {
+    int resultStart = 0;
+    int resultLast = codeBlockChildren.length;
+
+    if (codeBlockChildren.length == 0) return PsiElement.EMPTY_ARRAY;
+
+    final PsiElement first = codeBlockChildren[0];
+    if (first instanceof PsiJavaToken && ((PsiJavaToken)first).getTokenType() == JavaTokenType.LBRACE) {
+      resultStart++;
+    }
+    final PsiElement last = codeBlockChildren[codeBlockChildren.length - 1];
+    if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RBRACE) {
+      resultLast--;
+    }
+    final ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+    for (int i = resultStart; i < resultLast; i++) {
+      PsiElement element = codeBlockChildren[i];
+      if (!(element instanceof PsiWhiteSpace)) {
+        result.add(element);
+      }
+    }
+
+    return result.toArray(new PsiElement[result.size()]);
+  }
+
+  /**
+   * Method for test purposes
+   */
+  public void setShowErrorDialogs(boolean showErrorDialogs) {
+    myShowErrorDialogs = showErrorDialogs;
+  }
+
+  /**
+   * Invoked in atomic action
+   */
+  public boolean prepare() throws PrepareFailedException {
+    myExpression = null;
+    if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
+      final PsiExpression expression = (PsiExpression)myElements[0];
+      if (expression.getParent() instanceof PsiExpressionStatement) {
+        myElements[0] = expression.getParent();
+      }
+      else {
+        myExpression = expression;
+      }
+    }
+
+    //TODO temporary for testing JSPX
+    if (myFile instanceof JspFileImpl) {
+      if (myShowErrorDialogs) {
+        RefactoringMessageUtil.showErrorMessage(myRefactoringName,
+                                                myRefactoringName + " refactoring is not supported for JSP", myHelpId,
+                                                myProject);
+      }
+      return false;
+    }
+
+    myCodeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
+    myCodeFragementMember = myCodeFragment.getParent();
+
+    ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(myCodeFragment, new LocalsControlFlowPolicy(myCodeFragment), false);
+    try {
+      myControlFlow = analyzer.buildControlFlow();
+    }
+    catch (ControlFlowAnalyzer.AnalysisCanceledException e) {
+      throw new PrepareFailedException("Code contains syntax errors." +
+                                       "Cannot perform neccessary analysis.",
+                                       e.getErrorElement());
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(myControlFlow.toString());
+    }
+
+    calculateFlowStartAndEnd();
+
+    IntArrayList exitPoints = new IntArrayList();
+    myExitStatements = new ArrayList<PsiStatement>();
+
+    ControlFlowUtil.findExitPointsAndStatements
+      (myControlFlow, myFlowStart, myFlowEnd, exitPoints, myExitStatements,
+       ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("exit points:");
+      for (int i = 0; i < exitPoints.size(); i++) {
+        LOG.debug("  " + exitPoints.get(i));
+      }
+      LOG.debug("exit statements:");
+      for (int i = 0; i < myExitStatements.size(); i++) {
+        LOG.debug("  " + myExitStatements.get(i));
+      }
+    }
+    if (exitPoints.size() == 0) {
+      // if the fragment never exits assume as if it exits in the end
+      exitPoints.add(myControlFlow.getEndOffset(myElements[myElements.length - 1]));
+    }
+    if (exitPoints.size() != 1) {
+      showMultipleExitPointsMessage();
+      return false;
+    }
+    myExitPoint = exitPoints.get(0);
+
+    myHasReturnStatement = myExpression == null &&
+                           ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
+    /*myHasReturnStatement = false;
+    for (int i = 0; i < myExitStatements.size(); i++) {
+      PsiStatement statement = (PsiStatement) myExitStatements.get(i);
+      if (statement instanceof PsiReturnStatement) {
+        myHasReturnStatement = true;
+        break;
+      }
+    }*/
+
+    myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
+    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoint);
+
+    chooseTargetClass();
+
+    PsiType expressionType = null;
+    if (myExpression != null) {
+//        expressionType = myExpresssion.getType();
+      if (myForcedReturnType != null) {
+        expressionType = myForcedReturnType;
+      }
+      else {
+        expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
+      }
+    }
+    if (expressionType == null) {
+      expressionType = PsiType.VOID;
+    }
+    myHasExpressionOutput = expressionType != PsiType.VOID;
+
+    PsiType returnStatementType = null;
+    if (myHasReturnStatement) {
+      returnStatementType = myCodeFragementMember instanceof PsiMethod
+                            ? ((PsiMethod)myCodeFragementMember).getReturnType()
+                            : null;
+    }
+    myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
+
+    if (!myHasReturnStatementOutput) {
+      int outputCount = (myHasExpressionOutput ? 1 : 0) + myOutputVariables.length;
+      if (outputCount > 1) {
+        showMultipleOutputMessage(expressionType);
+        return false;
+      }
+    }
+
+    myOutputVariable = myOutputVariables.length > 0 ? myOutputVariables[0] : null;
+    if (myHasReturnStatementOutput) {
+      myReturnType = returnStatementType;
+    }
+    else if (myOutputVariable != null) {
+      myReturnType = myOutputVariable.getTypeElement().getType();
+    }
+    else {
+      myReturnType = expressionType;
+    }
+
+    PsiElement container = PsiTreeUtil.getParentOfType(myElements[0], new Class[]{PsiClass.class, PsiMethod.class});
+    if (container instanceof PsiMethod) {
+      myTypeParameterList = ((PsiMethod)container).getTypeParameterList();
+    }
+    myThrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
+    myStatic = shouldBeStatic();
+
+    if (myTargetClass.getContainingClass() == null ||
+        myTargetClass.hasModifierProperty(PsiModifier.STATIC)) {
+      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass);
+      for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
+        PsiElement element = myElements[i];
+        element.accept(needsThis);
+      }
+      myCanBeStatic = !needsThis.usesMembers();
+    }
+    else {
+      myCanBeStatic = false;
+    }
+
+    if (myExpression != null) {
+      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>(), false);
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    }
+    else {
+      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables), false);
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    }
+
+    return true;
+  }
+
+  private boolean shouldBeStatic() {
+    PsiElement codeFragementMember = myCodeFragementMember;
+    while (codeFragementMember != null && PsiTreeUtil.isAncestor(myTargetClass, codeFragementMember, true)) {
+      if (((PsiModifierListOwner)codeFragementMember).hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
+      }
+      codeFragementMember = PsiTreeUtil.getParentOfType(codeFragementMember, PsiModifierListOwner.class, true);
+    }
+    return false;
+  }
+
+  public boolean showDialog() {
+    ExtractMethodDialog dialog = new ExtractMethodDialog(myProject,
+                                                         myTargetClass,
+                                                         myInputVariables,
+                                                         myReturnType,
+                                                         myTypeParameterList,
+                                                         myThrownExceptions,
+                                                         myStatic,
+                                                         myCanBeStatic, myInitialMethodName,
+                                                         myRefactoringName,
+                                                         myHelpId);
+    dialog.show();
+    if (!dialog.isOK()) return false;
+    myMethodName = dialog.getChoosenMethodName();
+    myVariableDatas = dialog.getChoosenParameters();
+    myStatic = myStatic || dialog.isMakeStatic();
+    myMethodVisibility = dialog.getVisibility();
+    return true;
+  }
+
+  public void testRun() throws IncorrectOperationException {
+    ExtractMethodDialog dialog = new ExtractMethodDialog(myProject,
+                                                         myTargetClass,
+                                                         myInputVariables,
+                                                         myReturnType,
+                                                         myTypeParameterList, myThrownExceptions,
+                                                         myStatic,
+                                                         myCanBeStatic, myInitialMethodName,
+                                                         myRefactoringName,
+                                                         myHelpId);
+    myMethodName = dialog.getChoosenMethodName();
+    myVariableDatas = dialog.getChoosenParameters();
+    doRefactoring();
+  }
+
+  /**
+   * Invoked in command and in atomic action
+   */
+  public void doRefactoring() throws IncorrectOperationException {
+    chooseAnchor();
+
+    int col = myEditor.getCaretModel().getLogicalPosition().column;
+    int line = myEditor.getCaretModel().getLogicalPosition().line;
+    LogicalPosition pos = new LogicalPosition(0, 0);
+    myEditor.getCaretModel().moveToLogicalPosition(pos);
+
+    PsiMethodCallExpression methodCall = doExtract();
+
+    LogicalPosition pos1 = new LogicalPosition(line, col);
+    myEditor.getCaretModel().moveToLogicalPosition(pos1);
+    int offset = methodCall.getMethodExpression().getTextRange().getStartOffset();
+    myEditor.getCaretModel().moveToOffset(offset);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    myEditor.getSelectionModel().removeSelection();
+    myEditor.getSelectionModel().removeSelection();
+  }
+
+  private PsiMethodCallExpression doExtract() throws IncorrectOperationException {
+    renameInputVariables();
+
+    PsiMethod newMethod = generateEmptyMethod(myThrownExceptions, myStatic);
+
+    LOG.assertTrue(myElements[0].isValid());
+
+    PsiCodeBlock body = newMethod.getBody();
+    PsiMethodCallExpression methodCall = generateMethodCall(null);
+
+    LOG.assertTrue(myElements[0].isValid());
+
+    if (myExpression == null) {
+      String outVariableName = myOutputVariable != null ? getNewVariableName(myOutputVariable) : null;
+      PsiReturnStatement returnStatement;
+      if (myOutputVariable != null) {
+        returnStatement =
+        (PsiReturnStatement)myElementFactory.createStatementFromText("return " + outVariableName + ";", null);
+      }
+      else {
+        returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return;", null);
+      }
+
+      boolean hasNormalExit = false;
+      PsiElement lastElement = myElements[myElements.length - 1];
+      if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
+            lastElement instanceof PsiContinueStatement)) {
+        hasNormalExit = true;
+      }
+
+      PsiStatement exitStatementCopy = null;
+      // replace all exit-statements such as break's or continue's with appropriate return
+      for (int i = 0; i < myExitStatements.size(); i++) {
+        PsiStatement exitStatement = myExitStatements.get(i);
+        if (exitStatement instanceof PsiReturnStatement) {
+          continue;
+        }
+        else if (exitStatement instanceof PsiBreakStatement) {
+          PsiStatement statement = ((PsiBreakStatement)exitStatement).findExitedStatement();
+          if (statement == null) continue;
+          int startOffset = myControlFlow.getStartOffset(statement);
+          int endOffset = myControlFlow.getEndOffset(statement);
+          if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
+        }
+        else if (exitStatement instanceof PsiContinueStatement) {
+          PsiStatement statement = ((PsiContinueStatement)exitStatement).findContinuedStatement();
+          if (statement == null) continue;
+          int startOffset = myControlFlow.getStartOffset(statement);
+          int endOffset = myControlFlow.getEndOffset(statement);
+          if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
+        }
+        else {
+          LOG.assertTrue(false, exitStatement.toString());
+          continue;
+        }
+
+        int index = -1;
+        for (int j = 0; j < myElements.length; j++) {
+          if (exitStatement.equals(myElements[j])) {
+            index = j;
+            break;
+          }
+        }
+        if (exitStatementCopy == null) {
+          exitStatementCopy = (PsiStatement)exitStatement.copy();
+        }
+        PsiElement result = exitStatement.replace(returnStatement);
+        if (index >= 0) {
+          myElements[index] = result;
+        }
+      }
+
+      declareNecessaryVariablesInsideBody(myFlowStart, myFlowEnd, body);
+
+      if (myNeedChangeContext) {
+        for (int i = 0; i < myElements.length; i++) {
+          ChangeContextUtil.encodeContextInfo(myElements[i], false);
+        }
+      }
+
+      body.addRange(myElements[0], myElements[myElements.length - 1]);
+      if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
+        body.add(returnStatement);
+      }
+
+      if (myOutputVariable != null) {
+        String name = myOutputVariable.getName();
+        boolean toDeclare = isDeclaredInside(myOutputVariable);
+        if (!toDeclare) {
+          PsiExpressionStatement statement = (PsiExpressionStatement)myElementFactory.createStatementFromText(
+            name + "=x;", null);
+          statement = (PsiExpressionStatement)myStyleManager.reformat(statement);
+          statement = (PsiExpressionStatement)addToMethodCallLocation(statement);
+          PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
+          methodCall = (PsiMethodCallExpression)assignment.getRExpression().replace(methodCall);
+        }
+        else {
+          PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name,
+                                                                                                  myOutputVariable.getType(),
+                                                                                                  methodCall);
+          statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+          PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
+          methodCall = (PsiMethodCallExpression)var.getInitializer();
+          var.getModifierList().replace(myOutputVariable.getModifierList());
+        }
+      }
+      else if (myHasReturnStatementOutput) {
+        PsiStatement statement = myElementFactory.createStatementFromText("return x;", null);
+        statement = (PsiStatement)addToMethodCallLocation(statement);
+        methodCall = (PsiMethodCallExpression)((PsiReturnStatement)statement).getReturnValue().replace(methodCall);
+      }
+      else {
+        PsiStatement statement = myElementFactory.createStatementFromText("x();", null);
+        statement = (PsiStatement)addToMethodCallLocation(statement);
+        methodCall =
+        (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(methodCall);
+      }
+      if (myHasReturnStatement && !myHasReturnStatementOutput && !hasNormalExit) {
+        PsiStatement statement = myElementFactory.createStatementFromText("return;", null);
+        addToMethodCallLocation(statement);
+      }
+      else if (exitStatementCopy != null) {
+        addToMethodCallLocation(exitStatementCopy);
+      }
+
+      declareNecessaryVariablesAfterCall(myFlowEnd, myOutputVariable);
+
+      deleteExtracted();
+    }
+    else {
+      if (myHasExpressionOutput) {
+        PsiReturnStatement returnStatement =
+          (PsiReturnStatement)myElementFactory.createStatementFromText("return x;", null);
+        final PsiExpression returnValue;
+        returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
+        returnStatement.getReturnValue().replace(returnValue);
+        body.add(returnStatement);
+      }
+      else {
+        PsiExpressionStatement statement = (PsiExpressionStatement)myElementFactory.createStatementFromText("x;", null);
+        statement.getExpression().replace(myExpression);
+        body.add(statement);
+      }
+      methodCall = (PsiMethodCallExpression)myExpression.replace(methodCall);
+    }
+
+    if (myAnchor instanceof PsiField) {
+      ((PsiField)myAnchor).normalizeDeclaration();
+    }
+    newMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
+    if (myNeedChangeContext) {
+      ChangeContextUtil.decodeContextInfo(newMethod, myTargetClass,
+                                          RefactoringUtil.createThisExpression(myManager, null));
+    }
+
+    return methodCall;
+  }
+
+  public List<Match> getDuplicates() {
+    return myDuplicates;
+  }
+
+  public void processMatch(Match match) throws IncorrectOperationException {
+    final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression());
+    final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+
+    ArrayList<ParameterTablePanel.VariableData> datas = new ArrayList<ParameterTablePanel.VariableData>();
+    for (int i = 0; i < myVariableDatas.length; i++) {
+      final ParameterTablePanel.VariableData variableData = myVariableDatas[i];
+      if (variableData.passAsParameter) {
+        datas.add(variableData);
+      }
+    }
+    LOG.assertTrue(expressions.length == datas.size());
+    for (int i = 0; i < datas.size(); i++) {
+      ParameterTablePanel.VariableData data = datas.get(i);
+      final PsiElement parameterValue = match.getParameterValue(data.variable);
+      expressions[i].replace(parameterValue);
+    }
+    match.replace(methodCallExpression, myOutputVariable);
+  }
+
+  private void deleteExtracted() throws IncorrectOperationException {
+    if (myEnclosingBlockStatement == null) {
+      for (int i = 0; i < myElements.length; i++) {
+        myElements[i].delete();
+      }
+    }
+    else {
+      myEnclosingBlockStatement.delete();
+    }
+  }
+
+  private PsiElement addToMethodCallLocation(PsiElement statement) throws IncorrectOperationException {
+    if (myEnclosingBlockStatement == null) {
+      return myElements[0].getParent().addBefore(statement, myElements[0]);
+    }
+    else {
+      return myEnclosingBlockStatement.getParent().addBefore(statement, myEnclosingBlockStatement);
+    }
+  }
+
+
+  private void calculateFlowStartAndEnd() {
+    int index = 0;
+    myFlowStart = -1;
+    while (index < myElements.length) {
+      myFlowStart = myControlFlow.getStartOffset(myElements[index]);
+      if (myFlowStart >= 0) break;
+      index++;
+    }
+    if (myFlowStart < 0) {
+      // no executable code
+      myFlowStart = 0;
+      myFlowEnd = 0;
+    }
+    else {
+      index = myElements.length - 1;
+      while (true) {
+        myFlowEnd = myControlFlow.getEndOffset(myElements[index]);
+        if (myFlowEnd >= 0) break;
+        index--;
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("start offset:" + myFlowStart);
+      LOG.debug("end offset:" + myFlowEnd);
+    }
+  }
+
+  private void renameInputVariables() throws IncorrectOperationException {
+    for (int i = 0; i < myVariableDatas.length; i++) {
+      ParameterTablePanel.VariableData data = myVariableDatas[i];
+      PsiVariable variable = data.variable;
+      if (!data.name.equals(variable.getName())) {
+        for (int j = 0; j < myElements.length; j++) {
+          PsiElement element = myElements[j];
+          RefactoringUtil.renameVariableReferences(variable, data.name, new LocalSearchScope(element));
+        }
+      }
+    }
+  }
+
+  public PsiClass getTargetClass() {
+    return myTargetClass;
+  }
+
+  private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
+
+    PsiMethod newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
+    newMethod.getModifierList().setModifierProperty(myMethodVisibility, true);
+    newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+    if (myTypeParameterList != null) {
+      newMethod.getTypeParameterList().replace(myTypeParameterList);
+    }
+    PsiCodeBlock body = newMethod.getBody();
+
+    PsiParameterList list = newMethod.getParameterList();
+    for (int i = 0; i < myVariableDatas.length; i++) {
+      ParameterTablePanel.VariableData data = myVariableDatas[i];
+      boolean isFinal = data.variable.hasModifierProperty(PsiModifier.FINAL);
+      if (data.passAsParameter) {
+        PsiParameter parm = myElementFactory.createParameter(data.name, data.variable.getType());
+        if (isFinal) {
+          parm.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        }
+        list.add(parm);
+      }
+      else {
+        StringBuffer buffer = new StringBuffer();
+        if (isFinal) {
+          buffer.append("final ");
+        }
+        buffer.append("int ");
+        buffer.append(data.name);
+        buffer.append("=x;");
+        String text = buffer.toString();
+
+        PsiDeclarationStatement declaration = (PsiDeclarationStatement)myElementFactory.createStatementFromText(text,
+                                                                                                                null);
+        declaration = (PsiDeclarationStatement)myStyleManager.reformat(declaration);
+        ((PsiVariable)declaration.getDeclaredElements()[0]).getTypeElement().replace(data.variable.getTypeElement());
+        declaration = (PsiDeclarationStatement)body.add(declaration);
+
+        PsiExpression initializer = ((PsiVariable)declaration.getDeclaredElements()[0]).getInitializer();
+        TextRange range = initializer.getTextRange();
+        BlockSupport blockSupport = myProject.getComponent(BlockSupport.class);
+        blockSupport.reparseRange(body.getContainingFile(), range.getStartOffset(), range.getEndOffset(), "...");
+      }
+    }
+
+    PsiReferenceList throwsList = newMethod.getThrowsList();
+    for (int i = 0; i < exceptions.length; i++) {
+      PsiClassType exception = exceptions[i];
+      throwsList.add(myManager.getElementFactory().createReferenceElementByType(exception));
+    }
+
+    return (PsiMethod)myStyleManager.reformat(newMethod);
+  }
+
+  private PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
+    StringBuffer buffer = new StringBuffer();
+
+    final boolean skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
+    if (skipInstanceQualifier) {
+      if (myNeedChangeContext) {
+        boolean needsThisQualifier = false;
+        PsiElement parent = myCodeFragementMember;
+        while (!myTargetClass.equals(parent)) {
+          if (parent instanceof PsiMethod) {
+            String methodName = ((PsiMethod)parent).getName();
+            if (methodName.equals(myMethodName)) {
+              needsThisQualifier = true;
+              break;
+            }
+          }
+          parent = parent.getParent();
+        }
+        if (needsThisQualifier) {
+          buffer.append(myTargetClass.getName());
+          buffer.append(".this.");
+        }
+      }
+    }
+    else {
+      buffer.append("qqq.");
+    }
+
+    buffer.append(myMethodName);
+    buffer.append("(");
+    int count = 0;
+    for (int i = 0; i < myVariableDatas.length; i++) {
+      ParameterTablePanel.VariableData data = myVariableDatas[i];
+      if (data.passAsParameter) {
+        if (count > 0) {
+          buffer.append(",");
+        }
+        buffer.append(data.variable.getName());
+        count++;
+      }
+    }
+    buffer.append(")");
+    String text = buffer.toString();
+
+    PsiMethodCallExpression expr = (PsiMethodCallExpression)myElementFactory.createExpressionFromText(text, null);
+    expr = (PsiMethodCallExpression)myStyleManager.reformat(expr);
+    if (!skipInstanceQualifier) {
+      expr.getMethodExpression().getQualifierExpression().replace(instanceQualifier);
+    }
+    return expr;
+  }
+
+  private void declareNecessaryVariablesInsideBody(int start, int end, PsiCodeBlock body) throws IncorrectOperationException {
+    PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
+    for (int i = 0; i < usedVariables.length; i++) {
+      PsiVariable variable = usedVariables[i];
+      boolean toDeclare = !isDeclaredInside(variable) && !contains(myInputVariables, variable);
+      if (toDeclare) {
+        String name = variable.getName();
+        PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name,
+                                                                                                variable.getType(),
+                                                                                                null);
+        body.add(statement);
+      }
+    }
+  }
+
+  private void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
+    PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
+    for (int i = 0; i < usedVariables.length; i++) {
+      PsiVariable variable = usedVariables[i];
+      boolean toDeclare = isDeclaredInside(variable) && !variable.equals(outputVariable);
+      if (toDeclare) {
+        String name = variable.getName();
+        PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name,
+                                                                                                variable.getType(),
+                                                                                                null);
+        addToMethodCallLocation(statement);
+      }
+    }
+  }
+
+  private boolean isDeclaredInside(PsiVariable variable) {
+    int startOffset = myElements[0].getTextRange().getStartOffset();
+    int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
+    int offset = variable.getNameIdentifier().getTextRange().getStartOffset();
+    return startOffset <= offset && offset <= endOffset;
+  }
+
+  private String getNewVariableName(PsiVariable variable) {
+    for (int i = 0; i < myVariableDatas.length; i++) {
+      ParameterTablePanel.VariableData data = myVariableDatas[i];
+      if (data.variable.equals(variable)) {
+        return data.name;
+      }
+    }
+    return variable.getName();
+  }
+
+  private static boolean contains(Object[] array, Object object) {
+    for (int i = 0; i < array.length; i++) {
+      if (Comparing.equal(array[i], object)) return true;
+    }
+    return false;
+  }
+
+  private void chooseTargetClass() {
+    myNeedChangeContext = false;
+    myTargetClass = (PsiClass)myCodeFragementMember.getParent();
+    if (myTargetClass instanceof PsiAnonymousClass) {
+      PsiElement target = myTargetClass.getParent();
+      PsiElement targetMember = myTargetClass;
+      while (true) {
+        if (target instanceof PsiFile) break;
+        if (target instanceof PsiClass && !(target instanceof PsiAnonymousClass)) break;
+        targetMember = target;
+        target = target.getParent();
+      }
+      if (target instanceof PsiClass) {
+        PsiClass newTargetClass = (PsiClass)target;
+        List<PsiVariable> array = new ArrayList<PsiVariable>();
+        boolean success = true;
+        for (int i = 0; i < myElements.length; i++) {
+          if (!ControlFlowUtil.collectOuterLocals(array, myElements[i], myCodeFragementMember, targetMember)) {
+            success = false;
+            break;
+          }
+        }
+        if (success) {
+          myTargetClass = newTargetClass;
+          PsiVariable[] newInputVariables = new PsiVariable[myInputVariables.length + array.size()];
+          System.arraycopy(myInputVariables, 0, newInputVariables, 0, myInputVariables.length);
+          for (int i = 0; i < array.size(); i++) {
+            newInputVariables[myInputVariables.length + i] = array.get(i);
+          }
+          myInputVariables = newInputVariables;
+          myNeedChangeContext = true;
+        }
+      }
+    }
+  }
+
+  private void chooseAnchor() {
+    myAnchor = myCodeFragementMember;
+    while (!myAnchor.getParent().equals(myTargetClass)) {
+      myAnchor = myAnchor.getParent();
+    }
+  }
+
+  private void showMultipleExitPointsMessage() {
+    if (myShowErrorDialogs) {
+      HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+      PsiStatement[] exitStatementsArray = myExitStatements.toArray(new PsiStatement[myExitStatements.size()]);
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
+      String message =
+        "Cannot perform the refactoring.\n" +
+        "There are multiple exit points in the selected code fragment.";
+      RefactoringMessageUtil.showErrorMessage(myRefactoringName, message, myHelpId, myProject);
+      WindowManager.getInstance().getStatusBar(myProject).setInfo("Press Escape to remove the highlighting");
+    }
+  }
+
+  private void showMultipleOutputMessage(PsiType expressionType) {
+    if (myShowErrorDialogs) {
+      StringBuffer buffer = new StringBuffer();
+      buffer.append("Cannot perform the refactoring.\n");
+      buffer.append("There are multiple output values for the selected code fragment:\n");
+      if (myHasExpressionOutput) {
+        buffer.append("    expression result : ");
+        buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
+        buffer.append(",\n");
+      }
+      for (int i = 0; i < myOutputVariables.length; i++) {
+        PsiVariable var = myOutputVariables[i];
+        buffer.append("    ");
+        buffer.append(var.getName());
+        buffer.append(" : ");
+        buffer.append(PsiFormatUtil.formatType(var.getType(), 0, PsiSubstitutor.EMPTY));
+        if (i < myOutputVariables.length - 1) {
+          buffer.append(",\n");
+        }
+        else {
+          buffer.append(".");
+        }
+      }
+      RefactoringMessageUtil.showErrorMessage(myRefactoringName, buffer.toString(), myHelpId, myProject);
+    }
+  }
+
+  public boolean hasDuplicates() {
+    final List<Match> duplicates = getDuplicates();
+    final boolean hasDuplicates = duplicates != null && !duplicates.isEmpty();
+    return hasDuplicates;
+  }
+}

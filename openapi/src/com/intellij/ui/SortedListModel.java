@@ -1,0 +1,140 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.ui;
+
+import com.intellij.util.containers.ContainerUtil;
+
+import javax.swing.*;
+import java.util.*;
+
+public class SortedListModel<T> extends AbstractListModel {
+  private List<T> myItems = new ArrayList<T>();
+  private Comparator<T> myComparator;
+
+  public SortedListModel(Comparator<T> comparator) {
+    myComparator = comparator;
+  }
+
+  public static <T> SortedListModel<T> create(Comparator<T> comparator) {
+    return new SortedListModel<T>(comparator);
+  }
+
+  public int add(T item) {
+    int index;
+    if (myComparator != null)
+      index = Collections.binarySearch(myItems, item, myComparator);
+    else
+      index = myItems.size();
+    index = index >= 0 ? index : -(index + 1);
+    add(index, item);
+    return index;
+  }
+
+  public int[] addAll(Object[] items) {
+    int[] indices = new int[items.length];
+    for (int i = 0; i < items.length; i++) {
+      T item = (T)items[i];
+      int newIndex = add(item);
+      for (int j = 0; j < i ; j++)
+        if (indices[j] >= newIndex) indices[j]++;
+      indices[i] = newIndex;
+    }
+    return indices;
+  }
+
+  public int[] addAll(Iterator<T> iterator) {
+    return addAll(ContainerUtil.collect(iterator));
+  }
+
+  public int[] addAll(Collection<T> items) {
+    return addAll(items.toArray(new Object[items.size()]));
+  }
+
+  public void remove(int index) {
+    myItems.remove(index);
+    fireRemoved(index);
+  }
+
+  private void fireRemoved(int index) {
+    fireIntervalRemoved(this, index, index);
+  }
+
+  public void remove(T item) {
+    int index = indexOf(item);
+    if (index >= 0) remove(index);
+  }
+
+  public int indexOf(T item) {
+    int index = Collections.binarySearch(myItems, item, myComparator);
+    return index >= 0 ? index : -1;
+  }
+
+  private void add(int index, T item) {
+    myItems.add(index, item);
+    fireIntervalAdded(this, index, index);
+  }
+
+  public int getSize() {
+    return myItems.size();
+  }
+
+  public Object getElementAt(int index) {
+    return myItems.get(index);
+  }
+
+  public void setAll(Collection<T> items) {
+    clear();
+    myItems.addAll(items);
+    if (myComparator != null) Collections.sort(myItems, myComparator);
+    int newSize = getSize();
+    if (newSize > 0) fireIntervalAdded(this, 0, newSize - 1);
+  }
+
+  public void clear() {
+    int oldSize = getSize();
+    myItems = new ArrayList<T>();
+    if (oldSize > 0) fireIntervalRemoved(this, 0, oldSize - 1);
+  }
+
+  public List<T> getItems() {
+    return myItems;
+  }
+
+  public T get(int index) {
+    return myItems.get(index);
+  }
+
+  public void setAll(T[] items) {
+    setAll(Arrays.asList(items));
+  }
+
+  public Iterator<T> iterator() {
+    return new MyIterator();
+  }
+
+  private class MyIterator implements Iterator<T> {
+    private final Iterator<T> myIterator;
+    private int myCounter = -1;
+
+    public MyIterator() {
+      myIterator = myItems.iterator();
+    }
+
+    public boolean hasNext() {
+      return myIterator.hasNext();
+    }
+
+    public T next() {
+      myCounter++;
+      return myIterator.next();
+    }
+
+    public void remove() {
+      myIterator.remove();
+      fireRemoved(myCounter);
+      myCounter--;
+    }
+  }
+}

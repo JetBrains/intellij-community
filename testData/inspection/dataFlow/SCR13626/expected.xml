@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <description>Condition '!a &amp;&amp; b' always false</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <description>Condition '!a' always false</description>
+  </problem>
+</problems>
+

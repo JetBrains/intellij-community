@@ -1,0 +1,105 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.usageView;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+
+public class UsageInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
+  private SmartPsiElementPointer mySmartPointer;
+  public final int startOffset; // in navigation element
+  public final int endOffset; // in navigation element
+
+  public final boolean isNonCodeUsage;
+
+  public UsageInfo(PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
+    LOG.assertTrue(element.isValid());
+    LOG.assertTrue(element == element.getNavigationElement());
+    mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    this.startOffset = startOffset;
+    this.endOffset = endOffset;
+    this.isNonCodeUsage = isNonCodeUsage;
+  }
+
+  public UsageInfo(PsiElement element, boolean isNonCodeUsage) {
+    LOG.assertTrue(element.isValid());
+    element = element.getNavigationElement();
+    mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+
+    TextRange range = element.getTextRange();
+    this.startOffset = element.getTextOffset() - range.getStartOffset();
+    this.endOffset = range.getEndOffset() - range.getStartOffset();
+
+    this.isNonCodeUsage = isNonCodeUsage;
+  }
+
+  public UsageInfo(PsiElement element, int startOffset, int endOffset) {
+    this(element, startOffset, endOffset, false);
+  }
+
+  public UsageInfo(PsiElement element) {
+    this(element, false);
+  }
+
+  public PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
+    return mySmartPointer.getElement();
+  }
+
+  public TextRange getRange() {
+    return new TextRange(startOffset, endOffset);
+  }
+
+  /**
+   * Override this method if you want a tooltip to be displayed for this usage
+   */
+  public String getTooltipText () {
+    return null;
+  }
+
+  public final void navigateTo(boolean requestFocus) {
+    VirtualFile file = getElement().getContainingFile().getVirtualFile();
+    TextRange range = getElement().getTextRange();
+    int offset = range.getStartOffset() + startOffset;
+    Project project = getElement().getProject();
+    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset),
+                                                                                         requestFocus);
+  }
+
+  public final boolean isWritable() {
+    return getElement().isWritable();
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof UsageInfo)) return false;
+
+    final UsageInfo usageInfo = (UsageInfo)o;
+
+    if (endOffset != usageInfo.endOffset) return false;
+    if (isNonCodeUsage != usageInfo.isNonCodeUsage) return false;
+    if (startOffset != usageInfo.startOffset) return false;
+    PsiElement thisElement = mySmartPointer.getElement();
+    PsiElement thatElement = usageInfo.mySmartPointer.getElement();
+    return Comparing.equal(thisElement, thatElement);
+  }
+
+  public int hashCode() {
+    int result;
+    result = (mySmartPointer != null ? mySmartPointer.hashCode() : 0);
+    result = 29 * result + startOffset;
+    result = 29 * result + endOffset;
+    result = 29 * result + (isNonCodeUsage ? 1 : 0);
+    return result;
+  }
+}

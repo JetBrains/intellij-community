@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="output">
+  <template description="Prints a string to System.err" name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="XML" value="false" />
+      <option name="HTML" value="false" />
+      <option name="JSP" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="OTHER" value="false" />
+    </context>
+  </template>
+  <template description="Prints a string to System.out" name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$END$&quot;);">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="XML" value="false" />
+      <option name="HTML" value="false" />
+      <option name="JSP" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="OTHER" value="false" />
+    </context>
+  </template>
+  <template description="Prints current class and method names to System.out" name="soutm" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
+    <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
+    <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="XML" value="false" />
+      <option name="HTML" value="false" />
+      <option name="JSP" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="OTHER" value="false" />
+    </context>
+  </template>
+  <template description="Prints a value to System.out" name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
+    <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
+    <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="XML" value="false" />
+      <option name="HTML" value="false" />
+      <option name="JSP" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="OTHER" value="false" />
+    </context>
+  </template>
+</templateSet>
+

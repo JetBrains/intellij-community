@@ -1,0 +1,920 @@
+package com.intellij.openapi.application.impl;
+
+import com.intellij.Patches;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.RuntimeInterruptedException;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BlockingProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.SmoothProgressAdapter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.convertors.Convertor34;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.List;
+
+public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
+  private ModalityState MODALITY_STATE_NONE;
+
+  private ArrayList<ApplicationListener> myListeners = new ArrayList<ApplicationListener>();
+  private ApplicationListener[] myCachedListeners;
+
+  private boolean myTestModeFlag = false;
+
+  private String myComponentsDescriptor;
+
+  private boolean myIsInternal = false;
+  private static boolean ourSaveSettingsInProgress = false;
+  private static final String APPLICATION_LAYER = "application-components";
+  private String myName;
+
+  private ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
+  private Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
+  private Thread myExceptionalThreadWithReadAccess = null;
+  private int myInEditorPaintCounter = 0;
+  private final boolean myAspectJSupportEnabled = "enabled".equals(System.getProperty("idea.aspectj.support"));
+  private long myStartTime = 0;
+  private boolean myDoNotSave = false;
+  private boolean myIsWaitingForWriteAction = false;
+  private boolean myDispatchThreadAssertionsValid = false;
+
+  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
+    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
+
+    myStartTime = System.currentTimeMillis();
+    myName = appName;
+    ApplicationManagerEx.setApplication(this);
+    myComponentsDescriptor = componentsDescriptor;
+    myIsInternal = isInternal;
+    myTestModeFlag = isUnitTestMode;
+
+    loadApplicationComponents();
+
+    if (SystemInfo.isMac) {
+      registerShutdownHook();
+    }
+  }
+
+  private void registerShutdownHook() {
+    ShutDownTracker.getInstance(); // Necessary to avoid creating an instance while already shutting down.
+
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      public void run() {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+              saveAll();
+              dispose();
+            }
+          });
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+        catch (InvocationTargetException e) {
+          LOG.error(e);
+        }
+      }
+    }));
+  }
+
+  public String getComponentsDescriptor() {
+    return myComponentsDescriptor;
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  private void loadApplicationComponents() {
+    loadComponentsConfiguration(APPLICATION_LAYER);
+
+    if (shouldLoadPlugins()) {
+      final PluginDescriptor[] plugins = PluginManager.getPlugins();
+      for (int i = 0; i < plugins.length; i++) {
+        PluginDescriptor plugin = plugins[i];
+        if (!shouldLoadPlugin(plugin)) continue;
+        final Element appComponents = plugin.getAppComponents();
+        if (appComponents != null) {
+          loadComponentsConfiguration(appComponents, plugin);
+        }
+      }
+    }
+  }
+
+  public boolean isInternal() {
+    return myIsInternal;
+  }
+
+  public boolean isUnitTestMode() {
+    return myTestModeFlag;
+  }
+
+  public boolean isAspectJSupportEnabled() {
+    return myAspectJSupportEnabled || isUnitTestMode();
+  }
+
+  public boolean shouldLoadPlugins() {
+    final String loadPlugins = System.getProperty("idea.load.plugins");
+    return !isUnitTestMode() && (loadPlugins == null || "true".equals(loadPlugins));
+  }
+
+  public boolean shouldLoadPlugin(PluginDescriptor descriptor) {
+    final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
+    return loadPluginCategory == null || loadPluginCategory.equals(descriptor.getCategory());
+  }
+
+  private static Thread ourDispatchThread = null;
+
+  public boolean isDispatchThread() {
+    return isDispatchThread(Thread.currentThread());
+  }
+
+  /**
+   * @fabrique
+   */
+  protected boolean isDispatchThread(Thread currentThread) {
+    if (!myDispatchThreadAssertionsValid) return EventQueue.isDispatchThread();
+
+    if (ourDispatchThread == null && EventQueue.isDispatchThread()) {
+      ourDispatchThread = Thread.currentThread();
+    }
+
+    if (ourDispatchThread == currentThread) return true;
+    
+    if (ourDispatchThread != null && !ourDispatchThread.isAlive()) {
+      ourDispatchThread = null;
+      return isDispatchThread(currentThread);
+    }
+
+    return false;
+  }
+
+  public void setupIdeQueue(EventQueue queue) {
+    Toolkit.getDefaultToolkit().getSystemEventQueue().push(queue);
+    myDispatchThreadAssertionsValid = true;
+  }
+
+  private void save(String path) throws IOException {
+    deleteBackupFiles(path);
+    backupFiles(path);
+
+    Class[] componentClasses = getComponentInterfaces();
+
+    com.intellij.util.containers.HashMap<String,Element> fileNameToRootElementMap = new com.intellij.util.containers.HashMap<String, Element>();
+
+    for (int i = 0; i < componentClasses.length; i++) {
+      Class componentClass = componentClasses[i];
+      Object component = getComponent(componentClass);
+
+      String fileName;
+      if (component instanceof NamedJDOMExternalizable) {
+        fileName = ((NamedJDOMExternalizable)component).getExternalFileName() + ".xml";
+      }
+      else {
+        fileName = PathManager.DEFAULT_OPTIONS_FILE_NAME + ".xml";
+      }
+
+      Element root = getRootElement(fileNameToRootElementMap, fileName);
+      try {
+        Element node = serializeComponent((BaseComponent)component);
+        if (node != null) {
+          root.addContent(node);
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    for (Iterator<String> iterator = fileNameToRootElementMap.keySet().iterator(); iterator.hasNext();) {
+      String fileName = iterator.next();
+      Element root = fileNameToRootElementMap.get(fileName);
+
+      try {
+        JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    deleteBackupFiles(path);
+  }
+
+  private static void backupFiles(String path) throws IOException {
+    String[] list = new File(path).list();
+    for (int i = 0; i < list.length; i++) {
+      String name = list[i];
+      if (name.toLowerCase().endsWith(".xml")) {
+        File file = new File(path + File.separatorChar + name);
+        File newFile = new File(path + File.separatorChar + name + "~");
+        if (!file.renameTo(newFile)) {
+          throw new IOException("Cannot rename file " + file.getPath() + " to " + newFile.getPath());
+        }
+      }
+    }
+  }
+
+  private static Element getRootElement(Map<String,Element> fileNameToRootElementMap, String fileName) {
+    Element root = fileNameToRootElementMap.get(fileName);
+    if (root == null) {
+      root = new Element("application");
+      fileNameToRootElementMap.put(fileName, root);
+    }
+    return root;
+  }
+
+  private static void deleteBackupFiles(String path) throws IOException {
+    String[] list = new File(path).list();
+    for (int i = 0; i < list.length; i++) {
+      String name = list[i];
+      if (StringUtil.endsWithChar(name.toLowerCase(), '~')) {
+        File file = new File(path + File.separatorChar + name);
+        if (!file.delete()) {
+          throw new IOException("Cannot delete file " + file.getPath());
+        }
+      }
+    }
+  }
+
+  public void load(String path) throws IOException, InvalidDataException {
+    try {
+      if (path == null) return;
+      loadConfiguration(path);
+    }
+    finally {
+      initComponents();
+      clearDomMap();
+    }
+  }
+
+  private void loadConfiguration(String path) {
+    clearDomMap();
+
+    File configurationDir = new File(path);
+    if (!configurationDir.exists()) return;
+
+    Set<String> names = new HashSet<String>(Arrays.asList(configurationDir.list()));
+
+    for (Iterator<String> i = names.iterator(); i.hasNext();) {
+      String name = i.next();
+      if (name.endsWith(".xml")) {
+        String backupName = name + "~";
+        if (names.contains(backupName)) i.remove();
+      }
+    }
+
+    for (Iterator<String> i = names.iterator(); i.hasNext();) {
+      String name = i.next();
+      if (!name.endsWith(".xml") && !name.endsWith(".xml~")) continue; // see SCR #12791
+      final String filePath = path + File.separatorChar + name;
+      File file = new File(filePath);
+      if (!file.exists() || !file.isFile()) continue;
+
+      try {
+        loadFile(filePath);
+      }
+      catch (Exception e) {
+        //OK here. Just drop corrupted settings.
+      }
+    }
+  }
+
+  private void loadFile(String filePath) throws JDOMException, InvalidDataException, IOException {
+    Document document = JDOMUtil.loadDocument(new File(filePath));
+    if (document == null) {
+      throw new InvalidDataException();
+    }
+
+    Element root = document.getRootElement();
+    if (root == null || !"application".equals(root.getName())) {
+      throw new InvalidDataException();
+    }
+
+    final List<String> additionalFiles = new ArrayList<String>();
+    synchronized (this) {
+      List children = root.getChildren("component");
+      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+        Element element = (Element)iterator.next();
+
+        String name = element.getAttributeValue("name");
+        if (name == null || name.length() == 0) {
+          String className = element.getAttributeValue("class");
+          if (className == null) {
+            throw new InvalidDataException();
+          }
+          name = className.substring(className.lastIndexOf('.') + 1);
+        }
+
+        convertComponents(root, filePath, additionalFiles);
+
+        addConfiguration(name, element);
+      }
+    }
+
+    for (Iterator<String> iterator = additionalFiles.iterator(); iterator.hasNext();) {
+      String additionalPath = iterator.next();
+      loadFile(additionalPath);
+    }
+  }
+
+  private static void convertComponents(Element root, String filePath, final List<String> additionalFiles) {// Converting components
+    final String additionalFilePath;
+    additionalFilePath = Convertor34.convertLibraryTable34(root, filePath);
+    if (additionalFilePath != null) {
+      additionalFiles.add(additionalFilePath);
+    }
+    // Additional converors here probably, adding new files to load
+    // to aditionalFiles
+  }
+
+  public void dispose() {
+    Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
+    final boolean[] canClose = new boolean[] { true };
+    for (int i = 0; i < openProjects.length; i++) {
+      final Project project = openProjects[i];
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      commandProcessor.executeCommand(project, new Runnable() {
+        public void run() {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          if (!ProjectManagerEx.getInstanceEx().closeProject(project)) {
+            canClose[0] = false;
+          }
+        }
+      }, "Exit", null);
+      if (!canClose[0]) break;
+      ((ProjectEx)project).dispose();
+    }
+
+    if (canClose[0]) {
+      fireApplicationExiting();
+      disposeComponents();
+    }
+  }
+  
+  public boolean runProcessWithProgressSynchronously(final Runnable process,
+                                                     String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     Project project) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, true);
+  }
+  
+  public boolean runProcessWithProgressSynchronously(final Runnable process,
+                                                     String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     Project project, 
+                                                     boolean smoothProgress) {
+    assertIsDispatchThread();
+
+    if (myExceptionalThreadWithReadAccess != null) {
+      process.run();
+      return true;
+    }
+
+    if (Patches.MAC_HIDE_QUIT_HACK) {
+      smoothProgress = false;
+    }
+
+    final ProgressWindow progressWindow = new ProgressWindow(canBeCanceled, project);
+    progressWindow.setTitle(progressTitle);
+    final BlockingProgressIndicator progress = smoothProgress
+                                               ? new SmoothProgressAdapter(progressWindow, project)
+                                               : (BlockingProgressIndicator)progressWindow;
+
+    class MyThread extends Thread{
+      private final Runnable myProcess;
+
+      public MyThread() {
+        super("Process with Progress");
+        myProcess = process;
+      }
+
+      public void run() {
+        if (myExceptionalThreadWithReadAccess != this) {
+          if (myExceptionalThreadWithReadAccess == null){
+            LOG.error("myExceptionalThreadWithReadAccess = null!");
+          }
+          else{
+            LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess).myProcess);
+          }
+        }
+
+        try {
+          ProgressManager.getInstance().runProcess(myProcess, progress);
+        }
+        catch (ProcessCanceledException e) {
+        }
+      }
+    }
+    final MyThread thread = new MyThread();
+    try {
+      myExceptionalThreadWithReadAccess = thread;
+
+      final boolean[] threadStarted = new boolean[] { false };
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myExceptionalThreadWithReadAccess != thread) {
+            if (myExceptionalThreadWithReadAccess == null){
+              LOG.error("myExceptionalThreadWithReadAccess = null!");
+            }
+            else{
+              LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess).myProcess);
+            }
+          }
+
+          thread.start();
+          threadStarted[0] = true;
+        }
+      });
+
+      progress.startBlocking();
+      LOG.assertTrue(threadStarted[0]);
+      LOG.assertTrue(!smoothProgress || !progress.isRunning());
+    }
+    finally {
+      myExceptionalThreadWithReadAccess = null;
+    }
+
+    return !progress.isCanceled();
+  }
+
+  public void invokeLater(Runnable runnable) {
+    LaterInvocatorEx.invokeLater(runnable);
+  }
+
+  public void invokeLater(Runnable runnable, ModalityState state) {
+    LaterInvocatorEx.invokeLater(runnable, state);
+  }
+
+  public void invokeAndWait(Runnable runnable, ModalityState modalityState) {
+    if (isDispatchThread()) {
+      LOG.error("invokeAndWait should not be called from event queue thread");
+      runnable.run();
+      return;
+    }
+
+    Thread currentThread = Thread.currentThread();
+    if (myExceptionalThreadWithReadAccess == currentThread) { //OK if we're in exceptional thread.
+      LaterInvocatorEx.invokeAndWait(runnable, modalityState);
+      return;
+    }
+
+    if (myActionsLock.isReadLockAcquired(currentThread)) {
+      final Throwable stack = new Throwable();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.", stack);
+        }
+      });
+      if (myIsWaitingForWriteAction) return; // The deadlock indeed. Do not perform request or we'll stall here immediately.
+    }
+
+    LaterInvocatorEx.invokeAndWait(runnable, modalityState);
+  }
+
+  public ModalityState getCurrentModalityState() {
+    Object[] entities = LaterInvocatorEx.getCurrentModalEntities();
+    return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
+  }
+
+  public ModalityState getModalityStateForComponent(Component c) {
+    Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
+    if (window == null) return getNoneModalityState(); //?
+    return LaterInvocatorEx.modalityStateForWindow(window);
+  }
+
+  public ModalityState getDefaultModalityState() {
+    if (EventQueue.isDispatchThread()) {
+      return getCurrentModalityState();
+    }
+    else {
+      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      if (progress != null) {
+        return progress.getModalityState();
+      }
+      else {
+        return getNoneModalityState();
+      }
+    }
+  }
+
+  public ModalityState getNoneModalityState() {
+    if (MODALITY_STATE_NONE == null) {
+       MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }
+    return MODALITY_STATE_NONE;
+  }
+
+  public long getStartTime() {
+    return myStartTime;
+  }
+
+  public long getIdleTime() {
+    return IdeEventQueue.getInstance().getIdleTime();
+  }
+
+  public void exit() {
+    if (SystemInfo.isMac) {
+      if (!canExit()) return;
+      new Thread(new Runnable() {
+        public void run() {
+          System.exit(0);
+        }
+      }).start();
+    }
+    else {
+      Runnable runnable = new Runnable() {
+        public void run() {
+          saveAll();
+
+          if (!canExit()) return;
+
+          dispose();
+
+          System.exit(0);
+        }
+      };
+      if (!isDispatchThread()) {
+        invokeLater(runnable, ModalityState.NON_MMODAL);
+      }
+      else {
+        runnable.run();
+      }
+    }
+  }
+
+  private boolean canExit() {
+    ApplicationListener[] listeners = getListeners();
+
+    for (int i = 0; i < listeners.length; i++) {
+      ApplicationListener applicationListener = listeners[i];
+      if (!applicationListener.canExitApplication()) return false;
+    }
+
+    ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
+    Project[] projects = projectManager.getOpenProjects();
+    for (int i = 0; i < projects.length; i++) {
+      Project project = projects[i];
+      if (!projectManager.canClose(project)) return false;
+    }
+
+    return true;
+  }
+
+  public void runReadAction(final Runnable action) {
+    boolean isExceptionalThread = myExceptionalThreadWithReadAccess != null &&
+                                  Thread.currentThread() == myExceptionalThreadWithReadAccess;
+
+    if (!isExceptionalThread) {
+      while (true) {
+        try {
+          myActionsLock.readLock().acquire();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeInterruptedException(e);
+        }
+        break;
+      }
+    }
+
+    try {
+      action.run();
+    }
+    finally {
+      if (!isExceptionalThread) {
+        myActionsLock.readLock().release();
+      }
+    }
+  }
+
+  public <T> T runReadAction(final Computable<T> computation) {
+    final Ref<T> ref = Ref.create(null);
+    runReadAction(new Runnable() {
+      public void run() {
+        ref.set(computation.compute());
+      }
+    });
+    return ref.get();
+  }
+
+  public void runWriteAction(final Runnable action) {
+    assertCanRunWriteAction();
+
+    fireBeforeWriteActionStart(action);
+
+    myIsWaitingForWriteAction = true;
+    try {
+      while (true) {
+        try {
+          myActionsLock.writeLock().acquire();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeInterruptedException(e);
+        }
+        break;
+      }
+    }
+    finally {
+      myIsWaitingForWriteAction = false;
+    }
+
+    fireWriteActionStarted(action);
+
+    try {
+      synchronized (myWriteActionsStack) {
+        myWriteActionsStack.push(action);
+      }
+      action.run();
+    }
+    finally {
+      synchronized (myWriteActionsStack) {
+        myWriteActionsStack.pop();
+      }
+      fireWriteActionFinished(action);
+      myActionsLock.writeLock().release();
+    }
+  }
+
+  public <T> T runWriteAction(final Computable<T> computation) {
+    final Ref<T> ref = Ref.create(null);
+    runWriteAction(new Runnable() {
+      public void run() {
+        ref.set(computation.compute());
+      }
+    });
+    return ref.get();
+  }
+
+  public Object getCurrentWriteAction(Class actionClass) {
+    synchronized (myWriteActionsStack) {
+      for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
+        Object action = myWriteActionsStack.get(i);
+        if (actionClass == null || actionClass.isAssignableFrom(action.getClass())) return action;
+      }
+    }
+    return null;
+  }
+
+  public void assertReadAccessAllowed() {
+    if (!isReadAccessAllowed()) {
+      LOG.error("Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
+                new String[]{"Current thread: "+Thread.currentThread()});
+    }
+  }
+
+  public boolean isReadAccessAllowed() {
+    Thread currentThread = Thread.currentThread();
+    if (ourDispatchThread == currentThread) {
+      //TODO!
+      /*
+      IdeEventQueue eventQueue = IdeEventQueue.getInstance(); //TODO: cache?
+      if (!eventQueue.isInInputEvent() && !LaterInvocatorEx.isInMyRunnable() && !myInEditorPaint) {
+        LOG.error("Read access from event dispatch thread is allowed only inside input event processing or LaterInvocatorEx.invokeLater");
+      }
+      */
+    }
+    else {
+      if (myExceptionalThreadWithReadAccess == currentThread) return true;
+      if (myActionsLock.isReadLockAcquired(currentThread)) return true;
+      if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
+      if (isDispatchThread(currentThread)) return true;
+
+      return false;
+    }
+
+    return true;
+  }
+
+  public void assertReadAccessToDocumentsAllowed() {
+    /* TODO
+    Thread currentThread = Thread.currentThread();
+    if (ourDispatchThread != currentThread) {
+      if (myExceptionalThreadWithReadAccess == currentThread) return;
+      if (myActionsLock.isReadLockAcquired(currentThread)) return;
+      if (myActionsLock.isWriteLockAcquired(currentThread)) return;
+      if (isDispatchThread(currentThread)) return;
+      LOG.error(
+        "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())");
+    }
+    */
+  }
+
+  /**
+   * Overriden in Visual Fabrique
+   */
+  protected void assertCanRunWriteAction() {
+    if (!isDispatchThread()) {
+      LOG.error("Write access is allowed from event dispatch thread only");
+    }
+    /*
+    else{
+      if (!IdeEventQueue.getInstance().isInInputEvent() && !LaterInvocatorEx.isInMyRunnable()) {
+        LOG.error("Write actions are allowed only inside input event processing or LaterInvocatorEx.invokeLater");
+      }
+    }
+    */
+  }
+
+  public void assertIsDispatchThread() {
+    if (myDispatchThreadAssertionsValid && !isDispatchThread() && !EventQueue.isDispatchThread()) { // Last one to be completely sure.
+      LOG.error("Access is allowed from event dispatch thread only. Current thread=" + Thread.currentThread() + ", ourDispatch=" + ourDispatchThread);
+    }
+  }
+
+  public void assertWriteAccessAllowed() {
+    LOG.assertTrue(isWriteAccessAllowed(),
+                   "Write access is allowed inside write-action only (see com.intellij.openapi.application.Application.runWriteAction())");
+  }
+
+  public boolean isWriteAccessAllowed() {
+    return myActionsLock.isWriteLockAcquired(Thread.currentThread());
+  }
+
+  public void editorPaintStart() {
+    myInEditorPaintCounter++;
+  }
+
+  public void editorPaintFinish() {
+    myInEditorPaintCounter--;
+    LOG.assertTrue(myInEditorPaintCounter >= 0);
+  }
+
+  public void addApplicationListener(ApplicationListener l) {
+    synchronized (myListeners) {
+      myListeners.add(l);
+      myCachedListeners = null;
+    }
+  }
+
+  public void removeApplicationListener(ApplicationListener l) {
+    synchronized (myListeners) {
+      myListeners.remove(l);
+      myCachedListeners = null;
+    }
+  }
+
+  private void fireApplicationExiting() {
+    ApplicationListener[] listeners = myListeners.toArray(new ApplicationListener[myListeners.size()]);
+    for (int i = 0; i < listeners.length; i++) {
+      ApplicationListener applicationListener = listeners[i];
+      applicationListener.applicationExiting();
+    }
+  }
+
+  private void fireBeforeWriteActionStart(Object action) {
+    ApplicationListener[] listeners = getListeners();
+
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].beforeWriteActionStart(action);
+    }
+  }
+
+  private void fireWriteActionStarted(Object action) {
+    ApplicationListener[] listeners = getListeners();
+
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].writeActionStarted(action);
+    }
+  }
+
+  private void fireWriteActionFinished(Object action) {
+    ApplicationListener[] listeners = getListeners();
+
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].writeActionFinished(action);
+    }
+  }
+
+  private ApplicationListener[] getListeners() {
+    ApplicationListener[] listeners;
+    synchronized (myListeners) {
+      if (myCachedListeners == null) {
+        myCachedListeners = myListeners.toArray(new ApplicationListener[myListeners.size()]);
+      }
+      listeners = myCachedListeners;
+    }
+
+    return listeners;
+  }
+
+  protected Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException {
+    InputStream stream = getDefaultsInputStream(component);
+
+    if (stream != null) {
+      Document document = null;
+      try {
+        document = JDOMUtil.loadDocument(stream);
+      }
+      finally {
+        stream.close();
+      }
+      if (document == null) {
+        throw new InvalidDataException();
+      }
+      Element root = document.getRootElement();
+      if (root == null || !"component".equals(root.getName())) {
+        throw new InvalidDataException();
+      }
+      return root;
+    }
+    return null;
+  }
+
+  protected ComponentManagerImpl getParentComponentManager() {
+    return null;
+  }
+
+  private static InputStream getDefaultsInputStream(BaseComponent component) {
+    return DecodeDefaultsUtil.getDefaultsInputStream(component);
+  }
+
+  public void saveSettings() {
+    if (myDoNotSave) return;
+
+    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
+
+    try {
+      if (!ourSaveSettingsInProgress) {
+        ourSaveSettingsInProgress = true;
+        final String optionsPath = PathManager.getOptionsPath();
+        File file = new File(optionsPath);
+        if (!file.exists()) {
+          file.mkdirs();
+        }
+
+        try {
+          save(optionsPath);
+        }
+        catch (final Throwable ex) {
+          ex.printStackTrace();
+          invokeLater(new Runnable() {
+            public void run() {
+              Messages.showMessageDialog("Could not save application settings: " + ex.getLocalizedMessage(), "Error", Messages.getErrorIcon());
+            }
+          });
+        }
+        finally {
+          ourSaveSettingsInProgress = false;
+        }
+      }
+
+      saveSettingsSavingComponents();
+    }
+    finally {
+      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+    }
+  }
+
+  public void saveAll() {
+    if (myDoNotSave) return;
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (int i = 0; i < openProjects.length; i++) {
+      ProjectEx project = (ProjectEx)openProjects[i];
+      project.save();
+    }
+
+    saveSettings();
+  }
+
+  public void doNotSave() {
+    myDoNotSave = true;
+  }
+}

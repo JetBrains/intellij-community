@@ -1,0 +1,187 @@
+package com.intellij.packageDependencies.packageSet;
+
+import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.search.scope.packageSet.*;
+
+public class PackageSetFactoryImpl extends PackageSetFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl");
+
+  public PackageSetFactoryImpl() {}
+
+  public PackageSet compile(String text) throws ParsingException {
+    Lexer lexer = new FilterLexer(new JavaLexer(LanguageLevel.JDK_1_3),
+                                  new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(text.toCharArray());
+    return new Parser(lexer).parse();
+  }
+
+  private static class Parser {
+    private Lexer myLexer;
+
+    public Parser(Lexer lexer) {
+      myLexer = lexer;
+    }
+
+    public PackageSet parse() throws ParsingException {
+      PackageSet set = parseUnion();
+      if (myLexer.getTokenType() != null) error("Unexpected '" + getTokenText() + "'");
+      return set;
+    }
+
+    private PackageSet parseUnion() throws ParsingException {
+      PackageSet result = parseIntersection();
+      while (true) {
+        if (myLexer.getTokenType() != TokenType.OROR) break;
+        myLexer.advance();
+        result = new UnionPackageSet(result, parseIntersection());
+      }
+      return result;
+    }
+
+    private PackageSet parseIntersection() throws ParsingException {
+      PackageSet result = parseTerm();
+      while (true) {
+        if (myLexer.getTokenType() != TokenType.ANDAND) break;
+        myLexer.advance();
+        result = new IntersectionPackageSet(result, parseTerm());
+      }
+      return result;
+    }
+
+    private PackageSet parseTerm() throws ParsingException {
+      if (myLexer.getTokenType() == TokenType.EXCL) {
+        myLexer.advance();
+        return new ComplementPackageSet(parseTerm());
+      }
+
+      if (myLexer.getTokenType() == TokenType.LPARENTH) return parseParenthesized();
+      if (myLexer.getTokenType() == TokenType.IDENTIFIER && myLexer.getBuffer()[myLexer.getTokenStart()] == '$') {
+        NamedPackageSetReference namedPackageSetReference = new NamedPackageSetReference(getTokenText());
+        myLexer.advance();
+        return namedPackageSetReference;
+      }
+      return parsePattern();
+    }
+
+    private PackageSet parsePattern() throws ParsingException {
+      String scope = parseScope();
+      String modulePattern = parseModulePattern();
+
+      if (myLexer.getTokenType() == TokenType.COLON) {
+        if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
+          error("(test|lib|src)[modulename] expected before :");
+        }
+        myLexer.advance();
+      }
+
+      String pattern = parseAspectJPattern();
+
+      return new PatternPackageSet(pattern, scope, modulePattern);
+    }
+
+    private String parseScope() {
+      if (myLexer.getTokenType() != TokenType.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
+      String id = getTokenText();
+      String scope = PatternPackageSet.SCOPE_ANY;
+      if (PatternPackageSet.SCOPE_SOURCE.equals(id)) {
+        scope = PatternPackageSet.SCOPE_SOURCE;
+      }
+      if (PatternPackageSet.SCOPE_TEST.equals(id)) {
+        scope = PatternPackageSet.SCOPE_TEST;
+      }
+      if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
+        scope = PatternPackageSet.SCOPE_LIBRARY;
+      }
+
+      char[] buf = myLexer.getBuffer();
+      int end = myLexer.getTokenEnd();
+      int bufferEnd = myLexer.getBufferEnd();
+
+      if (scope == PatternPackageSet.SCOPE_ANY || end >= bufferEnd || buf[end] != ':' && buf[end] != '[') {
+        return PatternPackageSet.SCOPE_ANY;
+      }
+
+      myLexer.advance();
+
+      return scope;
+    }
+
+    private String parseAspectJPattern() throws ParsingException {
+      StringBuffer pattern = new StringBuffer();
+      boolean wasIdentifier = false;
+      while (true) {
+        if (myLexer.getTokenType() == TokenType.DOT) {
+          pattern.append('.');
+          wasIdentifier = false;
+        }
+        else if (myLexer.getTokenType() == TokenType.ASTERISK) {
+          pattern.append('*');
+          wasIdentifier = false;
+        }
+        else if (myLexer.getTokenType() == TokenType.IDENTIFIER) {
+          if (wasIdentifier) error("Unexpected " + getTokenText());
+          wasIdentifier = true;
+          pattern.append(getTokenText());
+        }
+        else {
+          break;
+        }
+        myLexer.advance();
+      }
+
+      if (pattern.length() == 0) {
+        error("Package pattern expected");
+      }
+
+      return pattern.toString();
+    }
+
+    private String getTokenText() {
+      int start = myLexer.getTokenStart();
+      int end = myLexer.getTokenEnd();
+      return new String(myLexer.getBuffer(), start, end - start);
+    }
+
+    private String parseModulePattern() throws ParsingException {
+      if (myLexer.getTokenType() != TokenType.LBRACKET) return null;
+      myLexer.advance();
+      StringBuffer pattern = new StringBuffer();
+      while (true) {
+        if (myLexer.getTokenType() == TokenType.RBRACKET) {
+          myLexer.advance();
+          break;
+        }
+
+        if (myLexer.getTokenType() == TokenType.IDENTIFIER || myLexer.getTokenType() == TokenType.ASTERISK) {
+          pattern.append(getTokenText());
+          myLexer.advance();
+        }
+        else {
+          error("identifier or whildcard expected as module name pattern");
+        }
+      }
+      return pattern.toString();
+    }
+
+    private PackageSet parseParenthesized() throws ParsingException {
+      LOG.assertTrue(myLexer.getTokenType() == TokenType.LPARENTH);
+      myLexer.advance();
+
+      PackageSet result = parseUnion();
+      if (myLexer.getTokenType() != TokenType.RPARENTH) error("')' expected");
+      myLexer.advance();
+
+      return result;
+    }
+
+    private void error(String message) throws ParsingException {
+      throw new ParsingException(message + " at position " + (myLexer.getTokenStart() + 1));
+    }
+  }
+}
