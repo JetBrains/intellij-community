@@ -719,10 +719,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       while (first != last && (first = first.getTreeNext()) != null);
     }
     catch(IncorrectOperationException ioe){}
+    finally{
+      clearCaches();
+    }
     return firstAppended;
   }
 
-  public TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException{
+  private TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException{
     final PsiFile containingFile = getContainingFile();
     final FileType fileType = containingFile.getFileType();
     final PomModel model = getProject().getModel();
@@ -832,6 +835,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     }
     catch (IncorrectOperationException e) {}
+    finally{
+      clearCaches();
+    }
   }
 
   public void replaceChildInternal(ASTNode child, TreeElement newElement) {
@@ -840,6 +846,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       deleteChildInternal(child);
     }
     catch (IncorrectOperationException e) {}
+    finally{
+      clearCaches();
+    }
   }
 
   private ASTNode expandTag() throws IncorrectOperationException{
