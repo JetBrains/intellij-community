@@ -39,30 +39,13 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   private boolean myIsInner;
 
   public ReplaceConstructorWithFactoryProcessor(Project project,
-                                              PsiMethod constructor,
-                                              PsiClass targetClass,
-                                              String factoryName,
-                                              Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
-    myOriginalClass = null;
-    myConstructor = constructor;
-    myFactoryName = factoryName;
-    myTargetClass = targetClass;
-    LOG.assertTrue(myConstructor.isConstructor());
-    myManager = PsiManager.getInstance(project);
-    myFactory = PsiManager.getInstance(project).getElementFactory();
-
-    myIsInner = isInner(myConstructor.getContainingClass());
-  }
-
-  public ReplaceConstructorWithFactoryProcessor(Project project,
-                                              PsiClass aClass,
-                                              PsiClass targetClass,
-                                              String factoryName,
-                                              Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
-    myOriginalClass = aClass;
-    myConstructor = null;
+                                                PsiMethod originalConstructor,
+                                                PsiClass originalClass,
+                                                PsiClass targetClass,
+                                                String factoryName) {
+    super(project);
+    myOriginalClass = originalClass;
+    myConstructor = originalConstructor;
     myTargetClass = targetClass;
     myFactoryName = factoryName;
     myManager = PsiManager.getInstance(project);

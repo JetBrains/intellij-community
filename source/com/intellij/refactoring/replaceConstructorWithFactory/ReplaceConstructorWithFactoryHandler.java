@@ -4,10 +4,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -81,9 +79,7 @@ public class ReplaceConstructorWithFactoryHandler
     if (!aClass.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, aClass)) return;
     }
-    final ReplaceConstructorWithFactoryDialog dialog =
-            new ReplaceConstructorWithFactoryDialog(myProject, aClass, new MyCallbackForClass(aClass));
-    dialog.show();
+    new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
   }
 
   private void showJspOrLocalClassMessage() {
@@ -122,70 +118,6 @@ public class ReplaceConstructorWithFactoryHandler
     if (!method.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, method)) return;
     }
-    final ReplaceConstructorWithFactoryDialog dialog =
-            new ReplaceConstructorWithFactoryDialog(myProject,
-                    method.getContainingClass(), new MyCallbackForMethod(method));
-    dialog.show();
-  }
-
-
-  private class MyCallbackForMethod implements ReplaceConstructorWithFactoryDialog.Callback {
-    private PsiMethod myMethod;
-
-    public MyCallbackForMethod(PsiMethod method) {
-      myMethod = method;
-    }
-
-    public void run(final ReplaceConstructorWithFactoryDialog dialog) {
-      final PsiManager manager = myMethod.getManager();
-      final String targetClassName = dialog.getTargetClassName();
-      final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(myProject));
-      if (targetClass == null) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Class " + targetClassName + " not found.";
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
-        return;
-      }
-      if (!targetClass.isWritable()) {
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, targetClass)) return;
-      }
-
-      new ReplaceConstructorWithFactoryProcessor(myProject, myMethod,
-              targetClass, dialog.getName(), new Runnable() {
-                public void run() {
-                  dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-                }
-              }
-      ).run(null);
-    }
-  }
-
-  private class MyCallbackForClass implements ReplaceConstructorWithFactoryDialog.Callback {
-    private PsiClass myClass;
-
-    public MyCallbackForClass(PsiClass aClass) {
-      myClass = aClass;
-    }
-
-    public void run(final ReplaceConstructorWithFactoryDialog dialog) {
-      final PsiManager manager = myClass.getManager();
-      final String targetClassName = dialog.getTargetClassName();
-      final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(myProject));
-      if (targetClass == null) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Class " + targetClassName + " not found.";
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
-        return;
-      }
-      new ReplaceConstructorWithFactoryProcessor(myProject, myClass,
-              targetClass, dialog.getName(), new Runnable() {
-                public void run() {
-                  dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-                }
-              }
-      ).run(null);
-    }
+    new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }
 }

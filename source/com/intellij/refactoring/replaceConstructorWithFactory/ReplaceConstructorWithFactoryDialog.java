@@ -1,18 +1,16 @@
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,27 +22,19 @@ import java.util.ArrayList;
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
-  private final Callback myCallback;
-
   private NameSuggestionsField myNameField;
   private final TextFieldWithBrowseButton myTfTargetClassName;
   private JComboBox myTargetClassNameCombo;
-  private Project myProject;
   private PsiClass myContainingClass;
+  private final PsiMethod myConstructor;
   private final boolean myIsInner;
 
-  public interface Callback {
-    void run(ReplaceConstructorWithFactoryDialog dialog);
-  }
-
-  ReplaceConstructorWithFactoryDialog(Project project, PsiClass containingClass, Callback callback) {
+  ReplaceConstructorWithFactoryDialog(Project project, PsiMethod constructor, PsiClass containingClass) {
     super(project, true);
-    myProject = project;
-
-    myCallback = callback;
     myContainingClass = containingClass;
+    myConstructor = constructor;
     myIsInner = myContainingClass.getContainingClass() != null
-            && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
+      && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
 
     setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
 
@@ -57,7 +47,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     return myNameField.getName();
   }
 
-  protected boolean hasHelpAction () { return false; }
+  protected boolean hasHelpAction() { return false; }
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
@@ -70,8 +60,9 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   public String getTargetClassName() {
     if (!myIsInner) {
       return myTfTargetClassName.getText();
-    } else {
-      return (String) myTargetClassNameCombo.getSelectedItem();
+    }
+    else {
+      return (String)myTargetClassNameCombo.getSelectedItem();
     }
   }
 
@@ -92,9 +83,9 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final String[] nameSuggestions = new String[]{
       "create" + myContainingClass.getName(),
       "new" + myContainingClass.getName(),
-      "getInstance"
-    };
-    myNameField = new NameSuggestionsField(nameSuggestions, myProject);
+        "getInstance"
+      };
+    myNameField = new NameSuggestionsField(nameSuggestions, getProject());
     myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
@@ -122,11 +113,12 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTfTargetClassName, BorderLayout.CENTER);
       myTfTargetClassName.setText(myContainingClass.getQualifiedName());
-    } else {
+    }
+    else {
       ArrayList<String> list = new ArrayList<String>();
       PsiElement parent = myContainingClass;
       while (parent instanceof PsiClass) {
-        list.add(((PsiClass) parent).getQualifiedName());
+        list.add(((PsiClass)parent).getQualifiedName());
         parent = parent.getParent();
       }
 
@@ -145,7 +137,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createProjectScopeChooser("Choose Destination Class");
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createProjectScopeChooser("Choose Destination Class");
       chooser.selectDirectory(myContainingClass.getContainingFile().getContainingDirectory());
       chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
@@ -161,7 +153,24 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    myCallback.run(this);
+    final Project project = getProject();
+    final PsiManager manager = PsiManager.getInstance(project);
+    final String targetClassName = getTargetClassName();
+    final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(project));
+    if (targetClass == null) {
+      String message =
+        "Cannot perform the refactoring.\n" +
+        "Class " + targetClassName + " not found.";
+      RefactoringMessageUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
+                                              message, null, project);
+      return;
+    }
+    if (!targetClass.isWritable()) {
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, targetClass)) return;
+    }
+
+    invokeRefactoring(new ReplaceConstructorWithFactoryProcessor(project, myConstructor, myContainingClass,
+                                                                 targetClass, getName()));
   }
 
   protected boolean areButtonsValid() {
@@ -169,5 +178,4 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final PsiNameHelper nameHelper = myContainingClass.getManager().getNameHelper();
     return nameHelper.isIdentifier(name);
   }
-
 }
