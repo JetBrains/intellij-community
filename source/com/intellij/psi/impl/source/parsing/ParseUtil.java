@@ -65,36 +65,6 @@ public class ParseUtil implements Constants {
     lexer.start(lexer.getBuffer(), (int)position & 0xFFFFFFFF, lexer.getBufferEnd(), (int)(position >> 32));
   }
 
-  public static int addTokens(CompositeElement parent, Lexer lexer, TokenSet typeBitSet, ParsingContext context) {
-    int count = 0;
-    while (true) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      if (!typeBitSet.isInSet(tokenType)) break;
-      if (parent != null) {
-        TreeUtil.addChildren(parent, ParseUtil.createTokenElement(lexer, context.getCharTable()));
-      }
-      lexer.advance();
-      count++;
-    }
-    return count;
-  }
-
-  public static int addTokensUntil(CompositeElement parent, Lexer lexer, IElementType stopType, ParsingContext context) {
-    int count = 0;
-    while (true) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      if (tokenType == stopType) break;
-      if (parent != null) {
-        TreeUtil.addChildren(parent, createTokenElement(lexer, context.getCharTable()));
-      }
-      lexer.advance();
-      count++;
-    }
-    return count;
-  }
-
   public static String getTokenText(Lexer lexer) {
     return StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
                                                        lexer.getTokenEnd() - lexer.getTokenStart());
