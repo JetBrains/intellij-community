@@ -1,8 +1,8 @@
 package com.intellij.ide.impl;
 
-import com.intellij.ide.structureView.*;
-import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -38,7 +38,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
 
   private Alarm myAlarm;
 
-  private StructureViewFactoryImpl myStructureViewFactory;
   private FileTypeListener myFileTypeListener;
 
   // -------------------------------------------------------------------------
@@ -51,8 +50,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     myPanel.setBackground(UIManager.getColor("Tree.textBackground"));
 
     myAlarm = new Alarm();
-
-    myStructureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
 
     getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
@@ -75,9 +72,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
                 return; // project may have been closed
               }
               setFileEditor(newEditor);
-              if (myStructureViewFactory.AUTOSCROLL_FROM_SOURCE && myStructureView != null) {
-                myStructureView.scrollToSelectedElement(false);
-              }
             }
           }, 400
         );
@@ -119,7 +113,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
         setFileEditor(fileEditor);
         rebuild();
       }
-      return myStructureView.scrollToSelectedElement(requestFocus);
+      return myStructureView.navigateToSelectedElement(requestFocus);
     } else {
       return false;
     }
@@ -146,6 +140,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
 
     boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent());
     if (myStructureView != null) {
+      myStructureView.storeState();
       myStructureView.dispose();
       myStructureView = null;
     }
@@ -156,14 +151,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     }
 
     if (myFileEditor!=null && myFileEditor.isValid()) {
-      final StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();      
+      final StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();
       if (structureViewBuilder != null) {
-        StructureViewModel structureViewModel = structureViewBuilder.getStructureViewModel();
-        myStructureView = new StructureViewComponent(myFileEditor, structureViewModel, myProject);
+        myStructureView = structureViewBuilder.createStructureView(myFileEditor, myProject);
         myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
         if (hadFocus) {
           IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent()).requestFocus();
         }
+        myStructureView.restoreState();
         myStructureView.centerSelectedRow();
       }
     }

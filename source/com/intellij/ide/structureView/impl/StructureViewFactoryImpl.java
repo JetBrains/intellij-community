@@ -4,7 +4,7 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.impl.StructureViewSelectInTarget;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.StructureViewExtension;
-import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Eugene Belyaev
  */
-public final class StructureViewFactoryImpl extends StructureViewFactory implements JDOMExternalizable, ProjectComponent {
+public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements JDOMExternalizable, ProjectComponent {
   public boolean AUTOSCROLL_MODE = true;
   public boolean AUTOSCROLL_FROM_SOURCE = false;
 

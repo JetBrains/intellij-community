@@ -105,9 +105,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     addTreeKeyListener();
     addTreeMouseListeners();
-
-    restoreStructureViewState();
-
+    restoreState();
   }
 
   private PsiElement[] getSelectedPsiElements() {
@@ -188,7 +186,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       });
   }
 
-  public void saveStructureViewState() {
+  public void storeState() {
     myStructureViewState = new StructureViewState();
     myStructureViewState.setExpandedElements(getExpandedPsiElements());
     myStructureViewState.setSelectedElements(getSelectedPsiElements());
@@ -201,7 +199,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
 
-  public void restoreStructureViewState() {
+  public void restoreState() {
     myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (myStructureViewState != null) {
       expandStoredElements();
@@ -407,7 +405,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return;
     }
 
-    StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
+    StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
 
     if (!structureViewFactory.AUTOSCROLL_FROM_SOURCE)
     {
@@ -443,9 +441,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
-
-    saveStructureViewState();
-
+    storeState();
     if (myAbstractTreeBuilder != null) {
       myAbstractTreeBuilder.dispose();
       myAbstractTreeBuilder = null;
@@ -469,21 +465,21 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void setActionActive(String name, boolean state) {
 
-    saveStructureViewState();
+    storeState();
 
-    StructureViewFactory.getInstance(myProject).setActiveAction(name, state);
+    StructureViewFactoryEx.getInstance(myProject).setActiveAction(name, state);
 
     ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
 
     myAbstractTreeBuilder.updateFromRoot();
-    restoreStructureViewState();
+    restoreState();
   }
 
   public boolean isActionActive(String name) {
     if (KindSorter.ID.equals(name)) {
       return mySortByKind;
     } else {
-      return StructureViewFactory.getInstance(myProject).isActionActive(name);
+      return StructureViewFactoryEx.getInstance(myProject).isActionActive(name);
     }
   }
 
@@ -496,14 +492,14 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void setKindSortingIsActive(boolean state) {
-    saveStructureViewState();
+    storeState();
 
     mySortByKind = state;
 
     ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
 
     myAbstractTreeBuilder.updateFromRoot();
-    restoreStructureViewState();
+    restoreState();
  }
 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
@@ -518,11 +514,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     protected boolean isAutoScrollMode() {
-      return myShouldAutoScroll && ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).AUTOSCROLL_MODE;
+      return myShouldAutoScroll && ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-        ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).AUTOSCROLL_MODE = state;
+        ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE = state;
     }
 
     protected void scrollToSource(JTree tree) {
@@ -566,12 +562,12 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     protected boolean isAutoScrollMode() {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
+      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
       return structureViewFactory.AUTOSCROLL_FROM_SOURCE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
+      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
       structureViewFactory.AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors != null && selectedEditors.length > 0) {
@@ -661,10 +657,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
-    return scrollToSelectedElement(requestFocus);
+    return navigateToSelectedElement(requestFocus);
   }
 
-  public boolean scrollToSelectedElement(boolean requestFocus) {
-    return scrollToSelectedElement(requestFocus);
+  public boolean navigateToSelectedElement(boolean requestFocus) {
+    return navigateToSelectedElement(requestFocus);
   }
 }

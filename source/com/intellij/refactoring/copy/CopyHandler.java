@@ -6,7 +6,7 @@ import com.intellij.ide.commander.Commander;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -307,7 +307,7 @@ public class CopyHandler {
     } else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {
       VirtualFile virtualFile = newElement.getContainingFile().getVirtualFile();
       FileEditor editor = FileEditorManager.getInstance(newElement.getProject()).getSelectedEditor(virtualFile);
-      StructureViewFactory.getInstance(project).getStructureViewWrapper().selectCurrentElement(editor, true);
+      StructureViewFactoryEx.getInstance(project).getStructureViewWrapper().selectCurrentElement(editor, true);
     }
   }
 

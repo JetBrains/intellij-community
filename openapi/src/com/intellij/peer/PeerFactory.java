@@ -15,6 +15,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
+import com.intellij.ide.structureView.StructureViewFactory;
 
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
@@ -39,4 +40,6 @@ public abstract class PeerFactory {
   public abstract DiffRequestFactory getDiffRequestFactory();
 
   public abstract VcsContextFactory getVcsContextFactory();
+
+  public abstract StructureViewFactory getStructureVeiwFactory();
 }

@@ -33,6 +33,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
@@ -95,10 +96,10 @@ public class HtmlFileType extends LanguageFileType {
   }
 
   public StructureViewBuilder getStructureViewBuilder(final VirtualFile file, final Project project) {
-    return new StructureViewBuilder() {
-      public StructureViewModel getStructureViewModel() {
+    return new TreeBasedStructureViewBuilder() {
+      public StructureViewModel createStructureViewModel() {
         return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
       }
-    };
+    }; 
   }
 }

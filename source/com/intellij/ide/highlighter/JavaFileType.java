@@ -33,6 +33,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
@@ -98,10 +99,10 @@ public class JavaFileType extends LanguageFileType {
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PsiJavaFile)) return null; 
-    return new StructureViewBuilder() {
-      public StructureViewModel getStructureViewModel() {
+    return new TreeBasedStructureViewBuilder() {
+      public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel((PsiJavaFile)psiFile);
       }
-    };
+    }; 
   }
 }

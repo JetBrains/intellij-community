@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -35,6 +36,10 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -206,6 +211,15 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
       public FilePath createOn(VirtualFile parent, String name) {
         return new FilePathImpl(parent, name);
+      }
+    };
+  }
+
+  public StructureViewFactory getStructureVeiwFactory() {
+    return new StructureViewFactory() {
+
+      public StructureView createStructureView(final FileEditor editor, StructureViewModel treeModel, Project project) {
+        return new StructureViewComponent(editor, treeModel, project);
       }
     };
   }

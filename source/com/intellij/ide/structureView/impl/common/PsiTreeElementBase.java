@@ -32,7 +32,7 @@
 package com.intellij.ide.structureView.impl.common;
 
 import com.intellij.ide.structureView.StructureViewExtension;
-import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
@@ -90,7 +90,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     StructureViewTreeElement[] baseChildren = getChildrenBase();
     result.addAll(Arrays.asList(baseChildren));
-    StructureViewFactory structureViewFactory = StructureViewFactory.getInstance(getElement().getProject());
+    StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(getElement().getProject());
     List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(getElement().getClass());
     for (Iterator<StructureViewExtension> iterator = allExtensions.iterator(); iterator.hasNext();) {
       StructureViewExtension extension = iterator.next();

@@ -16,7 +16,7 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <interface-class>com.intellij.ide.structureView.StructureViewFactory</interface-class>
+      <interface-class>com.intellij.ide.structureView.StructureViewFactoryEx</interface-class>
       <implementation-class>com.intellij.ide.structureView.impl.StructureViewFactoryImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>

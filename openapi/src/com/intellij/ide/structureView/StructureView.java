@@ -8,11 +8,15 @@ public interface StructureView{
 
   FileEditor getFileEditor();
 
-  boolean scrollToSelectedElement(boolean requestFocus);
+  boolean navigateToSelectedElement(boolean requestFocus);
 
   JComponent getComponent();
 
   void dispose();
 
   void centerSelectedRow();
+
+  void restoreState();
+
+  void storeState();
 }

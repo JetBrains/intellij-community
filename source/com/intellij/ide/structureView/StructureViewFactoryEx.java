@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public abstract class StructureViewFactory {
-  public static StructureViewFactory getInstance(Project project) {
-    return project.getComponent(StructureViewFactory.class);
+public abstract class StructureViewFactoryEx {
+  public static StructureViewFactoryEx getInstance(Project project) {
+    return project.getComponent(StructureViewFactoryEx.class);
   }
 
   public abstract StructureViewWrapper getStructureViewWrapper();

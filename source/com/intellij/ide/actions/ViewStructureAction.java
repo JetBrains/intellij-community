@@ -5,6 +5,7 @@ import com.intellij.ant.impl.ui.AntFileStructureList;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
@@ -58,8 +59,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
                                      final Editor editor,
                                      Project project,
                                      Navigatable navigatable) {
-    if (structureViewBuilder != null) {
-      return createStructureViewBasedDialog(structureViewBuilder.getStructureViewModel(), editor, project, navigatable);
+    if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
+      return createStructureViewBasedDialog(((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel(), editor, project, navigatable);
     } else {
       return AntFileStructureList.createDialog(editor, psiFile);
     }
