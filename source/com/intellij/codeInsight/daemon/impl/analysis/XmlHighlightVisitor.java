@@ -428,7 +428,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return;
     }
 
-    if (attributeDescriptor.hasIdType()) {
+    if (myRefCountHolder != null && attributeDescriptor.hasIdType()) {
       String unquotedValue = getUnquotedValue(value, tag);
       final XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
 
@@ -469,7 +469,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
-    if (!(value.getParent() instanceof XmlAttribute)) return null;
+    if (!(value.getParent() instanceof XmlAttribute) || holder==null) return null;
     XmlAttribute attribute = (XmlAttribute)value.getParent();
 
     XmlTag tag = attribute.getParent();
