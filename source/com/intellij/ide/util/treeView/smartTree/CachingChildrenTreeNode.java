@@ -191,7 +191,11 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   protected abstract void initChildren();
 
   protected void clearChildren() {
-    myChildren.clear();
+    if (myChildren != null) {
+      myChildren.clear();
+    } else {
+      myChildren = new ArrayList<CachingChildrenTreeNode>();
+    }
   }
 
   public void rebuildChildren() {

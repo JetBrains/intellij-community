@@ -58,8 +58,9 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   protected final AbstractTreeUpdater createUpdater(){
     return new AbstractTreeUpdater(this) {
       protected void updateSubtree(DefaultMutableTreeNode node) {
-        //((CachingChildrenTreeNode)node.getUserObject()).rebuildChildren();
-        super.updateSubtree(node);
+        if(!myProject.isDisposed()) {
+          super.updateSubtree(node);
+        }
       }
     };
   }

@@ -63,7 +63,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   }
 
   protected boolean shouldUpdateData() {
-    return getValue() != null;
+    return !myProject.isDisposed() && getValue() != null;
   }
 
   protected abstract void update(PresentationData presentation);
