@@ -3,12 +3,9 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.idea.IdeaTestUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.MockInlineMethodOptions;
-
-import java.util.Calendar;
 
 public class InlineMethodTest extends CodeInsightTestCase {
 
@@ -37,9 +34,7 @@ public class InlineMethodTest extends CodeInsightTestCase {
   public void testVoidWithReturn1() throws Exception { doTest(); }
 
   public void testScr10884() throws Exception {
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 8, 12, 0, "lesya", "Indent")) {
-      doTest();
-    }
+    doTest();
   }
   public void testFinalParameters() throws Exception { doTest(); }
   public void testFinalParameters1() throws Exception { doTest(); }
