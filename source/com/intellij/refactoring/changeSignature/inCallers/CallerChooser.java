@@ -1,17 +1,24 @@
 package com.intellij.refactoring.changeSignature.inCallers;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
@@ -30,13 +37,15 @@ import java.util.Set;
  * @author ven
  */
 public abstract class CallerChooser extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.inCallers.CallerChooser");
   PsiMethod myMethod;
-  private EditorTextField myEditorField;
   private Alarm myAlarm = new Alarm();
   private MethodNode myRoot;
   private Project myProject;
   private Tree myTree;
   private TreeSelectionListener myTreeSelectionListener;
+  private Editor myCallerEditor;
+  private Editor myCalleeEditor;
 
   public Tree getTree() {
     return myTree;
@@ -56,7 +65,8 @@ public abstract class CallerChooser extends DialogWrapper {
     JPanel result = new JPanel(new BorderLayout());
     if (myTree == null) {
       myTree = createTree();
-    } else {
+    }
+    else {
       final CheckedTreeNode root = (CheckedTreeNode)myTree.getModel().getRoot();
       myRoot = (MethodNode)root.getFirstChild();
     }
@@ -64,12 +74,11 @@ public abstract class CallerChooser extends DialogWrapper {
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath path = e.getPath();
         if (path != null) {
-          MethodNode node = (MethodNode)path.getLastPathComponent();
-          final PsiMethod method = node.getMethod();
+          final MethodNode node = (MethodNode)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
             public void run() {
-              myEditorField.setText(getText(method));
+              updateEditorTexts(node);
             }
           }, 300);
         }
@@ -79,19 +88,51 @@ public abstract class CallerChooser extends DialogWrapper {
 
     JScrollPane scrollPane = new JScrollPane(myTree);
     splitter.setFirstComponent(scrollPane);
-    myEditorField = createCallSitesViewer();
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null) {
-      CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
-      if (node instanceof MethodNode) {
-        myEditorField.setText(getText(((MethodNode)node).getMethod()));
-      } else myEditorField.setText(getText(myMethod));
-    } else myEditorField.setText(getText(myMethod));
+    final JComponent callSitesViewer = createCallSitesViewer();
+    TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath == null) {
+      selectionPath = new TreePath(myRoot.getPath());
+      myTree.getSelectionModel().addSelectionPath(selectionPath);
+    }
 
-    myEditorField.setBorder(IdeBorderFactory.createBorder());
-    splitter.setSecondComponent(myEditorField);
+    final MethodNode node = (MethodNode)selectionPath.getLastPathComponent();
+    updateEditorTexts(node);
+
+    splitter.setSecondComponent(callSitesViewer);
     result.add(splitter);
     return result;
+  }
+
+  private void updateEditorTexts(final MethodNode node) {
+    final MethodNode parentNode = (MethodNode)node.getParent();
+    final String callerText = getText(node.getMethod());
+    final Document callerDocument = myCallerEditor.getDocument();
+    final String calleeText = parentNode != null ? getText(parentNode.getMethod()) : "";
+    final Document calleeDocument = myCalleeEditor.getDocument();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        callerDocument.replaceString(0, callerDocument.getTextLength(), callerText);
+        calleeDocument.replaceString(0, calleeDocument.getTextLength(), calleeText);
+      }
+    });
+
+    final PsiMethod caller = node.getMethod();
+    final PsiMethod callee = parentNode != null ? parentNode.getMethod() : null;
+    if (caller != null && callee != null) {
+      final PsiReference[] refs = myMethod.getManager().getSearchHelper().findReferences(callee, new LocalSearchScope(caller), false);
+      HighlightManager highlighter = HighlightManager.getInstance(myProject);
+      EditorColorsManager colorManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+      int start = getStartOffset(caller);
+      for (int i = 0; i < refs.length; i++) {
+        final PsiElement element = refs[i].getElement();
+        if (element != null) {
+          highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
+                                        element.getTextRange().getEndOffset() - start, attributes, false, null);
+        }
+      }
+    }
   }
 
   protected void dispose() {
@@ -100,6 +141,7 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   private String getText(final PsiMethod method) {
+    if (method == null) return "";
     final PsiFile file = method.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
@@ -107,18 +149,37 @@ public abstract class CallerChooser extends DialogWrapper {
     return document.getText().substring(start, end);
   }
 
-  private EditorTextField createCallSitesViewer() {
-    return new EditorTextField("", myProject, StdFileTypes.JAVA) {
-      protected EditorEx createEditor() {
-        final EditorEx editor = super.createEditor();
-        editor.setOneLineMode(false);
-        return editor;
-      }
-    };
+  private int getStartOffset (final PsiMethod method) {
+    LOG.assertTrue(method != null);
+    final PsiFile file = method.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    return document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
+  }
+
+  private JComponent createCallSitesViewer() {
+    Splitter splitter = new Splitter(true);
+    myCallerEditor = createEditor();
+    myCalleeEditor = createEditor();
+    final JComponent callerComponent = myCallerEditor.getComponent();
+    callerComponent.setBorder(IdeBorderFactory.createTitledBorder("Caller Method"));
+    splitter.setFirstComponent(callerComponent);
+    final JComponent calleeComponent = myCalleeEditor.getComponent();
+    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder("Callee Method"));
+    splitter.setSecondComponent(calleeComponent);
+    splitter.setBorder(IdeBorderFactory.createBorder());
+    return splitter;
+  }
+
+  private Editor createEditor() {
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    final Document document = editorFactory.createDocument("");
+    final Editor editor = editorFactory.createViewer(document, myProject);
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, StdFileTypes.JAVA));
+    return editor;
   }
 
   private Tree createTree() {
-    final CheckedTreeNode root = new CheckedTreeNode(null);
+    final CheckedTreeNode root = new MethodNode(null);
     myRoot = new MethodNode(myMethod);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer() {
@@ -139,7 +200,7 @@ public abstract class CallerChooser extends DialogWrapper {
         node.setChecked(checked);
         if (checked) {
           CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
-          while(parent != null) {
+          while (parent != null) {
             parent.setChecked(true);
             parent = (CheckedTreeNode)parent.getParent();
           }

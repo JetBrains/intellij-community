@@ -66,6 +66,7 @@ public class MethodNode extends CheckedTreeNode {
   }
 
   private PsiMethod[] findCallers() {
+    if (myMethod == null) return PsiMethod.EMPTY_ARRAY;
     final Project project = myMethod.getProject();
     final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
     final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);
@@ -82,6 +83,7 @@ public class MethodNode extends CheckedTreeNode {
   }
 
   public void customizeRenderer (ColoredTreeCellRenderer renderer) {
+    if (myMethod == null) return;
     int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
     renderer.setIcon(myMethod.getIcon(flags));
 
