@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
+    public String getID(){
+        return "InstantiatingAThreadWithDefaultRunMethod";
+    }
     public String getDisplayName(){
         return "Instantiating a Thread with default run() method";
     }

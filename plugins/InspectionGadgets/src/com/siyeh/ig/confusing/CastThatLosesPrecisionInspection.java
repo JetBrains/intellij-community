@@ -25,6 +25,9 @@ public class CastThatLosesPrecisionInspection extends StatementInspection {
         s_typePrecisions.put("double", new Integer(6));
     }
 
+    public String getID(){
+        return "NumericCastThatLosesPrecision";
+    }
     public String getDisplayName() {
         return "Numeric cast that loses precision";
     }

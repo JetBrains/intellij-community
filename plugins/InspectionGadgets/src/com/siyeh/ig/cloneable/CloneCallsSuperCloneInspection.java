@@ -8,7 +8,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
 public class CloneCallsSuperCloneInspection extends MethodInspection {
-
+    public String getID(){
+        return "CloneDoesntCallSuperClone";
+    }
     public String getDisplayName() {
         return "clone() doesn't call super.clone()";
     }

@@ -18,6 +18,9 @@ public class UnnecessarySemicolonInspection extends ClassInspection {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Unnecessary semicolon #ref #loc";
     }

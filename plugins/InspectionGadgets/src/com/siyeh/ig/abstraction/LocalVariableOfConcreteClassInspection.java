@@ -11,7 +11,7 @@ import com.siyeh.ig.GroupNames;
 public class LocalVariableOfConcreteClassInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Concrete class for local variable";
+        return "Local variable of concrete class";
     }
 
     public String getGroupDisplayName() {

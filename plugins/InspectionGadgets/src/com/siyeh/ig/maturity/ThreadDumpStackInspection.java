@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 
 public class ThreadDumpStackInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToThreadDumpStack";
+    }
     public String getDisplayName() {
         return "Call to Thread.dumpStack()";
     }

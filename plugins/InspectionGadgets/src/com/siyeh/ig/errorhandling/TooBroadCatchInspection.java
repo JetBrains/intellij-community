@@ -13,7 +13,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class TooBroadCatchInspection extends StatementInspection {
-
+    public String getID(){
+        return "OverlyBroadCatchBlock";
+    }
     public String getDisplayName() {
         return "Overly broad 'catch' block";
     }

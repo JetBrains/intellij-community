@@ -14,6 +14,9 @@ public class EnumAsNameInspection extends BaseInspection {
 
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "EnumAsIdentifier";
+    }
     public String getDisplayName() {
         return "Use of 'enum' as identifier";
     }

@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends MethodInspection{
+    /** @noinspection PublicField*/
     public String nameCheckString = "is,can,has,should";
     private final RenameFix fix = new RenameFix();
 

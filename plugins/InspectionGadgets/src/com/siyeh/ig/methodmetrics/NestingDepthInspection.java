@@ -8,9 +8,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 
 public class NestingDepthInspection extends MethodMetricInspection {
-
+    public String getID(){
+        return "OverlyNestedMethod";
+    }
     public String getDisplayName() {
-        return "Overly nested method ";
+        return "Overly nested method";
     }
 
     public String getGroupDisplayName() {

@@ -19,6 +19,10 @@ public class ObsoleteCollectionInspection extends VariableInspection{
         s_obsoleteCollectionTypes.add("java.util.Hashtable");
     }
 
+    public String getID(){
+        return "UseOfObsoleteCollectionType";
+    }
+
     public String getDisplayName(){
         return "Use of obsolete collection type";
     }

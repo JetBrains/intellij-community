@@ -12,7 +12,7 @@ import com.siyeh.ig.MethodInspection;
 public class MethodReturnOfConcreteClassInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Concrete class for method return";
+        return "Method return of concrete class";
     }
 
     public String getGroupDisplayName() {

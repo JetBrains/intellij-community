@@ -13,7 +13,9 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class CharacterComparisonInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CharacterComparison";
+    }
     public String getDisplayName() {
         return "Character comparison";
     }

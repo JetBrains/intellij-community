@@ -17,6 +17,10 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return ".equals(#ref) is probably not what was intended #loc";
     }

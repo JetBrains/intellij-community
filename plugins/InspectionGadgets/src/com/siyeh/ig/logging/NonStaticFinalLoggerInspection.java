@@ -14,6 +14,10 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
 
     public String loggerClassName = "java.util.logging.Logger";
 
+    public String getID(){
+        return "NonConstantLogger";
+    }
+
     public String getDisplayName() {
         return "Non-constant logger";
     }

@@ -9,6 +9,9 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class StaticCallOnSubclassInspection extends ExpressionInspection {
+    public String getID(){
+        return "StaticMethodReferencedViaSubclass";
+    }
     private final StaticCallOnSubclassFix fix = new StaticCallOnSubclassFix();
 
 
@@ -18,6 +21,10 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location) {

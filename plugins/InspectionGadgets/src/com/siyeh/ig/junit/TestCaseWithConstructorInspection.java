@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TestCaseWithConstructorInspection extends ClassInspection {
+    public String getID(){
+        return "JUnitTestCaseWithNonTrivialConstructors";
+    }
 
     public String getDisplayName() {
         return "JUnit TestCase with non-trivial constructors";

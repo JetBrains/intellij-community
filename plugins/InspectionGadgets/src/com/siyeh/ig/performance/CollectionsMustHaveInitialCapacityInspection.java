@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.CollectionUtils;
 
 public class CollectionsMustHaveInitialCapacityInspection extends ExpressionInspection {
+    public String getID(){
+        return "CollectionWithoutInitialCapacity";
+    }
 
     public String getDisplayName() {
         return "Collection without initial capacity";

@@ -34,6 +34,10 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+    
     public String buildErrorString(PsiElement location) {
         return "Unnecessary boxing #ref #loc";
     }

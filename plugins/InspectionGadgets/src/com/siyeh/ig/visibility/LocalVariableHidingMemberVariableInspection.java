@@ -17,6 +17,10 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     public boolean m_ignoreStaticMethods = true;
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "LocalVariableHidesMemberVariable";
+    }
+
     public String getDisplayName() {
         return "Local variable hides member variable";
     }

@@ -10,6 +10,10 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 
 public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
 
+    public String getID(){
+        return "CollectionDeclaredAsConcreteClass";
+    }
+
     public String getDisplayName() {
         return "Collection declared by class, not interface";
     }

@@ -13,7 +13,9 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class DateToStringInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToDateToString";
+    }
     public String getDisplayName() {
         return "Call to Date.toString()";
     }

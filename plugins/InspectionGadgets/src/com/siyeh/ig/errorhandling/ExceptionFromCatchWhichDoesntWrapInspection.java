@@ -9,7 +9,9 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspection {
-
+    public String getID(){
+        return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
+    }
     public String getDisplayName() {
         return "'throw' inside 'catch' block which ignores the caught exception";
     }

@@ -17,7 +17,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
     private final NestedMethodCallFix fix = new NestedMethodCallFix();
 
     public String getDisplayName() {
-        return "Nested method calls";
+        return "Nested method call";
     }
 
     public String getGroupDisplayName() {

@@ -9,6 +9,10 @@ import com.siyeh.ig.GroupNames;
 
 public class ClassInitializerInspection extends ClassInspection {
 
+    public String getID(){
+        return "NonStaticInitializer";
+    }
+
     public String getDisplayName() {
         return "Non-static initializer";
     }

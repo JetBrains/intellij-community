@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class ThreadStartInConstructionInspection extends ExpressionInspection {
+    public String getID(){
+        return "CallToThreadStartDuringObjectConstruction";
+    }
 
     public String getDisplayName() {
         return "Call to Thread.start() during object construction";

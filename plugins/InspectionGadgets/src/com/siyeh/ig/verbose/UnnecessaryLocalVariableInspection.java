@@ -19,6 +19,10 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Local variable #ref is redundant #loc";
     }

@@ -15,6 +15,10 @@ import java.util.Set;
 public class FieldRepeatedlyAccessedInspection extends MethodInspection {
     public boolean m_ignoreFinalFields = false;
 
+    public String getID(){
+        return "FieldRepeatedlyAccessedInMethod";
+    }
+
     public String getDisplayName() {
         return "Field repeatedly accessed in method";
     }
@@ -34,11 +38,11 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceVariableRepeatedlyAccessedVisitor(this, inspectionManager, onTheFly);
+        return new FieldRepeatedlyAccessedVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class InstanceVariableRepeatedlyAccessedVisitor extends BaseInspectionVisitor {
-        private InstanceVariableRepeatedlyAccessedVisitor(BaseInspection inspection,
+    private class FieldRepeatedlyAccessedVisitor extends BaseInspectionVisitor {
+        private FieldRepeatedlyAccessedVisitor(BaseInspection inspection,
                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

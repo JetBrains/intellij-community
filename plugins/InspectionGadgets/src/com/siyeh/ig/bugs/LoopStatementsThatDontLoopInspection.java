@@ -9,13 +9,19 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class LoopStatementsThatDontLoopInspection extends StatementInspection {
-
+    public String getID(){
+        return "LoopStatementThatDoesntLoop";
+    }
     public String getDisplayName() {
         return "Loop statement that doesn't loop";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location) {

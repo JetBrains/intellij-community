@@ -65,6 +65,9 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    public String getID(){
+        return "ProhibittedExceptionCaught";
+    }
     public String getDisplayName() {
         return "Prohibitted exception caught";
     }

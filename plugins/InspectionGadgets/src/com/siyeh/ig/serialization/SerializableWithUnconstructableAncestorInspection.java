@@ -12,7 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SerializableWithUnconstructableAncestorInspection extends ClassInspection {
-
+    public String getID(){
+        return "SerializableClassWithUnconstructableAncestor";
+    }
     public String getDisplayName() {
         return "Serializable class with unconstructable ancestor";
     }

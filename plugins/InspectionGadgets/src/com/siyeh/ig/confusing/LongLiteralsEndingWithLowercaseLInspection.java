@@ -12,6 +12,10 @@ import com.siyeh.ig.*;
 public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspection {
     private final LongLiteralFix fix = new LongLiteralFix();
 
+    public String getID(){
+        return "LongLiteralEndingWithLowercaseL";
+    }
+
     public String getDisplayName() {
         return "Long literal ending with 'l' instead of 'L'";
     }

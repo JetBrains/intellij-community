@@ -10,6 +10,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class ThreadRunInspection extends ExpressionInspection {
     private final ThreadRunFix fix = new ThreadRunFix();
 
+    public String getID(){
+        return "CallToThreadRun";
+    }
     public String getDisplayName() {
         return "Call to Thread.run()";
     }

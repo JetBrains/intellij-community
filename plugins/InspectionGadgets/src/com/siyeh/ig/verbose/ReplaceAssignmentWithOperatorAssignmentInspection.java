@@ -12,6 +12,9 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
         extends ExpressionInspection{
+    public String getID(){
+        return "AssignmentReplaceableWithOperatorAssignment";
+    }
 
     public String getDisplayName(){
         return "Assignment replaceable with operator assignment";
@@ -23,14 +26,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     public String buildErrorString(PsiElement location){
         return "#ref could be simplified to " +
-                calculateReplacementExpression(
-                        (PsiAssignmentExpression) location) +
-                " #loc";
+                       calculateReplacementExpression(
+                               (PsiAssignmentExpression) location) +
+                       " #loc";
     }
 
     private static String calculateReplacementExpression(
             PsiAssignmentExpression expression){
-        final PsiBinaryExpression rhs = (PsiBinaryExpression) expression.getRExpression();
+        final PsiBinaryExpression rhs =
+                (PsiBinaryExpression) expression.getRExpression();
         final PsiExpression lhs = expression.getLExpression();
         final PsiJavaToken sign = rhs.getOperationSign();
         final PsiExpression rhsRhs = rhs.getROperand();
@@ -62,7 +66,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         private ReplaceAssignmentWithOperatorAssignmentFix(
                 PsiAssignmentExpression expression){
             super();
-            final PsiBinaryExpression rhs = (PsiBinaryExpression) expression.getRExpression();
+            final PsiBinaryExpression rhs =
+                    (PsiBinaryExpression) expression.getRExpression();
             final PsiJavaToken sign = rhs.getOperationSign();
             String signText = sign.getText();
             if("&&".equals(signText)){
@@ -78,14 +83,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiAssignmentExpression expression =
                     (PsiAssignmentExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
             replaceExpression(project, expression, newExpression);
         }
-
     }
 
     private static class ReplaceAssignmentWithOperatorAssignmentVisitor

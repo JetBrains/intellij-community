@@ -9,7 +9,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "ValueOfIncrementOrDecrementUsed";
+    }
     public String getDisplayName() {
         return "Value of ++ or -- used";
     }

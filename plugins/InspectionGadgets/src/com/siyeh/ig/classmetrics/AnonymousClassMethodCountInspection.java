@@ -10,6 +10,9 @@ import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 
 public class AnonymousClassMethodCountInspection
         extends ClassMetricInspection {
+    public String getID(){
+        return "AnonymousInnerClassWithTooManyMethods";
+    }
     private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
     private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix();
 

@@ -8,6 +8,9 @@ import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 public class MultipleDeclarationInspection extends VariableInspection {
     private final NormalizeDeclarationFix fix = new NormalizeDeclarationFix();
 
+    public String getID(){
+        return "MultipleVariablesInDeclaration";
+    }
     public String getDisplayName() {
         return "Multiple variables in one declaration";
     }

@@ -10,6 +10,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 public class LengthOneStringsInConcatenationInspection extends ExpressionInspection {
     private final ReplaceStringsWithCharsFix fix = new ReplaceStringsWithCharsFix();
 
+    public String getID(){
+        return "SingleCharacterStringConcatenation";
+    }
+
     public String getDisplayName() {
         return "Single character string concatenation";
     }

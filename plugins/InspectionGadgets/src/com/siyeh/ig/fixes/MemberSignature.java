@@ -112,12 +112,12 @@ public class MemberSignature implements Comparable
     public int compareTo(Object object)
     {
         final MemberSignature other = (MemberSignature)object;
-        int result = getName().compareTo(other.getName());
-        if (result == 0)
+        final int result = name.compareTo(other.name);
+        if (result != 0)
         {
-            result = getSignature().compareTo(other.getSignature());
+            return result;
         }
-        return result;
+        return  signature.compareTo(other.signature);
     }
 
     public static String createMethodSignature(PsiMethod method)
@@ -305,6 +305,6 @@ public class MemberSignature implements Comparable
 
     public String toString()
     {
-        return getName() + getSignature();
+        return name + signature;
     }
 }

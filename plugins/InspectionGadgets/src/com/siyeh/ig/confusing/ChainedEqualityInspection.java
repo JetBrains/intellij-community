@@ -10,7 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ChainedEqualityInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "ChainedEqualityComparisons";
+    }
     public String getDisplayName() {
         return "Chained equality comparisons";
     }

@@ -11,6 +11,9 @@ import java.util.Set;
 public class MethodOverridesStaticMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "MethodOverridesStaticMethodOfSuperclass";
+    }
     public String getDisplayName() {
         return "Method overrides static method of superclass";
     }

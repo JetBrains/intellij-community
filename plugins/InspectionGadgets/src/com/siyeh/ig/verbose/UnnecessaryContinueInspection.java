@@ -18,6 +18,10 @@ public class UnnecessaryContinueInspection extends StatementInspection{
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location){
         return "#ref is unnecessary as the last statement in a loop #loc";
     }

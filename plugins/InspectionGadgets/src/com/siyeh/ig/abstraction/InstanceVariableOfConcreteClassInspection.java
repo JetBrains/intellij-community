@@ -12,7 +12,7 @@ import com.siyeh.ig.GroupNames;
 public class InstanceVariableOfConcreteClassInspection extends FieldInspection {
 
     public String getDisplayName() {
-        return "Concrete class for instance variable";
+        return "Instance variable of concrete class";
     }
 
     public String getGroupDisplayName() {

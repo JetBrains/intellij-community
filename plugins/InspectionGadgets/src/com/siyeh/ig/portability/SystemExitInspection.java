@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class SystemExitInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToSystemExit";
+    }
     public String getDisplayName() {
         return "Call to System.exit() or related methods";
     }

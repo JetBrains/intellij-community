@@ -27,8 +27,12 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
         s_assertMethods.add("assertNotSame");
     }
 
+    public String getID(){
+        return "MessageMissingOnJUnitAssertion";
+    }
+
     public String getDisplayName() {
-        return "Missing message on JUnit assertion";
+        return "Message missing on JUnit assertion";
     }
 
     public String getGroupDisplayName() {

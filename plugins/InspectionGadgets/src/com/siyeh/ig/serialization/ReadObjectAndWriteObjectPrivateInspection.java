@@ -12,6 +12,9 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection {
     private final MakePrivateFix fix = new MakePrivateFix();
 
+    public String getID(){
+        return "NonPrivateSerializationMethod";
+    }
     public String getDisplayName() {
         return "'readObject()' or 'writeObject()' not declared 'private'";
     }

@@ -12,6 +12,9 @@ public class MethodCountInspection
         extends ClassMetricInspection {
     private static final int DEFAULT_METHOD_COUNT_LIMIT = 20;
 
+    public String getID(){
+        return "ClassWithTooManyMethods";
+    }
     public String getDisplayName() {
         return "Class with too many methods";
     }

@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 
 public class CyclomaticComplexityInspection
         extends MethodMetricInspection {
-
+    public String getID(){
+        return "OverlyComplexMethod";
+    }
     public String getDisplayName() {
         return "Overly complex method";
     }

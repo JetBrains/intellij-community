@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.CollectionUtils;
 
 public class ReturnOfCollectionFieldInspection extends ExpressionInspection{
+    public String getID(){
+        return "ReturnOfCollectionOrArrayField";
+    }
 
     public String getDisplayName(){
         return "Return of Collection or array field";
@@ -27,7 +30,6 @@ public class ReturnOfCollectionFieldInspection extends ExpressionInspection{
             return "'return' of Collection field #ref #loc";
         }
     }
-
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                boolean onTheFly){

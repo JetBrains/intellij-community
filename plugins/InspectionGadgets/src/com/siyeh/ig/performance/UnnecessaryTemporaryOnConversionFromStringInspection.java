@@ -38,6 +38,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         final String replacementString = calculateReplacementExpression(location);
         return "#ref can be simplified to " + replacementString + " #loc";

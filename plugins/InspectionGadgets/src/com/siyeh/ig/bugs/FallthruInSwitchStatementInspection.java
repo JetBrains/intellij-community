@@ -9,7 +9,9 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class FallthruInSwitchStatementInspection extends StatementInspection {
-
+    public String getID(){
+        return "FallthroughInSwitchStatement";
+    }
     public String getDisplayName() {
         return "Fallthrough in 'switch' statement";
     }

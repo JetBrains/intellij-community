@@ -21,6 +21,10 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                   boolean onTheFly){
         return new PointlessBooleanExpressionVisitor(this, inspectionManager,

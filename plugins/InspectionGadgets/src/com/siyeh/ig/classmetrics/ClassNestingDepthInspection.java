@@ -11,6 +11,9 @@ public class ClassNestingDepthInspection
         extends ClassMetricInspection {
     private static final int CLASS_NESTING_LIMIT = 1;
 
+    public String getID(){
+        return "InnerClassTooDeeplyNested";
+    }
     public String getDisplayName() {
         return "Inner class too deeply nested";
     }

@@ -9,7 +9,9 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
-
+    public String getID(){
+        return "SetUpWithIncorrectSignature";
+    }
     public String getDisplayName() {
         return "setUp() with incorrect signature";
     }

@@ -12,6 +12,9 @@ import java.util.List;
 public class MultipleTypedDeclarationInspection extends VariableInspection {
     private final NormalizeDeclarationFix fix = new NormalizeDeclarationFix();
 
+    public String getID(){
+        return "VariablesOfDifferentTypesInDeclaration";
+    }
     public String getDisplayName() {
         return "Variables of different types in one declaration";
     }

@@ -19,8 +19,8 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    protected String buildErrorString(Object object){
-        return "Access to private member of class '" + object + "' #loc";
+    protected String buildErrorString(Object arg){
+        return "Access to private member of class '" + arg + "' #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -30,7 +30,8 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     private static class MakePackagePrivateFix extends InspectionGadgetsFix{
         private String elementName;
 
-        MakePackagePrivateFix(PsiElement location){
+        private MakePackagePrivateFix(PsiElement location){
+            super();
             final PsiReferenceExpression reference =
                     (PsiReferenceExpression) location;
             final PsiMember member = (PsiMember) reference.resolve();
@@ -96,8 +97,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 return;
             }
             final PsiMember member = (PsiMember) element;
-            if(member == null ||
-                       !member.hasModifierProperty(PsiModifier.PRIVATE)){
+            if(!member.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
             final PsiElement containingClass =

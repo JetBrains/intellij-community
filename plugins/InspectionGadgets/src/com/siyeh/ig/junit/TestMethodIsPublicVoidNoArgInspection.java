@@ -9,7 +9,9 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
-
+    public String getID(){
+        return "TestMethodWithIncorrectSignature";
+    }
     public String getDisplayName() {
         return "Test method with incorrect signature";
     }

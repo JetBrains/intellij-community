@@ -13,6 +13,10 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 public class StringBufferReplaceableByStringBuilderInspection extends ExpressionInspection {
     private final StringBufferMayBeStringBuilderFix fix = new StringBufferMayBeStringBuilderFix();
 
+    public String getID(){
+        return "StringBufferMayBeStringBuilder";
+    }
+
     public String getDisplayName() {
         return "StringBuffer may be StringBuilder (J2SDK 5.0 only)";
     }
@@ -39,8 +43,9 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
             if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiElement variableIdentifier =
                     descriptor.getPsiElement();
+            final PsiLocalVariable variable = (PsiLocalVariable) variableIdentifier.getParent();
             final PsiDeclarationStatement declarationStatement =
-                    (PsiDeclarationStatement) variableIdentifier.getParent().getParent();
+                    (PsiDeclarationStatement) variable.getParent();
             final String text = declarationStatement.getText();
             final String newStatement = text.replaceAll("StringBuffer", "StringBuilder");
             replaceStatement(project, declarationStatement, newStatement);

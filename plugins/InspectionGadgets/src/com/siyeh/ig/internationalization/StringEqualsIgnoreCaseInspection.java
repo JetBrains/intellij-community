@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToStringEqualsIgnoreCase";
+    }
     public String getDisplayName() {
         return "Call to String.equalsIgnoreCase()";
     }

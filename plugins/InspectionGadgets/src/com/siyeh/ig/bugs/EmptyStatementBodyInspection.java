@@ -13,6 +13,10 @@ import javax.swing.*;
 public class EmptyStatementBodyInspection extends StatementInspection {
     public boolean m_reportEmptyBlocks = false;
 
+    public String getID(){
+        return "StatementWithEmptyBody";
+    }
+
     public String getDisplayName() {
         return "Statement with empty body";
     }

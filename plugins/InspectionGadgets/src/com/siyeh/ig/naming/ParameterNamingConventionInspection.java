@@ -14,6 +14,9 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MAX_LENGTH = 20;
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "MethodParameterNamingConvention";
+    }
     public String getDisplayName() {
         return "Method parameter naming convention";
     }

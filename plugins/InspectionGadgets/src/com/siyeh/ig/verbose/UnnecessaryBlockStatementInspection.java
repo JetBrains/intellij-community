@@ -12,6 +12,10 @@ import com.siyeh.ig.*;
 public class UnnecessaryBlockStatementInspection extends StatementInspection {
     private final UnnecessaryBlockFix fix = new UnnecessaryBlockFix();
 
+    public String getID(){
+        return "UnnecessaryCodeBlock";
+    }
+
     public String getDisplayName() {
         return "Unnecessary code block";
     }
@@ -47,7 +51,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
                 final PsiElement[] children = block.getChildren();
                 if (children.length > 2) {
                   final PsiElement added = containingElement.addRangeBefore(children[1], children[children.length - 2], blockStatement);
-                  CodeStyleManager.getInstance(project).reformat(added);
+                    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+                    codeStyleManager.reformat(added);
                 }
                 blockStatement.delete();
             } catch (IncorrectOperationException e) {
@@ -81,7 +86,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
             if (brace == null) {
                 return;
             }
-            if (((PsiCodeBlock)parent).getStatements().length > 1 && containsDeclarations(codeBlock)) {
+            if (((PsiCodeBlock)parent).getStatements().length > 1 &&
+                        containsConflictingDeclarations(codeBlock)) {
                 return;
             }
             registerError(brace);
@@ -91,7 +97,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection {
             }
         }
 
-        private static boolean containsDeclarations(PsiCodeBlock block) {
+        private static boolean containsConflictingDeclarations(PsiCodeBlock block) {
           final PsiStatement[] statements = block.getStatements();
             if (statements == null) {
                 return false;

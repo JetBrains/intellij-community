@@ -12,6 +12,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class InstanceofIncompatibleInterfaceInspection extends ExpressionInspection{
+
     public String getDisplayName(){
         return "'instanceof' with incompatible interface";
     }

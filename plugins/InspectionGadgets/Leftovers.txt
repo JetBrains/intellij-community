@@ -6,8 +6,7 @@
     setter or getter with non-standard name
     Avoid repeated casting
     arithmetic operations on volatile types
-    Field has setter but no getter
-    Class name with forbidden component
+    Class name with forbidden name component
     Paired open/close for Sockets
     Paired open/close for Channels
     Paired acquire/release for Locks
@@ -15,20 +14,14 @@
     Empty zip file entry
     Empty jar file entry
     getClass().getResource()
-    Using nextDouble rather than nextInt() to create random integer
     Inefficient use of keySet iterator rather than entrySet iterator
-    Equals methods that do not check parameter type
-    Call to simple getter or setter from within class
+    Encapsulatable use of field
+
     Static inheritance fix
     Static import fix
+    Vararg fix
     Fix for non-static initializer
-    Check IDs for all inspections
     Better handling of unnecessary block
-    Encapsulatable use of field
-    While loop replaceable by for-each
-    Acceptable name for type (Exceptions always e, Iterators always i)
-    Flag inspections with default on-off and default warning level
-    Inheritance as type def (change the EmptyClass inspection)
     Fix damn "Instanceof Incompatible Interface" inspection
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts

@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class SystemGetenvInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToSystemGetenv";
+    }
     public String getDisplayName() {
         return "Call to System.getenv()";
     }

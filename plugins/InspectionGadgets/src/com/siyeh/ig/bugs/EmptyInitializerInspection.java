@@ -11,7 +11,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
 
 public class EmptyInitializerInspection extends StatementInspection {
-
+    public String getID(){
+        return "EmptyClassInitializer";
+    }
     public String getDisplayName() {
         return "Empty class initializer";
     }

@@ -9,7 +9,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class NumericToStringInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToNumericToString";
+    }
     public String getDisplayName() {
         return "Call to Numeric .toString()";
     }

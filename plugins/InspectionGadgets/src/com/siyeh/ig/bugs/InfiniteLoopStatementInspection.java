@@ -21,6 +21,10 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "#ref statement cannot complete without throwing an exception #loc";
     }

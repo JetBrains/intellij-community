@@ -14,6 +14,7 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentToCatchBlockParameterInspection
         extends ExpressionInspection{
+
     private AssignmentToCatchBlockParameterFix fix =
             new AssignmentToCatchBlockParameterFix();
 

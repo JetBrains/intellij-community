@@ -1,7 +1,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -9,8 +8,6 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 
 public class FinalClassInspection extends MethodInspection {
-    private static final Logger s_logger =
-            Logger.getInstance("FinalClassInspection");
 
     public String getDisplayName() {
         return "'final' class";

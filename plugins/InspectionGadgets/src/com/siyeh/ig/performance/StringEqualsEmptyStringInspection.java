@@ -29,7 +29,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
 
     private static class StringEqualsEmptyStringFix extends InspectionGadgetsFix {
         public String getName() {
-            return "replace with .length()==0";
+            return "Replace with .length()==0";
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {

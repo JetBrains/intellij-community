@@ -17,6 +17,10 @@ import javax.swing.*;
 public class StringConcatenationInLoopsInspection extends ExpressionInspection {
     public boolean m_ignoreUnlessAssigned = false;
 
+    public String getID(){
+        return "StringContatenationInLoop";
+    }
+
     public String getDisplayName() {
         return "String concatenation in loop";
     }

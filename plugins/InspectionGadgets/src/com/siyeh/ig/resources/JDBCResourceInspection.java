@@ -30,6 +30,9 @@ public class JDBCResourceInspection extends ExpressionInspection {
                 "getResultSet",
             };
 
+    public String getID(){
+        return "JDBCResourceOpenedButNotSafelyClosed";
+    }
     public String getDisplayName() {
         return "JDBC resource opened but not safely closed";
     }

@@ -10,6 +10,9 @@ import com.siyeh.ig.fixes.RenameFix;
 public class UpperCaseFieldNameNotConstantInspection extends FieldInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "NonConstantFieldWithUpperCaseName";
+    }
 
     public String getDisplayName() {
         return "Non-constant field with upper-case name";

@@ -23,6 +23,10 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
         s_typeToWrapperMap.put("byte", "Byte");
     }
 
+    public String getID(){
+        return "ConcatenationWithEmptyString";
+    }
+
     public String getDisplayName(){
         return "Concatenation with empty string";
     }

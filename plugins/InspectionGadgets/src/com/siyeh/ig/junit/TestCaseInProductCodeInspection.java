@@ -11,6 +11,10 @@ import com.siyeh.ig.psiutils.TestUtils;
 public class TestCaseInProductCodeInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
 
+    public String getID(){
+        return "JUnitTestCaseInProductSource";
+    }
+
     public String getDisplayName() {
         return "JUnit TestCase in product source";
     }

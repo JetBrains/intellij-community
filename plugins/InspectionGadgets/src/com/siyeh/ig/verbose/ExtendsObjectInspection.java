@@ -12,6 +12,9 @@ import com.siyeh.ig.*;
 public class ExtendsObjectInspection extends ClassInspection {
     private final ExtendsObjectFix fix = new ExtendsObjectFix();
 
+    public String getID(){
+        return "ClassExplicitlyExtendsObject";
+    }
     public String getDisplayName() {
         return "Class explicitly extends java.lang.Object";
     }

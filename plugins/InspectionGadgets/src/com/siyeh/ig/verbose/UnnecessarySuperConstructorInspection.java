@@ -9,8 +9,12 @@ import com.siyeh.ig.*;
 public class UnnecessarySuperConstructorInspection extends ExpressionInspection {
     private final UnnecessarySuperConstructorFix fix = new UnnecessarySuperConstructorFix();
 
+    public String getID(){
+        return "UnnecessaryCallToSuper";
+    }
+
     public String getDisplayName() {
-        return "Unnecessary 'super()' statement";
+        return "Unnecessary call to 'super()'";
     }
 
     public String getGroupDisplayName() {

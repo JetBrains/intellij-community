@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "NonFinalFieldReferencedInHashCode";
+    }
     public String getDisplayName() {
         return "Non-final field referenced in 'hashCode()'";
     }

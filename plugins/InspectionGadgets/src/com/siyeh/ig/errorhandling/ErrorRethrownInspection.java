@@ -11,7 +11,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class ErrorRethrownInspection extends StatementInspection {
-
+    public String getID(){
+        return "ErrorNotRethrown";
+    }
     public String getDisplayName() {
         return "Error not rethrown";
     }

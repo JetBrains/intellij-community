@@ -10,7 +10,7 @@ import com.siyeh.ig.StatementInspection;
 public class UnnecessaryDefaultInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "Unnecessary 'default'";
+        return "Unnecessary 'default' for enum switch statement";
     }
 
     public String getGroupDisplayName() {

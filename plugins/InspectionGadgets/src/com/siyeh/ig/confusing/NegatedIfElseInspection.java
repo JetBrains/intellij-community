@@ -15,6 +15,10 @@ public class NegatedIfElseInspection extends StatementInspection {
     public boolean m_ignoreNegatedNullComparison = true;
     private final NegatedIfElseFix fix = new NegatedIfElseFix();
 
+    public String getID(){
+        return "IfStatementWithNegatedCondition";
+    }
+
     public String getDisplayName() {
         return "If statement with negated condition";
     }

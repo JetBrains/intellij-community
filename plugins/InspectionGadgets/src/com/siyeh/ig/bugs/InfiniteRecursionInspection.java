@@ -20,6 +20,9 @@ public class InfiniteRecursionInspection extends MethodInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Method #ref recurses infinitely, and can only end by throw an exception #loc";
     }

@@ -11,6 +11,9 @@ import java.util.Set;
 public class MethodOverridesPrivateMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "MethodOverridesPrivateMethodOfSuperclass";
+    }
     public String getDisplayName() {
         return "Method overrides private method of superclass";
     }

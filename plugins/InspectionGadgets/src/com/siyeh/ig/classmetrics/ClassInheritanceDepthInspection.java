@@ -12,6 +12,9 @@ import java.util.Set;
 
 public class ClassInheritanceDepthInspection
         extends ClassMetricInspection {
+    public String getID(){
+        return "ClassTooDeepInInheritanceTree";
+    }
     private static final int CLASS_INHERITANCE_LIMIT = 2;
 
     public String getDisplayName() {

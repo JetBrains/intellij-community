@@ -10,7 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class ExternalizableWithSerializationMethodsInspection extends ClassInspection {
-
+    public String getID(){
+        return "ExternalizableClassWithSerializationMethods";
+    }
     public String getDisplayName() {
         return "Externalizable class with 'readObject()' or 'writeObject()'";
     }

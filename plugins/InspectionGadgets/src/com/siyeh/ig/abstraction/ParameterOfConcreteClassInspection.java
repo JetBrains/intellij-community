@@ -10,9 +10,11 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
 public class ParameterOfConcreteClassInspection extends MethodInspection {
-
+    public String getID(){
+        return "MethodParameterOfConcreteClass";
+    }
     public String getDisplayName() {
-        return "Concrete class for method parameter";
+        return "Method parameter of concrete class";
     }
 
     public String getGroupDisplayName() {

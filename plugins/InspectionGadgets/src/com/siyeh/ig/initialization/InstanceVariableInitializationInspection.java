@@ -16,6 +16,9 @@ import javax.swing.*;
 public class InstanceVariableInitializationInspection extends FieldInspection {
     public boolean m_ignorePrimitives = false;
 
+    public String getID(){
+        return "InstanceVariableMayNotBeInitialized";
+    }
     public String getDisplayName() {
         return "Instance variable may not be initialized";
     }

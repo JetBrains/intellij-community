@@ -11,7 +11,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
 
 public class VarargParameterInspection extends StatementInspection {
-
+    public String getID(){
+        return "VariableArgumentMethod";
+    }
     public String getDisplayName() {
         return "Variable argument method";
     }

@@ -4,6 +4,7 @@ import java.io.*;
 
 public class SerializableHasSerialVersionUIDInspection implements Serializable
 {
+
     public static void main(String[] args)
     {
         new SerializableHasSerialVersionUIDInspection();

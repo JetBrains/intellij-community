@@ -85,6 +85,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         callCheckString = buffer.toString();
     }
 
+    public String getID(){
+        return "ResultOfMethodCallIgnored";
+    }
     public String getDisplayName(){
         return "Result of method call ignored";
     }

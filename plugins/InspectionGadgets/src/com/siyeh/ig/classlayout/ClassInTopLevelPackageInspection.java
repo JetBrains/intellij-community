@@ -12,6 +12,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class ClassInTopLevelPackageInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
 
+    public String getID(){
+        return "ClassWithoutPackageStatement";
+    }
     public String getDisplayName() {
         return "Class without package statement";
     }

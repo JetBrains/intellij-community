@@ -11,6 +11,10 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
     private MakeSerializableFix fix = new MakeSerializableFix();
 
+    public String getID(){
+        return "NonSerializableClassWithSerialVersionUID";
+    }
+
     public String getDisplayName() {
         return "Non-serializable class with serialVersionUID";
     }
@@ -26,7 +30,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
     protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
-    
+
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new NonSerializableWithSerialVersionUIDVisitor(this, inspectionManager, onTheFly);
     }

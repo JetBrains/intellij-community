@@ -8,7 +8,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class MultipleReturnPointsPerMethodInspection extends MethodMetricInspection {
-
+    public String getID(){
+        return "MethodWithMultipleReturnPoints";
+    }
     public String getDisplayName() {
         return "Method with multiple return points.";
     }

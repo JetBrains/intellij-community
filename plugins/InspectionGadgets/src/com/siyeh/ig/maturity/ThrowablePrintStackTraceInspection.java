@@ -12,7 +12,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 
 public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToPrintStackTrace";
+    }
     public String getDisplayName() {
         return "Call to printStackTrace()";
     }

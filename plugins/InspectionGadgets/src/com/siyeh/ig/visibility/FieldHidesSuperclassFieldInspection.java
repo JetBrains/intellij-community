@@ -17,6 +17,10 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     public boolean m_ignoreInvisibleFields = false;
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "FieldNameHidesFieldInSuperclass";
+    }
+
     public String getDisplayName() {
         return "Field name hides field in superclass";
     }

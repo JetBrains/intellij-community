@@ -24,4 +24,12 @@ public class UnnecessaryLocalVariableInspection {
         a = b;
         return a;
     }
+
+    public int bazoom() {
+        final int i = foo();
+        bar();
+        final int value = i;
+        System.out.println(value);
+        return 3;
+    }
 }

@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
 public class ThreeNegationsPerMethodInspection extends MethodInspection {
-
+    public String getID(){
+        return "MethodWithMoreThanThreeNegations";
+    }
     public String getDisplayName() {
         return "Method with more than three negations";
     }

@@ -16,6 +16,9 @@ import java.util.List;
 public class StaticVariableUninitializedUseInspection extends FieldInspection {
     public boolean m_ignorePrimitives = false;
 
+    public String getID(){
+        return "StaticVariableUsedBeforeInitialization";
+    }
     public String getDisplayName() {
         return "Static variable used before initialization";
     }

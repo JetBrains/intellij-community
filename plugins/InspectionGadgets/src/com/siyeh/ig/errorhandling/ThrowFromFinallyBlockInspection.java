@@ -19,6 +19,9 @@ public class ThrowFromFinallyBlockInspection extends StatementInspection {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "'#ref' inside 'finally' block #loc";
     }

@@ -15,6 +15,10 @@ public class NegatedConditionalInspection extends ExpressionInspection{
     public boolean m_ignoreNegatedNullComparison = true;
     private final NegatedConditionalFix fix = new NegatedConditionalFix();
 
+    public String getID(){
+        return "ConditionalExpressionWithNegatedCondition";
+    }
+
     public String getDisplayName(){
         return "Conditional expression with negated condition";
     }

@@ -16,6 +16,10 @@ public class FinalStaticMethodInspection extends MethodInspection {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+    
     public String buildErrorString(PsiElement location) {
         return "'static' method declared '#ref' #loc";
     }

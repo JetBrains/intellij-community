@@ -30,11 +30,11 @@ public class FeatureEnvyInspection extends MethodInspection {
 
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceVariableRepeatedlyAccessedVisitor(this, inspectionManager, onTheFly);
+        return new FeatureEnvyVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class InstanceVariableRepeatedlyAccessedVisitor extends BaseInspectionVisitor {
-        private InstanceVariableRepeatedlyAccessedVisitor(BaseInspection inspection,
+    private static class FeatureEnvyVisitor extends BaseInspectionVisitor {
+        private FeatureEnvyVisitor(BaseInspection inspection,
                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

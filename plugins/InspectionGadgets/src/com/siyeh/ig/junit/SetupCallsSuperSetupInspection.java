@@ -13,6 +13,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class SetupCallsSuperSetupInspection extends MethodInspection {
     private final AddSuperSetUpCall fix = new AddSuperSetUpCall();
 
+    public String getID(){
+        return "SetUpDoesntCallSuperSetUp";
+    }
     public String getDisplayName() {
         return "setUp() doesn't call super.setUp()";
     }

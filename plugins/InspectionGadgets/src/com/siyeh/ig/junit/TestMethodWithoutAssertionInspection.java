@@ -9,8 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
-
-
+    public String getID(){
+        return "JUnitTestMethodWithNoAssertions";
+    }
     public String getDisplayName() {
         return "JUnit test method without any assertions";
     }

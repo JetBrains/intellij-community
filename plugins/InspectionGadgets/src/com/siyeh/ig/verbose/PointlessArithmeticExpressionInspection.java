@@ -21,6 +21,9 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "#ref can be replaced with " +
                 calculateReplacementExpression((PsiExpression) location) + " #loc";

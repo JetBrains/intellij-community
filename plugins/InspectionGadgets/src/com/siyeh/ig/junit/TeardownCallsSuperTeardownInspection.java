@@ -14,6 +14,10 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
 
     private AddSuperTearDownCall fix = new AddSuperTearDownCall();
 
+    public String getID(){
+        return "TearDownDoesntCallSuperTearDown";
+    }
+
     public String getDisplayName() {
         return "tearDown() doesn't call super.tearDown()";
     }

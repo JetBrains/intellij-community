@@ -10,7 +10,9 @@ import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 
 public class MismatchedArrayReadWriteInspection extends VariableInspection {
-
+    public String getID(){
+        return "MismatchedReadAndWriteOfArray";
+    }
     public String getDisplayName() {
         return "Mismatched read and write of array";
     }
@@ -19,6 +21,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         final PsiVariable variable = (PsiVariable) location.getParent();
         final PsiElement context;

@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "StringToUpperCaseOrToLowerCaseWithoutLocale";
+    }
     public String getDisplayName() {
         return "Call to String.toUpperCase() or .toLowerCase() without a Locale";
     }

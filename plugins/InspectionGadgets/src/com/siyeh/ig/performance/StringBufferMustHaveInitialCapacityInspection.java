@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringBufferMustHaveInitialCapacityInspection extends ExpressionInspection {
+    public String getID(){
+        return "StringBufferWithoutInitialCapacity";
+    }
 
     public String getDisplayName() {
         return "StringBuffer or StringBuilder without initial capacity";

@@ -10,6 +10,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class InnerClassOnInterfaceInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
 
+    public String getID(){
+        return "InnerClassOfInterface";
+    }
     public String getDisplayName() {
         return "Inner class of interface";
     }

@@ -9,6 +9,9 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
+    public String getID(){
+        return "NonShortCircuitBooleanExpression";
+    }
     private final InspectionGadgetsFix fix = new NonShortCircuitBooleanFix();
 
     public String getDisplayName() {

@@ -9,6 +9,10 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 public class ZeroLengthArrayInitializationInspection extends ExpressionInspection {
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
+    public String getID(){
+        return "ZeroLengthArrayAllocation";
+    }
+
     public String getDisplayName() {
         return "Zero-length array allocation";
     }

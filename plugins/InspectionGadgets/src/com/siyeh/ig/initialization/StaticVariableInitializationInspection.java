@@ -15,6 +15,9 @@ import javax.swing.*;
 public class StaticVariableInitializationInspection extends FieldInspection {
     public boolean m_ignorePrimitives = false;
 
+    public String getID(){
+        return "StaticVariableMayNotBeInitialized";
+    }
     public String getDisplayName() {
         return "Static variable may not be initialized";
     }

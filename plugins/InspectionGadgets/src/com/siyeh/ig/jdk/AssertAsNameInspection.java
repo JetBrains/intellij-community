@@ -12,6 +12,9 @@ import com.siyeh.ig.fixes.RenameFix;
 public class AssertAsNameInspection extends BaseInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "AssertAsIdentifier";
+    }
     public String getDisplayName() {
         return "Use of 'assert' as identifier";
     }

@@ -16,6 +16,9 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     public boolean m_ignoreSerializableDueToInheritance = true;
     private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
+    public String getID(){
+        return "SerializableClassWithoutSerialVersionUID";
+    }
     public String getDisplayName() {
         return "Serializable class without serialVersionUID";
     }

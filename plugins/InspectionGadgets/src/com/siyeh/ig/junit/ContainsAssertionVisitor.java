@@ -4,7 +4,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 
-public class ContainsAssertionVisitor extends PsiRecursiveElementVisitor {
+class ContainsAssertionVisitor extends PsiRecursiveElementVisitor {
     private boolean containsAssertion = false;
 
     public void visitMethodCallExpression(PsiMethodCallExpression call) {

@@ -11,9 +11,11 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class ResultSetIndexZeroInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "UseOfIndexZeroInJDBCResultSet";
+    }
     public String getDisplayName() {
-        return "Use on index 0 with JDBC ResultSet";
+        return "Use of index 0 in JDBC ResultSet";
     }
 
     public String getGroupDisplayName() {

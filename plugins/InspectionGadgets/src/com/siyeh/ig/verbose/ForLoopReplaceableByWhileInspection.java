@@ -5,10 +5,18 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+
+import javax.swing.*;
 
 public class ForLoopReplaceableByWhileInspection extends StatementInspection {
+    /** @noinspection PublicField*/
+    public boolean m_ignoreLoopsWithoutConditions = false;
     private final ReplaceForByWhileFix fix = new ReplaceForByWhileFix();
 
+    public String getID(){
+        return "ForLoopReplaceableByWhile";
+    }
     public String getDisplayName() {
         return "'for' loop may be replaced by 'while' loop";
     }
@@ -19,6 +27,11 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
 
     public String buildErrorString(PsiElement location) {
         return "'#ref' loop statement may be replace by 'while' loop #loc";
+    }
+
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel("Ignore 'infinite' for loops without conditions",
+                                              this, "m_ignoreLoopsWithoutConditions");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -51,7 +64,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
         return new ForLoopReplaceableByWhileVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ForLoopReplaceableByWhileVisitor extends BaseInspectionVisitor {
+    private  class ForLoopReplaceableByWhileVisitor extends BaseInspectionVisitor {
         private ForLoopReplaceableByWhileVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -65,6 +78,17 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
             final PsiStatement update = statement.getUpdate();
             if (update != null && !(update instanceof PsiEmptyStatement)) {
                 return;
+            }
+            if(m_ignoreLoopsWithoutConditions)
+            {
+                final PsiExpression condition = statement.getCondition();
+                if(condition == null){
+                    return;
+                }
+                final String conditionText = condition.getText();
+                if("true".equals(conditionText)){
+                    return;
+                }
             }
             registerStatementError(statement);
         }

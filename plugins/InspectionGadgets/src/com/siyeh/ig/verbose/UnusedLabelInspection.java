@@ -21,6 +21,9 @@ public class UnusedLabelInspection extends StatementInspection {
         return "Unused label #ref #loc";
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new UnusedLabelVisitor(this, inspectionManager, onTheFly);
     }

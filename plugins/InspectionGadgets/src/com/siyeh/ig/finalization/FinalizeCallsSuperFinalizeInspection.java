@@ -10,7 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
 public class FinalizeCallsSuperFinalizeInspection extends MethodInspection {
-
+    public String getID(){
+        return "FinalizeDoesntCallSuperFinalize";
+    }
     public String getDisplayName() {
         return "finalize() doesn't call super.finalize()";
     }

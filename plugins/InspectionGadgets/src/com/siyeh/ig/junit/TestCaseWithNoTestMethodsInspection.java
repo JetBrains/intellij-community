@@ -9,6 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
+    public String getID(){
+        return "JUnitTestCaseWithNoTests";
+    }
 
     public String getDisplayName() {
         return "JUnit test case with no tests";

@@ -13,13 +13,19 @@ import com.siyeh.ig.psiutils.VariablePassedAsArgumentVisitor;
 import com.siyeh.ig.psiutils.VariableReturnedVisitor;
 
 public class MismatchedCollectionQueryUpdateInspection extends VariableInspection {
-
+    public String getID(){
+        return "MismatchedQueryAndUpdateOfCollection";
+    }
     public String getDisplayName() {
         return "Mismatched query and update of collection";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location) {

@@ -18,6 +18,9 @@ public class InstanceVariableUninitializedUseInspection
         extends FieldInspection {
     public boolean m_ignorePrimitives = false;
 
+    public String getID(){
+        return "InstanceVariableUsedBeforeInitialized";
+    }
     public String getDisplayName() {
         return "Instance variable used before initialized";
     }

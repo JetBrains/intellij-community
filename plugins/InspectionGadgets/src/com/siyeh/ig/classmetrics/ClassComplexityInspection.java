@@ -11,6 +11,9 @@ import com.siyeh.ig.GroupNames;
 
 public class ClassComplexityInspection
         extends ClassMetricInspection {
+    public String getID(){
+        return "OverlyComplexClass";
+    }
     private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
 
     public String getDisplayName() {

@@ -11,7 +11,6 @@ import com.siyeh.ig.*;
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
-
     public String getDisplayName() {
         return "Pointless bitwise expression";
     }
@@ -20,6 +19,9 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "#ref can be replaced with " +
                 calculateReplacementExpression((PsiExpression) location) + " #loc";

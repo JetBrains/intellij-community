@@ -9,9 +9,11 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "Finalize called explicitly";
+    }
     public String getDisplayName() {
-        return "finalize() called explicitly";
+        return "'finalize()' called explicitly";
     }
 
     public String getGroupDisplayName() {

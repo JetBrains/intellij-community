@@ -9,6 +9,10 @@ import com.siyeh.ig.*;
 public class StringToStringInspection extends ExpressionInspection {
     private final StringToStringFix fix = new StringToStringFix();
 
+    public String getID(){
+        return "RedundantStringToString";
+    }
+
     public String getDisplayName() {
         return "Redundant String.toString()";
     }

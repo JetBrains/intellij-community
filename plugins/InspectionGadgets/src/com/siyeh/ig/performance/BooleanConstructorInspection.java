@@ -10,6 +10,9 @@ import com.siyeh.ig.psiutils.TypeUtils;
 public class BooleanConstructorInspection extends ExpressionInspection {
     private final BooleanConstructorFix fix = new BooleanConstructorFix();
 
+    public String getID(){
+        return "BooleanConstructorCall";
+    }
     public String getDisplayName() {
         return "Boolean constructor call";
     }

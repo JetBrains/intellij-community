@@ -68,6 +68,9 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    public String getID(){
+        return "ProhibittedExceptionDeclared";
+    }
     public String getDisplayName() {
         return "Prohibitted exception declared";
     }

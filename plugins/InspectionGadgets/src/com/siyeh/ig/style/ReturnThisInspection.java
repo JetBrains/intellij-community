@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class ReturnThisInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "ReturnOfThis";
+    }
     public String getDisplayName() {
         return "Return of 'this'";
     }

@@ -12,7 +12,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class ParameterHidingMemberVariableInspection extends MethodInspection {
+public class ParameterHidingMemberVariableInspection extends MethodInspection{
     public boolean m_ignoreInvisibleFields = false;
     public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
     public boolean m_ignoreForConstructors = false;
@@ -20,73 +20,85 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
     public boolean m_ignoreForAbstractMethods = false;
     private final RenameFix fix = new RenameFix();
 
-    public String getDisplayName() {
+    public String getID(){
+        return "ParameterHidesMemberVariable";
+    }
+
+    public String getDisplayName(){
         return "Parameter hides member variable";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Parameter '#ref' hides member variable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ParameterHidingMemberVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
+        return new ParameterHidingMemberVariableVisitor(this, inspectionManager,
+                                                        onTheFly);
     }
 
-    private class ParameterHidingMemberVariableVisitor extends BaseInspectionVisitor {
-        private ParameterHidingMemberVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private class ParameterHidingMemberVariableVisitor
+            extends BaseInspectionVisitor{
+        private ParameterHidingMemberVariableVisitor(BaseInspection inspection,
+                                                     InspectionManager inspectionManager,
+                                                     boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitParameter(PsiParameter variable) {
+        public void visitParameter(PsiParameter variable){
             super.visitParameter(variable);
-            if (variable.getDeclarationScope() instanceof PsiCatchSection) {
+            if(variable.getDeclarationScope() instanceof PsiCatchSection){
                 return;
             }
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
-            if (method == null) {
+                    (PsiMethod) PsiTreeUtil.getParentOfType(variable,
+                                                            PsiMethod.class);
+            if(method == null){
                 return;
             }
-            if (m_ignoreForConstructors && method.isConstructor()) {
+            if(m_ignoreForConstructors && method.isConstructor()){
                 return;
             }
-            if (m_ignoreForAbstractMethods &&
-                    (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.getContainingClass().isInterface())) {
+            if(m_ignoreForAbstractMethods &&
+                       (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                       method.getContainingClass().isInterface())){
                 return;
             }
-            if (m_ignoreForPropertySetters) {
+            if(m_ignoreForPropertySetters){
                 final String methodName = method.getName();
                 final PsiType returnType = method.getReturnType();
-                if (methodName.startsWith("set") && returnType.equals(PsiType.VOID)) {
+                if(methodName.startsWith("set") &&
+                           returnType.equals(PsiType.VOID)){
                     return;
                 }
             }
 
             final PsiClass aClass =
                     ClassUtils.getContainingClass(variable);
-            if (aClass == null) {
+            if(aClass == null){
                 return;
             }
             final String variableName = variable.getName();
             final PsiField[] fields = aClass.getAllFields();
-            for (int i = 0; i < fields.length; i++) {
+            for(int i = 0; i < fields.length; i++){
                 final PsiField field = fields[i];
-                if (checkFieldName(field, variableName, aClass)) {
-                    if (m_ignoreStaticMethodParametersHidingInstanceFields &&
-                            !field.hasModifierProperty(PsiModifier.STATIC) &&
-                            method.hasModifierProperty(PsiModifier.STATIC)) {
+                if(checkFieldName(field, variableName, aClass)){
+                    if(m_ignoreStaticMethodParametersHidingInstanceFields &&
+                               !field.hasModifierProperty(PsiModifier.STATIC) &&
+                               method.hasModifierProperty(PsiModifier.STATIC)){
                         continue;
                     }
                     registerVariableError(variable);
@@ -94,69 +106,76 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection {
             }
         }
 
-        private boolean checkFieldName(PsiField field, String variableName, PsiClass aClass) {
-            if (field == null) {
+        private boolean checkFieldName(PsiField field, String variableName,
+                                       PsiClass aClass){
+            if(field == null){
                 return false;
             }
             final String fieldName = field.getName();
-            if (fieldName == null) {
+            if(fieldName == null){
                 return false;
             }
-            if (!fieldName.equals(variableName)) {
+            if(!fieldName.equals(variableName)){
                 return false;
             }
-            if (m_ignoreInvisibleFields && !ClassUtils.isFieldVisible(field, aClass)) {
+            if(m_ignoreInvisibleFields &&
+                       !ClassUtils.isFieldVisible(field, aClass)){
                 return false;
             }
             return true;
         }
-
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox settersCheckBox = new JCheckBox("Ignore for property setters", m_ignoreForPropertySetters);
+        final JCheckBox settersCheckBox =
+                new JCheckBox("Ignore for property setters",
+                              m_ignoreForPropertySetters);
         final ButtonModel settersModel = settersCheckBox.getModel();
-        settersModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        settersModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreForPropertySetters = settersModel.isSelected();
             }
         });
-        final JCheckBox ignoreInvisibleFieldsCheck = new JCheckBox("Ignore superclass fields not visible from subclass",
-                m_ignoreInvisibleFields);
+        final JCheckBox ignoreInvisibleFieldsCheck =
+                new JCheckBox("Ignore superclass fields not visible from subclass",
+                              m_ignoreInvisibleFields);
 
-        final ButtonModel invisibleFieldsModel = ignoreInvisibleFieldsCheck.getModel();
-        invisibleFieldsModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        final ButtonModel invisibleFieldsModel =
+                ignoreInvisibleFieldsCheck.getModel();
+        invisibleFieldsModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreInvisibleFields = invisibleFieldsModel.isSelected();
             }
         });
 
-        final JCheckBox constructorCheckBox = new JCheckBox("Ignore for constructors", m_ignoreForConstructors);
+        final JCheckBox constructorCheckBox =
+                new JCheckBox("Ignore for constructors",
+                              m_ignoreForConstructors);
         final ButtonModel constructorModel = constructorCheckBox.getModel();
-        constructorModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        constructorModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreForConstructors = constructorModel.isSelected();
             }
         });
-        final JCheckBox abstractMethodsCheckbox = new JCheckBox("Ignore for abstract methods", m_ignoreForAbstractMethods);
-        final ButtonModel abstractMethodsModel = abstractMethodsCheckbox.getModel();
-        abstractMethodsModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        final JCheckBox abstractMethodsCheckbox =
+                new JCheckBox("Ignore for abstract methods",
+                              m_ignoreForAbstractMethods);
+        final ButtonModel abstractMethodsModel =
+                abstractMethodsCheckbox.getModel();
+        abstractMethodsModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreForAbstractMethods = abstractMethodsModel.isSelected();
             }
         });
 
-        final JCheckBox staticMethodsCheckbox = new JCheckBox("Ignore for static method parameters hiding instance fields", m_ignoreStaticMethodParametersHidingInstanceFields);
+        final JCheckBox staticMethodsCheckbox =
+                new JCheckBox("Ignore for static method parameters hiding instance fields",
+                              m_ignoreStaticMethodParametersHidingInstanceFields);
         final ButtonModel staticMethodsModel = staticMethodsCheckbox.getModel();
-        staticMethodsModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
+        staticMethodsModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreStaticMethodParametersHidingInstanceFields = staticMethodsModel.isSelected();
             }
         });

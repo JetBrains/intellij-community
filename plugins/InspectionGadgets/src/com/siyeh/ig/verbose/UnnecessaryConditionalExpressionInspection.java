@@ -13,12 +13,20 @@ public class UnnecessaryConditionalExpressionInspection
         extends ExpressionInspection {
     private final TrivialConditionalFix fix = new TrivialConditionalFix();
 
+    public String getID(){
+        return "RedundantConditionalExpression";
+    }
+
     public String getDisplayName() {
-        return "Unnecessary conditional expression";
+        return "Redundant conditional expression";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.VERBOSE_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class RuntimeExecInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToRuntimeExec";
+    }
     public String getDisplayName() {
         return "Call to Runtime.exec()";
     }

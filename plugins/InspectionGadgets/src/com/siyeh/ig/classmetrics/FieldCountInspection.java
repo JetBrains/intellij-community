@@ -21,6 +21,9 @@ public class FieldCountInspection
     private static final int FIELD_COUNT_LIMIT = 10;
     public boolean m_countConstantFields = false;
 
+    public String getID(){
+        return "ClassWithTooManyFields";
+    }
     public String getDisplayName() {
         return "Class with too many fields";
     }

@@ -15,6 +15,9 @@ import java.util.Set;
 
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         extends MethodInspection{
+    public String getID(){
+        return "IteratorNextCanNotThrowNoSuchElementException";
+    }
     public String getDisplayName(){
         return "Iterator.next() which can't throw NoSuchElementException";
     }

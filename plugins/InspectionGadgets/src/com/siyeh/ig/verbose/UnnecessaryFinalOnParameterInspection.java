@@ -7,6 +7,10 @@ import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableUsedInInnerClassVisitor;
 
 public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
+    public String getID(){
+        return "UnnecessaryFinalForMethodParameter";
+    }
+
     public String getDisplayName() {
         return "Unnecessary 'final' for method parameter";
     }

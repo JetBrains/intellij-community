@@ -71,6 +71,10 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    public String getID(){
+        return "ProhibittedExceptionThrown";
+    }
+
     public String getDisplayName() {
         return "Prohibitted exception thrown";
     }

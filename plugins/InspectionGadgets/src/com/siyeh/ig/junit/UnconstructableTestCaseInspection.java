@@ -8,36 +8,44 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 
-public class UnconstructableTestCaseInspection extends ClassInspection {
+public class UnconstructableTestCaseInspection extends ClassInspection{
+    public String getID(){
+        return "UnconstructableJUnitTestCase";
+    }
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Unconstructable JUnit TestCase";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.JUNIT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Test case #ref is unusable by most test runners #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnconstructableTestCaseVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
+        return new UnconstructableTestCaseVisitor(this, inspectionManager,
+                                                  onTheFly);
     }
 
-    private static class UnconstructableTestCaseVisitor extends BaseInspectionVisitor {
-
-        private UnconstructableTestCaseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class UnconstructableTestCaseVisitor
+            extends BaseInspectionVisitor{
+        private UnconstructableTestCaseVisitor(BaseInspection inspection,
+                                               InspectionManager inspectionManager,
+                                               boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() ||
-                    aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        public void visitClass(PsiClass aClass){
+            if(aClass.isInterface() || aClass.isEnum() ||
+                       aClass.isAnnotationType() ||
+                       aClass.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")){
                 return;
             }
             boolean hasConstructor = false;
@@ -45,40 +53,39 @@ public class UnconstructableTestCaseInspection extends ClassInspection {
             boolean hasStringConstructor = false;
 
             final PsiMethod[] constructors = aClass.getConstructors();
-            if (constructors == null) {
+            if(constructors == null){
                 return;
             }
 
-            for (int i = 0; i < constructors.length; i++) {
+            for(int i = 0; i < constructors.length; i++){
                 final PsiMethod constructor = constructors[i];
                 hasConstructor = true;
-                if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+                if(!constructor.hasModifierProperty(PsiModifier.PUBLIC)){
                     continue;
                 }
-                final PsiParameterList parameterList = constructor.getParameterList();
+                final PsiParameterList parameterList =
+                        constructor.getParameterList();
                 final PsiParameter[] parameters = parameterList.getParameters();
-                if (parameters.length == 0) {
+                if(parameters.length == 0){
                     hasNoArgConstructor = true;
                 }
-                if (parameters.length == 1) {
+                if(parameters.length == 1){
                     final PsiType type = parameters[0].getType();
-                    if (type != null) {
-                        if (type.getCanonicalText().equals("java.lang.String")) {
+                    if(type != null){
+                        if(type.getCanonicalText().equals("java.lang.String")){
                             hasStringConstructor = true;
                         }
                     }
                 }
             }
 
-            if (!hasConstructor) {
+            if(!hasConstructor){
                 return;
             }
-            if (hasNoArgConstructor || hasStringConstructor) {
+            if(hasNoArgConstructor || hasStringConstructor){
                 return;
             }
             registerClassError(aClass);
         }
-
     }
-
 }

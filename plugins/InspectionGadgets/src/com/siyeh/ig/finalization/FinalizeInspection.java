@@ -10,9 +10,12 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
 public class FinalizeInspection extends MethodInspection {
+    public String getID(){
+        return "FinalizeDeclaration";
+    }
 
     public String getDisplayName() {
-        return "Use of finalize()";
+        return "'finalize()' declaration";
     }
 
     public String getGroupDisplayName() {

@@ -12,6 +12,9 @@ public class ConstructorCountInspection
         extends ClassMetricInspection {
     private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
 
+    public String getID(){
+        return "ClassWithTooManyConstructors";
+    }
     public String getDisplayName() {
         return "Class with too many constructors";
     }

@@ -11,7 +11,7 @@ public class LimitedScopeInnerClassInspection extends ClassInspection {
 
     private final MoveClassFix fix = new MoveClassFix();
     public String getDisplayName() {
-        return "Limited-scope class";
+        return "Limited-scope inner class";
     }
 
     public String getGroupDisplayName() {

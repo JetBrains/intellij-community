@@ -9,6 +9,10 @@ import com.siyeh.ig.StatementInspection;
 
 public class InstanceofChainInspection extends StatementInspection {
 
+    public String getID(){
+        return "ChainOfInstanceofChecks";
+    }
+
     public String getDisplayName() {
         return "Chain of 'instanceof' checks";
     }

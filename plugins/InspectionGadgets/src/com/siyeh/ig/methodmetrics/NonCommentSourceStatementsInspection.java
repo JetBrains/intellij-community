@@ -10,6 +10,9 @@ import com.siyeh.ig.GroupNames;
 public class NonCommentSourceStatementsInspection extends MethodMetricInspection {
     private static final int DEFAULT_LIMIT = 30;
 
+    public String getID(){
+        return "OverlyLongMethod";
+    }
     public String getDisplayName() {
         return "Overly long method ";
     }

@@ -11,6 +11,9 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class SwitchStatementsWithoutDefaultInspection extends StatementInspection {
+    public String getID(){
+        return "SwitchStatementWithoutDefaultBranch";
+    }
     private boolean m_ignoreFullyCoveredEnums = true;
 
     public String getDisplayName() {

@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.LibraryUtil;
 
 public class ParametersPerMethodInspection extends MethodMetricInspection {
-
+    public String getID(){
+        return "MethodWithTooManyParameters";
+    }
     public String getDisplayName() {
         return "Method with too many parameters";
     }

@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class UseOfAnotherObjectsPrivateFieldInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "AccessingNonPublicFieldOfAnotherObject";
+    }
     public String getDisplayName() {
         return "Accessing a non-public field of another object";
     }

@@ -16,6 +16,9 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
     public boolean m_ignoreSerializableDueToInheritance = true;
     private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
+    public String getID(){
+        return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
+    }
     public String getDisplayName() {
         return "Serializable non-static inner class without serialVersionUID";
     }
@@ -27,7 +30,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
     public String buildErrorString(PsiElement location) {
         return "Inner class #ref doesn't define a serialVersionUID field #loc";
     }
-    
+
     protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }

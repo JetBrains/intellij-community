@@ -8,6 +8,9 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringConstructorInspection extends ExpressionInspection {
+    public String getID(){
+        return "RedundantStringConstructorCall";
+    }
 
     public String getDisplayName() {
         return "Redundant String constructor call";

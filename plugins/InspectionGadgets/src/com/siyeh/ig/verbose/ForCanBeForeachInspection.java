@@ -17,14 +17,20 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 public class ForCanBeForeachInspection extends StatementInspection {
     private final ForCanBeForeachFix fix = new ForCanBeForeachFix();
 
+    public String getID(){
+        return "ForLoopReplaceableByForEach";
+    }
     public String getDisplayName() {
-        return "'for' loop replacable by 'for each' (J2SDK 5.0 only)";
+        return "'for' loop replaceable by 'for each' (J2SDK 5.0 only)";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "'#ref' loop replacable by 'for each'";
     }

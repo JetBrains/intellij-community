@@ -10,7 +10,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class OctalLiteralInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "OctalInteger";
+    }
     public String getDisplayName() {
         return "Octal integer";
     }

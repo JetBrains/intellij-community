@@ -10,9 +10,11 @@ import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class ReadObjectInitializationInspection extends FieldInspection {
-
+    public String getID(){
+        return "InstanceVariableMayNotBeInitializedByReadObject";
+    }
     public String getDisplayName() {
-        return "Instance variable may not be initialized by readObject";
+        return "Instance variable may not be initialized by readObject()";
     }
 
     public String getGroupDisplayName() {

@@ -12,6 +12,9 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentToCollectionFieldFromParameterInspection
         extends ExpressionInspection{
+    public String getID(){
+        return "AssignmentToCollectionOrArrayFieldFromParameter";
+    }
 
     public String getDisplayName(){
         return "Assignment to Collection or array field from parameter";

@@ -17,6 +17,9 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "Unnecessary label on #ref statement #loc";
     }

@@ -11,6 +11,9 @@ public class NonSerializableWithSerializationMethodsInspection
         extends ClassInspection{
     private MakeSerializableFix fix = new MakeSerializableFix();
 
+    public String getID(){
+        return "NonSerializableClassWithSerializationMethods";
+    }
     public String getDisplayName(){
         return "Non-serializable class with 'readObject()' or 'writeObject()'";
     }

@@ -9,6 +9,9 @@ import com.siyeh.ig.*;
 public class TypeParameterExtendsObjectInspection extends ClassInspection {
     private final ExtendsObjectFix fix = new ExtendsObjectFix();
 
+    public String getID(){
+        return "TypeParameterExplicitlyExtendsObject";
+    }
     public String getDisplayName() {
         return "Type parameter explicitly extends java.lang.Object";
     }

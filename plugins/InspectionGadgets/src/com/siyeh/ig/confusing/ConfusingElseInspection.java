@@ -12,7 +12,9 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ConfusingElseInspection extends StatementInspection {
-
+    public String getID(){
+        return "ConfusingElseBranch";
+    }
     public String getDisplayName() {
         return "Confusing else branch";
     }

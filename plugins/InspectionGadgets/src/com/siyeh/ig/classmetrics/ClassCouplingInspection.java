@@ -18,9 +18,12 @@ import java.text.NumberFormat;
 
 public class ClassCouplingInspection
         extends ClassMetricInspection {
+    public String getID(){
+        return "OverlyCoupledClass";
+    }
     private static final int DEFAULT_COUPLING_LIMIT = 15;
     public boolean m_includeJavaClasses = false;
-    public boolean m_includeLibraryClasses = true;
+    public boolean m_includeLibraryClasses = false;
 
     public String getDisplayName() {
         return "Overly coupled class";

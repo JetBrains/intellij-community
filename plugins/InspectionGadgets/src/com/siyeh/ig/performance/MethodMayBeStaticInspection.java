@@ -18,7 +18,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class MethodMayBeStaticInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public boolean m_onlyPrivateOrFinal = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreEmptyMethods = true;
     private final MethodMayBeStaticFix fix = new MethodMayBeStaticFix();
 

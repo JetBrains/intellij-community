@@ -10,6 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringReplaceableByStringBufferInspection extends ExpressionInspection {
+    public String getID(){
+        return "NonConstantStringShouldBeStringBuffer";
+    }
 
     public String getDisplayName() {
         return "Non-constant String should be StringBuffer";

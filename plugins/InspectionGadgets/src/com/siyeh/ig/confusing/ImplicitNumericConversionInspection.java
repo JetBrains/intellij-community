@@ -31,7 +31,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
     public boolean m_ignoreWideningConversions = false;
 
     public String getDisplayName() {
-        return "Implicit numeric conversions";
+        return "Implicit numeric conversion";
     }
 
     public String getGroupDisplayName() {

@@ -12,7 +12,9 @@ import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringTokenizerInspection extends VariableInspection {
-
+    public String getID(){
+        return "UseOfStringTokenizer";
+    }
     public String getDisplayName() {
         return "Use of StringTokenizer";
     }

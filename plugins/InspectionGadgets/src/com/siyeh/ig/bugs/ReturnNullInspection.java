@@ -14,6 +14,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ReturnNullInspection extends StatementInspection {
+    public String getID(){
+        return "ReturnOfNull";
+    }
     public boolean m_reportObjectMethods = true;
     public boolean m_reportArrayMethods = true;
 

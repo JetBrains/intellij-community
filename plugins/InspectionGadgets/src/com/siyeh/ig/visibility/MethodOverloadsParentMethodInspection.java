@@ -12,6 +12,9 @@ import java.util.Set;
 public class MethodOverloadsParentMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "MethodOverloadsMethodOfSuperclass";
+    }
     public String getDisplayName() {
         return "Method overloads method of superclass";
     }

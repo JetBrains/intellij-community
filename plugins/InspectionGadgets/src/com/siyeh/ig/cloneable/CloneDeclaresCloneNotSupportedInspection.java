@@ -12,6 +12,9 @@ import com.siyeh.ig.*;
 public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
     private final CloneDeclaresCloneNotSupportedInspectionFix fix = new CloneDeclaresCloneNotSupportedInspectionFix();
 
+    public String getID(){
+        return "CloneDoesntDeclareCloneNotSupportedException";
+    }
     public String getDisplayName() {
         return "clone() doesn't declare CloneNotSupportedException";
     }

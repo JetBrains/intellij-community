@@ -22,6 +22,10 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
+    public String getID(){
+        return "HardcodedLineSeparator";
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Hardcoded line separator #ref #loc";
     }

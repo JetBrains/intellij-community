@@ -16,6 +16,10 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
     public boolean m_ignoreInvisibleFields = false;
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "InnerClassFieldHidesOuterClassField";
+    }
+
     public String getDisplayName() {
         return "Inner class field hides outer class field";
     }
@@ -73,7 +77,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
                     if (!m_ignoreInvisibleFields ||
                             !reportStaticsOnly || field.hasModifierProperty(PsiModifier.STATIC)) {
                        registerFieldError(field);
-                    }                                            
+                    }
                 }
                 ancestorClass = ClassUtils.getContainingClass(ancestorClass);
             }

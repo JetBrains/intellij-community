@@ -10,6 +10,9 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class ExceptionNameDoesntEndWithExceptionInspection extends ClassInspection {
     private final RenameFix fix = new RenameFix();
 
+    public String getID(){
+        return "ExceptionClassNameDoesntEndWithException";
+    }
     public String getDisplayName() {
         return "Exception class name doesn't end with Exception";
     }

@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.SerializationUtils;
 
 public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
-
+    public String getID(){
+        return "SerialVersionUIDWithWrongSignature";
+    }
     public String getDisplayName() {
         return "'serialVersionUID' field not declared 'private static final long'";
     }

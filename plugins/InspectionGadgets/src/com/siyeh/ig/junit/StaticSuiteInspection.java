@@ -9,7 +9,9 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class StaticSuiteInspection extends MethodInspection {
-
+    public String getID(){
+        return "SuiteNotDeclaredStatic";
+    }
     public String getDisplayName() {
         return "'suite()' method not declared 'static'";
     }

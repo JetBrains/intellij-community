@@ -9,7 +9,9 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 
 public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
-
+    public String getID(){
+        return "MethodNamesDifferingOnlyByCase";
+    }
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {

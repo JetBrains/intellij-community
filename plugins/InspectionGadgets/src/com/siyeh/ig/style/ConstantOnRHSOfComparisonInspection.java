@@ -15,6 +15,10 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 public class ConstantOnRHSOfComparisonInspection extends ExpressionInspection {
     private final SwapComparisonFix fix = new SwapComparisonFix();
 
+    public String getID(){
+        return "ConstantOnRightSideOfComparison";
+    }
+
     public String getDisplayName() {
         return "Constant on right side of comparison";
     }

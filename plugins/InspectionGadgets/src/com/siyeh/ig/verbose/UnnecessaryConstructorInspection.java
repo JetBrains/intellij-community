@@ -9,6 +9,9 @@ import com.siyeh.ig.*;
 public class UnnecessaryConstructorInspection extends ClassInspection {
     private final UnnecessaryConstructorFix fix = new UnnecessaryConstructorFix();
 
+    public String getID(){
+        return "RedundantNoArgConstructor";
+    }
     public String getDisplayName() {
         return "Redundant no-arg constructor";
     }

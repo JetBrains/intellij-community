@@ -19,8 +19,11 @@ import java.text.NumberFormat;
 public class MethodCouplingInspection
         extends MethodMetricInspection {
     public boolean m_includeJavaClasses = false;
-    public boolean m_includeLibraryClasses = true;
+    public boolean m_includeLibraryClasses = false;
 
+    public String getID(){
+        return "OverlyCoupledMethod";
+    }
     public String getDisplayName() {
         return "Overly coupled method";
     }

@@ -10,7 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class ConfusingOctalEscapeInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "ConfusingOctalEscapeSequence";
+    }
     public String getDisplayName() {
         return "Confusing octal escape sequence";
     }

@@ -9,7 +9,9 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TeardownIsPublicVoidNoArgInspection extends MethodInspection {
-
+    public String getID(){
+        return "TearDownWithIncorrectSignature";
+    }
     public String getDisplayName() {
         return "tearDown() with incorrect signature";
     }

@@ -9,6 +9,9 @@ import com.siyeh.ig.*;
 public class ObjectNotifyInspection extends ExpressionInspection {
     private final ObjectNotifyFix fix = new ObjectNotifyFix();
 
+    public String getID(){
+        return "CallToNotifyInsteadOfNotifyAll";
+    }
     public String getDisplayName() {
         return "Call to notify() instead of notifyAll()";
     }

@@ -11,12 +11,20 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 public class UnnecessaryReturnInspection extends StatementInspection{
     private final UnnecessaryReturnFix fix = new UnnecessaryReturnFix();
 
+    public String getID(){
+        return "UnnecessaryReturnStatement";
+    }
+
     public String getDisplayName(){
         return "Unnecessary 'return' statement";
     }
 
     public String getGroupDisplayName(){
         return GroupNames.VERBOSE_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location){
@@ -45,7 +53,9 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement returnStatement = returnKeywordElement.getParent();
             deleteElement(returnStatement);
@@ -59,14 +69,12 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-
         public void visitReturnStatement(PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiMethod method =
                     (PsiMethod) PsiTreeUtil.getParentOfType(statement,
                                                             PsiMethod.class);
-            if(method == null)
-            {
+            if(method == null){
                 return;
             }
             if(!method.isConstructor()){
@@ -79,8 +87,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             if(body == null){
                 return;
             }
-            if(ControlFlowUtils.blockCompletesWithStatement(body, statement))
-            {
+            if(ControlFlowUtils.blockCompletesWithStatement(body, statement)){
                 registerStatementError(statement);
             }
         }

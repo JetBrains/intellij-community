@@ -39,6 +39,10 @@ public class MissortedModifiersInspection extends ClassInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         return "Missorted modifers '#ref' #loc";
     }

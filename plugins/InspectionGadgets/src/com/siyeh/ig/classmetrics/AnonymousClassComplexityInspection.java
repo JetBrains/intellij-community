@@ -10,6 +10,9 @@ import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 
 public class AnonymousClassComplexityInspection
         extends ClassMetricInspection {
+    public String getID(){
+        return "OverlyComplexAnonymousInnerClass";
+    }
     private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
     private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix();
 

@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "OctalAndDecimalIntegersInSameArray";
+    }
     public String getDisplayName() {
         return "Octal and decimal integers in same array";
     }

@@ -19,6 +19,10 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
     public String buildErrorString(PsiElement location) {
         final PsiMethodCallExpression expression = (PsiMethodCallExpression) location;
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();

@@ -10,6 +10,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class IOResourceInspection extends ExpressionInspection{
+    public String getID(){
+        return "IOResourceOpenedButNotSafelyClosed";
+    }
     public String getDisplayName(){
         return "I/O resource opened but not safely closed";
     }

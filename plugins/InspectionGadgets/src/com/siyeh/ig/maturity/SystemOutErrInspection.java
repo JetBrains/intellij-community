@@ -8,7 +8,9 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class SystemOutErrInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "UseOfSystemOutOrSystemErr";
+    }
     public String getDisplayName() {
         return "Use of System.out or System.err";
     }
@@ -16,6 +18,8 @@ public class SystemOutErrInspection extends ExpressionInspection {
     public String getGroupDisplayName() {
         return GroupNames.MATURITY_GROUP_NAME;
     }
+
+
 
     public String buildErrorString(PsiElement location) {
         return "Uses of System.out and System.err should probably be replaced with more robust logging #loc";

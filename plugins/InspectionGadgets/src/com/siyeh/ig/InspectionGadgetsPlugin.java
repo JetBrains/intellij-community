@@ -24,12 +24,6 @@ import com.siyeh.ig.imports.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
 import com.siyeh.ig.jdk.*;
-import com.siyeh.ig.jdk.AnnotationInspection;
-import com.siyeh.ig.jdk.AssertAsNameInspection;
-import com.siyeh.ig.jdk.AssertStatementInspection;
-import com.siyeh.ig.jdk.EnumAsNameInspection;
-import com.siyeh.ig.jdk.EnumClassInspection;
-import com.siyeh.ig.jdk.VarargParameterInspection;
 import com.siyeh.ig.junit.*;
 import com.siyeh.ig.logging.ClassWithMultipleLoggersInspection;
 import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
@@ -52,14 +46,14 @@ import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
     private static final int NUM_INSPECTIONS = 360;
     private final List m_inspectionClasses = new ArrayList(NUM_INSPECTIONS);
+    private static final String DESCRIPTION_DIRECTORY_NAME =
+            "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
 
     public static void main(String[] args){
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
@@ -114,19 +108,57 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             }
         }
 
+        out.println();
+        out.println("Inspections enabled by default:");
+        for(int i = 0; i < classes.length; i++){
+            final Class aClass = classes[i];
+            final String className = aClass.getName();
+            try{
+                final LocalInspectionTool inspection =
+                        (LocalInspectionTool) aClass.newInstance();
+                if(inspection.isEnabledByDefault())
+                {
+                    out.println("\t"+inspection.getDisplayName());
+                }
+            } catch(InstantiationException e){
+                out.print("Couldn't instantiate ");
+                out.println(className);
+            } catch(IllegalAccessException e){
+                out.print("Couldn't access ");
+                out.println(className);
+            } catch(ClassCastException e){
+                out.print("Couldn't cast ");
+                out.println(className);
+            }
+        }
+        final File descriptionDirectory = new File(DESCRIPTION_DIRECTORY_NAME);
+        final File[] descriptionFiles = descriptionDirectory.listFiles();
+        final Set descriptionFilesSet = new HashSet(descriptionFiles.length);
+        for(int i = 0; i < descriptionFiles.length; i++){
+            if(!descriptionFiles[i].getName().startsWith(".")){
+                descriptionFilesSet.add(descriptionFiles[i]);
+            }
+        }
         for(int i = 0; i < classes.length; i++){
             final Class aClass = classes[i];
             final String className = aClass.getName();
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
                                         className.length() -
-                                                "Inspection".length());
+                    "Inspection".length());
             final String fileName =
-            "C:/InspectionGadgetsSVN/src/inspectionDescriptions/" +
-                    simpleClassName + ".html";
-            if(!new File(fileName).exists()){
-                out.println("Couldn't find documentation file " + fileName);
+                    DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
+            final File descriptionFile = new File(fileName);
+            if(descriptionFile.exists()){
+                descriptionFilesSet.remove(descriptionFile);
+            } else{
+                out.println("Couldn't find documentation file: " + fileName);
             }
+        }
+        for(Iterator unusedDescriptionFiles = descriptionFilesSet.iterator();
+            unusedDescriptionFiles.hasNext();){
+            final File file = (File) unusedDescriptionFiles.next();
+            out.println("Unused documentation file: " + file.getAbsolutePath());
         }
     }
 
@@ -224,7 +256,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(JDBCResourceInspection.class);
     }
 
-
     private void registerLoggingInspections(){
         final List inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ClassWithoutLoggerInspection.class);
@@ -272,7 +303,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MethodNameSameAsParentNameInspection.class);
         inspectionClasses.add(StandardVariableNamesInspection.class);
         inspectionClasses.add(BooleanMethodNameMustStartWithQuestionInspection.class);
-        inspectionClasses.add(NonBooleanMethodNameMayNotStartWithQuestionInspection .class);
+        inspectionClasses.add(NonBooleanMethodNameMayNotStartWithQuestionInspection.class);
         inspectionClasses.add(QuestionableNameInspection.class);
         inspectionClasses.add(ConfusingMainMethodInspection.class);
         inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
@@ -325,6 +356,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(EqualsUsesNonFinalVariableInspection.class);
         inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
         inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
+        inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
     }
 
     private void registerAbstractionInspections(){
@@ -384,6 +416,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MultipleTopLevelClassesInFileInspection.class);
         inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
         inspectionClasses.add(MarkerInterfaceInspection.class);
+        inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
     }
 
     private void registerCloneInspections(){
@@ -504,6 +537,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
         inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
         inspectionClasses.add(ForCanBeForeachInspection.class);
+        inspectionClasses.add(WhileCanBeForeachInspection.class);
     }
 
     private void registerStyleInspections(){
@@ -690,11 +724,14 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(SystemGCInspection.class);
         inspectionClasses.add(SingleCharacterStartsWithInspection.class);
         inspectionClasses.add(StringEqualsEmptyStringInspection.class);
+        inspectionClasses.add(RandomDoubleForRandomIntegerInspection.class);
         inspectionClasses.add(FieldRepeatedlyAccessedInspection.class);
         inspectionClasses.add(ManualArrayCopyInspection.class);
         inspectionClasses.add(JavaLangReflectInspection.class);
         inspectionClasses.add(StaticCollectionInspection.class);
         inspectionClasses.add(ZeroLengthArrayInitializationInspection.class);
+        inspectionClasses.add(CallToSimpleGetterInClassInspection.class);
+        inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
     }
 
     private void registerMaturityInspections(){

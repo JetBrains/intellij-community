@@ -9,7 +9,9 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class StringEqualsInspection extends ExpressionInspection {
-
+    public String getID(){
+        return "CallToStringEquals";
+    }
     public String getDisplayName() {
         return "Call to String.equals()";
     }

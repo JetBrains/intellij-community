@@ -14,8 +14,12 @@ import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
 public class TrivialIfInspection extends ExpressionInspection{
     private final TrivialIfFix fix = new TrivialIfFix();
 
+    public String getID(){
+        return "RedundantIfStatement";
+    }
+
     public String getDisplayName(){
-        return "Unnecessary 'if' statement";
+        return "Redundant 'if' statement";
     }
 
     public String getGroupDisplayName(){
@@ -25,6 +29,10 @@ public class TrivialIfInspection extends ExpressionInspection{
     protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                   boolean onTheFly){
         return new TrivialIfVisitor(this, inspectionManager, onTheFly);
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location){
