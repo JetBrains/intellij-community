@@ -273,18 +273,6 @@ public class TypeConversionUtil {
   }
 
   /**
-   * @deprecated Use {@link PsiClassType#rawType()} instead
-   */
-  public static PsiClassType getRawType(PsiClassType type, PsiManager manager) {
-    PsiClass resolved = type.resolve();
-    if (resolved != null) {
-      return manager.getElementFactory().createType(resolved);
-    }
-
-    return type;
-  }
-
-  /**
    * @return 1..MAX_NUMERIC_TYPE if type is primitive numeric type,
    *         BOOL_TYPE for boolean,
    *         STRING_TYPE for String, Integer.MAX_VALUE for other
