@@ -171,11 +171,11 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.JAVA,new JavaIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.ASPECT,new AspectJIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XML,new XmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.XHTML,new XmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.DTD,new XmlIdCacheBuilder());
 
     registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
+    registerCacheBuilder(StdFileTypes.JSPX,new XHtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.JSP,new JspIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
