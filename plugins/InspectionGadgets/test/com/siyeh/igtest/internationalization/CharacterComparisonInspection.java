@@ -4,6 +4,7 @@ public class CharacterComparisonInspection
 {
     public CharacterComparisonInspection()
     {
+        super();
     }
 
     public void foo()
