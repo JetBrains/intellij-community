@@ -186,7 +186,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return "ProjectLevelVcsManager";
   }
 
-  public boolean checkAllFielsAreUnder(AbstractVcs abstractVcs, VirtualFile[] files) {
+  public boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files) {
     if (files == null) return false;
     for (int i = 0; i < files.length; i++) {
       if (ProjectLevelVcsManager.getInstance(myProject).getVcsFor(files[i]) != abstractVcs) {

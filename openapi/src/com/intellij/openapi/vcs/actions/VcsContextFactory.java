@@ -38,11 +38,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 
 public interface VcsContextFactory {
-  VcsContext createOn(AnActionEvent event);
+  VcsContext createCachedContextOn(AnActionEvent event);
 
-  FilePath createOn(VirtualFile virtualFile);
+  VcsContext createContextOn(final AnActionEvent event);
 
-  FilePath createOn(File file);
+  FilePath createFilePathOn(VirtualFile virtualFile);
 
-  FilePath createOn(VirtualFile parent, String name);
+  FilePath createFilePathOn(File file);
+
+  FilePath createFilePathOn(VirtualFile parent, String name);
+
+
 }

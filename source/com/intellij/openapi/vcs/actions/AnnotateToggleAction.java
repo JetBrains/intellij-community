@@ -29,7 +29,7 @@ public class AnnotateToggleAction extends ToggleAction {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(PeerFactory.getInstance().getVcsContextFactory().createOn(e)));
+    e.getPresentation().setEnabled(isEnabled(PeerFactory.getInstance().getVcsContextFactory().createCachedContextOn(e)));
   }
 
   private boolean isEnabled(final VcsContext context) {
@@ -55,7 +55,7 @@ public class AnnotateToggleAction extends ToggleAction {
 
 
   public boolean isSelected(AnActionEvent e) {
-    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createOn(e);
+    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createCachedContextOn(e);
     Editor editor = context.getEditor();
     if (editor == null) return false;
     Object annotations = editor.getUserData(AnnotateAction.KEY_IN_EDITOR);
@@ -64,7 +64,7 @@ public class AnnotateToggleAction extends ToggleAction {
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createOn(e);
+    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createCachedContextOn(e);
     Editor editor = context.getEditor();
     if (!state) {
       if (editor == null) {

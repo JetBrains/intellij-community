@@ -201,19 +201,23 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
   public VcsContextFactory getVcsContextFactory() {
     return new VcsContextFactory() {
-      public VcsContext createOn(AnActionEvent event) {
+      public VcsContext createCachedContextOn(AnActionEvent event) {
         return VcsContextWrapper.on(event);
       }
 
-      public FilePath createOn(VirtualFile virtualFile) {
+      public VcsContext createContextOn(final AnActionEvent event) {
+        return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
+      }
+
+      public FilePath createFilePathOn(VirtualFile virtualFile) {
         return new FilePathImpl(virtualFile);
       }
 
-      public FilePath createOn(File file) {
+      public FilePath createFilePathOn(File file) {
         return FilePathImpl.create(file);
       }
 
-      public FilePath createOn(VirtualFile parent, String name) {
+      public FilePath createFilePathOn(VirtualFile parent, String name) {
         return new FilePathImpl(parent, name);
       }
     };

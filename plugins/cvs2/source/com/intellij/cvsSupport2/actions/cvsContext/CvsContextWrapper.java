@@ -27,21 +27,23 @@ public class CvsContextWrapper implements CvsContext {
   private final VcsContext myVcsContext;
   private final DataContext myContext;
 
-  private CvsContextWrapper(AnActionEvent actionEvent) {
+  private CvsContextWrapper(AnActionEvent actionEvent, final VcsContext vcsContext) {
     myContext = actionEvent.getDataContext();
-    myVcsContext = PeerFactory.getInstance().getVcsContextFactory().createOn(actionEvent);
+    myVcsContext = vcsContext;
   }
 
-  public static CvsContext on(AnActionEvent event) {
-    CvsContextWrapper wrapper = new CvsContextWrapper(event);
-    return new CashedCvsContext(wrapper);
+  public static CvsContext createCachedInstance(AnActionEvent event) {
+    return new CachedCvsContext(new CvsContextWrapper(event, PeerFactory.getInstance().getVcsContextFactory().createCachedContextOn(event)));
   }
 
+  public static CvsContext createInstance(AnActionEvent event) {
+    return new CvsContextWrapper(event, PeerFactory.getInstance().getVcsContextFactory().createContextOn(event));
+  }
 
   public boolean cvsIsActive() {
     Project project = getProject();
     if (project == null) return false;
-    return ProjectLevelVcsManager.getInstance(project).checkAllFielsAreUnder(CvsVcs2.getInstance(project), getSelectedFiles());
+    return ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(CvsVcs2.getInstance(project), getSelectedFiles());
   }
 
 

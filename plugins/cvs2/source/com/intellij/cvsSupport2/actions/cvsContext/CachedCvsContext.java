@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
  * author: lesya
  */
-public class CashedCvsContext implements CvsContext{
+public class CachedCvsContext implements CvsContext{
   private final boolean myIsActive;
   private final Collection<String> myDeletedFileNames;
   private final String myFileToRestore;
@@ -28,7 +28,7 @@ public class CashedCvsContext implements CvsContext{
 
   private final VcsContext myVcsContext;
 
-  public CashedCvsContext(CvsContext baseContext){
+  public CachedCvsContext(CvsContext baseContext){
     myIsActive = baseContext.cvsIsActive();
     myDeletedFileNames = baseContext.getDeletedFileNames();
     myFileToRestore = baseContext.getFileToRestore();

@@ -47,7 +47,7 @@ public class IgnoreFileAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    CvsContext context = CvsContextWrapper.on(e);
+    CvsContext context = CvsContextWrapper.createCachedInstance(e);
     VirtualFile[] selectedFiles = context.getSelectedFiles();
 
     for (int i = 0; i < selectedFiles.length; i++) {

@@ -74,8 +74,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public static VcsContext on(AnActionEvent event) {
-    VcsContextWrapper wrapper = new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
-    return new CashedVcsContext(wrapper);
+    return new CachedVcsContext(new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace()));
   }
 
   public Project getProject() {

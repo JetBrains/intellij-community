@@ -34,7 +34,7 @@ public class UnmarkAddedAction extends AnAction{
   }
 
   public void actionPerformed(AnActionEvent e) {
-    VcsContext context = CvsContextWrapper.on(e);
+    VcsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {

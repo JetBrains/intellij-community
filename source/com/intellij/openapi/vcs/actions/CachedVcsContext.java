@@ -41,7 +41,7 @@ import com.intellij.psi.PsiElement;
 import java.util.Collection;
 import java.io.File;
 
-public class CashedVcsContext implements VcsContext {
+public class CachedVcsContext implements VcsContext {
   private final Project myProject;
   private final VirtualFile mySelectedFile;
   private final VirtualFile[] mySelectedFiles;
@@ -56,7 +56,7 @@ public class CashedVcsContext implements VcsContext {
   private final FilePath[] mySelectedFilePaths;
   private final FilePath mySelectedFilePath;
 
-  public CashedVcsContext(VcsContext baseContext) {
+  public CachedVcsContext(VcsContext baseContext) {
     myProject = baseContext.getProject();
     mySelectedFile = baseContext.getSelectedFile();
     mySelectedFiles = baseContext.getSelectedFiles();

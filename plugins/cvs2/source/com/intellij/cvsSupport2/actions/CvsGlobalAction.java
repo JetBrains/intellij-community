@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 
 public abstract class CvsGlobalAction extends AnAction {
   public void update(AnActionEvent e) {
-    CvsContext cvsContext = CvsContextWrapper.on(e);
+    CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     Presentation presentation = e.getPresentation();
     if (cvsContext.cvsIsActive()) {
       presentation.setVisible(true);

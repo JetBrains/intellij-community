@@ -2,16 +2,14 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationDialog;
+import com.intellij.cvsSupport2.cvsBrowser.ui.BrowserPanel;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.AbstractCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsBrowser.ui.BrowserPanel;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationDialog;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -30,7 +28,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    VcsContext context = CvsContextWrapper.on(e);
+    VcsContext context = CvsContextWrapper.createInstance(e);
     boolean projectExists = context.getProject() != null;
     presentation.setVisible(true);
     presentation.setEnabled(projectExists);

@@ -49,7 +49,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract AbstractVcs findVcsByName(String name);
 
-  public abstract boolean checkAllFielsAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
+  public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
 
   public abstract AbstractVcs getVcsFor(VirtualFile file);
 

@@ -135,7 +135,7 @@ public class CvsActionVisibility {
   }
 
   public void applyToEvent(AnActionEvent e) {
-    CvsContext cvsContext = CvsContextWrapper.on(e);
+    CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(isEnabled(cvsContext));
     presentation.setVisible(isVisible(cvsContext));

@@ -17,7 +17,7 @@ import java.util.List;
 public class ConfigureCvsRootsAction extends CvsGlobalAction {
 
   public void actionPerformed(AnActionEvent e) {
-    VcsContext cvsContext = CvsContextWrapper.on(e);
+    VcsContext cvsContext = CvsContextWrapper.createCachedInstance(e);
     CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     List<CvsRootConfiguration> configurations = configuration.CONFIGURATIONS;
     CvsConfigurationsListEditor cvsConfigurationsListEditor =

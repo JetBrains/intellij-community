@@ -50,7 +50,7 @@ public abstract class AbstractAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(CvsContextWrapper.on(e));
+    actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
 
   private LocalVcs getLvcs(Project project) {
@@ -201,13 +201,13 @@ public abstract class AbstractAction extends AnAction {
   }
 
   protected CvsConfiguration getConfig(AnActionEvent e) {
-    Project project = CvsContextWrapper.on(e).getProject();
+    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
     if (project == null) return null;
     return CvsConfiguration.getInstance(project);
   }
 
   protected VcsConfiguration getCommonConfig(AnActionEvent e) {
-    Project project = CvsContextWrapper.on(e).getProject();
+    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
     if (project == null) return null;
     return VcsConfiguration.getInstance(project);
   }
