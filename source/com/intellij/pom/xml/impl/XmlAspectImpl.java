@@ -11,9 +11,8 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
-import com.intellij.pom.xml.impl.events.*;
-import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -33,7 +32,7 @@ public class XmlAspectImpl implements XmlAspect {
   public XmlAspectImpl(PomModel model, TreeAspect aspect) {
     myModel = model;
     myTreeAspect = aspect;
-    myModel.registerAspect(this, Collections.singleton((PomModelAspect)myTreeAspect));
+    myModel.registerAspect(XmlAspect.class, this, Collections.singleton((PomModelAspect)myTreeAspect));
   }
 
   public void update(PomModelEvent event) {

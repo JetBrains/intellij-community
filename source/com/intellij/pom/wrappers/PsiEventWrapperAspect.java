@@ -28,7 +28,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
   public PsiEventWrapperAspect(PomModel model, TreeAspect aspect) {
     myModel = model;
     myTreeAspect = aspect;
-    myModel.registerAspect(this, Collections.singleton((PomModelAspect)aspect));
+    myModel.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
   }
 
   public void projectOpened() {}

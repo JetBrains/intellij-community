@@ -67,9 +67,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return (T)myAspects.get(aClass);
   }
 
-  public void registerAspect(PomModelAspect aspect, Set<PomModelAspect> dependencies) {
+  public void registerAspect(Class<? extends PomModelAspect> aClass, PomModelAspect aspect, Set<PomModelAspect> dependencies) {
     myAspectDependencies.put(aspect, dependencies);
-    myAspects.put(aspect.getClass(), aspect);
+    myAspects.put(aClass, aspect);
     final Iterator<PomModelAspect> iterator = dependencies.iterator();
     final List<PomModelAspect> deps = new ArrayList<PomModelAspect>();
     // todo: reorder dependencies

@@ -12,7 +12,7 @@ public class TreeAspect implements PomModelAspect{
 
   public TreeAspect(PomModel model) {
     myModel = model;
-    myModel.registerAspect(this, (Set<PomModelAspect>)Collections.EMPTY_SET);
+    myModel.registerAspect(TreeAspect.class, this, (Set<PomModelAspect>)Collections.EMPTY_SET);
   }
 
   public void projectOpened() {}
