@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -48,12 +47,12 @@ public class DetailExceptionsIntention extends Intention{
 
         final HeirarchicalTypeComparator comparator =
         new HeirarchicalTypeComparator();
-        PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+        final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         for(int i = 0; i < catchSections.length; i++){
             final PsiParameter param = catchSections[i].getParameter();
             final PsiCodeBlock block = catchSections[i].getCatchBlock();
             if(param == null || block == null){
-            continue;
+                continue;
             }
 
             final PsiType caughtType = param.getType();

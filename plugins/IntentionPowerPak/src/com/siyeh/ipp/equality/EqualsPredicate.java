@@ -2,7 +2,6 @@ package com.siyeh.ipp.equality;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
 class EqualsPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

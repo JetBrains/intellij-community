@@ -63,14 +63,17 @@ public class MergeIfOrIntention extends Intention{
         }
 
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
-        String statement =
+        final String parentThenBranchText = parentThenBranch.getText();
+        final StringBuffer statement = new StringBuffer(
         "if(" + parentConditionText + "||" + childConditionText + ')' +
-                parentThenBranch.getText();
+                parentThenBranchText);
         final PsiStatement childElseBranch = childStatement.getElseBranch();
         if(childElseBranch != null){
-            statement += "else " + childElseBranch.getText();
+            final String childElseBranchText = childElseBranch.getText();
+            statement.append("else " + childElseBranchText);
         }
-        replaceStatement(project, statement, parentStatement);
+        final String newStatement = statement.toString();
+        replaceStatement(project, newStatement, parentStatement);
     }
 
     private void replaceMergeableImplicitIf(PsiFile file, Editor editor,

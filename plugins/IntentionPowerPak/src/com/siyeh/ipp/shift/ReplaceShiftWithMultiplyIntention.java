@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -28,7 +28,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
             final PsiJavaToken sign = exp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             final String assignString;
-            if(tokenType == JavaTokenType.LTLTEQ){
+            if(JavaTokenType.LTLTEQ.equals(tokenType)){
                 assignString = "*=";
             } else{
                 assignString = "/=";
@@ -49,37 +49,64 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
             throws IncorrectOperationException{
         final PsiElement element = findMatchingElement(file, editor);
         if(element instanceof PsiBinaryExpression){
-            final PsiBinaryExpression exp =
-                    (PsiBinaryExpression) element;
-            final PsiExpression lhs = exp.getLOperand();
-            final PsiExpression rhs = exp.getROperand();
-            final PsiJavaToken sign = exp.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            final String operatorString;
-            if(tokenType.equals(JavaTokenType.LTLT)){
-                operatorString = "*";
-            } else{
-                operatorString = "/";
-            }
-            final String expString =
-            lhs.getText() + operatorString + ShiftUtils.getExpBase2(rhs);
-            replaceExpression(project, expString, exp);
+            replaceShiftWithMultiplyOrDivide(element, project);
         } else{
-            final PsiAssignmentExpression exp =
-                    (PsiAssignmentExpression) element;
-            final PsiExpression lhs = exp.getLExpression();
-            final PsiExpression rhs = exp.getRExpression();
-            final PsiJavaToken sign = exp.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            final String assignString;
-            if(tokenType.equals(JavaTokenType.LTLTEQ)){
-                assignString = "*=";
-            } else{
-                assignString = "/=";
-            }
-            final String expString =
-            lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
-            replaceExpression(project, expString, exp);
+            replaceShiftAssignWithMultiplyOrDivideAssign(element, project);
         }
+    }
+
+    private void replaceShiftAssignWithMultiplyOrDivideAssign(PsiElement element,
+                                                              Project project)
+            throws IncorrectOperationException{
+        final PsiAssignmentExpression exp =
+                (PsiAssignmentExpression) element;
+        final PsiExpression lhs = exp.getLExpression();
+        final PsiExpression rhs = exp.getRExpression();
+        final PsiJavaToken sign = exp.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        final String assignString;
+        if(tokenType.equals(JavaTokenType.LTLTEQ)){
+            assignString = "*=";
+        } else{
+            assignString = "/=";
+        }
+        final String expString =
+        lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
+        replaceExpression(project, expString, exp);
+    }
+
+    private void replaceShiftWithMultiplyOrDivide(PsiElement element,
+                                                  Project project)
+            throws IncorrectOperationException{
+        final PsiBinaryExpression exp =
+                (PsiBinaryExpression) element;
+        final PsiExpression lhs = exp.getLOperand();
+        final PsiExpression rhs = exp.getROperand();
+        final PsiJavaToken sign = exp.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        final String operatorString;
+        if(tokenType.equals(JavaTokenType.LTLT)){
+            operatorString = "*";
+        } else{
+            operatorString = "/";
+        }
+        final String lhsText;
+        if(ParenthesesUtils.getPrecendence(lhs) >
+                ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+            lhsText = '(' + lhs.getText() + ')';
+        } else{
+            lhsText = lhs.getText();
+        }
+        String expString =
+        lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
+        final PsiElement parent = exp.getParent();
+        if(parent != null && parent instanceof PsiExpression){
+            if(!(parent instanceof PsiParenthesizedExpression)&&
+                    ParenthesesUtils.getPrecendence((PsiExpression) parent) <
+                    ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+                expString = '(' + expString + ')';
+            }
+        }
+        replaceExpression(project, expString, exp);
     }
 }

@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -36,9 +35,10 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         if(isPartOfStringBufferAppend(exp)){
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) parent.getParent();
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
             final PsiExpression qualifierExpression =
-                    methodCallExpression.getMethodExpression()
-                            .getQualifierExpression();
+                    methodExpression.getQualifierExpression();
             final String qualifierText = qualifierExpression.getText();
             expString.append(qualifierText);
             turnExpressionIntoChainedAppends(exp, expString);

@@ -4,10 +4,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.*;
+import com.siyeh.ipp.psiutils.ControlFlowUtils;
+import com.siyeh.ipp.psiutils.DeclarationUtils;
+import com.siyeh.ipp.psiutils.EquivalenceChecker;
 
 import java.util.*;
 
@@ -137,8 +138,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             final String newStatement = out.toString();
             replaceStatement(project, newStatement, breakTarget);
         } else{
-            final String newStatement = switchStatementString;
-            replaceStatement(project, newStatement, statementToReplace);
+            replaceStatement(project, switchStatementString, statementToReplace);
         }
     }
 

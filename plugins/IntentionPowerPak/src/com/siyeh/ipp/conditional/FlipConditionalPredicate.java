@@ -3,7 +3,6 @@ package com.siyeh.ipp.conditional;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FlipConditionalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

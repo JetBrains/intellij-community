@@ -1,7 +1,8 @@
 package com.siyeh.ipp.integer;
 
-import com.intellij.psi.*;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertIntegerToHexPredicate implements PsiElementPredicate{

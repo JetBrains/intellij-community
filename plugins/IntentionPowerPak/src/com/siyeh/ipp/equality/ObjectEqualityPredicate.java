@@ -1,9 +1,8 @@
 package com.siyeh.ipp.equality;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ObjectEqualityPredicate implements PsiElementPredicate{
@@ -38,14 +37,4 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
                 !TypeConversionUtil.isPrimitiveAndNotNull(rhsType);
     }
 
-    private static boolean isPrimitive(PsiType lhsType){
-        return lhsType.equals(PsiType.INT)
-                || lhsType.equals(PsiType.SHORT)
-                || lhsType.equals(PsiType.LONG)
-                || lhsType.equals(PsiType.DOUBLE)
-                || lhsType.equals(PsiType.FLOAT)
-                || lhsType.equals(PsiType.CHAR)
-                || lhsType.equals(PsiType.BOOLEAN)
-                || lhsType.equals(PsiType.BYTE);
-    }
 }

@@ -10,10 +10,8 @@ class MergeIfOrPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(isMergableExplicitIf(element)){
             return true;
-        } else if(isMergableImplicitIf(element)){
-            return true;
         } else{
-            return false;
+            return isMergableImplicitIf(element);
         }
     }
 
@@ -45,6 +43,7 @@ class MergeIfOrPredicate implements PsiElementPredicate{
         return EquivalenceChecker.statementsAreEquivalent(thenBranch,
                                                           childThenBranch);
     }
+
     public static boolean isMergableImplicitIf(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -65,8 +64,7 @@ class MergeIfOrPredicate implements PsiElementPredicate{
             return false;
         }
 
-        if(ControlFlowUtils.statementMayCompleteNormally(thenBranch))
-        {
+        if(ControlFlowUtils.statementMayCompleteNormally(thenBranch)){
             return false;
         }
         final PsiElement nextStatement =

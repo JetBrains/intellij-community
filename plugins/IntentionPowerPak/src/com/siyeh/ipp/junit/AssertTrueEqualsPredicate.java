@@ -1,6 +1,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class AssertTrueEqualsPredicate implements PsiElementPredicate{
@@ -39,14 +40,16 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
         if(arg instanceof PsiBinaryExpression){
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) arg;
             final PsiJavaToken sign = binaryExp.getOperationSign();
-            return sign.getTokenType() == JavaTokenType.EQEQ;
+            final IElementType tokenType = sign.getTokenType();
+            return JavaTokenType.EQEQ.equals(tokenType);
         } else if(arg instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) arg;
-            if(expression.getArgumentList() == null){
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if(argumentList == null){
                 return false;
             }
-            if(expression.getArgumentList().getExpressions().length != 1){
+            if(argumentList.getExpressions().length != 1){
                 return false;
             }
             final PsiReferenceExpression methodExpression =

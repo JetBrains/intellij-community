@@ -30,18 +30,17 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
                 getLeftLiteralOperand(lOperand);
         final PsiLiteralExpression rightLiteral =
                 (PsiLiteralExpression) binaryExpression.getROperand();
-        final String leftText;
-        if(leftLiteral.getText().charAt(0) == '"'){
-            leftText = leftLiteral.getText()
-                    .substring(0, leftLiteral.getTextLength() - 1);
+        String leftText = leftLiteral.getText();
+        if(leftText.charAt(0) == '"'){
+            leftText = leftText.substring(0, leftText.length() - 1);
         } else{
             leftText = '"' + leftLiteral.getText();
         }
-        final String rightText;
-        if(rightLiteral.getText().charAt(0) == '"'){
-            rightText = rightLiteral.getText().substring(1);
+        String rightText = rightLiteral.getText();
+        if(rightText.charAt(0) == '"'){
+            rightText = rightText.substring(1);
         } else{
-            rightText = rightLiteral.getText() + '"';
+            rightText += '"';
         }
         final String newExpression;
         if(lOperand instanceof PsiBinaryExpression){

@@ -35,7 +35,7 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         }
     }
 
-    private boolean isSpecialLiteral(PsiExpression arg){
+    private static boolean isSpecialLiteral(PsiExpression arg){
         if(arg == null){
             return false;
         }

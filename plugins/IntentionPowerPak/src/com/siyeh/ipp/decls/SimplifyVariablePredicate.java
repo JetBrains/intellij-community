@@ -5,7 +5,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
 class SimplifyVariablePredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

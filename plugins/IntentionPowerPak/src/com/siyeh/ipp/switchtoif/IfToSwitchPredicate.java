@@ -1,7 +1,8 @@
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.*;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class IfToSwitchPredicate implements PsiElementPredicate{

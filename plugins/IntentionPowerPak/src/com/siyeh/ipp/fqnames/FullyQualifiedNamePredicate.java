@@ -2,7 +2,6 @@ package com.siyeh.ipp.fqnames;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

@@ -3,8 +3,8 @@ package com.siyeh.ipp.bool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -29,7 +29,8 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiJavaToken sign = exp.getOperationSign();
-        final boolean isEquals = sign.getTokenType() == JavaTokenType.EQEQ;
+        final IElementType tokenType = sign.getTokenType();
+        final boolean isEquals = JavaTokenType.EQEQ.equals(tokenType);
         final PsiExpression lhs = exp.getLOperand();
         final String lhsText = lhs.getText();
         final PsiExpression rhs = exp.getROperand();

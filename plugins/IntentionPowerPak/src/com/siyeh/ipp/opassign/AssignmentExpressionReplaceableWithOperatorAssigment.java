@@ -1,6 +1,7 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
@@ -14,7 +15,8 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) element;
         final PsiJavaToken sign = assignment.getOperationSign();
-        if(sign.getTokenType() != JavaTokenType.EQ){
+        final IElementType tokenType = sign.getTokenType();
+        if(!JavaTokenType.EQ.equals(tokenType)){
             return false;
         }
         final PsiExpression lhs = assignment.getLExpression();
@@ -27,8 +29,9 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         }
         final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
         final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
-        if(operatorSign.getTokenType() == JavaTokenType.OROR ||
-                operatorSign.getTokenType() == JavaTokenType.ANDAND){
+        final IElementType rhsTokenType = operatorSign.getTokenType();
+        if(JavaTokenType.OROR.equals(rhsTokenType) ||
+                JavaTokenType.ANDAND.equals(rhsTokenType)){
             return false;
         }
         if(SideEffectChecker.mayHaveSideEffects(lhs)){

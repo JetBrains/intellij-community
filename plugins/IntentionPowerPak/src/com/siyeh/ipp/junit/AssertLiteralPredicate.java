@@ -1,6 +1,9 @@
 package com.siyeh.ipp.junit;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class AssertLiteralPredicate implements PsiElementPredicate{
@@ -14,8 +17,12 @@ class AssertLiteralPredicate implements PsiElementPredicate{
         }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
-        final int numExpressions = expression.getArgumentList()
-                        .getExpressions().length;
+        final PsiExpressionList args = expression.getArgumentList();
+        if(args == null)
+        {
+            return false;
+        }
+        final int numExpressions = args.getExpressions().length;
         if(numExpressions < 1 || numExpressions > 2){
             return false;
         }

@@ -41,7 +41,7 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
                         (PsiBinaryExpression) parent;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 return lhs.equals(expression) &&
-                        parentOperator == childOperator;
+                        parentOperator.equals(childOperator);
             } else{
                 return false;
             }

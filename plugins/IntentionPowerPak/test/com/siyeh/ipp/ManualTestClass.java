@@ -55,6 +55,10 @@ public class ManualTestClass
 
         // test that this doesn't do anything
         x /= 7;
+
+
+        // test that this will go to shift and back
+        x = 3 + y * 8;
     }
 
     public void testFQNames()
@@ -853,6 +857,31 @@ public class ManualTestClass
         {
             return false;
         }
+    }
+
+    public boolean testImplicitAssignIf()
+    {
+        boolean foo = true;
+        boolean bar;
+        // test that this if can't be removed
+        bar = false;
+        if(!foo)
+        {
+           bar = true;
+        }
+        return bar;
+    }
+    public boolean testImplicitAssignIfNegated()
+    {
+        boolean foo = true;
+        boolean bar;
+        // test that this if can't be removed
+        bar = true;
+        if(!foo)
+        {
+           bar = false;
+        }
+        return bar;
     }
 
     public boolean testRemoveIfImplicitReturn1()
