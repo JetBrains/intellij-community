@@ -464,7 +464,7 @@ public class SelectWordUtil {
       List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
       TextRange range = e.getTextRange();
-      final StringLiteralLexer lexer = new StringLiteralLexer('\"');
+      final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
       char[] chars = CharArrayUtil.fromSequence(editorText);
       lexer.start(chars, range.getStartOffset(), range.getEndOffset());
       while (lexer.getTokenType() != null) {

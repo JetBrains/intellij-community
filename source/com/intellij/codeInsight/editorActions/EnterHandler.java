@@ -99,7 +99,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       PsiJavaToken token = (PsiJavaToken)psiAtOffset;
       if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
         TextRange range = token.getTextRange();
-        final StringLiteralLexer lexer = new StringLiteralLexer('\"');
+        final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
         char[] chars = CharArrayUtil.fromSequence(text);
         lexer.start(chars, range.getStartOffset(), range.getEndOffset());
         while (lexer.getTokenType() != null) {

@@ -1,8 +1,6 @@
 package com.intellij.lexer;
 
-import com.intellij.ide.highlighter.custom.tokens.HexNumberParser;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 
@@ -24,9 +22,11 @@ public class StringLiteralLexer implements Lexer, Cloneable {
   private int myLastState;
   private int myBufferEnd;
   private char myQuoteChar;
+  private IElementType myOriginalLiteralToken;
 
-  public StringLiteralLexer(char quoteChar) {
+  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken) {
     myQuoteChar = quoteChar;
+    myOriginalLiteralToken = originalLiteralToken;
   }
 
   public void start(char[] buffer) {
@@ -54,15 +54,19 @@ public class StringLiteralLexer implements Lexer, Cloneable {
     return LAST_STATE;
   }
 
+  private static boolean isHexDigit(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+  }
+
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
-    if (myBuffer[myStart] != '\\') return JavaTokenType.STRING_LITERAL;
+    if (myBuffer[myStart] != '\\') return myOriginalLiteralToken;
 
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
     if (myBuffer[myStart + 1] == 'u') {
       for(int i = myStart + 2; i < myStart + 6; i++) {
-        if (i >= myEnd || !HexNumberParser.isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
+        if (i >= myEnd || !isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }

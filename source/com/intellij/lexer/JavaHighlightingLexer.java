@@ -12,15 +12,16 @@ import com.intellij.psi.tree.IElementType;
 public class JavaHighlightingLexer extends LayeredLexer {
   public JavaHighlightingLexer(LanguageLevel languageLevel) {
     super(new JavaLexer(languageLevel));
-    registerSelfStoppingLayer(new StringLiteralLexer('\"'),
+    registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.STRING_LITERAL},
                               new IElementType[0]);
 
-    registerSelfStoppingLayer(new StringLiteralLexer('\''),
+    registerSelfStoppingLayer(new StringLiteralLexer('\'', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.CHARACTER_LITERAL},
                               new IElementType[0]);
 
 
+    
     LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer());
 
     HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
