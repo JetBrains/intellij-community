@@ -97,7 +97,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
           final FileElement treeElement = new DummyHolder(((TreeElement)parent).getManager(), null, treeFileElement.getCharTable()).getTreeElement();
           final ChameleonElement chameleon = reparseable.createChameleon(newFileText, textRange.getStartOffset(), textRange.getEndOffset() + lengthShift);
           TreeUtil.addChildren(treeElement, chameleon);
-          ChangeUtil.replaceAllChildren((CompositeElement)parent, chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
+          parent.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
           return;
         }
         else if(currentErrorLevel == Reparseable.FATAL_ERROR){
@@ -116,12 +116,12 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
     if(bestReparseable != null && !theOnlyReparseable){
       // best reparseable available
-      final CompositeElement treeElement = ((CompositeElement)bestReparseable);
+      final ASTNode treeElement = ((ASTNode)bestReparseable);
       final TextRange textRange = treeElement.getTextRange();
       final ChameleonElement chameleon = bestReparseable.createChameleon(newFileText, textRange.getStartOffset(), textRange.getEndOffset() + lengthShift);
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
-      ChangeUtil.replaceAllChildren(treeElement, chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
+      treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
     }
     else{
       // file reparse
@@ -149,12 +149,12 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       LeafElement chameleon = Factory.createLeafElement(fileImpl.getContentElementType(), newFileText, 0, textLength, -1, holderElement.getCharTable());
       TreeUtil.addChildren(holderElement, chameleon);
-      ChangeUtil.replaceAllChildren((CompositeElement)parent, holderElement);
+      parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else{
       final PsiFileImpl newFile = (PsiFileImpl)PsiElementFactoryImpl.createFileFromText((PsiManagerImpl)fileImpl.getManager(), fileType, fileImpl.getName(), newFileText, 0, textLength);
-      final CompositeElement newFileElement = newFile.getTreeElement();
-      ChangeUtil.replaceAllChildren(fileImpl.getTreeElement(), newFileElement);
+      final ASTNode newFileElement = newFile.getTreeElement();
+      fileImpl.getTreeElement().replaceAllChildrenToChildrenOf(newFileElement);
     }
   }
 }

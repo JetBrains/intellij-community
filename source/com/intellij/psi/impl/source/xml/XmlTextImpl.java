@@ -184,15 +184,15 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       final XmlElement parent = getParent();
       if(second != null){
         final XmlText xmlText = getManager().getElementFactory().createTagFromText("<tag> </tag>").getValue().getTextElements()[0];
-        final CompositeElement compositeElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(xmlText);
+        final ASTNode compositeElement = SourceTreeToPsiMap.psiElementToTree(xmlText);
         TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
         model.runTransaction(new PomTransaction() {
           public PomModelEvent run(){
             TreeElement current = second;
             while(current != null){
               final TreeElement next = current.getTreeNext();
-              ChangeUtil.removeChild(XmlTextImpl.this, current);
-              ChangeUtil.addChild(compositeElement, current, null);
+              removeChild(current);
+              compositeElement.addChild(current, null);
               current = next;
             }
             return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
@@ -270,9 +270,9 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
     element.copyTo(buffer, 0);
     final LeafElement firstPart = Factory.createSingleLeafElement(element.getElementType(), buffer, 0, offset, table, null);
     final LeafElement secondPart = Factory.createSingleLeafElement(element.getElementType(), buffer, offset, buffer.length, table, null);
-    final CompositeElement parent = element.getTreeParent();
-    ChangeUtil.replaceChild(parent, element, firstPart);
-    ChangeUtil.addChild(parent, secondPart, firstPart.getTreeNext());
+    final ASTNode parent = element.getTreeParent();
+    parent.replaceChild(element, firstPart);
+    parent.addChild(secondPart, firstPart.getTreeNext());
     return secondPart;
   }
 
@@ -307,7 +307,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
             while(current != null && (endOffset += current.getTextLength(table)) <= end){
               final LeafElement toDelete = current;
               current = (LeafElement)current.getTreeNext();
-              if(toDelete != firstAffectedLeaf) ChangeUtil.removeChild(XmlTextImpl.this, toDelete);
+              if(toDelete != firstAffectedLeaf) removeChild(toDelete);
             }
             lastAffectedLeaf = current;
             lastAffectedLeafOffset = endOffset - (current != null ? current.getTextLength(table) : 0);
@@ -320,8 +320,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
             // merging tokens
             final LeafElement merged = mergeElements(firstAffectedLeaf, lastAffectedLeaf, table);
             if(merged == null){
-              ChangeUtil.removeChild(XmlTextImpl.this, split(firstAffectedLeaf, startOffsetInStartToken));
-              ChangeUtil.removeChild(XmlTextImpl.this, split(lastAffectedLeaf, end - lastAffectedLeafOffset).getTreePrev());
+              removeChild(split(firstAffectedLeaf, startOffsetInStartToken));
+              removeChild(split(lastAffectedLeaf, end - lastAffectedLeafOffset).getTreePrev());
             }
             else{
               ChangeUtil.replaceAll(new LeafElement[]{firstAffectedLeaf, lastAffectedLeaf}, merged);
@@ -345,13 +345,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
               text = text.substring(0, deletedAreaStartOffset) + text.substring(deletedAreaEndOffset);
               final LeafElement newLeaf = Factory.createSingleLeafElement(firstAffectedLeaf.getElementType(),
                                                                           text.toCharArray(), 0, text.length(), table, null);
-              ChangeUtil.replaceChild(XmlTextImpl.this, tokenToChange, newLeaf);
+              replaceChild(tokenToChange, newLeaf);
             }
             else{
               final ASTNode treeNext = tokenToChange.getTreeNext();
               final ASTNode treePrev = tokenToChange.getTreePrev();
               final LeafElement merged = mergeElements((LeafElement)treePrev, (LeafElement)treeNext, table);
-              ChangeUtil.removeChild(XmlTextImpl.this, tokenToChange);
+              removeChild(tokenToChange);
               if(merged != null) ChangeUtil.replaceAll(new LeafElement[]{(LeafElement)treePrev, (LeafElement)treeNext}, merged);
             }
           }
@@ -507,10 +507,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
                    final TreeElement anchor,
                    final boolean isBefore) {
     if(isBefore){
-      ChangeUtil.addChildren(xmlText, firstChild, lastChild, anchor);
+      xmlText.addChildren(firstChild, lastChild, anchor);
     }
     else{
-      ChangeUtil.addChildren(xmlText, firstChild, lastChild, anchor.getTreeNext());
+      xmlText.addChildren(firstChild, lastChild, anchor.getTreeNext());
     }
     return firstChild;
   }

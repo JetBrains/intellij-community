@@ -132,22 +132,22 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public void addChild(ASTNode child, ASTNode anchorBefore) {
-    throw new InvalidStateException("Leaf elements cannot have children.");
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
   public void removeChild(ASTNode child) {
-    throw new InvalidStateException("Leaf elements cannot have children.");
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
   public void replaceChild(ASTNode oldChild, ASTNode newChild) {
-    throw new InvalidStateException("Leaf elements cannot have children.");
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
   public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
-    throw new InvalidStateException("Leaf elements cannot have children.");
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
-    throw new InvalidStateException("Leaf elements cannot have children.");
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 }

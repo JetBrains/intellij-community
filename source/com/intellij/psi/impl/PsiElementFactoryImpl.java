@@ -158,9 +158,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
     PsiField field = aClass.getFields()[0];
-    ChangeUtil.replaceChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(field),
-                            SourceTreeToPsiMap.psiElementToTree(field.getTypeElement()),
-                            typeCopy);
+    SourceTreeToPsiMap.psiElementToTree(field).replaceChild(SourceTreeToPsiMap.psiElementToTree(field.getTypeElement()), typeCopy);
     ChangeUtil.decodeInformation(SourceTreeToPsiMap.psiElementToTree(field));
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
@@ -210,7 +208,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
-    ChangeUtil.replaceChild(treeElement, (TreeElement)treeElement.findChildByRole(ChildRole.TYPE), typeElement);
+    treeElement.replaceChild((TreeElement)treeElement.findChildByRole(ChildRole.TYPE), typeElement);
     ChangeUtil.decodeInformation(typeElement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());

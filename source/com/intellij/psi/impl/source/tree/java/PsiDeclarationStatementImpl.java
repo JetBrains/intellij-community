@@ -38,7 +38,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
             removeCommaBefore(child);
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
-            ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 2]), semicolon, null);
+            SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 2]).addChild(semicolon, null);
           }
           else if (SourceTreeToPsiMap.psiElementToTree(declaredElements[0]) == child) {
             CompositeElement next = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[1]);

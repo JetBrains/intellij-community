@@ -361,9 +361,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         final XmlTagImpl dummyTag = (XmlTagImpl)getManager().getElementFactory().createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
-        ChangeUtil.replaceChild(tag, (TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        tag.replaceChild((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
-        if(childByRole != null) ChangeUtil.replaceChild(tag, (TreeElement)childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        if(childByRole != null) tag.replaceChild((TreeElement)childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
 
         return XmlTagNameChanged.createXmlTagNameChanged(model, tag, oldName);
       }
@@ -734,7 +734,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           if(treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
             final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, new char[]{' '}, 0, 1,
                                                                                   SharedImplUtil.findCharTableByTree(XmlTagImpl.this), null);
-            ChangeUtil.addChild(XmlTagImpl.this, singleLeafElement, treeElement);
+            addChild(singleLeafElement, treeElement);
             treeElement = singleLeafElement;
           }
 
@@ -782,8 +782,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
               event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
 
-              ChangeUtil.removeChild(XmlTagImpl.this, (TreeElement)treeNext);
-              ChangeUtil.removeChild(XmlTagImpl.this, (TreeElement)child);
+              removeChild((TreeElement)treeNext);
+              removeChild((TreeElement)child);
               return event;
             }
           }, aspect);
@@ -840,8 +840,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText);
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText);
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(this);
-      if(emptyTagEnd != null) ChangeUtil.removeChild(this, emptyTagEnd);
-      ChangeUtil.addChildren(this, (TreeElement)startTagStart, null, null);
+      if(emptyTagEnd != null) removeChild(emptyTagEnd);
+      addChildren((TreeElement)startTagStart, null, null);
     }
     return endTagStart;
   }
@@ -972,8 +972,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                                       Boolean beforeFlag,
                                       FileType fileType) {
     if(first instanceof XmlTagChild && fileType == StdFileTypes.XHTML){
-      if (beforeFlag == null || !beforeFlag.booleanValue()) ChangeUtil.addChildren(this, first, last.getTreeNext(), anchor.getTreeNext());
-      else ChangeUtil.addChildren(this, first, last.getTreeNext(), anchor);
+      if (beforeFlag == null || !beforeFlag.booleanValue()) addChildren(first, last.getTreeNext(), anchor.getTreeNext()); addChildren(first, last.getTreeNext(), anchor);
       return first;
     }
     return super.addInternal(first, last, anchor, beforeFlag);

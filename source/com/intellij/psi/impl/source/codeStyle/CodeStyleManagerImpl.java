@@ -240,7 +240,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (element.getElementType() == ElementType.WHITE_SPACE) {
       // trick to reduce number of PsiTreeChangeEvent's (Enter action optimization)
       final boolean physical = file.isPhysical();
-      CompositeElement parent;
+      ASTNode parent;
       ASTNode newSpace;
       try {
         ((PsiFileImpl)file).setIsPhysicalExplicitly(false);
@@ -253,21 +253,21 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         TreeElement tempElement = Factory.createSingleLeafElement(
           ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
           "###".length(), charTable, null);
-        ChangeUtil.addChild(parent, tempElement, (TreeElement)space1.getTreeNext());
+        parent.addChild(tempElement, (TreeElement)space1.getTreeNext());
         tempElement = (TreeElement)new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
         offset = tempElement.getTextRange().getStartOffset();
-        ChangeUtil.removeChild(parent, tempElement);
+        parent.removeChild(tempElement);
         CodeEditUtil.normalizeSpace(helper, parent, prev, next, charTable);
 
         newSpace = prev != null ? prev.getTreeNext() : parent.getFirstChildNode();
         LOG.assertTrue(newSpace.getElementType() == ElementType.WHITE_SPACE);
-        ChangeUtil.replaceChild(parent, (TreeElement)newSpace, element);
+        parent.replaceChild((TreeElement)newSpace, element);
       }
       finally {
         ((PsiFileImpl)file).setIsPhysicalExplicitly(physical);
       }
 
-      ChangeUtil.replaceChild(parent, element, (TreeElement)newSpace);
+      parent.replaceChild(element, (TreeElement)newSpace);
 
       return offset;
     }
@@ -306,7 +306,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                 elementText.substring(end - elementStart);
         LeafElement newElement = Factory.createSingleLeafElement(element.getElementType(), newElementText.toCharArray(), 0,
                                                            newElementText.length(), null, element.getManager());
-        ChangeUtil.replaceChild(element.getTreeParent(), element, newElement);
+        element.getTreeParent().replaceChild(element, newElement);
         return start + indentSpace.length();
       }
     }
@@ -339,7 +339,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     PsiElement elementAt = file.findElementAt(offset);
     if (elementAt == null) return null;
     TreeElement element = SourceTreeToPsiMap.psiElementToTree(elementAt);
-    CompositeElement parent = element.getTreeParent();
+    ASTNode parent = element.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
     if (element.getElementType() != ElementType.WHITE_SPACE) {
       /*
@@ -353,7 +353,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     ASTNode space1 = Helper.splitSpaceElement(element, offset - elementStart, charTable);
     TreeElement marker = Factory.createSingleLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
-    ChangeUtil.addChild(parent, marker, (TreeElement)space1.getTreeNext());
+    parent.addChild(marker, (TreeElement)space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }
 

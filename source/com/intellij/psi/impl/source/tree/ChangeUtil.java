@@ -211,7 +211,7 @@ public class ChangeUtil implements Constants {
     checkConsistency(file);
   }
 
-  public static void replaceAllChildren(final CompositeElement parent, final CompositeElement newChildrenParent) {
+  public static void replaceAllChildren(final CompositeElement parent, final ASTNode newChildrenParent) {
     int offset = parent.getStartOffset();
     int oldLength = parent.getTextLength();
     int newLength = newChildrenParent.getTextLength();
@@ -656,13 +656,13 @@ public class ChangeUtil implements Constants {
   private static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
   private static final Key<Boolean> INTERFACE_MODIFIERS_FLAG_KEY = Key.create("INTERFACE_MODIFIERS_FLAG_KEY");
 
-  public static void addChildren(final CompositeElement parent,
+  public static void addChildren(final ASTNode parent,
                                  TreeElement firstChild,
                                  final ASTNode lastChild,
                                  final TreeElement anchorBefore) {
     while(firstChild != lastChild){
       final TreeElement next = firstChild.getTreeNext();
-      addChild(parent, firstChild, anchorBefore);
+      parent.addChild(firstChild, anchorBefore);
       firstChild = next;
     }
   }

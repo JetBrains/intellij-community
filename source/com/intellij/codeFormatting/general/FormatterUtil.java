@@ -113,14 +113,14 @@ public class FormatterUtil {
     ASTNode treePrev = getWsCandidate(leafElement);
     if (treePrev == null) {
       if (whiteSpace.length() > 0) {
-        ChangeUtil.addChild(leafElement.getTreeParent(), whiteSpaceElement, leafElement);
+        leafElement.getTreeParent().addChild(whiteSpaceElement, leafElement);
       }
     } else if (!isSpaceTextElement(treePrev)) {
-      ChangeUtil.addChild((CompositeElement)treePrev.getTreeParent(), whiteSpaceElement, (TreeElement)treePrev);
+      treePrev.getTreeParent().addChild(whiteSpaceElement, treePrev);
     } else if (!isWhiteSpaceElement(treePrev)){
       return getWhiteSpaceBefore(leafElement);
     } else {
-      ChangeUtil.replaceChild((CompositeElement)treePrev.getTreeParent(), (TreeElement)treePrev, whiteSpaceElement);
+      treePrev.getTreeParent().replaceChild(treePrev, whiteSpaceElement);
     }
 
     return getWhiteSpaceBefore(leafElement);

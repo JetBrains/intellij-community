@@ -76,9 +76,9 @@ public class Helper {
     char[] chars = space.textToCharArray();
     LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, null);
     LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length, charTable, null);
-    CompositeElement parent = space.getTreeParent();
-    ChangeUtil.replaceChild(parent, space, space1);
-    ChangeUtil.addChild(parent, space2, space1.getTreeNext());
+    ASTNode parent = space.getTreeParent();
+    parent.replaceChild(space, space1);
+    parent.addChild(space2, space1.getTreeNext());
     return space1;
   }
 
@@ -442,7 +442,8 @@ public class Helper {
       if (text.length() == 0) return child2;
       LeafElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
                                                              charTableByTree, null);
-      ChangeUtil.addChild((CompositeElement)parent, newSpace, (TreeElement)(child1 != null ? child1.getTreeNext() : parent.getFirstChildNode()));
+      final TreeElement anchorBefore = (TreeElement)(child1 != null ? child1.getTreeNext() : parent.getFirstChildNode());
+      parent.addChild(newSpace, anchorBefore);
       indentShift = getIndent(newSpace.getText(), true);
     }
     else {
@@ -454,7 +455,7 @@ public class Helper {
           }
         }
 
-        ChangeUtil.removeChild((CompositeElement)parent, space);
+        parent.removeChild(space);
         indentShift = -getIndent(oldSpace, true);
       }
       else {
@@ -467,7 +468,7 @@ public class Helper {
         }
         TreeElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
                                                                charTableByTree, null);
-        ChangeUtil.replaceChild(space.getTreeParent(), space, newSpace);
+        space.getTreeParent().replaceChild(space, newSpace);
         indentShift = getIndent(newSpace.getText(), true) - getIndent(oldSpace, true);
       }
     }
@@ -521,12 +522,12 @@ public class Helper {
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(dst).getContainingFile();
     FileElement fileElement = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file));
     CharTable table = fileElement.getCharTable();
-    indentSubtree((CompositeElement)dst, 0, newIndent, table);
+    indentSubtree(dst, 0, newIndent, table);
 
     return dst;
   }
 
-  public void indentSubtree( final CompositeElement tree, final int oldIndent, final int newIndent, CharTable table) {
+  public void indentSubtree( final ASTNode tree, final int oldIndent, final int newIndent, CharTable table) {
     if( oldIndent == newIndent ) return;
 
     for( ASTNode son = tree.getFirstChildNode(); son != null; ) {
@@ -541,12 +542,12 @@ public class Helper {
           TreeElement newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                   newIndentString.toCharArray(),
                                                                   0, newIndentString.length(), table, null);
-          ChangeUtil.replaceChild(tree, (TreeElement)son, newWSElem);
+          tree.replaceChild((TreeElement)son, newWSElem);
           son = newWSElem;
         }
       }
       else if( son instanceof CompositeElement ) {
-        indentSubtree( (CompositeElement) son, oldIndent, newIndent, table);
+        indentSubtree( son, oldIndent, newIndent, table);
       }
       son = son.getTreeNext();
     }
@@ -613,7 +614,7 @@ public class Helper {
             if (newSpace.length() > 0) {
               LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, newSpace.toCharArray(), 0,
                                                                     newSpace.length(), charTableByTree, null);
-              ChangeUtil.addChild(next.getTreeParent(), newLeaf, next);
+              next.getTreeParent().addChild(newLeaf, next);
             }
             text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);
             continue;
@@ -631,16 +632,16 @@ public class Helper {
           LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText.toCharArray(), 0,
                                                                 newLeafText.length(), charTableByTree, null);
           if (leaf.getTreeParent() != null) {
-            ChangeUtil.replaceChild(leaf.getTreeParent(), leaf, newLeaf);
+            leaf.getTreeParent().replaceChild(leaf, newLeaf);
           }
           if (leaf == element) {
             element = newLeaf;
           }
         }
         else {
-          CompositeElement parent = leaf.getTreeParent();
+          ASTNode parent = leaf.getTreeParent();
           if (parent != null) {
-            ChangeUtil.removeChild(parent, leaf);
+            parent.removeChild(leaf);
           }
         }
         text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);

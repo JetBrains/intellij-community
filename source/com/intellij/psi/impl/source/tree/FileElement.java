@@ -69,7 +69,7 @@ public abstract class FileElement extends RepositoryTreeElement{
       if (newElement.getFirstChildNode() == null) { //empty import list
         TreeElement next = child.getTreeNext();
         if (next.getElementType() == ElementType.WHITE_SPACE) {
-          ChangeUtil.removeChild(this, next);
+          removeChild(next);
         }
       }
     }

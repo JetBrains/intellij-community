@@ -87,7 +87,7 @@ public class SharedImplUtil {
     TreeElement copyFirst = null;
     TreeElement copyLast = null;
     ASTNode next = SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
-    CompositeElement parent = null;
+    ASTNode parent = null;
     for(TreeElement element = SourceTreeToPsiMap.psiElementToTree(first); element != next; element = element.getTreeNext()){
       TreeElement elementCopy = ChangeUtil.copyElement(element, table);
       if (element == first){
@@ -98,7 +98,7 @@ public class SharedImplUtil {
       }
       if(parent == null) parent = elementCopy.getTreeParent();
       else {
-        ChangeUtil.addChild(parent, elementCopy, null);
+        parent.addChild(elementCopy, null);
         helper.normalizeIndent(elementCopy);
       }
     }
@@ -149,7 +149,7 @@ public class SharedImplUtil {
 
   public static void normalizeBrackets(PsiVariable variable){
     CompositeElement variableElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variable);
-    CompositeElement type = (CompositeElement)variableElement.findChildByRole(ChildRole.TYPE);
+    ASTNode type = variableElement.findChildByRole(ChildRole.TYPE);
     LOG.assertTrue(type.getTreeParent() == variableElement);
     ASTNode name = variableElement.findChildByRole(ChildRole.NAME);
 
@@ -173,7 +173,7 @@ public class SharedImplUtil {
       element = firstBracket;
       while(true){
         ASTNode next = element.getTreeNext();
-        ChangeUtil.removeChild(variableElement, (TreeElement)element);
+        variableElement.removeChild((TreeElement)element);
         if (element == lastBracket) break;
         element = next;
       }
@@ -189,7 +189,7 @@ public class SharedImplUtil {
         newType = newType1;
       }
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
-      ChangeUtil.replaceChild(variableElement, type, newType);
+      variableElement.replaceChild(type, newType);
     }
   }
 

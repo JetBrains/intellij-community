@@ -78,7 +78,7 @@ public class ClassElement extends RepositoryTreeElement {
         TreeElement oldIdentifier = (TreeElement)((CompositeElement)child).findChildByRole(ChildRole.NAME);
         TreeElement newIdentifier = (TreeElement)findChildByRole(ChildRole.NAME).clone();
         newIdentifier.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(this));
-        ChangeUtil.replaceChild((CompositeElement)child, oldIdentifier, newIdentifier);
+        child.replaceChild(oldIdentifier, newIdentifier);
       }
     }
 

@@ -51,7 +51,7 @@ public class CodeEditUtil {
     TreeElement next;
     for(TreeElement child = first; child != afterLast; child = next){
       next = child.getTreeNext();
-      ChangeUtil.addChild(parent, child, anchorBefore);
+      parent.addChild(child, anchorBefore);
     }
 
     if(fileType == StdFileTypes.XHTML) return first;
@@ -139,16 +139,16 @@ public class CodeEditUtil {
     TreeElement childNext;
     for(TreeElement child = first; child != next; child = childNext){
       childNext = child.getTreeNext();
-      ChangeUtil.removeChild(parent, child);
+      parent.removeChild(child);
     }
     if(fileType == StdFileTypes.XHTML) return;
 
     if (prevNonSpace == null && nextNonSpace == null){
       if (spaceBefore != null){
-        ChangeUtil.removeChild(parent, spaceBefore);
+        parent.removeChild(spaceBefore);
       }
       if (spaceAfter != null){
-        ChangeUtil.removeChild(parent, spaceAfter);
+        parent.removeChild(spaceAfter);
       }
       LOG.assertTrue(parent.getTextLength() == 0);
       ASTNode elementBefore = Helper.shiftBackwardToNonSpace(parent.getTreePrev());
@@ -191,7 +191,7 @@ public class CodeEditUtil {
 
     int oldIndent = helper.getIndent(newChild);
 
-    ChangeUtil.replaceChild(parent, oldChild, newChild);
+    parent.replaceChild(oldChild, newChild);
     if(fileType == StdFileTypes.XHTML) return newChild;
 
     ASTNode prevNonSpace = Helper.shiftBackwardToNonSpace(newChild.getTreePrev());
@@ -241,7 +241,7 @@ public class CodeEditUtil {
 
       int origIndent = helper.getIndent(original);
 
-      helper.indentSubtree((CompositeElement) clone, origIndent, 0, table);
+      helper.indentSubtree(clone, origIndent, 0, table);
     }
   }
 
@@ -366,7 +366,7 @@ public class CodeEditUtil {
   }
   */
 
-  public static void normalizeSpace(Helper helper, CompositeElement parent, ASTNode child1, ASTNode child2, CharTable table) {
+  public static void normalizeSpace(Helper helper, ASTNode parent, ASTNode child1, ASTNode child2, CharTable table) {
     StringBuffer buffer = null;
     int count = 0;
     for(ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = child.getTreeNext()){
@@ -390,10 +390,10 @@ public class CodeEditUtil {
         next = child.getTreeNext();
         if (child instanceof CompositeElement && child.getTextLength() == 0) continue;
         if (count == 0){
-          ChangeUtil.replaceChild(parent, (TreeElement)child, newSpace);
+          parent.replaceChild((TreeElement)child, newSpace);
         }
         else{
-          ChangeUtil.removeChild(parent, (TreeElement)child);
+          parent.removeChild((TreeElement)child);
         }
         count++;
       }

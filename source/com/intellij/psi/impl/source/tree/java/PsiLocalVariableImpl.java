@@ -121,26 +121,26 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         variable.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
         CompositeElement statement1 = Factory.createCompositeElement(DECLARATION_STATEMENT);
         statement1.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-        ChangeUtil.addChild(statement1, variable, null);
+        statement1.addChild(variable, null);
 
         TreeElement space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-        ChangeUtil.addChild(variable, space, (TreeElement)variable.getFirstChildNode());
+        variable.addChild(space, (TreeElement)variable.getFirstChildNode());
 
         TreeElement typeClone = (TreeElement)type.clone();
         typeClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        ChangeUtil.addChild(variable, typeClone, (TreeElement)variable.getFirstChildNode());
+        variable.addChild(typeClone, (TreeElement)variable.getFirstChildNode());
 
         if (modifierList.getTextLength() > 0){
           space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-          ChangeUtil.addChild(variable, space, (TreeElement)variable.getFirstChildNode());
+          variable.addChild(space, (TreeElement)variable.getFirstChildNode());
         }
 
         TreeElement modifierListClone = (TreeElement)modifierList.clone();
         modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        ChangeUtil.addChild(variable, modifierListClone, (TreeElement)variable.getFirstChildNode());
+        variable.addChild(modifierListClone, (TreeElement)variable.getFirstChildNode());
 
         TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
-        ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i - 1]), semicolon, null);
+        SourceTreeToPsiMap.psiElementToTree(variables[i - 1]).addChild(semicolon, null);
 
         CodeEditUtil.addChild(statement.getTreeParent(), statement1, (TreeElement)last.getTreeNext());
 
