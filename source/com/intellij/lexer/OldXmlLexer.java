@@ -1,7 +1,7 @@
 package com.intellij.lexer;
 
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
@@ -19,6 +19,6 @@ public class OldXmlLexer extends MergingLexerAdapter {
   });
 
   public OldXmlLexer() {
-    super(new _OldXmlLexer(), TOKENS_TO_MERGE);
+    super(new FlexAdapter(new _OldXmlLexer()), TOKENS_TO_MERGE);
   }
 }
