@@ -107,7 +107,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 25, 12, 0, "lesya", "method parameter alignment")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.FEBRUARY, 29, 12, 0, "lesya", "method parameter alignment")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
