@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,6 +47,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
 
+    invokeOnElements(elements, project, file, editor);
+  }
+
+  private void invokeOnElements(final PsiElement[] elements, final Project project, final PsiFile file, final Editor editor) {
     if (elements == null || elements.length == 0) {
       String message = "Cannot perform the refactoring.\n" +
               "Selected block should represent a set of statements or an expression.";
@@ -122,5 +127,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+    final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    if (file != null && editor != null) {
+      invokeOnElements(elements, project, file, editor);
+    }
   }
 }
