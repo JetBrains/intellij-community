@@ -8,8 +8,12 @@ package com.intellij.lexer;
  * To change this template use File | Settings | File Templates.
  */
 public class XHtmlLexer extends HtmlLexer {
+  protected XHtmlLexer(Lexer baseLexer) {
+    super(baseLexer,false);
+  }
+
   public XHtmlLexer() {
-    super(new XmlLexer(),false);
+    this(new XmlLexer());
   }
 
   protected boolean isHtmlTagState(int state) {

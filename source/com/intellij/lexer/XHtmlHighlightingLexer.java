@@ -2,7 +2,11 @@ package com.intellij.lexer;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
-    super(new XmlLexer(),false);
+    this(new XmlLexer());
+  }
+
+  protected XHtmlHighlightingLexer(Lexer baseLexer) {
+    super(baseLexer,false);
   }
 
   protected boolean isHtmlTagState(int state) {

@@ -12,6 +12,10 @@ public class XmlLexer extends MergingLexerAdapter {
   });
 
   public XmlLexer() {
-    super(new _XmlLexer(), TOKENS_TO_MERGE);
+    this(new _XmlLexer());
+  }
+
+  protected XmlLexer(Lexer baseLexer) {
+    super(baseLexer, TOKENS_TO_MERGE);
   }
 }

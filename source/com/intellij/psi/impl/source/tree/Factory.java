@@ -75,6 +75,8 @@ public class Factory implements Constants {
       element = new XmlFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
     } else if (type == XHTML_FILE_TEXT) {
       element = new XHtmlFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
+    } else if (type == JSPX_FILE_TEXT) {
+      element = new JspxFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == HTML_FILE_TEXT) {
       element = new HTMLFileChameleonElement(buffer, startOffset, endOffset, lexerState, table);
@@ -518,8 +520,9 @@ public class Factory implements Constants {
     }
     else if (type == ANNOTATION_PARAMETER_LIST) {
       element = new PsiAnnotationParameterListImpl();
-    } else if (type == CustomHighlighterTokenType.CUSTOM_CONTENT) {
-      element = new CompositePsiElement(type) {};
+    } else if (type == CustomHighlighterTokenType.CUSTOM_CONTENT ||
+               type == JspTokenType.JSP_EL_HOLDER) {
+      element = new XmlAnotherLanguageContent(type) {};
     }
     else {
       if (type instanceof IAspectElementType) {
