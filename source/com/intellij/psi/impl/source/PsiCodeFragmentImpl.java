@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.ICodeFragmentElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -172,7 +171,9 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
 
     IElementType i = myContentElementType;
-    if (i == STATEMENTS) {
+    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
+      return true;
+    } else {
       {
         processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
         if (lastParent == null)
@@ -184,8 +185,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
         return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
       }
     }
-
-    return true;
   }
 
   public String toString() {
