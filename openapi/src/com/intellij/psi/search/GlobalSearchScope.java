@@ -80,6 +80,10 @@ public abstract class GlobalSearchScope extends SearchScope {
     return SearchScopeCache.getInstance(module.getProject()).getModuleWithDependenciesScope(module);
   }
 
+  public static GlobalSearchScope moduleRuntimeScope(Module module, final boolean includeTests) {
+    return SearchScopeCache.getInstance(module.getProject()).getModuleRuntimeScope(module, includeTests);
+  }
+
   public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(Module module) {
     return moduleWithDependenciesAndLibrariesScope(module, true);
   }

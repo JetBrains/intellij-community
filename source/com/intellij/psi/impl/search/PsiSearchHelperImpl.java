@@ -875,7 +875,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     RepositoryIndex repositoryIndex = repositoryManager.getIndex();
     VirtualFileFilter rootFilter;
-    if (searchScope1 instanceof GlobalSearchScope) {
+    if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
       rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
     }
     else {

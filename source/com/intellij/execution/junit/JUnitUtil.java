@@ -133,7 +133,7 @@ public class JUnitUtil {
 
   public static PsiClass getTestCaseClass(final Module module) throws NoJUnitException {
     if (module == null) throw new NoJUnitException();
-    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+    final GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClass(scope, module.getProject());
   }
 
