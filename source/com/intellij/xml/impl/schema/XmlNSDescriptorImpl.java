@@ -231,7 +231,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
         if (name.equals(nameAttribute)
             || name.indexOf(":") >= 0 && name.substring(name.indexOf(":") + 1).equals(nameAttribute)) {
-          return new SimpleTypeDescriptor(tag);
+          return new ComplexTypeDescriptor(this, tag);
         }
       }
       else if (equalsToSchemaName(tag, "include")) {

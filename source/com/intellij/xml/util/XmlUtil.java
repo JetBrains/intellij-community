@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -24,7 +25,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 
 import java.io.File;
 import java.util.*;
@@ -602,6 +605,24 @@ public class XmlUtil {
         }
       }, tag);
     }
+  }
+
+  public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag) {
+    XmlElementDescriptor elementDescriptor = null;
+    final String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
+
+    if(type != null){
+      final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
+      final XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
+
+      if(typeDecr instanceof XmlNSDescriptorImpl){
+        final XmlNSDescriptorImpl schemaDescriptor = ((XmlNSDescriptorImpl)typeDecr);
+        final XmlElementDescriptor descriptorByType = schemaDescriptor.getDescriptorByType(type, xmlTag);
+        elementDescriptor = descriptorByType;
+      }
+    }
+
+    return elementDescriptor;
   }
 
   private static class MyAttributeInfo implements Comparable {

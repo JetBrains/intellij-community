@@ -220,16 +220,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     XmlElementDescriptor elementDescriptor = getElementDescriptor(element.getLocalName(), element.getNamespace(), (XmlElement)element.getParent());
     if(elementDescriptor == null){
-      final String type = element.getAttributeValue("type", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-      if(type != null){
-        final String namespaceByPrefix = element.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(type));
-        final XmlNSDescriptor typeDecr = element.getNSDescriptor(namespaceByPrefix, false);
-        if(typeDecr instanceof XmlNSDescriptorImpl){
-          final XmlNSDescriptorImpl schemaDescriptor = ((XmlNSDescriptorImpl)typeDecr);
-          final XmlElementDescriptor descriptorByType = schemaDescriptor.getDescriptorByType(type, element);
-          elementDescriptor = descriptorByType;
-        }
-      }
+      elementDescriptor = XmlUtil.findXmlDescriptorByType(element);
     }
     return elementDescriptor;
   }

@@ -39,7 +39,6 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.CollectionUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -327,16 +326,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     XmlElementDescriptor elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(this) : null;
 
     if(elementDescriptor == null){
-      final String type = getAttributeValue("type", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-      if(type != null){
-        final String namespaceByPrefix = XmlUtil.findNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(type), this);
-        final XmlNSDescriptor typeDecr = getNSDescriptor(namespaceByPrefix, true);
-        if(typeDecr instanceof XmlNSDescriptorImpl){
-          final XmlNSDescriptorImpl schemaDescriptor = ((XmlNSDescriptorImpl)typeDecr);
-          final XmlElementDescriptor descriptorByType = schemaDescriptor.getDescriptorByType(type, this);
-          elementDescriptor = descriptorByType;
-        }
-      }
+      elementDescriptor = XmlUtil.findXmlDescriptorByType(this);
     }
 
     return elementDescriptor;

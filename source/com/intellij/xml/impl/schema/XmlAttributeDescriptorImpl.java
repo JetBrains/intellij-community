@@ -1,11 +1,14 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+
+import java.util.HashSet;
 
 /**
  * @author Mike
@@ -68,7 +71,32 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public String[] getEnumeratedValues() {
+    final HashSet<String> variants = new HashSet<String>();
+    XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
+    
+    if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
+      findEnumerationValues(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(),variants);
+
+      if (variants.size() > 0) {
+        return variants.toArray(new String[variants.size()]);
+      }
+    }
+
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  private void findEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+    final XmlTag[] subtags = element.getSubTags();
+
+    for (int i = 0; i < subtags.length; i++) {
+      XmlTag tag = subtags[i];
+
+      if (tag.getLocalName().equals("enumeration")) {
+        variants.add(tag.getAttributeValue("value"));
+      } else {
+        findEnumerationValues(tag,variants);
+      }
+    }
   }
 
 
