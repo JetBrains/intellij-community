@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class LayeredLexer implements Lexer, Cloneable {
+public class LayeredLexer implements Lexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
 

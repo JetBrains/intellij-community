@@ -4,7 +4,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 
-public class _OldXmlLexer implements Lexer, Cloneable {
+public class _OldXmlLexer implements Lexer {
   private static final int YY_F = -1;
   private static final int YY_NO_STATE = -1;
   private static final int YY_NOT_ACCEPT = 0;

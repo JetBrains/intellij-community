@@ -2,7 +2,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-public class EmptyLexer implements Lexer, Cloneable{
+public class EmptyLexer implements Lexer {
   private char[] myBuffer;
   private int myStartOffset;
   private int myEndOffset;
