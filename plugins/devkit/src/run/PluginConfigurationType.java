@@ -33,11 +33,22 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
 public class PluginConfigurationType implements ConfigurationType {
+  private final ConfigurationFactory myFactory;
+
+  PluginConfigurationType() {
+    myFactory = new ConfigurationFactory(this) {
+      public RunConfiguration createTemplateConfiguration(Project project) {
+        return new PluginRunConfiguration(project, this, "");
+      }
+    };
+  }
   private static final Icon ICON = IconLoader.getIcon("/nodes/plugin.png");
 
   public String getDisplayName() {
@@ -53,7 +64,7 @@ public class PluginConfigurationType implements ConfigurationType {
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[] {new PluginRunConfigurationFactory(this)};
+    return new ConfigurationFactory[] {myFactory};
   }
 
   public String getComponentName() {
