@@ -16,10 +16,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -129,5 +126,15 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         .suggestVariableName(VariableKind.PARAMETER, null, null, type);
     String suggestedName = suggestedNameInfo.names.length > 0 ? suggestedNameInfo.names[0] : "";
     return suggestedName;
+  }
+
+  public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method) {
+    final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
+    Map<PsiClass, String> result = new com.intellij.util.containers.HashMap<PsiClass, String>();
+    for (int i = 0; i < classes.length; i++) {
+      PsiClass aClass = classes[i];
+      result.put(aClass, suggestParameterNameForThisClass(aClass));
+    }
+    return result;
   }
 }

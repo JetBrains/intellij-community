@@ -26,20 +26,17 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
   public void testRecursive() throws Exception { doTest(true, 0); }
 
   public void testQualifiedThis() throws Exception { doTest(true, 0); }
-
-
-
+  
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     final String filePath = "/refactoring/moveInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
-    String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(method.getContainingClass());
     final PsiVariable targetVariable = isTargetParameter ? ((PsiVariable)method.getParameterList().getParameters()[targetIndex]) :
                                        method.getContainingClass().getFields()[targetIndex];
     new MoveInstanceMethodProcessor(getProject(),
-                                         method, targetVariable, null, suggestedName).testRun();
+                                    method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method)).testRun();
     checkResultByFile(filePath + ".after");
 
   }

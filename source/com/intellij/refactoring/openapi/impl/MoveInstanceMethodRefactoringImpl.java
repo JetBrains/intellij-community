@@ -12,13 +12,17 @@ import com.intellij.refactoring.MoveInstanceMethodRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
+import com.intellij.refactoring.move.moveInstanceMethod.MoveMethodUtil;
+import com.intellij.util.containers.HashMap;
+
+import java.util.Map;
 
 /**
  * @author ven
  */
 public class MoveInstanceMethodRefactoringImpl extends RefactoringImpl<MoveInstanceMethodProcessor> implements MoveInstanceMethodRefactoring {
   MoveInstanceMethodRefactoringImpl(Project project, PsiMethod method, PsiVariable targetVariable) {
-    super(new MoveInstanceMethodProcessor(project, method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNameForThisClass(method.getContainingClass())));
+    super(new MoveInstanceMethodProcessor(project, method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method)));
   }
 
   public PsiMethod getMethod() {

@@ -2,20 +2,27 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Iterator;
 
 /**
  * @author ven
  */
 public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
-  private EditorTextField myOldClassParameterNameField;
+  private ArrayList<PsiClass> myRefThisClasses;
+  private ArrayList<EditorTextField> myOldClassParameterNameFields;
 
   public MoveInstanceMethodDialog(final PsiMethod method,
                                   final PsiVariable[] variables) {
@@ -39,40 +46,57 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     myVisibilityPanel = createVisibilityPanel();
     mainPanel.add(myVisibilityPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0,0,0,0), 0,0));
 
-    final String text = "Select a name for old class parameter";
-    final JLabel jLabel1 = new JLabel(text);
-    jLabel1.setDisplayedMnemonic('n');
-    mainPanel.add(jLabel1, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
-
-    String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(myMethod.getContainingClass());
-    myOldClassParameterNameField = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
-    mainPanel.add(myOldClassParameterNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
-    myOldClassParameterNameField.setEnabled(MoveMethodUtil.isOldThisNeeded (myMethod));
+    final JPanel parametersPanel = createParametersPanel();
+    if (parametersPanel != null) {
+      mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    }
 
     jLabel.setLabelFor(myList);
-    jLabel1.setLabelFor(myOldClassParameterNameField);
     return mainPanel;
+  }
+
+  private JPanel createParametersPanel () {
+    myRefThisClasses = new ArrayList<PsiClass>();
+    myOldClassParameterNameFields = new ArrayList<EditorTextField>();
+    final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(myMethod);
+    if (classes.length == 0) return null;
+    JPanel panel = new JPanel(new VerticalFlowLayout());
+    for (int i = 0; i < classes.length; i++) {
+      PsiClass aClass = classes[i];
+      final String text = "Select a name for '" + aClass.getName() + ".this' parameter";
+      final JLabel jLabel1 = new JLabel(text);
+      panel.add(jLabel1);
+
+      String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
+      final EditorTextField field = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
+      myOldClassParameterNameFields.add(field);
+      myRefThisClasses.add(aClass);
+      panel.add(field);
+    }
+    return panel;
   }
 
   protected void doAction() {
 
-    final String parameterName;
-    if (myOldClassParameterNameField.isEnabled()) {
-      parameterName = myOldClassParameterNameField.getText().trim();
+    Map<PsiClass, String> parameterNames = new HashMap<PsiClass, String>();
+    final Iterator<EditorTextField> fieldsIterator = myOldClassParameterNameFields.iterator();
+    final Iterator<PsiClass>       classesIterator = myRefThisClasses.iterator();
+    for (; fieldsIterator.hasNext();) {
+      EditorTextField field = fieldsIterator.next();
+      final PsiClass aClass = classesIterator.next();
+      String parameterName = field.getText().trim();
       if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
         Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
         return;
       }
-    }
-    else {
-      parameterName = null;
+      parameterNames.put(aClass, parameterName);
     }
 
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
     final MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(myMethod.getProject(),
                                                                                             myMethod, targetVariable,
                                                                                             myVisibilityPanel.getVisibility(),
-                                                                                  parameterName);
+                                                                                  parameterNames);
     if (!verifyTargetClass(processor.getTargetClass())) return;
     invokeRefactoring(processor);
   }
