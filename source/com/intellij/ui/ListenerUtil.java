@@ -36,6 +36,16 @@ public class ListenerUtil {
     }
   }
 
+  public static void removeMouseListener(Component component, MouseListener l) {
+    component.removeMouseListener(l);
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        removeMouseListener(container.getComponent(i), l);
+      }
+    }
+  }
+
   public static void addKeyListener(Component component, KeyListener l) {
     component.addKeyListener(l);
     if (component instanceof Container) {

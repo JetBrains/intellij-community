@@ -5,7 +5,6 @@ import com.intellij.debugger.ui.WeakMouseListener;
 import com.intellij.debugger.ui.WeakMouseMotionListener;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.WeakListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,8 +18,6 @@ import java.awt.event.*;
  * To change this template use File | Settings | File Templates.
  */
 public class TipManager {
-  private static int SHOW_DELAY = 1000;
-
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
   }
@@ -32,17 +29,22 @@ public class TipManager {
 
     private boolean isOverTip(MouseEvent e) {
       if (myCurrentTooltip != null) {
-        final Window tipWindow = SwingUtilities.windowForComponent(myCurrentTooltip);
-        if (tipWindow == null) {
-          return false;
-        }
-        if(!tipWindow.isShowing()) {
+        if(!myCurrentTooltip.isShowing()) {
           hideTooltip();
           return false;
         }
-        final Point point = e.getComponent().getLocationOnScreen();
-        point.translate(e.getX(), e.getY());
-        return tipWindow.getBounds().contains(point);
+        final Component eventOriginator = e.getComponent();
+        if (eventOriginator == null) {
+          return false;
+        }
+        final Point point = e.getPoint();
+        SwingUtilities.convertPointToScreen(point, eventOriginator);
+
+        final Rectangle bounds = myCurrentTooltip.getBounds();
+        final Point tooltipLocationOnScreen = myCurrentTooltip.getLocationOnScreen();
+        bounds.setLocation(tooltipLocationOnScreen.x, tooltipLocationOnScreen.y);
+
+        return bounds.contains(point);
       }
       return false;
     }
@@ -52,12 +54,9 @@ public class TipManager {
       if (isOverTip(e)) {
         ListenerUtil.addMouseListener(myCurrentTooltip, new MouseAdapter() {
           public void mouseExited(MouseEvent e) {
-            if (myCurrentTooltip != null) {
-              if(!isOverTip(e)) {
-                final Window tipWindow = SwingUtilities.windowForComponent(myCurrentTooltip);
-                if (tipWindow != null) {
-                  tipWindow.removeMouseListener(this);
-                }
+            if(!isOverTip(e)) {
+              ListenerUtil.removeMouseListener(myCurrentTooltip, this);
+              if (myCurrentTooltip != null) {
                 hideTooltip();
               }
             }
@@ -95,28 +94,27 @@ public class TipManager {
 
     if(newTip != null && myComponent.isShowing()) {
       PopupFactory popupFactory = PopupFactory.getSharedInstance();
-      Point sLocation = myComponent.getLocationOnScreen();
-      Point location = newTip.getLocation();
-      location.x += sLocation.x;
-      location.y += sLocation.y;
-
-      Popup tipPopup = popupFactory.getPopup(myComponent, newTip, location.x, location.y);
-      tipPopup.show();
+      final Point location = e.getPoint();
+      final Component sourceComponent = e.getComponent();
+      if (sourceComponent != null) {
+        SwingUtilities.convertPointToScreen(location, sourceComponent);
+      }
+      myTipPopup = popupFactory.getPopup(myComponent, newTip, location.x, location.y);
+      myTipPopup.show();
       myCurrentTooltip = newTip;
     }
   }
 
   public void hideTooltip() {
-    if (myCurrentTooltip != null) {
-      Window window = SwingUtilities.windowForComponent(myCurrentTooltip);
-      if(window != null && !(window instanceof JFrame)) {
-        window.hide();
-      }
-      myCurrentTooltip = null;
+    if (myTipPopup != null) {
+      myTipPopup.hide();
+      myTipPopup = null;
     }
+    myCurrentTooltip = null;
   }
 
   private JComponent myCurrentTooltip;
+  private Popup myTipPopup;
   private final TipFactory myTipFactory;
   private final JComponent myComponent;
   private MouseListener myMouseListener = new MyMouseListener();
@@ -130,6 +128,7 @@ public class TipManager {
 
     myTipFactory = factory;
     myComponent = component;
+
   }
 
   public void dispose() {

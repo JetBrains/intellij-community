@@ -103,23 +103,6 @@ public class DebuggerTreeBase extends Tree {
 
       String text = tipBuffer.toString();
 
-/*      int lastLine = 0;
-      for (int i = 0; i < text.length(); i++) {
-        if(text.charAt(i) == '\n') {
-//          Element p = new Element("p");
-          Element pre = new Element("pre");
-//          p.addContent(pre);
-          html.addContent(pre);
-          pre.setText(text.substring(lastLine, i));
-          lastLine = i + 1;
-        }
-      }
-//      Element p = new Element("p");
-      Element pre = new Element("pre");
-//      p.addContent(pre);
-      html.addContent(pre);
-      pre.setText(text.substring(lastLine, text.length()));*/
-
       Element p = new Element("pre");
       html.addContent(p);
       p.setText(text);
@@ -140,7 +123,7 @@ public class DebuggerTreeBase extends Tree {
   }
 
   public JComponent createToolTip(MouseEvent e) {
-    DebuggerTreeNodeImpl node = getNodeToShowTip(e);
+    final DebuggerTreeNodeImpl node = getNodeToShowTip(e);
     if (node == null) {
       return null;
     }
@@ -148,7 +131,7 @@ public class DebuggerTreeBase extends Tree {
     if(myCurrentTooltip != null && myCurrentTooltip.isShowing() && myCurrentTooltipNode == node) {
       return myCurrentTooltip;
     }
-    
+
     myCurrentTooltipNode = node;
 
     final String toolTipText = getTipText(node);
@@ -166,7 +149,8 @@ public class DebuggerTreeBase extends Tree {
     toolTip.setLayout(new BorderLayout());
     toolTip.add(scrollPane, BorderLayout.CENTER);
 
-    Rectangle tipRectangle = getTipRectangle(e, tipContent.getPreferredSize());
+    final Point point = e.getPoint();
+    Rectangle tipRectangle = getTipBounds(point, tipContent.getPreferredSize());
     final Border tooltipBorder = toolTip.getBorder();
     if(tooltipBorder != null) {
       final Insets borderInsets = tooltipBorder.getBorderInsets(this);
@@ -183,11 +167,11 @@ public class DebuggerTreeBase extends Tree {
     }
 
     if(!tipSize.equals(tipRectangle.getSize())) {
-      tipRectangle = getTipRectangle(e, tipSize);
+      tipRectangle = getTipBounds(point, tipSize);
     }
 
     toolTip.setPreferredSize(tipRectangle.getSize());
-    toolTip.setLocation(tipRectangle.getLocation());
+
     myCurrentTooltip = toolTip;
 
     return toolTip;
@@ -230,9 +214,9 @@ public class DebuggerTreeBase extends Tree {
     return null;
   }
 
-  private Rectangle getTipRectangle(MouseEvent event, Dimension tipContentSize) {
-    Rectangle nodeBounds = new Rectangle(event.getPoint());
-    TreePath pathForLocation = getPathForLocation(event.getX(), event.getY());
+  private Rectangle getTipBounds(final Point point, Dimension tipContentSize) {
+    Rectangle nodeBounds = new Rectangle(point);
+    TreePath pathForLocation = getPathForLocation(point.x, point.y);
     if(pathForLocation != null) {
       nodeBounds = getPathBounds(pathForLocation);
     }
@@ -243,7 +227,7 @@ public class DebuggerTreeBase extends Tree {
     int vgap = nodeBounds.height;
     int height;
     int width = Math.min(tipContentSize.width, contentRect.width);
-    if(event.getY() > contentRect.y + contentRect.height / 2) {
+    if(point.y > contentRect.y + contentRect.height / 2) {
       y = Math.max(contentRect.y, nodeBounds.y - tipContentSize.height - vgap);
       height = Math.min(tipContentSize.height, nodeBounds.y - contentRect.y - vgap);
     }
@@ -254,7 +238,7 @@ public class DebuggerTreeBase extends Tree {
 
     final Dimension tipSize = new Dimension(width, height);
 
-    x = event.getX() - width / 2;
+    x = point.x - width / 2;
     if(x < contentRect.x) {
       x = contentRect.x;
     }
@@ -267,7 +251,9 @@ public class DebuggerTreeBase extends Tree {
 
   private String prepareToolTipText(String text) {
     int tabSize = CodeStyleSettingsManager.getSettings(myProject).getTabSize(StdFileTypes.JAVA);
-    if (tabSize < 0) tabSize = 0;
+    if (tabSize < 0) {
+      tabSize = 0;
+    }
     StringBuffer buf = new StringBuffer();
     boolean special = false;
     for(int idx = 0; idx < text.length(); idx++) {
@@ -288,10 +274,12 @@ public class DebuggerTreeBase extends Tree {
           buf.append(c);
         }
         special = false;
-      } else {
+      }
+      else {
         if(c == '\\') {
           special = true;
-        } else {
+        }
+        else {
           buf.append(c);
         }
       }
