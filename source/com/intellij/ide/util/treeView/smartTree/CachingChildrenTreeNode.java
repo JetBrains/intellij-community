@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.Navigatable;
 
 import java.util.*;
 
@@ -211,6 +212,14 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   protected abstract void performTreeActions();
 
   protected abstract void initChildren();
+
+  public void navigate(final boolean requestFocus) {
+    ((Navigatable)getValue()).navigate(requestFocus);
+  }
+
+  public boolean canNavigate() {
+    return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigate();
+  }
 
   protected void clearChildren() {
     if (myChildren != null) {
