@@ -1,7 +1,5 @@
 package com.intellij.ide.commander;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
@@ -13,9 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 
-final class CommanderSelectInTarget extends SelectInTargetPsiWrapper{
-
-
+final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   public CommanderSelectInTarget(final Project project) {
     super(project);
   }
@@ -38,13 +34,8 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper{
       }
       element = element.getParent();
     }
-    if (element instanceof PsiAspectFile) {
-      final PsiAspect[] aspects = ((PsiAspectFile) element).getAspects();
-      if (aspects.length > 0) {
-        element = aspects[0];
-      }
-    }
-    else if (element instanceof PsiJavaFile) {
+
+    if (element instanceof PsiJavaFile) {
       final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
       if (classes.length > 0) {
         element = classes[0];
@@ -52,13 +43,16 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper{
     }
 
     final PsiElement _element = element.getOriginalElement();
-    final Commander commander = Commander.getInstance(myProject);
-    final ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = new Runnable() {
+
+    selectElementInCommander(new Runnable() {
       public void run() {
-        commander.selectElementInLeftPanel(_element, BasePsiNode.getVirtualFile(_element));
+        Commander.getInstance(myProject).selectElementInLeftPanel(_element, BasePsiNode.getVirtualFile(_element));
       }
-    };
+    }, requestFocus);
+  }
+
+  private void selectElementInCommander(final Runnable runnable, final boolean requestFocus) {
+    final ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
     if (requestFocus) {
       windowManager.getToolWindow(ToolWindowId.COMMANDER).activate(runnable);
     }
@@ -67,9 +61,14 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper{
     }
   }
 
-  protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
-    final Commander commander = Commander.getInstance(myProject);
-    commander.selectElementInLeftPanel(selector, virtualFile);
+  protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
+    selectElementInCommander(new Runnable() {
+      public void run() {
+        final Commander commander = Commander.getInstance(myProject);
+        commander.selectElementInLeftPanel(selector, virtualFile);
+      }
+    }, requestFocus);
+
   }
 
   protected boolean canWorkWithCustomObjects() {

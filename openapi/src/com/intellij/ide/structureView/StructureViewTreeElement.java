@@ -32,8 +32,9 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.pom.Navigatable;
 
-public interface StructureViewTreeElement extends TreeElement{
+public interface StructureViewTreeElement extends TreeElement, Navigatable{
   Object getValue();
   StructureViewTreeElement[] getChildren();
 }

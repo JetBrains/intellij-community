@@ -35,11 +35,11 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class PsiTreeElementBase<Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation {
+public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation {
   private final SmartPsiElementPointer mySmartPsiElementPointer;
 
   protected PsiTreeElementBase(PsiElement psiElement) {
@@ -58,7 +58,7 @@ public abstract class PsiTreeElementBase<Value extends PsiElement> implements St
     return this;
   }
 
-  public final Value getElement(){
+  public final Value getElement() {
     return (Value)mySmartPsiElementPointer.getElement();
   }
 
@@ -66,7 +66,8 @@ public abstract class PsiTreeElementBase<Value extends PsiElement> implements St
     final PsiElement element = getElement();
     if (element != null) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -84,7 +85,7 @@ public abstract class PsiTreeElementBase<Value extends PsiElement> implements St
   }
 
   public final StructureViewTreeElement[] getChildren() {
-    if (getElement() == null) return new StructureViewTreeElement[0]; 
+    if (getElement() == null) return new StructureViewTreeElement[0];
     if (!getElement().isValid()) return new StructureViewTreeElement[0];
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     StructureViewTreeElement[] baseChildren = getChildrenBase();
@@ -94,12 +95,27 @@ public abstract class PsiTreeElementBase<Value extends PsiElement> implements St
     for (Iterator<StructureViewExtension> iterator = allExtensions.iterator(); iterator.hasNext();) {
       StructureViewExtension extension = iterator.next();
       StructureViewTreeElement[] children = extension.getChildren(getElement());
-      if (children != null){
+      if (children != null) {
         result.addAll(Arrays.asList(children));
       }
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
-  public abstract  StructureViewTreeElement[] getChildrenBase();
+  public void navigate(boolean requestFocus) {
+    ((Navigatable)getElement()).navigate(requestFocus);
+  }
+
+  public boolean canNavigate() {
+    final Value element = getElement();
+    if (element == null) return false;
+    if (element instanceof Navigatable) {
+      return ((Navigatable)element).canNavigate();
+    }
+    else {
+      return false;
+    }
+  }
+
+  public abstract StructureViewTreeElement[] getChildrenBase();
 }

@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.AutoScrollFromSourceHandler;
@@ -78,9 +77,18 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)){
-      Object selectedElement = getSelectedElement();
-      if (selectedElement instanceof Navigatable){
-        return selectedElement;
+      TreePath[] paths = getSelectionPaths();
+      if (paths == null) return null;
+      for (int i = 0; i < paths.length; i++) {
+        TreePath path = paths[i];
+        Object lastPathComponent = path.getLastPathComponent();
+        if (lastPathComponent instanceof DefaultMutableTreeNode) {
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+          Object userObject = node.getUserObject();
+          if (userObject instanceof AbstractTreeNode) {
+            return userObject;
+          }
+        }
       }
     }
     return null;

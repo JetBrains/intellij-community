@@ -4,7 +4,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -21,5 +20,5 @@ public interface SelectInContext {
 
   Object getSelectorInFile();
 
-  StructureViewBuilder getStructureViewBuilder();
+  FileEditorProvider getFileEditorProvider();
 }

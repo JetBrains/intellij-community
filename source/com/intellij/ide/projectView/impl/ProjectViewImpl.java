@@ -1,6 +1,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
+import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.impl.StructureViewWrapper;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
@@ -9,8 +10,6 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -1198,11 +1197,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return myPsiFile;
       }
 
-      public StructureViewBuilder getStructureViewBuilder() {
+      public FileEditorProvider getFileEditorProvider() {
         if (myPsiFile == null) return null;
-        return new StructureViewBuilder() {
-          public StructureViewModel getStructureViewModel() {
-            return myPsiFile.getFileType().getStructureViewModel(getVirtualFile(), getProject());
+        return new FileEditorProvider() {
+          public FileEditor openFileEditor() {
+            return FileEditorManager.getInstance(getProject()).openFile(myPsiFile.getContainingFile().getVirtualFile(), false)[0];
           }
         };
       }

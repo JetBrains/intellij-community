@@ -223,10 +223,12 @@ public class CommanderPanel extends JPanel {
   }
 
   public boolean navigateSelectedElement() {
-    final Object selectedValue = getSelectedValue();
-    if (selectedValue instanceof Navigatable && ((Navigatable)selectedValue).canNavigate()) {
-      ((Navigatable)selectedValue).navigate(true);
-      return true;
+    final AbstractTreeNode selectedNode = getSelectedNode();
+    if (selectedNode != null) {
+      final Object value = selectedNode.getValue();
+      if (value instanceof Navigatable && ((Navigatable)value).canNavigate()) {
+        ((Navigatable)value).navigate(true);
+      }
     }
     return false;
   }

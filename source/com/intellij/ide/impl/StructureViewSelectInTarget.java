@@ -5,9 +5,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
@@ -24,22 +22,17 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   }
 
   public boolean canSelect(SelectInContext context) {
-    return context.getStructureViewBuilder() != null;
+    return context.getFileEditorProvider() != null;
   }
 
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    final Object selector = context.getSelectorInFile();
-    if (selector == null) return;
+    final FileEditor fileEditor = context.getFileEditorProvider().openFileEditor();
 
     final StructureView structureView = getStructureView();
     ToolWindowManager windowManager=ToolWindowManager.getInstance(context.getProject());
     final Runnable runnable = new Runnable() {
       public void run() {
-        VirtualFile virtualFile = context.getVirtualFile();
-        FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(virtualFile);
-        if (editor != null) {
-          structureView.selectCurrentElement(editor,requestFocus);
-        }
+        structureView.selectCurrentElement(fileEditor,requestFocus);
       }
     };
     if (requestFocus) {

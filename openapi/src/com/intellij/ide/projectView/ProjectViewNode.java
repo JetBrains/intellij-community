@@ -8,9 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
@@ -32,7 +32,6 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   }
 
   public abstract boolean contains(VirtualFile file);
-
 
   public final ViewSettings getSettings() {
     return mySettings;
