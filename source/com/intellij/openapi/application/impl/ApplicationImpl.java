@@ -67,7 +67,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
   private Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
-  private Thread myExceptionalThreadWithReadAccess = null;
+
+  //made protected for Fabrique
+  protected Thread myExceptionalThreadWithReadAccess = null;
+
   private int myInEditorPaintCounter = 0;
   private final boolean myAspectJSupportEnabled = "enabled".equals(System.getProperty("idea.aspectj.support"));
   private long myStartTime = 0;
