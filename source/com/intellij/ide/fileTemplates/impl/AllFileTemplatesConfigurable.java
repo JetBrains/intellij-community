@@ -212,7 +212,8 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_24),
           }),
           new TreeNode("Jsp files", StdFileTypes.JSP.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.JSP.getIcon(), J2EEFileTemplateNames.JSP_FILE)
+            new TreeNode(StdFileTypes.JSP.getIcon(), J2EEFileTemplateNames.JSP_FILE),
+            new TreeNode(StdFileTypes.JSPX.getIcon(), J2EEFileTemplateNames.JSPX_FILE)
           }),
         }));
 
