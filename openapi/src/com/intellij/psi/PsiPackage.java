@@ -8,8 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.Navigatable;
+import com.intellij.navigation.NavigationItem;
 
-public interface PsiPackage extends PsiElement, PsiNamedElement, Navigatable {
+public interface PsiPackage extends PsiElement, PsiNamedElement, NavigationItem {
   String getQualifiedName();
 
   PsiDirectory[] getDirectories();
