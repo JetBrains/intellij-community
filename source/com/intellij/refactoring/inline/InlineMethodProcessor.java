@@ -831,18 +831,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                                      GlobalSearchScope.projectScope(myProject),
                                                                      false);
     PsiAssignmentExpression assignment = null;
-    boolean isAssignmentUnique = false;
     PsiReferenceExpression resultUsage = null;
     for (int i = 0; i < refs.length; i++) {
       PsiReferenceExpression ref = (PsiReferenceExpression)refs[i];
       if (ref.getParent() instanceof PsiAssignmentExpression
           && ((PsiAssignmentExpression)ref.getParent()).getLExpression().equals(ref)) {
         if (assignment != null) {
-          isAssignmentUnique = false;
+          assignment = null;
+          break;
         }
         else {
           assignment = (PsiAssignmentExpression)ref.getParent();
-          isAssignmentUnique = true;
         }
       }
       else {
@@ -851,7 +850,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (!isAssignmentUnique) return;
+    if (assignment == null) return;
     boolean condition = assignment.getParent() instanceof PsiExpressionStatement;
     LOG.assertTrue(condition);
     // SCR3175 fixed: inline only if declaration and assignment is in the same code block.
