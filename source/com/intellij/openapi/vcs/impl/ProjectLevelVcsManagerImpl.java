@@ -254,6 +254,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private synchronized void resetTracker(final VirtualFile virtualFile) {
+    if (System.getProperty("idea.ignore.changemarkers") != null) return;
     final LvcsFile lvcsFile = LocalVcs.getInstance(getProject()).findFile(virtualFile.getPath());
     if (lvcsFile == null) return;
 
