@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.application.ApplicationManager;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   private void generate(final Project project, final GenerationOptions genOptions) {
+    ApplicationManager.getApplication().saveAll();
     final List<File> filesToRefresh = new ArrayList<File>();
     try {
       final File[] generated;
