@@ -35,7 +35,7 @@ public class RenameUtil {
                                        String newName,
                                        boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles) {
-    final List<UsageInfo> results = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     PsiManager manager = element.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
@@ -46,13 +46,13 @@ public class RenameUtil {
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
       for (int i = 0; i < refs.length; i++) {
         PsiReference ref = refs[i];
-        results.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
+        result.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
       }
 
       PsiElement[] overridings = helper.findOverridingMethods(method, projectScope, true);
       for (int i = 0; i < overridings.length; i++) {
         PsiElement element1 = overridings[i];
-        results.add(new MoveRenameUsageInfo(element1, null, element));
+        result.add(new MoveRenameUsageInfo(element1, null, element));
       }
     }
     else {
@@ -67,21 +67,21 @@ public class RenameUtil {
       for (int i = 0; i < refs.length; i++) {
         PsiReference ref = refs[i];
         PsiElement referenceElement = ref.getElement();
-        results.add(
+        result.add(
           new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                   ref.getRangeInElement().getEndOffset(), element,
                                   referenceElement instanceof XmlElement));
         if (classCollisionsDetector == null) {
-          addLocalsCollisions(element, referenceElement, newName, results);
+          addLocalsCollisions(element, referenceElement, newName, result);
         }
         else {
-          classCollisionsDetector.addClassCollisions(referenceElement, newName, results);
+          classCollisionsDetector.addClassCollisions(referenceElement, newName, result);
         }
       }
     }
 
-    RenameUtil.findUnresolvableLocalsCollisions(element, newName, results);
-    RenameUtil.findUnresolvableMemberCollisions(element, newName, results);
+    RenameUtil.findUnresolvableLocalsCollisions(element, newName, result);
+    RenameUtil.findUnresolvableMemberCollisions(element, newName, result);
 
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
@@ -94,7 +94,7 @@ public class RenameUtil {
             return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
           }
         };
-        RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, results, factory);
+        RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
       }
     }
 
@@ -110,28 +110,26 @@ public class RenameUtil {
             return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
           }
         };
-        RefactoringUtil.addUsagesInNonJavaFiles(element, stringToSearch, projectScope, results, factory);
+        RefactoringUtil.addUsagesInNonJavaFiles(element, stringToSearch, projectScope, result, factory);
 
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
           if (aClass.getParent() instanceof PsiClass) {
             final String dollaredStringToSearch = RefactoringUtil.getInnerClassNameForClassLoader(aClass);
-            final String dollaredStringToReplace =
-              RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
+            final String dollaredStringToReplace = RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
             RefactoringUtil.UsageInfoFactory dollaredFactory = new RefactoringUtil.UsageInfoFactory() {
               public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
                 int start = usage.getTextRange().getStartOffset();
                 return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, dollaredStringToReplace);
               }
             };
-            RefactoringUtil.addUsagesInNonJavaFiles(aClass, dollaredStringToSearch, projectScope, results,
-                                                    dollaredFactory);
+            RefactoringUtil.addUsagesInNonJavaFiles(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
           }
         }
       }
     }
 
-    return results.toArray(new UsageInfo[results.size()]);
+    return result.toArray(new UsageInfo[result.size()]);
   }
 
   public static void buildPackagePrefixChangedMessage(final VirtualFile[] virtualFiles, StringBuffer message, final String qualifiedName) {

@@ -357,8 +357,7 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
       PsiElement element = myElements.get(i);
       final String newName = myNames.get(i);
       if (element instanceof PsiDirectory) continue;
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName,
-          mySearchInComments, mySearchInNonJavaFiles);
+      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchInNonJavaFiles);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
         myRenamers.add(new AutomaticVariableRenamer((PsiClass) element, newName, Arrays.asList(usages)));

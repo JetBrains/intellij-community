@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
+import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
@@ -41,11 +42,11 @@ public abstract class BaseRefactoringProcessor {
   protected Runnable myPrepareSuccessfulSwingThreadCallback = EMPTY_CALLBACK;
 
 
-  public BaseRefactoringProcessor(Project project) {
+  protected BaseRefactoringProcessor(Project project) {
     this(project, null);
   }
 
-  public BaseRefactoringProcessor(Project project, Runnable prepareSuccessfulCallback) {
+  protected BaseRefactoringProcessor(Project project, Runnable prepareSuccessfulCallback) {
     myProject = project;
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
   }
@@ -167,7 +168,7 @@ public abstract class BaseRefactoringProcessor {
     );
   }
 
-  private UsageViewPresentation createPresentation(UsageViewDescriptor descriptor) {
+  private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabText("Refactoring preview");
     presentation.setTargetsNodeText(descriptor.getProcessedElementsHeader());
@@ -229,7 +230,7 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    final com.intellij.usages.UsageView usageView = viewManager.searchAndShowUsages(targets, searcherFactory, true, false, createPresentation(viewDescriptor));
+    final UsageView usageView = viewManager.searchAndShowUsages(targets, searcherFactory, true, false, createPresentation(viewDescriptor));
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {
@@ -245,7 +246,7 @@ public abstract class BaseRefactoringProcessor {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, "Do Refactor", SystemInfo.isMac ? 0 : 'D');
   }
 
-  private Set<UsageInfo> getExcludedUsages(final UsageView usageView) {
+  private static Set<UsageInfo> getExcludedUsages(final UsageView usageView) {
     Set<Usage> usages = usageView.getExcludedUsages();
 
     Set<UsageInfo> excludedUsageInfos = new HashSet<UsageInfo>();
@@ -280,7 +281,7 @@ public abstract class BaseRefactoringProcessor {
       usages = array.toArray(new UsageInfo[array.size()]);
     }
 
-    com.intellij.openapi.localVcs.LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
 
     try {
       final UsageInfo[] _usages = usages;
