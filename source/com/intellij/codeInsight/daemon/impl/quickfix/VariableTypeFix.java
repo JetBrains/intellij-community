@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -57,7 +58,7 @@ public class VariableTypeFix implements IntentionAction {
         && myReturnType.isValid()
         && !TypeConversionUtil.isNullType(myReturnType)
         && !TypeConversionUtil.isVoidType(myReturnType)
-        ;
+        && GenericsUtil.isFromExternalTypeLanguage(myReturnType);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

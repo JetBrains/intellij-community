@@ -159,4 +159,8 @@ public class GenericsUtil {
 
     return true;
   }
+
+  public static boolean isFromExternalTypeLanguage (PsiType type) {
+    return type.getInternalCanonicalText().equals(type.getCanonicalText());
+  }
 }
