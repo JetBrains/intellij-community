@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -33,15 +35,12 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
 
 public class DependenciesPanel extends JPanel {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private MyTree myLeftTree = new MyTree();
-  private JEditorPane myBrowser = new JEditorPane("text/html", "<HTML><BODY></BODY></HTML>");
   private MyTree myRightTree = new MyTree();
   private UsagesPanel myUsagesPanel;
 
@@ -57,7 +56,7 @@ public class DependenciesPanel extends JPanel {
   private DependenciesBuilder myBuilder;
   private Content myContent;
 
-  private JComponent myLeftTreePanel;
+
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder) {
     super(new BorderLayout());
@@ -67,11 +66,8 @@ public class DependenciesPanel extends JPanel {
     myProject = project;
     myUsagesPanel = new UsagesPanel(myProject);
 
-    hideHintsWhenNothingToShow();
-
-
     Splitter treeSplitter = new Splitter();
-    treeSplitter.setFirstComponent(myLeftTreePanel);
+    treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
     treeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
 
     Splitter splitter = new Splitter(true);
@@ -103,24 +99,23 @@ public class DependenciesPanel extends JPanel {
         updateRightTreeModel();
         final StringBuffer denyRules = new StringBuffer();
         final StringBuffer allowRules = new StringBuffer();
-        PackageDependenciesNode selectedNode = (PackageDependenciesNode)myLeftTree.getSelectionPath().getLastPathComponent();
-        traverseToLeaves(selectedNode, denyRules, allowRules);
-        try {
-          if (denyRules.length() + allowRules.length() > 0) {
-            myBrowser.read(new StringReader("<html><body>The following rule" +
-                                            ((denyRules.length() == 0 || allowRules.length() == 0) ? " is " : "s are ") +
-                                            "violated: " +
-                                            (denyRules.length() > 0 ? denyRules.toString() : " ") + "<br>" +
-                                            (allowRules.length() > 0 ? allowRules.toString() : " ") +
-                                            "</body></html>"), null);
-
-          }
-          else {
-            myBrowser.read(new StringReader("<html><body>No rules are violated.</body></html>"), null);
-          }
+        final TreePath selectionPath = myLeftTree.getSelectionPath();
+        if (selectionPath == null){
+          return;
         }
-        catch (IOException e1) {
-          //can't be
+        PackageDependenciesNode selectedNode = (PackageDependenciesNode)selectionPath.getLastPathComponent();
+        traverseToLeaves(selectedNode, denyRules, allowRules);
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (denyRules.length() + allowRules.length() > 0) {
+          statusBar.setInfo("The following rule" +
+                                          ((denyRules.length() == 0 || allowRules.length() == 0) ? " is " : "s are ") +
+                                          "violated: " +
+                                          (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ")  +
+                                          (allowRules.length() > 0 ? allowRules.toString() : " "));
+
+        }
+        else {
+          statusBar.setInfo("No rules are violated");
         }
       }
     });
@@ -200,21 +195,8 @@ public class DependenciesPanel extends JPanel {
 
   private void rebuild() {
     myIllegalDependencies = myBuilder.getIllegalDependencies();
-    hideHintsWhenNothingToShow();
     updateLeftTreeModel();
     updateRightTreeModel();
-  }
-
-  private void hideHintsWhenNothingToShow() {
-    if (myIllegalDependencies.isEmpty()) {
-      myLeftTreePanel = ScrollPaneFactory.createScrollPane(myLeftTree);
-    }
-    else {
-      Splitter leftTreeSplitter = new Splitter();
-      leftTreeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
-      leftTreeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myBrowser));
-      myLeftTreePanel = leftTreeSplitter;
-    }
   }
 
   private void initTree(final MyTree tree, boolean isRightTree) {
