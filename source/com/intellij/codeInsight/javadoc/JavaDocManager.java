@@ -82,7 +82,9 @@ public class JavaDocManager implements ProjectComponent {
     registerDocumentationProvider(StdFileTypes.XHTML, new XHtmlDocumentationProvider(project));
     registerDocumentationProvider(StdFileTypes.JSP,new JspImplUtil.JspDocumentationProvider(project));
 
-    registerDocumentationProvider(StdFileTypes.XML, new XmlDocumentationProvider());
+    final XmlDocumentationProvider provider = new XmlDocumentationProvider();
+    registerDocumentationProvider(StdFileTypes.XML, provider);
+    registerDocumentationProvider(StdFileTypes.JSPX, provider);
   }
 
   public String getComponentName() {
