@@ -52,7 +52,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "Local Code Analysis";
+    return GROUP_LOCAL_CODE_ANALYSIS;
   }
 
   public String getShortName() {
@@ -137,7 +137,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       public String getName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
-
       public void applyFix(final Project project, ProblemDescriptor descriptor) {
         final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
           protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
@@ -159,7 +158,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         };
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            handler.invoke(project, expressions, null);
+            handler.invoke(project, expressions);
           }
         });
       }

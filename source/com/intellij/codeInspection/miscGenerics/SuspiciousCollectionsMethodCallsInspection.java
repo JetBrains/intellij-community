@@ -147,7 +147,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
   }
 
   public String getGroupDisplayName() {
-    return "Local Code Analysis";
+    return GROUP_LOCAL_CODE_ANALYSIS;
   }
 
   public String getShortName() {

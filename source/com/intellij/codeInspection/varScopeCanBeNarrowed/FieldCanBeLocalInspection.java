@@ -34,7 +34,7 @@ import java.util.Set;
 public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection");
   public String getGroupDisplayName() {
-    return "Local Code Analysis";
+    return GROUP_LOCAL_CODE_ANALYSIS;
   }
 
   public String getDisplayName() {

@@ -20,6 +20,16 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return /*HelpID.INTRODUCE_CONSTANT*/ null;
   }
 
+  public void invoke(Project project, PsiExpression[] expressions) {
+    for (int i = 0; i < expressions.length; i++) {
+      PsiExpression expression = expressions[i];
+      final PsiFile file = expression.getContainingFile();
+      if (!file.isWritable() && !RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    super.invoke(project, expressions, null);
+  }
+
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
