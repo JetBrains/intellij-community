@@ -68,11 +68,11 @@ public class EditorFactoryImpl extends EditorFactory {
       if (editor.getProject() == project) {
         final Exception creator = editor.getUserData(EDITOR_CREATOR);
         if (creator == null) {
-          LOG.error("Editor for the document with the following text hasn't been released:\n" + editor.getDocument().getText());
+          LOG.error("Editor for the document with class:" + editor.getClass().getName() +" and the following text hasn't been released:\n" + editor.getDocument().getText());
         } else {
           final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
           creator.printStackTrace(new PrintWriter(buffer));
-          LOG.error("Editor hasn't been released:\n" + new String(buffer.toByteArray()));
+          LOG.error("Editor with class:" + editor.getClass().getName() + "hasn't been released:\n" + new String(buffer.toByteArray()));
         }
       }
     }
