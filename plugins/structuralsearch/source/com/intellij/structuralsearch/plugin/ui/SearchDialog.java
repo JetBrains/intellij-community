@@ -334,7 +334,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           configureActions(context);
         }
 
-        public void findingUsagesFinished() {
+        public void findingUsagesFinished(final UsageView usageView) {
         }
       }
     );
