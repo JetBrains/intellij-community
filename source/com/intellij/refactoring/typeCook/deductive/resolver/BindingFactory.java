@@ -31,6 +31,7 @@ public class BindingFactory {
   private int[] myBoundVariableIndices;
   private HashSet<PsiTypeVariable> myBoundVariables;
   private Project myProject;
+  private PsiTypeVariableFactory myFactory;
 
   private PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) {
@@ -77,6 +78,16 @@ public class BindingFactory {
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings[index] = type;
+
+      if (type instanceof Bottom){
+        final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
+
+        if (cluster != null){
+          for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
+            myBindings[v.next().getIndex()] = type;
+          }
+        }
+      }
     }
 
     BindingImpl(final int n) {
@@ -791,6 +802,7 @@ public class BindingFactory {
     myVariablesNumber = system.getVariableFactory().getNumber();
     myBoundVariables = system.getBoundVariables();
     myProject = system.getProject();
+    myFactory = system.getVariableFactory();
 
     final PsiTypeVariable[] index = myBoundVariables.toArray(new PsiTypeVariable[]{});
 

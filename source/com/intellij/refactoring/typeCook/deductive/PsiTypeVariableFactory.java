@@ -6,6 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,17 +19,26 @@ import java.util.LinkedList;
 public class PsiTypeVariableFactory {
   private int myCurrent = 0;
   private LinkedList<HashSet<PsiTypeVariable>> myClusters = new LinkedList<HashSet<PsiTypeVariable>>();
+  private HashMap<Integer, HashSet<PsiTypeVariable>> myVarCluster = new HashMap<Integer, HashSet<PsiTypeVariable>>();
 
   public final int getNumber() {
     return myCurrent;
   }
 
-  public final void registerCluster (final HashSet<PsiTypeVariable> cluster){
+  public final void registerCluster(final HashSet<PsiTypeVariable> cluster) {
     myClusters.add(cluster);
+
+    for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
+      myVarCluster.put (new Integer(v.next().getIndex()), cluster);
+    }
   }
 
   public final LinkedList<HashSet<PsiTypeVariable>> getClusters() {
     return myClusters;
+  }
+
+  public final HashSet<PsiTypeVariable> getClusterOf (final int var){
+    return myVarCluster.get(new Integer (var));
   }
 
   public final PsiTypeVariable create() {
