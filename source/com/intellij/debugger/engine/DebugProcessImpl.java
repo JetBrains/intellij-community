@@ -791,7 +791,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     LOG.assertTrue(!isAttached());
-    NodeRendererSettings.getInstance().addListener(mySettingsListener);
+    NodeRendererSettings.getInstance().removeListener(mySettingsListener);
     myDescriptorHistoryManager.dispose();
   }
 
