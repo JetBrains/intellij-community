@@ -62,12 +62,11 @@ public class ClassNamePrefixedWithPackageNameInspection extends ClassInspection 
                 currentPackageName = tokenizer.nextToken();
             }
 
-            final String packageName = lastPackageName;
-            if (packageName == null) {
+            if (lastPackageName == null) {
                 return;
             }
             final String lowercaseClassName = className.toLowerCase();
-            final String lowercasePackageName = packageName.toLowerCase();
+            final String lowercasePackageName = lastPackageName.toLowerCase();
             if (!lowercaseClassName.startsWith(lowercasePackageName)) {
                 return;
             }

@@ -8,6 +8,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 
 public class MethodNameSameAsClassNameInspection extends MethodInspection {
+    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
         return "Method name same as class name";
@@ -18,7 +19,6 @@ public class MethodNameSameAsClassNameInspection extends MethodInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final RenameFix fix = new RenameFix();
         return fix;
     }
 
