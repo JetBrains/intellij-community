@@ -199,6 +199,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   }
 
   private static String getGroupName(FeatureDescriptor featureDescriptor) {
-    return ProductivityFeaturesRegistry.getInstance().getGroupDescriptor(featureDescriptor.getGroupId()).getDisplayName();
+    final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();    
+    final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(featureDescriptor.getGroupId());
+    return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
   }
 }
