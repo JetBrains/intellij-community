@@ -79,14 +79,14 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public static final JobDescriptor BUILD_GRAPH = new JobDescriptor("Processing project usages in ");
   public static final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor("Processing external usages of ");
-  public static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor("Analyzing code in ");
+  private static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor("Analyzing code in ");
 
 
-  public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
-  public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "com.intellij.util.annotations.NoInspection";
+  private static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
+  private static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "com.intellij.util.annotations.NoInspection";
 
   //for use in local comments
-  public static final Pattern SUPPRESS_PATTERN = Pattern.compile("//" + SUPPRESS_INSPECTIONS_TAG_NAME + " (\\w+(,\\w+)*)");
+  private static final Pattern SUPPRESS_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
   private InspectionProfile myExternalProfile = null;
 
@@ -184,7 +184,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  private boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
+  private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
     String[] ids = inspectionsList.split(",");
     for (int i = 0; i < ids.length; i++) {
       String id = ids[i];
@@ -193,7 +193,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return false;
   }
 
-  public boolean isToCheckMember(PsiElement member, String inspectionToolID) {
+  public static boolean isToCheckMember(PsiElement member, String inspectionToolID) {
     PsiDocCommentOwner owner;
     if (member instanceof PsiDocCommentOwner){
       owner = (PsiDocCommentOwner)member;
@@ -231,7 +231,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  public boolean inspectionResultSuppressed(PsiElement place, String id) {
+  public static boolean inspectionResultSuppressed(PsiElement place, String id) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
@@ -262,16 +262,17 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myUIOptions.myAutoScrollToSourceHandler.install(tree);
   }
 
-  public interface DerivedClassesProcessor {
-    boolean process(PsiClass inheritor);
+  public interface DerivedClassesProcessor extends Processor<PsiClass>{
   }
 
-  public interface DerivedMethodsProcessor {
-    boolean process(PsiMethod derivedMethod);
+  public interface DerivedMethodsProcessor extends Processor<PsiMethod> {
   }
 
-  public interface UsagesProcessor {
-    boolean process(PsiReference psiReference);
+  public interface UsagesProcessor extends Processor<PsiReference> {
+  }
+
+  private interface Processor<T> {
+    boolean process(T element);
   }
 
   public void enqueueClassUsagesProcessing(RefClass refClass, UsagesProcessor p) {
@@ -300,10 +301,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
-  private static void enqueueRequestImpl(RefElement refElement, HashMap requestMap, Object processor) {
-    ArrayList requests = (ArrayList)requestMap.get(refElement.getElement());
+  private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<PsiElement,List<T>> requestMap, T processor) {
+    List<T> requests = requestMap.get(refElement.getElement());
     if (requests == null) {
-      requests = new ArrayList();
+      requests = new ArrayList<T>();
       requestMap.put(refElement.getElement(), requests);
     }
     requests.add(processor);
@@ -430,7 +431,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         if (myDerivedClassesRequests != null) {
-          ArrayList sortedIDs = getSortedIDs(myDerivedClassesRequests);
+          List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
           for (int i = 0; i < sortedIDs.size(); i++) {
             PsiClass psiClass = (PsiClass)sortedIDs.get(i);
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
@@ -456,7 +457,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
 
         if (myDerivedMethodsRequests != null) {
-          ArrayList sortedIDs = getSortedIDs(myDerivedMethodsRequests);
+          List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
           for (int i = 0; i < sortedIDs.size(); i++) {
             PsiMethod psiMethod = (PsiMethod)sortedIDs.get(i);
             final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
@@ -485,7 +486,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
 
         if (myFieldUsagesRequests != null) {
-          ArrayList sortedIDs = getSortedIDs(myFieldUsagesRequests);
+          List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
           for (int i = 0; i < sortedIDs.size(); i++) {
             PsiField psiField = (PsiField)sortedIDs.get(i);
             final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
@@ -499,7 +500,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
 
         if (myClassUsagesRequests != null) {
-          ArrayList sortedIDs = getSortedIDs(myClassUsagesRequests);
+          List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
           for (int i = 0; i < sortedIDs.size(); i++) {
             PsiClass psiClass = (PsiClass)sortedIDs.get(i);
             final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
@@ -513,7 +514,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
 
         if (myMethodUsagesRequests != null) {
-          ArrayList sortedIDs = getSortedIDs(myMethodUsagesRequests);
+          List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
           for (int i = 0; i < sortedIDs.size(); i++) {
             PsiMethod psiMethod = (PsiMethod)sortedIDs.get(i);
             final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
@@ -558,19 +559,16 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return list.size();
   }
 
-  private static ArrayList getSortedIDs(HashMap requests) {
-    ArrayList result = new ArrayList();
-    for (Iterator iterator = requests.keySet().iterator(); iterator.hasNext();) {
-      PsiElement id = (PsiElement)iterator.next();
+  private static List<PsiElement> getSortedIDs(Map<PsiElement,?> requests) {
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    for (Iterator<PsiElement> iterator = requests.keySet().iterator(); iterator.hasNext();) {
+      PsiElement id = iterator.next();
       result.add(id);
     }
 
-    Collections.sort(result, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        PsiElement i1 = (PsiElement)o1;
-        PsiElement i2 = (PsiElement)o2;
-
-        return i1.getContainingFile().getName().compareTo(i2.getContainingFile().getName());
+    Collections.sort(result, new Comparator<PsiElement>() {
+      public int compare(PsiElement o1, PsiElement o2) {
+        return o1.getContainingFile().getName().compareTo(o2.getContainingFile().getName());
       }
     });
 
@@ -619,7 +617,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runInspection, "Inspecting Code...", true, myProject)) return;
 
     InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
-    InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
     if (!view.update()) {
       Messages.showMessageDialog(myProject,
                                  "No suspicious code found",
