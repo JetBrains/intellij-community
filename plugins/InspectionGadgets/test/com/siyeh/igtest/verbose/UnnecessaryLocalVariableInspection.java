@@ -13,6 +13,11 @@ public class UnnecessaryLocalVariableInspection {
         return b;
     }
 
+    public int bar2() throws Exception{
+        final Exception b = new Exception();
+        throw b;
+    }
+
     public int baz() {
         int a;
         int b = 3;
