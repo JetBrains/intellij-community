@@ -206,6 +206,10 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
+            if(expectedType.equals(expressionType))
+            {
+                return;
+            }
             if (m_ignoreWideningConversions && hasLowerPrecision(expressionType, expectedType)) {
                 return;
             }
