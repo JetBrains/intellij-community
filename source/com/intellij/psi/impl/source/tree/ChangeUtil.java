@@ -619,12 +619,17 @@ public class ChangeUtil implements Constants {
       LOG.assertTrue(type instanceof PsiClassType);
       final PsiClassType classType = (PsiClassType)type;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass referencedClass = resolveResult.getElement();
+      PsiClass referencedClass = resolveResult.getElement();
       if (referencedClass == null) return;
-      final ASTNode reference = typeElement.getFirstChildNode();
-      LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
+      if (referencedClass instanceof PsiAnonymousClass) {
+        encodeInfoInTypeElement(typeElement, ((PsiAnonymousClass)referencedClass).getBaseClassType());
+      }
+      else {
+        final ASTNode reference = typeElement.getFirstChildNode();
+        LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
 
-      encodeClassTypeInfoInReference((CompositeElement)reference, resolveResult.getElement(), resolveResult.getSubstitutor());
+        encodeClassTypeInfoInReference((CompositeElement)reference, resolveResult.getElement(), resolveResult.getSubstitutor());
+      }
     }
   }
 
