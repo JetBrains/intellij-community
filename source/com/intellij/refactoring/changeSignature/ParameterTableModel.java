@@ -19,6 +19,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   private List<PsiCodeFragment> myDefaultValuesCodeFragments;
   private final PsiElement myContext;
   private final ChangeSignatureDialog myDialog;
+  static final String ANY_VAR_COLUMN_NAME = "Any var";
 
   public ParameterTableModel(PsiElement context, ChangeSignatureDialog dialog) {
     myContext = context;
@@ -75,7 +76,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   public int getColumnCount() {
-    return myDialog.isGenerateDelegate() ? 3 : 4;
+    return 4;
   }
 
   public Object getValueAt(int rowIndex, int columnIndex) {
@@ -132,7 +133,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
       case 2:
         return "Default value";
       case 3:
-        return "Any var";
+        return ANY_VAR_COLUMN_NAME;
       default:
         throw new IllegalArgumentException();
     }
@@ -154,6 +155,8 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
 
       case 3:
         {
+          if (myDialog.isGenerateDelegate()) return false;
+
           final PsiType typeByRow = getTypeByRow(rowIndex);
           final boolean isEllipsis = typeByRow instanceof PsiEllipsisType;
           return !isEllipsis && myParameterInfos.get(rowIndex).oldParameterIndex < 0;

@@ -33,6 +33,7 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
@@ -231,7 +232,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private DelegationPanel createDelegationPanel() {
     return new DelegationPanel() {
       protected void stateModified() {
-        myParametersTableModel.fireTableStructureChanged();
+        myParametersTableModel.fireTableDataChanged();
         configureParameterTableEditors();
       }
     };
@@ -257,8 +258,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     panel.add(subPanel, BorderLayout.CENTER);
 
     JPanel subPanel1 = new JPanel(new GridBagLayout());
-    subPanel1.add(createExceptionsPanel(), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(4,4,4,0), 0, 0));
-    subPanel1.add(createSignaturePanel(), new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.BOTH, new Insets(4,0,4,4), 0, 0));
+    subPanel1.add(createExceptionsPanel(), new GridBagConstraints(0, 0, 1, 1, 0.5, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(4,4,4,0), 0, 0));
+    subPanel1.add(createSignaturePanel(), new GridBagConstraints(1, 0, 1, 1, 0.5, 0.0, GridBagConstraints.EAST, GridBagConstraints.BOTH, new Insets(4,0,4,4), 0, 0));
     panel.add(subPanel1, BorderLayout.SOUTH);
 
     return panel;
@@ -268,7 +269,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private JPanel createParametersPanel() {
     myParametersTable = new Table(myParametersTableModel);
     myParametersTable.setFocusCycleRoot(true);
-
+    final int minWidth = new JCheckBox().getPreferredSize().width;
+    final TableColumn anyVarColumn = myParametersTable.getColumnModel().getColumn(3);
+    final int headerWidth = myParametersTable.getFontMetrics(myParametersTable.getFont()).stringWidth(ParameterTableModel.ANY_VAR_COLUMN_NAME) + 8;
+    anyVarColumn.setMaxWidth(Math.max(minWidth, headerWidth));
     configureParameterTableEditors();
     return createTablePanelImpl(myParametersTable, myParametersTableModel, "Parameters", true);
   }
