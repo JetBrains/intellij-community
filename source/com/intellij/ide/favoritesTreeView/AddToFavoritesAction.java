@@ -87,6 +87,9 @@ public class AddToFavoritesAction extends AnAction {
     
     //on psi element
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (psiElement == null && dataContext.getData(DataConstants.PSI_FILE) != null){
+      psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_FILE);
+    }
     if (psiElement != null){
       Module containingModule = null;
       if (inProjectView && ProjectView.getInstance(project).isShowModules(currentViewId)){
