@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ExpressionParsing");
@@ -856,10 +855,9 @@ public class ExpressionParsing extends Parsing {
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
         if (lexer.getTokenType() != COMMA) {
-          CompositeElement errorElement = Factory.createErrorElement("Unexpected token");
-          TreeUtil.addChildren(errorElement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-          lexer.advance();
-          TreeUtil.addChildren(element, errorElement);
+          TreeUtil.addChildren(element, Factory.createErrorElement("'}' expected"));
+          element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+          return element;
         }
         else {
           TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
