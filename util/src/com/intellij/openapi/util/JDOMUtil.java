@@ -62,6 +62,10 @@ public class JDOMUtil {
     return w1.toString().equals(w2.toString());
   }
 
+  public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
+    SAXBuilder builder = createBuilder();
+    return builder.build(new CharArrayReader(chars, 0, length));
+  }
 
   public static Document loadDocument(File file) throws JDOMException, IOException {
     SAXBuilder saxBuilder = createBuilder();
