@@ -1,12 +1,13 @@
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -78,7 +79,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       if (defaultMutableTreeNode.getUserObject() instanceof AbstractTreeNode) {
         ProjectViewNode treeNode = (ProjectViewNode)defaultMutableTreeNode.getUserObject();
         result.add(treeNode);
+      } else if (defaultMutableTreeNode.getUserObject() instanceof FavoritesTreeNodeDescriptor){
+        AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)defaultMutableTreeNode.getUserObject()).getElement();
+        result.add(treeNode);
       }
+
     }
 
     return result;

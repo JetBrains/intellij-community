@@ -21,6 +21,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -47,11 +49,16 @@ public class AddToFavoritesAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final AbstractTreeNode[] nodes = createNodes(dataContext);
+    final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     if (nodes != null) {
+      final FavoritesTreeViewPanel favoritesTreeViewPanel = favoritesView.getFavoritesTreeViewPanel(myFavoritesList);
       for (int i = 0; i < nodes.length; i++) {
         AbstractTreeNode node = nodes[i];
-        FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).addToFavorites(node);
+        favoritesTreeViewPanel.addToFavorites(node);
       }
+      final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
+      windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW).activate(null);
+      favoritesView.setSelectedContent(favoritesView.getContent(favoritesTreeViewPanel));
     }
   }
 
@@ -66,14 +73,10 @@ public class AddToFavoritesAction extends AnAction {
     }
   }
 
-  protected boolean isEnabled() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
   private AbstractTreeNode[] createNodes(DataContext dataContext) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel().getFavoritesTreeStructure().getFavoritesConfiguration();
+    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).getFavoritesTreeStructure().getFavoritesConfiguration();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();

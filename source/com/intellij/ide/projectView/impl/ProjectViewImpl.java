@@ -720,7 +720,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
             it.remove();
           }
         }
-        return elements.toArray(new PsiElement[elements.size()]);
+        return elements.isEmpty() ? null : elements.toArray(new PsiElement[elements.size()]);
       }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;

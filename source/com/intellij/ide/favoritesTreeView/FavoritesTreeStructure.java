@@ -3,7 +3,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.*;
-import com.intellij.ide.projectView.impl.nodes.FormNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.j2ee.module.components.J2EEModuleUrl;
@@ -15,11 +15,17 @@ import com.intellij.j2ee.module.view.web.FilterUrl;
 import com.intellij.j2ee.module.view.web.ListenerUrl;
 import com.intellij.j2ee.module.view.web.ServletUrl;
 import com.intellij.j2ee.module.view.web.WebRootFileUrl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -70,7 +76,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     super(project);
     myRoot = new AbstractTreeNode(myProject, "Root") {
       public Collection<AbstractTreeNode> getChildren() {
-        return null;
+        return myFavorites;
       }
 
       public void update(final PresentationData presentation) {
@@ -127,6 +133,77 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   public void removeFromFavorites(final AbstractTreeNode element) {
     myFavorites.remove(element);
+  }
+
+  public boolean contains(final VirtualFile vFile){
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ContentIterator contentIterator = new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        if (fileOrDir == null ? vFile == null : fileOrDir.equals(vFile)) {
+          return true;
+        }
+        return false;
+      }
+    };
+    for (Iterator<AbstractTreeNode> iterator = myRoot.getChildren().iterator(); iterator.hasNext();) {
+      AbstractTreeNode node = iterator.next();
+      boolean find = false;
+      if (node.getValue() instanceof PsiElement){
+        final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((PsiElement)node.getValue()));
+        if (vFile == null ? virtualFile == null : vFile.equals(virtualFile)){
+          return true;
+        }
+        if (!virtualFile.isDirectory()){
+          continue;
+        }
+        final Module module = ModuleUtil.findModuleForPsiElement(((PsiElement)node.getValue()));
+        if (module != null){
+          find = ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(virtualFile, contentIterator);
+        } else {
+          find = projectFileIndex.iterateContentUnderDirectory(virtualFile, contentIterator);
+        }
+      }
+      if (node.getValue() instanceof Module){
+        find = ModuleRootManager.getInstance(((Module)node.getValue())).getFileIndex().iterateContent(contentIterator);
+      }
+      if (node.getValue() instanceof LibraryGroupElement){
+        find = ModuleRootManager.getInstance(((LibraryGroupElement)node.getValue()).getModule()).getFileIndex().isInContent(vFile) &&
+               projectFileIndex.isInLibraryClasses(vFile);
+      }
+      if (node.getValue() instanceof NamedLibraryElement){
+        NamedLibraryElement namedLibraryElement = (NamedLibraryElement)node.getValue();
+        final VirtualFile[] files = namedLibraryElement.getOrderEntry().getFiles(OrderRootType.CLASSES);
+        if (files != null){
+          find = ArrayUtil.find(files, vFile) > -1;
+        }
+      }
+      if (node.getValue() instanceof Form){
+        Form form = (Form) node.getValue();
+        PsiFile[] forms = form.getClassToBind().getManager().getSearchHelper().findFormsBoundToClass(form.getClassToBind().getQualifiedName());
+        for (int i = 0; i < forms.length; i++) {
+          PsiFile psiFile = forms[i];
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
+          if (virtualFile == null ? vFile == null : virtualFile.equals(vFile)){
+            return true;
+          }
+        }
+      }
+      if (find){
+        return true;
+      }
+      if (node.getValue() instanceof ModuleGroup){
+        ModuleGroup group = (ModuleGroup) node.getValue();
+        final Module[] modules = group.modulesInGroup(myProject, true);
+        for (int i = 0; i < modules.length; i++) {
+          Module module = modules[i];
+          find = ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
+          if (find){
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public void initFavoritesList() {

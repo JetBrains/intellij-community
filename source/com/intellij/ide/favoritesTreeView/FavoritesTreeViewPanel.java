@@ -26,10 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -106,6 +103,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
+    new TreeSpeedSearch(myTree);
     myTree.setCellRenderer(new NodeRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,
@@ -143,8 +141,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     PopupHandler.installPopupHandler(myTree, (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
                                      ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
-
-
     /* mySplitter = new Splitter(true);
      mySplitter.setHonorComponentsMinimumSize(true);
      mySplitter.setFirstComponent(myCenterPanel);
@@ -166,6 +162,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     };
   }
 
+  public void selectElement(final Object selector, final VirtualFile file){
+    myBuilder.select(selector, file, true, myBuilder);
+  }
   /*public void selectElement(final AbstractTreeNode element) {
     myBuilder.updateFromRoot();
     DefaultMutableTreeNode node = myBuilder.getNodeForElement(element);
@@ -253,7 +252,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           result.add(element);
         }
       }
-      return result.toArray(new PsiElement[result.size()]);
+      return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
     if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
       return null;

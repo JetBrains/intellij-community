@@ -15,10 +15,13 @@ public class SendToFavoritesAction extends AnAction{
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final DataContext dataContext = e.getDataContext();
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
+    final FavoritesTreeViewPanel currentTreeViewPanel = favoritesView.getCurrentTreeViewPanel();
+    final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = currentTreeViewPanel.getSelectedNodeDescriptors();
     favoritesView.getAddToFavoritesAction(myName).actionPerformed(e);
-    ((DeleteFromFavoritesAction)ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES)).actionPerformed(e);
+    ((DeleteFromFavoritesAction)ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES)).removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
   }
 
   public void update(AnActionEvent e) {

@@ -1,5 +1,7 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -10,10 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -28,7 +27,7 @@ import java.util.*;
 public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComponent, JDOMExternalizable {
   private Project myProject;
   private Map<String, Content> myName2FavoritesListSet = new HashMap<String, Content>();
-  private String myCurrentFavoritesList;
+  public String myCurrentFavoritesList;
   private Map<String, AddToFavoritesAction> myActions = new HashMap<String, AddToFavoritesAction>();
   public static FavoritesViewImpl getInstance(Project project) {
     return project.getComponent(FavoritesViewImpl.class);
@@ -58,6 +57,12 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         }
       }
     });
+    SelectInManager selectInManager = SelectInManager.getInstance(myProject);
+    selectInManager.addTarget(createSelectInTarget());
+  }
+
+  private SelectInTarget createSelectInTarget() {
+    return new FavoritesViewSelectInTarget(myProject);
   }
 
   public void initComponent() {
@@ -133,6 +138,10 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     return temp.isEmpty() ? null : temp.toArray(new String[temp.size()]);
   }
 
+  public String [] getAllAddActionNames(){
+    return myActions.keySet().toArray(new String[myActions.keySet().size()]);
+  } 
+
   public AddToFavoritesAction getAddToFavoritesAction(String name){
     return myActions.get(name);
   }
@@ -159,7 +168,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).add(addAction);
       favoritesPanel.getFavoritesTreeStructure().readExternal(el);
     }
-    myCurrentFavoritesList = element.getAttributeValue("current");
+    DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -171,8 +180,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       favoritesTreeViewPanel.getFavoritesTreeStructure().writeExternal(el);
       element.addContent(el);
     }
-    if (myCurrentFavoritesList != null) {
-      element.setAttribute("current", myCurrentFavoritesList);
-    }
+    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

@@ -21,22 +21,29 @@ public class DeleteFromFavoritesAction extends AnAction {
       return;
     }
     if (e.getPlace().equals(ActionPlaces.FAVORITES_VIEW_POPUP) || e.getPlace().equals(ActionPlaces.FAVORITES_VIEW_TOOLBAR)) {
-      FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel()
+      final FavoritesTreeViewPanel currentTreeViewPanel = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel();
+      FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = currentTreeViewPanel
           .getSelectedNodeDescriptors();
-      for (int i = 0; i < selectedNodeDescriptors.length; i++) {
-        FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
-        selectedNodeDescriptor = getFavoritesRoot(selectedNodeDescriptor, project);
-        if (selectedNodeDescriptor != null) {
-          FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel().removeFromFavorites((AbstractTreeNode)selectedNodeDescriptor.getElement());
-        }
+      removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
+    }
+  }
+
+  public void removeNodes(final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors, final Project project, String favoritesViewPane) {
+    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
+    for (int i = 0; selectedNodeDescriptors != null && i < selectedNodeDescriptors.length; i++) {
+      FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
+      selectedNodeDescriptor = getFavoritesRoot(selectedNodeDescriptor, project, favoritesViewPane);
+      if (selectedNodeDescriptor != null) {
+        favoritesTreeViewPanel.removeFromFavorites((AbstractTreeNode)selectedNodeDescriptor.getElement());
       }
     }
   }
 
-  private FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project) {
+  private FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project, String favoritesViewPane) {
+    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
     while (node.getParentDescriptor() != null && node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
       FavoritesTreeNodeDescriptor favoritesDescriptor = (FavoritesTreeNodeDescriptor)node.getParentDescriptor();
-      if (favoritesDescriptor.getElement() == FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel().getFavoritesTreeStructure().getRootElement()) {
+      if (favoritesDescriptor.getElement() == favoritesTreeViewPanel.getFavoritesTreeStructure().getRootElement()) {
         return node;
       }
       node = favoritesDescriptor;
