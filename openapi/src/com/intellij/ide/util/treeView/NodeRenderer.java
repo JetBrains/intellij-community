@@ -70,17 +70,18 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       Object userObject = node.getUserObject();
       
       if (userObject instanceof AbstractTreeNode){
-        AbstractTreeNode treeNode = ((AbstractTreeNode)userObject);
+        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
         String locationString = treeNode.getPresentation().getLocationString();
         if (locationString != null && locationString.length() > 0) {
           append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
+        final String toolTip = treeNode.getToolTip();
+        setToolTipText(toolTip);
       }
-
     }
   }
 
-  protected SimpleTextAttributes getTextAttributes(NodeDescriptor descriptor) {
+  protected static SimpleTextAttributes getTextAttributes(NodeDescriptor descriptor) {
     return new SimpleTextAttributes(Font.PLAIN, descriptor.getColor());
   }
 }

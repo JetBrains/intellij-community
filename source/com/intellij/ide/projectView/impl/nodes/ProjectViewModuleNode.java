@@ -16,8 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ProjectViewModuleNode extends AbstractModuleNode {
-
-  static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
 
   public ProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
@@ -49,5 +48,4 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()));
     return children;
   }
-
 }

@@ -19,7 +19,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   private NodeDescriptor myParentDescriptor;
   protected String myLocationString;
 
-  public AbstractTreeNode(Project project, Value value) {
+  protected AbstractTreeNode(Project project, Value value) {
     super(project, null);
     setValue(value);
   }
@@ -38,9 +38,8 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
       color = CopyPasteManager.CUT_COLOR;
     }
 
-    boolean updated = false;
-    updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor},
-                         new Object[]{openIcon, closedIcon, name, locationString, color});
+     boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor},
+                                             new Object[]{openIcon, closedIcon, name, locationString, color});
 
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;
@@ -151,5 +150,9 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
 
   protected final Object getParentValue() {
     return getParent() == null ? null : getParent().getValue();
+  }
+  
+  protected String getToolTip() {
+    return null;
   }
 }

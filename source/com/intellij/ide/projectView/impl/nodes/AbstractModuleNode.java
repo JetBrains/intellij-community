@@ -35,16 +35,13 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Collection;
-
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
-  public AbstractModuleNode(Project project, Module value, ViewSettings viewSettings) {
+  protected AbstractModuleNode(Project project, Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -68,5 +65,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
           PackageUtil.moduleContainsFile(getValue(), file, getSettings(), true);
   }
 
-  public abstract Collection<AbstractTreeNode> getChildren();
+  public String getToolTip() {
+    final Module module = getValue();
+    return module.getModuleType().getName();
+  }
 }

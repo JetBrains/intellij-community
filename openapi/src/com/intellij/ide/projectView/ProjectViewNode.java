@@ -14,7 +14,7 @@ import java.util.Iterator;
 
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
-  static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.TreeNode");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.TreeNode");
 
   private ViewSettings mySettings;
 

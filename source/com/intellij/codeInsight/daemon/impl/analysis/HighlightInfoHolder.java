@@ -7,12 +7,15 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
 
 /** @fabrique **/
 public class HighlightInfoHolder extends SmartList<HighlightInfo>{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
+
   private PsiFile myContextFile;
   private HighlightInfoFilter[] myFilters;
   private int myErrorCount;
@@ -74,6 +77,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
 
   public boolean addAll(Collection<? extends HighlightInfo> highlightInfos) {
     if (highlightInfos == null) return false;
+    LOG.assertTrue(highlightInfos != this);
     boolean added = false;
     for (Iterator<? extends HighlightInfo> iterator = highlightInfos.iterator(); iterator.hasNext();) {
       final HighlightInfo highlightInfo = iterator.next();

@@ -14,7 +14,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
-
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
   private static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
   private final Class<? extends AbstractTreeNode> myModuleNodeClass;
@@ -53,5 +52,9 @@ public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
 
   public String getTestPresentation() {
     return "Group: " + getValue();
+  }
+
+  public String getToolTip() {
+    return "Module Group";
   }
 }

@@ -30,6 +30,8 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.util.SmartList;
+
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -38,7 +40,7 @@ import java.util.*;
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
-  private List<HighlightInfo> myResult = new ArrayList<HighlightInfo>();
+  private List<HighlightInfo> myResult = new SmartList<HighlightInfo>();
 
   private static boolean ourDoJaxpTesting;
   private static final Key<HashMap<String,XmlTag>> ID_TO_TAG_MAP_KEY = Key.create("ID_TO_TAG_MAP");
@@ -57,7 +59,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   public void visitReferenceExpression(PsiReferenceExpression expression) {
   }
 
-  private void addElementsForTag(XmlTag tag,
+  private static void addElementsForTag(XmlTag tag,
                                  String localizedMessage,
                                  List<HighlightInfo> result,
                                  HighlightInfoType type,
@@ -97,7 +99,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void visitXmlDocument(XmlDocument document) {
     final XmlTag rootTag = document.getRootTag();
-    final XmlNSDescriptor nsDescriptor = (rootTag!=null)?rootTag.getNSDescriptor(rootTag.getNamespace(), false):null;
+    final XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
     if (nsDescriptor instanceof Validator) {
       ((Validator)nsDescriptor).validate(document, this);
