@@ -24,7 +24,9 @@
           <root url="jar://$MODULE_DIR$/lib/javasvn.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://C:/svn_lib/jsvn/trunk/javasvn/src" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntryProperties />
