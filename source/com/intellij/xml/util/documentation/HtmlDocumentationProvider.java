@@ -68,8 +68,12 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();
+    } else if (element instanceof XmlAttribute) {
+      isTag = false;
+      key = ((XmlAttribute)element).getName();
     } else {
       nameElement = element;
+      isTag = element.getParent() instanceof XmlTag;
     }
 
     if (nameElement!=null) {
@@ -131,7 +135,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
 
     JavaDocUtil.formatEntityName(entityType + " name",descriptor.getName(),buf);
 
-    buf.append("Description  :&nbsp;").append(descriptor.getDescription()).append("<br>");
+    buf.append("Description").append(":&nbsp;").append(descriptor.getDescription()).append("<br>");
 
     if (descriptor instanceof HtmlTagDescriptor) {
       final HtmlTagDescriptor tagDescriptor = (HtmlTagDescriptor)descriptor;
@@ -139,33 +143,33 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       if (!ommitHtmlSpecifics) {
         boolean hasStartTag = tagDescriptor.isHasStartTag();
         if (!hasStartTag) {
-          buf.append("Start tag    :&nbsp;").append("could be ommitted").append("<br>");
+          buf.append("Start tag:&nbsp;").append("could be omitted").append("<br>");
         }
         if (!tagDescriptor.isEmpty() && !tagDescriptor.isHasEndTag()) {
-          buf.append("End tag      :&nbsp;").append("could be ommitted").append("<br>");
+          buf.append("End tag:&nbsp;").append("could be omitted").append("<br>");
         }
       }
 
       if (tagDescriptor.isEmpty()) {
-        buf.append("Is empty     :&nbsp;").append("true").append("<br>");
+        buf.append("Is empty:&nbsp;").append("true").append("<br>");
       }
     } else {
       final HtmlAttributeDescriptor attributeDescriptor = (HtmlAttributeDescriptor)descriptor;
 
-      buf.append(  "Attr type    :&nbsp;").append(attributeDescriptor.getType()).append("<br>");
+      buf.append(  "Attr type:&nbsp;").append(attributeDescriptor.getType()).append("<br>");
       if (!attributeDescriptor.isHasDefaultValue())
-        buf.append("Attr default :&nbsp;").append("required").append("<br>");
+        buf.append("Attr default:&nbsp;").append("required").append("<br>");
     }
 
     char dtdId = descriptor.getDtd();
     boolean deprecated = dtdId == HtmlTagDescriptor.LOOSE_DTD;
     if (deprecated) {
-      buf.append("Deprecated   :&nbsp;").append(deprecated).append("<br>");
+      buf.append("Deprecated ").append(":&nbsp;").append(deprecated).append("<br>");
     }
 
     String dtd = (dtdId == HtmlTagDescriptor.LOOSE_DTD)? "loose": (dtdId == HtmlTagDescriptor.FRAME_DTD)?"frameset":"any";
     dtd += " dtd";
-    buf.append("Defined in   :&nbsp;").append(dtd).append("<br>");
+    buf.append   ("Defined in").append(":&nbsp;").append(dtd).append("<br>");
 
     return buf.toString();
   }
