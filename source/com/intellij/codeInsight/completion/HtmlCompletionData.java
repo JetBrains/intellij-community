@@ -150,7 +150,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     return isStyleTag(PsiTreeUtil.getParentOfType(position, XmlTag.class, false));
   }
 
-  public void addKeywordVariants(Set set, CompletionContext context, PsiElement position) {
+  public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position) {
     super.addKeywordVariants(set, context, position);
 
     if (ourStyleCompletionData!=null && isStyleContext(position)) {
