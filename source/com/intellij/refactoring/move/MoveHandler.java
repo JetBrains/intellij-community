@@ -17,8 +17,8 @@ import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
-import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
+import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.containers.HashSet;
 
@@ -76,7 +76,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
       if (tryToMoveElement(element, project, dataContext)) {
         return;
-      } else {
+      } else if (!(element.getParent() instanceof PsiAnonymousClass)) {
         final PsiReference reference = element.getReference();
         if (reference != null) {
           final PsiElement refElement = reference.resolve();

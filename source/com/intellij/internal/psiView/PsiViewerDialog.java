@@ -230,6 +230,7 @@ public class PsiViewerDialog extends DialogWrapper {
       else{
         clearSelection();
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return;
         ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
         Object elementObject = descriptor.getElement();
         if (elementObject instanceof PsiElement) {
