@@ -94,18 +94,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     return result.toArray(new FileType[result.size()]);
   }
 
-  private boolean hasAssociatedExtensions(FileType type) {
-    return myTempExtension2TypeMap.containsValue(type);
-  }
-
   public void apply() throws ConfigurationException {
-    for (Iterator iterator = myTempFileTypes.iterator(); iterator.hasNext();) {
-      FileType fileType = (FileType)iterator.next();
-      if (StdFileTypes.UNKNOWN != fileType && !hasAssociatedExtensions(fileType)) {
-        throw new ConfigurationException("No default extension specified for type " + fileType.getName());
-      }
-    }
-
     Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
     for (Iterator<UserFileType> iterator = modifiedUserTypes.iterator(); iterator.hasNext();) {
       UserFileType oldType = iterator.next();
@@ -364,7 +353,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
       myExtensionsList.setModel(new DefaultListModel());
       myExtensionsList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          myRemoveButton.setEnabled(myExtensionsList.getSelectedIndex() != -1 && getListModel().size() > 1);
+          myRemoveButton.setEnabled(myExtensionsList.getSelectedIndex() != -1 && getListModel().size() > 0);
         }
       });
     }
