@@ -46,7 +46,7 @@ public class AbstractTreeUpdater {
       }
     }
     myNodesToUpdate.add(rootNode);
-
+            
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(
       new Runnable() {
