@@ -20,7 +20,7 @@ public abstract class OutputParser {
 
   public abstract boolean processMessageLine(Callback callback);
 
-  protected void processLoading(String line, final Callback callback) {
+  protected void processLoading(final String line, final Callback callback) {
     //if (LOG.isDebugEnabled()) {
     //  LOG.debug(line);
     //}
@@ -53,6 +53,11 @@ public abstract class OutputParser {
     else if (line.startsWith("[wrote") || line.startsWith("[write")){
       String filePath = line.substring("[wrote".length(), line.length() - 1).trim();
       processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Failed to interpret: #" + line + "#");
+      }
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class JavacOutputParser extends OutputParser {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JavacOutputParser");
   private int myTabSize;
 
   public JavacOutputParser(Project project) {
@@ -30,6 +32,11 @@ public class JavacOutputParser extends OutputParser {
     if (StringUtil.startsWithChar(line, '[') && StringUtil.endsWithChar(line, ']')){
       processLoading(line, callback);
       return true;
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Failed to match: #"+ line + "#");
+      }
     }
     int colonIndex1 = line.indexOf(':');
     if (colonIndex1 == 1){ // drive letter
