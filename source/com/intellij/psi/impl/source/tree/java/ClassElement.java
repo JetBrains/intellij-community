@@ -33,7 +33,8 @@ public class ClassElement extends RepositoryTreeElement {
 
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
     if (anchor == null) {
-      if (first.getElementType() != DOC_COMMENT) {
+      if (first.getElementType() != JavaDocElementType.DOC_COMMENT &&
+          first.getElementType() != JavaTokenType.DOC_COMMENT) {
         if (before == null) {
           if (first == last) {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
