@@ -175,7 +175,7 @@
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles" text="Compare Two _Files" description="Compare two selected files"/>
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor" text="Co_mpare File with Editor" description="Compare selected file with editor"/>
 
-    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version Control" popup="true">
+    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version _Control" popup="true">
 
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
