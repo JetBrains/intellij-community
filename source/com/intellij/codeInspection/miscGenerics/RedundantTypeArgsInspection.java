@@ -25,7 +25,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private LocalQuickFix myQuickFixAction;
 
   public String getGroupDisplayName() {
-    return "Local Code Analysis";
+    return "Verbose or redundant code constructs";
   }
 
   public String getDisplayName() {
