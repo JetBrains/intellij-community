@@ -182,7 +182,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    TreeState.createOn(myTree).writeExternal(element);
+    if (myTree != null) {
+      TreeState.createOn(myTree).writeExternal(element);
+    }
   }
 
   public final void restoreState(){
