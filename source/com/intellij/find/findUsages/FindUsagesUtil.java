@@ -55,7 +55,7 @@ public class FindUsagesUtil {
     }
 
     if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
-      new ThrowSearchUtil (processor, options.myThrowRoot, options).run();
+      ThrowSearchUtil.addThrowUsages(processor, options.myThrowRoot, options);
     }
 
     if (element instanceof PsiPackage && options.isClassesUsages){

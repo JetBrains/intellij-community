@@ -5,10 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Author: msk
@@ -16,14 +18,6 @@ import java.util.HashSet;
 public class ThrowSearchUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.ThrowSearchUtil");
-
-  private final PsiManager      myManager;
-  private final PsiSearchHelper myHelper;
-  private final Processor<UsageInfo> myResults;
-  private final FindUsagesOptions myOptions;
-  private final Root myRoot;
-
-  private final HashSet<PsiMethod> myReadySet;
 
   public static class Root {
     final PsiElement myElement;
@@ -41,28 +35,22 @@ public class ThrowSearchUtil {
     }
   }
 
-  public ThrowSearchUtil (final Processor<UsageInfo> processor, final Root root, final FindUsagesOptions options) {
-    myRoot = root;
-    myResults = processor;
-    myOptions = options;
-    myManager = myRoot.myElement.getManager ();
-    myHelper = myManager.getSearchHelper();
-    myReadySet = new HashSet<PsiMethod>();
-  }
-
   /**
-   * @param aCatch
    * @return true, if we should continue processing
+   * @param aCatch
+   * @param processor
+   * @param root
+   * @param options
    */
 
-  private boolean processExn (final PsiParameter aCatch) {
+  private static boolean processExn(final PsiParameter aCatch, Processor processor, Root root, FindUsagesOptions options) {
     final PsiType type = aCatch.getType();
-    if (type.isAssignableFrom(myRoot.myType)) {
-      myResults.process (new UsageInfo (aCatch));
+    if (type.isAssignableFrom(root.myType)) {
+      processor.process (new UsageInfo (aCatch));
       return false;
     }
-    else if (myOptions.isStrictThrowUsages && !myRoot.isExact && myRoot.myType.isAssignableFrom (type)) {
-        myResults.process (new UsageInfo (aCatch));
+    else if (options.isStrictThrowUsages && !root.isExact && root.myType.isAssignableFrom (type)) {
+        processor.process (new UsageInfo (aCatch));
         return true;
     }
     else {
@@ -70,17 +58,22 @@ public class ThrowSearchUtil {
     }
   }
 
-  private void scanCatches (PsiElement elem)
+  private static void scanCatches(PsiElement elem,
+                                  Processor processor,
+                                  Root root,
+                                  FindUsagesOptions options,
+                                  Set<PsiMethod> processed)
   {
     while (elem != null) {
       final PsiElement parent = elem.getParent();
       if (elem instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod) elem;
-        if (!myReadySet.contains(method)) {
-          myReadySet.add(method);
-          final PsiReference[] refs = myHelper.findReferencesIncludingOverriding(method, myOptions.searchScope, true);
+        final PsiMethod method = PsiSuperMethodUtil.findDeepestSuperMethod((PsiMethod) elem);
+        if (!processed.contains(method)) {
+          processed.add(method);
+          PsiSearchHelper helper = method.getManager().getSearchHelper();
+          final PsiReference[] refs = helper.findReferencesIncludingOverriding(method, options.searchScope, true);
           for (int i = 0; i != refs.length; ++ i)
-            scanCatches(refs [i].getElement ());
+            scanCatches(refs [i].getElement (), processor, root, options, processed);
         }
         return;
       }
@@ -88,7 +81,7 @@ public class ThrowSearchUtil {
         final PsiTryStatement aTry = (PsiTryStatement) elem;
         final PsiParameter[] catches = aTry.getCatchBlockParameters();
         for (int i = 0; i != catches.length; ++ i) {
-          if (!processExn(catches[i])) {
+          if (!processExn(catches[i], processor, root, options)) {
             return;
           }
         }
@@ -104,8 +97,9 @@ public class ThrowSearchUtil {
     }
   }
 
-  public void run() {
-    scanCatches (myRoot.myElement);
+  public static void addThrowUsages(Processor processor, Root root, FindUsagesOptions options) {
+    Set<PsiMethod> processed = new HashSet<PsiMethod>();
+    scanCatches (root.myElement, processor, root, options, processed);
   }
 
   /**
