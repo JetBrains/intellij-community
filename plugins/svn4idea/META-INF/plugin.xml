@@ -41,7 +41,6 @@
       <separator/>
     </group>
 
-    <action id="Subversion.ShowDiffAction" class="com.qintsoft.svn4idea.actions.ShowDiffAction" text="Show Diff..." description="Show difference with Subversion base version"/>
 
     <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
@@ -61,11 +60,11 @@
       <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert file" description="Revert file to repository state"/>
       <action id="Subversion.Resolve" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Confilct Resolved" description="Tell Subversion that the conflict has been resolved"/>
       <separator/>
-      <reference id="Subversion.ShowDiffAction"/>
+      <reference id="Compare.SameVersion"/>
+      <reference id="Compare.LastVersion"/>
+      <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
-      <!--
-      <action id="Subversion.ShowDiffExented" class="com.qintsoft.svn4idea.actions.ShowDiffExtendedAction" text="Show Diff extented..." description="Show difference with selection of Subversion revision"/>
-      -->
+      
       <separator/>
       <action id="SvnChangesBrowser" class="com.qintsoft.svn4idea.actions.BrowseChangesAction" text="Browse Changes..."/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
