@@ -160,7 +160,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         }
         newClass = (PsiClass)newClass.replace(myInnerClass);
         if (defaultDocComment != null && myInnerClass.getDocComment() == null) {
-          newClass.addBefore(defaultDocComment, newClass.getFirstChild());
+          newClass.addAfter(defaultDocComment, null);
         }
 
         newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, false);

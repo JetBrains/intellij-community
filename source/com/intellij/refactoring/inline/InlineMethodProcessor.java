@@ -464,7 +464,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     String resultName = null;
     if (returnType != null && returnType != PsiType.VOID) {
       resultName = myCodeStyleManager.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
-      resultName = myCodeStyleManager.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
+      resultName = myCodeStyleManager.suggestUniqueVariableName(resultName, block.getLBrace(), true);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(resultName, returnType, null);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       resultVar = (PsiLocalVariable)declaration.getDeclaredElements()[0];
@@ -479,7 +479,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       name = myCodeStyleManager.variableNameToPropertyName(name, VariableKind.PARAMETER);
       name = myCodeStyleManager.propertyNameToVariableName(name, VariableKind.LOCAL_VARIABLE);
       if (!name.equals(parmName)) {
-        name = myCodeStyleManager.suggestUniqueVariableName(name, block.getFirstChild(), true);
+        name = myCodeStyleManager.suggestUniqueVariableName(name, block.getLBrace(), true);
       }
       RefactoringUtil.renameVariableReferences(parm, name, GlobalSearchScope.projectScope(myProject));
       String defaultValue = CodeInsightUtil.getDefaultValueOfType(parm.getType());
@@ -501,7 +501,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         String[] names = myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
           .names;
         thisVarName = names[0];
-        thisVarName = myCodeStyleManager.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
+        thisVarName = myCodeStyleManager.suggestUniqueVariableName(thisVarName, block.getLBrace(), true);
         PsiExpression initializer = myFactory.createExpressionFromText("null", null);
         PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType,
                                                                                            initializer);
