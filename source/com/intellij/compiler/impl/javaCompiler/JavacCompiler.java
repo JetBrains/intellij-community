@@ -226,6 +226,8 @@ class JavacCompiler implements BackendCompiler {
       commandLine.add("@" + cpFile.getAbsolutePath());
     }
 
+    LOG.info("compiling module chunk" + chunk + "; classpath=\"" + cp + "\"");
+
     if (!isVersion1_1 && !isVersion1_0) {
       commandLine.add("-sourcepath");
       // this way we tell the compiler that the sourcepath is "empty". However, javac thinks that sourcepath is 'new File("")'

@@ -481,15 +481,13 @@ class BackendCompilerWrapper {
   private Pair<OutputParser, Process> runExternalCompiler(final ModuleChunk chunk, final String outputDir) throws IOException, IllegalArgumentException{
     final String[] commands = myCompiler.createStartupCommand(chunk, myCompileContext, outputDir);
 
-    if (LOG.isDebugEnabled()) {
-      StringBuffer buf = new StringBuffer(32);
-      for (int idx = 0; idx < commands.length; idx++) {
-        String command = commands[idx];
-        buf.append(command);
-        buf.append(" ");
-      }
-      LOG.debug(buf.toString());
+    final StringBuffer buf = new StringBuffer(16 * commands.length);
+    for (int idx = 0; idx < commands.length; idx++) {
+      String command = commands[idx];
+      buf.append(command);
+      buf.append(" ");
     }
+    LOG.info("Running compiler: " + buf.toString());
 
     final Process process = Runtime.getRuntime().exec(commands);
     return new Pair<OutputParser, Process>(myCompiler.createOutputParser(), process);
