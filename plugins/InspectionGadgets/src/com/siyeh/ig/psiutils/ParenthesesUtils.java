@@ -30,7 +30,7 @@ public class ParenthesesUtils {
     private static final int BINARY_OR_PRECEDENCE = 12;
     private static final int AND_PRECEDENCE = 13;
     private static final int OR_PRECEDENCE = 14;
-    private static final int CONDITIONAL_PRECEDENCE = 15;
+    public static final int CONDITIONAL_PRECEDENCE = 15;
     private static final int ASSIGNMENT_PRECEDENCE = 16;
 
     private static final int NUM_PRECEDENCES = 17;

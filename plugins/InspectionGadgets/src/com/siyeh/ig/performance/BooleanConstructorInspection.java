@@ -3,75 +3,100 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 
-public class BooleanConstructorInspection extends ExpressionInspection {
+public class BooleanConstructorInspection extends ExpressionInspection{
     private final BooleanConstructorFix fix = new BooleanConstructorFix();
 
     public String getID(){
         return "BooleanConstructorCall";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Boolean constructor call";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){
         return true;
     }
-    public String buildErrorString(PsiElement location) {
+
+    public String buildErrorString(PsiElement location){
         return "Boolean constructor call #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new BooleanConstructorVisitor(this, inspectionManager, onTheFly);
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class BooleanConstructorFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class BooleanConstructorFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Simplify";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
-            final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
+            final PsiNewExpression expression =
+                    (PsiNewExpression) descriptor.getPsiElement();
             final PsiExpressionList argList = expression.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();
-            final String text = args[0].getText();
+            final PsiExpression arg = args[0];
+            final String text = arg.getText();
             final String newExpression;
-            if ("true".equals(text)) {
+            final PsiManager psiManager = expression.getManager();
+            final LanguageLevel languageLevel =
+                    psiManager.getEffectiveLanguageLevel();
+            if("true".equals(text) || "\"true\"".equalsIgnoreCase(text)){
                 newExpression = "Boolean.TRUE";
-            } else if ("false".equals(text)) {
+            } else if("false".equals(text) || "\"false\"".equalsIgnoreCase(text)){
                 newExpression = "Boolean.FALSE";
-            } else {
+            } else if(languageLevel.equals(LanguageLevel.JDK_1_3)){
+                final PsiType argType = arg.getType();
+                if(PsiType.BOOLEAN.equals(argType)){
+                    if(ParenthesesUtils.getPrecendence(arg)> ParenthesesUtils.CONDITIONAL_PRECEDENCE)
+                    newExpression =   text + "?Boolean.TRUE:Boolean.FALSE";
+                    else
+                        newExpression = '(' +text + ")?Boolean.TRUE:Boolean.FALSE";
+
+                } else{
+                    newExpression = "Boolean.valueOf(" + text + ')';
+                }
+            } else{
                 newExpression = "Boolean.valueOf(" + text + ')';
             }
             replaceExpression(project, expression, newExpression);
         }
     }
 
-    private static class BooleanConstructorVisitor extends BaseInspectionVisitor {
-        private BooleanConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class BooleanConstructorVisitor
+            extends BaseInspectionVisitor{
+        private BooleanConstructorVisitor(BaseInspection inspection,
+                                          InspectionManager inspectionManager,
+                                          boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
-            if (!TypeUtils.typeEquals("java.lang.Boolean", type)) {
+            if(!TypeUtils.typeEquals("java.lang.Boolean", type)){
                 return;
             }
             registerError(expression);
         }
     }
-
 }
