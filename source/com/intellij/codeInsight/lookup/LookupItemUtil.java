@@ -205,7 +205,7 @@ public class LookupItemUtil{
     }
 
     if (s == null) {
-      LOG.assertTrue(false, "Null string for object: " + object + " of class " + object.getClass());
+      LOG.assertTrue(false, "Null string for object: " + object + " of class " + ((object!=null)?object.getClass():null));
     }
     item.setLookupString(s);
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, new Integer(tailType));
