@@ -41,7 +41,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-
+     
 public class CopyReferenceAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CopyReferenceAction");
 
@@ -52,10 +52,15 @@ public class CopyReferenceAction extends AnAction {
     boolean enabled = editor != null && project != null;
     if (enabled) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+      if (file == null) {
+        enabled = false;
+      }
+      else {
+        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
-      PsiMember member = findMemberToCopy(element);
-      enabled = member != null;
+        PsiMember member = findMemberToCopy(element);
+        enabled = member != null;
+      }
     }
     e.getPresentation().setEnabled(enabled);
   }
