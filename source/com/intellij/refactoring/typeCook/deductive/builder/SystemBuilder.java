@@ -255,15 +255,11 @@ public class SystemBuilder {
               if (result.getElement() != null) {
                 final PsiClass qualifierClass = result.getElement();
 
-                qualifierSubstitutor = result.getSubstitutor();
+                qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, qualifierClass, result.getSubstitutor());
 
-                if (!qualifierClass.equals(aClass)) {
-                  supertypeSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, qualifierClass, PsiSubstitutor.EMPTY);
-
-                  aType = supertypeSubstitutor.substitute(aType);
+                if (qualifierSubstitutor != null) {
+                  aType = qualifierSubstitutor.substitute(aType);
                 }
-
-                aType = qualifierSubstitutor.substitute(aType);
               }
             }
 
