@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.ITNReporter;
+import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
@@ -139,6 +140,7 @@ public class PluginManager {
     }, LoadingOrder.FIRST);
 
     Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.ERROR_HANDLER, ErrorReportSubmitter.class.getName());
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
     Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).registerExtension(new ITNReporter());
   }
 

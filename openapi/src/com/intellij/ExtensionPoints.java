@@ -32,4 +32,17 @@ public interface ExtensionPoints {
    * my.plugin.package.MyErrorHandler class must implement {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter} abstract class.
    */
   String ERROR_HANDLER = "com.intellij.errorHandler";
+
+  /**
+     * This extension point allows a plugin vendor to provide patches to junit run/debug configurations
+     * Extension declaration sample is as follows:
+     * <pre>
+     * &lt;extensions xmlns="com.intellij"&gt;
+     *   &lt;junitPatcher implementation="my.plugin.package.MyJUnitPatcher"/&gt;
+     * &lt;/extensions&gt;
+     * </pre>
+     * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
+     */
+
+  String JUNIT_PATCHER = "com.intellij.junitPatcher";
 }
