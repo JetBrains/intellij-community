@@ -17,23 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public interface ModifiableRootModel extends ModuleRootModel {
   /**
-   * Use this method to obtain all content entries of a module. Entries are given in
-   * lexicographical order of their paths.
-   *
-   * @return list of content entries for this module
-   * @see ContentEntry
-   */
-  ContentEntry[] getContentEntries();
-
-  /**
-   * Use this method to obtain order of roots of a module. Order of entries is important
-   * and can be modified by <code>{@link ModifiableRootModel#rearrangeOrderEntries(OrderEntry[])}</code>
-   *
-   * @return list of order entries for this module
-   */
-  OrderEntry[] getOrderEntries();
-
-  /**
    * Adds a content with a given virtual file.
    * @param root root of a content
    * @return new content entry
@@ -100,18 +83,11 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void dispose();
 
   /**
-   * Returns a module that will be changed when this model is commited.
-   */
-  Module getModule();
-
-  /**
    * Returns library table with module libraries.<br>
    * <b>Note:</b> returned library table does not support listeners.
    * @return library table to be modified
    */
   LibraryTable getModuleLibraryTable();
-
-  <R> R processOrder(RootPolicy<R> policy, R initialValue);
 
   /**
    * Sets JDK for this module to a specific value
@@ -123,13 +99,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Makes this module inheriting JDK from its project
    */
   void inheritJdk();
-
-  /**
-   * @return JDK set for this module (either inherited or specific)
-   */
-  ProjectJdk getJdk();
-
-  boolean isJdkInherited();
 
   /**
    * @deprecated Use {@link #getCompilerOutputPathUrl()} instead
