@@ -260,7 +260,7 @@ public class ChangeUtil implements Constants {
     try{
       final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
       model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
-        public PomModelEvent runInner() throws IncorrectOperationException {
+        public PomModelEvent runInner() {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
@@ -380,26 +380,24 @@ public class ChangeUtil implements Constants {
         if (refClass != null) {
           element.putCopyableUserData(REFERENCED_CLASS_KEY, null);
 
-          if (refClass.isPhysical() || !ref.isPhysical()) { //?
-            PsiManager manager = refClass.getManager();
-            CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
-            PsiElement refElement1 = ref.resolve();
-            try {
-              if (refClass != refElement1 && !manager.areElementsEquivalent(refClass, refElement1)) {
-                if (((CompositeElement)element).findChildByRole(ChildRole.QUALIFIER) ==
-                                               null) { // can restore only if short (otherwise qualifier should be already restored)
-                  ref = (PsiJavaCodeReferenceElement)ref.bindToElement(refClass);
-                }
+          PsiManager manager = refClass.getManager();
+          CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
+          PsiElement refElement1 = ref.resolve();
+          try {
+            if (refClass != refElement1 && !manager.areElementsEquivalent(refClass, refElement1)) {
+              if (((CompositeElement)element).findChildByRole(ChildRole.QUALIFIER) == null) {
+                // can restore only if short (otherwise qualifier should be already restored)
+                ref = (PsiJavaCodeReferenceElement)ref.bindToElement(refClass);
               }
-              else {
-                // shorten references to the same package and to inner classes that can be accessed by short name
-                ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, CodeStyleManagerEx.DO_NOT_ADD_IMPORTS);
-              }
-              element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
             }
-            catch (IncorrectOperationException e) {
-              codeStyleManager.addImport(ref.getContainingFile(), refClass); // it may fail for local class, let's try for DummyHolder
+            else {
+              // shorten references to the same package and to inner classes that can be accessed by short name
+              ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, CodeStyleManagerEx.DO_NOT_ADD_IMPORTS);
             }
+            element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
+          }
+          catch (IncorrectOperationException e) {
+            codeStyleManager.addImport(ref.getContainingFile(), refClass); // it may fail for local class, let's try for DummyHolder
           }
         }
       }
