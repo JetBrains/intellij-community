@@ -2,24 +2,19 @@ package com.intellij.cyclicDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.Chunk;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
-import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 
 import java.util.*;
 
@@ -33,6 +28,7 @@ public class CyclicDependenciesBuilder{
   private Map<String, PsiPackage> myPackages = new HashMap<String, PsiPackage>();
   private Graph<PsiPackage> myGraph;
   private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
+  private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myBackwardFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
   private Map<PsiPackage, Set<PsiPackage>> myPackageDependencies = new HashMap<PsiPackage, Set<PsiPackage>>();
   private HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> myCyclicDependencies = new HashMap<PsiPackage, Set<ArrayList<PsiPackage>>>();
   private int myFileCount = 0;
@@ -108,20 +104,12 @@ public class CyclicDependenciesBuilder{
               myPackageDependencies.put(pack, pack2Packages);
             }
             for (Iterator<PsiFile> it = psiFiles.iterator(); it.hasNext();) {
-              PsiFile psiFile = it.next();                                                                                                              //bounded scope - package scope for files
+              PsiFile psiFile = it.next();
               if (!(psiFile instanceof PsiJavaFile) ||
                   !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
                   !getScope().contains(psiFile)) {
                 continue;
               }
-
-              //construct all dependencies
-              Set<PsiFile> wholeDependencies = myForwardBuilder.getDependencies().get(psiJavaFile);
-              if (wholeDependencies == null) {
-                wholeDependencies = new HashSet<PsiFile>();
-                myForwardBuilder.getDependencies().put(psiJavaFile, wholeDependencies);
-              }
-              wholeDependencies.add(psiFile);
 
               // construct dependent packages
               final String packageName = ((PsiJavaFile)psiFile).getPackageName();
@@ -129,24 +117,19 @@ public class CyclicDependenciesBuilder{
               if (packageName == null || packageName.startsWith(pack.getQualifiedName())) {
                 continue;
               }
-              final PsiPackage depPackage = findPackage(packageName);
-              if (depPackage == null) { //not from analyze scope
+              final Set<PsiPackage> depPackages = getPackageHierarhy(packageName);
+              if (depPackages.isEmpty()) { //not from analyze scope
                 continue;
               }
-              pack2Packages.add(depPackage);
+              pack2Packages.addAll(depPackages);
 
-              //construct files in dependent packages
-              Map<PsiPackage, Set<PsiFile>> dependentPackages2Files = myFilesInDependentPackages.get(pack);
-              if (dependentPackages2Files == null) {
-                dependentPackages2Files = new HashMap<PsiPackage, Set<PsiFile>>();
-                myFilesInDependentPackages.put(pack, dependentPackages2Files);
+              for (Iterator<PsiPackage> depIt = depPackages.iterator(); depIt.hasNext();) {
+                PsiPackage depPackage = depIt.next();
+                constractFilesInDependenciesPackagesMap(pack, depPackage, psiFile, myFilesInDependentPackages);
+                constractFilesInDependenciesPackagesMap(depPackage, pack, psiJavaFile, myBackwardFilesInDependentPackages);
               }
-              Set<PsiFile> depFiles = dependentPackages2Files.get(depPackage);
-              if (depFiles == null) {
-                depFiles = new HashSet<PsiFile>();
-                dependentPackages2Files.put(depPackage, depFiles);
-              }
-              depFiles.add(psiFile);
+              
+              constractWholeDependenciesMap(psiJavaFile, psiFile);
             }
           }
         }
@@ -164,18 +147,135 @@ public class CyclicDependenciesBuilder{
     myCyclicDependencies = getCycles(myPackages.values(), myPerPackageCycleCount);
   }
 
+  private void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
+                                                       final PsiPackage depPackage,
+                                                       final PsiFile file,
+                                                       final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> filesInDependentPackages) {
+    Map<PsiPackage, Set<PsiFile>> dependentPackages2Files = filesInDependentPackages.get(pack);
+    if (dependentPackages2Files == null) {
+      dependentPackages2Files = new HashMap<PsiPackage, Set<PsiFile>>();
+      filesInDependentPackages.put(pack, dependentPackages2Files);
+    }
+    Set<PsiFile> depFiles = dependentPackages2Files.get(depPackage);
+    if (depFiles == null) {
+      depFiles = new HashSet<PsiFile>();
+      dependentPackages2Files.put(depPackage, depFiles);
+    }
+    depFiles.add(file);
+  }
+
+//construct all dependencies for usage view
+  private void constractWholeDependenciesMap(final PsiJavaFile psiJavaFile, final PsiFile psiFile) {
+    Set<PsiFile> wholeDependencies = myForwardBuilder.getDependencies().get(psiJavaFile);
+    if (wholeDependencies == null) {
+      wholeDependencies = new HashSet<PsiFile>();
+      myForwardBuilder.getDependencies().put(psiJavaFile, wholeDependencies);
+    }
+    wholeDependencies.add(psiFile);
+  }
+
   public int getPerPackageCycleCount() {
     return myPerPackageCycleCount;
   }
 
   public Set<PsiFile> getDependentFilesInPackage(PsiPackage pack, PsiPackage depPack) {
-    Set<PsiFile> psiFiles = myFilesInDependentPackages.get(pack).get(depPack);
+    Set<PsiFile> psiFiles = new HashSet<PsiFile>();
+    final Map<PsiPackage, Set<PsiFile>> map = myFilesInDependentPackages.get(pack);
+    if (map != null){
+      psiFiles = map.get(depPack);
+    }
     if (psiFiles == null) {
       psiFiles = new HashSet<PsiFile>();
     }
     return psiFiles;
   }
 
+  public Set<PsiFile> getDependentFilesInPackage(PsiPackage firstPack, PsiPackage middlePack, PsiPackage lastPack) {
+    Set<PsiFile> result = new HashSet<PsiFile>();
+    final Map<PsiPackage, Set<PsiFile>> forwardMap = myFilesInDependentPackages.get(middlePack);
+    if (forwardMap != null && forwardMap.get(lastPack) != null){
+      result.addAll(forwardMap.get(lastPack));
+    }
+    final Map<PsiPackage, Set<PsiFile>> backwardMap = myBackwardFilesInDependentPackages.get(middlePack);
+    if (backwardMap != null && backwardMap.get(firstPack) != null){
+      result.addAll(backwardMap.get(firstPack));
+    }
+    return result;
+  }
+
+  /*public Set<PsiFile> getDependentFilesInPackage(PsiPackage pack, PsiPackage depPack) {
+    final Set<PsiFile> result = new HashSet<PsiFile>();
+    final Map<PsiFile, Set<PsiFile>> dependencies = myForwardBuilder.getDependencies();
+    final Set<PsiFile> allPsiPackageFiles = getAllPsiPackageFiles(pack);
+    for (Iterator<PsiFile> it = allPsiPackageFiles.iterator(); it.hasNext();) {
+      PsiFile file = it.next();
+        final Set<PsiFile> psiFiles = dependencies.get(file);
+        if (psiFiles == null){
+          continue;
+        }
+        for (Iterator<PsiFile> iterator = psiFiles.iterator(); iterator.hasNext();) {
+          PsiFile psiFile = iterator.next();
+          if (psiFile.getContainingDirectory().getPackage().getQualifiedName().startsWith(depPack.getQualifiedName())){
+            result.add(psiFile);
+          }
+      }
+    }
+    return result;
+  }
+
+  public Set<PsiFile> getDependentFilesInPackage(PsiPackage firstPack, PsiPackage middlePack, PsiPackage lastPack) {
+    Set<PsiFile> result = new HashSet<PsiFile>();
+
+    final Map<PsiFile, Set<PsiFile>> dependencies = myForwardBuilder.getDependencies();
+    final Set<PsiFile> allPsiPackageFiles = getAllPsiPackageFiles(middlePack);
+
+    for (Iterator<PsiFile> it = allPsiPackageFiles.iterator(); it.hasNext();) {
+      PsiFile file = it.next();
+      final Set<PsiFile> psiFiles = dependencies.get(file);
+      if (psiFiles == null){
+        continue;
+      }
+      for (Iterator<PsiFile> iterator = psiFiles.iterator(); iterator.hasNext();) {
+        PsiFile psiFile = iterator.next();
+        if (psiFile.getContainingDirectory().getPackage().getQualifiedName().startsWith(lastPack.getQualifiedName())){
+          result.add(file);
+        }
+      }
+    }
+    result.addAll(getDependentFilesInPackage(firstPack, middlePack));
+    return result;
+  }
+
+  private Set<PsiFile> getAllPsiPackageFiles(PsiPackage aPackage){
+    Set<PsiFile> result = new HashSet<PsiFile>();
+    final PsiDirectory[] directories = aPackage.getDirectories();
+    if (directories == null){
+      return result;
+    }
+    for (int i = 0; i < directories.length; i++) {
+      PsiDirectory directory = directories[i];
+      final PsiFile[] files = directory.getFiles();
+      if (files == null){
+        continue;
+      }
+      for (int j = 0; j < files.length; j++) {
+        PsiFile file = files[j];
+        if (getScope().contains(file)){
+          result.add(file);
+        }
+      }
+      final PsiDirectory[] subdirectories = directory.getSubdirectories();
+      if (subdirectories == null){
+        continue;
+      }
+      for (int j = 0; j < subdirectories.length; j++) {
+        PsiDirectory subdirectory = subdirectories[j];
+        result.addAll(getAllPsiPackageFiles(subdirectory.getPackage()));
+      }
+    }
+    return result;
+  }
+*/
   public HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> getCyclicDependencies() {
     return myCyclicDependencies;
   }
@@ -188,6 +288,9 @@ public class CyclicDependenciesBuilder{
       final List<Chunk<PsiPackage>> chunksByPackage = findChunksByPackage(psiPackage, chunks);
       for (Iterator<Chunk<PsiPackage>> it = chunksByPackage.iterator(); it.hasNext();) {
         Chunk<PsiPackage> chunk = it.next();
+        if (chunk.getNodes().size() == 1){
+          continue;
+        }
         Set<ArrayList<PsiPackage>> paths2Pack = result.get(psiPackage);
         if (paths2Pack == null) {
           paths2Pack = new HashSet<ArrayList<PsiPackage>>();

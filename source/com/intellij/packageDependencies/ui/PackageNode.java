@@ -44,6 +44,10 @@ public class PackageNode extends PackageDependenciesNode {
     return myPackageName;
   }
 
+  public void setPackageName(final String packageName) {
+    myPackageName = packageName;
+  }
+
   public String getPackageQName() {
     return myPackageQName;
   }

@@ -26,7 +26,8 @@ public class FindDependencyUtil {
         indicator.setText("Searching for usages: " + psiFile.getVirtualFile().getPresentableUrl());
       }
 
-      final Set<PsiFile> deps = new HashSet<PsiFile>(builder.getDependencies().get(psiFile));
+      final Set<PsiFile> depsByFile = builder.getDependencies().get(psiFile);
+      final Set<PsiFile> deps = depsByFile != null ? new HashSet<PsiFile>(depsByFile) : new HashSet<PsiFile>();
       deps.retainAll(searchFor);
       if (deps.isEmpty()) continue;
 
