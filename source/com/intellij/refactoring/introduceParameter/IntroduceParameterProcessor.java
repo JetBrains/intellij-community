@@ -663,8 +663,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return;
       }
 
-      PsiElement[] oldChildren = RefactoringUtil.getChilderenWithoutWhitespaceOrComments(oldExpr);
-      PsiElement[] newChildren = RefactoringUtil.getChilderenWithoutWhitespaceOrComments(newExpr);
+      PsiElement[] oldChildren = oldExpr.getChildren();
+      PsiElement[] newChildren = newExpr.getChildren();
 
       if (oldChildren != null && newChildren != null & oldChildren.length == newChildren.length) {
         for (int i = 0; i < oldChildren.length; i++) {

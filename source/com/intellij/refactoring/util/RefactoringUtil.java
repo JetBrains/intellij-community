@@ -1393,16 +1393,6 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiElement[] getChilderenWithoutWhitespaceOrComments(PsiElement parent) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
-    for (PsiElement current = parent.getFirstChild(); current != null; current = current.getNextSibling()) {
-      if (!(current instanceof PsiWhiteSpace || current instanceof PsiComment)) {
-        result.add(current);
-      }
-    }
-    return result.toArray(new PsiElement[result.size()]);
-  }
-
   public static void processIncorrectOperation(final Project project, IncorrectOperationException e) {
     final String message = e.getMessage();
     final int index = message != null ? message.indexOf("java.io.IOException") : -1;
