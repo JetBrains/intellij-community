@@ -139,7 +139,9 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
   }
 
   static String getProgressTitile(UsageViewPresentation presentation) {
-    return "Searching for " + presentation.getUsagesString() + " in " + presentation.getScopeText() + "...";
+    final String scopeText = presentation.getScopeText();
+    if (scopeText == null) return "Searching for " + presentation.getUsagesString() + "...";
+    return "Searching for " + presentation.getUsagesString() + " in " + scopeText + "...";
   }
 
   private void activateToolwindow() {
