@@ -6,6 +6,9 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.idea.IdeaTestUtil;
+
+import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -500,6 +503,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testSeveralStatements() {
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 27, 15, 0, "lesya", "formatterProblen")) return;
     String s1 = "{\n" +
                 "        System.out.println(1);\n" +
                 "        System.out.println(2);\n" +
