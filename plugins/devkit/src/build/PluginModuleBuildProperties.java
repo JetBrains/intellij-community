@@ -5,6 +5,8 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.j2ee.j2eeDom.J2EEDeploymentItem;
+import com.intellij.j2ee.j2eeDom.DeploymentDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -14,16 +16,31 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 import org.jdom.Element;
+
+import java.io.File;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
+  private J2EEDeploymentItem myPluginXML;
   public boolean myJarPlugin = false;
-
+  public String myPluginXMLPath;
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
+    myPluginXMLPath = new File(myModule.getModuleFilePath()).getParent();
+    myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
+    myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
+    myPluginXML.createIfNotExists();
+  }
+
+  public static PluginModuleBuildProperties getInstance(Module module) {
+    return (PluginModuleBuildProperties)module.getComponent(ModuleBuildProperties.class);
   }
 
   public String getArchiveExtension() {
@@ -87,5 +104,24 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public J2EEDeploymentItem getPluginXML() {
+    return myPluginXML;
+  }
+
+  public String getPluginXMLPath() {
+    return myPluginXMLPath;
+  }
+
+  public void setPluginXMLPath(String pluginXMLPath) {
+    myPluginXMLPath = pluginXMLPath;
+    myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
+    myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
+    myPluginXML.createIfNotExists();
+  }
+
+  private String createPluginXMLURL(String path){
+    return VirtualFileManager.constructUrl("file", StringUtil.replace(path + "/META-INF/plugin.xml", File.separator, "/"));
   }
 }

@@ -35,13 +35,6 @@
       <interface-class>com.intellij.j2ee.make.ModuleBuildDescriptor</interface-class>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildDescriptor</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleProperties</implementation-class>
-      <option name="type" value="PLUGIN_MODULE"/>
-    </component>
-   <!-- <component>
-      <implementation-class>org.jetbrains.idea.devkit.projectRoots.IdeaProjectJdkPatch</implementation-class>      
-    </component>-->
+    </component>  
   </module-components>
 </idea-plugin>

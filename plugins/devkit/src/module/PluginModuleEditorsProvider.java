@@ -31,7 +31,7 @@ public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfi
       editorFactory.createDependenciesEditor(state),
       editorFactory.createOrderEntriesEditor(state),
       editorFactory.createJavadocEditor(state),
-      new PluginModuleBuildConfEditor((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module), state)
+      new PluginModuleBuildConfEditor(state)
     };
   }
 
