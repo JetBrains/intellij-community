@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.FieldView;
@@ -14,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.ItemPresentation;
 
 /**
  * @author dsl
@@ -274,5 +276,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     }
   }
 
-
+  public ItemPresentation getPresentation() {
+    return SymbolPresentationUtil.getFieldPresentation(this);
+  }
 }
