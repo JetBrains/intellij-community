@@ -4,13 +4,13 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringDialog;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
  */
 public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private NameSuggestionsField myNameField;
-  private final TextFieldWithBrowseButton myTfTargetClassName;
+  private final ReferenceEditorWithBrowseButton myTfTargetClassName;
   private JComboBox myTargetClassNameCombo;
   private PsiClass myContainingClass;
   private final PsiMethod myConstructor;
@@ -38,7 +38,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
     setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
 
-    myTfTargetClassName = new TextFieldWithBrowseButton(new ChooseClassAction());
+    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", myConstructor.getManager());
 
     init();
   }

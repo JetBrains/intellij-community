@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -24,14 +23,13 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -45,7 +43,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private PsiClass mySourceClass;
   private String mySourceClassName;
   private MemberInfo[] myMemberInfos;
-  private final TextFieldWithBrowseButton myTfTargetClassName;
+  private final ReferenceEditorWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
   private Set<PsiMember> myPreselectMembers;
   private final MoveCallback myMoveCallback;
@@ -101,13 +99,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       }
     }
     myMemberInfos = memberList.toArray(new MemberInfo[memberList.size()]);
-    myTfTargetClassName = new TextFieldWithBrowseButton(new ChooseClassAction());
+    String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
+    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject));
 
     init();
-
-    if (initialTargetClass != null && !sourceClass.equals(initialTargetClass)) {
-      myTfTargetClassName.setText(initialTargetClass.getQualifiedName());
-    }
   }
 
   public String getMemberVisibility() {
@@ -150,8 +145,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     _panel.add(myTfTargetClassName, BorderLayout.CENTER);
     box.add(_panel);
 
-    myTfTargetClassName.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+    myTfTargetClassName.getEditorTextField().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
       }
     });
@@ -183,7 +178,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myTfTargetClassName.getTextField();
+    return myTfTargetClassName.getEditorTextField();
   }
 
   public PsiMember[] getSelectedMembers() {

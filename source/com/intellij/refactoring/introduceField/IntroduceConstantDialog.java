@@ -3,28 +3,27 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.ide.util.TreeClassChooserDialog;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +55,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbDeleteVariable;
   private NameSuggestionsManager myNameSuggestionsManager;
   private final CodeStyleManager myCodeStyleManager;
-  private TextFieldWithBrowseButton myTfTargetClassName;
+  private ReferenceEditorWithBrowseButton myTfTargetClassName;
   private PsiClass myDestinationClass;
 
   public IntroduceConstantDialog(Project project,
@@ -202,7 +201,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     panel.add(nameInputPanel, gbConstraints);
 
     {
-      myTfTargetClassName = new TextFieldWithBrowseButton(new ChooseClassAction());
+      myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject));
       JPanel _panel = new JPanel(new BorderLayout());
       JLabel label = new JLabel("To (fully qualified name):");
       label.setLabelFor(myTfTargetClassName);
