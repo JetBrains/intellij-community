@@ -51,11 +51,11 @@ public class DeleteCatchFix implements IntentionAction {
         PsiElement reformatRangeEnd = tryStatement.getNextSibling();
         while((reformatRangeEnd = reformatRangeEnd.getNextSibling()) instanceof PsiWhiteSpace);
         if(reformatRangeEnd == null) reformatRangeEnd = tryParent;
-        PsiElement insideElement = tryBlock.getFirstBodyElement();
-        if (insideElement != tryBlock.getRBrace()) {
+        PsiElement firstElement = tryBlock.getFirstBodyElement();
+        if (firstElement != null) {
           PsiElement endElement = tryBlock.getLastBodyElement();
 
-          reformatRangeStart = tryParent.addRangeBefore(insideElement, endElement, tryStatement).getPrevSibling();
+          reformatRangeStart = tryParent.addRangeBefore(firstElement, endElement, tryStatement).getPrevSibling();
         }
         tryStatement.delete();
         CodeStyleManager styleManager = CodeStyleManager.getInstance(project);

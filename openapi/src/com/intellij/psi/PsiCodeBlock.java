@@ -19,5 +19,4 @@ public interface PsiCodeBlock extends PsiElement{
   /** can be null */
   PsiJavaToken getRBrace();
 
-  boolean isEmpty();
 }

@@ -58,9 +58,8 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
           PsiMethod firstMethod = (PsiMethod)results[0];
           final PsiCodeBlock block = firstMethod.getBody();
           final PsiElement first = block.getFirstBodyElement();
-          editor.getCaretModel().moveToOffset(first != null ?
-                                              first.getTextRange().getStartOffset() :
-                                              block.getTextRange().getEndOffset());
+          LOG.assertTrue(first != null);
+          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           editor.getSelectionModel().removeSelection();
         }

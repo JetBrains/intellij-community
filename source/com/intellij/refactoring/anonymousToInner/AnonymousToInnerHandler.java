@@ -332,8 +332,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiCodeBlock body = initializer.getBody();
         if (body != null) {
-          if(!body.isEmpty())
-            constructor.getBody().addRange(body.getFirstBodyElement(), body.getLastBodyElement());
+          PsiElement firstBodyElement = body.getFirstBodyElement();
+          if (firstBodyElement != null) {
+            constructor.getBody().addRange(firstBodyElement, body.getLastBodyElement());
+          }
         }
       }
     }

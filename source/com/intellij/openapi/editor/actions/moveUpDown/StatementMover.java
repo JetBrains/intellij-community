@@ -41,8 +41,8 @@ class StatementMover extends LineMover {
 
           whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
                                      document.getLineNumber(lineRangeMarker.getEndOffset()));
-          insertOffset = isDown ? newStatement.getCodeBlock().getFirstBodyElement().getTextRange().getStartOffset() :
-                         newStatement.getCodeBlock().getLastBodyElement().getTextRange().getEndOffset();
+          insertOffset = isDown ? newStatement.getCodeBlock().getFirstBodyElement().getTextRange().getEndOffset() :
+                         newStatement.getCodeBlock().getRBrace().getTextRange().getStartOffset();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

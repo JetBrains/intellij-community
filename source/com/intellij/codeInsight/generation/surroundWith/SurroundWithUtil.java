@@ -102,7 +102,7 @@ public class SurroundWithUtil {
     if (first instanceof PsiWhiteSpace) {
       first = first.getNextSibling();
     }
-    if (first.equals(block.getRBrace())) {
+    if (first == null) {
       int offset = block.getTextRange().getStartOffset() + 1;
       return new TextRange(offset, offset);
     }

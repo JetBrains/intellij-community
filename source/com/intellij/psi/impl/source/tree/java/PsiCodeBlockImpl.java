@@ -36,12 +36,17 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   }
 
   public PsiElement getFirstBodyElement() {
-    return getLBrace().getNextSibling();
+    final PsiElement nextSibling = getLBrace().getNextSibling();
+    return nextSibling == getRBrace() ? null : nextSibling;
   }
 
   public PsiElement getLastBodyElement() {
     final PsiJavaToken rBrace = getRBrace();
-    return rBrace != null ? rBrace.getPrevSibling() : getLastChild();
+    if (rBrace != null) {
+      final PsiElement prevSibling = rBrace.getPrevSibling();
+      return prevSibling == getLBrace() ? null : prevSibling;
+    }
+    return getLastChild();
   }
 
   public PsiJavaToken getLBrace() {
@@ -50,10 +55,6 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
 
   public PsiJavaToken getRBrace() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RBRACE);
-  }
-
-  public boolean isEmpty() {
-    return getLastBodyElement() == getLBrace();
   }
 
   private Set<String> myVariablesSet = null;
