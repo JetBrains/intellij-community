@@ -5,14 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention
 {
-    public FlipCommutativeMethodCallIntention(Project project)
-    {
-        super(project);
-    }
 
     protected String getTextForElement(PsiElement element)
     {
