@@ -48,7 +48,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final int selectionEnd = selectionModel.getSelectionEnd();
     final boolean hasSelection = selectionModel.hasSelection();
 
-    // for preventing flicker
+    // to prevent flicker
     caretModel.moveToOffset(0);
 
     document.deleteString(start, end);
@@ -123,7 +123,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class});
     // move operation should not go out of method
     final int insertOffset = editor.logicalPositionToOffset(new LogicalPosition(isDown ? result.endLine + 2 : result.startLine - 1, 0));
-    if (guard != null && !guard.getTextRange().contains(insertOffset)) return null;
+    if (guard != null && !guard.getTextRange().shiftRight(1).grown(-1).contains(insertOffset)) return null;
     
     return result;
   }
