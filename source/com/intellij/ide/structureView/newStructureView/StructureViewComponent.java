@@ -559,7 +559,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return element;
     }
     else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
-      return getSelectedElements();
+      return convertToPsiElementsArray(getSelectedElements());
     }
     else if (DataConstants.FILE_EDITOR.equals(dataId)) {
       return myFileEditor;
@@ -580,6 +580,17 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return null;
     }
     return null;
+  }
+
+  private PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
+    ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
+    for (int i = 0; i < selectedElements.length; i++) {
+      Object selectedElement = selectedElements[i];
+      if (selectedElement instanceof PsiElement){
+        psiElements.add((PsiElement)selectedElement);
+      }
+    }
+    return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
   private TreePath getSelectedPath() {

@@ -129,7 +129,10 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useNewFormatter(FileType fileType) {
-    return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.XML || fileType == StdFileTypes.JSPX) &&
+    return (fileType == StdFileTypes.JAVA
+            || fileType == StdFileTypes.XML
+            || fileType == StdFileTypes.JSPX
+            || fileType == StdFileTypes.HTML) &&
            USE_NEW_CODE_FORMATTER == 1;
   }
 

@@ -32,21 +32,21 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
+import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
+import com.intellij.psi.xml.XmlFile;
 
 import javax.swing.*;
 
@@ -120,10 +120,11 @@ public class HtmlFileType implements FileType {
   }
 
   public PseudoTextBuilder getPseudoTextBuilder() {
-    return null;
+    return new HtmlPseudoTextBuilder();
   }
 
   public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
-    return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
+    //return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
+    return null;
   }
 }

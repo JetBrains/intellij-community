@@ -32,7 +32,8 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.codeFormatting.xml.XmlPseudoTextBuilder;
+import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
+import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.structureView.StructureViewModel;

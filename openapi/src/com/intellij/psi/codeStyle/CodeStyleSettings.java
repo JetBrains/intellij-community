@@ -752,6 +752,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   // ---------------------------------- XML formatting options -------------------------
   public boolean XML_KEEP_WHITESPACES = false;
   public int XML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
+  public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
 
   public boolean XML_KEEP_LINE_BREAKS = true;
   public int XML_KEEP_BLANK_LINES = 2;
