@@ -837,7 +837,7 @@ public class HighlightClassUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
     }
     final PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, outerClass);
-    if (staticParent != null && staticParent.hasModifierProperty(PsiModifier.STATIC)) {
+    if (staticParent != null) {
       String description = MessageFormat.format(REFERENCED_FROM_STATIC_CONTEXT,
                                                 new Object[]{outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + ".this"});
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
