@@ -30,7 +30,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private final EditorFactory myEditorFactory;
   private FileDocumentManager myFileDocumentManager;
-  private FileEditorManagerEx myEditorManager;
+  private final FileEditorManagerEx myEditorManager;
   private VirtualFileManager myVfManager;
   private CommandProcessor myCmdProcessor;
   private VirtualFileListener myFileListener;
@@ -105,8 +105,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     };
     eventMulticaster.addCaretListener(myCaretListener);
 
-    FileEditorManager fileEditorManager = myEditorManager;
-    fileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    myEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent e) {
         onSelectionChanged();
       }
@@ -166,8 +165,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (myCommandStartPlace != null) {
       if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
         if (!myBackInProgress) {
-          Object gropupId = commandGroupId;
-          if (gropupId == null || !gropupId.equals(myLastGroupId)) {
+          if (commandGroupId == null || !commandGroupId.equals(myLastGroupId)) {
             putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
           }
           if (!myForwardInProgress) {
@@ -399,18 +397,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
    * @return currently selected FileEditor or null.
    */
   protected Pair<FileEditor,FileEditorProvider> getSelectedEditor() {
-    final FileEditorManagerEx fileEditorManager = myEditorManager;
-    final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
+    final VirtualFile[] selectedFiles = myEditorManager.getSelectedFiles();
     if (selectedFiles.length == 0) {
       return null;
     }
-    return fileEditorManager.getSelectedEditorWithProvider(selectedFiles[0]);
+    return myEditorManager.getSelectedEditorWithProvider(selectedFiles[0]);
   }
 
   private PlaceInfo createPlaceInfo(final FileEditor fileEditor, final FileEditorProvider fileProvider) {
     LOG.assertTrue(fileEditor != null);
-    final FileEditorManagerEx fileEditorManager = myEditorManager;
-    final VirtualFile file = fileEditorManager.getFile(fileEditor);
+    final VirtualFile file = myEditorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
 
     final FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
@@ -427,9 +423,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return "IdeDocumentHistory";
   }
 
-  private void putLastOrMerge(LinkedList list, PlaceInfo next, int limitSizeLimit) {
+  private void putLastOrMerge(LinkedList<PlaceInfo> list, PlaceInfo next, int limitSizeLimit) {
     if (list.size() > 0) {
-      PlaceInfo prev = (PlaceInfo)list.get(list.size() - 1);
+      PlaceInfo prev = list.get(list.size() - 1);
       if (isSame(prev, next)) {
         list.removeLast();
       }

@@ -4,7 +4,7 @@ import com.intellij.ide.util.treeView.NodeOptions;
 
 public interface ViewSettings extends NodeOptions {
 
-  static ViewSettings DEFAULT = new ViewSettings() {
+  ViewSettings DEFAULT = new ViewSettings() {
     public boolean isShowMembers() {
       return false;
     }
