@@ -2,6 +2,7 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -39,25 +40,24 @@ public class StringConcatenationInspection extends ExpressionInspection {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-
-            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
+            if(sign == null)
+            {
+                return;
+            }
+            final IElementType tokenType = sign.getTokenType();
+            if (!JavaTokenType.PLUS.equals(tokenType)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
 
             final PsiType lhsType = lhs.getType();
-            if (TypeUtils.isJavaLangString(lhsType)) {
-                registerError(sign);
-                return;
-            }
-
             final PsiExpression rhs = expression.getROperand();
-
             final PsiType rhsType = rhs.getType();
-            if (TypeUtils.isJavaLangString(rhsType)) {
-                registerError(sign);
+            if(!TypeUtils.isJavaLangString(lhsType) &&
+                       !TypeUtils.isJavaLangString(rhsType)){
                 return;
             }
+            registerError(sign);
 
         }
 

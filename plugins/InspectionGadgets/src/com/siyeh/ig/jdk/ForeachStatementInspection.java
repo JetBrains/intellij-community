@@ -39,22 +39,26 @@ public class ForeachStatementInspection extends StatementInspection{
                     (PsiForeachStatement) descriptor.getPsiElement()
                             .getParent();
 
-            StringBuffer newStatement = new StringBuffer();
+            final StringBuffer newStatement = new StringBuffer();
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if(iteratedValue.getType() instanceof PsiArrayType){
-                String index = codeStyleManager.suggestUniqueVariableName("i",
+                final String index = codeStyleManager.suggestUniqueVariableName("i",
                                                                    statement,
                                                                    true);
-                newStatement.append("for(int "+index+" = 0;"+index + "<")
-                        .append(iteratedValue.getText()).append(".length;"+index+"++)");
-                newStatement.append("{ ")
-                        .append(statement.getIterationParameter().getType()
-                                        .getPresentableText())
-                        .append(" ").append(statement.getIterationParameter().getName())
-                        .append(" = ").append(iteratedValue.getText())
-                        .append("["+ index+ "];");
+                newStatement.append("for(int " + index + " = 0;" + index + '<');
+                newStatement.append(iteratedValue.getText());
+                newStatement.append(".length;" + index + "++)");
+                newStatement.append("{ ");
+                newStatement.append(statement.getIterationParameter().getType()
+                                            .getPresentableText());
+                newStatement.append(' ');
+                newStatement.append(statement.getIterationParameter()
+                                            .getName());
+                newStatement.append(" = ");
+                newStatement.append(iteratedValue.getText());
+                newStatement.append('[' + index + "];");
                 final PsiStatement body = statement.getBody();
                 if(body instanceof PsiBlockStatement){
                     final PsiCodeBlock block =
@@ -68,24 +72,26 @@ public class ForeachStatementInspection extends StatementInspection{
                 } else{
                     newStatement.append(body.getText());
                 }
-                newStatement.append("}");
+                newStatement.append('}');
             } else{
 
-                String iterator =  codeStyleManager.suggestUniqueVariableName("it", statement,
+                final String iterator =  codeStyleManager.suggestUniqueVariableName("it", statement,
                                                                   true);
                 final String typeText = statement.getIterationParameter()
                                 .getType()
                                 .getPresentableText();
-                newStatement.append("for(java.util.Iterator<")
-                         .append(typeText)
-                        .append("> "+ iterator + " = ")
-                        .append(iteratedValue.getText())
-                        .append(".iterator();" + iterator+".hasNext();)");
-                newStatement.append("{");
-                newStatement.append(typeText)
-                        .append(" ").append(statement.getIterationParameter().getName())
-                        .append(" = ")
-                        .append( iterator+".next();");
+                newStatement.append("for(java.util.Iterator<");
+                newStatement.append(typeText);
+                newStatement.append("> " + iterator + " = ");
+                newStatement.append(iteratedValue.getText());
+                newStatement.append(".iterator();" + iterator + ".hasNext();)");
+                newStatement.append('{');
+                newStatement.append(typeText);
+                newStatement.append(' ');
+                newStatement.append(statement.getIterationParameter()
+                                            .getName());
+                newStatement.append(" = ");
+                newStatement.append(iterator + ".next();");
 
                 final PsiStatement body = statement.getBody();
                 if(body instanceof PsiBlockStatement){
@@ -98,7 +104,7 @@ public class ForeachStatementInspection extends StatementInspection{
                 } else{
                     newStatement.append(body.getText());
                 }
-                newStatement.append("}");
+                newStatement.append('}');
             }
             replaceStatement(project, statement, newStatement.toString());
         }

@@ -65,7 +65,7 @@ public class IOResourceInspection extends ExpressionInspection{
                 return;
             }
             final PsiElement referent =
-                    ((PsiReferenceExpression) lhs).resolve();
+                    ((PsiReference) lhs).resolve();
             if(referent == null || !(referent instanceof PsiVariable)){
                 return;
             }
@@ -94,7 +94,7 @@ public class IOResourceInspection extends ExpressionInspection{
             }
         }
 
-        private boolean isArgToResourceCreation(PsiVariable boundVariable,
+        private static boolean isArgToResourceCreation(PsiVariable boundVariable,
                                                 PsiElement scope){
             final UsedAsIOResourceArgVisitor visitor =
             new UsedAsIOResourceArgVisitor(boundVariable);
@@ -170,9 +170,9 @@ public class IOResourceInspection extends ExpressionInspection{
         private boolean usedAsArgToResourceCreation = false;
         private PsiVariable ioResource;
 
-        private UsedAsIOResourceArgVisitor(PsiVariable streamToClose){
+        private UsedAsIOResourceArgVisitor(PsiVariable ioResource){
             super();
-            this.ioResource = streamToClose;
+            this.ioResource = ioResource;
         }
 
         public void visitNewExpression(PsiNewExpression expression){
@@ -193,7 +193,7 @@ public class IOResourceInspection extends ExpressionInspection{
                 return;
             }
             final PsiElement referent =
-                    ((PsiReferenceExpression) arg).resolve();
+                    ((PsiReference) arg).resolve();
             if(referent == null || !referent.equals(ioResource)){
                 return;
             }

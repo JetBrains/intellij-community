@@ -78,10 +78,7 @@ public class StringCompareToInspection extends ExpressionInspection {
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
-                return false;
-            }
-            return true;
+            return "java.lang.String".equals(className);
         }
     }
 

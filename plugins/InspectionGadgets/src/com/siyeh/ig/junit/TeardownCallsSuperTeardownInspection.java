@@ -12,7 +12,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 
 public class TeardownCallsSuperTeardownInspection extends MethodInspection {
 
-    private AddSuperTearDownCall fix = new AddSuperTearDownCall();
+    private final AddSuperTearDownCall fix = new AddSuperTearDownCall();
 
     public String getID(){
         return "TearDownDoesntCallSuperTearDown";

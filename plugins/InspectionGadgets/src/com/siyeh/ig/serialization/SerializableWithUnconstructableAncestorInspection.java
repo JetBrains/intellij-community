@@ -52,7 +52,7 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
                 return;
             }
             PsiClass ancestor = aClass.getSuperClass();
-            final Set visitedClasses = new HashSet();
+            final Set visitedClasses = new HashSet(16);
             while (ancestor != null && SerializationUtils.isSerializable(ancestor)) {
                 ancestor = ancestor.getSuperClass();
                 if (!visitedClasses.add(ancestor)) {

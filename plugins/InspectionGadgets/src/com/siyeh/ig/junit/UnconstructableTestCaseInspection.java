@@ -72,7 +72,7 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
                 if(parameters.length == 1){
                     final PsiType type = parameters[0].getType();
                     if(type != null){
-                        if(type.getCanonicalText().equals("java.lang.String")){
+                        if("java.lang.String".equals(type.getCanonicalText())){
                             hasStringConstructor = true;
                         }
                     }

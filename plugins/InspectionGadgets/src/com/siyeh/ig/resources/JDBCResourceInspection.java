@@ -9,7 +9,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
 public class JDBCResourceInspection extends ExpressionInspection {
-    private static String[] creationMethodClassName =
+    private static final String[] creationMethodClassName =
             new String[]{
                 "java.sql.Driver",
                 "java.sql.DriverManager",
@@ -19,7 +19,7 @@ public class JDBCResourceInspection extends ExpressionInspection {
                 "java.sql.Statement",
                 "java.sql.Statement",
             };
-    private static String[] creationMethodName =
+    private static final String[] creationMethodName =
             new String[]{
                 "connect",
                 "getConnection",
@@ -72,7 +72,7 @@ public class JDBCResourceInspection extends ExpressionInspection {
             if (!(lhs instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiElement referent = ((PsiReferenceExpression) lhs).resolve();
+            final PsiElement referent = ((PsiReference) lhs).resolve();
             if (referent == null || !(referent instanceof PsiVariable)) {
                 return;
             }

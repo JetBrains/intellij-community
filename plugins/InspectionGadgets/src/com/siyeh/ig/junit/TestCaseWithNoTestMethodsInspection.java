@@ -72,10 +72,7 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
             }
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length != 0) {
-                return false;
-            }
-            return true;
+            return parameters.length == 0;
         }
 
     }

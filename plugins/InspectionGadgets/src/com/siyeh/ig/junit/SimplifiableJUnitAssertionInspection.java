@@ -9,7 +9,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
-    private SimplifyJUnitAssertFix fix = new SimplifyJUnitAssertFix();
+    private final SimplifyJUnitAssertFix fix = new SimplifyJUnitAssertFix();
 
     public String getDisplayName(){
         return "Simplifiable JUnit assertion";
@@ -32,8 +32,10 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             return "Simplify assertion";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression) methodNameIdentifier.getParent()
@@ -94,13 +96,13 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 lhs = equalityMethodExpression.getQualifierExpression();
             }
             if(!(lhs instanceof PsiLiteralExpression) &&
-                            rhs instanceof PsiLiteralExpression){
+                               rhs instanceof PsiLiteralExpression){
                 final PsiExpression temp = lhs;
                 lhs = rhs;
                 rhs = temp;
             }
             final StringBuffer newExpression =
-            new StringBuffer("assertEquals(");
+                    new StringBuffer("assertEquals(");
             if(message != null){
                 newExpression.append(message.getText());
                 newExpression.append(',');
@@ -146,7 +148,6 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 firstTestPosition = 0;
                 secondTestPosition = 1;
                 message = null;
-
             }
             final PsiExpression firstTestArg = args[firstTestPosition];
             final PsiExpression secondTestArg = args[secondTestPosition];
@@ -159,10 +160,11 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 literalValue = secondTestArg.getText();
                 compareValue = firstTestArg.getText();
             }
-            final String uppercaseLiteralValue=
-                    Character.toUpperCase( literalValue.charAt(0)) +literalValue.substring(1);
+            final String uppercaseLiteralValue =
+                    Character.toUpperCase(literalValue.charAt(0)) +
+                    literalValue.substring(1);
             final StringBuffer newExpression =
-            new StringBuffer("assert"+ uppercaseLiteralValue + '(');
+                    new StringBuffer("assert" + uppercaseLiteralValue + '(');
             if(message != null){
                 newExpression.append(message.getText());
                 newExpression.append(',');
@@ -182,15 +184,15 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                boolean onTheFly){
         return new SimplifiableJUnitAssertionVisitor(this,
-                                                           inspectionManager,
-                                                           onTheFly);
+                                                     inspectionManager,
+                                                     onTheFly);
     }
 
     private static class SimplifiableJUnitAssertionVisitor
             extends BaseInspectionVisitor{
         private SimplifiableJUnitAssertionVisitor(BaseInspection inspection,
-                                                        InspectionManager inspectionManager,
-                                                        boolean isOnTheFly){
+                                                  InspectionManager inspectionManager,
+                                                  boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
@@ -198,11 +200,8 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             super.visitMethodCallExpression(expression);
             if(isAssertTrueThatCouldBeAssertEquality(expression)){
                 registerMethodCallError(expression);
-                return;
-            }
-            if(isAssertEqualsThatCouldBeAssertLiteral(expression)){
+            } else if(isAssertEqualsThatCouldBeAssertLiteral(expression)){
                 registerMethodCallError(expression);
-                return;
             }
         }
     }
@@ -243,10 +242,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg == null){
             return false;
         }
-        if(!isEqualityComparison(testArg)){
-            return false;
-        }
-        return true;
+        return isEqualityComparison(testArg);
     }
 
     private static boolean isAssertEqualsThatCouldBeAssertLiteral(PsiMethodCallExpression expression){
@@ -292,10 +288,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(secondTestArg == null){
             return false;
         }
-        if(isSimpleLiteral(firstTestArg) || isSimpleLiteral(secondTestArg)){
-            return true;
-        }
-        return false;
+        return isSimpleLiteral(firstTestArg) || isSimpleLiteral(secondTestArg);
     }
 
     private static boolean isSimpleLiteral(PsiExpression arg){
@@ -304,7 +297,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
         final String text = arg.getText();
         return "null".equals(text) || "true".equals(text) ||
-                "false".equals(text);
+                       "false".equals(text);
     }
 
     private static boolean isEqualityComparison(PsiExpression testArg){
@@ -331,10 +324,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             if(type == null){
                 return false;
             }
-            if(!ClassUtils.isPrimitive(type)){
-                return false;
-            }
-            return true;
+            return ClassUtils.isPrimitive(type);
         } else if(testArg instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) testArg;
@@ -358,10 +348,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             if(args[0] == null){
                 return false;
             }
-            if(methodExpression.getQualifierExpression() == null){
-                return false;
-            }
-            return true;
+            return methodExpression.getQualifierExpression() != null;
         }
         return false;
     }
@@ -379,10 +366,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
 
         final PsiClass targetClass = method.getContainingClass();
-        if(!ClassUtils.isSubclass(targetClass, "junit.framework.Assert")){
-            return false;
-        }
-        return true;
+        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
     }
 
     private static boolean isAssertEquals(PsiMethodCallExpression expression){
@@ -398,9 +382,6 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
 
         final PsiClass targetClass = method.getContainingClass();
-        if(!ClassUtils.isSubclass(targetClass, "junit.framework.Assert")){
-            return false;
-        }
-        return true;
+        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
     }
 }

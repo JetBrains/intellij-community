@@ -9,7 +9,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class MisorderedAssertEqualsParametersInspection extends ExpressionInspection {
-    private FlipParametersFix fix = new FlipParametersFix();
+    private final FlipParametersFix fix = new FlipParametersFix();
 
 
     public String getDisplayName() {
@@ -142,10 +142,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             }
 
             final PsiClass targetClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(targetClass, "junit.framework.Assert")) {
-                return false;
-            }
-            return true;
+            return ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
         }
 
     }

@@ -100,10 +100,7 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
             }
 
             final PsiClass targetClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(targetClass, "junit.framework.Assert")) {
-                return false;
-            }
-            return true;
+            return ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
         }
 
     }

@@ -52,7 +52,7 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
                         final PsiType type = field.getType();
                         if (type != null) {
                             final String text = type.getCanonicalText();
-                            if (!text.equals("java.io.ObjectStreamField[]")) {
+                            if (!"java.io.ObjectStreamField[]".equals(text)) {
                                 registerFieldError(field);
                             }
                         }
