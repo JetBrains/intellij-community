@@ -143,7 +143,7 @@ public class ReformatCodeAction extends AnAction {
       }
       if (!(element instanceof PsiDirectory)){
         PsiFile file = element.getContainingFile();
-        if (file == null || (!(file instanceof PsiJavaFile) && !(file instanceof XmlFile))){
+        if (file == null || (!(file instanceof PsiJavaFile) && !(file instanceof XmlFile)) || (file.getVirtualFile() == null)){
           presentation.setEnabled(false);
           return;
         }
