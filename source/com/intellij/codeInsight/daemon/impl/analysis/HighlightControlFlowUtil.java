@@ -412,7 +412,9 @@ public class HighlightControlFlowUtil {
                                   Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
                                   Map<PsiParameter, Boolean> parameterIsMutable) {
     if (variable instanceof PsiLocalVariable) {
-      final PsiElement declarationScope = variable.getParent().getParent();
+      final PsiElement parent = variable.getParent();
+      if (parent == null) return false;
+      final PsiElement declarationScope = parent.getParent();
       Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
       return codeBlockProblems.contains(new ControlFlowUtil.VariableInfo(variable, null));
     }
