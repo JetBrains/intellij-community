@@ -1,6 +1,7 @@
 package com.intellij.newCodeFormatting;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import java.util.*;
 
@@ -13,10 +14,14 @@ public class FormatterImpl {
   private int myCurrentOffset = -1;
 
   private final Map <Block, WhiteSpace> myWhiteSpaceBeforeBlock = new LinkedHashMap<Block, WhiteSpace>();
+  private final CodeStyleSettings.IndentOptions myIndentOption;
+  private CodeStyleSettings mySettings;
 
-  public FormatterImpl(FormattingModel model, Block rootBlock) {
+  public FormatterImpl(FormattingModel model, Block rootBlock, CodeStyleSettings settings, CodeStyleSettings.IndentOptions indentOptions) {
     myModel = model;
     myRootBlock = rootBlock;
+    myIndentOption = indentOptions;
+    mySettings = settings;
   }
 
   public void format() {
@@ -190,9 +195,9 @@ public class FormatterImpl {
 
   private int getIndent(final BlockInfo stackElement) {
     final Indent indent = stackElement.getBlock().getChildIndent();
-    if (indent == null) return 8;
-    if (indent.getType() == Indent.Type.NORMAL) return 4;
-    return 1;
+    if (indent == null) return myIndentOption.CONTINUATION_INDENT_SIZE;
+    if (indent.getType() == Indent.Type.NORMAL) return myIndentOption.INDENT_SIZE;
+    return myIndentOption.LABEL_INDENT_SIZE;
   }
 
   private boolean onTheSameLine(WhiteSpace space) {
