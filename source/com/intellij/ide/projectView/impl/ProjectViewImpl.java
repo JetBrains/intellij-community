@@ -6,6 +6,7 @@ import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
@@ -469,9 +470,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     Object userObject = node.getUserObject();
-    if (userObject instanceof NodeDescriptor) {
-      NodeDescriptor descriptor = (NodeDescriptor)userObject;
-      Object element = descriptor.getElement();
+    if (userObject instanceof ProjectViewNode) {
+      ProjectViewNode descriptor = (ProjectViewNode)userObject;
+      Object element = descriptor.getValue();
       if (element instanceof PsiElement) {
         PsiElement psiElement = (PsiElement)element;
         if (!psiElement.isValid()) return null;
