@@ -10,6 +10,9 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.idea.IdeaTestUtil;
+
+import java.util.Calendar;
 
 /**
  * @author dsl
@@ -53,16 +56,18 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   public void testTypeParametersInMethod() throws Exception {
-    doTest(null, null, null, new GenParams() {
-      public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-        final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
-        return new ParameterInfo[] {
-          new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
-          new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
-          new ParameterInfo(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
-        };
-      }
-    }, false);
+    if (IdeaTestUtil.bombExplodes(2005, Calendar.JANUARY, 17, 15, 0, "lesya", "")) {
+      doTest(null, null, null, new GenParams() {
+        public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+          final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+          return new ParameterInfo[] {
+            new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
+            new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
+            new ParameterInfo(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
+          };
+        }
+      }, false);
+    }
   }
 
   public void testDefaultConstructor() throws Exception {
