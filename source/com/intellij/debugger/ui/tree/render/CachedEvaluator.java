@@ -5,10 +5,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 
 import java.lang.ref.SoftReference;
 
@@ -52,7 +52,7 @@ public abstract class CachedEvaluator {
       PsiCodeFragment codeFragment = myReferenceExpression.createCodeFragment(contextClass, project);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
-      cache.myEvaluator = DebuggerUtils.getInstance().getEvaluatorBuilder().build(cache.myPsiChildrenExpression);
+      cache.myEvaluator = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getEvaluatorBuilder().build(cache.myPsiChildrenExpression);
     } catch (EvaluateException e) {
       cache.myException = e;
     }
