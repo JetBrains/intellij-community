@@ -219,14 +219,6 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myHasReturnStatement = myExpression == null &&
                            ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
-    /*myHasReturnStatement = false;
-    for (int i = 0; i < myExitStatements.size(); i++) {
-      PsiStatement statement = (PsiStatement) myExitStatements.get(i);
-      if (statement instanceof PsiReturnStatement) {
-        myHasReturnStatement = true;
-        break;
-      }
-    }*/
 
     myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoint);

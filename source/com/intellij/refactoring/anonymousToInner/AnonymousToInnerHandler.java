@@ -10,11 +10,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -22,9 +22,9 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler");
@@ -83,18 +83,14 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
       return;
     }
-    boolean condition = targetContainer instanceof PsiClass;
-    LOG.assertTrue(condition);
+    LOG.assertTrue(targetContainer instanceof PsiClass);
     myTargetClass = (PsiClass) targetContainer;
 
-    if (!myTargetClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myTargetClass)) return;
-    }
+    if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myTargetClass)) return;
 
-    HashMap<PsiVariable,VariableInfo> variableInfoMap = new HashMap<PsiVariable, VariableInfo>();
-    ArrayList<VariableInfo> variableInfoVector = new ArrayList<VariableInfo>();
-    collectUsedVariables(variableInfoMap, variableInfoVector, myAnonClass);
-    myVariableInfos = variableInfoVector.toArray(new VariableInfo[variableInfoVector.size()]);
+    Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
+    collectUsedVariables(variableInfoMap, myAnonClass);
+    myVariableInfos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
     final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
     myDialog = new AnonymousToInnerDialog(
             myProject,
@@ -179,31 +175,34 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
   }
 
-  private void collectUsedVariables(HashMap<PsiVariable,VariableInfo> variableInfoMap, ArrayList<VariableInfo> variableInfoVector, PsiElement scope) {
-    if (scope instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression) scope;
-      if (refExpr.getQualifierExpression() == null) {
-        PsiElement refElement = refExpr.resolve();
-        if (refElement instanceof PsiVariable) {
-          PsiVariable var = (PsiVariable) refElement;
-          PsiElement parent = var.getParent();
-          while (true) {
-            if (parent instanceof PsiFile) break;
-            if (myAnonClass.equals(parent)) break;
-            if (myTargetClass.equals(parent.getParent())) {
-              saveVariable(variableInfoMap, variableInfoVector, var, refExpr);
-              break;
+  private void collectUsedVariables(final Map<PsiVariable, VariableInfo> variableInfoMap,
+                                    PsiElement scope) {
+    scope.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.getQualifierExpression() == null) {
+          PsiElement refElement = expression.resolve();
+          if (refElement instanceof PsiVariable) {
+            PsiVariable var = (PsiVariable)refElement;
+            if (var instanceof PsiField) {
+              final PsiClass containingClass = ((PsiField)var).getContainingClass();
+              if (!myAnonClass.equals(containingClass)) {
+                if (PsiTreeUtil.isAncestor(myTargetClass, containingClass, true)) {
+                  saveVariable(variableInfoMap, var, expression);
+                }
+              }
+            } else {
+              final PsiClass containingClass = PsiTreeUtil.getParentOfType(var, PsiClass.class);
+              if (!myAnonClass.equals(containingClass)) {
+                if (PsiTreeUtil.isAncestor(myTargetClass, containingClass, false)) {
+                  saveVariable(variableInfoMap, var, expression);
+                }
+              }
             }
-            parent = parent.getParent();
           }
         }
+        super.visitReferenceExpression(expression);
       }
-    }
-
-    PsiElement[] children = scope.getChildren();
-    for (int idx = 0; idx < children.length; idx++) {
-      collectUsedVariables(variableInfoMap, variableInfoVector, children[idx]);
-    }
+    });
   }
 
   private Boolean cachedNeedsThis = null;
@@ -229,16 +228,15 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
 
-  private void saveVariable(HashMap<PsiVariable,VariableInfo> variableInfoMap, ArrayList<VariableInfo> variableInfoVector, PsiVariable var, PsiReferenceExpression usage) {
+  private void saveVariable(Map<PsiVariable, VariableInfo> variableInfoMap,
+                            PsiVariable var,
+                            PsiReferenceExpression usage) {
     VariableInfo info = variableInfoMap.get(var);
     if (info == null) {
       info = new VariableInfo(var);
       variableInfoMap.put(var, info);
-      variableInfoVector.add(info);
     }
-    if (!isUsedInInitializer(usage)) {
-      info.saveInField = true;
-    }
+    info.saveInField |= !isUsedInInitializer(usage);
   }
 
   private boolean isUsedInInitializer(PsiElement usage) {
@@ -362,8 +360,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     for (int i = 0; i < myVariableInfos.length; i++) {
       VariableInfo info = myVariableInfos[i];
       if (info.passAsParameter) {
-        PsiParameter parameter = factory.createParameter(info.parameterName, info.variable.getType());
-        parameterList.add(parameter);
+        parameterList.add(factory.createParameter(info.parameterName, info.variable.getType()));
       }
     }
   }
