@@ -219,11 +219,13 @@ public abstract class ChooseByNameBase{
     myEditor = (Editor)DataManager.getInstance().getDataContext(myPreviouslyFocusedComponent).getData(DataConstants.EDITOR);
     if (myEditor != null) {
       myTextField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.EMPTY_SET);
+      /* TODO[max, cdr]: to discuss.
       final JPanel p = new JPanel(new BorderLayout());
       final JLabel label = new JLabel("<html><body><center>Press <b>TAB</b> to paste the reference into editor.</center></body></html>");
       label.setHorizontalAlignment(SwingConstants.CENTER);
       p.add(label, BorderLayout.CENTER);
       myTextFieldPanel.add(p);
+      */
     }
     
     myTextFieldPanel.add(myTextField);
