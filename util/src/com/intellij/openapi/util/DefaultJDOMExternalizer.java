@@ -125,76 +125,75 @@ public class DefaultJDOMExternalizer {
         field.setAccessible(true); // class might be non-public
         String value = e.getAttributeValue("value");
         if (type.isPrimitive()){
-          if (value == null){
-            throw new InvalidDataException();
-          }
-          if (type.equals(byte.class)){
-            try{
-              field.setByte(data, Byte.parseByte(value));
+          if (value != null) {
+            if (type.equals(byte.class)){
+              try{
+                field.setByte(data, Byte.parseByte(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
+            else if (type.equals(short.class)){
+              try{
+                field.setShort(data, Short.parseShort(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-          }
-          else if (type.equals(short.class)){
-            try{
-              field.setShort(data, Short.parseShort(value));
+            else if (type.equals(int.class)){
+              try{
+                field.setInt(data, Integer.parseInt(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
+            else if (type.equals(long.class)){
+              try{
+                field.setLong(data, Long.parseLong(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-          }
-          else if (type.equals(int.class)){
-            try{
-              field.setInt(data, Integer.parseInt(value));
+            else if (type.equals(float.class)){
+              try{
+                field.setFloat(data, Float.parseFloat(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
+            else if (type.equals(double.class)){
+              try{
+                field.setDouble(data, Double.parseDouble(value));
+              }
+              catch(NumberFormatException ex){
+                throw new InvalidDataException();
+              }
             }
-          }
-          else if (type.equals(long.class)){
-            try{
-              field.setLong(data, Long.parseLong(value));
+            else if (type.equals(char.class)){
+              if (value.length() != 1){
+                throw new InvalidDataException();
+              }
+              field.setChar(data, value.charAt(0));
             }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
-            }
-          }
-          else if (type.equals(float.class)){
-            try{
-              field.setFloat(data, Float.parseFloat(value));
-            }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
-            }
-          }
-          else if (type.equals(double.class)){
-            try{
-              field.setDouble(data, Double.parseDouble(value));
-            }
-            catch(NumberFormatException ex){
-              throw new InvalidDataException();
-            }
-          }
-          else if (type.equals(char.class)){
-            if (value.length() != 1){
-              throw new InvalidDataException();
-            }
-            field.setChar(data, value.charAt(0));
-          }
-          else if (type.equals(boolean.class)){
-            if (value.equals("true")){
-              field.setBoolean(data, true);
-            }
-            else if (value.equals("false")){
-              field.setBoolean(data, false);
+            else if (type.equals(boolean.class)){
+              if (value.equals("true")){
+                field.setBoolean(data, true);
+              }
+              else if (value.equals("false")){
+                field.setBoolean(data, false);
+              }
+              else{
+                throw new InvalidDataException();
+              }
             }
             else{
               throw new InvalidDataException();
             }
-          }
-          else{
-            throw new InvalidDataException();
           }
         }
         else if (type.equals(String.class)){
