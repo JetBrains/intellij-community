@@ -12,10 +12,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -26,8 +22,6 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -169,24 +163,7 @@ public class CodeFormatterFacade implements Constants {
       else {
         try {
           final PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
-          final PomModel model = myHelper.getProject().getModel();
-          final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
-          model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(element)) {
-            public PomModelEvent runInner() throws IncorrectOperationException {
-              final PomModelEvent result = new PomModelEvent(model);
-
-              final FileElement fileElement = getFileElement(element);
-              GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, result).format();
-              TreeUtil.clearCaches(fileElement);
-              return result;
-            }
-
-            private FileElement getFileElement(final ASTNode element) {
-              return (FileElement)SourceTreeToPsiMap.psiElementToTree(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile());
-            }
-          }, aspect);
-
-
+          GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, null).format();
         }
         catch (ProcessCanceledException processCanceledException) {
           throw processCanceledException;
