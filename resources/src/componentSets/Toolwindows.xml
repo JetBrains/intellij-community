@@ -28,10 +28,12 @@
 
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.ClassesTreeStructureProvider</implementation-class>
+      <test-implementation-class></test-implementation-class>
     </component>
 
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.FormMergerTreeStructureProvider</implementation-class>
+      <test-implementation-class></test-implementation-class>
     </component>
 
     <component>
