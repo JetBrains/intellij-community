@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
@@ -10,7 +10,6 @@ import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 
 /**
  *

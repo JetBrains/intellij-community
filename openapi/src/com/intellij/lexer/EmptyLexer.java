@@ -2,7 +2,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-public class EmptyLexer implements Lexer {
+public class EmptyLexer extends LexerBase {
   private char[] myBuffer;
   private int myStartOffset;
   private int myEndOffset;
@@ -40,6 +40,12 @@ public class EmptyLexer implements Lexer {
   public void advance() {
     myStartOffset = myEndOffset;
   }
+
+  public LexerPosition getCurrentPosition() {
+    return new LexerPositionImpl(0, new SimpleLexerState(getState()));
+  }
+
+  public void restore(LexerPosition position) {}
 
   public char[] getBuffer() {
     return myBuffer;

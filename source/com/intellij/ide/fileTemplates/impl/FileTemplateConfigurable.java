@@ -2,10 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.lexer.CompositeLexer;
-import com.intellij.lexer.FlexAdapter;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.lexer.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;

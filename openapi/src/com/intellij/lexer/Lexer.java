@@ -2,9 +2,6 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-/**
- *
- */
 public interface Lexer {
   /**
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset 0 and
@@ -43,6 +40,8 @@ public interface Lexer {
   int getTokenStart();
   int getTokenEnd();
   void advance();
+  LexerPosition getCurrentPosition();
+  void restore(LexerPosition position);
 
   char[] getBuffer();
   int getBufferEnd();

@@ -3,7 +3,7 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public class MergingLexerAdapter implements Lexer {
+public class MergingLexerAdapter extends LexerBase {
   private Lexer myOriginal;
   private TokenSet myTokensToMerge;
   private IElementType myTokenType;

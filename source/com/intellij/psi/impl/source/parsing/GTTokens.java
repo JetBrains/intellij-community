@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -16,11 +17,11 @@ class GTTokens implements JavaTokenType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.GTTokens");
   static IElementType getTokenType(Lexer lexer) {
     if (lexer.getTokenType() != GT) return lexer.getTokenType();
-    final long originalPosition = ParseUtil.savePosition(lexer);
+    final LexerPosition originalPosition = lexer.getCurrentPosition();
     final int prevTokenEnd = lexer.getTokenEnd();
     lexer.advance();
     if (lexer.getTokenStart() != prevTokenEnd) {
-      ParseUtil.restorePosition(lexer, originalPosition);
+      lexer.restore(originalPosition);
       return GT;
     }
     final IElementType resultType;
@@ -59,7 +60,7 @@ class GTTokens implements JavaTokenType {
     else {
       resultType = GT;
     }
-    ParseUtil.restorePosition(lexer, originalPosition);
+    lexer.restore(originalPosition);
     return resultType;
   }
 

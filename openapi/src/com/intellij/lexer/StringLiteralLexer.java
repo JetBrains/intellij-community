@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * @author max
  */
-public class StringLiteralLexer implements Lexer {
+public class StringLiteralLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.StringLiteralLexer");
 
   private static final short BEFORE_FIRST_QUOTE = 0;

@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.JavaWithJspTemplateDataLexer;
-import com.intellij.lexer.Lexer;
+import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -276,10 +273,10 @@ public class StatementParsing extends Parsing {
         }
 
         if (lexer.getTokenType() == IDENTIFIER) {
-          long refPos = ParseUtil.savePosition(lexer);
+          final LexerPosition refPos = lexer.getCurrentPosition();
           skipQualifiedName(lexer);
           final IElementType suspectedLT = lexer.getTokenType();
-          ParseUtil.restorePosition(lexer, refPos);
+          lexer.restore(refPos);
           LOG.assertTrue(lexer.getTokenType() == IDENTIFIER);
           if (suspectedLT == LT) {
             final TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
@@ -298,9 +295,9 @@ public class StatementParsing extends Parsing {
           }
         }
 
-        long pos = ParseUtil.savePosition(lexer);
+        final LexerPosition pos = lexer.getCurrentPosition();
         CompositeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
-        long pos1 = ParseUtil.savePosition(lexer);
+        final LexerPosition pos1 = lexer.getCurrentPosition();
         if (expr != null) {
           int count = 1;
           CompositeElement element = null;
@@ -309,12 +306,12 @@ public class StatementParsing extends Parsing {
             element = Factory.createCompositeElement(EXPRESSION_LIST_STATEMENT);
             TreeUtil.addChildren(element, list);
             TreeUtil.addChildren(list, expr);
-            long commaPos = ParseUtil.savePosition(lexer);
+            final LexerPosition commaPos = lexer.getCurrentPosition();
             TreeElement comma = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
             lexer.advance();
             CompositeElement expr1 = myContext.getExpressionParsing().parseExpression(lexer);
             if (expr1 == null) {
-              ParseUtil.restorePosition(lexer, commaPos);
+              lexer.restore(commaPos);
               break;
             }
             TreeUtil.addChildren(list, comma);
@@ -331,7 +328,7 @@ public class StatementParsing extends Parsing {
             processClosingSemicolon(element, lexer);
             return element;
           }
-          ParseUtil.restorePosition(lexer, pos);
+          lexer.restore(pos);
         }
 
         TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
@@ -346,7 +343,7 @@ public class StatementParsing extends Parsing {
           TreeElement identifier = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
           lexer.advance();
           if (lexer.getTokenType() != COLON) {
-            ParseUtil.restorePosition(lexer, pos);
+            lexer.restore(pos);
           }
           else {
             CompositeElement element = Factory.createCompositeElement(LABELED_STATEMENT);
@@ -362,7 +359,7 @@ public class StatementParsing extends Parsing {
         }
 
         if (expr != null) {
-          ParseUtil.restorePosition(lexer, pos1);
+          lexer.restore(pos1);
           CompositeElement element = Factory.createCompositeElement(EXPRESSION_STATEMENT);
           TreeUtil.addChildren(element, expr);
           processClosingSemicolon(element, lexer);
@@ -380,10 +377,10 @@ public class StatementParsing extends Parsing {
     while(true){
       lexer.advance();
       if (lexer.getTokenType() != DOT) return;
-      final long position = ParseUtil.savePosition(lexer);
+      final LexerPosition position = lexer.getCurrentPosition();
       lexer.advance();
       if (lexer.getTokenType() != IDENTIFIER){
-        ParseUtil.restorePosition(lexer, position);
+        lexer.restore(position);
         return;
       }
     }
@@ -457,10 +454,10 @@ public class StatementParsing extends Parsing {
     final TreeElement lparenth = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     lexer.advance();
 
-    final long afterLParenth = ParseUtil.savePosition(lexer);
+    final LexerPosition afterLParenth = lexer.getCurrentPosition();
     final TreeElement parameter = myContext.getDeclarationParsing().parseParameter(lexer, false);
     if (parameter == null || parameter.getElementType() != PARAMETER || lexer.getTokenType() != COLON) {
-      ParseUtil.restorePosition(lexer, afterLParenth);
+      lexer.restore(afterLParenth);
       return parseForLoopFromInitialization(forKeyword, lparenth, lexer);
     }
     else {
@@ -635,14 +632,14 @@ public class StatementParsing extends Parsing {
   private CompositeElement parseSwitchLabelStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == CASE_KEYWORD || lexer.getTokenType() == DEFAULT_KEYWORD);
     IElementType tokenType = lexer.getTokenType();
-    long pos = ParseUtil.savePosition(lexer);
+    final LexerPosition pos = lexer.getCurrentPosition();
     CompositeElement element = Factory.createCompositeElement(SWITCH_LABEL_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     if (tokenType == CASE_KEYWORD){
       TreeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
       if (expr == null){
-        ParseUtil.restorePosition(lexer, pos);
+        lexer.restore(pos);
         return null;
       }
       TreeUtil.addChildren(element, expr);
@@ -870,11 +867,11 @@ public class StatementParsing extends Parsing {
     TreeUtil.addChildren(parent, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
-    long beforeExprPos = ParseUtil.savePosition(lexer);
+    final LexerPosition beforeExprPos = lexer.getCurrentPosition();
     CompositeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
     if (expr == null || lexer.getTokenType() == SEMICOLON){
       if (expr != null){
-        ParseUtil.restorePosition(lexer, beforeExprPos);
+        lexer.restore(beforeExprPos);
       }
       TreeUtil.addChildren(parent, Factory.createErrorElement("Expression expected"));
       if (lexer.getTokenType() != RPARENTH){

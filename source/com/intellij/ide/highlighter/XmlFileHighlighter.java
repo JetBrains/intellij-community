@@ -31,10 +31,7 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlHighlightingLexer;
-import com.intellij.lexer.DtdHighlightingLexer;
-import com.intellij.lexer.XHtmlHighlightingLexer;
+import com.intellij.lexer.*;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;

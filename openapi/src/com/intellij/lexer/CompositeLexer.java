@@ -2,7 +2,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-public abstract class CompositeLexer implements Lexer {
+public abstract class CompositeLexer extends LexerBase {
   private Lexer myLexer1;
   private Lexer myLexer2;
   private int myCurOffset;

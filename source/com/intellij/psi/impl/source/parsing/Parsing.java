@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.Constants;
@@ -73,7 +74,7 @@ public class Parsing implements Constants{
     TreeUtil.addChildren(refElement, parameterList);
 
     while (lexer.getTokenType() == DOT) {
-      long dotPos = ParseUtil.savePosition(lexer);
+      final LexerPosition dotPos = lexer.getCurrentPosition();
       TreeElement dot = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
       if (lexer.getTokenType() == IDENTIFIER) {
@@ -82,7 +83,7 @@ public class Parsing implements Constants{
       }
       else{
         if (!allowIncomplete){
-          ParseUtil.restorePosition(lexer, dotPos);
+          lexer.restore(dotPos);
           return refElement;
         }
         identifier = null;
@@ -194,11 +195,11 @@ public class Parsing implements Constants{
     CompositeElement type = Factory.createCompositeElement(TYPE);
     TreeUtil.addChildren(type, refElement);
     while(lexer.getTokenType() == LBRACKET){
-      long lbracketPos = ParseUtil.savePosition(lexer);
+      final LexerPosition lbracketPos = lexer.getCurrentPosition();
       TreeElement lbracket = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
       if (lexer.getTokenType() != RBRACKET){
-        ParseUtil.restorePosition(lexer, lbracketPos);
+        lexer.restore(lbracketPos);
         break;
       }
       CompositeElement type1 = Factory.createCompositeElement(TYPE);

@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class FlexAdapter implements Lexer {
+public class FlexAdapter extends LexerBase {
   private FlexLexer myFlex = null;
   private IElementType myTokenType = null;
   private CharArrayCharSequence myText;

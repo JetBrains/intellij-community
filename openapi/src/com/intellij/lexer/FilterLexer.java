@@ -6,7 +6,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  *
  */
-public class FilterLexer implements Lexer {
+public class FilterLexer extends LexerBase {
   private Lexer myOriginal;
   private Filter myFilter;
   private boolean[] myStateFilter;

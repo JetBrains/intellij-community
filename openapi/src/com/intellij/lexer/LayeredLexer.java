@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class LayeredLexer implements Lexer {
+public class LayeredLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
 
@@ -31,13 +31,13 @@ public class LayeredLexer implements Lexer {
     myBaseLexer = baseLexer;
   }
 
-  public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
+  public void registerSelfStoppingLayer(LexerBase Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
     registerLayer(Lexer, startTokens);
     mySelfStoppingLexers.add(Lexer);
     myStopTokens.put(Lexer, stopTokens);
   }
 
-  public void registerLayer(Lexer Lexer, IElementType[] startTokens) {
+  public void registerLayer(LexerBase Lexer, IElementType[] startTokens) {
     for (int i = 0; i < startTokens.length; i++) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startTokens[i]));
       myStartTokenToLayerLexer.put(startTokens[i], Lexer);
@@ -115,6 +115,17 @@ public class LayeredLexer implements Lexer {
       activateLayerIfNecessary();
     }
     myState = isLayerActive() ? IN_LAYER_STATE : myBaseLexer.getState();
+  }
+
+  public LexerPosition getCurrentPosition() {
+    final int offset = getTokenStart();
+    final int intState = getState();
+    final LexerState state = new SimpleLexerState(intState);
+    return new LexerPositionImpl(offset, state);
+  }
+
+  public void restore(LexerPosition position) {
+    start(getBuffer(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
   }
 
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {

@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
  * Used to process scriptlet code in JSP attribute values like this:
  *   attribute="<%=texts.get(\"Blabla\")%>"
  */
-public class EscapedJavaLexer implements Lexer {
+public class EscapedJavaLexer extends LexerBase {
   private char mySurroundingQuote;
   private JavaLexer myJavaLexer;
 

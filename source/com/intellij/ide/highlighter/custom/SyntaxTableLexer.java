@@ -1,6 +1,6 @@
 package com.intellij.ide.highlighter.custom;
 
-import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
  * @author Yura Cangea
  * @version 1.0
  */
-public class SyntaxTableLexer implements Lexer {
+public class SyntaxTableLexer extends LexerBase {
   private SyntaxTable table;
 
   private PosBufferTokenizer tokenizer;

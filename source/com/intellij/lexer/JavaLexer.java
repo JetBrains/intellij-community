@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class JavaLexer implements Lexer {
+public class JavaLexer extends LexerBase {
 
   private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
     myTable = isAssertKeywordEnabled ?

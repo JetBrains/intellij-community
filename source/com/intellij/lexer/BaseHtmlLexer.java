@@ -14,7 +14,7 @@ import java.util.HashMap;
  * Time: 2:29:06 PM
  * To change this template use File | Settings | File Templates.
  */
-abstract class BaseHtmlLexer implements Lexer {
+abstract class BaseHtmlLexer extends LexerBase {
   private Lexer baseLexer;
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int SEEN_STYLE = 0x40;

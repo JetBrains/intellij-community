@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.lexer.CompositeLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;

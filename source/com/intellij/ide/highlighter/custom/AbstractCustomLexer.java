@@ -2,14 +2,14 @@ package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.TokenInfo;
 import com.intellij.ide.highlighter.custom.tokens.TokenParser;
-import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
 /**
  * @author dsl
  */
-public abstract class AbstractCustomLexer implements Lexer {
+public abstract class AbstractCustomLexer extends LexerBase {
   protected char[] myBuffer = new char[0];
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;

@@ -1,8 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.JavaWithJspTemplateDataLexer;
+import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,22 +44,6 @@ public class ParseUtil implements Constants {
       leafElement.setState(lexer.getState());
       return leafElement;
     }
-  }
-
-  public static long savePosition(Lexer lexer) {
-    return lexer.getTokenStart() | (long)lexer.getState() << 32;
-  }
-
-  public static int getStoredPosition(long position) {
-    return (int)position & 0xFFFFFFFF;
-  }
-
-  public static int getStoredState(long startPos) {
-    return (int)(startPos >> 32);
-  }
-
-  public static void restorePosition(Lexer lexer, long position) {
-    lexer.start(lexer.getBuffer(), (int)position & 0xFFFFFFFF, lexer.getBufferEnd(), (int)(position >> 32));
   }
 
   public static String getTokenText(Lexer lexer) {

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.lexer.LexerBase;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.tree.IElementType;
@@ -10,7 +11,7 @@ import gnu.trove.TIntIntHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class BaseFilterLexer implements Lexer {
+public abstract class BaseFilterLexer extends LexerBase {
   protected final Lexer myOriginalLexer;
   protected final TIntIntHashMap myTable;
   protected final int[] myTodoCounts;

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
@@ -104,14 +105,14 @@ public class FileTextParsing extends Parsing {
   }
 
   public ASTNode parsePackageStatement(Lexer lexer) {
-    long startPos = ParseUtil.savePosition(lexer);
+    final LexerPosition startPos = lexer.getCurrentPosition();
     CompositeElement packageStatement = Factory.createCompositeElement(PACKAGE_STATEMENT);
 
     if (lexer.getTokenType() != PACKAGE_KEYWORD) {
       FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
       TreeUtil.addChildren(packageStatement, myContext.getDeclarationParsing().parseAnnotationList(filterLexer));
       if (lexer.getTokenType() != PACKAGE_KEYWORD) {
-        ParseUtil.restorePosition(lexer, startPos);
+        lexer.restore(startPos);
         return null;
       }
     }
@@ -120,7 +121,7 @@ public class FileTextParsing extends Parsing {
     lexer.advance();
     TreeElement packageReference = parseJavaCodeReference(lexer, true);
     if (packageReference == null) {
-      ParseUtil.restorePosition(lexer, startPos);
+      lexer.restore(startPos);
       return null;
     }
     TreeUtil.addChildren(packageStatement, packageReference);

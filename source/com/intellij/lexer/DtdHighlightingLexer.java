@@ -7,7 +7,7 @@ import com.intellij.psi.xml.XmlTokenType;
 /**
  * @author mike
  */
-public class DtdHighlightingLexer implements Lexer {
+public class DtdHighlightingLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.XmlHighlightingLexer");
 
   private Lexer myLexer;

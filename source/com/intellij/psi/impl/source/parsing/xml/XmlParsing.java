@@ -2,8 +2,9 @@ package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer._OldXmlLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -253,7 +254,7 @@ public class XmlParsing implements ElementType {
         names.remove(openedName);
       }
 
-      long pos = ParseUtil.savePosition(lexer);
+      final LexerPosition pos = lexer.getCurrentPosition();
 
       if (lexer.getTokenType() != XML_END_TAG_START) {
         TreeUtil.insertAfter(tagEnd, Factory.createErrorElement("Element is not closed"));
@@ -272,7 +273,7 @@ public class XmlParsing implements ElementType {
                                                                          lexer.getTokenEnd() - lexer.getTokenStart());
 
       if (!closingName.equals(openedName) && names.contains(closingName)) {
-        ParseUtil.restorePosition(lexer, pos);
+        lexer.restore(pos);
         if (tagEnd != null) {
           final TreeElement start = tagEnd.getTreeNext();
           tagEnd.setTreeNext(null);
