@@ -57,12 +57,17 @@ public class Packet extends PacketWriter implements PoolOfKnownObjects {
 
   public Packet addThrowable(Throwable throwable) {
     String filteredTrace = BaseTestRunner.getFilteredTrace(throwable);
-    String message = makeNewLinesCompatibleWithJUnit(throwable.toString());
+    String message = makeNewLinesCompatibleWithJUnit(throwableToString(throwable));
     addLimitedString(message);
     if (filteredTrace.startsWith(message))
       filteredTrace = filteredTrace.substring(message.length());
     addLimitedString(new TraceFilter(filteredTrace).execute());
     return this;
+  }
+
+  private String throwableToString(final Throwable throwable) {
+    final String tostring = throwable.toString();
+    return tostring != null ? tostring : throwable.getClass().getName();
   }
 
   private static String makeNewLinesCompatibleWithJUnit(String string) {
