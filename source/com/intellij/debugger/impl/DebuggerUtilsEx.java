@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
@@ -586,22 +587,29 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static String getQualifiedClassName(String jdiName, Project project) {
-    String name = jdiName;
-    int startFrom = 0;
-    for (;;) {
-      int separator = name.indexOf('$', startFrom);
-      if(separator != -1) {
-        String qualifiedName = name.substring(0, separator);
-        PsiClass psiClass = PsiManager.getInstance(project).findClass(qualifiedName, GlobalSearchScope.allScope(project));
-        if(psiClass != null) {
-          int tail = separator + 1;
-          while(tail < name.length() && Character.isDigit(name.charAt(tail))) tail ++;
-          name = qualifiedName + "." + name.substring(tail);
+  public static String getQualifiedClassName(final String jdiName, final Project project) {
+    final String name= ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        String name = jdiName;
+        int startFrom = 0;
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        while (true) {
+          final int separator = name.indexOf('$', startFrom);
+          if(separator < 0) {
+            break;
+          }
+          final String qualifiedName = name.substring(0, separator);
+          final PsiClass psiClass = psiManager.findClass(qualifiedName, GlobalSearchScope.allScope(project));
+          if(psiClass != null) {
+            int tail = separator + 1;
+            while(tail < name.length() && Character.isDigit(name.charAt(tail))) tail ++;
+            name = qualifiedName + "." + name.substring(tail);
+          }
+          startFrom = separator + 1;
         }
-        startFrom = separator + 1;
-      } else break;
-    }
+        return name;
+      }
+    });
 
     if(jdiName.equals(name)) {
       return jdiName.replace('$', '.');
