@@ -84,6 +84,7 @@ public abstract class AbstractTreeBuilder {
     if (myWorker != null) {
       myWorker.dispose(true);
     }
+    TREE_NODE_WRAPPER.setValue(null);
     myProgress.cancel();
   }
 
