@@ -241,9 +241,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
         UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
         if (updateEnvironment != null) {
           if (!result.containsKey(updateEnvironment)) result.put(updateEnvironment, new HashSet<FilePath>());
-          if (vcs.fileIsUnderVcs(file)) {
-            result.get(updateEnvironment).add(file);
-          }
+          result.get(updateEnvironment).add(file);
         }
       }
     }
