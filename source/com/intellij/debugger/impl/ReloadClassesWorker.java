@@ -1,16 +1,14 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -23,7 +21,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
@@ -60,8 +57,7 @@ class ReloadClassesWorker {
   }
 
   private void reportObsoleteFrames(final Map<ThreadReferenceProxyImpl, PsiMethod[]> methodsOnTheStack) {
-    Project project = getProject();
-    PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           VirtualMachineProxyImpl vm = getDebugProcess().getVirtualMachineProxy();
           for (Iterator it = vm.allThreads().iterator(); it.hasNext();) {
@@ -108,7 +104,7 @@ class ReloadClassesWorker {
   private Map<ThreadReferenceProxyImpl, PsiMethod[]> getMethodsOnTheStack() {
     final Map<ThreadReferenceProxyImpl, PsiMethod[]> myThreadsToMethods = new HashMap<ThreadReferenceProxyImpl, PsiMethod[]>();
 
-    PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Runnable() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         VirtualMachineProxyImpl vm = getDebugProcess().getVirtualMachineProxy();
         try {
@@ -273,8 +269,9 @@ class ReloadClassesWorker {
 
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       public void run() {
-        (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager().reloadBreakpoints();
-        (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager().updateAllRequests();
+        final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+        breakpointManager.reloadBreakpoints();
+        breakpointManager.updateAllRequests();
         if (LOG.isDebugEnabled()) {
           LOG.debug("requests updated");
           LOG.debug("time stamp set");

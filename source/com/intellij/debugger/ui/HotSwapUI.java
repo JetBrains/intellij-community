@@ -13,11 +13,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
+import com.intellij.psi.PsiDocumentManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: lex
@@ -78,6 +76,9 @@ public class HotSwapUI implements ProjectComponent{
   private void hotSwapSessions(final List<DebuggerSession> sessions) {
     final boolean askBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
+    
+    // need this because search with PSI is perormed during hotswap
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     new Thread() {
       public void run() {
@@ -163,7 +164,7 @@ public class HotSwapUI implements ProjectComponent{
     }
     else {
       if(session.isAttached()) {
-        final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
+        final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>(1);
         sessions.add(session);
         hotSwapSessions(sessions);
       }

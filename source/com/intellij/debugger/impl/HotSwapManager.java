@@ -112,7 +112,7 @@ public class HotSwapManager implements ProjectComponent{
     return project.getComponent(HotSwapManager.class);
   }
 
-  public void reloadClasses(DebuggerSession session, HashMap<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
+  private void reloadClasses(DebuggerSession session, HashMap<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
     long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
     setTimeStamp(session, newSwapTime);
