@@ -5,5 +5,16 @@ public class UnnecessaryBlockStatementInspection {
         {
              System.out.println("3");
         }
+        {
+            int a;
+        }
+        {
+            int b;
+        }
+        {
+            {
+            int a;
+            }
+        }
     }
 }
