@@ -31,15 +31,15 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.Table;
+import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public interface UIHelper {
@@ -54,6 +54,8 @@ public interface UIHelper {
   void installEditSourceOnDoubleClick(Table table);
 
   void installTreeSpeedSearch(Tree tree);
+
+  void installListSpeedSearch(JList list);
 
   void installEditSourceOnEnterKeyHandler(JTree tree);
 

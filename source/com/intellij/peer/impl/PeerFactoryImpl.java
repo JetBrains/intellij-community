@@ -2,12 +2,17 @@ package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.execution.runners.ProcessProxyFactoryImpl;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
@@ -19,7 +24,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -36,10 +40,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -134,6 +134,10 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
     public void installTreeSpeedSearch(Tree tree) {
       new TreeSpeedSearch(tree);
+    }
+
+    public void installListSpeedSearch(JList list) {
+      new ListSpeedSearch(list);
     }
 
     public void installEditSourceOnEnterKeyHandler(JTree tree) {
