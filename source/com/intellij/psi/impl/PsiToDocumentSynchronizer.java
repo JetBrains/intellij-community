@@ -404,7 +404,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
           final MutableTextRange range = pair.getFirst();
           final StringBuffer buffer = pair.getSecond();
-          final int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
+          int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
 
           if(range.getStartOffset() <= start && effectiveFragmentEnd >= end) return pair;
 
@@ -418,6 +418,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
             if(end > range.getStartOffset()){
               fragmentBuffer.append(buffer);
               end = end > effectiveFragmentEnd ? end - (buffer.length() - range.getLength()) : range.getEndOffset();
+              effectiveFragmentEnd = range.getEndOffset();
               start = Math.min(start, range.getStartOffset());
               iterator.remove();
             }
