@@ -21,7 +21,6 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
     String libPath = jdk.getHomePath() + File.separator + "lib";
     javaParameters.getVMParametersList().add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
-    javaParameters.getClassPath().addTail(libPath + File.separator + "idea_rt.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
   }
 }

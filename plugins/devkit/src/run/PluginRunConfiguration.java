@@ -59,6 +59,8 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   private Module myModule;
   private String myModuleName;
 
+  public String VM_PARAMETERS;
+
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
   }
@@ -101,6 +103,11 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         final JavaParameters params = new JavaParameters();
 
         ParametersList vm = params.getVMParametersList();
+
+        final String[] userVMOptions = VM_PARAMETERS != null ? VM_PARAMETERS.split(" ") : null;
+        for (int i = 0; userVMOptions != null && i < userVMOptions.length; i++) {
+          vm.add(userVMOptions[i]);
+        }
 
         String libPath = jdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
@@ -171,6 +178,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     if (module != null) {
       myModuleName = module.getAttributeValue("name");
     }
+    DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -181,6 +189,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       }
     }));
     element.addContent(moduleElement);
+    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public Module getModule() {

@@ -31,14 +31,13 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
-
+import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +47,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
   private JComboBox myModules = new JComboBox(myModulesModel);
   private JLabel myModuleLabel = new JLabel("Choose classpath and jdk from module:");
-
+  private LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
 
 
   private PluginRunConfiguration myPRC;
@@ -59,6 +58,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
   public void resetEditorFrom(PluginRunConfiguration prc) {
     myModules.setSelectedItem(prc.getModule());
+    getVMParameters().setText(prc.VM_PARAMETERS);
   }
 
 
@@ -67,6 +67,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       throw new ConfigurationException("No module selected.");
     }
     prc.setModule(((Module)myModules.getSelectedItem()));
+    prc.VM_PARAMETERS = getVMParameters().getText();
   }
 
   public JComponent createEditor() {
@@ -89,12 +90,19 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(myModuleLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
                                                                             GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
-    wholePanel.add(myModules, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+    wholePanel.add(myModules, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                                            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+    myVMParameters.setText("&VM Parameters");
+    myVMParameters.setComponent(new RawCommandLineEditor());
+    myVMParameters.getComponent().setDialodCaption(myVMParameters.getRawText());
+    wholePanel.add(myVMParameters, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                                             GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     return wholePanel;
   }
 
-
+  public RawCommandLineEditor getVMParameters() {
+    return myVMParameters.getComponent();
+  }
 
   public void disposeEditor() {
   }
