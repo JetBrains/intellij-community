@@ -219,7 +219,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
-    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, createPane());
+    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
     if (nodeForElement == null) return false;
     return isExpanded(nodeForElement, pane);
   }
