@@ -572,6 +572,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
         inspectionClasses.add(WaitNotInLoopInspection.class);
         inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
+        inspectionClasses.add(VolatileArrayFieldInspection.class);
         inspectionClasses.add(WaitNotInSynchronizedContextInspection.class);
         inspectionClasses.add(WaitWhileHoldingTwoLocksInspection.class);
         inspectionClasses.add(NotifyNotInSynchronizedContextInspection.class);

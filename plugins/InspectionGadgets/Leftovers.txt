@@ -8,7 +8,6 @@
     setter or getter with non-standard name
     Avoid repeated casting
     arithmetic operations on volatile types
-    Volatile array
     Field has setter but no getter
     Class name with forbidden component
     Paired open/close for Sockets
@@ -48,5 +47,4 @@
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
               with unsynchronized private methods called only from synchronized contexts
     SerialVersionUID calculation
-    Filter resource management inspection for in-memory streams
 
