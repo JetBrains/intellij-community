@@ -45,7 +45,7 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.EQ) {
+            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();

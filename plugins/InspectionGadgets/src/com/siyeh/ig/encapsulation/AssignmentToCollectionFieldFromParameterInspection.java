@@ -49,7 +49,7 @@ public class AssignmentToCollectionFieldFromParameterInspection extends Expressi
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.EQ) {
+            if (!(sign.getTokenType() == JavaTokenType.EQ)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
