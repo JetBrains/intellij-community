@@ -16,6 +16,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
@@ -1006,8 +1008,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
 
       public PomModelEvent run() throws IncorrectOperationException{
-        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
         final PsiFile containingFile = getContainingFile();
+        final FileElement holder = new DummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
+        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+        TreeUtil.addChildren(holder, rightText);
 
         addChild(rightText, childText.getTreeNext());
 
