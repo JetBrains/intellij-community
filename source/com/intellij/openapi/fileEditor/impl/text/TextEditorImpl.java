@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -208,7 +207,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
   public StructureViewModel getStructureViewModel() {
     Document document = myComponent.getEditor().getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return null;
+    if (file == null || !file.isValid()) return null;
     return file.getFileType().getStructureViewModel(file, myProject);
   }
 }
