@@ -50,9 +50,11 @@ public class PluginManager {
     return ourLogger;
   }
 
-  private static String[] ourArguments;
-  private static String ourMainClass;
-  private static String ourMethodName;
+  // these fields are accessed via Reflection, so their names must not be changed by the obfuscator
+  // do not make them private cause in this case they will be scrambled
+  static String[] ourArguments;
+  static String ourMainClass;
+  static String ourMethodName;
 
   private static PluginDescriptor[] ourPlugins;
   private static Map<String, String> ourPluginClasses;
@@ -71,9 +73,6 @@ public class PluginManager {
     ourArguments = args;
     ourMainClass = mainClass;
     ourMethodName = methodName;
-
-    PathManager.loadProperties();
-
 
     final PluginManager pluginManager = new PluginManager();
     pluginManager.bootstrap(classpathElements);
@@ -226,6 +225,7 @@ public class PluginManager {
       Runnable runnable = new Runnable() {
         public void run() {
           try {
+            PathManager.loadProperties();
             Class aClass = Class.forName(ourMainClass);
             final Method method = aClass.getDeclaredMethod(ourMethodName, new Class[]{(ArrayUtil.EMPTY_STRING_ARRAY).getClass()});
             method.setAccessible(true);

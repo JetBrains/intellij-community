@@ -255,10 +255,13 @@ public class PathManager {
         final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
         fis.close();
         final Enumeration keys = bundle.getKeys();
+        final Properties sysProperties = System.getProperties();
         while (keys.hasMoreElements()) {
           String key = (String)keys.nextElement();
           final String value = substitueVars(bundle.getString(key));
-          System.getProperties().setProperty(key, value);
+          if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
+            sysProperties.setProperty(key, value);
+          }
         }
       }
       catch (IOException e) {
