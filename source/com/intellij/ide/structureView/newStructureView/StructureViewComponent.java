@@ -606,6 +606,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
+    if (selectedElements == null) return null;
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (int i = 0; i < selectedElements.length; i++) {
       Object selectedElement = selectedElements[i];
