@@ -11,18 +11,17 @@ package com.intellij.analysis;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
@@ -33,9 +32,11 @@ public class AnalysisScope {
   public static final int MODULE = 4;
   public static final int PACKAGE = 5;
   public static final int INVALID = 6;
+  public static final int MODULES = 7;
 
   private final Project myProject;
   private PsiFileFilter myFilter;
+  private final List<Module> myModules;
   private final Module myModule;
   private final PsiElement myElement;
   private final int myType;
@@ -62,6 +63,7 @@ public class AnalysisScope {
     myProject = project;
     myFilter = filter;
     myElement = null;
+    myModules = null;
     myModule = null;
     myType = PROJECT;
   }
@@ -70,13 +72,25 @@ public class AnalysisScope {
     myFilter = filter;
     myProject = null;
     myElement = null;
+    myModules = null;
     myModule = module;
     myType = MODULE;
+  }
+
+  public AnalysisScope(final Module[] modules, final PsiFileFilter filter) {
+    myFilter = filter;
+    myModules = Arrays.asList(modules);
+    myModule = null;
+    myFilter = filter;
+    myProject = null;
+    myElement = null;
+    myType = MODULES;
   }
 
   public AnalysisScope(PsiDirectory psiDirectory, PsiFileFilter filter) {
     myFilter = filter;
     myProject = null;
+    myModules = null;
     myModule = null;
     myElement = psiDirectory;
     if (psiDirectory.getPackage() != null) {
@@ -91,6 +105,7 @@ public class AnalysisScope {
     myFilter = filter;
     myProject = null;
     myModule = null;
+    myModules = null;
     myElement = psiPackage;
     myType = PACKAGE;
   }
@@ -100,6 +115,7 @@ public class AnalysisScope {
     myProject = null;
     myElement = psiFile;
     myModule = null;
+    myModules = null;
     myType = FILE;
   }
 
@@ -140,7 +156,7 @@ public class AnalysisScope {
       myFilesSet = new HashSet();
       myElement.accept(createFileSearcher());
     }
-    else if (myType == PROJECT || myType == MODULE || myType == PACKAGE) {
+    else if (myType == PROJECT || myType == MODULES || myType == MODULE || myType == PACKAGE) {
       myFilesSet = new HashSet();
       accept(createFileSearcher());
     }
@@ -182,6 +198,8 @@ public class AnalysisScope {
     }
     else if (myType == MODULE) {
       modules.add(myModule);
+    } else if (myType == MODULES){
+      modules.addAll(myModules);
     }
 
     if (modules.isEmpty()) {
@@ -246,6 +264,22 @@ public class AnalysisScope {
         }
       });
     }
+    else if (myModules != null) {
+      for (Iterator<Module> iterator = myModules.iterator(); iterator.hasNext();) {
+        final Module module = iterator.next();
+        final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+        moduleFileIndex.iterateContent(new ContentIterator() {
+          public boolean processFile(VirtualFile fileOrDir) {
+            if (moduleFileIndex.isContentJavaSourceFile(fileOrDir)) {
+              PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
+              LOG.assertTrue(psiFile != null);
+              psiFile.accept(visitor);
+            }
+            return true;
+          }
+        });
+      }
+    }
     else if (myElement instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)myElement;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()));
@@ -259,7 +293,7 @@ public class AnalysisScope {
   }
 
   public boolean isValid() {
-    if (myProject != null || myModule != null) return true;
+    if (myProject != null || myModule != null || myModules != null) return true;
     return myElement.isValid();
   }
 
@@ -271,6 +305,14 @@ public class AnalysisScope {
     switch (myType) {
       case MODULE:
         return "Module " + pathToName(myModule.getModuleFilePath());
+      case MODULES:
+        String displayName = "Module" + (myModules.size() > 1 ? "s " : " ");
+        for (Iterator<Module> iterator = myModules.iterator(); iterator.hasNext();) {
+          Module module = iterator.next();
+          displayName += pathToName(module.getModuleFilePath()) + ", ";
+        }
+        displayName = displayName.substring(0, displayName.length() - 2);
+        return displayName;
       case PROJECT:
         return "Project " + pathToName(myProject.getProjectFilePath());
       case FILE:

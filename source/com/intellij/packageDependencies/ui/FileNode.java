@@ -51,6 +51,10 @@ public class FileNode extends PackageDependenciesNode {
     return 4;
   }
 
+  public int getContainingFiles() {
+    return 1;
+  }
+
   public PsiElement getPsiElement() {
     return myFile;
   }

@@ -95,6 +95,10 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(moduleContext, myFileFilter);
     }
 
+    Module [] modulesArray = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    if (modulesArray != null) {
+      return new AnalysisScope(modulesArray, myFileFilter);
+    }
     PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (psiFile != null) {
       return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile, myFileFilter) : null;

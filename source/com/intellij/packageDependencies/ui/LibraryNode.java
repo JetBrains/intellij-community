@@ -30,7 +30,7 @@ public class LibraryNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myLibraryOrJdk.getPresentableName();
+    return myLibraryOrJdk.getPresentableName() + getPresentableFilesCount();
   }
 
   public int getWeight() {

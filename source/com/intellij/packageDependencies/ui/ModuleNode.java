@@ -34,7 +34,7 @@ public class ModuleNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myModule == null ? "<unknown>" : myModule.getName();
+    return myModule == null ? "<unknown>" : myModule.getName() + getPresentableFilesCount();
   }
 
   public String getModuleName() {

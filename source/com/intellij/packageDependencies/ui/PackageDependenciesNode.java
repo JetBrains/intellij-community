@@ -55,6 +55,19 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return null;
   }
 
+  public int getContainingFiles(){
+    int result = 0;
+    for (int i = 0; i < getChildCount(); i++) {
+      result += ((PackageDependenciesNode)getChildAt(i)).getContainingFiles();
+    }
+    return result;
+  }
+
+  protected String getPresentableFilesCount(){
+    final int filesCount = getContainingFiles();
+    return filesCount > 0 ? " (" + filesCount + (filesCount > 1 ? " entries" : " entry") + ")" : "";
+  }
+
   public void add(MutableTreeNode newChild) {
     super.add(newChild);
     boolean hasUnmarked = ((PackageDependenciesNode)newChild).hasUnmarked();

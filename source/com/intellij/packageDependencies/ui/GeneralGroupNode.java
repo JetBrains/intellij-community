@@ -30,7 +30,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myName;
+    return myName + getPresentableFilesCount();
   }
 
   public int getWeight() {

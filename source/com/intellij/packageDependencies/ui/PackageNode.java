@@ -40,7 +40,7 @@ public class PackageNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myPackageName;
+    return myPackageName + getPresentableFilesCount();
   }
 
   public String getPackageQName() {
