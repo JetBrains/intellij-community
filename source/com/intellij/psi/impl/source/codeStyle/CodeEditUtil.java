@@ -424,15 +424,14 @@ public class CodeEditUtil {
       }
     }
     else {
-      return getWhiteSpaceBeforeToken(second, language, false).generateNewWhiteSpace();
+      return getWhiteSpaceBeforeToken(second, language).generateNewWhiteSpace();
     }
 
   }
 
   public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                        final Language language,
-                                                        final boolean ignoreAlignment) {
-    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language), ignoreAlignment);
+                                                          final Language language) {
+    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language));
   }
 
   private static Language chooseLanguage(final ASTNode tokenNode, final Language language) {
@@ -455,8 +454,7 @@ public class CodeEditUtil {
   }
 
   public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                  final Language language,
-                                                  final boolean ignoreAlignment) {
+                                                    final Language language) {
     LOG.assertTrue(tokenNode != null);
     final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
     LOG.assertTrue(secondAsPsiElement != null);
@@ -475,7 +473,7 @@ public class CodeEditUtil {
                                                             settings,
                                                             file);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset, ignoreAlignment);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
