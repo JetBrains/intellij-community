@@ -460,7 +460,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           }
         } else if (usage.getElement() instanceof PsiEnumConstant) {
           fixActualArgumentsList(((PsiEnumConstant)usage.getElement()).getArgumentList(), myChangeInfo, true);
-        } else {
+        } else if (!(usage instanceof OverriderUsageInfo)) {
           postponedUsages.add(usage);
         }
       }
