@@ -32,6 +32,9 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
@@ -40,6 +43,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiJavaFile;
 
 import javax.swing.*;
 
@@ -82,8 +87,12 @@ public class JavaClassFileType implements FileType {
     return null;
   }
 
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
-    return null;
+  public StructureViewBuilder getStructureViewBuilder(final VirtualFile file, final Project project) {
+    return new TreeBasedStructureViewBuilder() {
+      public StructureViewModel createStructureViewModel() {
+        return new JavaFileTreeModel((PsiJavaFile)PsiManager.getInstance(project).findFile(file));
+      }
+    };
   }
 
   public Language getLanguage() {
