@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -76,10 +77,8 @@ public class DeclarationParsing extends Parsing {
     else if (tokenType == IDENTIFIER || PRIMITIVE_TYPE_BIT_SET.isInSet(tokenType)){
       if (context == FILE_CONTEXT) return null;
     }
-    else if (tokenType == JSP_HOLDER_TOKEN) {
-      final CompositeElement declaration = Factory.createCompositeElement(JSP_TEMPLATE_DECLARATION);
-      LeafElement leaf = Factory.createLeafElement(HOLDER_TEMPLATE_DATA, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
-      TreeUtil.addChildren(declaration, leaf);
+    else if (tokenType instanceof IChameleonElementType) {
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
       lexer.advance();
       return declaration;
     }

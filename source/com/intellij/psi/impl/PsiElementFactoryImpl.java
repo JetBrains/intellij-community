@@ -703,7 +703,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiStatement createStatementFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
-    CompositeElement treeElement = StatementParsing.parseStatementText(myManager, text.toCharArray(), treeHolder.getCharTable());
+    TreeElement treeElement = StatementParsing.parseStatementText(myManager, text.toCharArray(), treeHolder.getCharTable());
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
     }

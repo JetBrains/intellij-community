@@ -716,10 +716,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (tryBlock != null) {
       if (tryStatement.getCatchSections().length == 0 &&
           tryStatement.getFinallyBlock() == null) {
-        if (tryBlock.getLBrace() != null && tryBlock.getRBrace() != null) {
-          tryStatement.getParent().addRangeAfter(tryBlock.getLBrace().getNextSibling(), tryBlock.getRBrace().getPrevSibling(), tryStatement);
-          tryStatement.delete();
-        }
+        if(!tryBlock.isEmpty())
+          tryStatement.getParent().addRangeAfter(tryBlock.getFirstBodyElement(), tryBlock.getLastBodyElement(), tryStatement);
+        tryStatement.delete();
       }
     }
   }

@@ -19,7 +19,7 @@ public class BlockBraceFixer implements Fixer{
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiCodeBlock && afterUnmatchedBrace(editor,psiElement.getContainingFile().getFileType())) {
       PsiCodeBlock block = (PsiCodeBlock) psiElement;
-      int stopOffset = block.getLBrace().getTextRange().getEndOffset();
+      int stopOffset = block.getTextRange().getEndOffset();
       final PsiStatement[] statements = block.getStatements();
       if (statements.length > 0) {
         stopOffset = statements[0].getTextRange().getEndOffset();

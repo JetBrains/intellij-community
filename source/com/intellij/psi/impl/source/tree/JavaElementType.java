@@ -114,7 +114,7 @@ public interface JavaElementType {
     public boolean isParsable(CharSequence buffer) {return false;}
   };
 
-  IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK_TEXT", JavaLanguage.findByID("JAVA")){
+  IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK", JavaLanguage.findByID("JAVA")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       return StatementParsing.parseCodeBlockText(chameleon.getTreeParent().getPsi().getManager(), getLanguage().getParserDefinition().createLexer(),

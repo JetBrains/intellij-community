@@ -178,9 +178,9 @@ public class GenerateMembersUtil {
       PsiMethod method = (PsiMethod) firstMember;
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        PsiElement l = body.getLBrace().getNextSibling();
+        PsiElement l = body.getFirstBodyElement();
         while (l != null && l instanceof PsiWhiteSpace) l = l.getNextSibling();
-        PsiElement r = body.getRBrace().getPrevSibling();
+        PsiElement r = body.getLastBodyElement();
         while (r != null && r instanceof PsiWhiteSpace) r = r.getPrevSibling();
         int start = l.getTextRange().getStartOffset(),
             end = r.getTextRange().getEndOffset();

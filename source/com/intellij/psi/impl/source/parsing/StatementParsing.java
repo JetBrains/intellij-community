@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.util.CharTable;
 
@@ -145,7 +146,7 @@ public class StatementParsing extends Parsing {
 
   private void parseStatements(CompositeElement elementToAdd, Lexer lexer, int rbraceMode){
     while(lexer.getTokenType() != null){
-      CompositeElement statement = parseStatement(lexer);
+      TreeElement statement = parseStatement(lexer);
       if (statement != null){
         TreeUtil.addChildren(elementToAdd, statement);
         continue;
@@ -196,21 +197,22 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  public static CompositeElement parseStatementText(PsiManager manager, char[] buffer, CharTable table) {
+  public static TreeElement parseStatementText(PsiManager manager, char[] buffer, CharTable table) {
     Lexer lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     final ParsingContext context = new ParsingContext(table);
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, 0, buffer.length);
 
-    CompositeElement statement = context.getStatementParsing().parseStatement(filterLexer);
+    TreeElement statement = context.getStatementParsing().parseStatement(filterLexer);
     if (statement == null) return null;
     if (filterLexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(statement, lexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    if(statement instanceof CompositeElement)
+      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return statement;
   }
 
-  public CompositeElement parseStatement(Lexer lexer) {
+  public TreeElement parseStatement(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == IF_KEYWORD) {
       return parseIfStatement(lexer);
@@ -254,11 +256,10 @@ public class StatementParsing extends Parsing {
     else if (tokenType == LBRACE) {
       return parseBlockStatement(lexer);
     }
-    else if (tokenType == JSP_HOLDER_TOKEN) {
-      CompositeElement statement = Factory.createCompositeElement(JSP_TEMPLATE_STATEMENT);
-      TreeUtil.addChildren(statement, Factory.createLeafElement(HOLDER_TEMPLATE_DATA, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable()));
+    else if (tokenType instanceof IChameleonElementType) {
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
       lexer.advance();
-      return statement;
+      return declaration;
     }
     else if (tokenType == SEMICOLON) {
       {
@@ -352,7 +353,7 @@ public class StatementParsing extends Parsing {
             TreeUtil.addChildren(element, identifier);
             TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
             lexer.advance();
-            CompositeElement statement = parseStatement(lexer);
+            TreeElement statement = parseStatement(lexer);
             if (statement != null) {
               TreeUtil.addChildren(element, statement);
             }
@@ -398,7 +399,7 @@ public class StatementParsing extends Parsing {
       return element;
     }
 
-    CompositeElement thenStatement = parseStatement(lexer);
+    TreeElement thenStatement = parseStatement(lexer);
     if (thenStatement == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("Statement expected"));
       return element;
@@ -412,7 +413,7 @@ public class StatementParsing extends Parsing {
 
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
-    CompositeElement elseStatement = parseStatement(lexer);
+    TreeElement elseStatement = parseStatement(lexer);
     if (elseStatement == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("Statement expected"));
       return element;
@@ -431,7 +432,7 @@ public class StatementParsing extends Parsing {
       return element;
     }
 
-    CompositeElement statement = parseStatement(lexer);
+    TreeElement statement = parseStatement(lexer);
     if (statement == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("Statement expected"));
       return element;
@@ -488,7 +489,7 @@ public class StatementParsing extends Parsing {
     if (lexer.getTokenType() == RPARENTH) {
       TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
-      final CompositeElement body = parseStatement(lexer);
+      final TreeElement body = parseStatement(lexer);
       if (body != null) {
         TreeUtil.addChildren(element, body);
       } else {
@@ -507,7 +508,7 @@ public class StatementParsing extends Parsing {
     CompositeElement element = Factory.createCompositeElement(FOR_STATEMENT);
     TreeUtil.addChildren(element, forKeyword);
     TreeUtil.addChildren(element, lparenth);
-    CompositeElement init = parseStatement(lexer);
+    TreeElement init = parseStatement(lexer);
     if (init == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("Statement expected"));
       if (lexer.getTokenType() != RPARENTH){
@@ -542,7 +543,7 @@ public class StatementParsing extends Parsing {
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
-    CompositeElement statement = parseStatement(lexer);
+    TreeElement statement = parseStatement(lexer);
     if (statement == null){
       TreeUtil.addChildren(element, Factory.createErrorElement("Statement expected"));
       return element;

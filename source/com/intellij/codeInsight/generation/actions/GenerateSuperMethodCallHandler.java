@@ -24,7 +24,8 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
       OverrideImplementUtil.setupBody(template, method, method.getContainingClass());
       PsiStatement superCall = template.getBody().getStatements()[0];
       PsiCodeBlock body = method.getBody();
-      body.addAfter(superCall, body.getLBrace());
+      if(body.getLBrace() != null) body.addAfter(superCall, body.getLBrace());
+      else body.addBefore(superCall, null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

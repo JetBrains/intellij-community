@@ -35,12 +35,25 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     return (PsiStatement[])getChildrenAsPsiElements(STATEMENT_BIT_SET, PSI_STATEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  public PsiElement getFirstBodyElement() {
+    return getLBrace().getNextSibling();
+  }
+
+  public PsiElement getLastBodyElement() {
+    final PsiJavaToken rBrace = getRBrace();
+    return rBrace != null ? rBrace.getPrevSibling() : getLastChild();
+  }
+
   public PsiJavaToken getLBrace() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.LBRACE);
   }
 
   public PsiJavaToken getRBrace() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RBRACE);
+  }
+
+  public boolean isEmpty() {
+    return getLastBodyElement() == getLBrace();
   }
 
   private Set<String> myVariablesSet = null;

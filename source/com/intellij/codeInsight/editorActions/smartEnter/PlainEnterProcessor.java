@@ -18,7 +18,10 @@ public class PlainEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
     if (block != null) {
-      editor.getCaretModel().moveToOffset(block.getLBrace().getTextRange().getEndOffset());
+      final PsiElement firstBodyElement = block.getFirstBodyElement();
+      editor.getCaretModel().moveToOffset(firstBodyElement != null ?
+                                          firstBodyElement.getTextRange().getStartOffset() :
+                                          block.getTextRange().getEndOffset());
     }
 
     getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());

@@ -98,7 +98,7 @@ public class SurroundWithUtil {
   }
 
   public static TextRange getRangeToSelect (PsiCodeBlock block) {
-    PsiElement first = block.getLBrace().getNextSibling();
+    PsiElement first = block.getFirstBodyElement();
     if (first instanceof PsiWhiteSpace) {
       first = first.getNextSibling();
     }
