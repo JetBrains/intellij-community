@@ -84,7 +84,7 @@ public class MethodParameterFix implements IntentionAction {
       }
 
 
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

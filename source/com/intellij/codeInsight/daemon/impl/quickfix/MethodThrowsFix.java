@@ -72,7 +72,7 @@ public class MethodThrowsFix implements IntentionAction {
       if (myShouldThrow && !alreadyThrows) {
         myMethod.getThrowsList().add(myMethod.getManager().getElementFactory().createReferenceElementByType(myThrowsClassType));
       }
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

@@ -144,7 +144,7 @@ public class ModifierFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         changeModifierList(myModifierList);
-        QuickFixAction.spoilDocument(project, file);
+        QuickFixAction.markDocumentForUndo(file);
       }
     });
   }

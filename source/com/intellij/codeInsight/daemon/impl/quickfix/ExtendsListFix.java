@@ -74,7 +74,7 @@ public class ExtendsListFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     invokeImpl();
-    QuickFixAction.spoilDocument(project, file);
+    QuickFixAction.markDocumentForUndo(file);
   }
 
   /**

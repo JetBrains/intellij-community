@@ -55,7 +55,7 @@ public class VariableTypeFix implements IntentionAction {
       myVariable.normalizeDeclaration();
       myVariable.getTypeElement().replace(file.getManager().getElementFactory().createTypeElement(myReturnType));
       CodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

@@ -51,7 +51,7 @@ public class InsertSuperFix implements IntentionAction {
                 .dot(PsiMatcherImpl.hasText("("))
                 .getElement();
       editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

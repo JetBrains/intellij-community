@@ -71,7 +71,7 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
         qualifierExpression.replace(factory.createReferenceExpression(myMember.getContainingClass()));
       }
 
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

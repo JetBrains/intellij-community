@@ -52,7 +52,7 @@ class AddNoInspectionCommentAction implements IntentionAction {
     }
 
     container.addAfter(factory.createCommentFromText(COMMENT_START_TEXT +  myTool.getID(), null), null);
-    QuickFixAction.spoilDocument(project, file);
+    QuickFixAction.markDocumentForUndo(file);
   }
 
   public boolean startInWriteAction() {

@@ -44,7 +44,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    QuickFixAction.spoilDocument(project, file);
+    QuickFixAction.markDocumentForUndo(file);
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

@@ -43,7 +43,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
         referenceElements[i].delete();
       }
       convertToInterface(myClass);
-      QuickFixAction.spoilDocument(project, file);
+      QuickFixAction.markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

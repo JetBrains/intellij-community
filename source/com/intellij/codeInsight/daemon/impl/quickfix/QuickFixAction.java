@@ -4,6 +4,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionActionComposite;
+import com.intellij.openapi.command.impl.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -38,11 +42,20 @@ public final class QuickFixAction extends IntentionActionComposite {
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }
 
-  // spoil current document in order to Undo action work
-  public static void spoilDocument(Project project, PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    document.insertString(0, " ");
-    document.deleteString(0, 1);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  // make undoable action in current document in order to Undo action work from current file
+  public static void markDocumentForUndo(PsiFile file) {
+    Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
+      public void undo() {}
+
+      public void redo() {}
+
+      public DocumentReference[] getAffectedDocuments() {
+        return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
+      }
+
+      public boolean isComplex() { return false; }
+    });
   }
 }

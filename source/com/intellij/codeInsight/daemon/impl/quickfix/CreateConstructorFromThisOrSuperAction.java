@@ -84,7 +84,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
                 CreateFromUsageUtils.setupMethodBody(targetClass, constructor);
                 CreateFromUsageUtils.setupEditor(constructor, editor);
 
-                QuickFixAction.spoilDocument(project, callSite);
+                QuickFixAction.markDocumentForUndo(callSite);
               } catch (IncorrectOperationException e) {
                 LOG.error(e);
               }

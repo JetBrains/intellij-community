@@ -134,7 +134,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          QuickFixAction.spoilDocument(project, file);
+          QuickFixAction.markDocumentForUndo(file);
         }
       });
     }

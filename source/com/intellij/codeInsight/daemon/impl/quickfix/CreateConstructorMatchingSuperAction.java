@@ -107,7 +107,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
             LOG.error(e);
           }
 
-          QuickFixAction.spoilDocument(project, myClass.getContainingFile());
+          QuickFixAction.markDocumentForUndo(myClass.getContainingFile());
         }
       }
     );
