@@ -136,4 +136,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public ArrayList<String> getRecentMessages() {
     return new ArrayList<String>(myLastCommitMessages);
   }
+
+  public void removeMessage(final String content) {
+    myLastCommitMessages.remove(content);
+  }
 }

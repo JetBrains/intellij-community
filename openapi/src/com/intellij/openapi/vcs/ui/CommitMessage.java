@@ -1,77 +1,58 @@
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.editor.actions.ContentChooser;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsConfiguration;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Collections;
 
 public class CommitMessage extends JPanel{
 
   private final JTextArea myCommentArea = new JTextArea();
-  private final JComboBox myRecentMessages = new JComboBox();
+  private final JButton myHistory = new JButton("History...");
 
-  class RecentMessage {
-    private final boolean canBeInserted;
-    private final String myPresentation;
-    private final String myValue;
-
-    public RecentMessage(final boolean canBeInserted, final String presentation, final String value) {
-      this.canBeInserted = canBeInserted;
-      myPresentation = presentation;
-      myValue = value;
-    }
-
-    public boolean isCanBeInserted() {
-      return canBeInserted;
-    }
-
-    public String getPresentation() {
-      return myPresentation;
-    }
-
-    public String getValue() {
-      return myValue;
-    }
-  }
-
-  public CommitMessage(ArrayList<String> recentMessages) {
+  public CommitMessage(final VcsConfiguration configuration, final Project project) {
     super(new BorderLayout());
-    add(new JScrollPane(myCommentArea), BorderLayout.CENTER);
+    myHistory.setMnemonic('H');
+    final JScrollPane scrollPane = new JScrollPane(myCommentArea);
+    scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
+    add(scrollPane, BorderLayout.CENTER);
     add(new JLabel("Comment:"), BorderLayout.NORTH);
+    final ArrayList<String> recentMessages = configuration.getRecentMessages();
+    Collections.reverse(recentMessages);
+
     if (!recentMessages.isEmpty()) {
-      add(myRecentMessages, BorderLayout.SOUTH);
+      final JPanel buttonPanel = new JPanel(new BorderLayout());
+      buttonPanel.add(myHistory, BorderLayout.EAST);
+      add(buttonPanel, BorderLayout.SOUTH);
 
-      myRecentMessages.addItem(new RecentMessage(false, "<Recent messages>", null));
-
-      for (Iterator<String> iterator = recentMessages.iterator(); iterator.hasNext();) {
-        String s = iterator.next();
-        myRecentMessages.addItem(new RecentMessage(true, createPresentation(s), s));
-      }
-
-      myRecentMessages.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(
-          JList list,
-          Object value,
-          int index,
-          boolean selected,
-          boolean hasFocus
-          ) {
-          if (value instanceof RecentMessage) {
-            append(((RecentMessage)value).getPresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
-        }
-      });
-
-      myRecentMessages.addActionListener(new ActionListener() {
+      myHistory.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final Object selectedItem = myRecentMessages.getSelectedItem();
-          if (selectedItem instanceof RecentMessage && ((RecentMessage)selectedItem).canBeInserted) {
-            setText(((RecentMessage)selectedItem).getValue());
+          final ContentChooser<String> contentChooser = new ContentChooser<String>(project, "Choose Message", false){
+            protected void removeContentAt(final String content) {
+              configuration.removeMessage(content);
+            }
+
+            protected String getStringRepresentationFor(final String content) {
+              return content;
+            }
+
+            protected List<String> getContents() {
+              return recentMessages;
+            }
+          };
+          contentChooser.show();
+          if (contentChooser.isOK()) {
+            final int selectedIndex = contentChooser.getSelectedIndex();
+            if (selectedIndex >= 0) {
+              setText(contentChooser.getAllContents().get(selectedIndex));
+            }
           }
         }
       });
@@ -80,15 +61,6 @@ public class CommitMessage extends JPanel{
 
   public JComponent getTextField() {
     return myCommentArea;
-  }
-  
-  private String createPresentation(final String s) {
-    String converted = s.replaceAll("\n", " ");
-    if (converted.length() < 20) {
-      return converted;
-    } else {
-      return converted.substring(0, 20) + "...";
-    }
   }
 
   public void setText(final String initialMessage) {
