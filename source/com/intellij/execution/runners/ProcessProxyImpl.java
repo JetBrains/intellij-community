@@ -15,7 +15,7 @@ import java.net.Socket;
  */
 
 class ProcessProxyImpl implements ProcessProxy {
-  public static final Key<ProcessProxyImpl> KEY = Key.<ProcessProxyImpl>create("ProcessProxyImpl");
+  public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
   private int myPortNumber;
 
   private static final int SOCKET_NUMBER_START = 7532;
@@ -25,7 +25,7 @@ class ProcessProxyImpl implements ProcessProxy {
   private PrintWriter myWriter;
   private Socket mySocket;
   private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
-  public static final String PROPERTY_LIBRARY = "idea.launcher.library";
+  public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
   public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 

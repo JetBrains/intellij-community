@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.application.PathManager;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   public ProcessProxy createCommandLineProxy(final JavaCommandLine javaCmdLine) throws ExecutionException {
@@ -21,7 +22,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
         PathUtilEx.addRtJar(javaParameters.getClassPath());
         final ParametersList vmParametersList = javaParameters.getVMParametersList();
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, "" + proxy.getPortNumber());
-        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_LIBRARY, ProcessProxyImpl.getLaunchertLibName());
+        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BINPATH, PathManager.getBinPath());
         javaParameters.getProgramParametersList().prepend(javaParameters.getMainClass());
         javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
       }

@@ -11,13 +11,31 @@ import java.net.Socket;
  */
 public class AppMain {
   private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  private static final String PROPERTY_LIBRARY = "idea.launcher.library";
+  private static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
 
   private static native void triggerControlBreak();
 
   static {
-    String libPath = System.getProperty(PROPERTY_LIBRARY);
-    System.load(libPath);
+    String binPath = System.getProperty(PROPERTY_BINPATH) + File.separator;
+    final String osName = System.getProperty("os.name").toLowerCase();
+    String libPath = null;
+    if (osName.startsWith("windows")) {
+      libPath = binPath + "breakgen.dll";
+    } else if (osName.startsWith("linux")) {
+      if (System.getProperty("os.name").toLowerCase().equals("amd64")) {
+        libPath = binPath + "libbreakgen64.so";
+      } else {
+        libPath = binPath + "libbreakgen.so";
+      }
+    }
+    try {
+      if (libPath != null) {
+        System.load(libPath);
+      }
+    }
+    catch (UnsatisfiedLinkError e) {
+      //Do nothing, unknown os or some other error => no ctrl-break is available
+    }
   }
 
   public static void main(String[] args) throws Throwable, NoSuchMethodException, IllegalAccessException {
