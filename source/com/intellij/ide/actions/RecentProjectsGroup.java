@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.Presentation;
 
 public class RecentProjectsGroup extends ActionGroup {
   public AnAction[] getChildren(AnActionEvent e) {
-    return RecentProjectsManager.getInstance().getRecentProjectsActions();
+    return RecentProjectsManager.getInstance().getRecentProjectsActions(true);
   }
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(RecentProjectsManager.getInstance().getRecentProjectsActions().length > 0);
+    presentation.setEnabled(RecentProjectsManager.getInstance().getRecentProjectsActions(true).length > 0);
   }
 }
