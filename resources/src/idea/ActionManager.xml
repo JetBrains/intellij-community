@@ -581,8 +581,8 @@
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
-        <action id="SplitHorisontal"        class="com.intellij.ide.actions.SplitHorizontalAction" text="Split Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
-        <action id="SplitVertical"          class="com.intellij.ide.actions.SplitVerticalAction"   text="Split Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
+        <action id="SplitVertical"          class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split Vertically"    icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
+        <action id="SplitHorizontal"        class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
         <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter Orientation" description="Changes orientation of splitter"/>
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
         <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>

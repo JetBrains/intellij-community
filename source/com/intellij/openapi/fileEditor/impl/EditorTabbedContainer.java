@@ -7,11 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.plaf.beg.BegTabbedPaneUI;
@@ -360,7 +356,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
     private final class MyNewHorizontalTabGroupAction extends MyNewTabGroupAction {
       public MyNewHorizontalTabGroupAction(VirtualFile file) {
         super(SwingConstants.HORIZONTAL, file);
-        final AnAction action = ActionManager.getInstance().getAction("SplitHorisontal");
+        final AnAction action = ActionManager.getInstance().getAction("SplitHorizontal");
         copyFrom(action);
       }
     }
@@ -430,8 +426,8 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         _group.add(new MyCloseAllAction());
         _group.add(new MyCloseAllUnmodifiedAction());
         _group.addSeparator();
-        _group.add(new MyNewHorizontalTabGroupAction(fileAt));
         _group.add(new MyNewVerticalTabGroupAction(fileAt));
+        _group.add(new MyNewHorizontalTabGroupAction(fileAt));
         _group.add(new MyMoveEditorToOppositeTabGroupAction(fileAt));
         _group.add(new MyChangeTabGroupsOrientation());
         //_group.addSeparator();

@@ -5,8 +5,8 @@ import javax.swing.*;
 /**
  * @author Vladimir Kondratyev
  */
-public final class SplitVerticalAction extends SplitAction{
-  public SplitVerticalAction() {
+public final class SplitHorizontallyAction extends SplitAction{
+  public SplitHorizontallyAction() {
     super(SwingConstants.HORIZONTAL);
   }
 }
