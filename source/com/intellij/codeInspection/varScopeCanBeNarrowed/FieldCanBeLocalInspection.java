@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -138,7 +139,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         final CodeStyleManager styleManager = manager.getCodeStyleManager();
         final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
         String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
-        localName = styleManager.suggestUniqueVariableName(localName, anchorBlock.getFirstBodyElement(), true);
+        localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
         try {
           final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
           final PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();

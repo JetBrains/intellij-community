@@ -121,6 +121,42 @@ public class RefactoringUtil {
     }
   }
 
+  /**
+   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String, com.intellij.psi.PsiElement, boolean)
+   * Cannot use method from code style manager: a collision with fieldToReplace is not a collision
+   */
+  public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
+    int index = 0;
+    while (true) {
+      final String name = index > 0 ? baseName + index : baseName;
+      index++;
+      final PsiManager manager = place.getManager();
+      PsiResolveHelper helper = manager.getResolveHelper();
+      PsiVariable refVar = helper.resolveReferencedVariable(name, place);
+      if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
+      class Cancel extends RuntimeException {
+      }
+      try {
+        place.accept(new PsiRecursiveElementVisitor() {
+          public void visitClass(PsiClass aClass) {
+
+          }
+
+          public void visitVariable(PsiVariable variable) {
+            if (name.equals(variable.getName())) {
+              throw new Cancel();
+            }
+          }
+        });
+      }
+      catch (Cancel e) {
+        continue;
+      }
+
+      return name;
+    }
+  }
+
   public static interface UsageInfoFactory {
     UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset);
   }

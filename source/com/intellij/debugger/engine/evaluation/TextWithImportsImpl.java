@@ -57,6 +57,10 @@ public class TextWithImportsImpl implements TextWithImports{
     return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports);
   }
 
+  public String toString() {
+    return getText();
+  }
+
   public PsiCodeFragment createCodeFragment(PsiElement context, Project project){
     return myCodeFragmentFactory.createCodeFragment(this, context, project);
   }
