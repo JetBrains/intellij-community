@@ -32,6 +32,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.checkin.Revisions;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
@@ -70,4 +72,6 @@ public interface UIHelper {
   void installSmartExpander(JTree tree);
 
   void installSelectionSaver(JTree tree);
+
+  TreeTable createDirectoryDiffTree(Project project, AbstractRevisions[] roots);
 }

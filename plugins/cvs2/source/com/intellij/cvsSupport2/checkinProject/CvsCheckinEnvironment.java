@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -47,7 +48,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  public RollbackProvider createRollbackProviderOn(Revisions[] selectedRevisions) {
+  public RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions) {
     return new CvsRollbackProvider(myProject, selectedRevisions);
   }
 

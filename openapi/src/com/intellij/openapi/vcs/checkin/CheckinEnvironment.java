@@ -5,12 +5,14 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckinProjectDialogImplementer;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RollbackProvider;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.util.ui.ColumnInfo;
 
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.List;
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();
 
-  RollbackProvider createRollbackProviderOn(Revisions[] selectedRevisions);
+  RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions);
 
   DifferenceType[] getAdditionalDifferenceTypes();
 
