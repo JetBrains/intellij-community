@@ -1,14 +1,13 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.xml.*;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class XmlTagValueImpl implements XmlTagValue{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagValueImpl");
@@ -75,7 +74,11 @@ public class XmlTagValueImpl implements XmlTagValue{
       if(myElements.length > 0){
         myTag.deleteChildRange(myElements[0], myElements[myElements.length - 1]);
       }
-      if(value != null && value.length() > 0) myTag.add(myTag.getManager().getElementFactory().createDisplayText(value));
+      if(value != null && value.length() > 0) {
+        final XmlText displayText = myTag.getManager().getElementFactory().createDisplayText(" ");
+        myTag.add(displayText);
+        displayText.setValue(value);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
