@@ -8,4 +8,5 @@ public interface TreeStructureProvider {
 
   Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings);
 
+  //Object getData(Collection<ProjectViewNode> selected, String dataName);
 }

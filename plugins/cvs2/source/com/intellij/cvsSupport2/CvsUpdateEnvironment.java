@@ -44,6 +44,7 @@ import com.intellij.cvsSupport2.cvshandlers.UpdateHandler;
 import com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -80,9 +81,6 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     cvsOperationExecutor.setShowErrors(false);
     cvsOperationExecutor.performActionSync(handler, new CvsOperationExecutorCallback() {
       public void executionFinished(boolean successfully) {
-        if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
-          invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
-        }
 
       }
 
@@ -99,6 +97,13 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       public void onRefreshFilesCompleted() {
         if (updateSettings.getPruneEmptyDirectories()) {
           new DirectoryPruner(handler.getRoots()).execute();
+        }
+        if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            public void run() {
+              invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
+            }
+          }, ModalityState.defaultModalityState());          
         }
       }
     };
