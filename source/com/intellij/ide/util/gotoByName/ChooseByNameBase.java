@@ -1,9 +1,13 @@
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.actions.PasteReferenceAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -52,8 +56,8 @@ public abstract class ChooseByNameBase{
   protected JScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
   private DefaultListModel myListModel;
-  private ArrayList<Pair<String, Integer>> myHistory;
-  private ArrayList<Pair<String, Integer>> myFuture;
+  private List<Pair<String, Integer>> myHistory;
+  private List<Pair<String, Integer>> myFuture;
 
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
@@ -70,6 +74,7 @@ public abstract class ChooseByNameBase{
   private static final String NOT_FOUND_CARD = "nfound";
   private static final String CHECK_BOX_CARD = "chkbox";
   static final int REBUILD_DELAY = 100;
+  private Editor myEditor;
 
   private static class IgnoreCaseComparator implements Comparator<String> {
     public int compare(String a, String b) {
@@ -78,8 +83,6 @@ public abstract class ChooseByNameBase{
   }
 
   private static final Comparator<String> UCS_COMPARATOR = new IgnoreCaseComparator();
-
-
 
   /**
    * @param initialText initial text which will be in the lookup text field
@@ -114,7 +117,6 @@ public abstract class ChooseByNameBase{
           return element;
         }
       }
-
       return null;
     }
 
@@ -161,8 +163,9 @@ public abstract class ChooseByNameBase{
    * @param allowMultipleSelection
    */
   protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+    myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+
     myActionListener = callback;
-    //myTextFieldPanel = new JPanelProvider(new GridBagLayout());
     myTextFieldPanel = new JPanelProvider();
     myTextFieldPanel.setLayout(new BoxLayout(myTextFieldPanel, BoxLayout.Y_AXIS));
     final JPanel hBox = new JPanel();
@@ -181,11 +184,11 @@ public abstract class ChooseByNameBase{
     checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
 
     checkBoxPanel.add (new JLabel ("  ("));
-    myCheckBox = new JCheckBox(myModel.getCheckBoxName() + " )");
+    myCheckBox = new JCheckBox(myModel.getCheckBoxName());
     myCheckBox.setMnemonic(myModel.getCheckBoxMnemonic());
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
     checkBoxPanel.add (myCheckBox);
-
+    checkBoxPanel.add (new JLabel (")"));
 
     myCardContainer.add(checkBoxPanel, CHECK_BOX_CARD);
     myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_MESSAGE_CARD);
@@ -213,12 +216,20 @@ public abstract class ChooseByNameBase{
     myTextField = new MyTextField();
     myTextField.setText(myInitialText);
 
+    myEditor = (Editor)DataManager.getInstance().getDataContext(myPreviouslyFocusedComponent).getData(DataConstants.EDITOR);
+    if (myEditor != null) {
+      myTextField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.EMPTY_SET);
+      final JPanel p = new JPanel(new BorderLayout());
+      final JLabel label = new JLabel("<html><body><center>Press <b>TAB</b> to paste the reference into editor.</center></body></html>");
+      label.setHorizontalAlignment(SwingConstants.CENTER);
+      p.add(label, BorderLayout.CENTER);
+      myTextFieldPanel.add(p);
+    }
+    
+    myTextFieldPanel.add(myTextField);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
     myTextField.setFont(editorFont);
-    myTextFieldPanel.add(myTextField,
-                         new GridBagConstraints(0, 1, 3, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
-                                                new Insets(0, 0, 0, 0), 0, 0));
 
     if (isCloseByFocusLost()) {
       myTextField.addFocusListener(new FocusAdapter() {
@@ -248,26 +259,33 @@ public abstract class ChooseByNameBase{
 
     myTextField.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if (myListScrollPane.isVisible()) {
-          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+        if (!myListScrollPane.isVisible()) {
+          return;
+        }
+        final int keyCode = e.getKeyCode();
+        switch (keyCode) {
+          case KeyEvent.VK_TAB:
+            insertElement();
+            break;
+          case KeyEvent.VK_DOWN:
             ListScrollingUtilEx.moveDown(myList, e.getModifiersEx());
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_UP) {
+            break;
+          case KeyEvent.VK_UP:
             ListScrollingUtilEx.moveUp(myList, e.getModifiersEx());
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_PAGE_UP) {
+            break;
+          case KeyEvent.VK_PAGE_UP:
             ListScrollingUtil.movePageUp(myList);
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+            break;
+          case KeyEvent.VK_PAGE_DOWN:
             ListScrollingUtil.movePageDown(myList);
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            if (myList.getSelectedValue() instanceof ExtraElem) {
+            break;
+          case KeyEvent.VK_ENTER:
+            if (myList.getSelectedValue() == OUR_EXTRA_ELEMENT) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
               rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
               e.consume();
             }
-          }
+            break;
         }
       }
     });
@@ -290,13 +308,14 @@ public abstract class ChooseByNameBase{
         }
 
         if (e.getClickCount() == 2) {
-          if (myList.getSelectedValue() instanceof ExtraElem) {
+          if (myList.getSelectedValue() == OUR_EXTRA_ELEMENT) {
             myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
             rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
             e.consume();
           }
-          else
+          else {
             close(true);
+          }
         }
       }
     });
@@ -324,6 +343,16 @@ public abstract class ChooseByNameBase{
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
     }
+  }
+
+  private void insertElement() {
+    final Object chosenElement = getChosenElement();
+    if (!(chosenElement instanceof PsiElement)) return;
+    if (myEditor == null) return;
+    final PsiElement element = (PsiElement)chosenElement;
+    final String fqn = CopyReferenceAction.elementToFqn(element);
+    PasteReferenceAction.doInsert(fqn, element, myEditor);
+    close(false);
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -389,7 +418,6 @@ public abstract class ChooseByNameBase{
                                   KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                   JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
     if (myTextField.requestFocusInWindow()) {
       myTextField.requestFocus();
     }
@@ -435,7 +463,7 @@ public abstract class ChooseByNameBase{
             final Runnable request = this;
             LOG.info ("Rebuild " + hashCode() + " started");
             final CalcElementsCallback callback = new CalcElementsCallback() {
-              public void run(final ArrayList<?> elements) {
+              public void run(final List<?> elements) {
                 synchronized (myRebuildMutex) {
                   LOG.info ("Rebuild callback " + hashCode() + " of " + request.hashCode()  + " started");
                   ApplicationManager.getApplication().assertIsDispatchThread();
@@ -484,7 +512,7 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private void setElementsToList(int pos, ArrayList<?> elements) {
+  private void setElementsToList(int pos, List<?> elements) {
     if (myDisposedFlag) return;
     myListModel.clear();
     if (elements.size() == 0) {
@@ -513,7 +541,7 @@ public abstract class ChooseByNameBase{
 
   public Object getChosenElement() {
     final Object[] elements = getChosenElements();
-    return (elements != null && elements.length == 1) ? elements[0] : null;
+    return elements != null && elements.length == 1 ? elements[0] : null;
   }
 
   protected Object[] getChosenElements() {
@@ -574,11 +602,9 @@ public abstract class ChooseByNameBase{
     }
 
     protected void processKeyEvent(KeyEvent e) {
-      {
-        final int caretPosition = getCaretPosition();
-        if (getCaretPosition() < myExactPrefixLen) {
-          myExactPrefixLen = caretPosition;
-        }
+      final int caretPosition = getCaretPosition();
+      if (getCaretPosition() < myExactPrefixLen) {
+        myExactPrefixLen = caretPosition;
       }
 
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
@@ -601,13 +627,10 @@ public abstract class ChooseByNameBase{
         if (myHistory.size() != 0) {
           final String oldText = myTextField.getText();
           final int oldPos = myList.getSelectedIndex();
-          //final String pattern = myTextField.getText();
-          //final Object current = myList.getSelectedValue();
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
           myFuture.add(Pair.create(oldText, new Integer(oldPos)));
           rebuildList(0, 0, null, ModalityState.current());
-          //myList.setSelectedIndex(last.second.intValue());
         }
         return;
       }
@@ -620,7 +643,6 @@ public abstract class ChooseByNameBase{
           myTextField.setText(next.first);
           myHistory.add(Pair.create(oldText, new Integer(oldPos)));
           rebuildList(0, 0, null, ModalityState.current());
-          //myList.setSelectedIndex(next.second.intValue());
         }
         return;
       }
@@ -636,36 +658,35 @@ public abstract class ChooseByNameBase{
       final int oldPos = myList.getSelectedIndex();
 
       final String newPattern;
-      {
-        String commonPrefix  = null;
-        if (list.size() != 0) {
-          for (int i = 0; i < list.size(); i++) {
-            final String string = list.get(i).toLowerCase();
-            if (commonPrefix == null) {
-              commonPrefix = string;
-            }
-            else {
-              while (commonPrefix.length() > 0) {
-                if (string.startsWith(commonPrefix)) {
-                  break;
-                }
-                commonPrefix = commonPrefix.substring(0, commonPrefix.length() - 1);
-              }
-              if (commonPrefix.length() == 0) break;
-            }
+      String commonPrefix  = null;
+      if (list.size() != 0) {
+        for (int i = 0; i < list.size(); i++) {
+          final String string = list.get(i).toLowerCase();
+          if (commonPrefix == null) {
+            commonPrefix = string;
           }
-          commonPrefix = list.get(0).substring(0, commonPrefix.length());
-          for (int i = 1; i < list.size(); i++) {
-            final String string = list.get(i).substring(0, commonPrefix.length());
-            if (!string.equals(commonPrefix)) {
-              commonPrefix = commonPrefix.toLowerCase();
-              break;
+          else {
+            while (commonPrefix.length() > 0) {
+              if (string.startsWith(commonPrefix)) {
+                break;
+              }
+              commonPrefix = commonPrefix.substring(0, commonPrefix.length() - 1);
             }
+            if (commonPrefix.length() == 0) break;
           }
         }
-        if (commonPrefix == null) commonPrefix = "";
-        newPattern = commonPrefix;
+        commonPrefix = list.get(0).substring(0, commonPrefix.length());
+        for (int i = 1; i < list.size(); i++) {
+          final String string = list.get(i).substring(0, commonPrefix.length());
+          if (!string.equals(commonPrefix)) {
+            commonPrefix = commonPrefix.toLowerCase();
+            break;
+          }
+        }
       }
+      if (commonPrefix == null) commonPrefix = "";
+      newPattern = commonPrefix;
+
       myHistory.add(Pair.create(oldText, new Integer(oldPos)));
       myTextField.setText(newPattern);
       myTextField.setCaretPosition(newPattern.length());
@@ -685,13 +706,10 @@ public abstract class ChooseByNameBase{
     private final CalcElementsCallback myCallback;
     private final ModalityState myModalityState;
 
-    //private boolean myIsTooLong;
-    private ArrayList<?> myElements = null;
+    private List<Object> myElements = null;
 
     private volatile boolean [] myCancelled = new boolean[]{false};
     private boolean myCanCancel = true;
-    //private boolean endsWithSpace;
-    //private boolean noUpperCase;
 
     public CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState) {
       myPattern = pattern;
@@ -701,7 +719,7 @@ public abstract class ChooseByNameBase{
     }
 
     public void run() {
-      final ArrayList<Object> elements = new ArrayList<Object>();
+      final List<Object> elements = new ArrayList<Object>();
       Runnable action = new Runnable() {
         public void run() {
           try {
@@ -723,8 +741,9 @@ public abstract class ChooseByNameBase{
       } else {
         myCard.show(myCardContainer, CHECK_BOX_CARD);
       }
-      if (elements.size() == 0)
+      if (elements.size() == 0) {
         myCard.show(myCardContainer, NOT_FOUND_CARD);
+      }
 
       myElements = elements;
 
@@ -741,33 +760,32 @@ public abstract class ChooseByNameBase{
     }
 
 
-    private void addElementsByPattern(ArrayList<Object> elementsArray, String pattern) { //throws ProcessCanceledException {
-      ArrayList<String> namesList = new ArrayList<String>();
-      boolean ov = getNamesByPattern(myCheckboxState, myCancelled, namesList, pattern);
-      if (myCancelled[0])
+    private void addElementsByPattern(List<Object> elementsArray, String pattern) {
+      List<String> namesList = new ArrayList<String>();
+      boolean overflow = getNamesByPattern(myCheckboxState, myCancelled, namesList, pattern);
+      if (myCancelled[0]) {
         throw new ProcessCanceledException();
+      }
       Collections.sort(namesList, UCS_COMPARATOR);
 
       All:
       for (int i = 0; i < namesList.size(); i++) {
-        if (myCancelled[0])
+        if (myCancelled[0]) {
           throw new ProcessCanceledException();
-        final Object o = namesList.get(i);
-        final String name = (String)o;
+        }
+        final String name = namesList.get(i);
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
         for (int j = 0; j < elements.length; j++) {
           final Object element = elements[j];
           elementsArray.add(element);
           if (elementsArray.size() >= myMaximumListSizeLimit) {
-            ov = true;
+            overflow = true;
             break All;
           }
-
         }
-
       }
 
-      if (ov) {
+      if (overflow) {
         elementsArray.add(OUR_EXTRA_ELEMENT);
       }
     }
@@ -781,13 +799,13 @@ public abstract class ChooseByNameBase{
 
   private boolean getNamesByPattern(final boolean checkboxState,
                                   final boolean[] cancelled,
-                                  final ArrayList<String> list,
+                                  final List<String> list,
                                   final String pattern) throws ProcessCanceledException {
     if (!isShowListForEmptyPattern()) {
       LOG.assertTrue(pattern.length() > 0);
     }
 
-    boolean ov = false;
+    boolean overflow = false;
     final String[] names = checkboxState ? myNames[1] : myNames[0];
     final Pair<String,String> pref_regex = buildRegexp(pattern);
     final String regex = pref_regex.getSecond();
@@ -808,7 +826,7 @@ public abstract class ChooseByNameBase{
     catch (PatternSyntaxException e) {
     }
 
-    return ov;
+    return overflow;
   }
 
   private static boolean containsOnlyUppercaseLetters(String s) {
@@ -824,19 +842,22 @@ public abstract class ChooseByNameBase{
     {
       final int len = pattern.length ();
       int i = 0;
-      while (i != len && (Character.isLetterOrDigit(pattern.charAt(i)) && (i == 0 || !Character.isUpperCase(pattern.charAt(i)))))
-        ++ i;
+      while (i != len && (Character.isLetterOrDigit(pattern.charAt(i)) && (i == 0 || !Character.isUpperCase(pattern.charAt(i))))) {
+        ++i;
+      }
       pref = pattern.substring(0,i);
     }
 
 
     {
       final int eol = pattern.indexOf ('\n');
-      if (eol != -1)
-        pattern = pattern.substring (0, eol);
+      if (eol != -1) {
+        pattern = pattern.substring(0, eol);
+      }
     }
-    if (pattern.length () >= 80)
-      pattern = pattern.substring (0, 80);
+    if (pattern.length() >= 80) {
+      pattern = pattern.substring(0, 80);
+    }
 
     final StringBuffer buffer = new StringBuffer();
     boolean lastIsUppercase = false;
@@ -898,12 +919,11 @@ public abstract class ChooseByNameBase{
     else if (lastIsUppercase) {
       buffer.append("[a-z0-9]*");
     }
-
     final String regex = buffer.toString();
-    return Pair.create (pref, regex);
+    return Pair.create(pref, regex);
   }
 
   private static interface CalcElementsCallback {
-    void run(ArrayList<?> elements);
+    void run(List<?> elements);
   }
 }

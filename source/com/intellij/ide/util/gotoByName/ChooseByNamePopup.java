@@ -45,12 +45,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       preferredScrollPaneSize.height = layeredPane.getHeight() - bounds.y;
     }
 
-    {
-      if(preferredScrollPaneSize.width > layeredPane.getWidth() - bounds.x){
-        bounds.x = layeredPane.getX() + Math.max (1, layeredPane.getWidth()-preferredScrollPaneSize.width);
-        if(preferredScrollPaneSize.width > layeredPane.getWidth() - bounds.x){
-          preferredScrollPaneSize.width = layeredPane.getWidth() - bounds.x;
-        }
+    if (preferredScrollPaneSize.width > layeredPane.getWidth() - bounds.x) {
+      bounds.x = layeredPane.getX() + Math.max(1, layeredPane.getWidth() - preferredScrollPaneSize.width);
+      if (preferredScrollPaneSize.width > layeredPane.getWidth() - bounds.x) {
+        preferredScrollPaneSize.width = layeredPane.getWidth() - bounds.x;
       }
     }
 
@@ -117,7 +115,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       // Return focus back to the previous focused component if we need to do it and
       // previous focused componen is showing.
       if (
-        (myPreviouslyFocusedComponent instanceof JComponent) &&
+        myPreviouslyFocusedComponent instanceof JComponent &&
         myPreviouslyFocusedComponent.isShowing()
       ){
         final JComponent _component = (JComponent)myPreviouslyFocusedComponent;

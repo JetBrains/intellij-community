@@ -243,6 +243,8 @@
           <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction" text="C_opy Paths" description="Copy paths corresponding to selected files or directories to clipboard"/>
           <action id="$Paste" class="com.intellij.ide.actions.PasteAction" text="_Paste" icon="/actions/menu-paste.png" description="Paste from clipboard"/>
           <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction" text="Past_e..." description="Paste from recent clipboards"/>
+          <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction" text="Copy _Reference" description="Copy Java class/method/field reference"/>
+          <action id="PasteReference" class="com.intellij.ide.actions.PasteReferenceAction" text="Paste Re_ference" description="Paste reference to copied Java class/method/field"/>
           <reference ref="EditorToggleColumnMode"/>
         </group>
         <separator/>
