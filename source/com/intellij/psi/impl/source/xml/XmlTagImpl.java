@@ -2,29 +2,28 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
 import com.intellij.j2ee.ExternalResourceManager;
+import com.intellij.jsp.impl.JspXHTMLDescriptor;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomModel;
-import com.intellij.pom.PomTransaction;
-import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.xml.aspect.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -41,8 +40,6 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
-import com.intellij.jsp.impl.JspXHTMLDescriptor;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -899,15 +896,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         }
         if(left != null && left.getElementType() == XmlElementType.XML_TEXT){
           final XmlText xmlText = (XmlText)left;
+          final String text = xmlText.getText();
           xmlText.insertText(xmlChildAsText.getValue(), xmlText.getValue().length());
           myNewElement = left;
-          return null;
+          return XmlTextChanged.createXmlTextChanged(myModel, xmlText, text);
         }
         if(right != null && right.getElementType() == XmlElementType.XML_TEXT){
           final XmlText xmlText = (XmlText)right;
+          final String text = xmlText.getText();
           xmlText.insertText(xmlChildAsText.getValue(), 0);
           myNewElement = right;
-          return null;
+          return XmlTextChanged.createXmlTextChanged(myModel, xmlText, text);
         }
       }
 
