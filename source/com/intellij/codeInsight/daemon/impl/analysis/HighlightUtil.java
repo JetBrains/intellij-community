@@ -526,7 +526,7 @@ public class HighlightUtil {
     HighlightInfo errorResult = null;
     if (method == null && !(parent instanceof JspFile)) {
       description = RETURN_OUTSIDE_METHOD;
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.RETURN_OUTSIDE_METHOD, statement, description);
     }
     else {
       PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
