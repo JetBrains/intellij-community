@@ -232,58 +232,98 @@ public class MoveClassesOrPackagesUtil {
       }
     }
   }
+
 // Does not process non-code usages!
   public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination, UsageInfo[] usages)
     throws IncorrectOperationException {
-    PsiManager manager = aClass.getManager();
 
-// the class is already there, this is true when multiple classes are defined in the same file
     PsiFile file = aClass.getContainingFile();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-    if (!newDirectory.equals(file.getContainingDirectory())) {
-// do actual move
-      manager.moveFile(file, newDirectory);
 
-      if (file instanceof PsiJavaFile) { // Q: move this code into some util?
-        PsiPackage newPackage = newDirectory.getPackage();
-        PsiJavaFile javaFile = (PsiJavaFile)file;
-        PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-        String packageName = newPackage.getQualifiedName();
-        if (packageStatement != null) {
-          if (packageName.length() > 0) {
-            packageStatement.getPackageReference().bindToElement(newPackage);
-          }
-          else {
-            packageStatement.delete();
-          }
-        }
-        else {
-          if (packageName.length() > 0) {
-            file.add(manager.getElementFactory().createPackageStatement(packageName));
-          }
+    PsiClass newClass;
+    if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
+      shortenSelfReferences(aClass);
+      final PsiClass created = newDirectory.createClass(aClass.getName());
+      if (aClass.getDocComment() == null && created.getDocComment() != null) {
+        aClass.addAfter(created.getDocComment(), null);
+      }
+      newClass = (PsiClass)created.replace(aClass);
+      aClass.delete();
+    }
+    else {
+      newClass = aClass;
+      if (!newDirectory.equals(file.getContainingDirectory())) {
+        aClass.getManager().moveFile(file, newDirectory);
+        if (file instanceof PsiJavaFile) {
+          setPackageStatement((PsiJavaFile)file, newDirectory.getPackage());
         }
       }
     }
 
-// rename all references
-    for (int i = 0; i < usages.length; i++) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
-      if (usage.getElement() == null || !usage.getElement().isValid()) continue;
-      PsiReference reference = usage.reference;
-      if (reference != null) {
-        PsiElement parent = reference.getElement().getParent();
-        if (parent instanceof PsiImportStatement) {
-          if (parent.getContainingFile().getContainingDirectory().equals(newDirectory)) {
-            parent.delete(); // remove import statement to the class in the same package
-            continue;
+    if (!newDirectory.equals(file.getContainingDirectory())) {
+      // rename all references
+      for (int i = 0; i < usages.length; i++) {
+        MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
+        if (usage.getElement() == null) continue;
+        PsiReference reference = usage.reference;
+        if (reference != null) {
+          PsiElement parent = reference.getElement().getParent();
+          if (parent instanceof PsiImportStatement) {
+            if (parent.getContainingFile().getContainingDirectory().equals(newDirectory)) {
+              parent.delete(); // remove import statement to the class in the same package
+              continue;
+            }
           }
-        }
 
-        reference.bindToElement(aClass);
+          reference.bindToElement(newClass);
+        }
       }
+
+      return newClass;
     }
 
     return aClass;
+  }
+
+  private static void shortenSelfReferences(final PsiClass aClass) {
+    final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
+    if (aPackage != null) {
+      aClass.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          if (reference.isQualified() && reference.isReferenceTo(aClass)) {
+            final PsiElement qualifier = reference.getQualifier();
+            if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {
+              try {
+                qualifier.delete();
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+            }
+          }
+          super.visitReferenceElement(reference);
+        }
+      });
+    }
+  }
+
+  private static void setPackageStatement(final PsiJavaFile javaFile, final PsiPackage newPackage) throws IncorrectOperationException {
+    PsiManager manager = javaFile.getManager();
+    PsiPackageStatement packageStatement = javaFile.getPackageStatement();
+    String packageName = newPackage.getQualifiedName();
+    if (packageStatement != null) {
+      if (packageName.length() > 0) {
+        packageStatement.getPackageReference().bindToElement(newPackage);
+      }
+      else {
+        packageStatement.delete();
+      }
+    }
+    else {
+      if (packageName.length() > 0) {
+        javaFile.add(manager.getElementFactory().createPackageStatement(packageName));
+      }
+    }
   }
 
   public static String getPackageName(PackageWrapper aPackage) {

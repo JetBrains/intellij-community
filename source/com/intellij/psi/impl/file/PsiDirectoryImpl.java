@@ -527,7 +527,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
     else if (element instanceof PsiClass) {
       if (element.getParent() instanceof PsiFile) {
-        checkAdd(element.getParent());
+        checkCreateClassOrInterface(((PsiClass)element).getName());
       }
       else {
         LOG.error("not implemented");

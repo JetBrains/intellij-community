@@ -28,6 +28,10 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("moveMultiple1", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
   }
 
+  public void testSecondaryClass() throws Exception{
+    doTest("secondaryClass", new String[]{"pack1.Class2"}, "pack1");
+  }
+
   public void testStringsAndComments() throws Exception{
     doTest("stringsAndComments", new String[]{"pack1.Class1"}, "pack2");
   }
