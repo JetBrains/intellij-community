@@ -169,7 +169,6 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
                                                    myProject);
       dialog.show();
       if (!dialog.isOK()) {
-        prepareSuccessful();
         return false;
       }
     }
