@@ -30,17 +30,16 @@ class MergeElseIfPredicate implements PsiElementPredicate{
         if(!(elseBranch instanceof PsiBlockStatement)){
             return false;
         }
-        final PsiCodeBlock block = ((PsiBlockStatement) elseBranch).getCodeBlock();
+        final PsiCodeBlock block =
+                ((PsiBlockStatement) elseBranch).getCodeBlock();
         if(block == null){
             return false;
         }
         final PsiStatement[] statements = block.getStatements();
-        if(statements == null || statements.length!=1)
-        {
+        if(statements == null || statements.length != 1){
             return false;
         }
-        if(statements[0]== null || !(statements[0] instanceof PsiIfStatement))
-        {
+        if(statements[0] == null || !(statements[0] instanceof PsiIfStatement)){
             return false;
         }
         return true;

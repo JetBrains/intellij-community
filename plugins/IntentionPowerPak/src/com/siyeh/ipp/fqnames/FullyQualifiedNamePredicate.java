@@ -4,24 +4,19 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class FullyQualifiedNamePredicate implements PsiElementPredicate
-{
-    public boolean satisfiedBy(PsiElement element)
-    {
+class FullyQualifiedNamePredicate implements PsiElementPredicate{
+    public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaCodeReferenceElement)
-                || element instanceof PsiReferenceExpression)
-        {
+                || element instanceof PsiReferenceExpression){
             return false;
         }
 
         PsiElement parent = element.getParent();
-        while(parent instanceof PsiJavaCodeReferenceElement)
-        {
+        while(parent instanceof PsiJavaCodeReferenceElement){
             parent = parent.getParent();
         }
         if(parent instanceof PsiPackageStatement ||
-                parent instanceof PsiImportStatement)
-        {
+                        parent instanceof PsiImportStatement){
             return false;
         }
         final String text = element.getText();

@@ -8,28 +8,24 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class RemoveBooleanEqualityIntention extends MutablyNamedIntention
-{
-
-    protected String getTextForElement(PsiElement element)
-    {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) element;
+public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
+    protected String getTextForElement(PsiElement element){
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) element;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         return "Simplify " + sign.getText();
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Remove Boolean Equality";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new BooleanLiteralEqualityPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiJavaToken sign = exp.getOperationSign();
@@ -38,50 +34,30 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention
         final String lhsText = lhs.getText();
         final PsiExpression rhs = exp.getROperand();
         final String rhsText = rhs.getText();
-        if("true".equals(lhsText))
-        {
-            if(isEquals)
-            {
+        if("true".equals(lhsText)){
+            if(isEquals){
                 replaceExpression(project, rhsText, exp);
-            }
-            else
-            {
+            } else{
                 replaceExpressionWithNegatedExpression(project, rhs, exp);
             }
-        }
-        else if("false".equals(lhsText))
-        {
-            if(isEquals)
-            {
+        } else if("false".equals(lhsText)){
+            if(isEquals){
                 replaceExpressionWithNegatedExpression(project, rhs, exp);
-            }
-            else
-            {
+            } else{
                 replaceExpression(project, rhsText, exp);
             }
-        }
-        else if("true".equals(rhsText))
-        {
-            if(isEquals)
-            {
+        } else if("true".equals(rhsText)){
+            if(isEquals){
                 replaceExpression(project, lhsText, exp);
-            }
-            else
-            {
+            } else{
                 replaceExpressionWithNegatedExpression(project, lhs, exp);
             }
-        }
-        else
-        {
-            if(isEquals)
-            {
+        } else{
+            if(isEquals){
                 replaceExpressionWithNegatedExpression(project, lhs, exp);
-            }
-            else
-            {
+            } else{
                 replaceExpression(project, lhsText, exp);
             }
         }
-
     }
 }

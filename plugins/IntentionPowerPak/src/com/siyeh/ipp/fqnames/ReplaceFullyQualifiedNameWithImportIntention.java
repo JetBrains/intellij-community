@@ -9,28 +9,26 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
-
-    public String getText() {
+public class ReplaceFullyQualifiedNameWithImportIntention extends Intention{
+    public String getText(){
         return "Replace qualified name with import";
     }
 
-    public String getFamilyName() {
+    public String getFamilyName(){
         return "Replace Qualified Name With Import";
     }
 
-    public PsiElementPredicate getElementPredicate() {
+    public PsiElementPredicate getElementPredicate(){
         return new FullyQualifiedNamePredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         final PsiManager mgr = PsiManager.getInstance(project);
         PsiJavaCodeReferenceElement element =
                 (PsiJavaCodeReferenceElement) findMatchingElement(file, editor);
-        while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+        while(element.getParent() instanceof PsiJavaCodeReferenceElement){
             element = (PsiJavaCodeReferenceElement) element.getParent();
         }
 

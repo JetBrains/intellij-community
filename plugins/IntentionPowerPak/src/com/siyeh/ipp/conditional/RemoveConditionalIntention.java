@@ -11,40 +11,33 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 
-public class RemoveConditionalIntention extends Intention
-{
-
-    public String getText()
-    {
+public class RemoveConditionalIntention extends Intention{
+    public String getText(){
         return "Simplify ?:";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Remove Pointless Conditional";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new RemoveConditionalPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiConditionalExpression exp = (PsiConditionalExpression) findMatchingElement(file, editor);
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiConditionalExpression exp =
+                (PsiConditionalExpression) findMatchingElement(file, editor);
         final PsiExpression condition = exp.getCondition();
         final PsiExpression thenExpression = exp.getThenExpression();
         final String thenExpressionText = thenExpression.getText();
-        if("true".equals(thenExpressionText))
-        {
-        final String newExpression = condition.getText();
-        replaceExpression(project, newExpression, exp);
-        }
-        else
-        {
-            final String newExpression = BoolUtils.getNegatedExpressionText(condition);
+        if("true".equals(thenExpressionText)){
+            final String newExpression = condition.getText();
+            replaceExpression(project, newExpression, exp);
+        } else{
+            final String newExpression =
+                    BoolUtils.getNegatedExpressionText(condition);
             replaceExpression(project, newExpression, exp);
         }
     }
-
 }

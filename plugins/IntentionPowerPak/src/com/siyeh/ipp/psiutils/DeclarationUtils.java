@@ -4,150 +4,143 @@ import com.intellij.psi.*;
 
 import java.util.Set;
 
-public class DeclarationUtils
-{
-    private DeclarationUtils()
-    {
+public class DeclarationUtils{
+    private DeclarationUtils(){
         super();
     }
 
-    public static void calculateVariablesDeclared(PsiStatement statement, Set variablesDeclaredAtTopLevel,
-                                                  Set variablesDeclaredAtLowerLevels, boolean isTopLevel)
-    {
-        if(statement == null)
-        {
+    public static void calculateVariablesDeclared(PsiStatement statement,
+                                                  Set variablesDeclaredAtTopLevel,
+                                                  Set variablesDeclaredAtLowerLevels,
+                                                  boolean isTopLevel){
+        if(statement == null){
             return;
         }
         if(statement instanceof PsiBreakStatement ||
-                statement instanceof PsiExpressionStatement ||
-                statement instanceof PsiContinueStatement ||
-                statement instanceof PsiThrowStatement ||
-                statement instanceof PsiExpressionListStatement ||
-                statement instanceof PsiAssertStatement ||
-                statement instanceof PsiReturnStatement)
-        {
-
-        }
-        else if(statement instanceof PsiDeclarationStatement)
-        {
-            final PsiDeclarationStatement declStatement = (PsiDeclarationStatement) statement;
+                        statement instanceof PsiExpressionStatement ||
+                        statement instanceof PsiContinueStatement ||
+                        statement instanceof PsiThrowStatement ||
+                        statement instanceof PsiExpressionListStatement ||
+                        statement instanceof PsiAssertStatement ||
+                        statement instanceof PsiReturnStatement){
+        } else if(statement instanceof PsiDeclarationStatement){
+            final PsiDeclarationStatement declStatement =
+                    (PsiDeclarationStatement) statement;
             final PsiElement[] elements = declStatement.getDeclaredElements();
-            for(int i = 0; i < elements.length; i++)
-            {
+            for(int i = 0; i < elements.length; i++){
                 final PsiVariable var = (PsiVariable) elements[i];
                 final String varName = var.getName();
-                if(isTopLevel)
-                {
+                if(isTopLevel){
                     variablesDeclaredAtTopLevel.add(varName);
-                }
-                else
-                {
+                } else{
                     variablesDeclaredAtLowerLevels.add(varName);
                 }
             }
-        }
-        else if(statement instanceof PsiForStatement)
-        {
+        } else if(statement instanceof PsiForStatement){
             final PsiForStatement loopStatement = (PsiForStatement) statement;
-            final PsiStatement initialization = loopStatement.getInitialization();
-            calculateVariablesDeclared(initialization, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
+            final PsiStatement initialization =
+                    loopStatement.getInitialization();
+            calculateVariablesDeclared(initialization,
+                                       variablesDeclaredAtTopLevel,
+                                       variablesDeclaredAtLowerLevels, false);
             final PsiStatement update = loopStatement.getUpdate();
             calculateVariablesDeclared(update, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
+                                       variablesDeclaredAtLowerLevels, false);
             final PsiStatement body = loopStatement.getBody();
             calculateVariablesDeclared(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiWhileStatement)
-        {
-            final PsiWhileStatement loopStatement = (PsiWhileStatement) statement;
+                                       variablesDeclaredAtLowerLevels, false);
+        } else if(statement instanceof PsiWhileStatement){
+            final PsiWhileStatement loopStatement =
+                    (PsiWhileStatement) statement;
             final PsiStatement body = loopStatement.getBody();
             calculateVariablesDeclared(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiDoWhileStatement)
-        {
-            final PsiDoWhileStatement loopStatement = (PsiDoWhileStatement) statement;
+                                       variablesDeclaredAtLowerLevels, false);
+        } else if(statement instanceof PsiDoWhileStatement){
+            final PsiDoWhileStatement loopStatement =
+                    (PsiDoWhileStatement) statement;
             final PsiStatement body = loopStatement.getBody();
             calculateVariablesDeclared(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiSynchronizedStatement)
-        {
-            final PsiSynchronizedStatement syncStatement = (PsiSynchronizedStatement) statement;
+                                       variablesDeclaredAtLowerLevels, false);
+        } else if(statement instanceof PsiSynchronizedStatement){
+            final PsiSynchronizedStatement syncStatement =
+                    (PsiSynchronizedStatement) statement;
             final PsiCodeBlock body = syncStatement.getBody();
-            calculateVariablesDeclaredInCodeBlock(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiBlockStatement)
-        {
+            calculateVariablesDeclaredInCodeBlock(body,
+                                                  variablesDeclaredAtTopLevel,
+                                                  variablesDeclaredAtLowerLevels,
+                                                  false);
+        } else if(statement instanceof PsiBlockStatement){
             final PsiBlockStatement block = (PsiBlockStatement) statement;
             final PsiCodeBlock codeBlock = block.getCodeBlock();
-            calculateVariablesDeclaredInCodeBlock(codeBlock, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, isTopLevel);
-        }
-        else if(statement instanceof PsiLabeledStatement)
-        {
-            final PsiLabeledStatement labeledStatement = (PsiLabeledStatement) statement;
+            calculateVariablesDeclaredInCodeBlock(codeBlock,
+                                                  variablesDeclaredAtTopLevel,
+                                                  variablesDeclaredAtLowerLevels,
+                                                  isTopLevel);
+        } else if(statement instanceof PsiLabeledStatement){
+            final PsiLabeledStatement labeledStatement =
+                    (PsiLabeledStatement) statement;
             final PsiStatement body = labeledStatement.getStatement();
             calculateVariablesDeclared(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiIfStatement)
-        {
+                                       variablesDeclaredAtLowerLevels, false);
+        } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement) statement;
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             calculateVariablesDeclared(thenBranch, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
+                                       variablesDeclaredAtLowerLevels, false);
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             calculateVariablesDeclared(elseBranch, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
-        }
-        else if(statement instanceof PsiTryStatement)
-        {
+                                       variablesDeclaredAtLowerLevels, false);
+        } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement) statement;
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            calculateVariablesDeclaredInCodeBlock(tryBlock, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
+            calculateVariablesDeclaredInCodeBlock(tryBlock,
+                                                  variablesDeclaredAtTopLevel,
+                                                  variablesDeclaredAtLowerLevels,
+                                                  false);
 
-            calculateVariablesDeclaredInCodeBlock(tryBlock, variablesDeclaredAtTopLevel, variablesDeclaredAtLowerLevels, false);
+            calculateVariablesDeclaredInCodeBlock(tryBlock,
+                                                  variablesDeclaredAtTopLevel,
+                                                  variablesDeclaredAtLowerLevels,
+                                                  false);
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock != null)
-            {
-                calculateVariablesDeclaredInCodeBlock(finallyBlock, variablesDeclaredAtTopLevel, variablesDeclaredAtLowerLevels,
-                        false);
+            if(finallyBlock != null){
+                calculateVariablesDeclaredInCodeBlock(finallyBlock,
+                                                      variablesDeclaredAtTopLevel,
+                                                      variablesDeclaredAtLowerLevels,
+                                                      false);
             }
 
             final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-            for(int i = 0; i < catchBlocks.length; i++)
-            {
-                calculateVariablesDeclaredInCodeBlock(catchBlocks[i], variablesDeclaredAtTopLevel, variablesDeclaredAtLowerLevels,
-                        false);
+            for(int i = 0; i < catchBlocks.length; i++){
+                calculateVariablesDeclaredInCodeBlock(catchBlocks[i],
+                                                      variablesDeclaredAtTopLevel,
+                                                      variablesDeclaredAtLowerLevels,
+                                                      false);
             }
-        }
-        else if(statement instanceof PsiSwitchStatement)
-        {
-            final PsiSwitchStatement switchStatement = (PsiSwitchStatement) statement;
+        } else if(statement instanceof PsiSwitchStatement){
+            final PsiSwitchStatement switchStatement =
+                    (PsiSwitchStatement) statement;
             final PsiCodeBlock body = switchStatement.getBody();
-            calculateVariablesDeclaredInCodeBlock(body, variablesDeclaredAtTopLevel,
-                    variablesDeclaredAtLowerLevels, false);
+            calculateVariablesDeclaredInCodeBlock(body,
+                                                  variablesDeclaredAtTopLevel,
+                                                  variablesDeclaredAtLowerLevels,
+                                                  false);
         }
-
     }
 
-    private static void calculateVariablesDeclaredInCodeBlock(PsiCodeBlock block, Set variablesDeclaredAtTopLevel,
-                                                   Set variablesDeclaredAtLowerLevels, boolean isTopLevel)
-    {
-        if(block == null)
-        {
+    private static void calculateVariablesDeclaredInCodeBlock(PsiCodeBlock block,
+                                                              Set variablesDeclaredAtTopLevel,
+                                                              Set variablesDeclaredAtLowerLevels,
+                                                              boolean isTopLevel){
+        if(block == null){
             return;
         }
         final PsiStatement[] statements = block.getStatements();
-        for(int i = 0; i < statements.length; i++)
-        {
-            calculateVariablesDeclared(statements[i], variablesDeclaredAtTopLevel, variablesDeclaredAtLowerLevels,
-                    isTopLevel);
+        for(int i = 0; i < statements.length; i++){
+            calculateVariablesDeclared(statements[i],
+                                       variablesDeclaredAtTopLevel,
+                                       variablesDeclaredAtLowerLevels,
+                                       isTopLevel);
         }
     }
 }

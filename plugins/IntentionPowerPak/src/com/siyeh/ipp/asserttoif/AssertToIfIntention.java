@@ -10,34 +10,38 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 
-public class AssertToIfIntention extends Intention {
-
-    protected PsiElementPredicate getElementPredicate() {
+public class AssertToIfIntention extends Intention{
+    protected PsiElementPredicate getElementPredicate(){
         return new AssertStatementPredicate();
     }
 
-    public String getText() {
+    public String getText(){
         return "Replace assert with if statement";
     }
 
-    public String getFamilyName() {
+    public String getFamilyName(){
         return "Replace Assert With If Statement";
     }
 
     public void invoke(Project project, Editor editor, PsiFile file)
-            throws IncorrectOperationException {
-        final PsiAssertStatement assertStatement = (PsiAssertStatement) findMatchingElement(file, editor);
+            throws IncorrectOperationException{
+        final PsiAssertStatement assertStatement =
+                (PsiAssertStatement) findMatchingElement(file, editor);
         final PsiExpression condition = assertStatement.getAssertCondition();
-        final PsiExpression description = assertStatement.getAssertDescription();
+        final PsiExpression description =
+                assertStatement.getAssertDescription();
 
         final String newStatement;
-        final String negatedConditionString = BoolUtils.getNegatedExpressionText(condition);
-        if (description == null) {
-            newStatement = "if(" + negatedConditionString + "){ throw new IllegalArgumentException();}";
-        } else {
-            newStatement = "if(" + negatedConditionString + "){ throw new IllegalArgumentException(" + description.getText() + ");}";
+        final String negatedConditionString =
+                BoolUtils.getNegatedExpressionText(condition);
+        if(description == null){
+            newStatement = "if(" + negatedConditionString +
+                    "){ throw new IllegalArgumentException();}";
+        } else{
+            newStatement = "if(" + negatedConditionString +
+                    "){ throw new IllegalArgumentException(" +
+                    description.getText() + ");}";
         }
         replaceStatement(project, newStatement, assertStatement);
     }
-
 }

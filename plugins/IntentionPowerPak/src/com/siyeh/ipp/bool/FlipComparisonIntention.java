@@ -8,48 +8,42 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 
-public class FlipComparisonIntention extends MutablyNamedIntention
-{
-
-    public String getTextForElement(PsiElement element)
-    {
+public class FlipComparisonIntention extends MutablyNamedIntention{
+    public String getTextForElement(PsiElement element){
         String operatorText = "";
         String flippedOperatorText = "";
         final PsiBinaryExpression exp = (PsiBinaryExpression) element;
-        if(exp != null)
-        {
+        if(exp != null){
             final PsiJavaToken sign = exp.getOperationSign();
             operatorText = sign.getText();
             flippedOperatorText = ComparisonUtils.getFlippedComparison(operatorText);
         }
-        if(operatorText.equals(flippedOperatorText))
-        {
+        if(operatorText.equals(flippedOperatorText)){
             return "Flip " + operatorText;
-        }
-        else
-        {
+        } else{
             return "Flip " + operatorText + " to " + flippedOperatorText;
         }
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Flip Comparison";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new ComparisonPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiBinaryExpression exp = (PsiBinaryExpression) findMatchingElement(file, editor);
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiBinaryExpression exp =
+                (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         final PsiJavaToken sign = exp.getOperationSign();
         final String operand = sign.getText();
-        final String expString = rhs.getText() + ComparisonUtils.getFlippedComparison(operand) + lhs.getText();
+        final String expString =
+        rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
+                lhs.getText();
         replaceExpression(project, expString, exp);
     }
 }

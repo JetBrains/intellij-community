@@ -4,19 +4,15 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class ConvertIntegerToHexPredicate implements PsiElementPredicate
-{
-    public boolean satisfiedBy(PsiElement element)
-    {
-        if(!(element instanceof PsiLiteralExpression))
-        {
+class ConvertIntegerToHexPredicate implements PsiElementPredicate{
+    public boolean satisfiedBy(PsiElement element){
+        if(!(element instanceof PsiLiteralExpression)){
             return false;
         }
         final PsiLiteralExpression expression = (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
         if(!(type.equals(PsiType.INT) ||
-                type.equals(PsiType.LONG)))
-        {
+                        type.equals(PsiType.LONG))){
             return false;
         }
         final String text = expression.getText();

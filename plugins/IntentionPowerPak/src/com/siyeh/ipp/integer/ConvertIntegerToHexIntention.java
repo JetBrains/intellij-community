@@ -11,49 +11,39 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.math.BigInteger;
 
-public class ConvertIntegerToHexIntention extends Intention
-{
-
-    public String getText()
-    {
+public class ConvertIntegerToHexIntention extends Intention{
+    public String getText(){
         return "Convert to hex";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Convert To Hexadecimal";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new ConvertIntegerToHexPredicate();
     }
 
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiLiteralExpression exp = (PsiLiteralExpression) findMatchingElement(file, editor);
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiLiteralExpression exp =
+                (PsiLiteralExpression) findMatchingElement(file, editor);
         String textString = exp.getText();
         final int textLength = textString.length();
         final char lastChar = textString.charAt(textLength - 1);
         final boolean isLong = lastChar == 'l' || lastChar == 'L';
-        if(isLong)
-        {
+        if(isLong){
             textString = textString.substring(0, textLength - 1);
         }
 
         final BigInteger val;
-        if(textString.charAt(0) == '0')
-        {
+        if(textString.charAt(0) == '0'){
             val = new BigInteger(textString, 8);
-        }
-        else
-        {
+        } else{
             val = new BigInteger(textString, 10);
         }
         String hexString = "0x" + val.toString(16);
-        if(isLong)
-        {
+        if(isLong){
             hexString += 'L';
         }
         replaceExpression(project, hexString, exp);

@@ -8,37 +8,37 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntention
-{
-
-    public String getTextForElement(PsiElement element)
-    {
+public class ReplaceWithOperatorAssignmentIntention
+        extends MutablyNamedIntention{
+    public String getTextForElement(PsiElement element){
         final PsiAssignmentExpression exp = (PsiAssignmentExpression) element;
-        final PsiBinaryExpression rhs = (PsiBinaryExpression) exp.getRExpression();
+        final PsiBinaryExpression rhs =
+                (PsiBinaryExpression) exp.getRExpression();
         final PsiJavaToken sign = rhs.getOperationSign();
         final String operator = sign.getText();
         return "Replace = with " + operator + '=';
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Replace Assignment With Operator Assignment";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new AssignmentExpressionReplaceableWithOperatorAssigment();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiAssignmentExpression exp = (PsiAssignmentExpression) findMatchingElement(file, editor);
-        final PsiBinaryExpression rhs = (PsiBinaryExpression) exp.getRExpression();
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiAssignmentExpression exp =
+                (PsiAssignmentExpression) findMatchingElement(file, editor);
+        final PsiBinaryExpression rhs =
+                (PsiBinaryExpression) exp.getRExpression();
         final PsiExpression lhs = exp.getLExpression();
         final PsiJavaToken sign = rhs.getOperationSign();
         final String operand = sign.getText();
         final PsiExpression rhsrhs = rhs.getROperand();
-        final String expString = lhs.getText() + operand + '=' + rhsrhs.getText();
+        final String expString =
+        lhs.getText() + operand + '=' + rhsrhs.getText();
         replaceExpression(project, expString, exp);
     }
 }

@@ -10,7 +10,8 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiParenthesizedExpression)){
             return false;
         }
-        final PsiParenthesizedExpression expression = (PsiParenthesizedExpression) element;
+        final PsiParenthesizedExpression expression =
+                (PsiParenthesizedExpression) element;
         final PsiElement parent = expression.getParent();
         if(!(parent instanceof PsiExpression)){
             return true;
@@ -28,13 +29,16 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
         } else if(parentPrecendence == childPrecendence){
 
             if(parent instanceof PsiBinaryExpression &&
-                    body instanceof PsiBinaryExpression){
-                final PsiJavaToken parentSign = ((PsiBinaryExpression) parent).getOperationSign();
+                            body instanceof PsiBinaryExpression){
+                final PsiJavaToken parentSign =
+                        ((PsiBinaryExpression) parent).getOperationSign();
                 final IElementType parentOperator = parentSign.getTokenType();
-                final PsiJavaToken childSign = ((PsiBinaryExpression) body).getOperationSign();
+                final PsiJavaToken childSign =
+                        ((PsiBinaryExpression) body).getOperationSign();
                 final IElementType childOperator = childSign.getTokenType();
 
-                final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) parent;
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) parent;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 return lhs.equals(expression) &&
                         parentOperator == childOperator;
@@ -44,6 +48,5 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
         } else{
             return false;
         }
-
     }
 }

@@ -8,70 +8,65 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedIntention
-{
-
-    protected String getTextForElement(PsiElement element)
-    {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+public class ReplaceAssertLiteralWithAssertEqualsIntention
+        extends MutablyNamedIntention{
+    protected String getTextForElement(PsiElement element){
+        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
-        final PsiReferenceExpression methodExpression = call.getMethodExpression();
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
-        final String literal = methodName.substring("assert".length()).toLowerCase();
+        final String literal = methodName.substring("assert".length())
+                        .toLowerCase();
 
         final String messageText;
-        if(args.length == 1)
-        {
+        if(args.length == 1){
             messageText = "";
-        }
-        else
-        {
+        } else{
             messageText = "..., ";
         }
-        return "Replace " + methodName + "() with assertEquals(" + messageText + literal + ", ...)";
+        return "Replace " + methodName + "() with assertEquals(" + messageText +
+                literal + ", ...)";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Replace assertTrue, assertFalse, or assertNull with assertEquals";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new AssertLiteralPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression) findMatchingElement(file, editor);
-        final PsiReferenceExpression methodExpression = call.getMethodExpression();
-        final PsiExpression qualifierExp = methodExpression.getQualifierExpression();
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
+        final PsiExpression qualifierExp =
+                methodExpression.getQualifierExpression();
         final String methodName = methodExpression.getReferenceName();
-        final String literal = methodName.substring("assert".length()).toLowerCase();
+        final String literal = methodName.substring("assert".length())
+                        .toLowerCase();
 
         final String qualifier;
-        if(qualifierExp == null)
-        {
+        if(qualifierExp == null){
             qualifier = "";
-        }
-        else
-        {
+        } else{
             qualifier = qualifierExp.getText() + '.';
         }
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
 
         final String callString;
-        if(args.length == 1)
-        {
-            callString = qualifier + "assertEquals(" + literal + ", " + args[0].getText() + ')';
-        }
-        else
-        {
+        if(args.length == 1){
+            callString = qualifier + "assertEquals(" + literal + ", " +
+                    args[0].getText() + ')';
+        } else{
             callString =
-                    qualifier + "assertEquals(" + args[0].getText() + ", " + literal + ", " + args[1].getText() +
+            qualifier + "assertEquals(" + args[0].getText() + ", " + literal +
+                    ", " + args[1].getText() +
                     ')';
         }
         replaceExpression(project, callString, call);

@@ -7,19 +7,15 @@ import com.intellij.psi.PsiVariable;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class SimplifyVariablePredicate implements PsiElementPredicate
-{
-    public boolean satisfiedBy(PsiElement element)
-    {
-        if(!(element instanceof PsiVariable))
-        {
+class SimplifyVariablePredicate implements PsiElementPredicate{
+    public boolean satisfiedBy(PsiElement element){
+        if(!(element instanceof PsiVariable)){
             return false;
         }
 
         final PsiVariable var = (PsiVariable) element;
         final PsiTypeElement typeElement = var.getTypeElement();
-        if (typeElement == null)
-        {
+        if(typeElement == null){
             return false; // Could be true for enum constants.
         }
 

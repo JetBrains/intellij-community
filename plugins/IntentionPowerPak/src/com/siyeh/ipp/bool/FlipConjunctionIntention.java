@@ -9,35 +9,30 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class FlipConjunctionIntention extends MutablyNamedIntention
-{
-
-    protected String getTextForElement(PsiElement element)
-    {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) element;
+public class FlipConjunctionIntention extends MutablyNamedIntention{
+    protected String getTextForElement(PsiElement element){
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) element;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         return "Flip " + sign.getText();
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Flip Conjunction Operands";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new ConjunctionPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         PsiExpression exp = (PsiExpression) findMatchingElement(file, editor);
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) exp;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType conjunctionType = sign.getTokenType();
         PsiElement parent = exp.getParent();
-        while(isConjunctionExpression(parent, conjunctionType))
-        {
+        while(isConjunctionExpression(parent, conjunctionType)){
             exp = (PsiExpression) parent;
             parent = exp.getParent();
         }
@@ -45,36 +40,30 @@ public class FlipConjunctionIntention extends MutablyNamedIntention
         replaceExpression(project, newExpression, exp);
     }
 
-    private String flipExpression(PsiExpression exp, IElementType conjunctionType)
-    {
-        if(isConjunctionExpression(exp, conjunctionType))
-        {
+    private String flipExpression(PsiExpression exp,
+                                  IElementType conjunctionType){
+        if(isConjunctionExpression(exp, conjunctionType)){
             final PsiBinaryExpression andExpression = (PsiBinaryExpression) exp;
 
             final PsiExpression rhs = andExpression.getROperand();
             final PsiExpression lhs = andExpression.getLOperand();
             final String conjunctionSign;
-            if(conjunctionType.equals(JavaTokenType.ANDAND))
-            {
+            if(conjunctionType.equals(JavaTokenType.ANDAND)){
                 conjunctionSign = "&&";
-            }
-            else
-            {
+            } else{
                 conjunctionSign = "||";
-
             }
-            return flipExpression(rhs, conjunctionType) + ' ' + conjunctionSign + ' ' + flipExpression(lhs, conjunctionType);
-        }
-        else
-        {
+            return flipExpression(rhs, conjunctionType) + ' ' +
+                    conjunctionSign + ' ' +
+                    flipExpression(lhs, conjunctionType);
+        } else{
             return exp.getText();
         }
     }
 
-    private static boolean isConjunctionExpression(PsiElement exp, IElementType conjunctionType)
-    {
-        if(!(exp instanceof PsiBinaryExpression))
-        {
+    private static boolean isConjunctionExpression(PsiElement exp,
+                                                   IElementType conjunctionType){
+        if(!(exp instanceof PsiBinaryExpression)){
             return false;
         }
         final PsiBinaryExpression binExp = (PsiBinaryExpression) exp;

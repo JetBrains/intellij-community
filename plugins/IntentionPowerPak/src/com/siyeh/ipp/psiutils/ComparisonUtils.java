@@ -4,20 +4,16 @@ import com.intellij.psi.*;
 
 import java.util.*;
 
-public class ComparisonUtils
-{
-
+public class ComparisonUtils{
     private static final Set s_comparisonStrings = new HashSet(6);
     private static final Map s_swappedComparisons = new HashMap(6);
     private static final Map s_invertedComparisons = new HashMap(6);
 
-    private ComparisonUtils()
-    {
+    private ComparisonUtils(){
         super();
     }
 
-    static
-    {
+    static{
         s_comparisonStrings.add("==");
         s_comparisonStrings.add("!=");
         s_comparisonStrings.add(">");
@@ -40,10 +36,8 @@ public class ComparisonUtils
         s_invertedComparisons.put("<=", ">");
     }
 
-    public static boolean isComparison(PsiExpression exp)
-    {
-        if(!(exp instanceof PsiBinaryExpression))
-        {
+    public static boolean isComparison(PsiExpression exp){
+        if(!(exp instanceof PsiBinaryExpression)){
             return false;
         }
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) exp;
@@ -52,14 +46,11 @@ public class ComparisonUtils
         return s_comparisonStrings.contains(operation);
     }
 
-    public static String getFlippedComparison(String str)
-    {
+    public static String getFlippedComparison(String str){
         return (String) s_swappedComparisons.get(str);
     }
 
-    public static String getNegatedComparison(String str)
-    {
+    public static String getNegatedComparison(String str){
         return (String) s_invertedComparisons.get(str);
     }
-
 }

@@ -10,28 +10,25 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.util.*;
 
-public class DetailExceptionsIntention extends Intention
-{
-
-    public String getText()
-    {
+public class DetailExceptionsIntention extends Intention{
+    public String getText(){
         return "Detail exceptions";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Detail Exceptions";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new DetailExceptionsPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiJavaToken token = (PsiJavaToken) findMatchingElement(file, editor);
-        final PsiTryStatement tryStatement = (PsiTryStatement) token.getParent();
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiJavaToken token =
+                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiTryStatement tryStatement =
+                (PsiTryStatement) token.getParent();
 
         final String text = tryStatement.getText();
         final int length = text.length();
@@ -45,28 +42,32 @@ public class DetailExceptionsIntention extends Intention
 
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
-        ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown, factory);
+        ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
+                                                             exceptionsThrown,
+                                                             factory);
 
-        final HeirarchicalTypeComparator comparator = new HeirarchicalTypeComparator();
+        final HeirarchicalTypeComparator comparator =
+        new HeirarchicalTypeComparator();
         PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-        for (int i = 0; i < catchSections.length; i++) {
+        for(int i = 0; i < catchSections.length; i++){
             final PsiParameter param = catchSections[i].getParameter();
             final PsiCodeBlock block = catchSections[i].getCatchBlock();
-            if (param == null || block == null) continue;
+            if(param == null || block == null){
+            continue;
+            }
 
             final PsiType caughtType = param.getType();
             final List exceptionsToExpand = new ArrayList(10);
-            for(Iterator iterator = exceptionsThrown.iterator(); iterator.hasNext();)
-            {
+            for(Iterator iterator = exceptionsThrown.iterator();
+                iterator.hasNext();){
                 final PsiType thrownType = (PsiType) iterator.next();
-                if(caughtType.isAssignableFrom(thrownType))
-                {
+                if(caughtType.isAssignableFrom(thrownType)){
                     exceptionsToExpand.add(thrownType);
                 }
             }
             Collections.sort(exceptionsToExpand, comparator);
-            for(Iterator iterator = exceptionsToExpand.iterator(); iterator.hasNext();)
-            {
+            for(Iterator iterator = exceptionsToExpand.iterator();
+                iterator.hasNext();){
                 final PsiType thrownType = (PsiType) iterator.next();
                 newTryStatement.append("catch(");
                 final String exceptionType = thrownType.getPresentableText();
@@ -80,8 +81,7 @@ public class DetailExceptionsIntention extends Intention
             }
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-        if(finallyBlock != null)
-        {
+        if(finallyBlock != null){
             newTryStatement.append("finally");
             final String finallyBlockText = finallyBlock.getText();
             newTryStatement.append(finallyBlockText);

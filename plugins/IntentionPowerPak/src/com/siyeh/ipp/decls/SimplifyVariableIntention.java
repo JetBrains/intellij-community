@@ -9,26 +9,21 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class SimplifyVariableIntention extends Intention
-{
-
-    public String getText()
-    {
+public class SimplifyVariableIntention extends Intention{
+    public String getText(){
         return "Replace with Java-style array declaration";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Replace With Java Style Array Declaration";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new SimplifyVariablePredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         final PsiVariable var = (PsiVariable) findMatchingElement(file, editor);
         var.normalizeDeclaration();
     }

@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 
 import java.util.*;
 
-class SwitchStatementBranch
-{
+class SwitchStatementBranch{
     private final Set m_pendingVariableDeclarations = new HashSet(5);
     private final List m_labels = new ArrayList(2);
     private final List m_bodyElements = new ArrayList(5);
@@ -13,75 +12,60 @@ class SwitchStatementBranch
     private boolean m_default = false;
     private boolean m_hasStatements = false;
 
-    SwitchStatementBranch()
-    {
+    SwitchStatementBranch(){
         super();
     }
 
-    public void addLabel(String labelString)
-    {
+    public void addLabel(String labelString){
         m_labels.add(labelString);
     }
 
-    public void addStatement(PsiElement statement)
-    {
+    public void addStatement(PsiElement statement){
         m_hasStatements = true;
         addElement(statement);
     }
 
-    public void addComment(PsiElement comment)
-    {
+    public void addComment(PsiElement comment){
         addElement(comment);
     }
 
-    private void addElement(PsiElement element)
-    {
+    private void addElement(PsiElement element){
         m_bodyElements.addAll(m_pendingWhiteSpace);
         m_pendingWhiteSpace.clear();
         m_bodyElements.add(element);
     }
 
-    public void addWhiteSpace(PsiElement statement)
-    {
-        if(m_bodyElements.size() > 0)
-        {
+    public void addWhiteSpace(PsiElement statement){
+        if(m_bodyElements.size() > 0){
             m_pendingWhiteSpace.add(statement);
         }
     }
 
-    public List getLabels()
-    {
-        return Collections.unmodifiableList(m_labels) ;
+    public List getLabels(){
+        return Collections.unmodifiableList(m_labels);
     }
 
-    public List getBodyElements()
-    {
-        return Collections.unmodifiableList(m_bodyElements) ;
+    public List getBodyElements(){
+        return Collections.unmodifiableList(m_bodyElements);
     }
 
-    public boolean isDefault()
-    {
+    public boolean isDefault(){
         return m_default;
     }
 
-    public void setDefault()
-    {
+    public void setDefault(){
         m_default = true;
     }
 
-    public boolean hasStatements()
-    {
+    public boolean hasStatements(){
         return m_hasStatements;
     }
 
-    public void addPendingVariableDeclarations(Set vars)
-    {
+    public void addPendingVariableDeclarations(Set vars){
         m_pendingVariableDeclarations.addAll(vars);
     }
 
-    public Set getPendingVariableDeclarations()
-    {
+    public Set getPendingVariableDeclarations(){
         return Collections.unmodifiableSet(m_pendingVariableDeclarations);
     }
-
 }

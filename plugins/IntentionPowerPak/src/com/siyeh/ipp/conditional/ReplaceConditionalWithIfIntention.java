@@ -9,29 +9,32 @@ import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ReplaceConditionalWithIfIntention extends Intention {
-
-    public String getText() {
+public class ReplaceConditionalWithIfIntention extends Intention{
+    public String getText(){
         return "Replace ?: with if-else";
     }
 
-    public String getFamilyName() {
+    public String getFamilyName(){
         return "Replace Conditional With If Else";
     }
 
-    public PsiElementPredicate getElementPredicate() {
+    public PsiElementPredicate getElementPredicate(){
         return new ReplaceConditionalWithIfPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
         final PsiElement element = findMatchingElement(file, editor);
-        if (element instanceof PsiReturnStatement) {
-            final PsiReturnStatement returnStatement = (PsiReturnStatement) element;
+        if(element instanceof PsiReturnStatement){
+            final PsiReturnStatement returnStatement =
+                    (PsiReturnStatement) element;
             final PsiConditionalExpression returnValue =
                     (PsiConditionalExpression) returnStatement.getReturnValue();
             final PsiExpression condition = returnValue.getCondition();
-            final PsiExpression thenExpression = returnValue.getThenExpression();
-            final PsiExpression elseExpression = returnValue.getElseExpression();
+            final PsiExpression thenExpression =
+                    returnValue.getThenExpression();
+            final PsiExpression elseExpression =
+                    returnValue.getElseExpression();
             final String ifStatementString = "if(" + condition.getText() + ')' +
                     '{' +
                     "return " + thenExpression.getText() + ';' +
@@ -41,18 +44,20 @@ public class ReplaceConditionalWithIfIntention extends Intention {
                     "return " + elseExpression.getText() + ';' +
                     '}';
             replaceStatement(project, ifStatementString, returnStatement);
-        }
-        else if (element instanceof PsiDeclarationStatement)
-        {
+        } else if(element instanceof PsiDeclarationStatement){
             final PsiManager mgr = PsiManager.getInstance(project);
             final PsiElementFactory factory = mgr.getElementFactory();
-            final PsiDeclarationStatement statement = (PsiDeclarationStatement) findMatchingElement(file, editor);
-            final PsiVariable var = (PsiVariable) statement.getDeclaredElements()[0];
-            final PsiConditionalExpression rhs = (PsiConditionalExpression) var.getInitializer();
+            final PsiDeclarationStatement statement =
+                    (PsiDeclarationStatement) findMatchingElement(file, editor);
+            final PsiVariable var =
+                    (PsiVariable) statement.getDeclaredElements()[0];
+            final PsiConditionalExpression rhs =
+                    (PsiConditionalExpression) var.getInitializer();
             final String lhsText = var.getName();
             final String str = statement.getText();
             final int equalsIndex = str.indexOf((int) '=');
-            final String declarationString = str.substring(0, equalsIndex) + ';';
+            final String declarationString =
+            str.substring(0, equalsIndex) + ';';
             final PsiExpression condition = rhs.getCondition();
             final PsiExpression thenExpression = rhs.getThenExpression();
             final PsiExpression elseExpression = rhs.getElseExpression();
@@ -64,20 +69,23 @@ public class ReplaceConditionalWithIfIntention extends Intention {
                     '{' +
                     lhsText + '=' + elseExpression.getText() + ';' +
                     '}';
-            final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, null);
-            final PsiStatement ifStatement = factory.createStatementFromText(ifStatementString, null);
+            final PsiStatement declarationStatement =
+                    factory.createStatementFromText(declarationString, null);
+            final PsiStatement ifStatement =
+                    factory.createStatementFromText(ifStatementString, null);
             PsiElement ifElement = statement.replace(ifStatement);
             final CodeStyleManager styleManager = mgr.getCodeStyleManager();
             ifElement = styleManager.reformat(ifElement);
             final PsiElement parent = ifElement.getParent();
-            final PsiElement declarationElement = parent.addBefore(declarationStatement, ifElement);
+            final PsiElement declarationElement =
+                    parent.addBefore(declarationStatement, ifElement);
             styleManager.reformat(declarationElement);
             styleManager.reformat(parent);
-        }
-        else
-        {
-            final PsiExpressionStatement statement = (PsiExpressionStatement) findMatchingElement(file, editor);
-            final PsiAssignmentExpression assigmentExpression = (PsiAssignmentExpression) statement.getExpression();
+        } else{
+            final PsiExpressionStatement statement =
+                    (PsiExpressionStatement) findMatchingElement(file, editor);
+            final PsiAssignmentExpression assigmentExpression =
+                    (PsiAssignmentExpression) statement.getExpression();
             final PsiConditionalExpression rhs =
                     (PsiConditionalExpression) assigmentExpression.getRExpression();
             final PsiExpression lhs = assigmentExpression.getLExpression();

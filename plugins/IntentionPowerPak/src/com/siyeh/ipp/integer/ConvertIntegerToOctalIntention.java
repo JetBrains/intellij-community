@@ -11,49 +11,39 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.math.BigInteger;
 
-public class ConvertIntegerToOctalIntention extends Intention
-{
-
-    public String getText()
-    {
+public class ConvertIntegerToOctalIntention extends Intention{
+    public String getText(){
         return "Convert to octal";
     }
 
-    public String getFamilyName()
-    {
+    public String getFamilyName(){
         return "Convert To Octal";
     }
 
-    public PsiElementPredicate getElementPredicate()
-    {
+    public PsiElementPredicate getElementPredicate(){
         return new ConvertIntegerToOctalPredicate();
     }
 
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException
-    {
-        final PsiLiteralExpression exp = (PsiLiteralExpression) findMatchingElement(file, editor);
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        final PsiLiteralExpression exp =
+                (PsiLiteralExpression) findMatchingElement(file, editor);
         String textString = exp.getText();
         final int textLength = textString.length();
         final char lastChar = textString.charAt(textLength - 1);
         final boolean isLong = lastChar == 'l' || lastChar == 'L';
-        if(isLong)
-        {
+        if(isLong){
             textString = textString.substring(0, textLength - 1);
         }
         final BigInteger val;
-        if(textString.startsWith("0x"))
-        {
+        if(textString.startsWith("0x")){
             final String rawTextString = textString.substring(2);
             val = new BigInteger(rawTextString, 16);
-        }
-        else
-        {
+        } else{
             val = new BigInteger(textString, 10);
         }
         String octString = '0' + val.toString(8);
-        if(isLong)
-        {
+        if(isLong){
             octString += 'L';
         }
         replaceExpression(project, octString, exp);

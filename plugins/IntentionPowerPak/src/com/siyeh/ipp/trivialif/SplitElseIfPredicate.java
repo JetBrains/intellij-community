@@ -7,39 +7,31 @@ import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class SplitElseIfPredicate implements PsiElementPredicate
-{
-    public boolean satisfiedBy(PsiElement element)
-    {
-        if(!(element instanceof PsiJavaToken))
-        {
+class SplitElseIfPredicate implements PsiElementPredicate{
+    public boolean satisfiedBy(PsiElement element){
+        if(!(element instanceof PsiJavaToken)){
             return false;
         }
         final String text = element.getText();
-        if(!"else".equals(text))
-        {
+        if(!"else".equals(text)){
             return false;
         }
         final PsiJavaToken token = (PsiJavaToken) element;
 
         final PsiElement parent = token.getParent();
-        if(!(parent instanceof PsiIfStatement))
-        {
+        if(!(parent instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
-        if(thenBranch == null)
-        {
+        if(thenBranch == null){
             return false;
         }
-        if(elseBranch == null)
-        {
+        if(elseBranch == null){
             return false;
         }
-        if(!(elseBranch instanceof PsiIfStatement))
-        {
+        if(!(elseBranch instanceof PsiIfStatement)){
             return false;
         }
 

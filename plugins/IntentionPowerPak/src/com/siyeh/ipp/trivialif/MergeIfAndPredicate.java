@@ -4,19 +4,15 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 
-class MergeIfAndPredicate implements PsiElementPredicate
-{
-    public boolean satisfiedBy(PsiElement element)
-    {
-        if(!(element instanceof PsiJavaToken))
-        {
+class MergeIfAndPredicate implements PsiElementPredicate{
+    public boolean satisfiedBy(PsiElement element){
+        if(!(element instanceof PsiJavaToken)){
             return false;
         }
         final PsiJavaToken token = (PsiJavaToken) element;
 
         final PsiElement parent = token.getParent();
-        if(!(parent instanceof PsiIfStatement))
-        {
+        if(!(parent instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
@@ -24,16 +20,13 @@ class MergeIfAndPredicate implements PsiElementPredicate
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(thenBranch == null)
-        {
+        if(thenBranch == null){
             return false;
         }
-        if(elseBranch != null)
-        {
+        if(elseBranch != null){
             return false;
         }
-        if(!(thenBranch instanceof PsiIfStatement))
-        {
+        if(!(thenBranch instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement childIfStatement = (PsiIfStatement) thenBranch;
