@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -15,14 +16,20 @@ import java.awt.event.ActionListener;
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> {
   private final PsiManager myManager;
+  private final boolean myToAcceptClasses;
 
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final String text, final PsiManager manager) {
-    super(new EditorTextField(createDocument(text, manager), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
+  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
+                                         final String text,
+                                         final PsiManager manager,
+                                         boolean toAcceptClasses) {
+    super(new EditorTextField(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
     myManager = manager;
+    myToAcceptClasses = toAcceptClasses;
   }
 
-  private static Document createDocument(final String text, PsiManager manager) {
-    final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(text, null, true);
+  private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
+    PsiPackage defaultPackage = manager.findPackage("");
+    final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setEverythingAcessible(true);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
@@ -36,7 +43,7 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
   }
 
   public void setText(final String text){
-    getEditorTextField().setDocument(createDocument(text, myManager));
+    getEditorTextField().setDocument(createDocument(text, myManager, myToAcceptClasses));
   }
 
   public void setTextFieldPreferredWidth(final int charCount) {

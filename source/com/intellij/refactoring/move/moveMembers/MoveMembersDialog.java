@@ -100,7 +100,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
     myMemberInfos = memberList.toArray(new MemberInfo[memberList.size()]);
     String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
-    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject));
+    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject), true);
 
     init();
   }

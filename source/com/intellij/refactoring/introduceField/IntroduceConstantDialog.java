@@ -201,7 +201,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     panel.add(nameInputPanel, gbConstraints);
 
     {
-      myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject));
+      myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
       JPanel _panel = new JPanel(new BorderLayout());
       JLabel label = new JLabel("To (fully qualified name):");
       label.setLabelFor(myTfTargetClassName);

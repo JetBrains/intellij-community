@@ -111,7 +111,8 @@ public interface PsiElementFactory {
 
   PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
                                                                PsiElement context,
-                                                               boolean isPhysical);
+                                                               boolean isPhysical,
+                                                               boolean isClassesAccepted);
 
   PsiTypeCodeFragment createTypeCodeFragment(String text,
                                                 PsiElement context,

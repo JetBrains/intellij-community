@@ -355,9 +355,10 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
                                                                       PsiElement context,
-                                                                      boolean isPhysical) {
+                                                                      boolean isPhysical,
+                                                                      boolean isClassesAccepted) {
     final PsiJavaCodeReferenceCodeFragmentImpl result =
-      new PsiJavaCodeReferenceCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text);
+      new PsiJavaCodeReferenceCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, isClassesAccepted);
     result.setContext(context);
     return result;
   }

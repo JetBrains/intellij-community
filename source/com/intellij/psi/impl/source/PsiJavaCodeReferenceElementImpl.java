@@ -139,7 +139,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
     else if (i == CODE_FRAGMENT) {
-      return CLASS_OR_PACKAGE_NAME_KIND;
+      PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
+      return fragment.isClassesAccepted() ? CLASS_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
     else {
       LOG.error("Unknown parent for java code reference:" + getTreeParent());
@@ -749,8 +750,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
     if (!smartCompletion) {
-      filter.addFilter(new ClassFilter(PsiClass.class));
-      filter.addFilter(new ClassFilter(PsiPackage.class));
+      /*filter.addFilter(new ClassFilter(PsiClass.class));
+      filter.addFilter(new ClassFilter(PsiPackage.class));*/
       filter.addFilter(new NotFilter(new ConstructorFilter()));
       filter.addFilter(new ClassFilter(PsiVariable.class));
     }

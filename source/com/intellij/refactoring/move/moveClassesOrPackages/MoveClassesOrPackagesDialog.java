@@ -68,7 +68,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myNameLabel = new JLabel();
     myPromptTo = new JLabel("To package: ");
     myManager = PsiManager.getInstance(myProject);
-    myWithBrowseButtonReference = new ReferenceEditorWithBrowseButton(null, "", myManager);
+    myWithBrowseButtonReference = new ReferenceEditorWithBrowseButton(null, "", myManager, false);
 
     init();
   }

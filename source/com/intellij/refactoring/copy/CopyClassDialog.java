@@ -109,7 +109,7 @@ class CopyClassDialog extends DialogWrapper{
           myTfPackage.setText(aPackage.getQualifiedName());
         }
       }
-    }, "", PsiManager.getInstance(myProject));
+    }, "", PsiManager.getInstance(myProject), false);
     myPackageLabel.setLabelFor(myTfPackage.getEditorTextField());
     myPackageLabel.setDisplayedMnemonic('D');
 
