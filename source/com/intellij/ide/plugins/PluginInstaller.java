@@ -59,9 +59,10 @@ public class PluginInstaller {
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         String depPluginName = pluginNode.getDepends().get(i);
 
-        if (PluginManager.isPluginInstalled(depPluginName))
+        if (PluginManager.isPluginInstalled(depPluginName)) {
         //  ignore installed plugins
           continue;
+        }
 
         PluginNode depPlugin = new PluginNode(depPluginName);
         depPlugin.setSize("-1");
@@ -70,8 +71,12 @@ public class PluginInstaller {
 
       }
 
-      if (! prepareToInstall(depends))
-        return false;
+      if (depends.size() > 0) { // has something to install prior installing the plugin
+        final boolean success = prepareToInstall(depends);
+        if (!success) {
+          return false;
+        }
+      }
     }
 
     synchronized (lock) {
