@@ -559,7 +559,7 @@ public class VirtualFileImpl extends VirtualFile {
           myFileSystem.getManager().addEventToFireByRefresh(runnable, asynchronous, modalityState);
         }
         else {
-          myFileSystem.refresh(VirtualFileImpl.this, recursive, true, worker, modalityState);
+          myFileSystem.refresh(VirtualFileImpl.this, recursive, true, worker, modalityState, asynchronous);
         }
       }
     };

@@ -367,7 +367,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
             getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
           }
           else {
-            refresh(rootFile, true, false, worker, modalityState);
+            refresh(rootFile, true, false, worker, modalityState, asynchronous);
           }
         }
       }
@@ -401,8 +401,13 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return mySynchronizeQueueAlarm;
   }
 
-  void refresh(VirtualFile file, boolean recursive, boolean storeStatus, WorkerThread worker, ModalityState modalityState) {
-    if (!FileWatcher.isAvailable()) {
+  void refresh(VirtualFile file,
+             boolean recursive,
+             boolean storeStatus,
+             WorkerThread worker,
+             ModalityState modalityState,
+             boolean asynchronous) {
+    if (!FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState);
     }
     else {
@@ -438,7 +443,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           for (int i = 0; i < children.length; i++) {
             VirtualFile child = children[i];
             if (status == DIRTY_STATUS && !((VirtualFileImpl)child).getPhysicalFile().exists()) continue; // should be already handled above (see SCR6145)
-            refresh(child, recursive, false, worker, modalityState);
+            refresh(child, recursive, false, worker, modalityState, asynchronous);
           }
         }
       }
