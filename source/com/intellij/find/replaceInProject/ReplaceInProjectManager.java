@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -30,6 +31,7 @@ import com.intellij.util.Processor;
 import javax.swing.*;
 import java.util.Set;
 import java.util.Iterator;
+import java.util.HashSet;
 
 public class ReplaceInProjectManager implements ProjectComponent {
   private Project myProject;
@@ -174,6 +176,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
       Runnable selectOnEditorRunnable = new Runnable() {
         public void run() {
           final VirtualFile virtualFile = psiFile.getVirtualFile();
+
           if (virtualFile != null &&
               ApplicationManager.getApplication().runReadAction(
                 new Computable<Boolean>() {
@@ -278,11 +281,9 @@ public class ReplaceInProjectManager implements ProjectComponent {
       }
     };
 
-    replaceContext.getUsageView().addPerformOperationAction(
+    replaceContext.getUsageView().addButtonToLowerPane(
       replaceSelectedRunnable,
       "Replace Selected",
-      null,
-      "Replace selected occurrences of \"" + replaceContext.getFindModel().getStringToFind() + "\" to \"" + replaceContext.getFindModel().getStringToReplace() + "\"",
       SystemInfo.isMac ? 0 : 'l'
     );
   }
@@ -329,6 +330,23 @@ public class ReplaceInProjectManager implements ProjectComponent {
     if(selectedUsages == null){
       return;
     }
+
+    Set<VirtualFile> readOnlyFiles = null;
+    for(Iterator<Usage> i = selectedUsages.iterator();i.hasNext();) {
+      final VirtualFile file = ((UsageInfo2UsageAdapter)i.next()).getFile();
+
+      if (!file.isWritable()) {
+        if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
+        readOnlyFiles.add(file);
+      }
+    }
+
+    if (readOnlyFiles != null) {
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(
+        readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()] )
+      );
+    }
+
     if (FindInProjectUtil.hasReadOnlyUsages(selectedUsages)){
       int result = Messages.showOkCancelDialog(
         replaceContext.getUsageView().getComponent(),
