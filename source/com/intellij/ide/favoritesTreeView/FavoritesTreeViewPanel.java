@@ -24,12 +24,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -40,6 +42,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -191,6 +197,21 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
+    myTree.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (!e.isPopupTrigger() && e.getClickCount() == 2) {
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(FavoritesTreeViewPanel.this), true);
+        }
+      }
+    });
+
+    myTree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(FavoritesTreeViewPanel.this), false);
+        }
+      }
+    });
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();
@@ -251,6 +272,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
       return selectedNodeDescriptors != null && selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
     }
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
+      return selectedElements.toArray(new Navigatable[selectedElements.size()]);
+    }
+
     if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }

@@ -66,14 +66,14 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     ourAbstractUrlProviders.add(new MethodUrl(null, null));
   }
 
-  private final AbstractTreeNode myRoot;
+  private final AbstractTreeNode<String> myRoot;
 
   private Set<AbstractTreeNode> myFavorites = new HashSet<AbstractTreeNode>();
   private HashMap<AbstractUrl, String> myAbstractUrls = new HashMap<AbstractUrl, String>();
   private FavoritesTreeViewConfiguration myFavoritesConfiguration = new FavoritesTreeViewConfiguration();
   public FavoritesTreeStructure(Project project) {
     super(project);
-    myRoot = new AbstractTreeNode(myProject, "") {
+    myRoot = new AbstractTreeNode<String>(myProject, "") {
       public Collection<AbstractTreeNode> getChildren() {
         return myFavorites;
       }
@@ -103,18 +103,18 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     final AbstractTreeNode favoritesTreeElement = (AbstractTreeNode)element;
     try {
       if (element == myRoot) {
-        if (myFavorites.isEmpty()){
-          return new Object [] {new AbstractTreeNode<String>(myProject, "There is nothing to display. Add node to favorites list."){
-                                      public Collection<AbstractTreeNode> getChildren() {
-                                        return null;
-                                      }
-
-                                      public void update(final PresentationData presentation) {
-                                        presentation.setPresentableText(getValue());
-                                      }
-                                    }
-                                };
-
+        //todo
+        Set<AbstractTreeNode> result = new HashSet<AbstractTreeNode>();
+        for (Iterator<AbstractTreeNode> iterator = myFavorites.iterator(); iterator.hasNext();) {
+          AbstractTreeNode abstractTreeNode = iterator.next();
+          final Object val = abstractTreeNode.getValue();
+          if (val != null && (!(val instanceof PsiElement) || ((PsiElement)val).isValid())){
+            result.add(abstractTreeNode);
+          }
+        }
+        myFavorites = result;
+        if (myFavorites.isEmpty()) {
+          return new Object[]{getEmptyScreen()};
         }
         return myFavorites.toArray(new Object[myFavorites.size()]);
       }
@@ -124,6 +124,18 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private AbstractTreeNode<String> getEmptyScreen() {
+    return new AbstractTreeNode<String>(myProject, "There is nothing to display. Add node to favorites list."){
+                                public Collection<AbstractTreeNode> getChildren() {
+                                  return null;
+                                }
+
+                                public void update(final PresentationData presentation) {
+                                  presentation.setPresentableText(getValue());
+                                }
+                              };
   }
 
   public Object getParentElement(Object element) {
@@ -223,6 +235,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     for (Iterator<AbstractUrl> iterator = myAbstractUrls.keySet().iterator(); iterator.hasNext();) {
       AbstractUrl abstractUrl = iterator.next();
       final Object[] path = abstractUrl.createPath(myProject);
+      if (path == null || path.length < 1){
+        continue;
+      }
       try {
         if (abstractUrl instanceof FormUrl){
           final PsiManager psiManager = PsiManager.getInstance(myProject);
@@ -268,9 +283,10 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     for (Iterator<Element> iterator = element.getChildren("favorite_root").iterator(); iterator.hasNext();) {
       Element favorite = iterator.next();
       final String klass = favorite.getAttributeValue("klass");
-
       final AbstractUrl abstractUrl = readUrlFromElement(favorite);
-      myAbstractUrls.put(abstractUrl, klass);
+      if (abstractUrl != null) {
+        myAbstractUrls.put(abstractUrl, klass);
+      }
     }
     myFavoritesConfiguration.readExternal(element);
   }
