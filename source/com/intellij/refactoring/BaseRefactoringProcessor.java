@@ -139,6 +139,7 @@ public abstract class BaseRefactoringProcessor {
 
     LOG.assertTrue(usages[0] != null);
     if (!preprocessUsages(usages)) return;
+    ensureFilesWritable(usages[0]);
     boolean toPreview = isPreviewUsages(usages[0]);
     if (toPreview) {
       FindUsagesCommand findUsagesCommand = new FindUsagesCommand() {
@@ -150,11 +151,8 @@ public abstract class BaseRefactoringProcessor {
       };
       UsageViewDescriptor descriptor = createUsageViewDescriptor(usages[0], findUsagesCommand);
       showUsageView(descriptor, isVariable(), isVariable());
-      ensureFilesWritable(usages[0]);
     } else {
-      final UsageInfo[] usages1 = usages[0];
-      ensureFilesWritable(usages[0]);
-      execute(usages1);
+      execute(usages[0]);
     }
   }
 
