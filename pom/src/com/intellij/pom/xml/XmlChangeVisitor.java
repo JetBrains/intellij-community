@@ -5,7 +5,7 @@
 
 package com.intellij.pom.xml;
 
-import com.intellij.pom.xml.impl.events.*;
+import com.intellij.pom.xml.events.*;
 
 /**
  * @author peter

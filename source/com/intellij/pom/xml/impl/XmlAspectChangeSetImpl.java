@@ -4,9 +4,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.pom.xml.impl.events.XmlChange;
-import com.intellij.pom.event.PomChangeSet;
-import com.intellij.pom.xml.impl.events.XmlChange;
+import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
 
 import java.util.ArrayList;

@@ -1,9 +1,8 @@
 package com.intellij.pom.xml.impl.events;
 
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.pom.xml.XmlChangeVisitor;
-import com.intellij.pom.xml.impl.events.XmlChange;
-import com.intellij.pom.xml.impl.events.XmlElementChanged;
+import com.intellij.pom.xml.events.XmlElementChanged;
+import com.intellij.psi.xml.XmlElement;
 
 public class XmlElementChangedImpl implements XmlElementChanged {
   private final XmlElement myElement;
