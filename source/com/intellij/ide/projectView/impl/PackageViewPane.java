@@ -38,7 +38,6 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
 
   public PackageViewPane(Project project) {
     super(project);
-    myExpandedElements.registerExpandedElementProvider(new PackageUrl(null,null));
   }
 
   public String getTitle() {

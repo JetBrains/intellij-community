@@ -19,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -29,7 +28,6 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -50,9 +48,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   protected AbstractProjectViewPSIPane(Project project) {
     super(project);
-    myExpandedElements.registerExpandedElementProvider(new ClassUrl(null, null));
-    myExpandedElements.registerExpandedElementProvider(new ModuleUrl(null, null));
-    myExpandedElements.registerExpandedElementProvider(new DirectoryUrl(null, null));
   }
 
   protected final void initPSITree() {
@@ -123,8 +118,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         }
       }
     });
-
-    myExpandedElements.restoreExpandedElements(this, myProject);
   }
 
   public final void expand(Object[] path) {
@@ -195,6 +188,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     selectInManager.addTarget(createSelectInTarget());
 
     initPSITree();
+    restoreState();
   }
 
   protected abstract ProjectViewSelectInTarget createSelectInTarget();
@@ -273,14 +267,4 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public JComponent getComponent() {
     return myComponent;
   }
-
-  public void readExternal(Element viewElement) throws InvalidDataException {
-    myExpandedElements.readExternal(viewElement);
-  }
-
-  public void writeExternal(Element viewElement) {
-    new ExpandedElements(getExpandedUrls()).writeExternal(viewElement);
-  }
-
-
 }
