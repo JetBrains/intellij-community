@@ -172,4 +172,6 @@ public interface IdeActions {
 
   String ACTION_GOTO_BACK    = "Back";
   String ACTION_GOTO_FORWARD = "Forward";
+
+  String MODULE_SETTINGS = "ModuleSettings";
 }
