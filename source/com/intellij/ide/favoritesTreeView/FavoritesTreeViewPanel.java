@@ -1,8 +1,6 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.CopyPasteManagerEx;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -113,6 +111,34 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
     new TreeSpeedSearch(myTree);
+    final TreeExpander treeExpander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+        if (myTree.getLeadSelectionPath() == null){
+          TreeUtil.selectFirstNode(myTree);
+        }
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 1);
+        if (myTree.getLeadSelectionPath() == null){
+          TreeUtil.selectFirstNode(myTree);
+        }
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
+    AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
+    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
+    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
+    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), myTree);
     myTree.setCellRenderer(new NodeRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,
