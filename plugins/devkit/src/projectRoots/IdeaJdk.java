@@ -292,7 +292,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public String getPresentableName() {
-    return "ItelliJ IDEA SDK";
+    return "IntelliJ IDEA SDK";
   }
 
   public String getComponentName() {
