@@ -180,6 +180,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public void dispose() {
     isModuleAdded = false;
     disposeComponents();
+    Extensions.disposeArea(this);
     myIsDisposed = true;
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
