@@ -210,7 +210,7 @@ public class TypedHandler implements TypedActionHandler {
         return false;
       }
       finally {
-        while(iterator.getStart() != offset) iterator.retreat();
+        while(iterator.atEnd() || iterator.getStart() != offset) iterator.retreat();
       }
     }
 
