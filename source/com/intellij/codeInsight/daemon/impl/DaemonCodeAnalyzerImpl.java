@@ -245,6 +245,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     stopProcess(false);
     myUpdateThreadSemaphore.waitFor();
+    myLastSettings = null;
   }
 
   public void settingsChanged() {
