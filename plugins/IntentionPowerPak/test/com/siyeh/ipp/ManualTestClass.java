@@ -1216,6 +1216,15 @@ public class ManualTestClass
         buffer.append("foo" + "bar" + "baz");
     }
 
+    public void testStringBufferSequencing()
+    {
+        StringBuffer buf = new StringBuffer();
+        buf.append("foo").append("bar").append("baz");
+        StringBuffer buf2;
+        buf2 = new StringBuffer().append("foo").append("bar").append("baz");
+        final StringBuffer buf3 = new StringBuffer().append("foo").append("bar").append("baz");
+    }
+
     public boolean testExpandBoolean()
     {
         boolean foo = true;

@@ -1,0 +1,107 @@
+package com.siyeh.ipp.concatenation;
+
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
+    protected PsiElementPredicate getElementPredicate(){
+        return new AppendChainPredicate();
+    }
+
+    public String getText(){
+        return "Make .append() chain into .append() sequence";
+    }
+
+    public String getFamilyName(){
+        return "Make Append Chain Into Append Sequence";
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file)
+            throws IncorrectOperationException{
+        if(isFileReadOnly(project, file)){
+            return;
+        }
+
+        PsiExpression call =
+                (PsiExpression) findMatchingElement(file, editor);
+        final List argsList = new ArrayList();
+        PsiExpression currentCall = call;
+        while(currentCall instanceof PsiMethodCallExpression &&
+                        AppendUtil.isAppend((PsiMethodCallExpression) currentCall)){
+            final PsiExpressionList args =
+                    ((PsiMethodCallExpression) currentCall).getArgumentList();
+            final String argText = args.getText();
+            argsList.add(argText);
+            final PsiReferenceExpression methodExpression =
+                    ((PsiMethodCallExpression) currentCall).getMethodExpression();
+            currentCall = methodExpression.getQualifierExpression();
+        }
+        final String targetText;
+        final String firstTargetText;
+        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiElementFactory factory = mgr.getElementFactory();
+        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+        final PsiStatement statement;
+        final String firstStatementPreamble;
+        if(call.getParent() instanceof PsiExpressionStatement){
+            targetText = currentCall.getText();
+            firstTargetText = currentCall.getText();
+            statement = (PsiStatement) call.getParent();
+            firstStatementPreamble = "";
+        } else if(call.getParent() instanceof PsiAssignmentExpression &&
+                                call.getParent()
+                                .getParent() instanceof PsiExpressionStatement){
+            statement = (PsiStatement) call.getParent().getParent();
+            final PsiAssignmentExpression assignment =
+                    (PsiAssignmentExpression) call.getParent();
+            targetText = assignment.getLExpression().getText();
+            firstTargetText = currentCall.getText();
+            firstStatementPreamble =
+                    assignment.getLExpression().getText() +
+                    assignment.getOperationSign().getText();
+        } else{
+            statement = (PsiStatement) call.getParent().getParent();
+            final PsiDeclarationStatement declaration =
+                    (PsiDeclarationStatement) statement;
+            final PsiVariable variable =
+                    (PsiVariable) declaration.getDeclaredElements()[0];
+            targetText = variable.getName();
+            firstTargetText = currentCall.getText();
+            if(variable.hasModifierProperty(PsiModifier.FINAL)){
+                firstStatementPreamble = "final " +
+                        variable.getType().getPresentableText() +
+                        ' ' + variable.getName() + '=';
+            } else{
+                firstStatementPreamble =
+                        variable.getType().getPresentableText() +
+                        ' ' + variable.getName() + '=';
+            }
+        }
+
+        for(Iterator iterator = argsList.iterator(); iterator.hasNext();){
+            final String arg = (String) iterator.next();
+            final String append;
+            if(iterator.hasNext()){
+                append = targetText + ".append" + arg + ';';
+            } else{
+                append = firstStatementPreamble +
+                        firstTargetText + ".append" + arg + ';';
+            }
+            final PsiStatement newCall =
+                    factory.createStatementFromText(append, null);
+            final PsiElement insertedElement = statement.getParent()
+                            .addAfter(newCall, statement);
+            codeStyleManager.reformat(insertedElement);
+        }
+        statement.delete();
+    }
+}
