@@ -336,12 +336,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
       if (elementDescriptor == null) { return; }
 
       elementDescriptor = elementDescriptor.getElementDescriptor(tag);
+      
+      if (elementDescriptor instanceof AnyXmlElementDescriptor) {
+        elementDescriptor = tag.getDescriptor();
+      }
       if (elementDescriptor == null) {
         addElementsForTag(tag, "Element " + name + " is not allowed here", myResult, HighlightInfoType.WRONG_REF, null);
         return;
-      }
-      if (elementDescriptor instanceof AnyXmlElementDescriptor) {
-        elementDescriptor = tag.getDescriptor();
       }
     }
     else {

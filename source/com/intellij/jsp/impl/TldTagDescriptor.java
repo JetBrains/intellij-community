@@ -3,6 +3,7 @@ package com.intellij.jsp.impl;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
@@ -24,6 +25,7 @@ public class TldTagDescriptor implements XmlElementDescriptor {
   private String myName;
   private XmlAttributeDescriptor[] myAttributeDescriptors;
   private TldDescriptor myNsDescriptor;
+  private boolean myEmpty;
 
   public TldTagDescriptor() {}
 
@@ -41,11 +43,12 @@ public class TldTagDescriptor implements XmlElementDescriptor {
 
   //todo: refactor to support full DTD spec
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    return new XmlElementDescriptor[0];
+    return EMPTY_ARRAY;
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
-    return null;
+    if (myEmpty) return null;
+    return new AnyXmlElementDescriptor(this,getNSDescriptor());
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
@@ -89,7 +92,8 @@ public class TldTagDescriptor implements XmlElementDescriptor {
   }
 
   public int getContentType() {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    if (myEmpty) return CONTENT_TYPE_EMPTY;;
+    return CONTENT_TYPE_MIXED;
   }
 
   public PsiElement getDeclaration() {
@@ -133,6 +137,8 @@ public class TldTagDescriptor implements XmlElementDescriptor {
       myNsDescriptor = null;
     }
     myTag = (XmlTag)element;
+    final XmlTag bodyContent = myTag.findFirstSubTag("bodycontent");
+    if (bodyContent!=null) myEmpty = bodyContent.getValue().getText().equals("empty");
   }
 
   public Object[] getDependences() {
