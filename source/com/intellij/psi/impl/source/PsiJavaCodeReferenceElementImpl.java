@@ -138,7 +138,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     else if (i == DOC_TAG || i == DOC_INLINE_TAG || i == DOC_REFERENCE_HOLDER || i == DOC_TYPE_HOLDER) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == CODE_FRAGMENT) {
+    else if (i == REFERENCE_TEXT) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
     else {
