@@ -127,10 +127,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
-    final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (file != null && editor != null) {
-      invokeOnElements(elements, project, file, editor);
+    if (dataContext != null) {
+      final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      if (file != null && editor != null) {
+        invokeOnElements(elements, project, file, editor);
+      }
     }
   }
 }
