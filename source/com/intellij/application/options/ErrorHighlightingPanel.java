@@ -73,7 +73,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
 
     myDescriptors.add(createDescriptor(HighlightDisplayKey.EJB_ERROR, null, "Local_EJBErrors.html"));
     myDescriptors.add(createDescriptor(HighlightDisplayKey.EJB_WARNING, null, "Local_EJBWarnings.html"));
-    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNCHECKED_ASSIGNMENT, null, "Local_UncheckedAssignment.html"));
+    myDescriptors.add(createDescriptor(HighlightDisplayKey.UNCHECKED_WARNING, null, "Local_UncheckedWarning.html"));
   }
 
   private Descriptor createDescriptor(HighlightDisplayKey key, JComponent optionsPanel, String decriptionFileName) {

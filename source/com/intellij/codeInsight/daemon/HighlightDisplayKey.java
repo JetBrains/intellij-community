@@ -1,9 +1,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.util.containers.HashMap;
-import com.intellij.ui.DocumentAdapter;
 
-import javax.swing.event.DocumentEvent;
 import java.util.Map;
 
 public class HighlightDisplayKey {
@@ -22,7 +20,7 @@ public class HighlightDisplayKey {
   public static final HighlightDisplayKey EJB_ERROR = register("EJB_ERROR", "EJB errors");
   public static final HighlightDisplayKey EJB_WARNING = register("EJB_WARNING", "EJB warnings");
   public static final HighlightDisplayKey ILLEGAL_DEPENDENCY = register("ILLEGAL_DEPENDENCY", "Illegal package dependencies");
-  public static final HighlightDisplayKey UNCHECKED_ASSIGNMENT = register("UNCHECKED_ASSIGNMENT", "Unchecked warning");
+  public static final HighlightDisplayKey UNCHECKED_WARNING = register("UNCHECKED_WARNING", "Unchecked warning");
 
 
   private final String myName;

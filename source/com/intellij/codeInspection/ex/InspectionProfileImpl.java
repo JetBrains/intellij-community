@@ -253,7 +253,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_ASSIGNMENT, new ToolState(HighlightDisplayLevel.WARNING));
+    myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
   }
 
   public String getName() {
