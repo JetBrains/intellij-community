@@ -76,7 +76,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return indices;
   }
 
-  public boolean belongs(String url) {
+  public boolean belongs(final String url) {
     Module candidateModule = null;
     int maxUrlLength = 0;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -127,7 +127,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
       }
       final String[] sourceRootUrls = moduleRootManager.getSourceRootUrls();
       for (int i = 0; i < sourceRootUrls.length; i++) {
-        if (isUrlUnderRoot(url, excludeRootUrls[i])) {
+        if (isUrlUnderRoot(url, sourceRootUrls[i])) {
           return true;
         }
       }
