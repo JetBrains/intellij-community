@@ -11,6 +11,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 
@@ -34,7 +35,8 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     myNonNullFields = PsiField.EMPTY_ARRAY;
 
 
-    final PsiMethod equalsMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project));
+    GlobalSearchScope scope = aClass.getResolveScope();
+    final PsiMethod equalsMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project, scope));
     final PsiMethod hashCodeMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature());
 
     boolean needEquals = equalsMethod == null;

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -24,7 +25,7 @@ public class GenerateEqualsHelper implements Runnable {
   private PsiClass myClass;
   private PsiField[] myEqualsFields;
   private PsiField[] myHashCodeFields;
-  private HashSet myNonNullSet;
+  private HashSet<PsiField> myNonNullSet;
   private final PsiElementFactory myFactory;
   private final PsiManager myManager;
   private String myParameterName;
@@ -34,7 +35,7 @@ public class GenerateEqualsHelper implements Runnable {
   private PsiType myClassType;
   private String myClassInstanceName;
 
-  private static final com.intellij.util.containers.HashMap PRIMITIVE_HASHCODE_FORMAT = new com.intellij.util.containers.HashMap();
+  private static final com.intellij.util.containers.HashMap<String,MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new com.intellij.util.containers.HashMap<String, MessageFormat>();
   private final boolean mySuperHasHashCode;
   private CodeStyleManager myCodeStyleManager;
   private final Project myProject;
@@ -49,7 +50,7 @@ public class GenerateEqualsHelper implements Runnable {
     myHashCodeFields = hashCodeFields;
     myProject = project;
 
-    myNonNullSet = new HashSet();
+    myNonNullSet = new HashSet<PsiField>();
     for (int i = 0; i < nonNullFields.length; i++) {
       PsiField field = nonNullFields[i];
       myNonNullSet.add(field);
@@ -105,7 +106,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   public PsiElement[] generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
-    if (myEqualsFields != null && findMethod(myClass, getEqualsSignature(myProject)) == null) {
+    if (myEqualsFields != null && findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())) == null) {
       equals = createEquals();
     }
 
@@ -153,14 +154,14 @@ public class GenerateEqualsHelper implements Runnable {
     if (myEqualsFields.length > 0) {
       addClassInstance(buffer);
 
-      ArrayList equalsFields = new ArrayList();
+      ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
       for (int i = 0; i < myEqualsFields.length; i++) {
         equalsFields.add(myEqualsFields[i]);
       }
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
-      for (Iterator iterator = equalsFields.iterator(); iterator.hasNext();) {
-        PsiField field = (PsiField) iterator.next();
+      for (Iterator<PsiField> iterator = equalsFields.iterator(); iterator.hasNext();) {
+        PsiField field = iterator.next();
 
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiType type = field.getType();
@@ -236,13 +237,13 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private void addInstanceOfToText(StringBuffer buffer, String returnValue) {
-    buffer.append("if(!(" + myParameterName + " instanceof " + myClass.getName() + ")) " +
+    buffer.append("if(getClass() != " + myParameterName + ".getClass()) " +
             "return " + returnValue + ";\n");
   }
 
   private void addEqualsPrologue(StringBuffer buffer) {
     buffer.append("if(this==" + myParameterName + ") return true;\n");
-    if (!superMethodExists(getEqualsSignature(myProject))) {
+    if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
       addInstanceOfToText(buffer, "false");
     } else {
       addInstanceOfToText(buffer, "false");
@@ -369,7 +370,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private void addPrimitiveFieldHashCode(StringBuffer buffer, PsiField field, String tempName) {
-    MessageFormat format = (MessageFormat) PRIMITIVE_HASHCODE_FORMAT.get(field.getType().getCanonicalText());
+    MessageFormat format = PRIMITIVE_HASHCODE_FORMAT.get(field.getType().getCanonicalText());
     buffer.append(format.format(new Object[]{field.getName(), tempName}));
   }
 
@@ -455,7 +456,8 @@ public class GenerateEqualsHelper implements Runnable {
     return MethodSignatureUtil.createMethodSignature("hashCode",(PsiType[])null,null,PsiSubstitutor.EMPTY);
   }
 
-  public static MethodSignature getEqualsSignature(Project project) {
-    return MethodSignatureUtil.createMethodSignature("equals",new PsiType[]{PsiType.getJavaLangObject(PsiManager.getInstance(project))},null,PsiSubstitutor.EMPTY);
+  public static MethodSignature getEqualsSignature(Project project, GlobalSearchScope scope) {
+    final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), scope);
+    return MethodSignatureUtil.createMethodSignature("equals",new PsiType[]{javaLangObject},null,PsiSubstitutor.EMPTY);
   }
 }
