@@ -196,7 +196,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         result.add((PsiElement)element);
       }
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {
@@ -557,7 +557,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     private PsiElement[] getElementsToDelete() {
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       Object[] elements = getSelectedNodeElements();
-      for (int idx = 0; idx < elements.length; idx++) {
+      for (int idx = 0; elements != null && idx < elements.length; idx++) {
         if (elements[idx] instanceof PsiElement) {
           final PsiElement element = (PsiElement)elements[idx];
           result.add(element);
