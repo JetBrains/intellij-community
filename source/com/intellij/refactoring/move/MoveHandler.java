@@ -59,7 +59,7 @@ public class MoveHandler implements RefactoringActionHandler {
     while(true){
 
       if (element == null) {
-        if (!(file instanceof PsiJavaFile)) {
+        if (file instanceof PsiPlainTextFile) {
           PsiElement[] elements = new PsiElement[]{file};
           if (MoveFilesOrDirectoriesUtil.canMoveFiles(elements)) {
             doMove(project, elements, null, null);
@@ -80,7 +80,7 @@ public class MoveHandler implements RefactoringActionHandler {
         final PsiReference reference = element.getReference();
         if (reference != null) {
           final PsiElement refElement = reference.resolve();
-          if (tryToMoveElement(refElement, project, dataContext)) return;
+          if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
         }
       }
 
