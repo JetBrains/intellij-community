@@ -1,9 +1,6 @@
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.*;
 
 public class BoolUtils {
     private BoolUtils() {
@@ -24,15 +21,22 @@ public class BoolUtils {
         final PsiExpression operand = prefixExp.getOperand();
         return ParenthesesUtils.stripParentheses(operand);
     }
-
-    public static String getNegatedExpressionText(PsiExpression condition) {
-        if (isNegation(condition)) {
-            final PsiExpression negatedCondition = getNegated(condition);
-            return negatedCondition.getText();
-        } else if (ParenthesesUtils.getPrecendence(condition) >
-                ParenthesesUtils.PREFIX_PRECEDENCE) {
+    public static String getNegatedExpressionText(PsiExpression condition){
+        if(BoolUtils.isNegation(condition)){
+            final PsiExpression negated = getNegated(condition);
+            return negated.getText();
+        } else if(ComparisonUtils.isComparison(condition)){
+            final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) condition;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final String operator = sign.getText();
+            final String negatedComparison = ComparisonUtils.getNegatedComparison(operator);
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            return lhs.getText() + negatedComparison + rhs.getText();
+        } else if(ParenthesesUtils.getPrecendence(condition) >
+                ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
-        } else {
+        } else{
             return '!' + condition.getText();
         }
 

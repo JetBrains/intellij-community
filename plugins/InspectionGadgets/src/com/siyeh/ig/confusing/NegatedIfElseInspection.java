@@ -1,18 +1,19 @@
 package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
 public class NegatedIfElseInspection extends StatementInspection {
     public boolean m_ignoreNegatedNullComparison = true;
+    private final NegatedIfElseFix fix = new NegatedIfElseFix();
 
     public String getDisplayName() {
         return "If statement with negated condition";
@@ -35,6 +36,29 @@ public class NegatedIfElseInspection extends StatementInspection {
                 this, "m_ignoreNegatedNullComparison");
     }
 
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class NegatedIfElseFix extends InspectionGadgetsFix{
+
+
+        public String getName(){
+            return "Invert If Condition";
+        }
+
+        public void applyFix(Project project,
+                             ProblemDescriptor problemDescriptor){
+            final PsiElement ifToken = problemDescriptor.getPsiElement();
+            final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
+            final PsiStatement thenBranch = ifStatement.getThenBranch();
+            final PsiExpression condition = ifStatement.getCondition();
+            final String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
+            final String newStatement = "if("+ negatedCondition + ')' +elseBranch.getText() + " else " + thenBranch.getText();
+            replaceStatement(project, ifStatement, newStatement);
+        }
+    }
     private class NegatedIfElseVisitor extends BaseInspectionVisitor {
         private NegatedIfElseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
