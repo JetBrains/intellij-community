@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -91,14 +92,16 @@ public class SmartEnterProcessor {
       queue.add(atCaret);
       for (int i = 0; i < queue.size(); i++) {
         PsiElement psiElement = queue.get(i);
-        for (int j = 0; j < ourFixers.size(); j++) {
-          Fixer fixer = ourFixers.get(j);
-          fixer.apply(myEditor, this, psiElement);
-          if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
-          if (isUncommited() || !psiElement.isValid()) {
-            moveCaretInsideBracesIfAny();
-            process();
-            return;
+        if (StdFileTypes.JAVA.getLanguage().equals(psiElement.getLanguage())) {
+          for (int j = 0; j < ourFixers.size(); j++) {
+            Fixer fixer = ourFixers.get(j);
+            fixer.apply(myEditor, this, psiElement);
+            if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
+            if (isUncommited() || !psiElement.isValid()) {
+              moveCaretInsideBracesIfAny();
+              process();
+              return;
+            }
           }
         }
       }
