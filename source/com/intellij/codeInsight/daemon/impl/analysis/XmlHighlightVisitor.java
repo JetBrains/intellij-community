@@ -12,16 +12,11 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,28 +25,21 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.ASTNode;
-import org.xml.sax.SAXParseException;
-
 import java.text.MessageFormat;
 import java.util.*;
-import java.lang.ref.WeakReference;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
 
 /**
  * @author Mike
  */
-public class XmlHighlightVisitor extends PsiElementVisitor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-
+public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
   private List<HighlightInfo> myResult = new ArrayList<HighlightInfo>();
-  private ValidateXmlActionHandler myHandler;
+
   private static boolean ourDoJaxpTesting;
   private static final Key<HashMap<String,XmlTag>> ID_TO_TAG_MAP_KEY = Key.create("ID_TO_TAG_MAP");
 
@@ -67,163 +55,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
   }
 
   public void visitReferenceExpression(PsiReferenceExpression expression) {
-  }
-
-  private long myTimeStamp;
-  private VirtualFile myFile;
-  private WeakReference<List<HighlightInfo>> myInfos; // last jaxp validation result
-
-  private void runJaxpValidation(final XmlElement element, final List<HighlightInfo> result) {
-    VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-    if (myFile == virtualFile &&
-        virtualFile != null &&
-        myTimeStamp == virtualFile.getTimeStamp() &&
-        myInfos!=null &&
-        myInfos.get()!=null // we have validated before
-        ) {
-      result.addAll(myInfos.get());
-      return;
-    }
-
-    PsiFile containingFile = element.getContainingFile();
-    if (myHandler==null)  myHandler = new ValidateXmlActionHandler(false);
-    final Project project = element.getProject();
-
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
-    if (document==null) return;
-
-    final List<HighlightInfo> results = new LinkedList<HighlightInfo>();
-    myHandler.setErrorReporter(myHandler.new ErrorReporter() {
-      public boolean filterValidationException(Exception ex) {
-        super.filterValidationException(ex);
-        if (ex instanceof FileNotFoundException ||
-            ex instanceof MalformedURLException
-            ) {
-          // do not log problems caused by malformed and/or ignored external resources
-          return true;
-        }
-        return false;
-      }
-
-      public void processError(final SAXParseException e, final boolean warning) {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              if (document.getLineCount() <= e.getLineNumber() || e.getLineNumber() <= 0) {
-                return;
-              }
-
-              int offset = Math.max(0, document.getLineStartOffset(e.getLineNumber() - 1) + e.getColumnNumber() - 2);
-              PsiElement currentElement = PsiDocumentManager.getInstance(project).getPsiFile(document).findElementAt(offset);
-              PsiElement originalElement = currentElement;
-              final String elementText = currentElement.getText();
-
-              if (elementText.equals("</")) {
-                currentElement = currentElement.getNextSibling();
-              }
-              else if (elementText.equals(">") || elementText.equals("=")) {
-                currentElement = currentElement.getPrevSibling();
-              }
-
-              // Cannot find the declaration of element
-              String localizedMessage = e.getLocalizedMessage();
-              localizedMessage = localizedMessage.substring(localizedMessage.indexOf(':') + 1).trim();
-
-              if (localizedMessage.startsWith("Cannot find the declaration of element") ||
-                  localizedMessage.startsWith("Element") ||
-                  localizedMessage.startsWith("Document root element") ||
-                  localizedMessage.startsWith("The content of element type")
-                  ) {
-                addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
-                //return;
-              } else if (localizedMessage.startsWith("Value ")) {
-                addProblemToTagName(currentElement, originalElement, localizedMessage, result, warning);
-                return;
-              } else if (localizedMessage.startsWith("Attribute ")) {
-                currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
-                final int messagePrefixLength = "Attribute ".length();
-
-                if (currentElement==null && localizedMessage.charAt(messagePrefixLength) == '"') {
-                  // extract the attribute name from message and get it from tag!
-                  final int nextQuoteIndex = localizedMessage.indexOf('"', messagePrefixLength + 1);
-                  String attrName = (nextQuoteIndex!=-1)?localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex):null;
-
-                  XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
-                  currentElement = parent.getAttribute(attrName,null);
-
-                  if (currentElement!=null) {
-                    currentElement = SourceTreeToPsiMap.treeElementToPsi(
-                      XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(
-                        SourceTreeToPsiMap.psiElementToTree(currentElement)
-                      )
-                    );
-                  }
-                }
-
-                if (currentElement!=null) {
-                  assertValidElement(currentElement, originalElement,localizedMessage);
-                  result.add(HighlightInfo.createHighlightInfo(warning ? HighlightInfoType.WARNING : HighlightInfoType.ERROR,
-                                                               currentElement,
-                                                               localizedMessage));
-                } else {
-                  addProblemToTagName(originalElement, originalElement, localizedMessage, result, warning);
-                }
-                return;
-              } else {
-                currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
-                assertValidElement(currentElement, originalElement,localizedMessage);
-                if (currentElement!=null) {
-                  result.add(HighlightInfo.createHighlightInfo(warning ? HighlightInfoType.WARNING : HighlightInfoType.ERROR,
-                                                               currentElement,
-                                                               localizedMessage));
-                }
-              }
-            }
-          });
-        }
-        catch (Exception ex) {
-          if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
-          LOG.error(ex);
-        }
-      }
-
-    });
-
-    myHandler.doValidate(project, element.getContainingFile());
-
-    myFile = containingFile.getVirtualFile();
-    myTimeStamp = myFile == null ? 0 : myFile.getTimeStamp();
-    myInfos = new WeakReference<List<HighlightInfo>>(results);
-
-    result.addAll(results);
-  }
-
-  private PsiElement addProblemToTagName(PsiElement currentElement,
-                                     final PsiElement originalElement,
-                                     final String localizedMessage,
-                                     final List<HighlightInfo> result, final boolean warning) {
-    currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
-    assertValidElement(currentElement, originalElement,localizedMessage);
-
-    if (currentElement instanceof XmlTag) {
-      addElementsForTag((XmlTag)currentElement, localizedMessage, result, warning ? HighlightInfoType.WARNING : HighlightInfoType.ERROR, null);
-    }
-
-    return currentElement;
-  }
-
-  private static void assertValidElement(PsiElement currentElement, PsiElement originalElement, String message) {
-    if (currentElement==null) {
-      XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class);
-      LOG.assertTrue(
-        false,
-        "The validator message:"+ message+ " is bound to null node,\n" +
-        "initial element:"+originalElement.getText()+",\n"+
-        "parent:" + originalElement.getParent()+",\n" +
-        "tag:" + (tag != null? tag.getText():"null") + ",\n" +
-        "offset in tag: " + (originalElement.getTextOffset() - ((tag!=null)?tag.getTextOffset():0))
-      );
-    }
   }
 
   private void addElementsForTag(XmlTag tag,
@@ -265,10 +96,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
   }
 
   public void visitXmlDocument(XmlDocument document) {
-    if (!(document.getRootTag() instanceof HtmlTag) &&
-        document.getContainingFile().getFileType() != StdFileTypes.JSPX
-        ) {
-      runJaxpValidation(document, myResult);
+    final XmlTag rootTag = document.getRootTag();
+    final XmlNSDescriptor nsDescriptor = (rootTag!=null)?rootTag.getNSDescriptor(rootTag.getNamespace(), false):null;
+
+    if (nsDescriptor instanceof Validator) {
+      ((Validator)nsDescriptor).validate(document, this);
     }
   }
 
@@ -474,10 +306,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
     }
 
     if (elementDescriptor instanceof Validator) {
-      final String s = ((Validator)elementDescriptor).validate(tag);
-      if (s!=null && s.length() > 0) {
-        myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,tag,s));
-      }
+      ((Validator)elementDescriptor).validate(tag,this);
     }
   }
 
@@ -761,5 +590,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
 
   public static void setDoJaxpTesting(final boolean doJaxpTesting) {
     ourDoJaxpTesting = doJaxpTesting;
+  }
+
+  public void addMessage(PsiElement context, String message, int type) {
+    if (message != null && message.length() > 0) {
+      if (context instanceof XmlTag) {
+        addElementsForTag((XmlTag)context,message,myResult, type == ERROR ? HighlightInfoType.ERROR:HighlightInfoType.WARNING,null);
+      } else {
+        myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,context,message));
+      }
+    }
   }
 }

@@ -11,14 +11,16 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.Validator;
 
 import java.util.*;
 
 /**
  * @author Mike
  */
-public class XmlNSDescriptorImpl implements XmlNSDescriptor {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private static final Set<String> STD_TYPES = new HashSet<String>();
   XmlFile myFile;
   private String myTargetNamespace;
@@ -486,5 +488,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor {
     STD_TYPES.add("NOTATION");
     STD_TYPES.add("NMTOKEN");
     STD_TYPES.add("NMTOKENS");
+  }
+
+  public void validate(PsiElement context, Validator.ValidationHost host) {
+    ExternalDocumentValidator.doValidation(context,host);
   }
 }

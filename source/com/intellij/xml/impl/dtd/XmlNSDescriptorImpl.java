@@ -17,13 +17,15 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.ExternalDocumentValidator;
+import com.intellij.codeInsight.daemon.Validator;
 
 import java.util.*;
 
 /**
  * @author Mike
  */
-public class XmlNSDescriptorImpl implements XmlNSDescriptor {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
   private CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
@@ -134,5 +136,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor {
 
   public Object[] getDependences(){
     return new Object[]{myElement, ExternalResourceManagerImpl.getInstance()};
+  }
+
+  public void validate(PsiElement context, ValidationHost host) {
+    ExternalDocumentValidator.doValidation(context,host);
   }
 }

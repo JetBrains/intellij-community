@@ -10,5 +10,12 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface Validator {
-  String validate(PsiElement context);
+  interface ValidationHost {
+    int ERROR = 1;
+    int WARNING = 0;
+
+    void addMessage(PsiElement context, String message, int type);
+  }
+
+  void validate(PsiElement context, ValidationHost host);
 }

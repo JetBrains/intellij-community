@@ -240,26 +240,25 @@ public class TldTagDescriptor implements XmlElementDescriptor,Validator {
     return new Object[]{myTag, ExternalResourceManagerImpl.getInstance()};
   }
 
-  public String validate(PsiElement context) {
+  public void validate(PsiElement context,ValidationHost host) {
     final WebModuleProperties properties = ((JspFile)context.getContainingFile()).getWebModuleProperties();
 
     if(properties != null) {
       final TagExtraInfo info = getExtraInfo(properties);
-      if (info == null) return null;
+      if (info == null) return;
       //final JspToken end = getEndToken(context);
       //if (end == null) return false;
 
       try {
         //info.getVariableInfo(JspImplUtil.getTagData((XmlTag)context));
-        if (info.isValid(JspImplUtil.getTagData((XmlTag)context))) return null;
+        if (info.isValid(JspImplUtil.getTagData((XmlTag)context))) return;
       }
       catch (Throwable e) {
-        return "Exception during TEI processing occured: " + e.getMessage();
+        host.addMessage(context,"Exception during TEI processing occured: " + e.getMessage(),ValidationHost.ERROR);
       }
 
-      return "Wrong Tag Data";
+      host.addMessage(context,"Wrong Tag Data",ValidationHost.ERROR);
     }
-    return null;
   }
 
   public TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties) {
