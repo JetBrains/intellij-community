@@ -9,6 +9,8 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -23,9 +25,13 @@ public class EditSourceOnDoubleClickHandler {
         Project project = (Project)dataContext.getData(DataConstants.PROJECT);
         if (project == null) return;
 
-        Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-        if (navigatable != null && navigatable.canNavigate()) {
-          navigatable.navigate(true);
+        final TreePath selectionPath = tree.getSelectionPath();
+        if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf()) {
+          //Node expansion for non-leafs has a higher priority
+          Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+          if (navigatable != null && navigatable.canNavigate()) {
+            navigatable.navigate(true);
+          }
         }
       }
     });
