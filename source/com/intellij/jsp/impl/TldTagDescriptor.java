@@ -4,6 +4,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
@@ -38,6 +39,7 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
   private XmlAttributeDescriptor[] myAttributeDescriptors;
   private TldDescriptor myNsDescriptor;
   private boolean myEmpty;
+  private boolean myDynamicAttributes;
 
   private String myTagClass;
   private String myTeiClass;
@@ -90,6 +92,9 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
         return attributesDescriptor;
       }
     }
+
+    if (myDynamicAttributes) return new AnyXmlAttributeDescriptor(attributeName);
+
     return null;
   }
 
@@ -175,6 +180,11 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
       myTagClass = null;
     }
 
+    XmlTag dynamicAttributes = myTag.findFirstSubTag("dynamic-attributes");
+    if (dynamicAttributes!=null) {
+      myDynamicAttributes = CustomTagSupportUtil.isTrue(dynamicAttributes.getValue().getTrimmedText());
+    }
+
     final XmlTag[] vars = myTag.findSubTags("variable");
 
     CustomTagSupportUtil.configureVariables(myTLDVars, vars, CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
@@ -193,11 +203,8 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
     if(properties != null) {
       final TagExtraInfo info = getExtraInfo(properties);
       if (info == null) return;
-      //final JspToken end = getEndToken(context);
-      //if (end == null) return false;
 
       try {
-        //info.getVariableInfo(JspImplUtil.getTagData((XmlTag)context));
         if (info.isValid(JspImplUtil.getTagData((XmlTag)context))) return;
       }
       catch (Throwable e) {
