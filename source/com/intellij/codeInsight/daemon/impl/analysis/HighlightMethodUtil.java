@@ -297,7 +297,7 @@ public class HighlightMethodUtil {
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
     final PsiMethod method = (PsiMethod)referenceList.getParent();
     if (referenceList != method.getThrowsList()) return null;
-    final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(method.getProject()));
+    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(method.getProject());
     if (!iManager.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.toString())) return null;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
@@ -604,16 +604,25 @@ public class HighlightMethodUtil {
     return s;
   }
 
-  static String createMismatchedArgumentsHtmlTooltip(MethodCandidateInfo info, PsiExpressionList list) {
+  private static String createMismatchedArgumentsHtmlTooltip(MethodCandidateInfo info, PsiExpressionList list) {
     final PsiMethod method = info.getElement();
-    final PsiClass aClass = method.getContainingClass();
     final PsiSubstitutor substitutor = info.getSubstitutor();
-    String s = "<html><body><table border=0>";
+    final PsiClass aClass = method.getContainingClass();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final String methodName = method.getName();
+    return createMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass);
+  }
+
+  private static String createMismatchedArgumentsHtmlTooltip(final PsiExpressionList list,
+                                                             final PsiParameter[] parameters,
+                                                             final String methodName,
+                                                             final PsiSubstitutor substitutor,
+                                                             final PsiClass aClass) {
+    String s = "<html><body><table border=0>";
     final PsiExpression[] expressions = list.getExpressions();
     int cols = Math.max(parameters.length, expressions.length);
     s += "<tr>";
-    s += "<td><b>" + method.getName() + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "") + "</b></td>";
+    s += "<td><b>" + methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "") + "</b></td>";
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType type = substitutor.substitute(parameter.getType());
@@ -1128,7 +1137,7 @@ public class HighlightMethodUtil {
                                                       List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                       DaemonCodeAnalyzerSettings settings) {
     if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(methodSignature.getMethod().getProject()));
+    final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(methodSignature.getMethod().getProject());
     if (!manager.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     final PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
@@ -1243,11 +1252,12 @@ public class HighlightMethodUtil {
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       if (list.getExpressions().length != 0) {
-        String constructorName = aClass.getName() + "()";
+        String constructorName = aClass.getName();
         String containerName = HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY);
         String argTypes = HighlightUtil.buildArgTypesList(list);
-        String description = MessageFormat.format(WRONG_CONSTRUCTOR_ARGUMENTS, new Object[]{constructorName, containerName, argTypes});
-        final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
+        String description = MessageFormat.format(WRONG_CONSTRUCTOR_ARGUMENTS, new Object[]{constructorName+"()", containerName, argTypes});
+        final String tooltip = createMismatchedArgumentsHtmlTooltip(list, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
+        final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall));
         info.navigationShift = +1;
         return info;
