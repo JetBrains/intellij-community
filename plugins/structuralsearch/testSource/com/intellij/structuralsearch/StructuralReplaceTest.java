@@ -1,12 +1,12 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.idea.IdeaTestUtil;
 
 import java.util.Calendar;
 
@@ -400,7 +400,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                               "        OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 20, 12, 0, "lesya", "method parameter alignment")) {
+    if (IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 25, 12, 0, "lesya", "method parameter alignment")) {
       assertEquals(
         "Replace in constructor",
         expectedResult17,
