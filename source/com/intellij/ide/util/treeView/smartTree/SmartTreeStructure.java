@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiDocumentManager;
 
 public class SmartTreeStructure extends AbstractTreeStructure {
 
@@ -24,6 +25,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   }
 
   public void commit() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
@@ -40,6 +42,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   public Object getRootElement() {
     if (myRootElementWrapper == null){
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       myRootElementWrapper = createTree();
     }
     return myRootElementWrapper;
@@ -50,15 +53,10 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   }
 
   public boolean hasSomethingToCommit() {
-    return false;
+    return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
   public void rebuildTree() {
-    if (myRootElementWrapper != null) {
-      final TreeElementWrapper newRoot = createTree();
-      newRoot.myOldChildren = myRootElementWrapper.myChildren;
-      newRoot.synchronizeChildren();
-    }
     ((CachingChildrenTreeNode)getRootElement()).rebuildChildren();
   }
 }

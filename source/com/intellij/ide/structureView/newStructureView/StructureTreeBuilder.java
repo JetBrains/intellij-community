@@ -4,6 +4,9 @@ import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -22,6 +25,8 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final ModelListener myModelListener;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private DocumentAdapter myDocumentsListener;
 
   public StructureTreeBuilder(Project project,
                               JTree tree,
@@ -49,13 +54,26 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
+    myDocumentsListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
+        myUpdateEditorAlarm.cancelAllRequests();
+        myUpdateEditorAlarm.addRequest(new Runnable() {
+          public void run() {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          }
+        }, 300);
+      }
+    };
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentsListener);
   }
 
   public void dispose() {
     myUpdateAlarm.cancelAllRequests();
+    myUpdateEditorAlarm.cancelAllRequests();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     myStructureModel.removeModelListener(myModelListener);
+    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentsListener);
     super.dispose();
   }
 
@@ -75,13 +93,11 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     return new AbstractTreeUpdater(this) {
       protected void updateSubtree(DefaultMutableTreeNode node) {
         if(!myProject.isDisposed()) {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           super.updateSubtree(node);
         }
       }
     };
   }
-  
   
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
 
@@ -122,7 +138,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       myUpdateAlarm.cancelAllRequests();
       myUpdateAlarm.addRequest(new Runnable() {
         public void run() {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           ((SmartTreeStructure)getTreeStructure()).rebuildTree();
           myUpdater.addSubtreeToUpdate(myRootNode);
         }
