@@ -1,8 +1,7 @@
 package com.intellij.featureStatistics.actions;
 
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl;
+import com.intellij.featureStatistics.*;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -188,7 +187,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           }
           else {
             FeatureDescriptor feature = (FeatureDescriptor)selection.iterator().next();
-            TipUIUtil.openTipInBrowser(feature.getTipFileName(), browser);
+            TipUIUtil.openTipInBrowser(feature.getTipFileName(), browser, feature.getProvider());
           }
         }
         catch (IOException ex) {
