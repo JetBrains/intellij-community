@@ -45,7 +45,7 @@ import java.util.List;
  * Time: 4:54:09 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageViewImpl implements UsageView {
+public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
   private UsageNodeTreeBuilder myBuilder;
   private MyPanel myRootPanel;
   private JTree myTree = new JTree();
@@ -100,20 +100,22 @@ public class UsageViewImpl implements UsageView {
     collapseAll();
 
     myModelTracker = new UsageModelTracker(project);
-    myModelTracker.addListener(new UsageModelTracker.UsageModelTrackerListener() {
-                                     public void modelChanged() {
-                                       myChangesDetected = true;
-                                       updateLater();
-                                     }
-                                   });
+    myModelTracker.addListener(this);
 
     if (myPresentation.isShowCancelButton()) {
       addButtonToLowerPane(new Runnable() {
-                                 public void run() {
-                                   close();
-                                 }
-                               }, "Cancel", 'C');
+        public void run() {
+          close();
+        }
+      }, "Cancel", 'C');
     }
+  }
+
+  public void modelChanged(boolean isPropertyChange) {
+    if (!isPropertyChange) {
+      myChangesDetected = true;
+    }
+    updateLater();
   }
 
   private void initTree() {
@@ -472,6 +474,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   public void dispose() {
+    myModelTracker.removeListener(this);
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();
   }

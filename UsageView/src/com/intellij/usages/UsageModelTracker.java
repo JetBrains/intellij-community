@@ -19,7 +19,7 @@ public class UsageModelTracker {
   private PsiTreeChangeListener myPsiListener;
 
   public interface UsageModelTrackerListener {
-    public void modelChanged();
+    public void modelChanged(boolean isPropertyChange);
   }
 
   private Project myProject;
@@ -47,27 +47,27 @@ public class UsageModelTracker {
       }
 
       public void childAdded(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(false);
       }
 
       public void childRemoved(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(false);
       }
 
       public void childReplaced(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(false);
       }
 
       public void childrenChanged(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(false);
       }
 
       public void childMoved(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(false);
       }
 
       public void propertyChanged(PsiTreeChangeEvent event) {
-        fireModelChanged();
+        fireModelChanged(true);
       }
     };
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
@@ -85,10 +85,10 @@ public class UsageModelTracker {
     myListeners.remove(listener);
   }
 
-  private void fireModelChanged() {
-    UsageModelTrackerListener[] listeners = myListeners.toArray(new UsageModelTrackerListener[myListeners.size()]);
+  private void fireModelChanged(final boolean isPropertyChange) {
+    final UsageModelTrackerListener[] listeners = myListeners.toArray(new UsageModelTrackerListener[myListeners.size()]);
     for (int i = 0; i < listeners.length; i++) {
-      listeners[i].modelChanged();
+      listeners[i].modelChanged(isPropertyChange);
     }
   }
 }
