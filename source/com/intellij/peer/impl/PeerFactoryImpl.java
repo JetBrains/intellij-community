@@ -6,6 +6,10 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
@@ -28,7 +32,6 @@ import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
@@ -42,11 +45,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.lexer.Lexer;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -240,10 +238,6 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq) {
-    final Lexer lexer = lang.getParserDefinition().createLexer();
-    lexer.start(((LeafElement)tree).textToCharArray());
-    return new PsiBuilderImpl(lexer, SharedImplUtil.findCharTableByTree(tree),
-                              false, lang.getParserDefinition().getWhitespaceTokens(),
-                              lang.getParserDefinition().getCommentTokens());
+    return new PsiBuilderImpl(lang, SharedImplUtil.findCharTableByTree(tree), seq);
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,8 +37,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
                         String name,
                         CharSequence text,
                         final Language language) {
-    super(project, _createFileElement(text, language, project), language.getParserDefinition().getFileNodeType(),
-          FILE_TEXT_CHAMELEON, name);
+    super(project, _createFileElement(text, language), language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, name);
     myLanguage = language;
   }
 
@@ -52,17 +50,15 @@ public abstract class PsiFileBase extends PsiFileImpl {
   }
 
   protected final FileElement createFileElement(final CharSequence docText) {
-    return _createFileElement(docText, myLanguage, getProject());
+    return _createFileElement(docText, myLanguage);
   }
 
-  private static FileElement _createFileElement(final CharSequence docText, final Language language, final Project project) {
+  private static FileElement _createFileElement(final CharSequence docText, final Language language) {
     final ParserDefinition parserDefinition = language.getParserDefinition();
     final PsiParser parser = parserDefinition.createParser();
     final IElementType root = parserDefinition.getFileNodeType();
-    final Lexer lexer = parserDefinition.createLexer();
-    char[] text = CharArrayUtil.fromSequence(docText);
-    lexer.start(text, 0, docText.length());
-    final FileElement fileRoot = (FileElement) parser.parse(root, new PsiBuilderImpl(lexer, null, true, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens()));
+    final PsiBuilderImpl builder = new PsiBuilderImpl(language, null, docText);
+    final FileElement fileRoot = (FileElement) parser.parse(root, builder);
     LOG.assertTrue(fileRoot.getElementType() == root, "Parsing file text returns rootElement with type different from declared in parser definition");
     return fileRoot;
   }

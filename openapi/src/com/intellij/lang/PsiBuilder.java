@@ -10,8 +10,11 @@ import com.intellij.psi.tree.IElementType;
  * To change this template use File | Settings | File Templates.
  */
 public interface PsiBuilder {
+  CharSequence getOriginalText();
+
   IElementType getTokenType();
   void advanceLexer();
+  int getCurrentOffset();
 
   interface Marker {
     Marker preceed();

@@ -1,6 +1,8 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +10,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,22 +25,29 @@ import java.util.List;
 public class PsiBuilderImpl implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
-  private List<Token> myLexems = new ArrayList<Token>();
-  private MyList myProduction = new MyList();
+  private final List<Token> myLexems = new ArrayList<Token>();
+  private final MyList myProduction = new MyList();
 
-  private Lexer myLexer;
-  private boolean myFileLevelParsing;
-  private TokenSet myWhitespaces;
-  private TokenSet myComments;
-  private int myCurrentLexem;
+  private final Lexer myLexer;
+  private final boolean myFileLevelParsing;
+  private final TokenSet myWhitespaces;
+  private final TokenSet myComments;
+
   private CharTable myCharTable;
+  private int myCurrentLexem;
+  private CharSequence myText;
 
-  public PsiBuilderImpl(final Lexer lexer, final CharTable charTable, boolean fileLevelParsing, TokenSet whitespaces, TokenSet comments) {
+  public PsiBuilderImpl(Language lang, CharTable charTable, CharSequence text) {
+    myText = text;
+    ParserDefinition parserDefinition = lang.getParserDefinition();
+    myLexer = parserDefinition.createLexer();
+    myWhitespaces = parserDefinition.getWhitespaceTokens() != null ? parserDefinition.getWhitespaceTokens() : TokenSet.EMPTY;
+    myComments = parserDefinition.getCommentTokens() != null ? parserDefinition.getCommentTokens() : TokenSet.EMPTY;
     myCharTable = charTable;
-    myLexer = lexer;
-    myFileLevelParsing = fileLevelParsing;
-    myWhitespaces = whitespaces;
-    myComments = comments;
+    myFileLevelParsing = myCharTable == null;
+
+    char[] chars = CharArrayUtil.fromSequence(text);
+    myLexer.start(chars, 0, text.length());
   }
 
   private class StartMarker extends ProductionMarker implements Marker {
@@ -122,6 +132,10 @@ public class PsiBuilderImpl implements PsiBuilder {
     }
   }
 
+  public CharSequence getOriginalText() {
+    return myText;
+  }
+
   public IElementType getTokenType() {
     final Token lex = getCurrentToken();
     final IElementType tokenType = lex == null ? null : lex.getTokenType();
@@ -131,6 +145,12 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public void advanceLexer() {
     myCurrentLexem++;
+  }
+
+  public int getCurrentOffset() {
+    final PsiBuilderImpl.Token token = getCurrentToken();
+    if (token == null) return getOriginalText().length();
+    return token.myTokenStart;
   }
 
   public Token getCurrentToken() {
