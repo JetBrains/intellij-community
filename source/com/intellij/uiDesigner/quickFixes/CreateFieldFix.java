@@ -44,10 +44,8 @@ public final class CreateFieldFix extends QuickFix{
   }
 
   /**
-   * This method should be invoked inside write action.
-   *
    * @param showErrors if <code>true</code> the error messages will be shown to the
-   * use. Otherwise method works silently.
+   * user. Otherwise method works silently.
    */
   public static void runImpl(
     final GuiEditor editor,
@@ -60,6 +58,7 @@ public final class CreateFieldFix extends QuickFix{
     LOG.assertTrue(boundClass != null);
     LOG.assertTrue(fieldClassName != null);
     LOG.assertTrue(fieldName != null);
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = editor.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -70,21 +69,12 @@ public final class CreateFieldFix extends QuickFix{
     }
 
     if(!boundClass.isWritable()){
-      final boolean[] toReturn = new boolean[] {true};
-      if(showErrors){
-        ApplicationManager.getApplication().invokeLater(
-          new Runnable() {
-            public void run() {
-              toReturn[0] = RefactoringMessageUtil.checkReadOnlyStatus(
-                boundClass,
-                project,
-                "Cannot create field '" + fieldClassName + "'"
-              );
-            }
-          }
-        );
-      }
-      if (toReturn[0]) return;
+      if(showErrors) {
+        if (!RefactoringMessageUtil.checkReadOnlyStatus(boundClass, project,
+                                                        "Cannot create field '" + fieldClassName + "'")) {
+          return;
+        }
+      } else return;
     }
 
     final PsiClass fieldClass = PsiManager.getInstance(project).findClass(
@@ -93,27 +83,42 @@ public final class CreateFieldFix extends QuickFix{
     );
     if(fieldClass == null){
       if(showErrors){
-        ApplicationManager.getApplication().invokeLater(
-          new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(
-                editor,
-                "Cannot create field '" + fieldName + "' because\nclass '" + fieldClassName + "' does not exist.",
-                "Error"
-              );
-            }
-          }
+        Messages.showErrorDialog(
+          editor,
+          "Cannot create field '" + fieldName + "' because\nclass '" + fieldClassName + "' does not exist.",
+          "Error"
         );
       }
       return;
     }
 
-    // 1. Create field
+    ApplicationManager.getApplication().runWriteAction(
+      new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(
+            editor.getProject(),
+            new Runnable() {
+              public void run() {
+                createField(project, fieldClass, fieldName, boundClass, showErrors, editor);
+              }
+            },
+            "Create Field",
+            null
+          );
+        }
+      }
+    );
+  }
+
+  private static void createField(final Project project,
+                                  final PsiClass fieldClass,
+                                  final String fieldName,
+                                  final PsiClass boundClass,
+                                  final boolean showErrors, final GuiEditor editor) {// 1. Create field
     final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     final PsiType type = factory.createType(fieldClass);
     LOG.assertTrue(type != null);
     try {
-      // 2. Insert field into proper place of PsiFile
       final PsiField field = factory.createField(fieldName, type);
       boundClass.add(field);
     }
@@ -136,21 +141,6 @@ public final class CreateFieldFix extends QuickFix{
   }
 
   public void run() {
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(
-            myEditor.getProject(),
-            new Runnable() {
-              public void run() {
-                runImpl(myEditor, myClass, myFieldClassName, myFieldName, true);
-              }
-            },
-            getName(),
-            null
-          );
-        }
-      }
-    );
+    runImpl(myEditor, myClass, myFieldClassName, myFieldName, true);
   }
 }
