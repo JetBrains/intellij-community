@@ -117,6 +117,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
     new TreeSpeedSearch(myTree);
+    ToolTipManager.sharedInstance().registerComponent(myTree);
+    TreeToolTipHandler.install(myTree);
     final TreeExpander treeExpander = new TreeExpander() {
       public void expandAll() {
         TreeUtil.expandAll(myTree);
