@@ -1,8 +1,8 @@
 package com.intellij.lexer;
 
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.impl.source.tree.ElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -80,7 +80,7 @@ public class HtmlLexer extends BaseHtmlLexer {
   }
 
   public HtmlLexer() {
-    this(new _HtmlLexer(),true);
+    this(new FlexAdapter(new _HtmlLexer()),true);
   }
 
   protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {

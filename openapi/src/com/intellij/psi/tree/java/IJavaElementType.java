@@ -36,6 +36,6 @@ import com.intellij.psi.tree.IElementType;
 
 public class IJavaElementType extends IElementType {
   public IJavaElementType(String debugName) {
-    super(debugName, StdFileTypes.JAVA.getLanguage());
+    super(debugName, StdFileTypes.JAVA != null ? StdFileTypes.JAVA.getLanguage() : null);
   }
 }
