@@ -4,7 +4,9 @@ public class DfaValue {
   private final int myID;
 
   protected DfaValue() {
-    myID = DfaValueFactory.getInstance().createID(this);
+    final DfaValueFactory factory = DfaValueFactory.getInstance();
+    myID = factory.createID(this);
+    factory.registerID(this);
   }
 
   public int getID() {
