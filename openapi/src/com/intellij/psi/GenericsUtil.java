@@ -10,6 +10,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -22,7 +23,7 @@ public class GenericsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.GenericsUtil");
 
   public static PsiType getGreatestLowerBound(PsiType type1, PsiType type2) {
-    return PsiIntersectionType.createIntersection(new PsiType[] {type1, type2});
+    return PsiIntersectionType.createIntersection(new PsiType[]{type1, type2});
   }
 
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
@@ -33,13 +34,14 @@ public class GenericsUtil {
   private static PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Pair<PsiType, PsiType>> compared, PsiManager manager) {
     if (type1 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(((PsiCapturedWildcardType)type1).getUpperBound(), type2, compared, manager);
-    } else if (type2 instanceof PsiCapturedWildcardType) {
+    }
+    else if (type2 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(type1, ((PsiCapturedWildcardType)type2).getUpperBound(), compared, manager);
     }
 
     if (type1 instanceof PsiArrayType && type2 instanceof PsiArrayType) {
       final PsiType componentType = getLeastUpperBound(((PsiArrayType)type1).getComponentType(),
-                                                  ((PsiArrayType)type2).getComponentType(), manager);
+                                                       ((PsiArrayType)type2).getComponentType(), manager);
       if (componentType != null) {
         return componentType.createArrayType();
       }
@@ -103,18 +105,23 @@ public class GenericsUtil {
       if (type2 instanceof PsiWildcardType) {
         PsiWildcardType wild2 = (PsiWildcardType)type2;
         if (wild1.isExtends() == wild2.isExtends()) {
-          return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared, manager)) :
+          return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
+                                                                   getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared,
+                                                                                      manager)) :
                  wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
                  wild1;
-        } else {
+        }
+        else {
           return wild1.getBound().equals(wild2.getBound()) ? wild1.getBound() : PsiWildcardType.createUnbounded(manager);
         }
-      } else {
-        return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
-                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
-                 wild1;
       }
-    } else if (type2 instanceof PsiWildcardType) {
+      else {
+        return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
+               wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
+               wild1;
+      }
+    }
+    else if (type2 instanceof PsiWildcardType) {
       return getLeastContainingTypeArgument(type2, type1, compared, manager);
     }
     //Done with wildcards
@@ -133,7 +140,8 @@ public class GenericsUtil {
   private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers) {
     if (bClass.isInheritor(aClass, true)) {
       supers.add(aClass);
-    } else {
+    }
+    else {
       final PsiClass[] aSupers = aClass.getSupers();
       for (int i = 0; i < aSupers.length; i++) {
         PsiClass aSuper = aSupers[i];
@@ -162,5 +170,34 @@ public class GenericsUtil {
 
   public static boolean isFromExternalTypeLanguage (PsiType type) {
     return type.getInternalCanonicalText().equals(type.getCanonicalText());
+  }
+
+  public static PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
+    if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) {
+      return new PsiClass[]{aClass};
+    }
+
+    if (InheritanceUtil.isInheritorOrSelf(bClass, aClass, true)) {
+      return new PsiClass[]{bClass};
+    }
+
+    final Set<PsiClass> descendants = new LinkedHashSet<PsiClass>();
+
+    new Object() {
+      public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
+        if (aClass.isInheritor(bClass, true)) {
+          descendants.add(bClass);
+        }
+        else {
+          final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
+          final PsiClass[] bSubs = helper.findInheritors(bClass, helper.getAccessScope(bClass), true);
+          for (int i = 0; i < bSubs.length; i++) {
+            getLeastUpperClassesInner(bSubs[i], aClass, descendants);
+          }
+        }
+      }
+    }.getGreatestLowerClasses(aClass, bClass, descendants);
+
+    return descendants.toArray(new PsiClass[descendants.size()]);
   }
 }
