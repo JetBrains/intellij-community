@@ -18,6 +18,14 @@ public class DirectoryUrl extends AbstractUrl {
   public DirectoryUrl(String url, String moduleName) {
     super(url, moduleName,ELEMENT_TYPE);
   }
+  public static DirectoryUrl create(PsiDirectory directory) {
+    Project project = directory.getProject();
+    final VirtualFile virtualFile = directory.getVirtualFile();
+    if (virtualFile == null) return null;
+    final Module module = ModuleUtil.getModuleForFile(project, virtualFile);
+    if (module == null) return null;
+    return new DirectoryUrl(virtualFile.getUrl(), module.getName());
+  }
 
   public Object[] createPath(Project project) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
@@ -36,12 +44,7 @@ public class DirectoryUrl extends AbstractUrl {
 
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof PsiDirectory) {
-      Project project = ((PsiDirectory)element).getProject();
-      final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-      if (virtualFile == null) return null;
-      final Module module = ModuleUtil.getModuleForFile(project, virtualFile);
-      if (module == null) return null;
-      return new DirectoryUrl(virtualFile.getUrl(), module.getName());
+      return create((PsiDirectory)element);
     }
     return null;
   }

@@ -4,10 +4,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -15,7 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
-class MoveStatementHandler extends EditorActionHandler {
+class MoveStatementHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.MoveStatementHandler");
 
   private final boolean isDown;
@@ -24,7 +23,7 @@ class MoveStatementHandler extends EditorActionHandler {
     isDown = down;
   }
 
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void executeWriteAction(Editor editor, DataContext dataContext) {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
@@ -49,25 +48,28 @@ class MoveStatementHandler extends EditorActionHandler {
     final int selectionEnd = selectionModel.getSelectionEnd();
     final boolean hasSelection = selectionModel.hasSelection();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        document.deleteString(start, end);
-        document.insertString(insStart, toInsert);
-        documentManager.commitDocument(document);
+    document.deleteString(start, end);
+    document.insertString(insStart, toInsert);
+    documentManager.commitDocument(document);
 
-        caretModel.moveToLogicalPosition(new LogicalPosition(caretLine + (isDown ? 1 : -1), caretColumn));
-        if (hasSelection) {
-          restoreSelection(editor, selectionStart, selectionEnd, start, insStart);
-        }
+    caretModel.moveToLogicalPosition(new LogicalPosition(caretLine + (isDown ? 1 : -1), caretColumn));
+    if (hasSelection) {
+      restoreSelection(editor, selectionStart, selectionEnd, start, insStart);
+    }
 
-        try {
-          CodeStyleManager.getInstance(project).reformatRange(file, insStart, insEnd);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    try {
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      final int line1 = editor.offsetToLogicalPosition(insStart).line;
+      final int line2 = editor.offsetToLogicalPosition(insEnd).line;
+      for (int line = line1; line <= line2; line++) {
+        int lineStart = document.getLineStartOffset(line);
+        codeStyleManager.adjustLineIndent(file, lineStart);
       }
-    });
+      //codeStyleManager.reformatRange(file, insStart, insEnd);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
