@@ -15,7 +15,7 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
   }
 
   public boolean isDebugEnabled() {
-    return false;
+    return true;
   }
 
   public void debug(String message) {
