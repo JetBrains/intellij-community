@@ -88,8 +88,8 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
     if (Extensions.getAllAreas().length < 2) {
-      Extensions.registerAreaClass("PROJECT", null);
-      Extensions.registerAreaClass("MODULE", "PROJECT");
+      Extensions.registerAreaClass("IDEA_PROJECT", null);
+      Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
     }
   }
 
