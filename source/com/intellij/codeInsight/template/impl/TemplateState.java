@@ -342,10 +342,10 @@ public class TemplateState {
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
       final LookupItemPreferencePolicy preferencePolicy = new LookupItemPreferencePolicy() {
-        public int compare(Object o1, Object o2) {
-          if (o1.equals(o2)) return 0;
-          if (o1.equals(lookupItems[0])) return -1;
-          if (o2.equals(lookupItems[0])) return +1;
+        public int compare(LookupItem i1, LookupItem i2) {
+          if (i1.equals(i2)) return 0;
+          if (i1.equals(lookupItems[0])) return -1;
+          if (i2.equals(lookupItems[0])) return +1;
           return 0;
         }
 

@@ -65,9 +65,7 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   }
 
-  public int compare(final Object obj1, final Object obj2) {
-    LookupItem item1 = (LookupItem)obj1;
-    LookupItem item2 = (LookupItem)obj2;
+  public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
 
     Object o1 = item1.getObject();
