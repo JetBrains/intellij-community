@@ -2,9 +2,10 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -21,7 +22,6 @@ public class FlipConditionalIntention extends Intention
     {
         return "Flip Conditional";
     }
-
 
     public PsiElementPredicate getElementPredicate()
     {
