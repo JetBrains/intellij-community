@@ -11,13 +11,30 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface PsiBuilder {
-  interface Marker {}
+  interface Marker {
+  }
+
+  interface Lexem {
+    IElementType getTokenType();
+
+    String getTokenText();
+  }
+
+  void advanceLexer();
+
+  Lexem getCurrentLexem();
 
   Marker start(IElementType symbol);
+
   void rollbackTo(Marker marker);
+
   void drop(Marker marker);
+
   void done(Marker marker);
+
   void insertErrorElement(String messageText);
 
-  PsiElement getTreeBuilt();
+  boolean eof();
+
+  ASTNode getTreeBuilt();
 }

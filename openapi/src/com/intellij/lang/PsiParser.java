@@ -1,6 +1,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.lexer.Lexer;
 
 /**
@@ -11,5 +12,5 @@ import com.intellij.lexer.Lexer;
  * To change this template use File | Settings | File Templates.
  */
 public interface PsiParser {
-  PsiElement parse(Lexer lexer, PsiBuilder builder);
+  PsiElement parse(IElementType root, Lexer lexer, PsiBuilder builder);
 }

@@ -14,11 +14,12 @@ import com.intellij.lang.ASTNode;
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
   protected TreeElement next = null; // this var could be not only next element pointer in ChildElements
-                                     // use it _VERY_ carefuly!! If you are not sure use apropariate getter (getTreeNext()).
+  // use it _VERY_ carefuly!! If you are not sure use apropariate getter (getTreeNext()).
 
   public static final Key<PsiManager> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
+  public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("Element.PsiElement");
 
-  public Object clone(){
+  public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     clone.clearCaches();
     clone.next = null;
@@ -27,18 +28,18 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public ASTNode copyElement() {
     if (getTreeParent() != null) {
-      CompositeElement parentCopy = (CompositeElement)getTreeParent().copyElement();
-      synchronized (PsiLock.LOCK) {
-        int index = 0;
-        for (ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()) {
-          index++;
-        }
-        ASTNode child;
-        for (child = parentCopy.firstChild; index > 0; child = child.getTreeNext(), index--) {
-        }
-//child.putUserData(MANAGER_KEY, getManager()); //?
-        return child;
+                 CompositeElement parentCopy = (CompositeElement)getTreeParent().copyElement();
+    synchronized (PsiLock.LOCK) {
+      int index = 0;
+      for (ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()) {
+        index++;
       }
+      ASTNode child;
+      for (child = parentCopy.firstChild; index > 0; child = child.getTreeNext(), index--) {
+      }
+      //child.putUserData(MANAGER_KEY, getManager()); //?
+      return child;
+    }
     }
     else {
       final ASTNode clone = (ASTNode)clone();
@@ -49,17 +50,17 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public PsiManager getManager() {
     TreeElement element;
-    for(element = this; element.getTreeParent() != null; element = element.getTreeParent()){
+    for (element = this; element.getTreeParent() != null; element = element.getTreeParent()) {
     }
 
-    if (element instanceof FileElement){ //TODO!!
+    if (element instanceof FileElement) { //TODO!!
       return element.getManager();
     }
-    else{
+    else {
       if (getTreeParent() != null) {
         return getTreeParent().getManager();
       }
-      else{
+      else {
         return getUserData(MANAGER_KEY);
       }
     }
@@ -70,6 +71,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public abstract LeafElement findLeafElementAt(int offset);
 
   public abstract String getText();
+
   public abstract String getText(CharTable table);
 
   public abstract char[] textToCharArray();
@@ -77,35 +79,35 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public abstract boolean textContains(char c);
 
   public TextRange getTextRange() {
-    synchronized (PsiLock.LOCK) {
-      int start = getStartOffset();
-      return new TextRange(start, start + getTextLength());
-    }
+  synchronized (PsiLock.LOCK) {
+    int start = getStartOffset();
+    return new TextRange(start, start + getTextLength());
+  }
   }
 
   public int getStartOffset() {
-    synchronized (PsiLock.LOCK) {
-      final CompositeElement parent = getTreeParent();
-      if (parent == null) return 0;
-      int offset = parent.getStartOffset();
-      final CharTable table = SharedImplUtil.findCharTableByTree(this);
-      for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
-        offset += element1.getTextLength(table);
-      }
-      return offset;
+  synchronized (PsiLock.LOCK) {
+    final CompositeElement parent = getTreeParent();
+    if (parent == null) return 0;
+    int offset = parent.getStartOffset();
+    final CharTable table = SharedImplUtil.findCharTableByTree(this);
+    for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
+      offset += element1.getTextLength(table);
     }
+    return offset;
+  }
   }
 
-  public final int getStartOffsetInParent(){
+  public final int getStartOffsetInParent() {
     if (getTreeParent() == null) return -1;
     int offset = 0;
-    for(ASTNode child = getTreeParent().getFirstChildNode(); child != this; child = child.getTreeNext()){
+    for (ASTNode child = getTreeParent().getFirstChildNode(); child != this; child = child.getTreeNext()) {
       offset += child.getTextLength();
     }
     return offset;
   }
 
-  public int getTextOffset(){
+  public int getTextOffset() {
     return getStartOffset();
   }
 
@@ -113,25 +115,25 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     return textMatches(this, buffer, startOffset, endOffset) == endOffset;
   }
 
-  public int textStartsWith(CharSequence buffer, int startOffset, int endOffset){
+  public int textStartsWith(CharSequence buffer, int startOffset, int endOffset) {
     return textMatches(this, buffer, startOffset, endOffset);
   }
 
   private static int textMatches(ASTNode element, CharSequence buffer, int startOffset, int endOffset) {
-    synchronized (PsiLock.LOCK) {
-      if (element instanceof LeafElement) {
-        final LeafElement leaf = (LeafElement)element;
-        return leaf.textMatches(buffer, startOffset);
-      }
-      else {
-        int curOffset = startOffset;
-        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          curOffset = textMatches(child, buffer, curOffset, endOffset);
-          if (curOffset == -1) return -1;
-        }
-        return curOffset;
-      }
+  synchronized (PsiLock.LOCK) {
+    if (element instanceof LeafElement) {
+      final LeafElement leaf = (LeafElement)element;
+      return leaf.textMatches(buffer, startOffset);
     }
+    else {
+      int curOffset = startOffset;
+      for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        curOffset = textMatches(child, buffer, curOffset, endOffset);
+        if (curOffset == -1) return -1;
+      }
+      return curOffset;
+    }
+  }
   }
 
   public boolean textMatches(CharSequence seq) {
@@ -143,7 +145,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     return textMatches(element.getText());
   }
 
-  public String toString(){
+  public String toString() {
     return "Element" + "(" + getElementType().toString() + ")";
   }
 
@@ -159,7 +161,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public abstract void setTreePrev(TreeElement prev);
 
-  public void setTreeNext(TreeElement next){
+  public void setTreeNext(TreeElement next) {
     this.next = next;
   }
 
@@ -167,13 +169,13 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public abstract int getTextLength(CharTable charTableByTree);
 
-  public void clearCaches(){}
+  public void clearCaches() { }
 
-  public final boolean equals(Object obj){
+  public final boolean equals(Object obj) {
     return super.equals(obj);
   }
 
-  public final int hashCode(){
+  public final int hashCode() {
     return super.hashCode();
   }
 

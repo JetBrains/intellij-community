@@ -4,6 +4,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.Key;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,27 +17,46 @@ public interface ASTNode extends UserDataHolder {
   IElementType getElementType();
 
   String getText();
+
   boolean textContains(char c);
 
   int getStartOffset();
+
   int getTextLength();
+
   TextRange getTextRange();
 
   ASTNode getTreeParent();
+
   ASTNode getFirstChildNode();
+
   ASTNode getLastChildNode();
+
   ASTNode getTreeNext();
+
   ASTNode getTreePrev();
 
   ASTNode[] getChildren(TokenSet filter);
 
+  void addChild(ASTNode child);
+
   void addChild(ASTNode child, ASTNode anchorBefore);
+
   void removeChild(ASTNode child);
+
   void replaceChild(ASTNode oldChild, ASTNode newChild);
+
   void replaceAllChildrenToChildrenOf(ASTNode anotherParent);
+
   void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore);
 
   Object clone();
 
   ASTNode copyElement();
+
+  ASTNode findLeafElementAt(int offset);
+
+  <T> T getCopyableUserData(Key<T> key);
+
+  <T> void putCopyableUserData(Key<T> key, T value);
 }

@@ -23,6 +23,9 @@ public class SourceTreeToPsiMap {
       return RepositoryElementsManager.getOrFindPsiElement((RepositoryTreeElement)element);
     }
     else {
+      PsiElement psiElement = element.getUserData(TreeElement.PSI_ELEMENT_KEY);
+      if (psiElement != null) return psiElement;
+
       LOG.error("Not PsiElement:" + element);
       return null;
     }
@@ -38,6 +41,9 @@ public class SourceTreeToPsiMap {
     }
     else if (psiElement instanceof SrcRepositoryPsiElement) {
       return RepositoryElementsManager.getOrFindTreeElement((SrcRepositoryPsiElement)psiElement);
+    }
+    else if (psiElement instanceof ASTWrapperPsiElement) {
+      return ((ASTWrapperPsiElement)psiElement).getNode();
     }
     else {
       LOG.error("Not TreeElement:" + psiElement);

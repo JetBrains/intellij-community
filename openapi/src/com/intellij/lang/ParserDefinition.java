@@ -13,6 +13,8 @@ import com.intellij.psi.tree.IElementType;
  */
 public interface ParserDefinition {
   Lexer createLexer();
+
   PsiParser createParser();
+
   PsiElement createElement(ASTNode node);
 }
