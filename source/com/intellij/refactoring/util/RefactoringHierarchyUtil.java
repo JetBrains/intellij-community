@@ -83,7 +83,7 @@ public class RefactoringHierarchyUtil {
    * @param sortAlphabetically if false, sorted in DFS order
    * @return
    */
-  public static ArrayList createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
+  public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
     LinkedHashSet<PsiClass> bases = new LinkedHashSet<PsiClass>();
     getSuperClasses(subClass, bases, includeNonProject);
 

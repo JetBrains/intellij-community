@@ -32,7 +32,7 @@ public class PullUpDialog extends DialogWrapper {
   private MemberSelectionPanel myMemberSelectionPanel;
   private MyMemberInfoModel myMemberInfoModel;
   private final PsiClass myClass;
-  private final List mySuperClasses;
+  private final List<PsiClass> mySuperClasses;
   private final MemberInfoStorage myMemberInfoStorage;
   private MemberInfo[] myMemberInfos;
   private JavaDocPanel myJavaDocPanel;
@@ -44,7 +44,7 @@ public class PullUpDialog extends DialogWrapper {
   }
 
 
-  public PullUpDialog(Project project, PsiClass aClass, List superClasses,
+  public PullUpDialog(Project project, PsiClass aClass, List<PsiClass> superClasses,
                       MemberInfoStorage memberInfoStorage, Callback callback) {
     super(project, true);
     myClass = aClass;

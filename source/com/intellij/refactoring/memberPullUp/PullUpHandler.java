@@ -89,7 +89,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       return;
     }
 
-    ArrayList bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
+    ArrayList<PsiClass> bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
 
     if (bases.isEmpty()) {
       String message =
@@ -151,8 +151,11 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       try {
+        final PsiClass superClass = dialog.getSuperClass();
+        if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, superClass)) return;
+
         PullUpHelper helper = new PullUpHelper(mySubclass,
-                dialog.getSuperClass(),
+                                               superClass,
                 dialog.getSelectedMemberInfos(),
                 new JavaDocPolicy(dialog.getJavaDocPolicy())
         );
