@@ -341,9 +341,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void configureActions(final UsageViewContext context) {
-    context.getUsageView().addPerformOperationAction(
+    context.getUsageView().addButtonToLowerPane(
       new Runnable() {
-       public void run() {
+        public void run() {
+          context.getUsageView().close();
           SwingUtilities.invokeLater( new Runnable() {
             public void run() {
               UIUtil.invokeActionAnotherTime(context.getConfiguration(),searchContext);
@@ -351,8 +352,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           });
        }
       },
-      "Edit Query",
-      null,
       "Edit Query",
       'Q'
     );
