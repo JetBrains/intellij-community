@@ -112,14 +112,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
-    FileInfo[] result = new FileInfo[files.length];
-    for (int i = 0; i < result.length; i++) {
+    List<FileInfo> fileInfos = new ArrayList<FileInfo>();
+    for (int i = 0; i < files.length; i++) {
       final VirtualFile file = files[i];
       if (!file.isWritable()) {
-        result[i] = new FileInfo(file, myProject);
+        fileInfos.add(new FileInfo(file, myProject));
       }
     }
-    return result;
+    return fileInfos.toArray(new FileInfo[fileInfos.size()]);
   }
 
   public void projectOpened() {
