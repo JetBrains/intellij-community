@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import electric.util.directory.filters.NameFilter;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -69,7 +71,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      JspAttributeValue.class,
+      XmlAttributeValue.class,
       new JavaClassReferenceProvider()
     );
     RegisterInPsi.referenceProviders(this);

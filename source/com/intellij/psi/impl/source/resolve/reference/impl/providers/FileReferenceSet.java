@@ -1,23 +1,22 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.jsp.WebDirectoryElement;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.jsp.JspImplUtil;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.JspImplUtil;
+import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.WebDirectoryElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,12 +34,14 @@ public class FileReferenceSet {
   private final int myStartInElement;
   private final ReferenceType myType;
   private final PsiReferenceProvider myProvider;
+  private String myPathString;
 
   public FileReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, PsiReferenceProvider provider){
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
     myProvider = provider;
+    myPathString = str.trim();
 
     reparse(str);
   }
@@ -60,8 +61,9 @@ public class FileReferenceSet {
                                                           myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
                                             index++, subreferenceText);
       referencesList.add(currentContextRef);
-      if((currentSlash = nextSlash) < 0)
+      if ((currentSlash = nextSlash) < 0) {
         break;
+      }
     }
 
     myReferences = referencesList.toArray(new Reference[referencesList.size()]);
@@ -129,7 +131,7 @@ public class FileReferenceSet {
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       } else if (context instanceof PsiDirectory) {
-        final PsiElement[] children = ((PsiDirectory)context).getChildren();
+        final PsiElement[] children = context.getChildren();
 
         for (int i = 0; i < children.length; i++) {
           PsiFileSystemItem item = (PsiFileSystemItem) children[i];
@@ -156,7 +158,7 @@ public class FileReferenceSet {
       } else if (context instanceof PsiDirectory) {
         if (".".equals(myText)) return context;
         if ("..".equals(myText)) return ((PsiDirectory)context).getParentDirectory();
-        PsiElement[] children = ((PsiElement)context).getChildren();
+        PsiElement[] children = context.getChildren();
 
         for (int i = 0; i < children.length; i++) {
           PsiFileSystemItem child = (PsiFileSystemItem)children[i];
@@ -171,8 +173,9 @@ public class FileReferenceSet {
     }
 
     public boolean isReferenceTo(PsiElement element) {
-      if(element instanceof WebDirectoryElement || element instanceof PsiFile)
+      if (element instanceof WebDirectoryElement || element instanceof PsiFile) {
         return super.isReferenceTo(element);
+      }
       return false;
     }
 
@@ -193,7 +196,12 @@ public class FileReferenceSet {
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
-      throw new IncorrectOperationException("NYI");
+      if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
+
+      final String newName = JspUtil.getDeploymentPath(((PsiFileSystemItem)element));
+      final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+      final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
+      return finalElement;
     }
   }
 
@@ -201,16 +209,15 @@ public class FileReferenceSet {
     return false;
   }
 
-  public static PsiElement getDefaultContext (PsiElement element) {
+  public PsiElement getDefaultContext (PsiElement element) {
     Project project = element.getProject();
-    final String path = element.getText().trim();
-    PsiFile file = (PsiFile)element.getContainingFile();
+    PsiFile file = element.getContainingFile();
 
     if (!(file.isPhysical())) file = file.getOriginalFile();
     if (file == null) return null;
     final WebModuleProperties properties = JspImplUtil.getWebModuleProperties(file);
 
-    if (path.startsWith(SEPARATOR_STRING)) {
+    if (myPathString.startsWith(SEPARATOR_STRING)) {
       if (properties != null) {
         return JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
       } else {
