@@ -102,9 +102,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     EncapsulateFieldsDialog dialog = new EncapsulateFieldsDialog(
             project,
             aClass,
-            preselectedFields,
-            new EncapsulateFieldsProcessor(project)
-    );
+            preselectedFields);
     dialog.show();
   }
 }

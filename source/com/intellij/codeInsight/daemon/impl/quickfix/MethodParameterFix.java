@@ -74,8 +74,7 @@ public class MethodParameterFix implements IntentionAction {
                                                                         false, null,
                                                                         method.getName(),
                                                                         method.getReturnType(),
-                                                                        getNewParametersInfo(),
-                                                                        BaseRefactoringProcessor.EMPTY_CALLBACK);
+                                                                        getNewParametersInfo());
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         processor.testRun();

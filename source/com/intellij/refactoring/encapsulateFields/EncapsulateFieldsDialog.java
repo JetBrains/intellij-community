@@ -37,10 +37,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
           "#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDialog"
   );
 
-  public static interface Callback {
-    void run(EncapsulateFieldsDialog dialog);
-  }
-
   private static final int CHECKED_COLUMN = 0;
   private static final int FIELD_COLUMN = 1;
   private static final int GETTER_COLUMN = 2;
@@ -48,7 +44,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
 
   private final Project myProject;
   private final PsiClass myClass;
-  private final Callback myCallback;
 
   private PsiField[] myFields;
   private boolean[] myCheckedMarks;
@@ -90,11 +85,10 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     myRbFieldProtected.setFocusable(false);
   }
 
-  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields, Callback callback) {
+  public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields) {
     super(project, true);
     myProject = project;
     myClass = aClass;
-    myCallback = callback;
 
     String title = "Encapsulate Fields";
     String qName = myClass.getQualifiedName();
@@ -438,13 +432,14 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
       }
     }
     String errorString = validateData();
-    if (errorString == null) {
-      myCallback.run(this);
-      RefactoringSettings settings = RefactoringSettings.getInstance();
-      settings.ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = myCbUseAccessorsWhenAccessible.isSelected();
-    } else { // were errors
+    if (errorString != null) { // were errors
       RefactoringMessageUtil.showErrorMessage("Encapsulate Fields", errorString, HelpID.ENCAPSULATE_FIELDS, myProject);
+      return;
     }
+
+    invokeRefactoring(new EncapsulateFieldsProcessor(myProject, this));
+    RefactoringSettings settings = RefactoringSettings.getInstance();
+    settings.ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = myCbUseAccessorsWhenAccessible.isSelected();
   }
 
   /**

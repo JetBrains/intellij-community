@@ -60,30 +60,28 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private final PsiMethod[] myPropagateExceptionsEndPoints;
 
   public ChangeSignatureProcessor(Project project,
-                                PsiMethod method,
-                                final boolean generateDelegate,
-                                String newVisibility,
-                                String newName,
-                                PsiType newType,
-                                ParameterInfo[] parameterInfo,
-                                Runnable prepareSuccessfulCallback) {
+                                  PsiMethod method,
+                                  final boolean generateDelegate,
+                                  String newVisibility,
+                                  String newName,
+                                  PsiType newType,
+                                  ParameterInfo[] parameterInfo) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, null, prepareSuccessfulCallback, null, null);
+         parameterInfo, null, null, null);
   }
 
   public ChangeSignatureProcessor(Project project,
-                                PsiMethod method,
-                                final boolean generateDelegate,
-                                String newVisibility,
-                                String newName,
-                                PsiType newType,
-                                ParameterInfo[] parameterInfo,
-                                ThrownExceptionInfo[] exceptionInfos,
-                                Runnable prepareSuccessfulCallback) {
+                                  PsiMethod method,
+                                  final boolean generateDelegate,
+                                  String newVisibility,
+                                  String newName,
+                                  PsiType newType,
+                                  ParameterInfo[] parameterInfo,
+                                  ThrownExceptionInfo[] exceptionInfos) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-         parameterInfo, exceptionInfos, prepareSuccessfulCallback, null, null);
+         parameterInfo, exceptionInfos, null, null);
   }
 
   public ChangeSignatureProcessor(Project project,
@@ -94,10 +92,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   CanonicalTypes.Type newType,
                                   ParameterInfo[] parameterInfo,
                                   ThrownExceptionInfo[] thrownExceptions,
-                                  Runnable prepareSuccessfulCallback,
                                   PsiMethod[] propagateParametersEndPoints,
                                   PsiMethod[] propagateExceptionsEndPoints) {
-    super(project, prepareSuccessfulCallback);
+    super(project);
     myGenerateDelegate = generateDelegate;
     myPropagateParametersEndPoints = propagateParametersEndPoints;
     myPropagateExceptionsEndPoints = propagateExceptionsEndPoints;

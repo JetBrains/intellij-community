@@ -1,22 +1,25 @@
 
 package com.intellij.refactoring.inline;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class InlineMethodDialog extends RefactoringDialog implements InlineOptions {
   public static final String REFACTORING_NAME = "Inline Method";
+  private PsiJavaCodeReferenceElement myReferenceElement;
+  private final Editor myEditor;
+
   public static interface Callback {
     void run(InlineMethodDialog dialog);
   }
@@ -25,16 +28,16 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
 
   private final PsiMethod myMethod;
   private final boolean myInvokedOnReference;
-  private final Callback myCallback;
 
   private JRadioButton myRbInlineAll;
   private JRadioButton myRbInlineThisOnly;
 
-  public InlineMethodDialog(Project project, PsiMethod method, boolean invokedOnReference, Callback callback) {
+  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor) {
     super(project, true);
     myMethod = method;
-    myInvokedOnReference = invokedOnReference;
-    myCallback = callback;
+    myReferenceElement = ref;
+    myEditor = editor;
+    myInvokedOnReference = ref != null;
 
     setTitle(REFACTORING_NAME);
 
@@ -101,7 +104,7 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
   }
 
   protected void doAction() {
-    myCallback.run(this);
+    invokeRefactoring(new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly()));
     RefactoringSettings settings = RefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();

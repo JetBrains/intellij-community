@@ -131,8 +131,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
         psiMethod,
         false, null, psiMethod.getName(),
         PsiType.VOID,
-        infos,
-        BaseRefactoringProcessor.EMPTY_CALLBACK);
+        infos);
 
       csp.run(null);
     }

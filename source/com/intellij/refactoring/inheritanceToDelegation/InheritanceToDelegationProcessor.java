@@ -50,8 +50,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private final HashMap<PsiMethod,String> myDelegatedMethodsVisibility;
   private final LinkedHashSet<PsiMethod> myOverridenMethods;
 
-  private boolean myPreviewUsages;
-
   private final PsiClass myBaseClass;
   private final Set<Object> myBaseClassMembers;
   private final String myFieldName;
@@ -69,19 +67,20 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   public InheritanceToDelegationProcessor(Project project,
                                           PsiClass aClass,
-                                          PsiClass targetBaseClass, String fieldName, String innerClassName,
-                                          PsiClass[] delegatedInterfaces, PsiMethod[] delegatedMethods,
-                                          boolean delegateOtherMembers, boolean generateGetter,
-                                          boolean previewUsages,
-                                          Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
+                                          PsiClass targetBaseClass,
+                                          String fieldName,
+                                          String innerClassName,
+                                          PsiClass[] delegatedInterfaces,
+                                          PsiMethod[] delegatedMethods,
+                                          boolean delegateOtherMembers,
+                                          boolean generateGetter) {
+    super(project);
 
     myClass = aClass;
     myInnerClassName = innerClassName;
     myIsDelegateOtherMembers = delegateOtherMembers;
     myManager = myClass.getManager();
     myFactory = myManager.getElementFactory();
-    myPreviewUsages = previewUsages;
 
     myBaseClass = targetBaseClass;
     LOG.assertTrue(

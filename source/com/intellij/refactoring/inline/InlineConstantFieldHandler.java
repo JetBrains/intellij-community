@@ -50,9 +50,8 @@ public class InlineConstantFieldHandler {
     if (!invokedOnReference && !field.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, field)) return;
     }
-    PsiReferenceExpression element = reference != null ? (PsiReferenceExpression)reference.getElement() : null;
-    final InlineConstantFieldProcessor processor = new InlineConstantFieldProcessor(field, project, element, editor);
-    InlineFieldDialog dialog = new InlineFieldDialog(project, field, invokedOnReference, processor);
+    PsiReferenceExpression refExpression = reference != null ? (PsiReferenceExpression)reference.getElement() : null;
+    InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();
   }
 }

@@ -124,8 +124,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             false, null,
                             method.getName(),
                             method.getReturnType(),
-                            myNewParametersInfo,
-                            BaseRefactoringProcessor.EMPTY_CALLBACK);
+                            myNewParametersInfo);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         processor.testRun();
       }
@@ -141,24 +140,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
     else {
       final List<ParameterInfo> parameterInfos = Arrays.asList(myNewParametersInfo);
-      final ChangeSignatureDialog.Callback callback = new ChangeSignatureDialog.Callback() {
-            public void run(final ChangeSignatureDialog dialog) {
-              new ChangeSignatureProcessor(
-                      project,
-                      method,
-                      false, dialog.getVisibility(),
-                      dialog.getMethodName(),
-                      dialog.getReturnType(),
-                      dialog.getParameters(),
-                      null,
-                      new Runnable() {
-                        public void run() {
-                          dialog.close(DialogWrapper.OK_EXIT_CODE);
-                        }
-                      }, null, null).run(null);
-            }
-          };
-      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, callback);
+      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
     }

@@ -60,8 +60,7 @@ public class MethodReturnFix implements IntentionAction {
         false, null,
         method.getName(),
         myReturnType,
-        RemoveUnusedParameterFix.getNewParametersInfo(method, null),
-        BaseRefactoringProcessor.EMPTY_CALLBACK);
+        RemoveUnusedParameterFix.getNewParametersInfo(method, null));
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       processor.testRun();
     }

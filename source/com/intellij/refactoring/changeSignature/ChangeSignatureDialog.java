@@ -48,7 +48,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     "#com.intellij.refactoring.changeSignature.ChangeSignatureDialog");
   private Project myProject;
   private PsiMethod myMethod;
-  private final Callback myCallback;
   private final boolean myAllowDelegation;
   private EditorTextField myNameField;
   private EditorTextField myReturnTypeField;
@@ -67,17 +66,12 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private PsiMethod[] myMethodsToPropagateParameters = null;
   private PsiMethod[] myMethodsToPropagateExceptions = null;
 
-  public interface Callback {
-    void run(ChangeSignatureDialog dialog);
-  }
-
-  public ChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation, Callback callback) {
+  public ChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation) {
     super(project, true);
     myProject = project;
     myMethod = method;
     myParametersTableModel = new ParameterTableModel(myMethod.getParameterList(), this);
     myExceptionsTableModel = new ExceptionsTableModel(myMethod.getThrowsList());
-    myCallback = callback;
     myAllowDelegation = allowDelegation;
 
     setParameterInfos(getParameterInfos(method));
@@ -520,7 +514,12 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       Messages.showWarningDialog(myProject, "Recursive propagation of thrown exceptions changes won't be performed", ChangeSignatureHandler.REFACTORING_NAME);
       myMethodsToPropagateExceptions = null;
     }
-    myCallback.run(this);
+
+    invokeRefactoring(new ChangeSignatureProcessor(getProject(), myMethod, isGenerateDelegate(),
+                                                   getVisibility(), getMethodName(), getReturnType(),
+                                                   getParameters(), getExceptions(),
+                                                   getEndPointsToPropagateParameters(),
+                                                   getEndPointsToPropagateExceptions()));
   }
 
   private String validateAndCommitData() {

@@ -74,26 +74,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     }
 
     final PsiClass containingClass = method.getContainingClass();
-    final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(), new ChangeSignatureDialog.Callback() {
-      public void run(final ChangeSignatureDialog dialog) {
-        new ChangeSignatureProcessor(
-                project,
-                method,
-                dialog.isGenerateDelegate(),
-                dialog.getVisibility(),
-                dialog.getMethodName(),
-                dialog.getReturnType(),
-                dialog.getParameters(),
-                dialog.getExceptions(),
-                new Runnable() {
-                  public void run() {
-                    dialog.close(DialogWrapper.OK_EXIT_CODE);
-                  }
-                },
-                dialog.getEndPointsToPropagateParameters(),
-                dialog.getEndPointsToPropagateExceptions()).run(null);
-      }
-    });
+    final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface());
     dialog.show();
   }
 

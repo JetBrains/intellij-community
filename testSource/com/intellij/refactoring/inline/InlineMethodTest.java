@@ -3,12 +3,10 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.inline.InlineMethodProcessor;
-import com.intellij.refactoring.inline.InlineOptions;
 import com.intellij.refactoring.MockInlineMethodOptions;
-import com.intellij.idea.IdeaTestUtil;
 
 import java.util.Calendar;
 
@@ -89,9 +87,9 @@ public class InlineMethodTest extends CodeInsightTestCase {
     final boolean condition = InlineMethodProcessor.checkBadReturns((PsiMethod) element);
     assertFalse("Bad returns found", condition);
     PsiMethod method = (PsiMethod)element;
-    final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, null, myEditor);
-    InlineOptions dialog = new MockInlineMethodOptions();
-      //new InlineMethodDialog(myProject, method, false, processor);
-    processor.testRun(dialog);
+    InlineOptions options = new MockInlineMethodOptions();
+    final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, null, myEditor, options.isInlineThisOnly());
+    //new InlineMethodDialog(myProject, method, false, processor);
+    processor.testRun();
   }
 }

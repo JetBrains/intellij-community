@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -24,11 +23,10 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 
-public class InheritanceToDelegationHandler implements RefactoringActionHandler, InheritanceToDelegationDialog.Callback {
+public class InheritanceToDelegationHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
   public static final String REFACTORING_NAME = "Replace Inheritance With Delegation";
 
-  private Project myProject;
   private PsiClass myClass;
   private static final MemberInfo.Filter MEMBER_INFO_FILTER = new MemberInfo.Filter() {
     public boolean includeMember(PsiMember element) {
@@ -70,7 +68,6 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
-    myProject = project;
     myClass = (PsiClass) elements[0];
 
     if (myClass.isInterface()) {
@@ -103,8 +100,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
 
     new InheritanceToDelegationDialog(project, myClass,
-            bases, basesToMemberInfos, this
-    ).show();
+            bases, basesToMemberInfos).show();
   }
 
   private MemberInfo[] createBaseClassMemberInfos(PsiClass baseClass) {
@@ -123,32 +119,5 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
     final MemberInfo[] targetClassMemberInfos = memberInfoList.toArray(new MemberInfo[memberInfoList.size()]);
     return targetClassMemberInfos;
-  }
-
-  public void run(final InheritanceToDelegationDialog dialog) {
-    final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
-    final ArrayList<PsiClass> implementedInterfaces = new ArrayList<PsiClass>();
-    final ArrayList<PsiMethod> delegatedMethods = new ArrayList<PsiMethod>();
-
-    for (int i = 0; i < selectedMemberInfos.length; i++) {
-      MemberInfo memberInfo = selectedMemberInfos[i];
-      final PsiElement member = memberInfo.getMember();
-      if (member instanceof PsiClass && Boolean.FALSE.equals(memberInfo.getOverrides())) {
-        implementedInterfaces.add((PsiClass)member);
-      } else if (member instanceof PsiMethod) {
-        delegatedMethods.add((PsiMethod)member);
-      }
-    }
-    new InheritanceToDelegationProcessor(myProject, myClass,
-            dialog.getSelectedTargetClass(), dialog.getFieldName(), dialog.getInnerClassName(),
-            implementedInterfaces.toArray(new PsiClass[implementedInterfaces.size()]),
-            delegatedMethods.toArray(new PsiMethod[delegatedMethods.size()]),
-            dialog.isGenerateGetter(), dialog.isGenerateGetter(),
-            dialog.isPreviewUsages(), new Runnable() {
-              public void run() {
-                dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }
-    ).run(null);
   }
 }

@@ -60,7 +60,10 @@ public abstract class RefactoringFactory {
                                                                                                PsiClass targetClass,
                                                                                                String factoryName);
 
-  public abstract TypeCookRefactoring createTypeCook(PsiElement[] elements);
+  public abstract TypeCookRefactoring createTypeCook(PsiElement[] elements,
+                                                     boolean dropObsoleteCasts,
+                                                     boolean leaveObjectsRaw,
+                                                     boolean preserveRawArrays);
 
   /**
    * Creates Introduce Parameter refactoring that replaces local variable with parameter.

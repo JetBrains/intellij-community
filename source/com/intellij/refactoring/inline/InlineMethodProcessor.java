@@ -8,9 +8,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -35,13 +33,13 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
-public class InlineMethodProcessor extends BaseRefactoringProcessor implements InlineMethodDialog.Callback {
+public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
 
   private PsiMethod myMethod;
   private PsiJavaCodeReferenceElement myReference;
   private Editor myEditor;
-  private InlineOptions myDialog;
+  private final boolean myInlineThisOnly;
 
   private PsiManager myManager;
   private PsiElementFactory myFactory;
@@ -55,11 +53,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
   public InlineMethodProcessor(Project project,
                                PsiMethod method,
                                PsiJavaCodeReferenceElement reference,
-                               Editor editor) {
+                               Editor editor,
+                               boolean isInlineThisOnly) {
     super(project);
     myMethod = method;
     myReference = reference;
     myEditor = editor;
+    myInlineThisOnly = isInlineThisOnly;
 
     myManager = PsiManager.getInstance(myProject);
     myFactory = myManager.getElementFactory();
@@ -71,23 +71,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
     return "Inlining method " + myDescriptiveName;
   }
 
-  public void run(InlineMethodDialog dialog) {
-    myDialog = dialog;
-    run((Object)null);
-  }
-
-  public void testRun(InlineOptions dialog) {
-    myDialog = dialog;
-    UsageInfo[] usages = findUsages();
-    performRefactoring(usages);
-  }
-
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
     return new InlineViewDescriptor(myMethod, usages, refreshCommand);
   }
 
   protected UsageInfo[] findUsages() {
-    if (myDialog.isInlineThisOnly()) return new UsageInfo[]{new UsageInfo(myReference)};
+    if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     PsiSearchHelper helper = myManager.getSearchHelper();
     PsiReference[] refs = helper.findReferences(myMethod, GlobalSearchScope.projectScope(myProject), true);
     UsageInfo[] infos = new UsageInfo[refs.length];
@@ -131,19 +120,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
       }
     }
 
-    if (myDialog != null && conflicts.size() > 0) {
+    if (conflicts.size() > 0) {
       ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]),
                                                    myProject);
       dialog.show();
-      if (!dialog.isOK()) return false;
+      if (!dialog.isOK()) {
+        prepareSuccessful();
+        return false;
+      }
     }
 
-    // make sure that dialog is closed in swing thread
-    ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
-      public void run() {
-        myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      }
-    });
+    prepareSuccessful();
     return true;
   }
 
@@ -203,7 +190,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
 
   private void doRefactoring(UsageInfo[] usages) {
     try {
-      if (myDialog.isInlineThisOnly()) {
+      if (myInlineThisOnly) {
         if (myMethod.isConstructor()) {
           PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall(myReference);
           if (constructorCall != null) {

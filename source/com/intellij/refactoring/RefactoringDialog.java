@@ -51,10 +51,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
+  private Project myProject;
 
   protected RefactoringDialog(Project project, boolean canBeParent) {
     super (project, canBeParent);
     myCbPreviewResults = true;
+    myProject = project;
   }
 
   final public boolean isPreviewUsages() {
@@ -131,6 +133,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
       return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction()};
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   private class RefactorAction extends AbstractAction {
     public RefactorAction() {
       putValue(Action.NAME, "Refactor");
@@ -152,4 +158,14 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
   }
 
+  protected void invokeRefactoring(BaseRefactoringProcessor processor) {
+    final Runnable prepareSuccessfulCallback = new Runnable() {
+      public void run() {
+        close(DialogWrapper.OK_EXIT_CODE);
+      }
+    };
+    processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
+    processor.setPreviewUsages(isPreviewUsages());
+    processor.run(null);
+  }
 }

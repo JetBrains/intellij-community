@@ -109,8 +109,11 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
     return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, originalClass, targetClass, factoryName);
   }
 
-  public TypeCookRefactoring createTypeCook(PsiElement[] elements) {
-    return new TypeCookRefactoringImpl(myProject, elements);
+  public TypeCookRefactoring createTypeCook(PsiElement[] elements,
+                                            boolean dropObsoleteCasts,
+                                            boolean leaveObjectsRaw,
+                                            boolean preserveRawArrays) {
+    return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays);
   }
 
   public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,

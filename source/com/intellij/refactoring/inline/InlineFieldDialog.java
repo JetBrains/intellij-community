@@ -2,39 +2,35 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class InlineFieldDialog extends RefactoringDialog implements InlineOptions {
   public static final String REFACTORING_NAME = "Inline Field";
-  public static interface Callback {
-    void run(InlineFieldDialog dialog);
-  }
+  private PsiReferenceExpression myReferenceExpression;
 
   private JLabel myFieldNameLabel = new JLabel();
 
   private final PsiField myField;
   private final boolean myInvokedOnReference;
-  private final Callback myCallback;
 
   private JRadioButton myRbInlineAll;
   private JRadioButton myRbInlineThisOnly;
 
-  public InlineFieldDialog(Project project, PsiField field, boolean invokedOnReference, Callback callback) {
+  public InlineFieldDialog(Project project, PsiField field, PsiReferenceExpression ref) {
     super(project, true);
     myField = field;
-    myInvokedOnReference = invokedOnReference;
-    myCallback = callback;
+    myReferenceExpression = ref;
+    myInvokedOnReference = myReferenceExpression != null;
 
     setTitle(REFACTORING_NAME);
 
@@ -101,7 +97,7 @@ public class InlineFieldDialog extends RefactoringDialog implements InlineOption
   }
 
   protected void doAction() {
-    myCallback.run(this);
+    invokeRefactoring(new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly()));
     RefactoringSettings settings = RefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();

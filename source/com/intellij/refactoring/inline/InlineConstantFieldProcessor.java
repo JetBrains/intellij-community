@@ -2,12 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -28,18 +23,17 @@ import java.util.Iterator;
 /**
  * @author ven
  */
-class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements InlineFieldDialog.Callback {
+class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineConstantFieldProcessor");
   private PsiField myField;
-  private InlineFieldDialog myDialog;
   private PsiReferenceExpression myRefExpr;
-  private Editor myEditor;
+  private final boolean myInlineThisOnly;
 
-  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, Editor editor) {
+  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
     super(project);
     myField = field;
     myRefExpr = ref;
-    myEditor = editor;
+    myInlineThisOnly = isInlineThisOnly;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -48,7 +42,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
 
   protected UsageInfo[] findUsages() {
     PsiManager manager = myField.getManager();
-    if (myDialog.isInlineThisOnly()) return new UsageInfo[]{new UsageInfo(myRefExpr)};
+    if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
     PsiSearchHelper helper = manager.getSearchHelper();
     PsiReference[] refs = helper.findReferences(myField, GlobalSearchScope.projectScope(myProject), false);
@@ -68,15 +62,6 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    int col = -1;
-    int line = -1;
-    if (myEditor != null) {
-      col = myEditor.getCaretModel().getLogicalPosition().column;
-      line = myEditor.getCaretModel().getLogicalPosition().line;
-      LogicalPosition pos = new LogicalPosition(0, 0);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
-    }
-
     PsiExpression initializer = myField.getInitializer();
     LOG.assertTrue(initializer != null);
 
@@ -114,18 +99,13 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
       }
     }
 
-    if (!myDialog.isInlineThisOnly()) {
+    if (!myInlineThisOnly) {
       try {
         myField.delete();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }
-
-    if (myEditor != null) {
-      LogicalPosition pos = new LogicalPosition(line, col);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
     }
   }
 
@@ -184,18 +164,17 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
       }
     }
 
-    if (myDialog != null && conflicts.size() > 0) {
+    if (conflicts.size() > 0) {
       ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]),
                                                    myProject);
       dialog.show();
-      if (!dialog.isOK()) return false;
+      if (!dialog.isOK()) {
+        prepareSuccessful();
+        return false;
+      }
     }
 
-    ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
-      public void run() {
-        myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      }
-    });
+    prepareSuccessful();
     return true;
   }
 
@@ -205,10 +184,5 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor implements I
     }
 
     return PsiUtil.isAccessedForWriting(expr);
-  }
-
-  public void run(InlineFieldDialog dialog) {
-    myDialog = dialog;
-    this.run((Object)null);
   }
 }

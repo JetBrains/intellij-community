@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
-public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor implements EncapsulateFieldsDialog.Callback {
+public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
 
   private PsiClass myClass;
@@ -41,8 +41,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor impleme
   private HashMap<String,PsiMethod> myNameToGetter;
   private HashMap<String,PsiMethod> myNameToSetter;
 
-  public EncapsulateFieldsProcessor(Project project) {
+  public EncapsulateFieldsProcessor(Project project, EncapsulateFieldsDialog dialog) {
     super(project);
+    myDialog = dialog;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -55,11 +56,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor impleme
 
   protected String getCommandName() {
     return "Encapsulating fields in " + UsageViewUtil.getDescriptiveName(myClass);
-  }
-
-  public void run(EncapsulateFieldsDialog dialog) {
-    myDialog = dialog;
-    run((Object)null);
   }
 
   public void run(Object markerId) {

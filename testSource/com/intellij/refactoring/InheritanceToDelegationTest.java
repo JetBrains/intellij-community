@@ -126,8 +126,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         new InheritanceToDelegationProcessor(
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
-          generateGetter, false, null
-        ).testRun();
+          generateGetter).testRun();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };
@@ -143,7 +142,6 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         assertNotNull("Class " + className + " not found", aClass);
         PsiClass baseClass = myPsiManager.findClass(baseClassName);
         assertNotNull("Base class " + baseClassName + " not found", baseClass);
-        final PsiMethod[] methods = baseClass.getMethods();
         final PsiMethod[] delegatedMethods;
         final List<PsiMethod> methodsList = new ArrayList<PsiMethod>();
         for (int i = 0; i < methodNames.length; i++) {
@@ -154,7 +152,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
             methodsList.add(method);
           }
         }
-        delegatedMethods = (PsiMethod[])methodsList.toArray(new PsiMethod[methodsList.size()]);
+        delegatedMethods = methodsList.toArray(new PsiMethod[methodsList.size()]);
 
         final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
         for (int i = 0; i < delegatedInterfaceNames.length; i++) {
@@ -166,8 +164,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         new InheritanceToDelegationProcessor(
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
-          generateGetter, false, null
-        ).testRun();
+          generateGetter).testRun();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };
