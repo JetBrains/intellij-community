@@ -10,6 +10,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.JspAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
@@ -17,13 +18,12 @@ import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttri
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JSPActionReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
 import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.JspAttributeValue;
 import com.intellij.psi.jsp.JspDirective;
 import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
@@ -94,6 +94,25 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         ),
         JspAttributeValue.class,
         new JavaClassReferenceProvider()
+      );
+
+      registerReferenceProvider(
+        new ScopeFilter (
+          new AndFilter (
+            new SuperParentFilter(
+              new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+            ),
+            new ParentElementFilter(
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("jsp:directive.include")
+
+              ), 2
+            )
+          )
+        ),
+        XmlAttributeValue.class,
+        new JspxIncludePathReferenceProvider()
       );
 
       //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),

@@ -83,22 +83,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
     return cachedPackages;
   }
 
-  public String findPrefix(PsiElement element, int position){
-    final String text = element.getText().substring(0, position + 1);
-    return text.substring(text.lastIndexOf(SEPARATOR) + 1);
-  }
-
-  // Not implemented yet
-  public PsiElement handleElementRename(PsiElement element, String newElementName) throws IncorrectOperationException{
-    return null;
-  }
-
-
-  // Not implemented yet
-  public PsiElement bindToElement(GenericReference reference, PsiElement element) throws IncorrectOperationException{
-    return null;
-  }
-
   protected class ReferenceSet{
     private JavaReference[] myReferences;
     private final PsiElement myElement;
