@@ -73,7 +73,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
         }
         return false;
       }
-    });
+    }, true);
 
     super.init();
 

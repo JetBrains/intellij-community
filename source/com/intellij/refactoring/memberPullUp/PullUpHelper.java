@@ -122,13 +122,11 @@ public class PullUpHelper {
       } else if (info.getMember() instanceof PsiClass) {
         PsiClass aClass = (PsiClass) info.getMember();
         if (Boolean.FALSE.equals(info.getOverrides())) {
-          final PsiReferenceList sourceReferenceList;
-          if (!mySourceClass.isInterface()) {
-            sourceReferenceList = mySourceClass.getImplementsList();
-          } else {
-            sourceReferenceList = mySourceClass.getExtendsList();
-          }
-          PsiJavaCodeReferenceElement ref = RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass);
+          final PsiReferenceList sourceReferenceList = info.getSourceReferenceList();
+          LOG.assertTrue(sourceReferenceList != null);
+          PsiJavaCodeReferenceElement ref = mySourceClass.equals(sourceReferenceList.getParent()) ? 
+                                            RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
+                                            RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
           if (ref != null) {
             final PsiReferenceList referenceList;
             if (!myTargetSuperClass.isInterface()) {

@@ -49,7 +49,7 @@ public class MemberInfoStorage {
     List<MemberInfo> result = myClassToMemberInfoMap.get(aClass);
     if(result == null) {
       ArrayList<MemberInfo> temp = new ArrayList<MemberInfo>();
-      MemberInfo.extractClassMembers(aClass, temp, myFilter);
+      MemberInfo.extractClassMembers(aClass, temp, myFilter, false);
       result = Collections.unmodifiableList(temp);
       myClassToMemberInfoMap.put(aClass, result);
     }

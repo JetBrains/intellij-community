@@ -42,7 +42,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     LOG.assertTrue(needEquals || needHashCode);
     myClass = aClass;
 
-    myClassFields = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER);
+    myClassFields = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
     for (int i = 0; i < myClassFields.length; i++) {
       myClassFields[i].setChecked(true);
     }
@@ -152,7 +152,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private HashMap<PsiElement, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
-    MemberInfo[] memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER);
+    MemberInfo[] memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
     final HashMap<PsiElement, MemberInfo> result = new HashMap<PsiElement, MemberInfo>();
     for (int i = 0; i < memberInfos.length; i++) {
       MemberInfo memberInfo = memberInfos[i];

@@ -523,14 +523,23 @@ public class RefactoringUtil {
   public static PsiJavaCodeReferenceElement removeFromReferenceList(PsiReferenceList refList, PsiClass aClass)
     throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
-    if (refs != null) {
-      for (int i = 0; i < refs.length; i++) {
-        PsiJavaCodeReferenceElement ref = refs[i];
-        if (aClass.equals(ref.resolve())) {
-          PsiJavaCodeReferenceElement refCopy = (PsiJavaCodeReferenceElement)ref.copy();
-          ref.delete();
-          return refCopy;
-        }
+    for (int i = 0; i < refs.length; i++) {
+      PsiJavaCodeReferenceElement ref = refs[i];
+      if (ref.isReferenceTo(aClass)) {
+        PsiJavaCodeReferenceElement refCopy = (PsiJavaCodeReferenceElement)ref.copy();
+        ref.delete();
+        return refCopy;
+      }
+    }
+    return null;
+  }
+
+  public static PsiJavaCodeReferenceElement findReferenceToClass(PsiReferenceList refList, PsiClass aClass) {
+    PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
+    for (int i = 0; i < refs.length; i++) {
+      PsiJavaCodeReferenceElement ref = refs[i];
+      if (ref.isReferenceTo(aClass)) {
+        return ref;
       }
     }
     return null;
