@@ -53,6 +53,7 @@
       <!--<action id="Subversion.Checkin" class="com.qintsoft.svn4idea.actions.CheckInAction" text="Commit file" description="Commit the file to Subversion"/>-->
       <reference id="CheckinFiles"/>
       <reference id="UpdateFiles"/>
+      <reference id="CheckStatusForFiles"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <!--
       <action id="Subversion.Update" class="com.qintsoft.svn4idea.actions.UpdateAction" text="Update file" description="Update the file from Subversion"/>
