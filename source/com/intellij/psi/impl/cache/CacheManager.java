@@ -34,7 +34,5 @@ public interface CacheManager {
    * @deprecated
    */
   void addOrInvalidateFile(VirtualFile file);
-
-  List<VirtualFile> getVirtualFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope);
 }
 

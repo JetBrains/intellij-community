@@ -109,21 +109,21 @@ public class FindInProjectUtil {
     }
   }
 
-  private static void addVirtualFilesUnderDirectory(VirtualFile directory, List<VirtualFile> vFileList, boolean isRecursive, Pattern fileMaskRegExp) {
-    final VirtualFile[] children = directory.getChildren();
+  private static void addFilesUnderDirectory(PsiDirectory directory, List<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
+    final PsiElement[] children = directory.getChildren();
     if (children == null) return;
 
     for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
-      if (!child.isDirectory() &&
+      PsiElement child = children[i];
+      if (child instanceof PsiFile &&
           (fileMaskRegExp == null ||
-           fileMaskRegExp.matcher(child.getName()).matches()
+           fileMaskRegExp.matcher(((PsiFile)child).getName()).matches()
           )
       ) {
-        vFileList.add(child);
+        fileList.add((PsiFile)child);
       }
-      else if (isRecursive) {
-        addVirtualFilesUnderDirectory(child, vFileList, isRecursive, fileMaskRegExp);
+      else if (isRecursive && child instanceof PsiDirectory) {
+        addFilesUnderDirectory((PsiDirectory)child, fileList, isRecursive, fileMaskRegExp);
       }
     }
   }
@@ -164,12 +164,15 @@ public class FindInProjectUtil {
                                 final AsyncFindUsagesProcessListener consumer) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
-    final VirtualFile[] virtualFiles = getFilesToSearchIn(findModel, project, psiDirectory);
+    final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
-      for (int i = 0; i < virtualFiles.length; i++) {
+      int i =0;
+      for (Iterator<PsiFile> iterator = psiFiles.iterator(); iterator.hasNext();i++) {
         ProgressManager.getInstance().checkCanceled();
-        final VirtualFile virtualFile = virtualFiles[i];
+        final PsiFile psiFile = iterator.next();
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile == null) continue;
         final int index = i;
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -178,10 +181,10 @@ public class FindInProjectUtil {
               if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return; // do not decompile .class files
               final Document document = manager.getDocument(virtualFile);
               if (document != null) {
-                addToUsages(project, document, consumer, findModel);
+                addToUsages(project, document, consumer, findModel, psiFile);
 
                 if (progress != null) {
-                  progress.setFraction((double)index / virtualFiles.length);
+                  progress.setFraction((double)index / psiFiles.size());
                   String text = "Searching for '" + findModel.getStringToFind() + "' in " + virtualFile.getPresentableUrl() + "...";
                   progress.setText(text);
                   int size = consumer.getCount();
@@ -204,14 +207,14 @@ public class FindInProjectUtil {
     consumer.findUsagesCompleted();
   }
 
-  private static VirtualFile[] getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
+  private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiFile>>() {
+      public Collection<PsiFile> compute() {
         return getFilesToSearchInReadAction(findModel, project, psiDirectory);
       }
     });
   }
-  private static VirtualFile[] getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+  private static Collection<PsiFile> getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
     final FileIndex fileIndex = findModel.getModuleName() == null ?
                                 (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
@@ -231,21 +234,22 @@ public class FindInProjectUtil {
             return o2.length() - o1.length();
           }
         });
-        Set<VirtualFile> resultFiles = new THashSet<VirtualFile>();
+        Set<PsiFile> resultFiles = new THashSet<PsiFile>();
         for (int i = 0; i < words.size(); i++) {
           String word = words.get(i);
-          List<VirtualFile> virtualFiles = cacheManager.getVirtualFilesWithWord(word, UsageSearchContext.ANY, scope);
+          PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope);
 
+          final List<PsiFile> psiFiles = Arrays.asList(files);
           if (i == 0) {
-            resultFiles.addAll(virtualFiles);
+            resultFiles.addAll(psiFiles);
           }
           else {
-            resultFiles.retainAll(virtualFiles);
+            resultFiles.retainAll(psiFiles);
           }
           if (resultFiles.size() == 0) break;
         }
 
-        return resultFiles.toArray(new VirtualFile[resultFiles.size()]);
+        return resultFiles;
       }
       class EnumContentIterator implements ContentIterator {
         List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
@@ -262,12 +266,20 @@ public class FindInProjectUtil {
           return true;
         }
 
-        public VirtualFile[] getVirtualFiles() {
-          return myVirtualFiles.toArray(new VirtualFile[myVirtualFiles.size()]);
+        public Collection<PsiFile> getFiles() {
+          final ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>(myVirtualFiles.size());
+          final PsiManager manager = PsiManager.getInstance(project);
+          for (int i = 0; i < myVirtualFiles.size(); i++) {
+            VirtualFile virtualFile = myVirtualFiles.get(i);
+            final PsiFile psiFile = manager.findFile(virtualFile);
+            if (psiFile != null) {
+              psiFiles.add(psiFile);
+            }
+          }
+          return psiFiles;
         }
       }
       final EnumContentIterator iterator = new EnumContentIterator();
-
 
       if (psiDirectory == null) {
         fileIndex.iterateContent(iterator);
@@ -275,48 +287,50 @@ public class FindInProjectUtil {
       else {
         fileIndex.iterateContentUnderDirectory(psiDirectory.getVirtualFile(), iterator);
       }
-
-      return iterator.getVirtualFiles();
+      return iterator.getFiles();
     }
     else {
-      List<VirtualFile> vFileList = new ArrayList<VirtualFile>();
-      VirtualFile virtualFile = psiDirectory.getVirtualFile();
+      ArrayList<PsiFile> fileList = new ArrayList<PsiFile>();
 
-      addVirtualFilesUnderDirectory(virtualFile,
-                                    vFileList,
+      addFilesUnderDirectory(psiDirectory,
+                                    fileList,
                                     findModel.isWithSubdirectories(),
                                     createFileMaskRegExp(findModel));
-      return vFileList.toArray(new VirtualFile[vFileList.size()]);
+      return fileList;
     }
-  }
+  }  
 
   private static boolean canBeOptimizedForWordSearching(final FindModel findModel) {
     return findModel.isWholeWordsOnly() && findModel.isCaseSensitive() && !findModel.isRegularExpressions();
   }
 
-  private static void addToUsages(Project project, Document document, AsyncFindUsagesProcessListener consumer, FindModel findModel) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+  private static void addToUsages(Project project,
+                                  Document document,
+                                  AsyncFindUsagesProcessListener consumer,
+                                  FindModel findModel,
+                                  final PsiFile psiFile) {
 
-    if (psiFile != null) {
-      CharSequence text = document.getCharsSequence();
-      int textLength = document.getTextLength();
-      if (text != null) {
-        int offset = 0;
-        FindManager findManager = FindManager.getInstance(project);
-        while (offset < textLength) {
-          FindResult result = findManager.findString(text, offset, findModel);
-          if (result == null || !result.isStringFound()) break;
+    if (psiFile == null) {
+      return;
+    }
+    CharSequence text = document.getCharsSequence();
+    int textLength = document.getTextLength();
+    if (text != null) {
+      int offset = 0;
+      FindManager findManager = FindManager.getInstance(project);
+      while (offset < textLength) {
+        FindResult result = findManager.findString(text, offset, findModel);
+        if (result == null || !result.isStringFound()) break;
 
-          UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
-          consumer.foundUsage(info);
+        UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
+        consumer.foundUsage(info);
 
-          final int prevOffset = offset;
-          offset = result.getEndOffset();
+        final int prevOffset = offset;
+        offset = result.getEndOffset();
 
-          if (prevOffset == offset) {
-            // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
-            ++offset;
-          }
+        if (prevOffset == offset) {
+          // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+          ++offset;
         }
       }
     }

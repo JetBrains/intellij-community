@@ -54,15 +54,6 @@ public class CompositeCacheManager implements CacheManager{
     return files.toArray(new PsiFile[files.size()]);
   }
 
-  public List<VirtualFile> getVirtualFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Iterator<CacheManager> iterator = myManagers.iterator(); iterator.hasNext();) {
-      CacheManager cacheManager = iterator.next();
-      result.addAll(cacheManager.getVirtualFilesWithWord(word, occurenceMask, scope));
-    }
-    return result;
-  }
-
   public PsiFile[] getFilesWithTodoItems() {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (int i = 0; i < myManagers.size(); i++) {
