@@ -1,9 +1,8 @@
 package com.intellij.newCodeFormatting;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ public class InitialInfoBuilder {
   private final Map<Block, BlockWrapper> myResult = new LinkedHashMap<Block, BlockWrapper>();
   private BlockWrapper myPreviousBlock;
   private BlockWrapper myFirstTokenBlock;
+  private SpaceProperty myCurrentSpaceProperty;
 
   private InitialInfoBuilder(final FormattingModel model) {
     myModel = model;
@@ -25,15 +25,15 @@ public class InitialInfoBuilder {
 
   public static final InitialInfoBuilder buildBlocks(Block root, FormattingModel model) {
     final InitialInfoBuilder builder = new InitialInfoBuilder(model);
-    builder.buildFrom(root);
+    builder.buildFrom(root, 0);
     return builder;
   }
 
-  private void buildFrom(final Block rootBlock) {
+  private void buildFrom(final Block rootBlock, final int index) {
     final TextRange textRange = rootBlock.getTextRange();
     final int blockStartOffset = textRange.getStartOffset();
     myCurrentWhiteSpace.append(blockStartOffset, myModel);
-    final BlockWrapper info = new BlockWrapper(rootBlock, myCurrentWhiteSpace, myModel, myPreviousBlock);
+    final BlockWrapper info = new BlockWrapper(rootBlock, myCurrentWhiteSpace, myModel, myPreviousBlock, index, myResult);
     myResult.put(rootBlock, info);
     final List<Block> subBlocks = rootBlock.getSubBlocks();
     if (subBlocks.isEmpty()) {
@@ -44,11 +44,20 @@ public class InitialInfoBuilder {
       if (myFirstTokenBlock == null) {
         myFirstTokenBlock = info;
       }
+      if (myCurrentSpaceProperty != null && myCurrentSpaceProperty.isReadOnly()) {
+        myCurrentWhiteSpace.setReadOnly();
+      }
       myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), textRange.getEndOffset(), 0, 0, false);
       myPreviousBlock = info;
     } else {
-      for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
-        buildFrom(iterator.next());
+      Block previous = null;
+      for (int i = 0; i < subBlocks.size(); i++) {
+        final Block block = subBlocks.get(i);
+        if (previous != null) {
+          myCurrentSpaceProperty = rootBlock.getSpaceProperty(previous, block);
+        }
+        buildFrom(block, i);
+        previous = block;
       }
     }
   }

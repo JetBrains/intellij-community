@@ -8,6 +8,7 @@ public class WhiteSpace{
   private int mySpaces;
   private int myLineFeeds;
   private final boolean myIsFirstWhiteSpace;
+  private boolean myIsReadOnly;
 
   public WhiteSpace(int startOffset, int endOffset, int spaces, int lineFeeds, boolean isFirst) {
     myTextRange = new TextRange(startOffset, endOffset);
@@ -44,7 +45,7 @@ public class WhiteSpace{
   }
 
   public void arrangeSpaces(final SpaceProperty spaceProperty) {
-    if (spaceProperty != null) {
+    if (spaceProperty != null && !myIsReadOnly) {
       if (myLineFeeds == 0) {
         if (mySpaces < spaceProperty.getMinSpaces()) {
           mySpaces = spaceProperty.getMinSpaces();
@@ -58,7 +59,7 @@ public class WhiteSpace{
   }
 
   public void arrangeLineFeeds(final SpaceProperty spaceProperty) {
-    if (spaceProperty != null) {
+    if (spaceProperty != null && !myIsReadOnly) {
       if (myLineFeeds < spaceProperty.getMinLineFeeds()) {
         myLineFeeds = spaceProperty.getMinLineFeeds();
       }
@@ -82,10 +83,18 @@ public class WhiteSpace{
   }
 
   public void ensureLineFeed() {
-    if (!containsLineFeeds()) {
+    if (!containsLineFeeds() && !myIsReadOnly) {
       myLineFeeds = 1;
       mySpaces = 0;
     }
+  }
+
+  public boolean isReadOnly() {
+    return myIsReadOnly;
+  }
+
+  public void setReadOnly() {
+    myIsReadOnly = true;
   }
 }
 

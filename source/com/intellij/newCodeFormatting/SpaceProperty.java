@@ -5,13 +5,16 @@ public class SpaceProperty {
   private final int myMaxSpaces;
   private final int myMinLineFeeds;
   private final int myMaxLineFeeds;
+  private final boolean myIsReadOnly;
 
-  public SpaceProperty(final int minSpaces, final int maxSpaces, final int minLineFeeds, final int maxLineFeeds) {
+  public SpaceProperty(final int minSpaces, final int maxSpaces, final int minLineFeeds, final int maxLineFeeds, boolean isReadOnly) {
     myMinSpaces = minSpaces;
-    myMaxSpaces = maxSpaces;
+    myMaxSpaces = Math.max(minSpaces, maxSpaces);
     myMinLineFeeds = minLineFeeds;
-    myMaxLineFeeds = maxLineFeeds;
+    myMaxLineFeeds = Math.max(minLineFeeds, maxLineFeeds);
+    myIsReadOnly = isReadOnly;
   }
+
 
   public int getMinSpaces() {
     return myMinSpaces;
@@ -27,5 +30,9 @@ public class SpaceProperty {
 
   public int getMaxLineFeeds() {
     return myMaxLineFeeds;
+  }
+
+  public boolean isReadOnly(){
+    return myIsReadOnly;
   }
 }
