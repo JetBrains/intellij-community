@@ -4,6 +4,7 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.FileEditorPositionListener;
+import com.intellij.ide.structureView.ModelListener;
 
 import java.util.ArrayList;
 
@@ -66,5 +67,13 @@ public class TreeModelWrapper implements StructureViewModel {
 
   public void dispose() {
     myModel.dispose();
+  }
+
+  public void addModelListener(ModelListener modelListener) {
+    myModel.addModelListener(modelListener);
+  }
+
+  public void removeModelListener(ModelListener modelListener) {
+    myModel.removeModelListener(modelListener);
   }
 }

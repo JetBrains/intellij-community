@@ -124,5 +124,13 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return false;
   }
 
+  public void addModelListener(ModelListener modelListener) {
+
+  }
+
+  public void removeModelListener(ModelListener modelListener) {
+
+  }
+
   protected abstract Class[] getSuitableClasses();
 }

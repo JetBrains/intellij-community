@@ -71,7 +71,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper);
     JTree tree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
-                                                    (DefaultTreeModel)tree.getModel(),treeStructure);
+                                                    (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
