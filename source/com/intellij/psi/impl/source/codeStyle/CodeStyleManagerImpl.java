@@ -77,8 +77,23 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new BraceEnforcer(getSettings()).process(formatted);
   }
 
+  public PsiElement reformatRange(PsiElement element,
+                                  int startOffset,
+                                  int endOffset,
+                                  boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
+     return reformatRangeImpl(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
+  }
+
   public PsiElement reformatRange(PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
+    return reformatRangeImpl(element, startOffset, endOffset, true);
+
+  }
+
+  private PsiElement reformatRangeImpl(final PsiElement element,
+                                       final int startOffset,
+                                       final int endOffset,
+                                       boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
@@ -96,7 +111,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final PsiElement startElement = element.getContainingFile().findElementAt(startOffset);
     final PsiElement endElement = element.getContainingFile().findElementAt(endOffset);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
-    if (startElement != null && endElement != null && startElement.isValid() && endElement.isValid()) {
+    if (!canChangeWhiteSpacesOnly && startElement != null && endElement != null && startElement.isValid() && endElement.isValid()) {
       return new BraceEnforcer(getSettings()).process(formatted, startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
     } else {
       return formatted;

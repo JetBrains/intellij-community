@@ -411,7 +411,7 @@ public class PasteHandler extends EditorActionHandler {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     try {
-      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset);
+      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -25,6 +25,10 @@ public abstract class CodeStyleManager {
 
   public abstract PsiElement reformat(PsiElement element) throws IncorrectOperationException;
   public abstract PsiElement reformatRange(PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
+  public abstract PsiElement reformatRange(PsiElement element,
+                                           int startOffset,
+                                           int endOffset,
+                                           boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
   public abstract PsiElement shortenClassReferences(PsiElement element) throws IncorrectOperationException;
   public abstract void shortenClassReferences(PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 

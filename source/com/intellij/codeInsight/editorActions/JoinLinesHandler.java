@@ -167,7 +167,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
           PsiDocumentManager.getInstance(project).commitDocument(doc);
           try {
-            CodeStyleManager.getInstance(project).reformatRange(psiFile, start, end);
+            CodeStyleManager.getInstance(project).reformatRange(psiFile, start, end, true);
           } catch (IncorrectOperationException e) {
             LOG.error(e);
           }
