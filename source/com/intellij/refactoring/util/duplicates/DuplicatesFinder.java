@@ -48,10 +48,6 @@ public class DuplicatesFinder {
     for (int i = 0; i < myPattern.length; i++) {
       final PsiElement patternComponent = myPattern[i];
       patternComponent.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitReferenceElement(expression);
-        }
-
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           final PsiElement element = reference.resolve();
           if (myParameters.contains(element)) {
@@ -73,10 +69,6 @@ public class DuplicatesFinder {
     for (int i = 0; i < myPattern.length; i++) {
       final PsiElement patternComponent = myPattern[i];
       patternComponent.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitReferenceElement(expression);
-        }
-
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (reference.getUserData(PARAMETER) != null) {
             reference.putUserData(PARAMETER, null);

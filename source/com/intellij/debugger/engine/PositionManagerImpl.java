@@ -128,10 +128,6 @@ public class PositionManagerImpl implements PositionManager {
       final PsiMethod[] compiledMethod = new PsiMethod[1];
 
       PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          expression.acceptChildren(this);
-        }
-
         public void visitClass(PsiClass aClass) {
           List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
           for (Iterator<ReferenceType> iterator = allClasses.iterator(); iterator.hasNext();) {

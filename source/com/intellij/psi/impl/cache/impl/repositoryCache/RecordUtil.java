@@ -41,10 +41,6 @@ public class RecordUtil {
 
     if (psiElement != null && mayContainClassesInside(psiElement)) {
       psiElement.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitElement(expression);
-        }
-
         public void visitClass(PsiClass aClass) {
           if (ourList.isNull()) ourList.set(new ArrayList<PsiClass>());
           ourList.get().add(aClass);

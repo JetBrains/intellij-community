@@ -84,9 +84,6 @@ class FoldingPolicy {
         list.add(aClass);
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
     };
     scope.accept(visitor);
     for (Iterator<PsiClass> iterator = list.iterator(); iterator.hasNext();) {

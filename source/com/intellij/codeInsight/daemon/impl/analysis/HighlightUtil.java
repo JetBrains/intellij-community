@@ -917,6 +917,7 @@ public class HighlightUtil {
     }
     else if (type instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass == null) return false;
       return psiClass != null && psiClass.isEnum();
     }
     else {

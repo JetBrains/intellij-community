@@ -115,10 +115,6 @@ public class DefUseInspection extends BaseLocalInspectionTool {
     }
 
     body.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
-
       public void visitClass(PsiClass aClass) {
       }
 

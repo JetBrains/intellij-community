@@ -119,10 +119,6 @@ public class AnalysisScope {
 
   private PsiElementVisitor createFileSearcher() {
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
-
       public void visitFile(PsiFile file) {
         if (myFilter.accept(file)) {
           myFilesSet.add(file.getVirtualFile());

@@ -75,10 +75,6 @@ public class ComparingReferencesInspection extends BaseLocalInspectionTool {
 
     final ArrayList[] problemList = new ArrayList[]{null};
     where.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitElement(expression);
-      }
-
       public void visitMethod(PsiMethod method) {}
 
       public void visitClass(PsiClass aClass) {}

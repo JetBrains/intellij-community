@@ -10,8 +10,4 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   public void visitElement(PsiElement element) {
     element.acceptChildren(this);
   }
-
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
-    visitReferenceElement(expression);
-  }
 }

@@ -19,7 +19,7 @@ public class RemoveRedundantElseAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction");
 
   public String getText() {
-    return "Remove Redundant 'else'";
+    return getFamilyName();
   }
 
   public String getFamilyName() {

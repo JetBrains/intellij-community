@@ -645,7 +645,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               }
               super.visitXmlTag(tag);
             }
-            public void visitReferenceExpression(PsiReferenceExpression expression) {}
           });
         }
       }

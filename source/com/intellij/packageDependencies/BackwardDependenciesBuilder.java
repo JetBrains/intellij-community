@@ -54,9 +54,6 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     psiManager.startBatchFilesProcessingMode();
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-        }
-
         public void visitFile(final PsiFile file) {
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (indicator != null) {

@@ -5,11 +5,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
@@ -34,9 +36,6 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     psiManager.startBatchFilesProcessingMode();
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-        }
-
         public void visitFile(final PsiFile file) {
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (indicator != null) {

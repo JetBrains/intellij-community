@@ -27,10 +27,6 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
         public void visitErrorElement(PsiErrorElement element) {
           throw new SyntaxError();
         }
-
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitReferenceElement(expression);
-        }
       });
     }
     catch(SyntaxError e) {

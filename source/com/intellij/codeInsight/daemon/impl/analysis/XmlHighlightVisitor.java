@@ -56,9 +56,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     myResult.clear();
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
-  }
-
   private static void addElementsForTag(XmlTag tag,
                                  String localizedMessage,
                                  List<HighlightInfo> result,

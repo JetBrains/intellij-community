@@ -429,10 +429,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected PsiFile createCopy(final CompletionContext context) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitExpression(expression);
-      }
-
       public void visitClass(PsiClass aClass) {
         aClass.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, aClass);
         super.visitClass(aClass);

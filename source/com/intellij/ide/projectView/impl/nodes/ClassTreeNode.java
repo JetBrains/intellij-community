@@ -26,9 +26,6 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
       for (Iterator<PsiElement> iterator = result.iterator(); iterator.hasNext();) {
         PsiElement psiElement = iterator.next();
         psiElement.accept(new PsiElementVisitor() {
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-          }
-
           public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassTreeNode(getProject(), aClass, getSettings()));
           }

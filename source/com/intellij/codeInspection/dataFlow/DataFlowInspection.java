@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 
 import java.util.*;
 
@@ -67,7 +68,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private LocalQuickFix createAssertNotNullFix(PsiExpression qualifier) {
+  private static LocalQuickFix createAssertNotNullFix(PsiExpression qualifier) {
     if (qualifier != null && qualifier.getManager().getEffectiveLanguageLevel().hasAssertKeyword() &&
         !(qualifier instanceof PsiMethodCallExpression)) {
       try {
@@ -179,10 +180,12 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
           else {
+            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(true);
             descriptions.add(manager.createProblemDescriptor(psiAnchor,
                                                              "Condition <code>#ref</code> #loc is always true</code>",
-                                                             null,
+                                                             localQuickFix,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+
           }
         }
         else if (psiAnchor instanceof PsiSwitchLabelStatement) {
@@ -193,9 +196,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
         else if (psiAnchor != null) {
           if (!reportedAnchors.contains(psiAnchor)) {
+            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(trueSet.contains(instruction));
             descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
                                                                         (trueSet.contains(instruction) ? "true" : "false") +
-                                                                        "</code>.", null,
+                                                                        "</code>.", localQuickFix,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             reportedAnchors.add(psiAnchor);
           }
@@ -204,6 +208,26 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
 
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
+  }
+
+  private static LocalQuickFix createSimplifyBooleanExpressionFix(final boolean value) {
+    return new LocalQuickFix() {
+      public String getName() {
+        return new SimplifyBooleanExpressionFix(null,false).getText();
+      }
+
+      public void applyFix(Project project, ProblemDescriptor descriptor) {
+        final PsiElement psiElement = descriptor.getPsiElement();
+        try {
+          final SimplifyBooleanExpressionFix action = new SimplifyBooleanExpressionFix((PsiExpression)psiElement, value);
+          LOG.assertTrue(psiElement.isValid());
+          action.invoke(project, null, psiElement.getContainingFile());
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    };
   }
 
   private static class RedundantInstanceofFix implements LocalQuickFix {

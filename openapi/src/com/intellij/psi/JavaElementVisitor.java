@@ -250,7 +250,9 @@ public abstract class JavaElementVisitor {
     visitElement(reference);
   }
 
-  public abstract void visitReferenceExpression(PsiReferenceExpression expression);
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    visitReferenceElement(expression);
+  }
 
   public void visitReferenceList(PsiReferenceList list) {
     visitElement(list);

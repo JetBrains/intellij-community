@@ -1443,10 +1443,6 @@ public class RefactoringUtil {
     for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
       final PsiElement scope = iterator.next();
       scope.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitReferenceElement(expression);
-        }
-
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           final PsiElement resolved = reference.resolve();

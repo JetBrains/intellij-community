@@ -49,10 +49,6 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
         }
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
-
       public void visitElement(PsiElement element) {
         PsiElement[] children = element.getChildren();
         for (int i = 0; i < children.length; i++) {
