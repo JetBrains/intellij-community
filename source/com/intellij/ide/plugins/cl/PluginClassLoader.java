@@ -95,8 +95,7 @@ public class PluginClassLoader extends IdeaClassLoader{
   private URL fetchResource(ClassLoader cl, String resourceName) {
     //protected URL findResource(String s)
     try {
-      final Method findResourceMethod = cl.getClass().getDeclaredMethod("findResource", new Class[] {String.class});
-      findResourceMethod.setAccessible(true);
+      final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResource");
       return (URL)findResourceMethod.invoke(cl, new Object[] {resourceName});
     }
     catch (Exception e) {
@@ -108,11 +107,10 @@ public class PluginClassLoader extends IdeaClassLoader{
   private Enumeration fetchResources(ClassLoader cl, String resourceName) {
     //protected Enumeration findResources(String s) throws IOException
     try {
-      final Method findResourceMethod = getFindResourceMethod(cl.getClass());
+      final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResources");
       if (findResourceMethod == null) {
         return null;
       }
-      findResourceMethod.setAccessible(true);
       return (Enumeration)findResourceMethod.invoke(cl, new Object[] {resourceName});
     }
     catch (Exception e) {
@@ -121,16 +119,18 @@ public class PluginClassLoader extends IdeaClassLoader{
     }
   }
 
-  private Method getFindResourceMethod(final Class clClass) {
+  private Method getFindResourceMethod(final Class clClass, final String methodName) {
     try {
-      return clClass.getDeclaredMethod("findResources", new Class[] {String.class});
+      final Method declaredMethod = clClass.getDeclaredMethod(methodName, new Class[]{String.class});
+      declaredMethod.setAccessible(true);
+      return declaredMethod;
     }
     catch (NoSuchMethodException e) {
       final Class superclass = clClass.getSuperclass();
       if (superclass == null || superclass.equals(Object.class)) {
         return null;
       }
-      return getFindResourceMethod(superclass);
+      return getFindResourceMethod(superclass, methodName);
     }
   }
 }

@@ -67,6 +67,7 @@
     <component>
       <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
       <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
+      <test-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</test-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.intention.IntentionManager</interface-class>

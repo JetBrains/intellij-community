@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.ComponentDescriptor;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
@@ -491,13 +492,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public void loadComponentsConfiguration(final Element element, PluginDescriptor descriptor) {
     if (element == null) return;
-
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       try {
         Element child = (Element)i.next();
         if ("component".equals(child.getName())) {
           String interfaceClass = child.getChildText("interface-class");
           String implClass = child.getChildText("implementation-class");
+          if (testMode) {
+            String testImplClass = child.getChildText("test-implementation-class");
+            if (testImplClass != null) {
+              if (testImplClass.trim().length() == 0) continue;
+              implClass = testImplClass;
+            }
+          }
 
           if (interfaceClass == null) interfaceClass = implClass;
 

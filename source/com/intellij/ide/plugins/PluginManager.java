@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
@@ -153,7 +152,7 @@ public class PluginManager {
       return false;
     }
     final String loadPlugins = System.getProperty("idea.load.plugins");
-    return ApplicationManagerEx.getApplicationEx() != null && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() && (loadPlugins == null || "true".equals(loadPlugins));
+    return loadPlugins == null || "true".equals(loadPlugins);
   }
 
   public static boolean shouldLoadPlugin(PluginDescriptor descriptor) {
