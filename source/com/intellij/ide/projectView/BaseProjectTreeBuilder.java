@@ -100,6 +100,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (current instanceof ProjectViewNode && !(((ProjectViewNode)current).contains(file))) return null;
 
+    final DefaultMutableTreeNode currentNode = getNodeForElement(current);
+
+    boolean expanded = currentNode == null ? false : getTree().isExpanded(new TreePath(currentNode.getPath()));
+
     List<AbstractTreeNode> kids = getOrBuildChildren(current);
     for (int i = 0; i < kids.size(); i++) {
       AbstractTreeNode node = kids.get(i);
@@ -108,7 +112,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         return result;
       }
       else {
-        hideChildrenFor(node);
+        if (!expanded) {
+          hideChildrenFor(node);
+        }
       }
     }
 
