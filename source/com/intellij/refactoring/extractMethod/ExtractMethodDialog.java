@@ -12,13 +12,12 @@ import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -34,7 +33,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private final boolean myCanBeStatic;
   private final String myHelpId;
 
-  private final JTextField myTfName;
+  private final EditorTextField myNameField;
   private final JTextArea mySignatureArea;
   private final JCheckBox myCbMakeStatic;
 
@@ -79,8 +78,8 @@ class ExtractMethodDialog extends DialogWrapper {
 
     // Create UI components
 
-    myTfName = new JTextField(30);
-    myTfName.setText(initialMethodName);
+    myNameField = new EditorTextField(initialMethodName);
+    //myTfName.setText(initialMethodName);
 
     int height = myVariableData.length + 2;
     if (myExceptions.length > 0) {
@@ -109,7 +108,7 @@ class ExtractMethodDialog extends DialogWrapper {
   }
 
   public String getChoosenMethodName() {
-    return myTfName.getText();
+    return myNameField.getText();
   }
 
   public ParameterTablePanel.VariableData[] getChoosenParameters() {
@@ -117,7 +116,7 @@ class ExtractMethodDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myTfName;
+    return myNameField;
   }
 
   protected void doHelpAction() {
@@ -128,18 +127,19 @@ class ExtractMethodDialog extends DialogWrapper {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     panel.setBorder(IdeBorderFactory.createTitledBorder("Method"));
 
-    JLabel lblName = new JLabel("Name:");
-    lblName.setDisplayedMnemonic('N');
-    lblName.setLabelFor(myTfName);
-    panel.add(lblName);
+    JLabel nameLabel = new JLabel("Name:");
+    nameLabel.setDisplayedMnemonic('N');
+    nameLabel.setLabelFor(myNameField);
+    panel.add(nameLabel);
 
-    panel.add(myTfName);
+    panel.add(myNameField);
 
-    myTfName.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+    myNameField.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         update();
       }
     });
+
     setOKActionEnabled(false);
     myCbMakeStatic.setMnemonic('s');
     panel.add(myCbMakeStatic);
@@ -155,13 +155,13 @@ class ExtractMethodDialog extends DialogWrapper {
       myCbMakeStatic.setSelected(false);
       myCbMakeStatic.setEnabled(false);
     }
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myTfName.getText()));
+    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
 
     return panel;
   }
   private void update() {
     updateSignature();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myTfName.getText()));
+    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
   }
 
   public String getVisibility() {
@@ -229,7 +229,7 @@ class ExtractMethodDialog extends DialogWrapper {
     try {
       PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
       prototype = factory.createMethod(
-              myTfName.getText().trim(),
+              myNameField.getText().trim(),
               myReturnType
       );
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
@@ -269,7 +269,7 @@ class ExtractMethodDialog extends DialogWrapper {
 
     buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
     buffer.append(" ");
-    buffer.append(myTfName.getText());
+    buffer.append(myNameField.getText());
     buffer.append("(");
     int count = 0;
     final String INDENT = "    ";
