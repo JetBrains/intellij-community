@@ -146,8 +146,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
         try {
           final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
-          final PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
-          LOG.assertTrue(firstBodyElement != null);
+          final PsiElement firstBodyElement = getAnchorElement(anchorBlock);
           final PsiElement newVariable = anchorBlock.addBefore(decl, firstBodyElement);
           if (newCaretPosition == null) {
             newCaretPosition = newVariable;
@@ -183,6 +182,20 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         LOG.error(e);
       }
 
+    }
+
+    private PsiElement getAnchorElement(final PsiCodeBlock anchorBlock) {
+      PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
+      LOG.assertTrue(firstBodyElement != null);
+      firstBodyElement = PsiTreeUtil.skipSiblingsForward(firstBodyElement, new Class[]{PsiWhiteSpace.class, PsiComment.class});
+      if (firstBodyElement instanceof PsiExpressionStatement) {
+        final PsiExpression expression = ((PsiExpressionStatement)firstBodyElement).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          final String refName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
+          if ("this".equals(refName) || "super".equals(refName)) firstBodyElement = firstBodyElement.getNextSibling();
+        }
+      }
+      return firstBodyElement;
     }
 
     private static PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {

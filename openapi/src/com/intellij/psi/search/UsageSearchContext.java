@@ -4,7 +4,7 @@
  */
 package com.intellij.psi.search;
 
-public class UsageSearchContext {
+public interface UsageSearchContext {
   /**
    * Element's usages in its language code are requested
    */
