@@ -19,7 +19,7 @@ public class IfStatementWithTooManyBranchesInspection extends StatementInspectio
     public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {
-        return "If statement with too many branches";
+        return "'if' statement with too many branches";
     }
 
     public String getGroupDisplayName() {

@@ -13,7 +13,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
         return "InstantiatingAThreadWithDefaultRunMethod";
     }
     public String getDisplayName(){
-        return "Instantiating a Thread with default run() method";
+        return "Instantiating a Thread with default 'run()' method";
     }
 
     public String getGroupDisplayName(){

@@ -19,7 +19,7 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return "tearDown() doesn't call super.tearDown()";
+        return "'tearDown()' doesn't call 'super.tearDown()'";
     }
 
     public String getGroupDisplayName() {

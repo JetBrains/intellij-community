@@ -13,7 +13,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
         return "CallToThreadDumpStack";
     }
     public String getDisplayName() {
-        return "Call to Thread.dumpStack()";
+        return "Call to 'Thread.dumpStack()'";
     }
 
     public String getGroupDisplayName() {

@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
 
     public String getDisplayName(){
-        return "Comparison of short and char values";
+        return "Comparison of 'short' and 'char' values";
     }
 
     public String getGroupDisplayName(){

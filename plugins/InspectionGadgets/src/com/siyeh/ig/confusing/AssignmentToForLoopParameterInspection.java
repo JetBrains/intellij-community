@@ -13,7 +13,7 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 public class AssignmentToForLoopParameterInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Assignment to for-loop parameter";
+        return "Assignment to 'for' loop parameter";
     }
 
     public String getGroupDisplayName() {

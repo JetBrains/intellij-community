@@ -23,10 +23,6 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
     public String buildErrorString(PsiElement location) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) location.getParent().getParent();
         final PsiMethod method = methodCall.resolveMethod();

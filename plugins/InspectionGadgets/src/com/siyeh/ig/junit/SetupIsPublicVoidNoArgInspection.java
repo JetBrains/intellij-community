@@ -13,7 +13,7 @@ public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
         return "SetUpWithIncorrectSignature";
     }
     public String getDisplayName() {
-        return "setUp() with incorrect signature";
+        return "'setUp()' with incorrect signature";
     }
 
     public String getGroupDisplayName() {

@@ -14,7 +14,7 @@ public class StringToStringInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "Redundant String.toString()";
+        return "Redundant 'String.toString()'";
     }
 
     public String getGroupDisplayName() {

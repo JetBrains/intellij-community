@@ -24,6 +24,10 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
         return "#ref() called explicitly #loc";
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+    
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new NoExplicitFinalizeCallsVisitor(this, inspectionManager, onTheFly);
     }

@@ -13,7 +13,7 @@ import java.util.List;
 public class ForLoopWithMissingComponentInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "For loop with missing components";
+        return "'for' loop with missing components";
     }
 
     public String getGroupDisplayName() {

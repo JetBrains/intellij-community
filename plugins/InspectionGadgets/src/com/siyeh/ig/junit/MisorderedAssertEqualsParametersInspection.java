@@ -13,7 +13,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
 
 
     public String getDisplayName() {
-        return "Misordered assertEquals parameters";
+        return "Misordered 'assertEquals()' parameters";
     }
 
     public String getGroupDisplayName() {

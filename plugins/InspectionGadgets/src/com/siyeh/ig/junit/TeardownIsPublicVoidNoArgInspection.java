@@ -13,7 +13,7 @@ public class TeardownIsPublicVoidNoArgInspection extends MethodInspection {
         return "TearDownWithIncorrectSignature";
     }
     public String getDisplayName() {
-        return "tearDown() with incorrect signature";
+        return "'tearDown()' with incorrect signature";
     }
 
     public String getGroupDisplayName() {

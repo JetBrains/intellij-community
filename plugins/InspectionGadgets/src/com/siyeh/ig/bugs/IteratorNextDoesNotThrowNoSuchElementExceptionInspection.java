@@ -19,7 +19,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         return "IteratorNextCanNotThrowNoSuchElementException";
     }
     public String getDisplayName(){
-        return "Iterator.next() which can't throw NoSuchElementException";
+        return "'Iterator.next()' which can't throw NoSuchElementException";
     }
 
     public String getGroupDisplayName(){

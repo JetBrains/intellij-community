@@ -17,7 +17,7 @@ public class SetupCallsSuperSetupInspection extends MethodInspection {
         return "SetUpDoesntCallSuperSetUp";
     }
     public String getDisplayName() {
-        return "setUp() doesn't call super.setUp()";
+        return "'setUp()' doesn't call 'super.setUp()'";
     }
 
     public String getGroupDisplayName() {

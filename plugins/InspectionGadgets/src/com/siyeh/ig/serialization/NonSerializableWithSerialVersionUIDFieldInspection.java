@@ -16,7 +16,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
     }
 
     public String getDisplayName() {
-        return "Non-serializable class with serialVersionUID";
+        return "Non-serializable class with 'serialVersionUID'";
     }
 
     public String getGroupDisplayName() {

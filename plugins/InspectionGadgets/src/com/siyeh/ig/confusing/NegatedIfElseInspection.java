@@ -21,7 +21,7 @@ public class NegatedIfElseInspection extends StatementInspection {
     }
 
     public String getDisplayName() {
-        return "If statement with negated condition";
+        return "'if' statement with negated condition";
     }
 
     public String getGroupDisplayName() {

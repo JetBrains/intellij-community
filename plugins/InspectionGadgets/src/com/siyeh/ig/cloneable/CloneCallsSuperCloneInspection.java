@@ -12,7 +12,7 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
         return "CloneDoesntCallSuperClone";
     }
     public String getDisplayName() {
-        return "clone() doesn't call super.clone()";
+        return "'clone()' doesn't call 'super.clone()'";
     }
 
     public String getGroupDisplayName() {
@@ -23,6 +23,9 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
         return "#ref() doesn't call super.clone()";
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new NoExplicitCloneCallsVisitor(this, inspectionManager, onTheFly);
     }

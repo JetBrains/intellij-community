@@ -13,7 +13,7 @@ public class ObjectNotifyInspection extends ExpressionInspection {
         return "CallToNotifyInsteadOfNotifyAll";
     }
     public String getDisplayName() {
-        return "Call to notify() instead of notifyAll()";
+        return "Call to 'notify()' instead of 'notifyAll()'";
     }
 
     public String getGroupDisplayName() {

@@ -18,7 +18,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
     }
 
     public String getDisplayName() {
-        return "StringBuffer may be StringBuilder (J2SDK 5.0 only)";
+        return "'StringBuffer' may be 'StringBuilder' (J2SDK 5.0 only)";
     }
 
     public String getGroupDisplayName() {

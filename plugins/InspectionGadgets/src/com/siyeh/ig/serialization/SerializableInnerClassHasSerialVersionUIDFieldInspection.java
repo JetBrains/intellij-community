@@ -21,7 +21,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
         return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
     }
     public String getDisplayName() {
-        return "Serializable non-static inner class without serialVersionUID";
+        return "Serializable non-static inner class without 'serialVersionUID'";
     }
 
     public String getGroupDisplayName() {

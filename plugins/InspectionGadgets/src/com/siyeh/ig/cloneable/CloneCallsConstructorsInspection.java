@@ -11,7 +11,7 @@ import com.siyeh.ig.GroupNames;
 public class CloneCallsConstructorsInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "clone() instantiates objects with constructor";
+        return "'clone()' instantiates objects with constructor";
     }
 
     public String getGroupDisplayName() {

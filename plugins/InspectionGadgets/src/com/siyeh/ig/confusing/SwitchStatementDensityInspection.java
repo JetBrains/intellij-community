@@ -18,7 +18,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     public int m_limit = DEFAULT_DENSITY_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {
-        return "Switch statement with too low of branch density";
+        return "'switch' statement with too low of branch density";
     }
 
     public String getGroupDisplayName() {

@@ -12,7 +12,7 @@ public class CovariantCompareToInspection extends MethodInspection {
     private static final String COMPARE_TO_METHOD_NAME = "compareTo";
 
     public String getDisplayName() {
-        return "Covariant compareTo()";
+        return "Covariant 'compareTo()'";
     }
 
     public String getGroupDisplayName() {

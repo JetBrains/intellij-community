@@ -13,7 +13,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
     private final AddExplicitSuperCall fix = new AddExplicitSuperCall();
 
     public String getDisplayName() {
-        return "Implicit call to super()";
+        return "Implicit call to 'super()'";
     }
 
     public String getGroupDisplayName() {

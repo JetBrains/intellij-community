@@ -12,7 +12,7 @@ public class RuntimeExecInspection extends ExpressionInspection {
         return "CallToRuntimeExec";
     }
     public String getDisplayName() {
-        return "Call to Runtime.exec()";
+        return "Call to 'Runtime.exec()'";
     }
 
     public String getGroupDisplayName() {

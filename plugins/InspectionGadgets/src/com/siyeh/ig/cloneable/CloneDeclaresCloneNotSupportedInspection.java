@@ -16,11 +16,15 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
         return "CloneDoesntDeclareCloneNotSupportedException";
     }
     public String getDisplayName() {
-        return "clone() doesn't declare CloneNotSupportedException";
+        return "'clone()' doesn't declare CloneNotSupportedException";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.CLONEABLE_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location) {

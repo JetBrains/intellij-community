@@ -14,7 +14,7 @@ public class ThreadDeathRethrownInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "ThreadDeath not rethrown";
+        return "java.lang.ThreadDeath not rethrown";
     }
 
     public String getGroupDisplayName(){

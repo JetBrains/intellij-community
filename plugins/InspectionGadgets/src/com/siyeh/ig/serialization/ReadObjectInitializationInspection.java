@@ -14,7 +14,7 @@ public class ReadObjectInitializationInspection extends FieldInspection {
         return "InstanceVariableMayNotBeInitializedByReadObject";
     }
     public String getDisplayName() {
-        return "Instance variable may not be initialized by readObject()";
+        return "Instance variable may not be initialized by 'readObject()'";
     }
 
     public String getGroupDisplayName() {

@@ -23,10 +23,6 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
         return "C-style array declaration #ref #loc";
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
     }

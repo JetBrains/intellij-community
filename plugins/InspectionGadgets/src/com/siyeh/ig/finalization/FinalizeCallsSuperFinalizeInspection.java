@@ -14,13 +14,16 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection {
         return "FinalizeDoesntCallSuperFinalize";
     }
     public String getDisplayName() {
-        return "finalize() doesn't call super.finalize()";
+        return "'finalize()' doesn't call 'super.finalize()'";
     }
 
     public String getGroupDisplayName() {
         return GroupNames.FINALIZATION_GROUP_NAME;
     }
 
+    public boolean isEnabledByDefault(){
+        return true;
+    }
     public String buildErrorString(PsiElement location) {
         return "#ref() doesn't call super.finalize()";
     }

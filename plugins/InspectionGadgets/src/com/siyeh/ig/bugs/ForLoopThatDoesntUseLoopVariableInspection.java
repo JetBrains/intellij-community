@@ -13,7 +13,7 @@ import java.util.List;
 public class ForLoopThatDoesntUseLoopVariableInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "For loop where update or condition doesn't use loop variable";
+        return "'for' loop where update or condition doesn't use loop variable";
     }
 
     public String getGroupDisplayName() {

@@ -20,7 +20,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends StatementInspec
     public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {
-        return "Switch statement with too few branches";
+        return "'switch' statement with too few branches";
     }
 
     public String getGroupDisplayName() {

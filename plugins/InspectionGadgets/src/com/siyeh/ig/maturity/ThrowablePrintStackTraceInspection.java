@@ -16,7 +16,7 @@ public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
         return "CallToPrintStackTrace";
     }
     public String getDisplayName() {
-        return "Call to printStackTrace()";
+        return "Call to 'printStackTrace()'";
     }
 
     public String getGroupDisplayName() {

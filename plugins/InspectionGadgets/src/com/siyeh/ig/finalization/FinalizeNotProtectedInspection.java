@@ -14,7 +14,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection {
     private final ProtectedFinalizeFix fix = new ProtectedFinalizeFix();
 
     public String getDisplayName() {
-        return "finalize() not declared 'protected'";
+        return "'finalize()' not declared 'protected'";
     }
 
     public String getGroupDisplayName() {

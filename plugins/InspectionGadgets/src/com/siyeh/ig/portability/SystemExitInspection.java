@@ -12,7 +12,7 @@ public class SystemExitInspection extends ExpressionInspection {
         return "CallToSystemExit";
     }
     public String getDisplayName() {
-        return "Call to System.exit() or related methods";
+        return "Call to 'System.exit()' or related methods";
     }
 
     public String getGroupDisplayName() {

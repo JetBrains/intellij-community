@@ -14,7 +14,7 @@ public class ThreadRunInspection extends ExpressionInspection {
         return "CallToThreadRun";
     }
     public String getDisplayName() {
-        return "Call to Thread.run()";
+        return "Call to 'Thread.run()'";
     }
 
     public String getGroupDisplayName() {

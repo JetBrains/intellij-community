@@ -15,7 +15,7 @@ public class ErrorRethrownInspection extends StatementInspection {
         return "ErrorNotRethrown";
     }
     public String getDisplayName() {
-        return "Error not rethrown";
+        return "java.lang.Error not rethrown";
     }
 
     public String getGroupDisplayName() {

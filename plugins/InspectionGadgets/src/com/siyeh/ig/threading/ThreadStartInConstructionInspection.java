@@ -14,7 +14,7 @@ public class ThreadStartInConstructionInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "Call to Thread.start() during object construction";
+        return "Call to 'Thread.start()' during object construction";
     }
 
     public String getGroupDisplayName() {

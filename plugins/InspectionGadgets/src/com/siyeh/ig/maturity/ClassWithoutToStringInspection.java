@@ -11,7 +11,7 @@ import com.siyeh.ig.psiutils.UtilityClassUtil;
 public class ClassWithoutToStringInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Class without toString()";
+        return "Class without 'toString()'";
     }
 
     public String getGroupDisplayName() {

@@ -13,7 +13,7 @@ public class SystemGetenvInspection extends ExpressionInspection {
         return "CallToSystemGetenv";
     }
     public String getDisplayName() {
-        return "Call to System.getenv()";
+        return "Call to 'System.getenv()'";
     }
 
     public String getGroupDisplayName() {

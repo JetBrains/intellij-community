@@ -12,7 +12,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
     private final StringEqualsEmptyStringFix fix = new StringEqualsEmptyStringFix();
 
     public String getDisplayName() {
-        return "String.equals(\"\")";
+        return "'String.equals(\"\")'";
     }
 
     public String getGroupDisplayName() {

@@ -11,7 +11,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 public class CovariantEqualsInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Covariant equals()";
+        return "Covariant 'equals()'";
     }
 
     public String getGroupDisplayName() {

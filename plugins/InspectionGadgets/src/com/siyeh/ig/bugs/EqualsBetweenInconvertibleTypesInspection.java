@@ -11,7 +11,7 @@ import com.siyeh.ig.GroupNames;
 public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "equals() between objects of inconvertible types";
+        return "'equals()' between objects of inconvertible types";
     }
 
     public String getGroupDisplayName() {

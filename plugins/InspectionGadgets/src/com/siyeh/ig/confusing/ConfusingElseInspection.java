@@ -16,7 +16,7 @@ public class ConfusingElseInspection extends StatementInspection {
         return "ConfusingElseBranch";
     }
     public String getDisplayName() {
-        return "Confusing else branch";
+        return "Confusing 'else' branch";
     }
 
     public String getGroupDisplayName() {

@@ -12,7 +12,7 @@ public class StringEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
-        return "String comparison using ==, instead of '.equals()'";
+        return "String comparison using '==', instead of '.equals()'";
     }
 
     public String getGroupDisplayName() {
