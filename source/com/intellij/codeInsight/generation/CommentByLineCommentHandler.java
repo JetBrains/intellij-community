@@ -580,7 +580,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler, Li
         final PsiElement elementAt = context.getFile().findElementAt(offset1);
         final XmlTag tag = PsiTreeUtil.getParentOfType(elementAt, XmlTag.class, false);
 
-        if (tag.getName().equals("jsp:scriplet") || tag.getName().equals("jsp:declaration")) {
+        if (tag == null || tag.getName().equals("jsp:scriplet") || tag.getName().equals("jsp:declaration")) {
           myJavaComment = true;
         }
       }
