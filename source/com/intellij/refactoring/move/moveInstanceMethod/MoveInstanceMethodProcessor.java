@@ -281,14 +281,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               final PsiExpression qualifier = expression.getQualifierExpression();
               if (qualifier == null || qualifier instanceof PsiThisExpression) {
                 final PsiElement resolved = expression.resolve();
-                if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass().equals(methodCopy.getContainingClass())) {
+                if (variableCopy.equals(resolved)) {
+                  PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
+                  expression.replace(thisExpression);
+                } else if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass().equals(methodCopy.getContainingClass())) {
                   PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText(myOldClassParameterName + ".f", null);
                   qualified.getReferenceNameElement().replace(expression.getReferenceNameElement());
                   expression.replace(qualified);
-                }
-                else if (variableCopy.equals(resolved)) {
-                  PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
-                  expression.replace(thisExpression);
                 }
               } else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(variableCopy)) {
               qualifier.delete();              }
