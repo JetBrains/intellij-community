@@ -270,6 +270,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
           showInBrowser(problemNode.getElement(), problemNode.getDescriptor());
+        } else if (node instanceof InspectionNode){
+          showInBrowser(((InspectionNode)node).getTool());
         }
         else {
           myBrowser.showEmpty();
@@ -282,6 +284,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
     myBrowser.showPageFor(refEntity);
+    setCursor(currentCursor);
+  }
+
+  public void showInBrowser(InspectionTool tool){
+    Cursor currentCursor = getCursor();
+    setCursor(new Cursor(Cursor.WAIT_CURSOR));
+    myBrowser.showDescription(tool);
     setCursor(currentCursor);
   }
 

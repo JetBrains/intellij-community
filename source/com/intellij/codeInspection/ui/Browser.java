@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
@@ -25,6 +26,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public class Browser extends JPanel {
+  private static final String UNDER_CONSTRUCTION = "Under construction";
   private final ArrayList myClickListeners;
   private RefEntity myCurrentEntity;
   private final JEditorPane myHTMLViewer;
@@ -249,6 +251,25 @@ public class Browser extends JPanel {
     }
     catch (IOException e) {
     }
+  }
+
+  public void showDescription(InspectionTool tool){
+    try {
+      myHTMLViewer.setPage(getDescriptionUrl(tool));
+    }
+    catch (IOException e) {
+      try {
+        myHTMLViewer.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
+      }
+      catch (IOException e1) {
+        //Can't be
+      }
+    }
+  }
+
+  private URL getDescriptionUrl(InspectionTool tool) {
+    Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
+    return aClass.getResource("/inspectionDescriptions/" + tool.getDescriptionFileName());
   }
 
   private InspectionTool getTool() { return myView.getSelectedTool(); }
