@@ -37,7 +37,7 @@ public class CodeFormatterFacade implements Constants {
 
   public CodeFormatterFacade(CodeStyleSettings settings, Helper helper) {
     if (USE_NEW_CODE_FORMATTER < 0) {
-      ApplicationEx application = ( (ApplicationEx)ApplicationManager.getApplication());
+      ApplicationEx application = ((ApplicationEx)ApplicationManager.getApplication());
       boolean internal = application.isInternal();
       boolean unitTestMode = application.isUnitTestMode();
       USE_NEW_CODE_FORMATTER = (internal || unitTestMode) ? 1 : 0;
@@ -116,8 +116,15 @@ public class CodeFormatterFacade implements Constants {
         return element;
       }
       else {
-        PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
-        GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset).format();
+        final long start = System.currentTimeMillis();
+        try {
+          PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
+          GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset).format();
+        }
+        catch (Exception e) {
+
+        }
+        //        System.out.println("Time to reformat: " + (System.currentTimeMillis() - start));
         formatComments(element, startOffset, endOffset);
         return element;
       }
@@ -130,10 +137,9 @@ public class CodeFormatterFacade implements Constants {
 
   private boolean useNewFormatter(FileType fileType) {
     return (fileType == StdFileTypes.JAVA
-            || fileType == StdFileTypes.XML
-            || fileType == StdFileTypes.JSPX
-            || fileType == StdFileTypes.HTML) &&
-           USE_NEW_CODE_FORMATTER == 1;
+               || fileType == StdFileTypes.XML
+               || fileType == StdFileTypes.JSPX
+               || fileType == StdFileTypes.HTML);
   }
 
   private ASTNode processRange(ASTNode element, int[] bounds) {
@@ -146,13 +152,15 @@ public class CodeFormatterFacade implements Constants {
       int child1Offset = 0;
       int child2Offset;
       for (;
-           child2 != null;
-           child1 = child2, child2 = Helper.shiftForwardToNonSpace(child2.getTreeNext()), child1Offset = child2Offset) {
+             child2 != null;
+           child1 = child2,
+ child2 = Helper.shiftForwardToNonSpace(child2.getTreeNext()),
+ child1Offset = child2Offset) {
         int length1 = child1 != null ? child1.getTextLength() : 0;
         int length2 = child2.getTextLength();
         child2Offset = child1Offset + length1;
         for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode();
-             child != child2;
+               child != child2;
              child = child.getTreeNext()) {
           child2Offset += child.getTextLength();
         }
@@ -165,7 +173,7 @@ public class CodeFormatterFacade implements Constants {
             child2 = myCodeFormatter.format(SourceTreeToPsiMap.treeElementToPsi(parent), child1, child2, mySettings, myHelper);
             child2Offset = child1Offset + length1;
             for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode();
-                 child != child2;
+                   child != child2;
                  child = child.getTreeNext()) {
               child2Offset += child.getTextLength();
             }
@@ -188,7 +196,7 @@ public class CodeFormatterFacade implements Constants {
           child2 = myCommentFormatter.formatComment(child2);
           child2Offset = child1Offset + length1;
           for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode();
-               child != child2;
+                 child != child2;
                child = child.getTreeNext()) {
             child2Offset += child.getTextLength();
           }
