@@ -135,6 +135,9 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   // incremental compiler integration support
   // instruction implementation should only process the intersection of files it owns and files passed in this method
   public void addFileToChangedSet(FileCopyInstructionImpl item) {
+    if (myChangedSet == null) {
+      clearChangedSet();
+    }
     myChangedSet.add(item);
   }
 

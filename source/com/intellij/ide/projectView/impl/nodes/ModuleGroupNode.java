@@ -15,8 +15,8 @@ import java.util.*;
 
 public class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
 
-  private static final Icon OPEN_ICON = IconLoader.getIcon("/actions/newFolder.png");
-  private static final Icon CLOSED_ICON = OPEN_ICON;
+  private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
+  private static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
   private final Class<? extends AbstractTreeNode> myModuleNodeClass;
 
   public ModuleGroupNode(final Project project,
