@@ -3,9 +3,8 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl");
@@ -33,7 +32,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       return PsiType.CHAR;
     }
     else if (i == STRING_LITERAL) {
-      return PsiType.getJavaLangString(getManager());
+      return PsiType.getJavaLangString(getManager(), getResolveScope());
     }
     else if (i == TRUE_KEYWORD || i == FALSE_KEYWORD) {
       return PsiType.BOOLEAN;

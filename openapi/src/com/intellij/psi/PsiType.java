@@ -58,55 +58,20 @@ public abstract class PsiType {
 
   public abstract boolean equalsToText(String text);
 
-  /**
-   * @deprecated use {@link #getJavaLangObject(PsiManager, GlobalSearchScope)}
-   */
-  public static PsiClassType getJavaLangObject(PsiManager manager) {
-    return getJavaLangObject(manager, GlobalSearchScope.allScope(manager.getProject()));
-  }
-
   public static PsiClassType getJavaLangObject(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", resolveScope);
-  }
-
-  /**
-   * @deprecated use {@link #getJavaLangClass(PsiManager, GlobalSearchScope)}
-   */
-  public static PsiType getJavaLangClass(PsiManager manager) {
-    return getJavaLangClass(manager, GlobalSearchScope.allScope(manager.getProject()));
   }
 
   public static PsiType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Class", resolveScope);
   }
 
-  /**
-   * @deprecated use {@link #getJavaLangString(PsiManager, GlobalSearchScope)}
-   */
-  public static PsiType getJavaLangString(PsiManager manager) {
-    return getJavaLangString(manager, GlobalSearchScope.allScope(manager.getProject()));
-  }
-
   public static PsiType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.String", resolveScope);
   }
 
-  /**
-   * @deprecated use {@link #getJavaLangError(PsiManager, GlobalSearchScope)}
-   */
-  public static PsiType getJavaLangError(PsiManager manager) {
-    return getJavaLangError(manager, GlobalSearchScope.allScope(manager.getProject()));
-  }
-
   public static PsiType getJavaLangError(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Error", resolveScope);
-  }
-
-  /**
-   * @deprecated use {@link #getJavaLangRuntimeException(PsiManager, GlobalSearchScope)}
-   */
-  public static PsiType getJavaLangRuntimeException(PsiManager manager) {
-    return getJavaLangRuntimeException(manager, GlobalSearchScope.allScope(manager.getProject()));
   }
 
   public static PsiType getJavaLangRuntimeException(PsiManager manager, GlobalSearchScope resolveScope) {

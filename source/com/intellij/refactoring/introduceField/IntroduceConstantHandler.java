@@ -166,7 +166,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     if (type != null && PsiUtil.isConstantExpression(initializerExpression)) {
       if (type instanceof PsiPrimitiveType ||
-          PsiType.getJavaLangString(initializerExpression.getManager()).equals(type)) {
+          PsiType.getJavaLangString(initializerExpression.getManager(), initializerExpression.getResolveScope()).equals(type)) {
         return super.getParentClass(initializerExpression);
       }
     }

@@ -3,15 +3,11 @@ package com.intellij.refactoring.typeCook;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
+import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
+import com.intellij.util.IncorrectOperationException;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -399,7 +395,7 @@ public class Util {
         if (aClass instanceof PsiTypeParameter) {
           final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
 
-          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager) : sType, level);
+          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : sType, level);
         }
 
         final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
@@ -487,7 +483,7 @@ public class Util {
 
         if (parms.length > 0 && subst.substitute(parms[0]) != null) {
           PsiJavaCodeReferenceElement classReference = newx.getClassReference();
-          PsiReferenceParameterList list = null;
+          PsiReferenceParameterList list;
 
           if (classReference == null) {
             list = newx.getAnonymousClass().getBaseClassReference().getParameterList();
@@ -514,7 +510,7 @@ public class Util {
               aType = ((PsiWildcardType)aType).getBound();
             }
 
-            list.add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager()) : aType));
+            list.add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope()) : aType));
           }
         }
       }
