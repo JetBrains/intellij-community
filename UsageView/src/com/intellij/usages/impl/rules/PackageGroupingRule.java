@@ -37,11 +37,13 @@ public class PackageGroupingRule implements UsageGroupingRule {
     if (usage instanceof UsageInFile) {
       UsageInFile usageInFile = (UsageInFile)usage;
       VirtualFile file = usageInFile.getFile();
-      VirtualFile dir = file.getParent();
-      PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
-      PsiPackage aPackage = psiDirectory.getPackage();
-      if (aPackage != null) return new PackageGroup(aPackage);
-      return new DirectoryGroup(dir);
+      if (file != null) {
+        VirtualFile dir = file.getParent();
+        PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
+        PsiPackage aPackage = psiDirectory.getPackage();
+        if (aPackage != null) return new PackageGroup(aPackage);
+        return new DirectoryGroup(dir);
+      }
     }
     return null;
   }
