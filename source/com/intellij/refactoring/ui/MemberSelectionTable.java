@@ -91,7 +91,7 @@ public class MemberSelectionTable extends Table {
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
     myMyTableModel = new MyTableModel();
-    setModel(myMyTableModel);
+
     myMemberInfos = memberInfos;
     if (memberInfoModel != null) {
       myMemberInfoModel = memberInfoModel;
@@ -100,7 +100,7 @@ public class MemberSelectionTable extends Table {
       myMemberInfoModel = defaultMemberInfoModel;
     }
 
-
+    setModel(myMyTableModel);
 
 //    myTable.setTableHeader(null);
 //    this.setDefaultRenderer(Boolean.class, new MyBooleanRenderer());
