@@ -90,9 +90,8 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
     myIsSuspended    = suspendManager.isSuspended(thread);
     myIsExpandable   = calcExpandable(suspendManager);
-    SuspendContextImpl threadContext = SuspendManagerUtil.findContextByThread(suspendManager, thread);
     mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), thread);
-    myIsAtBreakpoint = threadContext != null;
+    myIsAtBreakpoint = SuspendManagerUtil.findContextByThread(suspendManager, thread) != null;
     myIsCurrent      = calcIsCurrent(context);
     myIsFrozen       = suspendManager.isFrozen(getThreadReference());
   }

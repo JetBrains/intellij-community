@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.ThreadReference;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -170,9 +171,24 @@ public class DebuggerSession {
           }
 
           if(currentThread == null) {
-            currentThread = getProcess().getVirtualMachineProxy().allThreads().iterator().next();
+            final Iterator<ThreadReferenceProxyImpl> iterator = getProcess().getVirtualMachineProxy().allThreads().iterator();
+            while (iterator.hasNext()) {
+              currentThread = iterator.next();
+              if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING) {
+                break;
+              }
+            }
           }
 
+          while (!currentThread.isSuspended()) {
+            // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
+            // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
+            try {
+              Thread.sleep(10);
+            }
+            catch (InterruptedException e) {
+            }
+          }
 
           StackFrameProxyImpl proxy;
           try {
@@ -370,18 +386,21 @@ public class DebuggerSession {
   }
 
   public void stepOut() {
-    mySteppingThroughThreads.add(getSuspendContext().getThread());
-    resumeAction(myDebugProcess.createStepOutCommand(getSuspendContext()), EVENT_STEP);
+    final SuspendContextImpl suspendContext = getSuspendContext();
+    mySteppingThroughThreads.add(suspendContext.getThread());
+    resumeAction(myDebugProcess.createStepOutCommand(suspendContext), EVENT_STEP);
   }
 
   public void stepOver(boolean ignoreBreakpoints) {
-    mySteppingThroughThreads.add(getSuspendContext().getThread());
-    resumeAction(myDebugProcess.createStepOverCommand(getSuspendContext(), ignoreBreakpoints), EVENT_STEP);
+    final SuspendContextImpl suspendContext = getSuspendContext();
+    mySteppingThroughThreads.add(suspendContext.getThread());
+    resumeAction(myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints), EVENT_STEP);
   }
 
   public void stepInto(final boolean ignoreFilters) {
-    mySteppingThroughThreads.add(getSuspendContext().getThread());
-    resumeAction(myDebugProcess.createStepIntoCommand(getSuspendContext(), ignoreFilters), EVENT_STEP);
+    final SuspendContextImpl suspendContext = getSuspendContext();
+    mySteppingThroughThreads.add(suspendContext.getThread());
+    resumeAction(myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters), EVENT_STEP);
   }
 
   public void runToCursor(Document document, int line) {

@@ -212,18 +212,20 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   /**
    *
-   * @param suspendContext
+   * @return
+   * @param stepThread
    * @param depth
    * @param hint may be null
-   * @return
    */
-  protected boolean doStep(SuspendContextImpl suspendContext, int depth, RequestHint hint) {
-    final ThreadReferenceProxyImpl currentThreadProxy = suspendContext.getThread();
-    if (currentThreadProxy == null || !currentThreadProxy.isSuspended()) return false;
+  protected boolean doStep(ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
+    final ThreadReferenceProxyImpl currentThreadProxy = stepThread;
+    if (currentThreadProxy == null || !currentThreadProxy.isSuspended()) {
+      return false;
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("DO_STEP: creating step request for " + currentThreadProxy.getThreadReference());
     }
-    deleteStepRequests(suspendContext.getThread());
+    deleteStepRequests(currentThreadProxy);
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     StepRequest stepRequest = requestManager.createStepRequest(currentThreadProxy.getThreadReference(), StepRequest.STEP_LINE, depth);
     DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -264,7 +266,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
           // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occures
           continue;
         }
-        else if(threadReference.equals(requestsInThread.getThreadReference())) {
+        else /*if(threadReference.equals(requestsInThread.getThreadReference())) */{
           toDelete.add(request);
         }
       }
@@ -1153,9 +1155,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     public void contextAction() {
       showStatusText("Stepping out");
-      if (doStep(getSuspendContext(), StepRequest.STEP_OUT, null)) {
-        super.contextAction();
-      }
+      final SuspendContextImpl suspendContext = getSuspendContext();
+      doStep(suspendContext.getThread(), StepRequest.STEP_OUT, null);
+      super.contextAction();
     }
   }
 
@@ -1169,11 +1171,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     public void contextAction() {
       showStatusText("Stepping into");
-      RequestHint hint = new RequestHint(getSuspendContext(), StepRequest.STEP_INTO);
+      final SuspendContextImpl suspendContext = getSuspendContext();
+      RequestHint hint = new RequestHint(suspendContext, StepRequest.STEP_INTO);
       hint.setIgnoreFilters(myIgnoreFilters);
-      if (doStep(getSuspendContext(), StepRequest.STEP_INTO, hint)) {
-        super.contextAction();
-      }
+      doStep(suspendContext.getThread(), StepRequest.STEP_INTO, hint);
+      super.contextAction();
     }
   }
 
@@ -1187,15 +1189,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     public void contextAction() {
       showStatusText("Stepping over");
-      RequestHint hint = new RequestHint(getSuspendContext(), StepRequest.STEP_OVER);
+      final SuspendContextImpl suspendContext = getSuspendContext();
+      RequestHint hint = new RequestHint(suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
 
-      if (doStep(getSuspendContext(), StepRequest.STEP_OVER, hint)) {
+      final boolean succeeded = doStep(suspendContext.getThread(), StepRequest.STEP_OVER, hint);
+      if (succeeded) {
         if (myIsIgnoreBreakpoints) {
           DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
         }
-        super.contextAction();
       }
+      super.contextAction();
     }
   }
 
@@ -1244,7 +1248,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       getVirtualMachineProxy().suspend();
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
-      mySuspendManager.notifyPaused(suspendContext);
+      myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
     }
   }
 

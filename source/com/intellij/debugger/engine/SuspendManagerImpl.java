@@ -21,6 +21,8 @@ public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManager");
 
   private final LinkedList<SuspendContextImpl> myEventContexts  = new LinkedList<SuspendContextImpl>();
+  // contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
+  // "paused at breakpoint" and JDI prohibits data queries on its stackframes 
   private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<SuspendContextImpl>();
   private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = new HashSet<ThreadReferenceProxyImpl>();
 

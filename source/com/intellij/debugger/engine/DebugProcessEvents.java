@@ -342,7 +342,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (LOG.isDebugEnabled()) {
           LOG.debug("STEPOUT doStep");
         }
-        shouldResume = doStep(suspendContext, hint.getDepth(), hint);
+        shouldResume = doStep(suspendContext.getThread(), hint.getDepth(), hint);
       }
 
       if(!shouldResume && hint.isRestoreBreakpoints()) {

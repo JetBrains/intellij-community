@@ -9,21 +9,25 @@ import com.intellij.util.concurrency.Semaphore;
  * Time: 12:56:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class InvokeAndWaitEventImpl implements InvokeAndWaitEvent{
-  private Semaphore myInvokeAndWaitSemaphore;
+public abstract class InvokeAndWaitEventImpl extends Semaphore implements InvokeAndWaitEvent{
 
   public final void release() {
-    if(myInvokeAndWaitSemaphore != null) myInvokeAndWaitSemaphore.up();
+    up();
   }
 
   public final void hold() {
-    if(myInvokeAndWaitSemaphore == null) {
-      myInvokeAndWaitSemaphore = new Semaphore();
-    }
-    myInvokeAndWaitSemaphore.down();
+    down();
   }
 
-  public void waitFor() {
-    myInvokeAndWaitSemaphore.waitFor();
+  public final void down() {
+    super.down();
+  }
+
+  public final void up() {
+    super.up();
+  }
+
+  public final void waitFor() {
+    super.waitFor();
   }
 }

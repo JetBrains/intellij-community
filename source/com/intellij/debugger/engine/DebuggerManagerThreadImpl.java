@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 
@@ -47,17 +48,17 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   public void invokeAndWait(DebuggerCommandImpl managerCommand, int priority) {
-    LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
                    "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
-    super.invokeAndWait(managerCommand, priority);    //To change body of overridden methods use File | Settings | File Templates.
+    super.invokeAndWait(managerCommand, priority);
   }
 
   public void invokeAndWait(DebuggerCommandImpl managerCommand) {
-    LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
                    "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
-    invokeAndWait(managerCommand, NORMAL_PRIORITY);
+    super.invokeAndWait(managerCommand, NORMAL_PRIORITY);    
   }
 
   public void invoke(DebuggerCommandImpl managerCommand) {

@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.SuspendContextImpl;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -30,8 +32,12 @@ public class ForceStepOverAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
-    presentation.setEnabled(debuggerSession != null && debuggerSession.isPaused());
+    final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
+    DebuggerSession debuggerSession = context.getDebuggerSession();
+    final boolean isPaused = debuggerSession != null && debuggerSession.isPaused();
+    final SuspendContextImpl suspendContext = context.getSuspendContext();
+    final boolean hasCurrentThread = suspendContext != null && suspendContext.getThread() != null;
+    presentation.setEnabled(isPaused && hasCurrentThread);
   }
 }
 
