@@ -27,7 +27,7 @@ public class ChameleonTransforming implements Constants {
 
       TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable(), file.createLexer());
       final TreeElement treeNext = chameleon.getTreeNext();
-      TreeUtil.replace(chameleon, newElement);
+      TreeUtil.replaceWithList(chameleon, newElement);
       if (DebugUtil.CHECK) {
         if (newElement != null) {
           DebugUtil.checkTreeStructure(newElement);

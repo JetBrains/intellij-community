@@ -13,17 +13,17 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 
 public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   private final XmlElementDescriptor myParentDescriptor;
   private final XmlNSDescriptor myXmlNSDescriptor;
 
   public AnyXmlElementDescriptor(XmlElementDescriptor parentDescriptor, XmlNSDescriptor xmlNSDescriptor) {
-    myParentDescriptor = parentDescriptor;
+    myParentDescriptor = parentDescriptor == null ? NullElementDescriptor.getInstance() : parentDescriptor;
     myXmlNSDescriptor = xmlNSDescriptor;
   }
 
@@ -67,7 +67,7 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag tag){
-    return myParentDescriptor!=null ? myParentDescriptor.getElementDescriptor(tag):null;
+    return myParentDescriptor.getElementDescriptor(tag);
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
