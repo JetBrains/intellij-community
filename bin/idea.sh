@@ -15,7 +15,7 @@ IDEA_BIN_HOME=`dirname "$0"`
 export JAVA_HOME
 export IDEA_HOME
 
-if [ -n $IDEA_PROPERTIES ]; then
+if [ -n "$IDEA_PROPERTIES" ]; then
   IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=$IDEA_PROPERTIES
 fi
 
