@@ -584,8 +584,24 @@ public class RefactoringUtil {
             return type;
         }
 
+        public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
+          final PsiType bound = wildcardType.getBound();
+          PsiManager manager = wildcardType.getManager();
+          if (bound != null) {
+            final PsiType acceptedBound = bound.accept(this);
+            if (acceptedBound instanceof PsiWildcardType) {
+              if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
+              return acceptedBound;
+            }
+            if (acceptedBound.equals(bound)) return wildcardType;
+            return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, acceptedBound) :
+                   PsiWildcardType.createSuper(manager, acceptedBound);
+          }
+          return wildcardType;
+        }
+
         public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-            return capturedWildcardType.getWildcard();
+            return capturedWildcardType.getWildcard().accept(this);
         }
 
         public PsiType visitClassType(PsiClassType classType) {
