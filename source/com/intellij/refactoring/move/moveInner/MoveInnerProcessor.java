@@ -32,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -272,7 +273,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final ArrayList<String> conflicts = new ArrayList<String>();
 
     class Visitor extends PsiRecursiveElementVisitor {
-      private final com.intellij.util.containers.HashMap reported = new com.intellij.util.containers.HashMap();
+      private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitReferenceElement(expression);
@@ -294,11 +295,11 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         }
 
         if (isInInnerClass &&
-            resolved instanceof PsiModifierListOwner && becomesInaccessible(((PsiModifierListOwner)resolved))) {
+            becomesInaccessible(((PsiModifierListOwner)resolved))) {
           final PsiElement container = ConflictsUtil.getContainer(reference);
-          HashSet containerSet = (HashSet)reported.get(resolved);
+          HashSet<PsiElement> containerSet = reported.get(resolved);
           if (containerSet == null) {
-            containerSet = new HashSet();
+            containerSet = new HashSet<PsiElement>();
             reported.put(resolved, containerSet);
           }
           if (!containerSet.contains(container)) {
