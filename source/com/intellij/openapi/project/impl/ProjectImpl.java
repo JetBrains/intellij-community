@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -362,6 +363,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
   public void init() {
     super.init();
 
+    ((ModuleManagerImpl)ModuleManager.getInstance(this)).loadModules();
     myProjectManagerListener = new ProjectImpl.MyProjectManagerListener();
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }

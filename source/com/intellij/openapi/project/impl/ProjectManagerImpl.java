@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -261,7 +260,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (myOpenProjects.contains(project)) return;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !checkVersion(project)) return;
 
-    ((ModuleManagerImpl)ModuleManager.getInstance(project)).loadModules();
 
     myCountOfProjectsBeingOpen++;
     myOpenProjects.add(project);
