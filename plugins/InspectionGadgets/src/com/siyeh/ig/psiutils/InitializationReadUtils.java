@@ -142,7 +142,7 @@ public class InitializationReadUtils {
                                                    PsiTryStatement tryStatement,
                                                    Set checkedMethods) {
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if (catchBlocks == null || catchBlocks.length == 0) {
+        if (catchBlocks.length == 0) {
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
             if (cachingBlockMustAssignVariable(field, tryBlock, checkedMethods)) {
                 return true;
