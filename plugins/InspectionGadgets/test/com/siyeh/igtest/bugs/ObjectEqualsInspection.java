@@ -36,4 +36,14 @@ public class ObjectEqualsInspection
 
         }
     }
+
+    public void fooBarClass()
+    {
+        final Class class1 = String.class;
+        final Class class2 = Object.class;
+        if (class1 == class2)
+        {
+
+        }
+    }
 }
