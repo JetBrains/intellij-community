@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -70,6 +71,16 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
                        "Move method is not supported when method is a part of inheritance hierarchy";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
       return;
+    }
+
+    final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
+    for (int i = 0; i < classes.length; i++) {
+      if (classes[i] instanceof JspClass) {
+        String message = "Cannot perform the refactoring.\n" +
+                         "Synthetic jsp class is referenced in the method";
+        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+        return;
+      }
     }
 
     List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
