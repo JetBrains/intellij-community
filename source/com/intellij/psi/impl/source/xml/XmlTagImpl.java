@@ -361,9 +361,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         final XmlTagImpl dummyTag = (XmlTagImpl)getManager().getElementFactory().createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
-        tag.replaceChild((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        tag.replaceChild(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
-        if(childByRole != null) tag.replaceChild((TreeElement)childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        if(childByRole != null) tag.replaceChild(childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
 
         return XmlTagNameChanged.createXmlTagNameChanged(model, tag, oldName);
       }
@@ -692,7 +692,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return true;
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean beforeB) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {
     //ChameleonTransforming.transformChildren(this);
     TreeElement firstAppended = null;
     boolean before = beforeB != null ? beforeB.booleanValue() : true;
@@ -710,7 +710,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return firstAppended;
   }
 
-  public TreeElement addInternal(final TreeElement child, final TreeElement anchor, final boolean before) throws IncorrectOperationException{
+  public TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException{
     final PsiFile containingFile = getContainingFile();
     final FileType fileType = containingFile.getFileType();
     final PomModel model = getProject().getModel();
@@ -727,7 +727,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             if(startTagEnd == null) startTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(XmlTagImpl.this);
 
             if(startTagEnd == null) treeElement = addInternalHack(child, child, null, null,fileType);
-            else treeElement = addInternalHack(child, child, (TreeElement)startTagEnd, Boolean.TRUE, fileType);
+            else treeElement = addInternalHack(child, child, startTagEnd, Boolean.TRUE, fileType);
           }
           else treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
           final ASTNode treePrev = treeElement.getTreePrev();
@@ -782,8 +782,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
               event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
 
-              removeChild((TreeElement)treeNext);
-              removeChild((TreeElement)child);
+              removeChild(treeNext);
+              removeChild(child);
               return event;
             }
           }, aspect);
@@ -825,7 +825,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     catch (IncorrectOperationException e) {}
   }
 
-  public void replaceChildInternal(TreeElement child, TreeElement newElement) {
+  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
     try {
       addInternal(newElement, child, false);
       deleteChildInternal(child);
@@ -841,7 +841,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText);
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(this);
       if(emptyTagEnd != null) removeChild(emptyTagEnd);
-      addChildren((TreeElement)startTagStart, null, null);
+      addChildren(startTagStart, null, null);
     }
     return endTagStart;
   }
@@ -866,13 +866,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private class BodyInsertTransaction implements PomTransaction{
     private TreeElement myChild;
-    private TreeElement myAnchor;
+    private ASTNode myAnchor;
     private ASTNode myNewElement;
     private PomModel myModel;
     private boolean myBeforeFlag;
     private FileType myFileType ;
 
-    public BodyInsertTransaction(PomModel model, TreeElement child, TreeElement anchor, boolean beforeFlag, FileType fileType) {
+    public BodyInsertTransaction(PomModel model, TreeElement child, ASTNode anchor, boolean beforeFlag, FileType fileType) {
       this.myModel = model;
       this.myChild = child;
       this.myAnchor = anchor;
@@ -923,7 +923,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                 // insert child just after anchor
                 // insert into the position specified by index
                 if(subTagNum >= 0){
-                  final TreeElement subTag = (TreeElement)subTags[subTagNum];
+                  final ASTNode subTag = (ASTNode)subTags[subTagNum];
                   if(subTag.getTreeParent() != XmlTagImpl.this){
                     // in entity
                     final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
@@ -933,7 +933,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                 }
                 else{
                   final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
-                  treeElement = addInternalHack(myChild, myChild, (TreeElement)child, Boolean.FALSE, myFileType);
+                  treeElement = addInternalHack(myChild, myChild, child, Boolean.FALSE, myFileType);
                 }
                 myNewElement = treeElement;
                 return XmlTagChildAdd.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
@@ -941,7 +941,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             }
           }
         }
-        treeElement = addInternalHack(myChild, myChild, (TreeElement)anchor, Boolean.TRUE, myFileType);
+        treeElement = addInternalHack(myChild, myChild, anchor, Boolean.TRUE, myFileType);
       }
       else {
         treeElement = addInternalHack(myChild, myChild, myAnchor, Boolean.valueOf(myBeforeFlag), myFileType);
@@ -967,8 +967,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   private TreeElement addInternalHack(TreeElement first,
-                                      TreeElement last,
-                                      TreeElement anchor,
+                                      ASTNode last,
+                                      ASTNode anchor,
                                       Boolean beforeFlag,
                                       FileType fileType) {
     if(first instanceof XmlTagChild && fileType == StdFileTypes.XHTML){

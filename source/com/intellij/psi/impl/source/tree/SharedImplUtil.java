@@ -77,7 +77,7 @@ public class SharedImplUtil {
     return null;
   }
 
-  public static PsiElement addRange(PsiElement thisElement, PsiElement first, PsiElement last, TreeElement anchor, Boolean before) throws IncorrectOperationException{
+  public static PsiElement addRange(PsiElement thisElement, PsiElement first, PsiElement last, ASTNode anchor, Boolean before) throws IncorrectOperationException{
     CheckUtil.checkWritable(thisElement);
     final CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
     FileType fileType = thisElement.getContainingFile().getFileType();
@@ -85,7 +85,7 @@ public class SharedImplUtil {
     Helper helper = new Helper(fileType, project);
 
     TreeElement copyFirst = null;
-    TreeElement copyLast = null;
+    ASTNode copyLast = null;
     ASTNode next = SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
     ASTNode parent = null;
     for(TreeElement element = SourceTreeToPsiMap.psiElementToTree(first); element != next; element = element.getTreeNext()){
@@ -173,7 +173,7 @@ public class SharedImplUtil {
       element = firstBracket;
       while(true){
         ASTNode next = element.getTreeNext();
-        variableElement.removeChild((TreeElement)element);
+        variableElement.removeChild(element);
         if (element == lastBracket) break;
         element = next;
       }

@@ -42,10 +42,10 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
           }
           else if (SourceTreeToPsiMap.psiElementToTree(declaredElements[0]) == child) {
             CompositeElement next = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[1]);
-            ASTNode copyChild = ((TreeElement)child).copyElement();
+            ASTNode copyChild = child.copyElement();
             ASTNode nameChild = ((CompositeElement)copyChild).findChildByRole(ChildRole.NAME);
             removeCommaBefore(next);
-            next.addInternal((TreeElement)copyChild.getFirstChildNode(), (TreeElement)nameChild.getTreePrev(), null, Boolean.FALSE);
+            next.addInternal((TreeElement)copyChild.getFirstChildNode(), nameChild.getTreePrev(), null, Boolean.FALSE);
           }
           else {
             removeCommaBefore (child);

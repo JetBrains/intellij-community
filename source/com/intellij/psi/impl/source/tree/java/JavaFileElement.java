@@ -16,10 +16,10 @@ public class JavaFileElement extends FileElement{
     super(JAVA_FILE);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     if (before == null && first == last && first.getElementType() == ElementType.PACKAGE_STATEMENT){ //?
-      anchor = (TreeElement)getFirstChildNode();
+      anchor = getFirstChildNode();
       before = Boolean.TRUE;
     }
     return super.addInternal(first, last, anchor, before);

@@ -179,7 +179,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     visitor.visitNameValuePair(this);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     final TreeElement treeElement = super.addInternal(first, last, anchor, before);

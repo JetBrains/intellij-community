@@ -37,4 +37,6 @@ public interface ASTNode extends UserDataHolder {
   void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore);
 
   Object clone();
+
+  ASTNode copyElement();
 }

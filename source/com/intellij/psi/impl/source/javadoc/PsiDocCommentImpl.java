@@ -125,7 +125,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(tag);
-    final TreeElement newLine = Factory.createSingleLeafElement(/*DOC_COMMENT_DATA*/WHITE_SPACE, new char[]{'\n'}, 0, 1, treeCharTab, null);
+    final ASTNode newLine = Factory.createSingleLeafElement(/*DOC_COMMENT_DATA*/WHITE_SPACE, new char[]{'\n'}, 0, 1, treeCharTab, null);
     tag.addChild(newLine, null);
     final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
                                                                         null);
@@ -134,15 +134,15 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     tag.addInternal(commentData, commentData, null, Boolean.TRUE);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     TreeElement firstAdded = null;
     boolean needToAddNewline = false;
     if (first == last && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
-        anchor = (TreeElement)getLastChildNode(); // this is a '*/'
+        anchor = getLastChildNode(); // this is a '*/'
         final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), WHITE_SPACE_BIT_SET);
         if (prevBeforeWS != null) {
-          anchor = (TreeElement)prevBeforeWS;
+          anchor = prevBeforeWS;
           before = Boolean.FALSE;
         }
         else {

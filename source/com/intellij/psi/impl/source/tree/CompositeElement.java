@@ -235,8 +235,8 @@ public class CompositeElement extends TreeElement implements Cloneable{
   /**
    * @return First element that was appended (for example whitespaces could be skipped)
    */
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
-    TreeElement anchorBefore;
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    ASTNode anchorBefore;
     if (anchor != null){
       anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
     }
@@ -252,10 +252,10 @@ public class CompositeElement extends TreeElement implements Cloneable{
   }
 
   public void deleteChildInternal(ASTNode child) {
-    CodeEditUtil.removeChild(this, (TreeElement)child);
+    CodeEditUtil.removeChild(this, child);
   }
 
-  public void replaceChildInternal(TreeElement child, TreeElement newElement) {
+  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
     if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
       boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
       if (needParenth) {
@@ -324,6 +324,6 @@ public class CompositeElement extends TreeElement implements Cloneable{
   }
 
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
-    ChangeUtil.addChildren(this, (TreeElement)firstChild, lastChild, (TreeElement)anchorBefore);
+    ChangeUtil.addChildren(this, firstChild, lastChild, anchorBefore);
   }
 }

@@ -16,21 +16,21 @@ public class ParameterListElement extends RepositoryTreeElement {
     super(PARAMETER_LIST);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     if (anchor == null) {
       if (before == null || before.booleanValue()) {
-        anchor = (TreeElement)findChildByRole(ChildRole.RPARENTH);
+        anchor = findChildByRole(ChildRole.RPARENTH);
         before = Boolean.TRUE;
       }
       else {
-        anchor = (TreeElement)findChildByRole(ChildRole.LPARENTH);
+        anchor = findChildByRole(ChildRole.LPARENTH);
         before = Boolean.FALSE;
       }
     }
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (first == last && first.getElementType() == PARAMETER) {
-      TreeElement element = first;
+      ASTNode element = first;
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
@@ -40,7 +40,7 @@ public class ParameterListElement extends RepositoryTreeElement {
           break;
         }
       }
-      for (TreeElement child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
+      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());

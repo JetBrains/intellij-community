@@ -149,7 +149,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
-    TreeElement firstElement = SourceTreeToPsiMap.psiElementToTree(first);
+    ASTNode firstElement = SourceTreeToPsiMap.psiElementToTree(first);
     ASTNode lastElement = SourceTreeToPsiMap.psiElementToTree(last);
     LOG.assertTrue(firstElement.getTreeParent() == this);
     LOG.assertTrue(lastElement.getTreeParent() == this);

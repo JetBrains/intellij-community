@@ -18,7 +18,6 @@ import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -444,7 +443,7 @@ public class ImportHelper{
     return null;
   }
 
-  public TreeElement getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement){
+  public ASTNode getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement){
     PsiJavaCodeReferenceElement ref = statement.getImportReference();
     if (ref == null) return null;
 

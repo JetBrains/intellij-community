@@ -331,16 +331,16 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, null, getManager());
       CodeEditUtil.addChild((CompositeElement)field, semicolon, null);
 
-      CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), (TreeElement)comma);
+      CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);
 
       TreeElement typeClone = (TreeElement)type.clone();
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(type);
       typeClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, typeClone, (TreeElement)nextField.getFirstChildNode());
+      CodeEditUtil.addChild((CompositeElement)nextField, typeClone, nextField.getFirstChildNode());
 
       TreeElement modifierListClone = (TreeElement)modifierList.clone();
       modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, modifierListClone, (TreeElement)nextField.getFirstChildNode());
+      CodeEditUtil.addChild((CompositeElement)nextField, modifierListClone, nextField.getFirstChildNode());
 
       field = nextField;
     }

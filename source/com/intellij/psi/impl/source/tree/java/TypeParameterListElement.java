@@ -37,19 +37,19 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     }
   }
 
-  public TreeElement addInternal(final TreeElement first, final TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(final TreeElement first, final ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     TreeElement lt = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (lt == null) {
       lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(lt, lt, (TreeElement)getFirstChildNode(), Boolean.TRUE);
+      super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
     }
 
     TreeElement gt = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
     if (gt == null) {
       gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(gt, gt, (TreeElement)getLastChildNode(), Boolean.FALSE);
+      super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
     }
 
     if (anchor == null) {
@@ -66,7 +66,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
 
     if (first == last && first.getElementType() == TYPE_PARAMETER) {
-      final TreeElement element = first;
+      final ASTNode element = first;
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE_PARAMETER){
@@ -75,7 +75,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
           break;
         }
       }
-      for(TreeElement child = element.getTreePrev(); child != null; child = child.getTreePrev()){
+      for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE_PARAMETER){
           final TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());

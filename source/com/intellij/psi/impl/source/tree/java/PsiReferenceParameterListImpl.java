@@ -74,7 +74,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before){
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
     if (first == last && first.getElementType() == TYPE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
         super.deleteChildInternal(getLastChildNode());
@@ -83,11 +83,11 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
     if (anchor == null){
       if (before == null || before.booleanValue()){
-        anchor = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
+        anchor = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
         before = Boolean.TRUE;
       }
       else{
-        anchor = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
+        anchor = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
         before = Boolean.FALSE;
       }
     }
@@ -96,7 +96,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
 
     if (first == last && first.getElementType() == TYPE){
-      TreeElement element = first;
+      ASTNode element = first;
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE){
@@ -105,7 +105,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
           break;
         }
       }
-      for(TreeElement child = element.getTreePrev(); child != null; child = child.getTreePrev()){
+      for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE){
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -117,11 +117,11 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
     if (getFirstChildNode().getElementType() != LT){
       TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(lt, lt, (TreeElement)getFirstChildNode(), Boolean.TRUE);
+      super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
     }
     if (getLastChildNode().getElementType() != GT){
       TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(gt, gt, (TreeElement)getLastChildNode(), Boolean.FALSE);
+      super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
     }
     return firstAdded;
   }

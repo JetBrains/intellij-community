@@ -19,11 +19,11 @@ import com.intellij.lang.ASTNode;
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
 
-  public static ASTNode addChild(CompositeElement parent, TreeElement child, TreeElement anchorBefore) {
+  public static ASTNode addChild(CompositeElement parent, TreeElement child, ASTNode anchorBefore) {
     return addChildren(parent, child, child, anchorBefore);
   }
 
-  public static TreeElement addChildren(CompositeElement parent, TreeElement first, ASTNode last, TreeElement anchorBefore) {
+  public static TreeElement addChildren(CompositeElement parent, TreeElement first, ASTNode last, ASTNode anchorBefore) {
     final Project project = parent.getManager().getProject();
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(parent).getContainingFile();
     FileType fileType = file.getFileType();
@@ -48,8 +48,8 @@ public class CodeEditUtil {
     final int oldIndent = helper.getIndent(first);
 
     ASTNode afterLast = last.getTreeNext();
-    TreeElement next;
-    for(TreeElement child = first; child != afterLast; child = next){
+    ASTNode next;
+    for(ASTNode child = first; child != afterLast; child = next){
       next = child.getTreeNext();
       parent.addChild(child, anchorBefore);
     }
@@ -113,11 +113,11 @@ public class CodeEditUtil {
     return first;
   }
 
-  public static void removeChild(CompositeElement parent, TreeElement child) {
+  public static void removeChild(CompositeElement parent, ASTNode child) {
     removeChildren(parent, child, child);
   }
 
-  public static void removeChildren(CompositeElement parent, TreeElement first, ASTNode last) {
+  public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
     final PsiManager manager = parent.getManager();
     final Project project = manager.getProject();
@@ -133,11 +133,11 @@ public class CodeEditUtil {
     ASTNode next = last.getTreeNext();
     ASTNode prevNonSpace = Helper.shiftBackwardToNonSpace(prev);
     ASTNode nextNonSpace = Helper.shiftForwardToNonSpace(next);
-    TreeElement spaceBefore = Helper.getSpaceElement(parent, prevNonSpace, first);
-    TreeElement spaceAfter = Helper.getSpaceElement(parent, last, nextNonSpace);
+    ASTNode spaceBefore = Helper.getSpaceElement(parent, prevNonSpace, first);
+    ASTNode spaceAfter = Helper.getSpaceElement(parent, last, nextNonSpace);
 
-    TreeElement childNext;
-    for(TreeElement child = first; child != next; child = childNext){
+    ASTNode childNext;
+    for(ASTNode child = first; child != next; child = childNext){
       childNext = child.getTreeNext();
       parent.removeChild(child);
     }
@@ -177,7 +177,7 @@ public class CodeEditUtil {
     }
   }
 
-  public static ASTNode replaceChild(CompositeElement parent, TreeElement oldChild, TreeElement newChild) {
+  public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
     final PsiManager manager = parent.getManager();
     final Project project = manager.getProject();
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(parent);
@@ -215,7 +215,7 @@ public class CodeEditUtil {
         || (parent.getTreeParent() == null && prevNonSpace == null && newChild.getTextRange().getStartOffset() == spaceText.length())
       ){
         spaceText = spaceText.substring(0, index + 1) + helper.fillIndent(oldIndent);
-        newChild = (TreeElement)helper.makeSpace(parent, prevNonSpace, newChild, spaceText, false);
+        newChild = helper.makeSpace(parent, prevNonSpace, newChild, spaceText, false);
         //indentAdjuster.adjustIndent(newChild);
       }
     }
@@ -245,7 +245,7 @@ public class CodeEditUtil {
     }
   }
 
-  public static TreeElement getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement) {
+  public static ASTNode getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
     ImportHelper importHelper = new ImportHelper(settings);
     return importHelper.getDefaultAnchor(list, statement);
@@ -390,10 +390,10 @@ public class CodeEditUtil {
         next = child.getTreeNext();
         if (child instanceof CompositeElement && child.getTextLength() == 0) continue;
         if (count == 0){
-          parent.replaceChild((TreeElement)child, newSpace);
+          parent.replaceChild(child, newSpace);
         }
         else{
-          parent.removeChild((TreeElement)child);
+          parent.removeChild(child);
         }
         count++;
       }

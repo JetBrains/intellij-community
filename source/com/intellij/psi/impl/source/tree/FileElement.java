@@ -63,11 +63,11 @@ public abstract class FileElement extends RepositoryTreeElement{
     myCharTable = table;
   }
 
-  public void replaceChildInternal(TreeElement child, TreeElement newElement) {
+  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
     if (newElement.getElementType() == ElementType.IMPORT_LIST) {
       LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
       if (newElement.getFirstChildNode() == null) { //empty import list
-        TreeElement next = child.getTreeNext();
+        ASTNode next = child.getTreeNext();
         if (next.getElementType() == ElementType.WHITE_SPACE) {
           removeChild(next);
         }

@@ -85,15 +85,15 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     }, PsiSubstitutor.EMPTY, this, this);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     if (anchor == null){
       if (before == null || before.booleanValue()){
-        anchor = (TreeElement)findChildByRole(ChildRole.RBRACE);
+        anchor = findChildByRole(ChildRole.RBRACE);
         before = Boolean.TRUE;
       }
       else{
-        anchor = (TreeElement)findChildByRole(ChildRole.LBRACE);
+        anchor = findChildByRole(ChildRole.LBRACE);
         before = Boolean.FALSE;
       }
     }

@@ -59,7 +59,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     model.runTransaction(new PomTransaction() {
       public PomModelEvent run(){
         if(value != null){
-          CodeEditUtil.replaceChild(XmlAttributeImpl.this, (TreeElement)value, (TreeElement)newValue);
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, value, newValue);
         }
         else {
           CodeEditUtil.addChild(XmlAttributeImpl.this, (TreeElement)newValue, null);
@@ -111,7 +111,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)getManager().getElementFactory().createXmlAttribute(nameText, ""));
     model.runTransaction(new PomTransaction() {
       public PomModelEvent run(){
-        CodeEditUtil.replaceChild(XmlAttributeImpl.this, (TreeElement)name, (TreeElement)newName);
+        CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
         return XmlAttributeSet.createXmlAttributeSet(model, getParent(), nameText, getValue());
       }
     }, model.getModelAspect(XmlAspect.class));

@@ -111,7 +111,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       for(int i = 1; i < variables.length; i++){
         CompositeElement variable = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i]);
 
-        TreeElement comma = (TreeElement)TreeUtil.skipElementsBack(variable.getTreePrev(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode comma = TreeUtil.skipElementsBack(variable.getTreePrev(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
         if (comma != null && comma.getElementType() == JavaTokenType.COMMA){
           CodeEditUtil.removeChildren(statement, comma, variable.getTreePrev());
         }
@@ -123,26 +123,26 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         statement1.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
         statement1.addChild(variable, null);
 
-        TreeElement space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-        variable.addChild(space, (TreeElement)variable.getFirstChildNode());
+        ASTNode space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
+        variable.addChild(space, variable.getFirstChildNode());
 
-        TreeElement typeClone = (TreeElement)type.clone();
+        ASTNode typeClone = (ASTNode)type.clone();
         typeClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        variable.addChild(typeClone, (TreeElement)variable.getFirstChildNode());
+        variable.addChild(typeClone, variable.getFirstChildNode());
 
         if (modifierList.getTextLength() > 0){
           space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-          variable.addChild(space, (TreeElement)variable.getFirstChildNode());
+          variable.addChild(space, variable.getFirstChildNode());
         }
 
-        TreeElement modifierListClone = (TreeElement)modifierList.clone();
+        ASTNode modifierListClone = (ASTNode)modifierList.clone();
         modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        variable.addChild(modifierListClone, (TreeElement)variable.getFirstChildNode());
+        variable.addChild(modifierListClone, variable.getFirstChildNode());
 
-        TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
+        ASTNode semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
         SourceTreeToPsiMap.psiElementToTree(variables[i - 1]).addChild(semicolon, null);
 
-        CodeEditUtil.addChild(statement.getTreeParent(), statement1, (TreeElement)last.getTreeNext());
+        CodeEditUtil.addChild(statement.getTreeParent(), statement1, last.getTreeNext());
 
         //?
         //codeStyleManager.adjustInsertedCode(statement1);

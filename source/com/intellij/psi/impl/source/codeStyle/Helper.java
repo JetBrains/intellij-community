@@ -442,7 +442,7 @@ public class Helper {
       if (text.length() == 0) return child2;
       LeafElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
                                                              charTableByTree, null);
-      final TreeElement anchorBefore = (TreeElement)(child1 != null ? child1.getTreeNext() : parent.getFirstChildNode());
+      final ASTNode anchorBefore = (child1 != null ? child1.getTreeNext() : parent.getFirstChildNode());
       parent.addChild(newSpace, anchorBefore);
       indentShift = getIndent(newSpace.getText(), true);
     }
@@ -466,7 +466,7 @@ public class Helper {
           }
           if (i == text.length()) return child2;
         }
-        TreeElement newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
+        ASTNode newSpace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(),
                                                                charTableByTree, null);
         space.getTreeParent().replaceChild(space, newSpace);
         indentShift = getIndent(newSpace.getText(), true) - getIndent(oldSpace, true);
@@ -539,10 +539,10 @@ public class Helper {
         String newIndentString = indentWhitespace(ws, indentLevelsDiff, indentSpacesDiff);
 
         if( !ws.equals(newIndentString) ) {
-          TreeElement newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
+          ASTNode newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                   newIndentString.toCharArray(),
                                                                   0, newIndentString.length(), table, null);
-          tree.replaceChild((TreeElement)son, newWSElem);
+          tree.replaceChild(son, newWSElem);
           son = newWSElem;
         }
       }
@@ -572,7 +572,7 @@ public class Helper {
         newIndent = Math.max(newIndent, 0);
         String newSpace = fillIndent(newIndent);
 
-        TreeElement leaf = element.findLeafElementAt(offset);
+        ASTNode leaf = element.findLeafElementAt(offset);
         if (leaf.getElementType() != ElementType.WHITE_SPACE
             && leaf.getElementType() != ElementType.C_STYLE_COMMENT
             && leaf.getElementType() != ElementType.JSP_TEMPLATE_DATA
@@ -605,7 +605,7 @@ public class Helper {
 
         int leafOffset = getStartOffset(element, leaf);
         if (leaf.getElementType() == ElementType.DOC_COMMENT_DATA && leafOffset + leaf.getTextLength() == offset + 1) {
-          TreeElement next = element.findLeafElementAt(offset + 1);
+          ASTNode next = element.findLeafElementAt(offset + 1);
           if (next.getElementType() == ElementType.WHITE_SPACE) {
             leaf = next;
             leafOffset = getStartOffset(element, leaf);

@@ -28,7 +28,7 @@ public class ClassElement extends RepositoryTreeElement {
     }
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
 
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
@@ -40,21 +40,21 @@ public class ClassElement extends RepositoryTreeElement {
           anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
         }
         else {
-          anchor = (TreeElement)findChildByRole(ChildRole.RBRACE);
+          anchor = findChildByRole(ChildRole.RBRACE);
         }
         before = Boolean.TRUE;
       }
       else if (!before.booleanValue()) {
-        anchor = (TreeElement)findChildByRole(ChildRole.LBRACE);
+        anchor = findChildByRole(ChildRole.LBRACE);
       }
       else {
-        anchor = (TreeElement)findChildByRole(ChildRole.RBRACE);
+        anchor = findChildByRole(ChildRole.RBRACE);
       }
     }
 
     if (isEnum()) {
       if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.isInSet(first.getElementType())) {
-        TreeElement semicolonPlace = findEnumConstantListDelimiterPlace();
+        ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         if (semicolonPlace.getElementType() != SEMICOLON) {
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
@@ -75,8 +75,8 @@ public class ClassElement extends RepositoryTreeElement {
     for (ASTNode child = first; child != afterLast; child = next) {
       next = child.getTreeNext();
       if (child.getElementType() == ElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) {
-        TreeElement oldIdentifier = (TreeElement)((CompositeElement)child).findChildByRole(ChildRole.NAME);
-        TreeElement newIdentifier = (TreeElement)findChildByRole(ChildRole.NAME).clone();
+        ASTNode oldIdentifier = ((CompositeElement)child).findChildByRole(ChildRole.NAME);
+        ASTNode newIdentifier = (ASTNode)findChildByRole(ChildRole.NAME).clone();
         newIdentifier.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(this));
         child.replaceChild(oldIdentifier, newIdentifier);
       }
@@ -196,7 +196,7 @@ public class ClassElement extends RepositoryTreeElement {
     return candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
-  private TreeElement findEnumConstantListDelimiterPlace() {
+  private ASTNode findEnumConstantListDelimiterPlace() {
     final ASTNode first = findChildByRole(ChildRole.LBRACE);
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); ; child = child.getTreeNext()) {
@@ -204,9 +204,9 @@ public class ClassElement extends RepositoryTreeElement {
       if (WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(childType) ||
           childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) continue;
       else if (childType == COMMA) continue;
-      else if (childType == SEMICOLON) return (TreeElement)child;
+      else if (childType == SEMICOLON) return child;
       else {
-        return (TreeElement)TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        return TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       }
     }
   }

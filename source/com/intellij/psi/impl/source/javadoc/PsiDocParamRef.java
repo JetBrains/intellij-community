@@ -47,7 +47,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(PsiDocParamRef.this);
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
         LeafElement newElement = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
-        replaceChildInternal((TreeElement)getFirstChildNode(), newElement);
+        replaceChildInternal(getFirstChildNode(), newElement);
         return PsiDocParamRef.this;
       }
 

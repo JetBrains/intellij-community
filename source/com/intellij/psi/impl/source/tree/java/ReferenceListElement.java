@@ -11,7 +11,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     super(type);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before){
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
         super.deleteChildInternal(getLastChildNode());
@@ -21,7 +21,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
-      TreeElement element = first;
+      ASTNode element = first;
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
@@ -30,7 +30,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
           break;
         }
       }
-      for(TreeElement child = element.getTreePrev(); child != null; child = child.getTreePrev()){
+      for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
@@ -46,7 +46,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     keywordText = getKeywordText();
     if (TreeUtil.findChild(this, keywordType) == null && TreeUtil.findChild(this, JAVA_CODE_REFERENCE) != null){
       LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText.toCharArray(), 0, keywordText.length(), SharedImplUtil.findCharTableByTree(this), getManager());
-      super.addInternal(keyword, keyword, (TreeElement)getFirstChildNode(), Boolean.TRUE);
+      super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;
   }

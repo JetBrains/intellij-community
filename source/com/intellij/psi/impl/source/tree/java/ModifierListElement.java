@@ -15,10 +15,10 @@ public class ModifierListElement extends RepositoryTreeElement{
     super(MODIFIER_LIST);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (before == null){
       if (first == last && ElementType.KEYWORD_BIT_SET.isInSet(first.getElementType())){
-        anchor = (TreeElement)CodeEditUtil.getDefaultAnchor((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(this),
+        anchor = CodeEditUtil.getDefaultAnchor((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(this),
                                                             (PsiKeyword)SourceTreeToPsiMap.treeElementToPsi(first));
         before = Boolean.TRUE;
       }

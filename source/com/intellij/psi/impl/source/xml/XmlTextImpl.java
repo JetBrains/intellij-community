@@ -169,10 +169,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       localOffset = element.getTextLength();
     final PomModel model = getManager().getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final TreeElement[] retHolder = new TreeElement[1];
+    final ASTNode[] retHolder = new ASTNode[1];
     final TreeElement insertedElement = SourceTreeToPsiMap.psiElementToTree(element);
     final String oldText = getText();
-    final TreeElement second;
+    final ASTNode second;
     if(elementAt != null){
       final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(elementAt);
       second = split((LeafElement)treeElement, localOffset);
@@ -188,9 +188,9 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
         TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
         model.runTransaction(new PomTransaction() {
           public PomModelEvent run(){
-            TreeElement current = second;
+            ASTNode current = second;
             while(current != null){
-              final TreeElement next = current.getTreeNext();
+              final ASTNode next = current.getTreeNext();
               removeChild(current);
               compositeElement.addChild(current, null);
               current = next;
@@ -396,7 +396,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
     return null;
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean beforeB) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {
     //ChameleonTransforming.transformChildren(this);
     TreeElement firstAppended = null;
     boolean before = beforeB != null ? beforeB.booleanValue() : true;
@@ -414,7 +414,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
     return firstAppended;
   }
 
-  public TreeElement addInternal(final TreeElement child, final TreeElement anchor, final boolean before) throws IncorrectOperationException{
+  public TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException{
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final TreeElement[] retHolder = new TreeElement[1];
@@ -424,7 +424,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       model.runTransaction(new PomTransaction() {
         public PomModelEvent run(){
           final String oldText = getText();
-          TreeElement childBefore = (TreeElement)(anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
+          ASTNode childBefore = (anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
           if(childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()){
             final LeafElement newText = mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(), SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
             if(newText != null){
@@ -437,7 +437,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
             }
           }
           else{
-            TreeElement childAfter = (TreeElement)(anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
+            ASTNode childAfter = (anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
             if(childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()){
               final LeafElement newText = mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
               if(newText != null){
@@ -504,7 +504,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
   private static TreeElement addChildren(final XmlTextImpl xmlText,
                    final TreeElement firstChild,
                    final ASTNode lastChild,
-                   final TreeElement anchor,
+                   final ASTNode anchor,
                    final boolean isBefore) {
     if(isBefore){
       xmlText.addChildren(firstChild, lastChild, anchor);

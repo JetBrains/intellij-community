@@ -153,7 +153,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    TreeElement typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
+    ASTNode typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
     String text = "class _Dummy_ {private int " + name + ";}";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
@@ -208,7 +208,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
-    treeElement.replaceChild((TreeElement)treeElement.findChildByRole(ChildRole.TYPE), typeElement);
+    treeElement.replaceChild(treeElement.findChildByRole(ChildRole.TYPE), typeElement);
     ChangeUtil.decodeInformation(typeElement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());

@@ -250,24 +250,24 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         ASTNode prev = element.getTreePrev();
         ASTNode next = element.getTreeNext();
         ASTNode space1 = Helper.splitSpaceElement(element, end - spaceStart, charTable);
-        TreeElement tempElement = Factory.createSingleLeafElement(
+        ASTNode tempElement = Factory.createSingleLeafElement(
           ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
           "###".length(), charTable, null);
-        parent.addChild(tempElement, (TreeElement)space1.getTreeNext());
-        tempElement = (TreeElement)new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
+        parent.addChild(tempElement, space1.getTreeNext());
+        tempElement = new IndentAdjusterFacade(getSettings(), helper).adjustIndent(tempElement);
         offset = tempElement.getTextRange().getStartOffset();
         parent.removeChild(tempElement);
         CodeEditUtil.normalizeSpace(helper, parent, prev, next, charTable);
 
         newSpace = prev != null ? prev.getTreeNext() : parent.getFirstChildNode();
         LOG.assertTrue(newSpace.getElementType() == ElementType.WHITE_SPACE);
-        parent.replaceChild((TreeElement)newSpace, element);
+        parent.replaceChild(newSpace, element);
       }
       finally {
         ((PsiFileImpl)file).setIsPhysicalExplicitly(physical);
       }
 
-      parent.replaceChild(element, (TreeElement)newSpace);
+      parent.replaceChild(element, newSpace);
 
       return offset;
     }
@@ -352,8 +352,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = Helper.splitSpaceElement(element, offset - elementStart, charTable);
-    TreeElement marker = Factory.createSingleLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
-    parent.addChild(marker, (TreeElement)space1.getTreeNext());
+    ASTNode marker = Factory.createSingleLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length(), charTable, null);
+    parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }
 

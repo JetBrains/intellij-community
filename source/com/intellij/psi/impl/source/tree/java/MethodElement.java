@@ -21,7 +21,7 @@ public class MethodElement extends RepositoryTreeElement{
     return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first == last && first.getElementType() == ElementType.CODE_BLOCK){
       ASTNode semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
       if (semicolon != null){

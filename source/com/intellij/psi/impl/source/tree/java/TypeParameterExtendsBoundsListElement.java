@@ -19,7 +19,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     super(JavaElementType.EXTENDS_BOUND_LIST);
   }
 
-  public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
         super.deleteChildInternal(getLastChildNode());
@@ -29,7 +29,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
-      TreeElement element = first;
+      ASTNode element = first;
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == AND) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
@@ -38,7 +38,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
           break;
         }
       }
-      for(TreeElement child = element.getTreePrev(); child != null; child = child.getTreePrev()){
+      for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == AND) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
           TreeElement comma = Factory.createSingleLeafElement(AND, new char[]{'&'}, 0, 1, treeCharTab, getManager());
@@ -52,7 +52,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     final String keywordText = "extends";
     if (TreeUtil.findChild(this, keywordType) == null && TreeUtil.findChild(this, JAVA_CODE_REFERENCE) != null){
       LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText.toCharArray(), 0, keywordText.length(), treeCharTab, getManager());
-      super.addInternal(keyword, keyword, (TreeElement)getFirstChildNode(), Boolean.TRUE);
+      super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;
   }

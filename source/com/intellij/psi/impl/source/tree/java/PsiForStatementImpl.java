@@ -143,7 +143,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       final LeafElement comma = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1, SharedImplUtil.findCharTableByTree(this), getManager());
       emptyStatement.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(comma));
       TreeUtil.addChildren(emptyStatement, comma);
-      super.replaceChildInternal((TreeElement)child, emptyStatement);
+      super.replaceChildInternal(child, emptyStatement);
     }
     else {
       super.deleteChildInternal(child);

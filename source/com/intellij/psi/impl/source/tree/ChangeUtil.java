@@ -657,11 +657,11 @@ public class ChangeUtil implements Constants {
   private static final Key<Boolean> INTERFACE_MODIFIERS_FLAG_KEY = Key.create("INTERFACE_MODIFIERS_FLAG_KEY");
 
   public static void addChildren(final ASTNode parent,
-                                 TreeElement firstChild,
+                                 ASTNode firstChild,
                                  final ASTNode lastChild,
-                                 final TreeElement anchorBefore) {
+                                 final ASTNode anchorBefore) {
     while(firstChild != lastChild){
-      final TreeElement next = firstChild.getTreeNext();
+      final ASTNode next = firstChild.getTreeNext();
       parent.addChild(firstChild, anchorBefore);
       firstChild = next;
     }

@@ -105,7 +105,7 @@ public class FormatterUtil {
     return text.length() > 0 && text.trim().length() == 0;
   }
 
-  public static String replaceWhiteSpace(final String whiteSpace, final TreeElement leafElement) {
+  public static String replaceWhiteSpace(final String whiteSpace, final ASTNode leafElement) {
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(leafElement), null);

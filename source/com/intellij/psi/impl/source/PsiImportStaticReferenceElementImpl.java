@@ -119,7 +119,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (qualifiedName == null) throw new IncorrectOperationException();
     final CompositeElement newRef = Parsing.parseJavaCodeReferenceText(getManager(), qualifiedName.toCharArray(), SharedImplUtil.findCharTableByTree(this));
     if (getQualifier() != null) {
-      replaceChildInternal((TreeElement)findChildByRole(ChildRole.QUALIFIER), newRef);
+      replaceChildInternal(findChildByRole(ChildRole.QUALIFIER), newRef);
       return (PsiImportStaticStatement)getParent();
     }
     else {
