@@ -60,64 +60,64 @@ public class EquivalenceChecker{
             return false;
         }
         switch(type1){
-        case ASSERT_STATEMENT:
-               return assertStatementsAreEquivalent((PsiAssertStatement) exp1,
-                                                    (PsiAssertStatement) exp2);
-        case BLOCK_STATEMENT:
-               return blockStatementsAreEquivalent((PsiBlockStatement) exp1,
-                                                   (PsiBlockStatement) exp2);
-        case BREAK_STATEMENT:
-               return breakStatementsAreEquivalent((PsiBreakStatement) exp1,
-                                                   (PsiBreakStatement) exp2);
-        case CONTINUE_STATEMENT:
-               return continueStatementsAreEquivalent((PsiContinueStatement) exp1,
-                                                      (PsiContinueStatement) exp2);
-        case DECLARATION_STATEMENT:
-               return declarationStatementsAreEquivalent((PsiDeclarationStatement) exp1,
-                                                         (PsiDeclarationStatement) exp2);
-        case DO_WHILE_STATEMENT:
-               return doWhileStatementsAreEquivalent((PsiDoWhileStatement) exp1,
-                                                     (PsiDoWhileStatement) exp2);
-        case EMPTY_STATEMENT:
-               return true;
-        case EXPRESSION_LIST_STATEMENT:
-               return expressionListStatementsAreEquivalent((PsiExpressionListStatement) exp1,
-                                                            (PsiExpressionListStatement) exp2);
-        case EXPRESSION_STATEMENT:
-               return expressionStatementsAreEquivalent((PsiExpressionStatement) exp1,
-                                                        (PsiExpressionStatement) exp2);
-        case FOR_STATEMENT:
-               return forStatementsAreEquivalent((PsiForStatement) exp1,
-                                                 (PsiForStatement) exp2);
-        case IF_STATEMENT:
-               return ifStatementsAreEquivalent((PsiIfStatement) exp1,
-                                                (PsiIfStatement) exp2);
-        case LABELED_STATEMENT:
-               return labeledStatementsAreEquivalent((PsiLabeledStatement) exp1,
-                                                     (PsiLabeledStatement) exp2);
-        case RETURN_STATEMENT:
-               return returnStatementsAreEquivalent((PsiReturnStatement) exp1,
-                                                    (PsiReturnStatement) exp2);
-        case SWITCH_LABEL_STATEMENT:
-               return switchLabelStatementsAreEquivalent((PsiSwitchLabelStatement) exp1,
-                                                         (PsiSwitchLabelStatement) exp2);
-        case SWITCH_STATEMENT:
-               return switchStatementsAreEquivalent((PsiSwitchStatement) exp1,
-                                                    (PsiSwitchStatement) exp2);
-        case SYNCHRONIZED_STATEMENT:
-               return synchronizedStatementsAreEquivalent((PsiSynchronizedStatement) exp1,
-                                                          (PsiSynchronizedStatement) exp2);
-        case THROW_STATEMENT:
-               return throwStatementsAreEquivalent((PsiThrowStatement) exp1,
-                                                   (PsiThrowStatement) exp2);
-        case TRY_STATEMENT:
-               return tryStatementsAreEquivalent((PsiTryStatement) exp1,
-                                                 (PsiTryStatement) exp2);
-        case WHILE_STATEMENT:
-               return whileStatementsAreEquivalent((PsiWhileStatement) exp1,
-                                                   (PsiWhileStatement) exp2);
-        default:
-               return false;
+            case ASSERT_STATEMENT:
+                return assertStatementsAreEquivalent((PsiAssertStatement) exp1,
+                                                     (PsiAssertStatement) exp2);
+            case BLOCK_STATEMENT:
+                return blockStatementsAreEquivalent((PsiBlockStatement) exp1,
+                                                    (PsiBlockStatement) exp2);
+            case BREAK_STATEMENT:
+                return breakStatementsAreEquivalent((PsiBreakStatement) exp1,
+                                                    (PsiBreakStatement) exp2);
+            case CONTINUE_STATEMENT:
+                return continueStatementsAreEquivalent((PsiContinueStatement) exp1,
+                                                       (PsiContinueStatement) exp2);
+            case DECLARATION_STATEMENT:
+                return declarationStatementsAreEquivalent((PsiDeclarationStatement) exp1,
+                                                          (PsiDeclarationStatement) exp2);
+            case DO_WHILE_STATEMENT:
+                return doWhileStatementsAreEquivalent((PsiDoWhileStatement) exp1,
+                                                      (PsiDoWhileStatement) exp2);
+            case EMPTY_STATEMENT:
+                return true;
+            case EXPRESSION_LIST_STATEMENT:
+                return expressionListStatementsAreEquivalent((PsiExpressionListStatement) exp1,
+                                                             (PsiExpressionListStatement) exp2);
+            case EXPRESSION_STATEMENT:
+                return expressionStatementsAreEquivalent((PsiExpressionStatement) exp1,
+                                                         (PsiExpressionStatement) exp2);
+            case FOR_STATEMENT:
+                return forStatementsAreEquivalent((PsiForStatement) exp1,
+                                                  (PsiForStatement) exp2);
+            case IF_STATEMENT:
+                return ifStatementsAreEquivalent((PsiIfStatement) exp1,
+                                                 (PsiIfStatement) exp2);
+            case LABELED_STATEMENT:
+                return labeledStatementsAreEquivalent((PsiLabeledStatement) exp1,
+                                                      (PsiLabeledStatement) exp2);
+            case RETURN_STATEMENT:
+                return returnStatementsAreEquivalent((PsiReturnStatement) exp1,
+                                                     (PsiReturnStatement) exp2);
+            case SWITCH_LABEL_STATEMENT:
+                return switchLabelStatementsAreEquivalent((PsiSwitchLabelStatement) exp1,
+                                                          (PsiSwitchLabelStatement) exp2);
+            case SWITCH_STATEMENT:
+                return switchStatementsAreEquivalent((PsiSwitchStatement) exp1,
+                                                     (PsiSwitchStatement) exp2);
+            case SYNCHRONIZED_STATEMENT:
+                return synchronizedStatementsAreEquivalent((PsiSynchronizedStatement) exp1,
+                                                           (PsiSynchronizedStatement) exp2);
+            case THROW_STATEMENT:
+                return throwStatementsAreEquivalent((PsiThrowStatement) exp1,
+                                                    (PsiThrowStatement) exp2);
+            case TRY_STATEMENT:
+                return tryStatementsAreEquivalent((PsiTryStatement) exp1,
+                                                  (PsiTryStatement) exp2);
+            case WHILE_STATEMENT:
+                return whileStatementsAreEquivalent((PsiWhileStatement) exp1,
+                                                    (PsiWhileStatement) exp2);
+            default:
+                return false;
         }
     }
 
@@ -237,7 +237,7 @@ public class EquivalenceChecker{
         final PsiStatement body1 = statement1.getBody();
         final PsiStatement body2 = statement2.getBody();
         return expressionsAreEquivalent(condition1, condition2) &&
-                statementsAreEquivalent(body1, body2);
+                       statementsAreEquivalent(body1, body2);
     }
 
     private static boolean forStatementsAreEquivalent(PsiForStatement statement1,
@@ -269,7 +269,7 @@ public class EquivalenceChecker{
         final PsiCodeBlock body1 = statement1.getBody();
         final PsiCodeBlock body2 = statement2.getBody();
         return expressionsAreEquivalent(switchExpression1, swithcExpression2) &&
-                codeBlocksAreEquivalent(body1, body2);
+                       codeBlocksAreEquivalent(body1, body2);
     }
 
     private static boolean doWhileStatementsAreEquivalent(PsiDoWhileStatement statement1,
@@ -279,7 +279,7 @@ public class EquivalenceChecker{
         final PsiStatement body1 = statement1.getBody();
         final PsiStatement body2 = statement2.getBody();
         return expressionsAreEquivalent(condition1, condition2) &&
-                statementsAreEquivalent(body1, body2);
+                       statementsAreEquivalent(body1, body2);
     }
 
     private static boolean assertStatementsAreEquivalent(PsiAssertStatement statement1,
@@ -289,7 +289,7 @@ public class EquivalenceChecker{
         final PsiExpression description1 = statement1.getAssertDescription();
         final PsiExpression description2 = statement2.getAssertDescription();
         return expressionsAreEquivalent(condition1, condition2) &&
-                expressionsAreEquivalent(description1, description2);
+                       expressionsAreEquivalent(description1, description2);
     }
 
     private static boolean synchronizedStatementsAreEquivalent(PsiSynchronizedStatement statement1,
@@ -299,7 +299,7 @@ public class EquivalenceChecker{
         final PsiCodeBlock body1 = statement1.getBody();
         final PsiCodeBlock body2 = statement2.getBody();
         return expressionsAreEquivalent(lock1, lock2) &&
-                codeBlocksAreEquivalent(body1, body2);
+                       codeBlocksAreEquivalent(body1, body2);
     }
 
     private static boolean blockStatementsAreEquivalent(PsiBlockStatement statement1,
@@ -398,8 +398,8 @@ public class EquivalenceChecker{
         final PsiStatement elseBranch1 = statement1.getElseBranch();
         final PsiStatement elseBranch2 = statement2.getElseBranch();
         return expressionsAreEquivalent(condition1, condition2) &&
-                statementsAreEquivalent(thenBranch1, thenBranch2) &&
-                statementsAreEquivalent(elseBranch1, elseBranch2);
+                       statementsAreEquivalent(thenBranch1, thenBranch2) &&
+                       statementsAreEquivalent(elseBranch1, elseBranch2);
     }
 
     private static boolean expressionStatementsAreEquivalent(PsiExpressionStatement statement1,
@@ -457,47 +457,47 @@ public class EquivalenceChecker{
             return false;
         }
         switch(type1){
-        case THIS_EXPRESSION:
-        case SUPER_EXPRESSION:
-               return true;
-        case LITERAL_EXPRESSION:
-        case CLASS_OBJECT_EXPRESSION:
-        case REFERENCE_EXPRESSION:
-               final String text1 = expToCompare1.getText();
-               final String text2 = expToCompare2.getText();
-               return text1.equals(text2);
-        case METHOD_CALL_EXPRESSION:
-               return methodCallExpressionsAreEquivalent((PsiMethodCallExpression) expToCompare1,
-                                                         (PsiMethodCallExpression) expToCompare2);
-        case NEW_EXPRESSION:
-               return newExpressionsAreEquivalent((PsiNewExpression) expToCompare1,
-                                                  (PsiNewExpression) expToCompare2);
-        case ARRAY_INITIALIZER_EXPRESSION:
-               return arrayInitializerExpressionsAreEquivalent((PsiArrayInitializerExpression) expToCompare1,
-                                                               (PsiArrayInitializerExpression) expToCompare2);
-        case TYPECAST_EXPRESSION:
-               return typecastExpressionsAreEquivalent((PsiTypeCastExpression) expToCompare2,
-                                                       (PsiTypeCastExpression) expToCompare1);
-        case ARRAY_ACCESS_EXPRESSION:
-               return arrayAccessExpressionsAreEquivalent((PsiArrayAccessExpression) expToCompare2,
-                                                          (PsiArrayAccessExpression) expToCompare1);
-        case PREFIX_EXPRESSION:
-               return prefixExpressionsAreEquivalent((PsiPrefixExpression) expToCompare1,
-                                                     (PsiPrefixExpression) expToCompare2);
-        case POSTFIX_EXPRESSION:
-               return postfixExpressionsAreEquivalent((PsiPostfixExpression) expToCompare1,
-                                                      (PsiPostfixExpression) expToCompare2);
-        case BINARY_EXPRESSION:
-               return binaryExpressionsAreEquivalent((PsiBinaryExpression) expToCompare1,
-                                                     (PsiBinaryExpression) expToCompare2);
-        case ASSIGNMENT_EXPRESSION:
-               return assignmentExpressionsAreEquivalent((PsiAssignmentExpression) expToCompare1,
-                                                         (PsiAssignmentExpression) expToCompare2);
-        case CONDITIONAL_EXPRESSION:
-               return conditionalExpressionsAreEquivalent((PsiConditionalExpression) expToCompare1,
-                                                          (PsiConditionalExpression) expToCompare2);
-        default:
-               return false;
+            case THIS_EXPRESSION:
+            case SUPER_EXPRESSION:
+                return true;
+            case LITERAL_EXPRESSION:
+            case CLASS_OBJECT_EXPRESSION:
+            case REFERENCE_EXPRESSION:
+                final String text1 = expToCompare1.getText();
+                final String text2 = expToCompare2.getText();
+                return text1.equals(text2);
+            case METHOD_CALL_EXPRESSION:
+                return methodCallExpressionsAreEquivalent((PsiMethodCallExpression) expToCompare1,
+                                                          (PsiMethodCallExpression) expToCompare2);
+            case NEW_EXPRESSION:
+                return newExpressionsAreEquivalent((PsiNewExpression) expToCompare1,
+                                                   (PsiNewExpression) expToCompare2);
+            case ARRAY_INITIALIZER_EXPRESSION:
+                return arrayInitializerExpressionsAreEquivalent((PsiArrayInitializerExpression) expToCompare1,
+                                                                (PsiArrayInitializerExpression) expToCompare2);
+            case TYPECAST_EXPRESSION:
+                return typecastExpressionsAreEquivalent((PsiTypeCastExpression) expToCompare2,
+                                                        (PsiTypeCastExpression) expToCompare1);
+            case ARRAY_ACCESS_EXPRESSION:
+                return arrayAccessExpressionsAreEquivalent((PsiArrayAccessExpression) expToCompare2,
+                                                           (PsiArrayAccessExpression) expToCompare1);
+            case PREFIX_EXPRESSION:
+                return prefixExpressionsAreEquivalent((PsiPrefixExpression) expToCompare1,
+                                                      (PsiPrefixExpression) expToCompare2);
+            case POSTFIX_EXPRESSION:
+                return postfixExpressionsAreEquivalent((PsiPostfixExpression) expToCompare1,
+                                                       (PsiPostfixExpression) expToCompare2);
+            case BINARY_EXPRESSION:
+                return binaryExpressionsAreEquivalent((PsiBinaryExpression) expToCompare1,
+                                                      (PsiBinaryExpression) expToCompare2);
+            case ASSIGNMENT_EXPRESSION:
+                return assignmentExpressionsAreEquivalent((PsiAssignmentExpression) expToCompare1,
+                                                          (PsiAssignmentExpression) expToCompare2);
+            case CONDITIONAL_EXPRESSION:
+                return conditionalExpressionsAreEquivalent((PsiConditionalExpression) expToCompare1,
+                                                           (PsiConditionalExpression) expToCompare2);
+            default:
+                return false;
         }
     }
 
@@ -539,10 +539,10 @@ public class EquivalenceChecker{
         }
         final PsiExpressionList argumentList1 = newExp1.getArgumentList();
         final PsiExpression[] args1 = argumentList1 == null?null:
-                        argumentList1.getExpressions();
+                argumentList1.getExpressions();
         final PsiExpressionList argumentList2 = newExp2.getArgumentList();
         final PsiExpression[] args2 = argumentList2 == null?null:
-                        argumentList2.getExpressions();
+                argumentList2.getExpressions();
         return expressionListsAreEquivalent(args1, args2);
     }
 
@@ -576,7 +576,9 @@ public class EquivalenceChecker{
         final PsiExpression indexExpression1 =
                 arrAccessExp1.getIndexExpression();
         return expressionsAreEquivalent(arrayExpression2, arrayExpression1)
-                && expressionsAreEquivalent(indexExpression2, indexExpression1);
+                       &&
+                       expressionsAreEquivalent(indexExpression2,
+                                                indexExpression1);
     }
 
     private static boolean prefixExpressionsAreEquivalent(PsiPrefixExpression prefixExp1,
@@ -615,7 +617,7 @@ public class EquivalenceChecker{
         final PsiExpression rhs1 = binaryExp1.getROperand();
         final PsiExpression rhs2 = binaryExp2.getROperand();
         return expressionsAreEquivalent(lhs1, lhs2)
-                && expressionsAreEquivalent(rhs1, rhs2);
+                       && expressionsAreEquivalent(rhs1, rhs2);
     }
 
     private static boolean assignmentExpressionsAreEquivalent(PsiAssignmentExpression assignExp1,
@@ -630,7 +632,7 @@ public class EquivalenceChecker{
         final PsiExpression rhs1 = assignExp1.getRExpression();
         final PsiExpression rhs2 = assignExp2.getRExpression();
         return expressionsAreEquivalent(lhs1, lhs2)
-                && expressionsAreEquivalent(rhs1, rhs2);
+                       && expressionsAreEquivalent(rhs1, rhs2);
     }
 
     private static boolean conditionalExpressionsAreEquivalent(PsiConditionalExpression condExp1,
@@ -642,8 +644,12 @@ public class EquivalenceChecker{
         final PsiExpression elseExpression1 = condExp1.getElseExpression();
         final PsiExpression elseExpression2 = condExp2.getElseExpression();
         return expressionsAreEquivalent(condition1, condition2)
-                && expressionsAreEquivalent(thenExpression1, thenExpression2)
-                && expressionsAreEquivalent(elseExpression1, elseExpression2);
+                       &&
+                       expressionsAreEquivalent(thenExpression1,
+                                                thenExpression2)
+                       &&
+                       expressionsAreEquivalent(elseExpression1,
+                                                elseExpression2);
     }
 
     private static boolean expressionListsAreEquivalent(PsiExpression[] expressions1,

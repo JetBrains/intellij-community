@@ -2,8 +2,6 @@ package com.siyeh.ipp.commutative;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -29,7 +27,9 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression) findMatchingElement(file, editor);
         final PsiReferenceExpression methodExpression =
@@ -44,7 +44,7 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
                 ParenthesesUtils.stripParentheses(arg);
         final String callString;
         if(ParenthesesUtils.getPrecendence(strippedArg) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                   ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
                     strippedTarget.getText() + ')';
         } else{

@@ -10,15 +10,15 @@ public class SideEffectChecker{
 
     public static boolean mayHaveSideEffects(PsiExpression exp){
         if(exp instanceof PsiThisExpression ||
-                        exp instanceof PsiLiteralExpression ||
-                        exp instanceof PsiClassObjectAccessExpression ||
-                        exp instanceof PsiReferenceExpression ||
-                        exp instanceof PsiSuperExpression){
+                                exp instanceof PsiLiteralExpression ||
+                                exp instanceof PsiClassObjectAccessExpression ||
+                                exp instanceof PsiReferenceExpression ||
+                                exp instanceof PsiSuperExpression){
             return false;
         } else if(exp instanceof PsiMethodCallExpression ||
-                        exp instanceof PsiNewExpression ||
-                        exp instanceof PsiAssignmentExpression ||
-                        exp instanceof PsiArrayInitializerExpression){
+                                exp instanceof PsiNewExpression ||
+                                exp instanceof PsiAssignmentExpression ||
+                                exp instanceof PsiArrayInitializerExpression){
             return true;
         } else if(exp instanceof PsiTypeCastExpression){
             final PsiExpression body =
@@ -39,7 +39,7 @@ public class SideEffectChecker{
             final PsiJavaToken sign = prefixExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             return tokenType == JavaTokenType.PLUSPLUS ||
-                    tokenType == JavaTokenType.MINUSMINUS;
+                           tokenType == JavaTokenType.MINUSMINUS;
         } else if(exp instanceof PsiPostfixExpression){
             final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
             final PsiExpression body = postfixExp.getOperand();
@@ -49,13 +49,13 @@ public class SideEffectChecker{
             final PsiJavaToken sign = postfixExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             return tokenType == JavaTokenType.PLUSPLUS ||
-                    tokenType == JavaTokenType.MINUSMINUS;
+                           tokenType == JavaTokenType.MINUSMINUS;
         } else if(exp instanceof PsiBinaryExpression){
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) exp;
             final PsiExpression lhs = binaryExp.getLOperand();
             final PsiExpression rhs = binaryExp.getROperand();
             return mayHaveSideEffects(lhs) ||
-                    mayHaveSideEffects(rhs);
+                           mayHaveSideEffects(rhs);
         } else if(exp instanceof PsiInstanceOfExpression){
             final PsiExpression body =
                     ((PsiInstanceOfExpression) exp).getOperand();
@@ -67,8 +67,8 @@ public class SideEffectChecker{
             final PsiExpression thenBranch = conditionalExp.getThenExpression();
             final PsiExpression elseBranch = conditionalExp.getElseExpression();
             return mayHaveSideEffects(condition) ||
-                    mayHaveSideEffects(thenBranch) ||
-                    mayHaveSideEffects(elseBranch);
+                           mayHaveSideEffects(thenBranch) ||
+                           mayHaveSideEffects(elseBranch);
         } else if(exp instanceof PsiParenthesizedExpression){
             final PsiExpression body =
                     ((PsiParenthesizedExpression) exp).getExpression();

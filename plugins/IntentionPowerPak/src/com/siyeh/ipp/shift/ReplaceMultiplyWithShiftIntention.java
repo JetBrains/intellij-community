@@ -2,8 +2,6 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -49,12 +47,15 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiElement matchingElement = findMatchingElement(file, editor);
         if(matchingElement instanceof PsiBinaryExpression){
             replaceMultiplyOrDivideWithShift(matchingElement, project);
         } else{
-            replaceMultiplyOrDivideAssignWithShiftAssign(matchingElement, project);
+            replaceMultiplyOrDivideAssignWithShiftAssign(matchingElement,
+                                                         project);
         }
     }
 
@@ -74,12 +75,12 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention{
             assignString = ">>=";
         }
         final String expString =
-        lhs.getText() + assignString + ShiftUtils.getLogBase2(rhs);
+                lhs.getText() + assignString + ShiftUtils.getLogBase2(rhs);
         replaceExpression(project, expString, exp);
     }
 
     private void replaceMultiplyOrDivideWithShift(PsiElement matchingElement,
-                                          Project project)
+                                                  Project project)
             throws IncorrectOperationException{
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) matchingElement;
@@ -95,18 +96,18 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention{
         }
         final String lhsText;
         if(ParenthesesUtils.getPrecendence(lhs) >
-                ParenthesesUtils.SHIFT_PRECEDENCE){
+                   ParenthesesUtils.SHIFT_PRECEDENCE){
             lhsText = '(' + lhs.getText() + ')';
         } else{
             lhsText = lhs.getText();
         }
         String expString =
-        lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
+                lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
         final PsiElement parent = exp.getParent();
-        if(parent !=null && parent instanceof PsiExpression){
-            if(!(parent instanceof PsiParenthesizedExpression)&&
-                    ParenthesesUtils.getPrecendence((PsiExpression) parent)<
-                            ParenthesesUtils.SHIFT_PRECEDENCE){
+        if(parent != null && parent instanceof PsiExpression){
+            if(!(parent instanceof PsiParenthesizedExpression) &&
+                       ParenthesesUtils.getPrecendence((PsiExpression) parent) <
+                       ParenthesesUtils.SHIFT_PRECEDENCE){
                 expString = '(' + expString + ')';
             }
         }

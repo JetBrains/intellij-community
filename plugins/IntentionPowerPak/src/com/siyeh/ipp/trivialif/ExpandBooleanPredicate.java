@@ -35,8 +35,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         if(returnValue == null){
             return false;
         }
-        if(returnValue instanceof PsiLiteralExpression)
-        {
+        if(returnValue instanceof PsiLiteralExpression){
             return false;
         }
         final PsiType returnType = returnValue.getType();

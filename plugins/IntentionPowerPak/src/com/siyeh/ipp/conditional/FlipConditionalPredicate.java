@@ -13,7 +13,7 @@ class FlipConditionalPredicate implements PsiElementPredicate{
                 (PsiConditionalExpression) element;
 
         return condition.getCondition() != null &&
-                condition.getThenExpression() != null &&
-                condition.getElseExpression() != null;
+                       condition.getThenExpression() != null &&
+                       condition.getElseExpression() != null;
     }
 }

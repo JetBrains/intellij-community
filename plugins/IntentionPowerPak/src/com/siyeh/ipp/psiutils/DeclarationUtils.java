@@ -17,12 +17,12 @@ public class DeclarationUtils{
             return;
         }
         if(statement instanceof PsiBreakStatement ||
-                        statement instanceof PsiExpressionStatement ||
-                        statement instanceof PsiContinueStatement ||
-                        statement instanceof PsiThrowStatement ||
-                        statement instanceof PsiExpressionListStatement ||
-                        statement instanceof PsiAssertStatement ||
-                        statement instanceof PsiReturnStatement){
+                                statement instanceof PsiExpressionStatement ||
+                                statement instanceof PsiContinueStatement ||
+                                statement instanceof PsiThrowStatement ||
+                                statement instanceof PsiExpressionListStatement ||
+                                statement instanceof PsiAssertStatement ||
+                                statement instanceof PsiReturnStatement){
         } else if(statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declStatement =
                     (PsiDeclarationStatement) statement;

@@ -6,7 +6,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaCodeReferenceElement)
-                || element instanceof PsiReferenceExpression){
+                   || element instanceof PsiReferenceExpression){
             return false;
         }
 
@@ -15,7 +15,7 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate{
             parent = parent.getParent();
         }
         if(parent instanceof PsiPackageStatement ||
-                        parent instanceof PsiImportStatement){
+                                parent instanceof PsiImportStatement){
             return false;
         }
         final String text = element.getText();

@@ -2,8 +2,6 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -36,7 +34,9 @@ public class DemorgansIntention extends MutablyNamedIntention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiJavaToken sign = exp.getOperationSign();
@@ -85,7 +85,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
         if(BoolUtils.isNegation(condition)){
             final PsiExpression negated = BoolUtils.getNegated(condition);
             if(ParenthesesUtils.getPrecendence(negated) >
-                    ParenthesesUtils.OR_PRECEDENCE){
+                       ParenthesesUtils.OR_PRECEDENCE){
                 return '(' + negated.getText() + ')';
             }
             return negated.getText();
@@ -100,7 +100,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
             final PsiExpression rhs = binaryExpression.getROperand();
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
-                ParenthesesUtils.PREFIX_PRECEDENCE){
+                          ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{
             return '!' + condition.getText();

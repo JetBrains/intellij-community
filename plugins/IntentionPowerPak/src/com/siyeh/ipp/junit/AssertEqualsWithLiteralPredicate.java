@@ -41,6 +41,6 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         }
         final String text = arg.getText();
         return "true".equals(text) ||
-                "false".equals(text) || "null".equals(text);
+                       "false".equals(text) || "null".equals(text);
     }
 }

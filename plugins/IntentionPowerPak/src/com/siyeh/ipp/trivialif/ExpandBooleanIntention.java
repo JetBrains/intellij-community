@@ -2,8 +2,6 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +23,9 @@ public class ExpandBooleanIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
 
         final PsiJavaToken token =
                 (PsiJavaToken) findMatchingElement(file, editor);
@@ -43,7 +43,8 @@ public class ExpandBooleanIntention extends Intention{
             final PsiExpression lhs = assignmentExpression.getLExpression();
             final String lhsText = lhs.getText();
             final String statement =
-            "if(" + rhsText + "){" + lhsText + " = true;}else{" + lhsText +
+                    "if(" + rhsText + "){" + lhsText + " = true;}else{" +
+                    lhsText +
                     " = false;}";
             replaceStatement(project, statement, containingStatement);
         } else if(ExpandBooleanPredicate.isBooleanReturn(containingStatement)){
@@ -52,7 +53,7 @@ public class ExpandBooleanIntention extends Intention{
             final PsiExpression returnValue = returnStatement.getReturnValue();
             final String valueText = returnValue.getText();
             final String statement =
-            "if(" + valueText + "){return true;}else{return false;}";
+                    "if(" + valueText + "){return true;}else{return false;}";
             replaceStatement(project, statement, containingStatement);
         }
     }

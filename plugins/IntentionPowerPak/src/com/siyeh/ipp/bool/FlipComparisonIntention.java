@@ -2,8 +2,6 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -37,7 +35,9 @@ public class FlipComparisonIntention extends MutablyNamedIntention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiExpression lhs = exp.getLOperand();
@@ -45,7 +45,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention{
         final PsiJavaToken sign = exp.getOperationSign();
         final String operand = sign.getText();
         final String expString =
-        rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
+                rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
                 lhs.getText();
         replaceExpression(project, expString, exp);
     }

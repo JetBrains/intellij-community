@@ -2,8 +2,6 @@ package com.siyeh.ipp.switchtoif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -29,7 +27,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiJavaToken switchToken =
                 (PsiJavaToken) findMatchingElement(file, editor);
         PsiIfStatement ifStatement = (PsiIfStatement) switchToken.getParent();
@@ -41,9 +41,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             PsiElement ancestor = ifStatement.getParent();
             while(ancestor != null){
                 if(ancestor instanceof PsiForStatement ||
-                                ancestor instanceof PsiDoWhileStatement ||
-                                ancestor instanceof PsiWhileStatement ||
-                                ancestor instanceof PsiSwitchStatement){
+                                        ancestor instanceof PsiDoWhileStatement ||
+                                        ancestor instanceof PsiWhileStatement ||
+                                        ancestor instanceof PsiSwitchStatement){
                     breakTarget = (PsiStatement) ancestor;
                     break;
                 }
@@ -59,7 +59,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         final PsiExpression caseExpression =
                 CaseUtil.getCaseExpression(ifStatement);
         switchStatementBuffer.append("switch(" + caseExpression.getText() +
-                                             ')');
+                ')');
         switchStatementBuffer.append('{');
         final List branches = new ArrayList(20);
         while(true){
@@ -141,7 +141,8 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             final String newStatement = out.toString();
             replaceStatement(project, newStatement, breakTarget);
         } else{
-            replaceStatement(project, switchStatementString, statementToReplace);
+            replaceStatement(project, switchStatementString,
+                             statementToReplace);
         }
     }
 
@@ -150,7 +151,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         if(target.equals(replace)){
             out.append(stringToReplaceWith);
         } else if(target.getChildren() != null &&
-                target.getChildren().length != 0){
+                          target.getChildren().length != 0){
             final PsiElement[] children = target.getChildren();
             for(int i = 0; i < children.length; i++){
                 final PsiElement child = children[i];
@@ -268,14 +269,14 @@ public class ReplaceIfWithSwitchIntention extends Intention{
                 final String identifierText = identifier.getText();
                 if("".equals(identifierText)){
                     switchStatementString.append("break " + breakLabelString +
-                                                         ';');
+                            ';');
                 } else{
                     switchStatementString.append(text);
                 }
             }
         } else if(element instanceof PsiBlockStatement ||
-                        element instanceof PsiCodeBlock ||
-                        element instanceof PsiIfStatement){
+                                element instanceof PsiCodeBlock ||
+                                element instanceof PsiIfStatement){
             final PsiElement[] children = element.getChildren();
             for(int i = 0; i < children.length; i++){
                 final PsiElement child = children[i];

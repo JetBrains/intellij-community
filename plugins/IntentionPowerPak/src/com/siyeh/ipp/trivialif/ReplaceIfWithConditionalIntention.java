@@ -2,8 +2,6 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +25,9 @@ public class ReplaceIfWithConditionalIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiJavaToken token =
                 (PsiJavaToken) findMatchingElement(file, editor);
         final PsiIfStatement ifStatement = (PsiIfStatement) token.getParent();
@@ -50,7 +50,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String thenValue;
             final PsiExpression thenRhs = thenAssign.getRExpression();
             if(ParenthesesUtils.getPrecendence(thenRhs)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 thenValue = thenRhs.getText();
             } else{
                 thenValue = '(' + thenRhs.getText() + ')';
@@ -58,14 +58,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String elseValue;
             final PsiExpression elseRhs = elseAssign.getRExpression();
             if(ParenthesesUtils.getPrecendence(elseRhs)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 elseValue = elseRhs.getText();
             } else{
                 elseValue = '(' + elseRhs.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
@@ -73,7 +73,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
 
             replaceStatement(project,
                              lhsText + operator + conditionText + '?' +
-                                     thenValue + ':' + elseValue + ';',
+                    thenValue + ':' + elseValue + ';',
                              ifStatement);
         } else if(ReplaceIfWithConditionalPredicate.isReplaceableReturn(ifStatement)){
             final PsiExpression condition = ifStatement.getCondition();
@@ -87,7 +87,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String thenValue;
             final PsiExpression thenReturnValue = thenReturn.getReturnValue();
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
@@ -95,14 +95,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String elseValue;
             final PsiExpression elseReturnValue = elseReturn.getReturnValue();
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 elseValue = elseReturnValue.getText();
             } else{
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
@@ -110,19 +110,21 @@ public class ReplaceIfWithConditionalIntention extends Intention{
 
             replaceStatement(project,
                              "return " + conditionText + '?' + thenValue + ':' +
-                                     elseValue + ';',
+                    elseValue + ';',
                              ifStatement);
         } else if(ReplaceIfWithConditionalPredicate.isReplaceableImplicitReturn(ifStatement)){
             final PsiExpression condition = ifStatement.getCondition();
             final PsiStatement rawThenBranch = ifStatement.getThenBranch();
-            final PsiReturnStatement thenBranch = (PsiReturnStatement) ConditionalUtils.stripBraces(rawThenBranch);
+            final PsiReturnStatement thenBranch =
+                    (PsiReturnStatement) ConditionalUtils.stripBraces(rawThenBranch);
             final PsiReturnStatement elseBranch =
-                    (PsiReturnStatement)PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
+                    (PsiReturnStatement) PsiTreeUtil.getNextSiblingOfType(ifStatement,
+                                                                          PsiReturnStatement.class);
 
             final String thenValue;
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
@@ -130,14 +132,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String elseValue;
             final PsiExpression elseReturnValue = elseBranch.getReturnValue();
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 elseValue = elseReturnValue.getText();
             } else{
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                       <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
@@ -145,7 +147,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
 
             replaceStatement(project,
                              "return " + conditionText + '?' + thenValue + ':' +
-                                     elseValue + ';',
+                    elseValue + ';',
                              ifStatement);
             elseBranch.delete();
         }

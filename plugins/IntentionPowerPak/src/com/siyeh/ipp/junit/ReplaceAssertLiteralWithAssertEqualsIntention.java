@@ -2,8 +2,6 @@ package com.siyeh.ipp.junit;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -28,7 +26,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
             messageText = "..., ";
         }
         return "Replace " + methodName + "() with assertEquals(" + messageText +
-                literal + ", ...)";
+                       literal + ", ...)";
     }
 
     public String getFamilyName(){
@@ -41,7 +39,9 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression) findMatchingElement(file, editor);
         final PsiReferenceExpression methodExpression =
@@ -67,7 +67,8 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
                     args[0].getText() + ')';
         } else{
             callString =
-            qualifier + "assertEquals(" + args[0].getText() + ", " + literal +
+                    qualifier + "assertEquals(" + args[0].getText() + ", " +
+                    literal +
                     ", " + args[1].getText() +
                     ')';
         }

@@ -2,8 +2,6 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -27,14 +25,17 @@ public class FlipConditionalIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
-        final PsiConditionalExpression exp = (PsiConditionalExpression) findMatchingElement(file, editor);
+        if(isFileReadOnly(project, file)){
+            return;
+        }
+        final PsiConditionalExpression exp =
+                (PsiConditionalExpression) findMatchingElement(file, editor);
 
         final PsiExpression condition = exp.getCondition();
         final PsiExpression elseExpression = exp.getElseExpression();
         final PsiExpression thenExpression = exp.getThenExpression();
         final String newExpression =
-        BoolUtils.getNegatedExpressionText(condition) + '?' +
+                BoolUtils.getNegatedExpressionText(condition) + '?' +
                 elseExpression.getText() +
                 ':' +
                 thenExpression.getText();

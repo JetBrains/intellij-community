@@ -38,8 +38,8 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
                 (PsiConditionalExpression) initializer;
 
         if(condition.getCondition() == null ||
-                condition.getThenExpression() == null ||
-                condition.getElseExpression() == null){
+                   condition.getThenExpression() == null ||
+                   condition.getElseExpression() == null){
             return false;
         }
         return true;
@@ -63,8 +63,8 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
                 (PsiConditionalExpression) rhs;
 
         if(condition.getCondition() == null ||
-                condition.getThenExpression() == null ||
-                condition.getElseExpression() == null){
+                   condition.getThenExpression() == null ||
+                   condition.getElseExpression() == null){
             return false;
         }
         return true;
@@ -82,7 +82,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
                 (PsiConditionalExpression) returnValue;
 
         return condition.getCondition() != null &&
-                condition.getThenExpression() != null &&
-                condition.getElseExpression() != null;
+                       condition.getThenExpression() != null &&
+                       condition.getElseExpression() != null;
     }
 }

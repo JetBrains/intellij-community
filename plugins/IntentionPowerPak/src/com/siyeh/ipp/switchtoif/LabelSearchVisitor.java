@@ -1,6 +1,9 @@
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 
 class LabelSearchVisitor extends PsiRecursiveElementVisitor{
     private final String m_labelName;

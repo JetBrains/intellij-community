@@ -2,8 +2,6 @@ package com.siyeh.ipp.switchtoif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +27,9 @@ public class ReplaceSwitchWithIfIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiJavaToken switchToken =
                 (PsiJavaToken) findMatchingElement(file, editor);
         final PsiSwitchStatement switchStatement =
@@ -54,7 +54,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                                                            true);
             expressionText = variableName;
             declarationString =
-            switchExpressionType.getPresentableText() + ' ' + variableName +
+                    switchExpressionType.getPresentableText() + ' ' +
+                    variableName +
                     " = " +
                     switchExpression.getText() +
                     ';';
@@ -250,7 +251,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             if(CaseUtil.isUsedByStatementList(var, bodyStatements)){
                 final PsiType varType = var.getType();
                 ifStatementString.append(varType.getPresentableText() + ' ' +
-                                                 var.getName() + ';');
+                        var.getName() + ';');
             }
         }
 
@@ -282,8 +283,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                 ifStatementString.append(text);
             }
         } else if(element instanceof PsiBlockStatement ||
-                        element instanceof PsiCodeBlock ||
-                        element instanceof PsiIfStatement){
+                                element instanceof PsiCodeBlock ||
+                                element instanceof PsiIfStatement){
             final PsiElement[] children = element.getChildren();
             for(int i = 0; i < children.length; i++){
                 final PsiElement child = children[i];

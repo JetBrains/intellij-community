@@ -2,8 +2,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -25,7 +23,9 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         PsiElement parent = exp.getParent();
@@ -72,7 +72,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         final PsiType type = methodExpression.getType();
         final String className = type.getCanonicalText();
         if(!"java.lang.StringBuffer".equals(className) &&
-                !"java.lang.StringBuilder".equals(className)){
+                   !"java.lang.StringBuilder".equals(className)){
             return false;
         }
         final String methodName = methodExpression.getReferenceName();

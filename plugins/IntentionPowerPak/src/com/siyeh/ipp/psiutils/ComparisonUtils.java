@@ -1,8 +1,13 @@
 package com.siyeh.ipp.psiutils;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ComparisonUtils{
     private static final Set s_comparisonStrings = new HashSet(6);

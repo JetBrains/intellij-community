@@ -2,8 +2,6 @@ package com.siyeh.ipp.asserttoif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -27,7 +25,9 @@ public class AssertToIfIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
 
         final PsiAssertStatement assertStatement =
                 (PsiAssertStatement) findMatchingElement(file, editor);

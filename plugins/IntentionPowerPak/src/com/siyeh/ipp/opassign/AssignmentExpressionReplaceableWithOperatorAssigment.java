@@ -31,7 +31,7 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
         final IElementType rhsTokenType = operatorSign.getTokenType();
         if(JavaTokenType.OROR.equals(rhsTokenType) ||
-                JavaTokenType.ANDAND.equals(rhsTokenType)){
+                   JavaTokenType.ANDAND.equals(rhsTokenType)){
             return false;
         }
         if(SideEffectChecker.mayHaveSideEffects(lhs)){

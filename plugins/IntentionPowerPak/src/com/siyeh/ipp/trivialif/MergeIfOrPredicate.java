@@ -3,8 +3,8 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
+import com.siyeh.ipp.psiutils.EquivalenceChecker;
 
 class MergeIfOrPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){

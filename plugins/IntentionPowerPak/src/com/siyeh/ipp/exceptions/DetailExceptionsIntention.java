@@ -2,8 +2,6 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -26,7 +24,9 @@ public class DetailExceptionsIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiJavaToken token =
                 (PsiJavaToken) findMatchingElement(file, editor);
         final PsiTryStatement tryStatement =
@@ -49,7 +49,7 @@ public class DetailExceptionsIntention extends Intention{
                                                              factory);
 
         final HeirarchicalTypeComparator comparator =
-        new HeirarchicalTypeComparator();
+                new HeirarchicalTypeComparator();
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         for(int i = 0; i < catchSections.length; i++){
             final PsiParameter param = catchSections[i].getParameter();

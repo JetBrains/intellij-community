@@ -13,7 +13,7 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
         final PsiLiteralExpression expression = (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
         if(!(type.equals(PsiType.INT) ||
-                        type.equals(PsiType.LONG))){
+                type.equals(PsiType.LONG))){
             return false;
         }
         final String text = expression.getText();

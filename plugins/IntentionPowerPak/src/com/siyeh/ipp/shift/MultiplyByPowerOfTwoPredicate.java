@@ -19,7 +19,7 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
-                !tokenType.equals(JavaTokenType.DIVEQ)){
+                   !tokenType.equals(JavaTokenType.DIVEQ)){
             return false;
         }
         final PsiExpression lhs = expression.getLExpression();
@@ -44,7 +44,7 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISK) &&
-                !tokenType.equals(JavaTokenType.DIV)){
+                   !tokenType.equals(JavaTokenType.DIV)){
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();

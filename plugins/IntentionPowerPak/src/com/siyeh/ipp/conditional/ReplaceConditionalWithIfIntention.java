@@ -2,8 +2,6 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +23,9 @@ public class ReplaceConditionalWithIfIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiElement element = findMatchingElement(file, editor);
         if(element instanceof PsiReturnStatement){
             replaceConditionalReturn(element, project);
@@ -37,7 +37,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
     }
 
     private static void replaceConditionalAssignment(PsiElement element,
-                                              Project project)
+                                                     Project project)
             throws IncorrectOperationException{
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
@@ -77,7 +77,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final String str = statement.getText();
         final int equalsIndex = str.indexOf((int) '=');
         final String declarationString =
-        str.substring(0, equalsIndex) + ';';
+                str.substring(0, equalsIndex) + ';';
         final PsiExpression condition = rhs.getCondition();
         final PsiExpression thenExpression = rhs.getThenExpression();
         final PsiExpression elseExpression = rhs.getElseExpression();
@@ -104,7 +104,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
     }
 
     private static void replaceConditionalReturn(PsiElement element,
-                                          Project project)
+                                                 Project project)
             throws IncorrectOperationException{
         final PsiReturnStatement returnStatement =
                 (PsiReturnStatement) element;

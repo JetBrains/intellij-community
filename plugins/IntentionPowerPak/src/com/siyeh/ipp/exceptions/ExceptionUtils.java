@@ -2,7 +2,9 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 class ExceptionUtils{
     private ExceptionUtils(){
@@ -26,7 +28,7 @@ class ExceptionUtils{
             return;
         }
         if(statement instanceof PsiBreakStatement ||
-                        statement instanceof PsiContinueStatement){
+                                statement instanceof PsiContinueStatement){
             // don't do anything
         } else if(statement instanceof PsiReturnStatement){
             final PsiReturnStatement returnStatement =
@@ -271,9 +273,9 @@ class ExceptionUtils{
             return;
         }
         if(exp instanceof PsiThisExpression ||
-                        exp instanceof PsiLiteralExpression ||
-                        exp instanceof PsiSuperExpression ||
-                        exp instanceof PsiClassObjectAccessExpression){
+                                exp instanceof PsiLiteralExpression ||
+                                exp instanceof PsiSuperExpression ||
+                                exp instanceof PsiClassObjectAccessExpression){
         } else if(exp instanceof PsiTypeCastExpression){
             calculateExceptionsThrownForTypeCast((PsiTypeCastExpression) exp,
                                                  exceptionTypes, factory);

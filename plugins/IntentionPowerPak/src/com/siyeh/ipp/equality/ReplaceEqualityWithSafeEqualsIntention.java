@@ -2,8 +2,6 @@ package com.siyeh.ipp.equality;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -27,7 +25,9 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiExpression lhs = exp.getLOperand();
@@ -40,7 +40,7 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
         final String lhsText = strippedLhs.getText();
         final String rhsText = strippedRhs.getText();
         if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                   ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             expString = lhsText + "==null?" + rhsText + " == null:(" + lhsText +
                     ").equals(" + rhsText + ')';
         } else{

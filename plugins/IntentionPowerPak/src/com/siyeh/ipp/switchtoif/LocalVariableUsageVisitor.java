@@ -1,6 +1,9 @@
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 
 class LocalVariableUsageVisitor extends PsiRecursiveElementVisitor{
     private final PsiLocalVariable m_var;

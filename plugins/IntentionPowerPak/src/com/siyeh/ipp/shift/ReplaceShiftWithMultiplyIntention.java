@@ -2,8 +2,6 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -49,7 +47,9 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiElement element = findMatchingElement(file, editor);
         if(element instanceof PsiBinaryExpression){
             replaceShiftWithMultiplyOrDivide(element, project);
@@ -74,7 +74,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
             assignString = "/=";
         }
         final String expString =
-        lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
+                lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
         replaceExpression(project, expString, exp);
     }
 
@@ -95,18 +95,18 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
         }
         final String lhsText;
         if(ParenthesesUtils.getPrecendence(lhs) >
-                ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+                   ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
             lhsText = '(' + lhs.getText() + ')';
         } else{
             lhsText = lhs.getText();
         }
         String expString =
-        lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
+                lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
         final PsiElement parent = exp.getParent();
         if(parent != null && parent instanceof PsiExpression){
-            if(!(parent instanceof PsiParenthesizedExpression)&&
-                    ParenthesesUtils.getPrecendence((PsiExpression) parent) <
-                    ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+            if(!(parent instanceof PsiParenthesizedExpression) &&
+                       ParenthesesUtils.getPrecendence((PsiExpression) parent) <
+                       ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
                 expString = '(' + expString + ')';
             }
         }

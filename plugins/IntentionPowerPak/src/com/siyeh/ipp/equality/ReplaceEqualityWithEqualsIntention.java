@@ -2,8 +2,6 @@ package com.siyeh.ipp.equality;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -26,7 +24,9 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) findMatchingElement(file, editor);
         final PsiExpression lhs = exp.getLOperand();
@@ -40,7 +40,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
         final String expString;
         if(tokenType.equals(JavaTokenType.EQEQ)){
             if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                    ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                       ParenthesesUtils.METHOD_CALL_PRECEDENCE){
                 expString = '(' + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';
             } else{
@@ -49,7 +49,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
             }
         } else{
             if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                    ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                       ParenthesesUtils.METHOD_CALL_PRECEDENCE){
                 expString = "!(" + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';
             } else{

@@ -14,7 +14,7 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.NE) &&
-                !tokenType.equals(JavaTokenType.EQEQ)){
+                   !tokenType.equals(JavaTokenType.EQEQ)){
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
@@ -34,7 +34,6 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
             return false;
         }
         return !TypeConversionUtil.isPrimitiveAndNotNull(lhsType) &&
-                !TypeConversionUtil.isPrimitiveAndNotNull(rhsType);
+                       !TypeConversionUtil.isPrimitiveAndNotNull(rhsType);
     }
-
 }

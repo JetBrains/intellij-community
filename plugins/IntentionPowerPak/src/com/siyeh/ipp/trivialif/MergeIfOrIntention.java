@@ -2,8 +2,6 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,13 +24,14 @@ public class MergeIfOrIntention extends Intention{
 
     public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()}).hasReadonlyFiles()) return;
+        if(isFileReadOnly(project, file)){
+            return;
+        }
         final PsiJavaToken token =
                 (PsiJavaToken) findMatchingElement(file, editor);
         if(MergeIfOrPredicate.isMergableExplicitIf(token)){
             replaceMergeableExplicitIf(file, editor, project);
-        }
-        else{
+        } else{
             replaceMergeableImplicitIf(file, editor, project);
         }
     }
@@ -50,7 +49,7 @@ public class MergeIfOrIntention extends Intention{
         final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(childCondition)
-                > ParenthesesUtils.OR_PRECEDENCE){
+                   > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -59,7 +58,7 @@ public class MergeIfOrIntention extends Intention{
         final String parentConditionText;
         final PsiExpression condition = parentStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(condition)
-                > ParenthesesUtils.OR_PRECEDENCE){
+                   > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';
         } else{
             parentConditionText = condition.getText();
@@ -68,7 +67,8 @@ public class MergeIfOrIntention extends Intention{
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
         final String parentThenBranchText = parentThenBranch.getText();
         final StringBuffer statement = new StringBuffer(
-        "if(" + parentConditionText + "||" + childConditionText + ')' +
+                        "if(" + parentConditionText + "||" +
+                childConditionText + ')' +
                 parentThenBranchText);
         final PsiStatement childElseBranch = childStatement.getElseBranch();
         if(childElseBranch != null){
@@ -93,7 +93,7 @@ public class MergeIfOrIntention extends Intention{
         final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(childCondition)
-                > ParenthesesUtils.OR_PRECEDENCE){
+                   > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -102,7 +102,7 @@ public class MergeIfOrIntention extends Intention{
         final String parentConditionText;
         final PsiExpression condition = parentStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(condition)
-                > ParenthesesUtils.OR_PRECEDENCE){
+                   > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';
         } else{
             parentConditionText = condition.getText();
@@ -110,7 +110,7 @@ public class MergeIfOrIntention extends Intention{
 
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
         String statement =
-        "if(" + parentConditionText + "||" + childConditionText + ')' +
+                "if(" + parentConditionText + "||" + childConditionText + ')' +
                 parentThenBranch.getText();
         final PsiStatement childElseBranch = childStatement.getElseBranch();
         if(childElseBranch != null){
@@ -119,5 +119,4 @@ public class MergeIfOrIntention extends Intention{
         replaceStatement(project, statement, parentStatement);
         childStatement.delete();
     }
-
 }

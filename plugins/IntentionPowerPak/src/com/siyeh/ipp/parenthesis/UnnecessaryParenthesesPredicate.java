@@ -22,14 +22,14 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
         }
 
         final int parentPrecendence = ParenthesesUtils.getPrecendence(
-                (PsiExpression) parent);
+                        (PsiExpression) parent);
         final int childPrecendence = ParenthesesUtils.getPrecendence(body);
         if(parentPrecendence > childPrecendence){
             return true;
         } else if(parentPrecendence == childPrecendence){
 
             if(parent instanceof PsiBinaryExpression &&
-                            body instanceof PsiBinaryExpression){
+                                    body instanceof PsiBinaryExpression){
                 final PsiJavaToken parentSign =
                         ((PsiBinaryExpression) parent).getOperationSign();
                 final IElementType parentOperator = parentSign.getTokenType();
@@ -41,7 +41,7 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
                         (PsiBinaryExpression) parent;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 return lhs.equals(expression) &&
-                        parentOperator.equals(childOperator);
+                               parentOperator.equals(childOperator);
             } else{
                 return false;
             }

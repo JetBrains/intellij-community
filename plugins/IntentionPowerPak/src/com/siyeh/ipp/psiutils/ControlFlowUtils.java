@@ -11,35 +11,35 @@ public class ControlFlowUtils{
 
     public static boolean statementMayCompleteNormally(PsiStatement statement){
         if(statement instanceof PsiBreakStatement ||
-                        statement instanceof PsiContinueStatement ||
-                        statement instanceof PsiReturnStatement ||
-                        statement instanceof PsiThrowStatement){
+                                statement instanceof PsiContinueStatement ||
+                                statement instanceof PsiReturnStatement ||
+                                statement instanceof PsiThrowStatement){
             return false;
         } else if(statement instanceof PsiExpressionListStatement ||
-                        statement instanceof PsiExpressionStatement ||
-                        statement instanceof PsiEmptyStatement ||
-                        statement instanceof PsiAssertStatement ||
-                        statement instanceof PsiDeclarationStatement){
+                                statement instanceof PsiExpressionStatement ||
+                                statement instanceof PsiEmptyStatement ||
+                                statement instanceof PsiAssertStatement ||
+                                statement instanceof PsiDeclarationStatement){
             return true;
         } else if(statement instanceof PsiForStatement){
             final PsiForStatement loopStatement = (PsiForStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
 
             return test != null && !isBooleanConstant(test, false) ||
-                    statementIsBreakTarget(loopStatement);
+                           statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiWhileStatement){
             final PsiWhileStatement loopStatement =
                     (PsiWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
             return !isBooleanConstant(test, true)
-                    || statementIsBreakTarget(loopStatement);
+                           || statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiDoWhileStatement){
             final PsiDoWhileStatement loopStatement =
                     (PsiDoWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
             return statementMayCompleteNormally(loopStatement) &&
-                    !isBooleanConstant(test, true)
-                    || statementIsBreakTarget(loopStatement);
+                           !isBooleanConstant(test, true)
+                           || statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiSynchronizedStatement){
             final PsiCodeBlock body =
                     ((PsiSynchronizedStatement) statement).getBody();
@@ -53,7 +53,7 @@ public class ControlFlowUtils{
                     (PsiLabeledStatement) statement;
             final PsiStatement body = labeledStatement.getStatement();
             return statementMayCompleteNormally(body)
-                    || statementIsBreakTarget(body);
+                           || statementIsBreakTarget(body);
         } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement) statement;
             final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -62,7 +62,7 @@ public class ControlFlowUtils{
             }
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             if(elseBranch == null ||
-                    statementMayCompleteNormally(elseBranch)){
+                       statementMayCompleteNormally(elseBranch)){
                 return true;
             }
             return false;
@@ -106,7 +106,7 @@ public class ControlFlowUtils{
                 return true;    // it's all labels
             } else if(lastNonLabelOffset == statements.length - 1){
                 return statementMayCompleteNormally(statements[statements.length -
-                                                            1]);
+                        1]);
             } else{
                 return true;    // the last statement is a label
             }

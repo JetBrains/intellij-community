@@ -4,6 +4,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +29,8 @@ public abstract class Intention implements IntentionAction{
             throws IncorrectOperationException{
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
-        final PsiExpression newCall = factory.createExpressionFromText(newExpression, null);
+        final PsiExpression newCall =
+                factory.createExpressionFromText(newExpression, null);
         final PsiElement insertedElement = exp.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
@@ -58,7 +61,7 @@ public abstract class Intention implements IntentionAction{
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
             if(ParenthesesUtils.getPrecendence(newExpression) >
-                    ParenthesesUtils.PREFIX_PRECEDENCE){
+                       ParenthesesUtils.PREFIX_PRECEDENCE){
                 expString = "!(" + newExpressionText + ')';
             } else{
                 expString = '!' + newExpressionText;
@@ -98,7 +101,8 @@ public abstract class Intention implements IntentionAction{
             throws IncorrectOperationException{
         final PsiManager mgr = PsiManager.getInstance(project);
         final PsiElementFactory factory = mgr.getElementFactory();
-        final PsiStatement newCall = factory.createStatementFromText(newStatement, null);
+        final PsiStatement newCall =
+                factory.createStatementFromText(newStatement, null);
         final PsiElement insertedElement = statement.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
@@ -124,5 +128,11 @@ public abstract class Intention implements IntentionAction{
 
     public boolean startInWriteAction(){
         return true;
+    }
+
+    public static boolean isFileReadOnly(Project project, PsiFile file){
+        return ReadonlyStatusHandler.getInstance(project)
+                .ensureFilesWritable(new VirtualFile[]{file.getVirtualFile()})
+                .hasReadonlyFiles();
     }
 }
