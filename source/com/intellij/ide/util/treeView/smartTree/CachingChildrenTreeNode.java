@@ -177,4 +177,6 @@ abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   public void rebuildChildren() {
     myChildren = null;
   }
+
+
 }

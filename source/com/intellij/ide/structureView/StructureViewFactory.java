@@ -20,4 +20,7 @@ public abstract class StructureViewFactory {
 
   public abstract List<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type);
 
+  public abstract void setActiveAction(final String name, final boolean state);
+
+  public abstract boolean isActionActive(final String name);
 }

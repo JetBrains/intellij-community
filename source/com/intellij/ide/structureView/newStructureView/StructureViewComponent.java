@@ -47,7 +47,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private AbstractTreeBuilder myAbstractTreeBuilder;
-  private final Collection<String> myActiveActions = new HashSet<String>();
+
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
 
@@ -441,20 +441,19 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void setActionActive(String name, boolean state) {
+
     saveStructureViewState();
-    if (state) {
-      myActiveActions.add(name);
-    }
-    else {
-      myActiveActions.remove(name);
-    }
-      ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
+
+    StructureViewFactory.getInstance(myProject).setActiveAction(name, state);
+
+    ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
+
     myAbstractTreeBuilder.updateFromRoot();
     restoreStructureViewState();
   }
 
   public boolean isActionActive(String name) {
-    return myActiveActions.contains(name);
+    return StructureViewFactory.getInstance(myProject).isActionActive(name);
   }
 
   public AbstractTreeStructure getTreeStructure() {

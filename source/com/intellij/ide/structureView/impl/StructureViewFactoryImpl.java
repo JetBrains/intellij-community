@@ -15,10 +15,10 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,6 +28,8 @@ import java.util.List;
 public final class StructureViewFactoryImpl extends StructureViewFactory implements JDOMExternalizable, ProjectComponent {
   public boolean AUTOSCROLL_MODE = true;
   public boolean AUTOSCROLL_FROM_SOURCE = false;
+
+  public String ACTIVE_ACTIONS = "";
 
   private Project myProject;
   private StructureViewWrapper myStructureViewWrapper;
@@ -94,5 +96,38 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
       if (registeregType.isAssignableFrom(type)) result.addAll(myExtensions.get(registeregType));
     }
     return result;
+  }
+
+  public void setActiveAction(final String name, final boolean state) {
+
+    List<String> activeActions = collectActiveActions();
+
+    if (state) {
+      activeActions.add(name);
+    } else {
+      activeActions.remove(name);
+    }
+
+    ACTIVE_ACTIONS = toString(activeActions);
+  }
+
+  private String toString(final List<String> activeActions) {
+    final StringBuffer result = new StringBuffer();
+    for (Iterator<String> iterator = activeActions.iterator(); iterator.hasNext();) {
+      result.append(iterator.next());
+      if (iterator.hasNext()) {
+        result.append(",");
+      }
+    }
+    return result.toString();
+  }
+
+  private List<String> collectActiveActions() {
+    final String[] strings = ACTIVE_ACTIONS.split(",");
+    return new ArrayList<String>(Arrays.asList(strings));
+  }
+
+  public boolean isActionActive(final String name) {
+    return collectActiveActions().contains(name);
   }
 }

@@ -17,6 +17,7 @@ public class TreeActionWrapper extends ToggleAction{
   }
 
   public void update(AnActionEvent e) {
+    super.update(e);
     Presentation presentation = e.getPresentation();
     ActionPresentation actionPresentation = myAction.getPresentation();
     presentation.setIcon(actionPresentation.getIcon());
