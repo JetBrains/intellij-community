@@ -1,34 +1,37 @@
 package com.intellij.refactoring.changeSignature.inCallers;
 
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.ui.Tree;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Alarm;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.Enumeration;
-import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author ven
  */
 public abstract class CallerChooser extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.inCallers.CallerChooser");
   PsiMethod myMethod;
   private EditorTextField myEditorField;
   private Alarm myAlarm = new Alarm();
@@ -129,20 +132,18 @@ public abstract class CallerChooser extends DialogWrapper {
     }
   }
 
-  private PsiMethod[] getSelectedMethods () {
+  private void getSelectedMethods(Set<PsiMethod> methods) {
     MethodNode node = myRoot;
-    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
-    getSelectedMethodsInner(node, result);
-    return result.toArray(new PsiMethod[result.size()]);
+    getSelectedMethodsInner(node, methods);
+    methods.remove(node.getMethod());
   }
 
-  private void getSelectedMethodsInner(final MethodNode node, final ArrayList<PsiMethod> methods) {
-    if (node.isChecked()) {
-      methods.add(node.getMethod());
-    } else {
+  private void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
+    allMethods.add(node.getMethod());
+    if (!node.isChecked()) {
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        getSelectedMethodsInner((MethodNode)children.nextElement(), methods);
+        getSelectedMethodsInner((MethodNode)children.nextElement(), allMethods);
       }
     }
   }
@@ -153,8 +154,8 @@ public abstract class CallerChooser extends DialogWrapper {
       return;
     }
 
-    final PsiMethod[] selectedMethods = getSelectedMethods();
-    LOG.assertTrue(selectedMethods.length > 0);
+    final Set<PsiMethod> selectedMethods = new HashSet<PsiMethod>();
+    getSelectedMethods(selectedMethods);
     callersChosen(selectedMethods);
     super.doOKAction();
   }
@@ -170,5 +171,5 @@ public abstract class CallerChooser extends DialogWrapper {
     return true;
   }
 
-  abstract protected void callersChosen (PsiMethod[] callers);
+  abstract protected void callersChosen(Set<PsiMethod> allCallers);
 }

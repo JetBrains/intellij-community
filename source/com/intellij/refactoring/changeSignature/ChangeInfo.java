@@ -12,6 +12,8 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 
 class ChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfo");
@@ -25,7 +27,7 @@ class ChangeInfo {
   final String newName;
   final CanonicalTypes.Type newReturnType;
   final ParameterInfo[] newParms;
-  final ThrownExceptionInfo[] newExceptions;
+  ThrownExceptionInfo[] newExceptions;
   final boolean[] toRemoveParm;
   boolean isVisibilityChanged = false;
   boolean isNameChanged = false;
@@ -35,6 +37,7 @@ class ChangeInfo {
   boolean isExceptionSetOrOrderChanged = false;
   boolean isParameterNamesChanged = false;
   boolean isParameterTypesChanged = false;
+  boolean isPropagationEnabled = true;
   final boolean wasVararg;
   final boolean retainsVarargs;
   final boolean obtainsVarags;
@@ -89,7 +92,7 @@ class ChangeInfo {
     if (parameters.length != newParms.length){
       this.isParameterSetOrOrderChanged = true;
     }
-    else{
+    else {
       for(int i = 0; i < newParms.length; i++){
         ParameterInfo parmInfo = newParms[i];
         PsiParameter parameter = parameters[i];
@@ -111,28 +114,9 @@ class ChangeInfo {
       }
     }
 
-    if (newExceptions == null) newExceptions = extractExceptions(method);
+    setupPropagationEnabled(parameters, newParms);
 
-    this.newExceptions = newExceptions;
-
-    PsiClassType[] types = method.getThrowsList().getReferencedTypes();
-    isExceptionSetChanged = newExceptions.length != types.length;
-    if (!isExceptionSetChanged) {
-      for (int i = 0; i < newExceptions.length; i++) {
-        try {
-          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method))) {
-            isExceptionSetChanged = true;
-            break;
-          }
-        }
-        catch (IncorrectOperationException e) {
-          isExceptionSetChanged = true;
-        }
-        if (newExceptions[i].oldIndex != i) isExceptionSetOrOrderChanged = true;
-      }
-    }
-
-    isExceptionSetOrOrderChanged |= isExceptionSetChanged;
+    setupExceptions(newExceptions, method);
 
     this.toRemoveParm = new boolean[parameters.length];
     Arrays.fill(this.toRemoveParm, true);
@@ -169,6 +153,46 @@ class ChangeInfo {
     ejbRole = J2EERolesUtil.getEjbRole(method);
   }
 
+  private void setupExceptions(ThrownExceptionInfo[] newExceptions, final PsiMethod method) {
+    if (newExceptions == null) newExceptions = extractExceptions(method);
+
+    this.newExceptions = newExceptions;
+
+    PsiClassType[] types = method.getThrowsList().getReferencedTypes();
+    isExceptionSetChanged = newExceptions.length != types.length;
+    if (!isExceptionSetChanged) {
+      for (int i = 0; i < newExceptions.length; i++) {
+        try {
+          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method))) {
+            isExceptionSetChanged = true;
+            break;
+          }
+        }
+        catch (IncorrectOperationException e) {
+          isExceptionSetChanged = true;
+        }
+        if (newExceptions[i].oldIndex != i) isExceptionSetOrOrderChanged = true;
+      }
+    }
+
+    isExceptionSetOrOrderChanged |= isExceptionSetChanged;
+  }
+
+  private void setupPropagationEnabled(final PsiParameter[] parameters, final ParameterInfo[] newParms) {
+    if (parameters.length >= newParms.length) {
+      isPropagationEnabled = false;
+    }
+    else {
+      for (int i = 0; i < parameters.length; i++) {
+        final ParameterInfo newParm = newParms[i];
+        if (newParm.oldParameterIndex != i) {
+          isPropagationEnabled = false;
+          break;
+        }
+      }
+    }
+  }
+
   //create identity mapping
   private static ThrownExceptionInfo[] extractExceptions(PsiMethod method) {
     PsiClassType[] types = method.getThrowsList().getReferencedTypes();
@@ -185,5 +209,16 @@ class ChangeInfo {
 
   public void updateMethod(PsiMethod method) {
     this.method = method;
+  }
+
+  public ParameterInfo[] getCreatedParmsInfoWithoutVarargs() {
+    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
+    for (int i = 0; i < newParms.length; i++) {
+      ParameterInfo newParm = newParms[i];
+      if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
+        result.add(newParm);
+      }
+    }
+    return result.toArray(new ParameterInfo[result.size()]);
   }
 }

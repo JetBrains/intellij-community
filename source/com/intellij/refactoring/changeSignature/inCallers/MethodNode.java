@@ -70,7 +70,8 @@ public class MethodNode extends CheckedTreeNode {
     List<PsiMethod> callers = new ArrayList<PsiMethod>();
     for (int i = 0; i < refs.length; i++) {
       final PsiElement element = refs[i].getElement();
-      if (element instanceof PsiReferenceExpression && element.getParent() instanceof PsiMethodCallExpression) {
+      if (!(element instanceof PsiReferenceExpression) ||
+          !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
         final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
         if (enclosingContext instanceof PsiMethod) callers.add((PsiMethod)enclosingContext);
       }
@@ -95,8 +96,10 @@ public class MethodNode extends CheckedTreeNode {
     );
     buffer.append(methodText);
 
-    final int style = isEnabled() ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_STRIKEOUT;
-    renderer.append(buffer.toString(), new SimpleTextAttributes(style, IdeaUIManager.getTreeForegroung()));
+    final SimpleTextAttributes attributes = isEnabled() ?
+        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, IdeaUIManager.getTreeForegroung()) :
+        SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
+    renderer.append(buffer.toString(), attributes);
 
     final String packageName = getPackageName(myMethod.getContainingClass());
     renderer.append("  (" + packageName + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Color.GRAY));

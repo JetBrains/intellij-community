@@ -10,9 +10,6 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
 
 /**
  * @author dsl

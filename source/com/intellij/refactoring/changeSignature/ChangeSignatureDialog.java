@@ -38,10 +38,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class ChangeSignatureDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(
@@ -63,8 +61,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private ExceptionsTableModel myExceptionsTableModel;
   private JButton myPropagateParamChangesButton;
   private JButton myPropagateExnChangesButton;
-  private PsiMethod[] myMethodsToPropagateParameters = null;
-  private PsiMethod[] myMethodsToPropagateExceptions = null;
+  private Set<PsiMethod> myMethodsToPropagateParameters = null;
+  private Set<PsiMethod> myMethodsToPropagateExceptions = null;
 
   public ChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation) {
     super(project, true);
@@ -166,8 +164,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myPropagateParamChangesButton = new JButton("Propagate Parameters");
     myPropagateParamChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select Caller Methods To Apply Default Value") {
-          protected void callersChosen(PsiMethod[] callers) {
+        new CallerChooser(myMethod, "Select New Parameters Propagation End Points") {
+          protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateParameters = callers;
           }
         }.show();
@@ -178,8 +176,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myPropagateExnChangesButton = new JButton("Propagate Exceptions");
     myPropagateExnChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select Caller Methods To Insert Catch Statements") {
-          protected void callersChosen(PsiMethod[] callers) {
+        new CallerChooser(myMethod, "Select New Thrown Exceptions Propagation End Points") {
+          protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateExceptions = callers;
           }
         }.show();
@@ -332,14 +330,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private void configureExceptionTableEditors () {
     myExceptionsTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     myExceptionsTable.getColumnModel().getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
-  }
-
-  public PsiMethod[] getEndPointsToPropagateExceptions() {
-    return myMethodsToPropagateExceptions;
-  }
-
-  public PsiMethod[] getEndPointsToPropagateParameters() {
-    return myMethodsToPropagateParameters;
   }
 
   private void completeVariable(EditorTextField editorTextField, PsiType type) {
@@ -518,8 +508,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     invokeRefactoring(new ChangeSignatureProcessor(getProject(), myMethod, isGenerateDelegate(),
                                                    getVisibility(), getMethodName(), getReturnType(),
                                                    getParameters(), getExceptions(),
-                                                   getEndPointsToPropagateParameters(),
-                                                   getEndPointsToPropagateExceptions()));
+                                                   myMethodsToPropagateParameters,
+                                                   myMethodsToPropagateExceptions));
   }
 
   private String validateAndCommitData() {

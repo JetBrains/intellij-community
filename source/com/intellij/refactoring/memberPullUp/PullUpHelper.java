@@ -479,13 +479,13 @@ public class PullUpHelper {
       // check default constructor
       if (constructor == null || constructor.getParameterList().getParameters().length == 0) {
         RefactoringUtil.visitImplicitSuperConstructorUsages(mySourceClass, new RefactoringUtil.ImplicitConstructorUsageVisitor() {
-          public void visitConstructor(PsiMethod constructor) {
+          public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
             referencingSubConstructors.add(constructor);
           }
 
           public void visitClassWithoutConstructors(PsiClass aClass) {
           }
-        });
+        }, myTargetSuperClass);
 
       }
     }

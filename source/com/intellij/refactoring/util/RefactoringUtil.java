@@ -394,8 +394,9 @@ public class RefactoringUtil {
     PsiElement prev = null;
     while (true) {
       if (parent instanceof PsiClass) {
-        if (!(parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getArgumentList() == prev))
+        if (!(parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getArgumentList() == prev)) {
           return (PsiClass)parent;
+        }
       }
       prev = parent;
       parent = parent.getContext();
@@ -406,8 +407,9 @@ public class RefactoringUtil {
   public static PsiClass getThisResolveClass(final PsiReferenceExpression place) {
     final ResolveResult resolveResult = place.advancedResolve(false);
     final PsiElement scope = resolveResult.getCurrentFileResolveScope();
-    if (scope instanceof PsiClass)
-      return (PsiClass) scope;
+    if (scope instanceof PsiClass) {
+      return (PsiClass)scope;
+    }
     return null;
     /*
     PsiElement parent = place.getContext();
@@ -433,6 +435,11 @@ public class RefactoringUtil {
     }
 
     return parent instanceof PsiNewExpression ? (PsiNewExpression)parent : null;
+  }
+
+  public static final PsiMethod getEnclosingMethod (PsiElement element) {
+    final PsiElement container = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
+    return container instanceof PsiMethod ? ((PsiMethod)container) : null;
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope)
@@ -764,7 +771,8 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiExpressionList getArgumentListByMethodReference(PsiJavaCodeReferenceElement ref) {
+  public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
+    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).getArgumentList();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
       return ((PsiCall)parent).getArgumentList();
@@ -1051,30 +1059,41 @@ public class RefactoringUtil {
     for (int i = 0; i < inheritors.length; i++) {
       PsiClass inheritor = inheritors[i];
 
-      visitImplicitSuperConstructorUsages(inheritor, implicitConstructorUsageVistor);
+      visitImplicitSuperConstructorUsages(inheritor, implicitConstructorUsageVistor, aClass);
     }
   }
 
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
-                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor) {
+                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
+                                                         PsiClass superClass) {
+    final PsiMethod baseDefaultConstructor = findDefaultConstructor (superClass);
     final PsiMethod[] constructors = subClass.getConstructors();
     if (constructors.length > 0) {
       for (int j = 0; j < constructors.length; j++) {
         PsiMethod constructor = constructors[j];
         final PsiStatement[] statements = constructor.getBody().getStatements();
         if (statements.length < 1 || !isSuperOrThisCall(statements[0], true, true)) {
-          implicitConstructorUsageVistor.visitConstructor(constructor);
+          implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
         }
       }
     }
     else {
       implicitConstructorUsageVistor.visitClassWithoutConstructors(subClass);
-//        visitImplicitConstructorUsages(inheritor, implicitConstructorUsageVistor);
     }
   }
 
+  private static PsiMethod findDefaultConstructor(final PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    for (int i = 0; i < constructors.length; i++) {
+      PsiMethod constructor = constructors[i];
+      if (constructor.getParameterList().getParameters().length == 0) return constructor;
+    }
+
+    return null;
+  }
+
   public static interface ImplicitConstructorUsageVisitor {
-    void visitConstructor(PsiMethod constructor);
+    void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 
     void visitClassWithoutConstructors(PsiClass aClass);
   }
