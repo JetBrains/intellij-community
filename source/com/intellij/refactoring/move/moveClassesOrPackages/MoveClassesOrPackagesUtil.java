@@ -278,11 +278,9 @@ public class MoveClassesOrPackagesUtil {
           reference.bindToElement(newClass);
         }
       }
-
-      return newClass;
     }
 
-    return aClass;
+    return newClass;
   }
 
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
