@@ -841,7 +841,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
                 PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
                 if (substitutor != null) {
-                  if (method.getSignature(PsiSubstitutor.EMPTY).equals(refMethod.getSignature(substitutor))) {
+                  if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
                     if (!processor.execute(reference)) return false;
                   }
                 }
