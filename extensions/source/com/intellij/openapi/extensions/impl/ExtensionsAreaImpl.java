@@ -189,8 +189,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     ExtensionComponentAdapter adapter = (ExtensionComponentAdapter) myExtensionElement2extension.remove(extensionElement);
     if (adapter == null) return;
-    if (getExtensionPoint(epName).hasExtension(adapter.getExtension())) {
-      getExtensionPoint(epName).unregisterExtension(adapter.getExtension());
+    if (getExtensionPointImpl(epName).unregisterComponentAdapter(adapter)) {
       MutablePicoContainer pluginContainer = internalGetPluginContainer(pluginName);
       pluginContainer.unregisterComponent(adapter.getComponentKey());
       if (pluginContainer.getComponentAdapters().size() == 0) {

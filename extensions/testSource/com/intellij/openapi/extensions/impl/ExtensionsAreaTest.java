@@ -1,12 +1,12 @@
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.extensions.Extensions;
 import junit.framework.TestCase;
-import org.picocontainer.defaults.DefaultPicoContainer;
 import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.DefaultPicoContainer;
+import org.jdom.Element;
 
 import java.util.List;
-
-import com.intellij.openapi.extensions.Extensions;
 
 /**
  * @author mike
@@ -27,5 +27,23 @@ public class ExtensionsAreaTest extends TestCase {
 
     final List adapters = myPicoContainer.getComponentAdaptersOfType(ExtensionsAreaTest.class);
     assertEquals(1, adapters.size());
+  }
+
+  public void testNoCreateOnUnregisterElement() {
+    myExtensionsArea.registerExtensionPoint("test.ep", TestClass.class.getName());
+    final Element element = ExtensionComponentAdapterTest.readElement("<extension point=\"test.ep\"/>");
+    TestClass.ourCreationCount = 0;
+    myExtensionsArea.registerExtension("test", element);
+    assertEquals(0, TestClass.ourCreationCount);
+    myExtensionsArea.unregisterExtension("test", element);
+    assertEquals(0, TestClass.ourCreationCount);
+  }
+
+  public static class TestClass {
+    public static int ourCreationCount = 0;
+
+    public TestClass() {
+      ourCreationCount++;
+    }
   }
 }

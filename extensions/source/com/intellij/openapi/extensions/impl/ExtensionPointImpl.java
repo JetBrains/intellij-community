@@ -276,6 +276,18 @@ public class ExtensionPointImpl implements ExtensionPoint {
     myExtensionAdapters.add(adapter);
   }
 
+  public boolean unregisterComponentAdapter(final ExtensionComponentAdapter componentAdapter) {
+    if (myExtensionAdapters.contains(componentAdapter)) {
+      myExtensionAdapters.remove(componentAdapter);
+      return true;
+    }
+    else if (myLoadedAdapters.contains(componentAdapter)) {
+      unregisterExtension(componentAdapter.getExtension());
+      return true;
+    }
+    return false;
+  }
+
   private static class ObjectComponentAdapter extends ExtensionComponentAdapter {
     private Object myExtension;
     private LoadingOrder myLoadingOrder;
