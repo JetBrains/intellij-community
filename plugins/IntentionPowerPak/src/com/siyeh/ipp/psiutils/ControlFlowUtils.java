@@ -37,7 +37,7 @@ public class ControlFlowUtils{
             final PsiDoWhileStatement loopStatement =
                     (PsiDoWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
-            return statementMayCompleteNormally(loopStatement) &&
+            return statementMayCompleteNormally(loopStatement.getBody()) &&
                            !isBooleanConstant(test, true)
                            || statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiSynchronizedStatement){
