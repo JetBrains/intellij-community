@@ -147,10 +147,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     return temp.isEmpty() ? null : temp.toArray(new String[temp.size()]);
   }
 
-  public String [] getAllAddActionNames(){
-    return myActions.keySet().toArray(new String[myActions.keySet().size()]);
-  } 
-
   public AddToFavoritesAction getAddToFavoritesAction(String name){
     return myActions.get(name);
   }

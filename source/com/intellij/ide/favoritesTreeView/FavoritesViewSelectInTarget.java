@@ -75,7 +75,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper{
 
   private FavoritesTreeViewPanel findSuitableFavoritesList(VirtualFile file){
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(myProject);
-    final String[] allAddActionNames = favoritesView.getAllAddActionNames();
+    final String[] allAddActionNames = favoritesView.getAvailableFavoritesLists();
     for (int i = 0; i < allAddActionNames.length; i++) {
       String actionName = allAddActionNames[i];
       final FavoritesTreeViewPanel favoritesTreeViewPanel = favoritesView.getFavoritesTreeViewPanel(actionName);

@@ -2,6 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 
 /**
  * User: anna
@@ -9,7 +10,7 @@ import com.intellij.openapi.project.Project;
  */
 class AddToNewFavoritesListAction extends AnAction {
  public AddToNewFavoritesListAction() {
-   super("Add to New Favorites List");
+   super("Add To New Favorites List", "Add To New Favorites List", IconLoader.getIcon("/general/addFavoritesList.png"));
  }
 
  public void actionPerformed(AnActionEvent e) {

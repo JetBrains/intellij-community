@@ -16,7 +16,7 @@
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
 
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction" text="Add To Favorites" description="Add selected node to favorites"/>
-    <group id="AddToFavorites" popup="true" text="_Add To Favorites"/>
+    <group id="AddToFavorites" class = "com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true" text="_Add To Favorites"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List"/>
     <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.RemoveFavoritesListAction" text="Remove Favorites List" description="REmove Favorites List"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send To Favorites"/>

@@ -26,7 +26,7 @@ public class SendToFavoritesGroup extends DefaultActionGroup{
     add(new SendToNewFavoritesListAction());
   }
 
-  private class SendToNewFavoritesListAction extends AnAction {
+  private static class SendToNewFavoritesListAction extends AnAction {
     public SendToNewFavoritesListAction() {
       super("Send To New Favorites List");
     }

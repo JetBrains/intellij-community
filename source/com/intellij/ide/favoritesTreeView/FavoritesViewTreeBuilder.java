@@ -29,13 +29,11 @@ import javax.swing.tree.DefaultTreeModel;
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
   private ModuleRootListener myModuleRootListener;
-  private Project myProject;
   private FileStatusListener myFileStatusListener;
   private MyCopyPasteListener myCopyPasteListener;
 
   public FavoritesViewTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, IndexComparator.INSTANCE);
-    myProject = project;
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
       protected DefaultMutableTreeNode getRootNode() {
         return myRootNode;

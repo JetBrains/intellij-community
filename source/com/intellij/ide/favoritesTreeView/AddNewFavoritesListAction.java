@@ -6,24 +6,15 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ArrayUtil;
 
 /**
  * User: anna
  * Date: Feb 24, 2005
  */
 public class AddNewFavoritesListAction extends AnAction{
-  public static LayeredIcon ourIcon = new LayeredIcon(2);
-  static {
-    ourIcon.setIcon(IconLoader.getIcon("/general/favorites.png"), 1);
-    ourIcon.setIcon(IconLoader.getIcon("/general/add.png"), 0, 2, 2);
-  }
-  public AddNewFavoritesListAction() {
-    super("Add New Favorites List", "Add New Favorites List", ourIcon);
-  }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
@@ -45,7 +36,8 @@ public class AddNewFavoritesListAction extends AnAction{
                       }
 
                                      public boolean canClose(String inputString) {
-                                       return inputString != null && inputString.trim().length() > 0;
+                                       final boolean alreadyContains = ArrayUtil.find(FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists(), inputString.trim()) == -1;
+                                       return inputString != null && inputString.trim().length() > 0 && alreadyContains;
                       }
                     });
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
