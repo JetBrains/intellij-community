@@ -124,8 +124,12 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
                 final String prefix = (String) iterator.next();
                 if(name.startsWith(prefix))
                 {
-                    startsWithQuestionWord = true;
-                    break;
+                    final char nextChar = name.charAt(prefix.length());
+                    if(Character.isUpperCase(nextChar) || nextChar == '_')
+                    {
+                        startsWithQuestionWord = true;
+                        break;
+                    }
                 }
             }
             if(!startsWithQuestionWord)
