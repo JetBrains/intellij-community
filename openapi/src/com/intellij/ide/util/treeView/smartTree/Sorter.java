@@ -31,7 +31,7 @@ public interface Sorter extends TreeAction {
     }
 
     public ActionPresentation getPresentation() {
-      return new ActionPresentationData("", "", IconLoader.getIcon("/objectBrowser/sorted.png"));
+      return new ActionPresentationData("Sort Alphabetically", "Sort Alphabetically", IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
     public String getName() {
