@@ -272,6 +272,59 @@ public class ControlFlowUtils {
         }
     }
 
+    public static boolean blockCompletesWithStatement(PsiCodeBlock body,
+                                                      PsiStatement statement){
+        PsiElement statementToCheck = statement;
+        while(true)
+        {
+            final PsiElement container =
+                    getContainingStatementOrBlock(statementToCheck);
+            if(container == null)
+            {
+                return false;
+            }
+            if(container instanceof PsiCodeBlock)
+            {
+                if(!statementIsLastInBlock((PsiCodeBlock) container, (PsiStatement)statementToCheck))
+                {
+                    return false;
+                }
+                if(container.equals(body))
+                {
+                    return true;
+                }
+            }
+            if(container instanceof PsiWhileStatement ||
+                    container instanceof PsiDoWhileStatement ||
+                    container instanceof PsiForeachStatement ||
+                    container instanceof PsiForStatement)
+            {
+                return false;
+            }
+            statementToCheck = container;
+        }
+    }
+
+    private static PsiElement getContainingStatementOrBlock(PsiElement statement){
+       return PsiTreeUtil.getParentOfType(statement, new Class[]{PsiStatement.class, PsiCodeBlock.class});
+    }
+
+    private static boolean statementIsLastInBlock(PsiCodeBlock block,
+                                           PsiStatement statement){
+        final PsiStatement[] statements = block.getStatements();
+        for(int i = statements.length - 1; i >= 0; i--){
+            final PsiStatement childStatement = statements[i];
+            if(statement.equals(childStatement)){
+                return true;
+            }
+            if(!(statement instanceof PsiEmptyStatement)){
+                return false;
+            }
+        }
+        return false;
+    }
+
+
     private static class ReturnFinder extends PsiRecursiveElementVisitor {
         private boolean m_found = false;
 

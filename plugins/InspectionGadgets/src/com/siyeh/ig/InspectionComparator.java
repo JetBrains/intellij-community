@@ -32,18 +32,25 @@ class InspectionComparator implements Comparator {
         String displayName2 = inspection2.getDisplayName();
         displayName1 = displayName1.toUpperCase();
         displayName2 = displayName2.toUpperCase();
-        displayName1 = stripLeadingNonCharacters(displayName1);
-        displayName2 = stripLeadingNonCharacters(displayName2);
+        displayName1 = stripQuotes(displayName1);
+        displayName2 = stripQuotes(displayName2);
+
         return displayName1.compareTo(displayName2);
     }
 
-    private static String stripLeadingNonCharacters(String str) {
-        for (int i = 0; i < str.length(); i++) {
+    private static String stripQuotes(String str) {
+        if(str.indexOf((int) '\'') <0 && str.indexOf((int) '"')<0)
+        {
+            return str;
+        }
+        final int length = str.length();
+        final StringBuffer buffer = new StringBuffer(length);
+        for (int i = 0; i < length; i++) {
             final char ch = str.charAt(i);
-            if (Character.isLetter(ch)) {
-                return str.substring(i);
+            if(ch != '"' && ch != '\''){
+                buffer.append(ch);
             }
         }
-        return str;
+        return buffer.toString();
     }
 }

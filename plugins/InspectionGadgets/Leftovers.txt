@@ -20,14 +20,11 @@
     Equals methods that do not check parameter type
     Call to simple getter or setter from within class
     Copyright comment
-    Tail recursion quickfix
     Make "Merge else-if" understand chained returning ifs
-    "Extract method" as quickfix to overly complex expression
     Flag on class without no-arg constructor
     Static inheritance fix
     Fixes for the assignment and return encapsulation inspections
     Static import fix
-    Fixes for call to super for JUnit setUp() and tearDown()
     Check IDs for all inspections
     Flag inspections with default on-off and default warning level
     Quick fix for "Constant StringBuffer may be String"
@@ -40,7 +37,6 @@
     QuickFix for "Integer division in floating point context"
     Quickfix for "Non-serializable class with..."
     Quickfix for "Unnecessary default"
-    JUnit test methods should not be marked "may be static"
 
 
     Inheritance as type def (change the EmptyClass inspection)

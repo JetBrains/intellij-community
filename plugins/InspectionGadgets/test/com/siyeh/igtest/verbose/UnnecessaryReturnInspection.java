@@ -21,4 +21,12 @@ public class UnnecessaryReturnInspection
         }
     }
 
+    public void barzoom()
+    {
+        while(true)
+        {
+            return;
+        }
+    }
+
 }

@@ -131,6 +131,12 @@ public class MethodMayBeStaticInspection extends MethodInspection {
                     !method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
+            final String methodName = method.getName();
+            if(methodName!=null && methodName.startsWith("test") &&
+                    ClassUtils.isSubclass(containingClass,
+                                          "junit.framework.TestCase")){
+                return;
+            }
             final PsiMethod[] superMethods = method.findSuperMethods();
             if (superMethods.length > 0) {
                 return;
