@@ -24,7 +24,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.font.FontRenderContext;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -431,11 +430,11 @@ public class WelcomeScreen {
                                                     new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 
-    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH);
+    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, 2);
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
-    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText("<html>" + name + "</html>");
+    if (shortenedName.endsWith("...</html>")) logoName.setToolTipText(adjustStringBreaksByWidth(name, TEXT_FONT, false, MAX_TOOLTIP_WIDTH, 0));
 
     gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                     new Insets(15, 7, 0, 0), 0, 0);
@@ -450,10 +449,10 @@ public class WelcomeScreen {
         }
       }
       description = description.replaceAll("\\n", "");
-      String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH);
+      String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, 2);
       JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
-      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText("<html>" + description + "</html>");
+      if (shortenedDcs.endsWith("...</html>")) pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, TEXT_FONT, false, MAX_TOOLTIP_WIDTH, 0));
 
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                    new Insets(5, 7, 0, 0), 5, 0);
@@ -508,13 +507,58 @@ public class WelcomeScreen {
    * so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
    * Returns the resulting or original string surrounded by html tags.
    * @param string not <code>null</code> {@link String String} value
+   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags
    * @param font not <code>null</code> {@link Font Font} object
    * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not
    * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels
-   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags
+   * @param maxRows
    */
-  private String adjustStringBreaksByWidth(String string, final Font font, final boolean isAntiAliased, final int maxWidth) {
+  private String adjustStringBreaksByWidth(String string,
+                                           final Font font,
+                                           final boolean isAntiAliased,
+                                           final int maxWidth,
+                                           final int maxRows) {
 
+    String modifiedString = string.trim();
+    Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
+
+    if (r.getWidth() > maxWidth) {
+
+      String prefix = "";
+      String suffix = string.trim();
+      int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
+      int lengthLeft = string.length();
+      int rows = maxRows;
+      if (rows == 0) {
+        rows = string.length() / maxIdxPerLine + 1;
+      }
+
+      while (lengthLeft > maxIdxPerLine && rows > 1) {
+        int i;
+        for (i = maxIdxPerLine; i > 0; i--) {
+          if (suffix.charAt(i) == ' ') {
+            prefix += suffix.substring(0, i) + "<br>";
+            suffix = suffix.substring(i + 1, suffix.length());
+            lengthLeft = suffix.length();
+            rows--;
+            break;
+          }
+        }
+        if (i == 0 && maxRows == 0) {
+          prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
+          suffix = suffix.substring(maxIdxPerLine, suffix.length());
+          lengthLeft = suffix.length();
+          rows--;
+        }
+        if (prefix.equals("")) break;
+      }
+      if (suffix.length() > maxIdxPerLine) {
+        suffix = suffix.substring(0, maxIdxPerLine - 2) + "...";
+      }
+      modifiedString = prefix + suffix;
+    }
+    return "<html>" + modifiedString + "</html>";
+/*
     String shortenedString = string;
     Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
 
@@ -541,7 +585,7 @@ public class WelcomeScreen {
         shortenedString = string.substring(0, maxIdxPerLine - 2) + "...";
       }
     }
-    return "<html>" + shortenedString + "</html>";
+    return "<html>" + shortenedString + "</html>";*/
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
