@@ -1265,7 +1265,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     PsiElementProcessorEx processor = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element.findReferenceAt(offsetInElement) == null) {
+        if (element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset() + offsetInElement) == null) {
           results.add(element);
         }
         return true;
