@@ -53,7 +53,6 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
   }
 
   public void update(AnActionEvent e) {
-    super.update(e);
     VcsContext dataContext = VcsContextWrapper.on(e);
     if (myChildren == null) {
       DefaultActionGroup vcsGroupsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
@@ -123,7 +122,11 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
         }
       }
       updateFromAction(composite, presentation);
+
+      if (currentVcses.size() == 0) e.getPresentation().setVisible(false);
     }
+
+    super.update(e);
   }
 
   private void updateFromAction(AnAction action, Presentation presentation) {
