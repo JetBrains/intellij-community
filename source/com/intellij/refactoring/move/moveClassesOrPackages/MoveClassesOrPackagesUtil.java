@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -260,11 +259,7 @@ public class MoveClassesOrPackagesUtil {
         }
         else {
           if (packageName.length() > 0) {
-            String text = "package " + packageName + ";";
-            String ext = StdFileTypes.JAVA.getDefaultExtension();
-            PsiJavaFile dummyFile = (PsiJavaFile)manager.getElementFactory().createFileFromText("_Dummy_." + ext, text);
-            packageStatement = dummyFile.getPackageStatement();
-            file.add(packageStatement);
+            file.add(manager.getElementFactory().createPackageStatement(packageName));
           }
         }
       }
