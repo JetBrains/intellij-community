@@ -1,7 +1,8 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 
@@ -104,7 +105,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate
         return true;
     }
 
-    public static boolean isReplaceableAssignment(final PsiIfStatement ifStatement) {
+    public static boolean isReplaceableAssignment(PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch == null)
         {

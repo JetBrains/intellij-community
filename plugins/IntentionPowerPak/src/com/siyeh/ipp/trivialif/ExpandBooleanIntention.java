@@ -5,13 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class ExpandBooleanIntention extends Intention {
-    public ExpandBooleanIntention(Project project) {
-        super(project);
-    }
 
     public String getText() {
         return "Expand boolean use to if-else";

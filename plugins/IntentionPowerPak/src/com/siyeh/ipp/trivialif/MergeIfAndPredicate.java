@@ -1,7 +1,7 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 
 class MergeIfAndPredicate implements PsiElementPredicate

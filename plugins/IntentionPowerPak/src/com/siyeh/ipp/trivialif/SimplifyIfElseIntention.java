@@ -5,13 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.BoolUtils;
 
 public class SimplifyIfElseIntention extends Intention {
-    public SimplifyIfElseIntention(Project project) {
-        super(project);
-    }
 
     public String getText() {
         return "Simplify if-else";

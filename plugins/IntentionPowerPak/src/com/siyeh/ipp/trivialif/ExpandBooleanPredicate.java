@@ -2,7 +2,8 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExpandBooleanPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {

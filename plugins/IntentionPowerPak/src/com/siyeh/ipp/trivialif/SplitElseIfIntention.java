@@ -4,15 +4,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class SplitElseIfIntention extends Intention
 {
-    public SplitElseIfIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {
@@ -33,12 +29,8 @@ public class SplitElseIfIntention extends Intention
     {
         final PsiJavaToken token = (PsiJavaToken) findMatchingElement(file, editor);
         final PsiIfStatement parentStatement = (PsiIfStatement) token.getParent();
-        final PsiStatement thenBranch = parentStatement.getThenBranch();
         final PsiStatement elseBranch = parentStatement.getElseBranch();
-        final PsiExpression condition = parentStatement.getCondition();
-
-        final String newStatement = "if(" + condition.getText() + ')' +thenBranch.getText() + "else{" + elseBranch.getText() + '}';
-
-        replaceStatement(project, newStatement, parentStatement);
+        final String newStatement = "{" + elseBranch.getText() + '}';
+        replaceStatement(project, newStatement, elseBranch);
     }
 }

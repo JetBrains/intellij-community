@@ -4,17 +4,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.Intention;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 public class MergeIfAndIntention extends Intention
 {
-    public MergeIfAndIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {
