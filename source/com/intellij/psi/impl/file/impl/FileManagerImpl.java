@@ -12,8 +12,10 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -218,6 +220,8 @@ public class FileManagerImpl implements FileManager {
   }
 
   public PsiFile findFile(VirtualFile vFile) {
+    if (((ProjectEx)myManager.getProject()).isDummy()) return null;
+
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (vFile == null) {
       LOG.assertTrue(false);
