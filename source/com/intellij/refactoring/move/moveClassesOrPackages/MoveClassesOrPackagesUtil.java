@@ -242,7 +242,7 @@ public class MoveClassesOrPackagesUtil {
 
     PsiClass newClass;
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
-      shortenSelfReferences(aClass);
+      correctSelfReferences(aClass, newDirectory.getPackage());
       final PsiClass created = newDirectory.createClass(aClass.getName());
       if (aClass.getDocComment() == null && created.getDocComment() != null) {
         aClass.addAfter(created.getDocComment(), null);
@@ -285,7 +285,7 @@ public class MoveClassesOrPackagesUtil {
     return aClass;
   }
 
-  private static void shortenSelfReferences(final PsiClass aClass) {
+  private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
     final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
     if (aPackage != null) {
       aClass.accept(new PsiRecursiveElementVisitor() {
@@ -294,7 +294,7 @@ public class MoveClassesOrPackagesUtil {
             final PsiElement qualifier = reference.getQualifier();
             if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {
               try {
-                qualifier.delete();
+                ((PsiJavaCodeReferenceElement)qualifier).bindToElement(newContainingPackage);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
