@@ -66,7 +66,7 @@ public class WelcomeScreen {
   private static final String DEVELOP_SLOGAN = "/general/developSlogan.png";
   private static final String NEW_PROJECT_ICON = "/general/createNewProject.png";
   private static final String REOPEN_RECENT_ICON = "/general/reopenRecentProject.png";
-  private static final String FROM_VCS_ICON = "/general/getProjectFromVCS.png";
+  private static final String FROM_VCS_ICON = "/general/getProjectfromVCS.png";
   private static final String READ_HELP_ICON = "/general/readHelp.png";
   private static final String KEYMAP_ICON = "/general/defaultKeymap.png";
   private static final String KEYMAP_URL = PathManager.getHomePath() + File.separator + "help" + File.separator + "4.5_ReferenceCard.pdf";
