@@ -59,7 +59,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return "Fetch External Resource";
   }
 
-  private String findUri(PsiFile file, int offset) {
+  static String findUri(PsiFile file, int offset) {
     final PsiElement currentElement = file.findElementAt(offset);
     PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
     if (element != null) {

@@ -583,6 +583,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     String location = attribute.getValue();
 
     if (attribute.getLocalName().equals("noNamespaceSchemaLocation")) {
+      if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(location)) return;
+
       if(XmlUtil.findXmlFile(attribute.getContainingFile(),location) == null) {
         final int start = attribute.getValueElement().getTextOffset();
         reportURIProblem(start,start + location.length());
@@ -592,11 +594,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       XmlFile file = null;
 
       while(tokenizer.hasMoreElements()) {
-        String namespace = tokenizer.nextToken(); // skip namespace
+        tokenizer.nextToken(); // skip namespace
         if (!tokenizer.hasMoreElements()) return;
         String url = tokenizer.nextToken();
 
-        if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(namespace)) continue;
+        if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(url)) continue;
         if (file == null) {
           file = (XmlFile)attribute.getContainingFile();
         }
