@@ -566,6 +566,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(BusyWaitInspection.class);
         inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
         inspectionClasses.add(ObjectNotifyInspection.class);
+        inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
         inspectionClasses.add(NakedNotifyInspection.class);
         inspectionClasses.add(UnconditionalWaitInspection.class);
         inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
@@ -653,6 +654,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerPerformanceInspections(){
         final List inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ObjectAllocationInLoopInspection.class);
+        inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
         inspectionClasses.add(UnnecessaryTemporaryOnConversionToStringInspection.class);
         inspectionClasses.add(UnnecessaryTemporaryOnConversionFromStringInspection.class);
         inspectionClasses.add(FieldMayBeStaticInspection.class);

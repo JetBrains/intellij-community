@@ -17,11 +17,17 @@
     Duplicate condition
     Boolean method name must begin with
     Non-Boolean method name cannot begin with
+    Empty zip file entry
+    Empty jar file entry
+    Method parameter dead but overwritten
+    Iterator.next() which won't throw NoSuchElementException
+    getClass().getResource()
+    Using nextDouble rather than nextInt() to create random integer
+    Inefficient use of keySet iterator rather than entrySet iterator
     Equals methods that do not check parameter type
     Call to simple getter or setter from within class
     Copyright comment
     Make "Merge else-if" understand chained returning ifs
-    Flag on class without no-arg constructor
     Static inheritance fix
     Fixes for the assignment and return encapsulation inspections
     Static import fix
@@ -35,10 +41,7 @@
     Split "Portability Issues" into "Portability Issues" and "JDK issues"
     QuickFix for "Confusing else Branch"
     QuickFix for "Integer division in floating point context"
-    Quickfix for "Unnecessary default"
     More detectors and quickfixes for "Simplifiable JUnit Assertion"
-
-
     Inheritance as type def (change the EmptyClass inspection)
     changing multiply/divide to shift may change precedence!
     Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
