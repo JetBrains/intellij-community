@@ -169,12 +169,18 @@ public class ExtensionPointImpl implements ExtensionPoint {
 
   public void unregisterExtension(final Object extension) {
     assert (extension != null) : "Extension cannot be null";
+    if (!myExtensions.contains(extension)) {
+      throw new IllegalArgumentException("Extension to be removed not found: " + extension);
+    }
 
-    myOwner.getMutablePicoContainer().unregisterComponentByInstance(extension);
+    final int index = myExtensions.indexOf(extension);
+    final ExtensionComponentAdapter adapter = (ExtensionComponentAdapter)myLoadedAdapters.get(index);
+
+    myOwner.getMutablePicoContainer().unregisterComponent(adapter.getComponentKey());
     final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
     for (int i = 0; i < pluginContainers.length; i++) {
       MutablePicoContainer pluginContainer = pluginContainers[i];
-      pluginContainer.unregisterComponentByInstance(extension);
+      pluginContainer.unregisterComponent(adapter.getComponentKey());
     }
 
     processAdapters();

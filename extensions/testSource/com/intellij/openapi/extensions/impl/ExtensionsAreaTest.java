@@ -67,7 +67,10 @@ public class ExtensionsAreaTest extends TestCase {
       public void verify(PicoContainer container) throws PicoIntrospectionException {
       }
     });
+    final TestClass extension = new TestClass();
+    myExtensionsArea.getExtensionPoint("test.ep").registerExtension(extension);
     myExtensionsArea.unregisterExtension("test", element);
+    myExtensionsArea.getExtensionPoint("test.ep").unregisterExtension(extension);
   }
 
   public static class TestClass {
