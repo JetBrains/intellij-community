@@ -1,9 +1,5 @@
-package com.intellij.cvsSupport2.actions;
+package com.intellij.openapi.vcs.actions;
 
-import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +9,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.peer.PeerFactory;
 
 import java.util.Collection;
 
@@ -22,27 +22,29 @@ import java.util.Collection;
  * author: lesya
  */
 public class AnnotateToggleAction extends ToggleAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AnnotateToggleAction");
-
-  private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 
   public AnnotateToggleAction() {
-    myVisibility.shouldNotBePerformedOnDirectory();
-    myVisibility.addCondition(ActionOnSelectedElement.FILES_EXIST_IN_CVS);
-    myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_NOT_DELETED);
-    myVisibility.addCondition(new CvsActionVisibility.Condition() {
-      public boolean isPerformedOn(CvsContext context) {
-        if (context.getEditor() != null) return true;
-        VirtualFile selectedFile = context.getSelectedFile();
-        if (selectedFile == null) return false;
-        return hasTextEditor(selectedFile);
-      }
-    });
   }
 
   public void update(AnActionEvent e) {
-    myVisibility.applyToEvent(e);
+    e.getPresentation().setEnabled(isEnabled(PeerFactory.getInstance().getVcsContextFactory().createOn(e)));
+  }
+
+  private boolean isEnabled(final VcsContext context) {
+    VirtualFile[] selectedFiles = context.getSelectedFiles();
+    if (selectedFiles == null) return false;
+    if (selectedFiles.length == 0) return false;
+    VirtualFile file = selectedFiles[0];
+    Project project = context.getProject();
+    if (project == null) return false;
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    if (vcs == null) return false;
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    if (annotationProvider == null) return false;
+    return hasTextEditor(file);
+
   }
 
   private boolean hasTextEditor(VirtualFile selectedFile) {
@@ -53,7 +55,7 @@ public class AnnotateToggleAction extends ToggleAction {
 
 
   public boolean isSelected(AnActionEvent e) {
-    VcsContext context = CvsContextWrapper.on(e);
+    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createOn(e);
     Editor editor = context.getEditor();
     if (editor == null) return false;
     Object annotations = editor.getUserData(AnnotateAction.KEY_IN_EDITOR);
@@ -62,7 +64,7 @@ public class AnnotateToggleAction extends ToggleAction {
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsContext context = CvsContextWrapper.on(e);
+    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createOn(e);
     Editor editor = context.getEditor();
     if (!state) {
       if (editor == null) {
@@ -78,7 +80,7 @@ public class AnnotateToggleAction extends ToggleAction {
         FileEditor[] fileEditors = FileEditorManager.getInstance(context.getProject()).openFile(selectedFile, false);
         for (int i = 0; i < fileEditors.length; i++) {
           FileEditor fileEditor = fileEditors[i];
-          if (fileEditor instanceof TextEditor){
+          if (fileEditor instanceof TextEditor) {
             editor = ((TextEditor)fileEditor).getEditor();
           }
         }

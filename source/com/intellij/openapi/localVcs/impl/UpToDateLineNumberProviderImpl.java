@@ -34,6 +34,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
 
   private static int calcLineNumber(LineStatusTracker tracker, int currentNumber){
+    if (tracker == null) return -1;
     List ranges = tracker.getRanges();
     int result = currentNumber;
 

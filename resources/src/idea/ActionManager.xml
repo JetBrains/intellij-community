@@ -147,6 +147,7 @@
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction" text="Check In"/>
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction" text="Update"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction" text="Check Status"/>
+    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction" text="A_nnotate" description="Show information about last modification date and author for each line"/>    
 
     <group id="NewGroup" text="New" popup="true">
       <action id="NewClass" text="Class" class="com.intellij.ide.actions.CreateClassAction"/>

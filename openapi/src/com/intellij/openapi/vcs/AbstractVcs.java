@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 
 public abstract class AbstractVcs {
 
@@ -128,6 +129,10 @@ public abstract class AbstractVcs {
   }
 
   public UpdateEnvironment getStatusEnvironment() {
+    return null;
+  }
+
+  public AnnotationProvider getAnnotationProvider(){
     return null;
   }
 }

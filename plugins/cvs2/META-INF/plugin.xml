@@ -108,7 +108,7 @@
 
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
-      <action id="Cvs.Annotate" class="com.intellij.cvsSupport2.actions.AnnotateToggleAction" text="A_nnotate" description="Show information about last modification date and author for each line"/>
+      <reference id="Annotate"/>
 
       <separator/>
       <action id="Cvs.CreateBranch" class="com.intellij.cvsSupport2.actions.BranchAction" text="Create _Branch..." description="Create branch in CVS repository for file/directory"/>

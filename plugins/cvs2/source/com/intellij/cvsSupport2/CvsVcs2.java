@@ -5,7 +5,6 @@ import com.intellij.cvsSupport2.actions.EditAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
-import com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -15,10 +14,12 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
+import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -49,6 +50,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
   private final CvsStatusEnvironment myCvsStatusEnvironment;
   private final CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
+  private final CvsAnnotationProvider myCvsAnnotationProvider;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
@@ -62,6 +64,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     myConfigurable = new Cvs2Configurable(getProject());
     myStorageComponent = cvsStorageComponent;
     myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
+    myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
   }
 
   /* ======================================= ProjectComponent */
@@ -239,6 +242,10 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   public UpdateEnvironment getStatusEnvironment() {
     return myCvsStatusEnvironment;
+  }
+
+  public AnnotationProvider getAnnotationProvider() {
+    return myCvsAnnotationProvider;
   }
 }
 
