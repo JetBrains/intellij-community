@@ -7,7 +7,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.LibraryUtil;
 
 public class ParametersPerMethodInspection extends MethodMetricInspection {
 
@@ -45,7 +44,17 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
 
         public void visitMethod(PsiMethod method) {
             // note: no call to super
-            if (method.getParameterList().getParameters().length <= getLimit()) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if(parameterList == null)
+            {
+                return;
+            }
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if(parameters== null)
+            {
+                return;
+            }
+            if (parameters.length <= getLimit()) {
                 return;
             }
 

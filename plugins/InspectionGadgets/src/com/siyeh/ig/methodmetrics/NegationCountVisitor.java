@@ -22,7 +22,7 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
         if (sign == null) {
             return;
         }
-        if (sign.getTokenType() == JavaTokenType.NE) {
+        if (!(sign.getTokenType() != JavaTokenType.NE)) {
             m_count++;
         }
     }
@@ -37,7 +37,7 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
         if (sign == null) {
             return;
         }
-        if (sign.getTokenType() == JavaTokenType.EXCL) {
+        if (sign.getTokenType().equals(JavaTokenType.EXCL)) {
             m_count++;
         }
     }
