@@ -88,7 +88,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       if (!showReadAccess) {
         myShowWriteAccess = true;
       }
-      flushStateToGlobalSettongs();
+      flushStateToGlobalSettings();
     }
 
     public boolean isShowWriteAccess() {
@@ -100,10 +100,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       if (!showWriteAccess) {
         myShowReadAccess = true;
       }
-      flushStateToGlobalSettongs();
+      flushStateToGlobalSettings();
     }
 
-    private void flushStateToGlobalSettongs() {
+    private void flushStateToGlobalSettings() {
       SHOW_READ_ACCESS = myShowReadAccess;
       SHOW_WRITE_ACCESS = myShowWriteAccess;
     }
