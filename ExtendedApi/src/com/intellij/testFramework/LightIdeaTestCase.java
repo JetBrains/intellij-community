@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -85,6 +86,10 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private void initApplication() throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
+    if (Extensions.getAllAreas().length < 2) {
+      Extensions.registerAreaClass("PROJECT", null);
+      Extensions.registerAreaClass("MODULE", "PROJECT");
+    }
     cleanupApplicationCaches();
   }
 

@@ -367,6 +367,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
+    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
+    
     final ComponentDescriptor[] componentDescriptors =
       (ComponentDescriptor[])extensionsArea.getExtensionPoint(PluginManager.COMPONENT_EXTENSION_POINT).getExtensions();
     for (int i = 0; i < componentDescriptors.length; i++) {

@@ -6,8 +6,8 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -19,8 +19,8 @@ import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -84,7 +84,10 @@ public class PluginManager {
   }
 
   private static void initializePlugins() {
-    if (!shouldLoadPlugins()) return;
+    if (!shouldLoadPlugins()) {
+      ourPlugins = new PluginDescriptor[0];
+      return;
+    }
 
     configureExtensions();
 

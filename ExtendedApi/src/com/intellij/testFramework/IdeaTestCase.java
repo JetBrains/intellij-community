@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -86,6 +87,10 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   protected void initApplication() throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
+    if (Extensions.getAllAreas().length < 2) {
+      Extensions.registerAreaClass("PROJECT", null);
+      Extensions.registerAreaClass("MODULE", "PROJECT");
+    }
   }
 
   protected void setUp() throws Exception {
