@@ -9,7 +9,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
@@ -88,9 +87,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     final CompositeElement parent = getTreeParent();
     if (parent == null) return 0;
     int offset = parent.getStartOffset();
-    final CharTable table = SharedImplUtil.findCharTableByTree(this);
     for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
-      offset += element1.getTextLength(table);
+      offset += element1.getTextLength();
     }
     return offset;
   }
@@ -164,8 +162,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public abstract void setTreeParent(CompositeElement parent);
-
-  public abstract int getTextLength(CharTable charTableByTree);
 
   public void clearCaches() { }
 

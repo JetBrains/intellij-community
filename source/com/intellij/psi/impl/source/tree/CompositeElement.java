@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharTable;
 
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -110,17 +109,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
     this.parent = parent;
   }
 
-  public int getTextLength(CharTable charTableByTree) {
-    return myCachedLength > 0 ? myCachedLength : getLengthInner(charTableByTree);
-  }
-
   public LeafElement findLeafElementAt(int offset) {
-
     synchronized (PsiLock.LOCK) {
-      final CharTable table = SharedImplUtil.findCharTableByTree(this);
       TreeElement child = firstChild;
       while (child != null) {
-        final int textLength = child.getTextLength(table);
+        final int textLength = child.getTextLength();
         if (textLength > offset) {
           if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
             child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
@@ -289,10 +282,10 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public int getTextLength() {
     if (myCachedLength < 0) {
-      myCachedLength = getLengthInner(SharedImplUtil.findCharTableByTree(this));
+      myCachedLength = getLengthInner();
     }
     if (DebugUtil.CHECK) {
-      int trueLength = getLengthInner(SharedImplUtil.findCharTableByTree(this));
+      int trueLength = getLengthInner();
       if (myCachedLength != trueLength) {
         LOG.error("myCachedLength != trueLength");
         myCachedLength = trueLength;
@@ -305,11 +298,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return myCachedLength;
   }
 
-  protected int getLengthInner(CharTable charTableByTree) {
+  protected int getLengthInner() {
     synchronized (PsiLock.LOCK) {
       int length = 0;
       for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
-        length += child.getTextLength(charTableByTree);
+        length += child.getTextLength();
       }
       return length;
     }

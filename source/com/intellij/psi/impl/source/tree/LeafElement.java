@@ -17,10 +17,6 @@ public abstract class LeafElement extends TreeElement {
 
   public abstract int copyTo(char[] buffer, int start);
 
-  public int getTextLength(CharTable table) {
-    return getTextLength();
-  }
-
   protected LeafElement(IElementType type) {
     myState = myState | type.getIndex();
   }
