@@ -1,11 +1,16 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
+import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.Bottom;
 import com.intellij.refactoring.typeCook.Util;
+import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
 import java.util.HashMap;
@@ -19,16 +24,22 @@ import java.util.Iterator;
  * To change this template use File | Settings | File Templates.
  */
 public class Result {
-  final HashSet<PsiElement> myVictims;
-  final HashMap<PsiElement, PsiType> myTypes;
-  final Project myProject;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Result");
 
-  Binding myBinding;
+  private final HashSet<PsiElement> myVictims;
+  private final HashMap<PsiElement, PsiType> myTypes;
+  private final Project myProject;
+  private final Settings mySettings;
+  private final PsiTypeVariableFactory myFactory;
+
+  private Binding myBinding;
 
   public Result(final System system) {
     myVictims = system.myElements;
     myTypes = system.myTypes;
     myProject = system.myProject;
+    mySettings = system.mySettings;
+    myFactory = system.getVariableFactory();
   }
 
   final private PsiType substitute(final PsiType t) {
@@ -45,6 +56,10 @@ public class Result {
       return wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
     }
     else if (t instanceof PsiTypeVariable) {
+      if (myBinding == null) {
+        return null;
+      }
+
       final PsiType b = myBinding.apply(t);
 
       if (b instanceof Bottom || b instanceof PsiTypeVariable) {
@@ -90,7 +105,7 @@ public class Result {
       myBinding = binding;
     }
     else {
-      myBinding.merge(binding);
+      myBinding.merge(binding, mySettings.leaveObjectParameterizedTypesRaw());
     }
   }
 
@@ -110,7 +125,8 @@ public class Result {
         ? ((PsiVariable)element).getType()
         : ((PsiExpression)element).getType();
 
-      if (!originalType.equals(getCookedType(element))){
+      final PsiType cookedType = getCookedType(element);
+      if (cookedType != null && !originalType.equals(cookedType)) {
         set.add(element);
       }
     }
@@ -119,10 +135,23 @@ public class Result {
   }
 
   public void apply(final HashSet<PsiElement> victims) {
-    for (final Iterator<PsiElement> e=victims.iterator(); e.hasNext();){
+    for (final Iterator<PsiElement> e = victims.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
 
       Util.changeType(element, getCookedType(element));
+
+      if (mySettings.dropObsoleteCasts() && element instanceof PsiTypeCastExpression){
+        final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
+
+        if (cast.getType().equals(cast.getOperand().getType())){
+          try {
+            cast.replace(cast.getOperand());
+          }
+          catch (IncorrectOperationException e1) {
+            LOG.error (e1);
+          }
+        }
+      }
     }
   }
 }

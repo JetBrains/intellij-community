@@ -1,2 +1,2 @@
-List\nPsiField:x
-List\nnew
+List<java.lang.String>\nPsiField:x
+List<java.lang.String>\nnew

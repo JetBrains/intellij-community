@@ -33,7 +33,7 @@ public abstract class Binding {
 
   public abstract boolean binds(final PsiTypeVariable var);
 
-  public abstract void merge (Binding b);
+  public abstract void merge (Binding b, boolean removeObject);
 
   public abstract HashSet<PsiTypeVariable> getBoundVariables ();
 }

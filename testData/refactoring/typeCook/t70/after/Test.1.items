@@ -1,2 +1,2 @@
-List\nPsiLocalVariable:x
-List\nnew
+List<java.lang.String,java.lang.String>\nPsiLocalVariable:x
+List<java.lang.String,java.lang.String>\nnew

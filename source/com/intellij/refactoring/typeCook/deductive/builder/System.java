@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.TypeNode;
 import com.intellij.refactoring.typeCook.Bottom;
+import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -26,18 +27,21 @@ public class System {
   final HashMap<PsiElement, PsiType> myTypes;
   final PsiTypeVariableFactory myTypeVariableFactory;
   final Project myProject;
+  final Settings mySettings;
 
   HashSet<PsiTypeVariable> myBoundVariables;
 
   public System(final Project project,
                 final HashSet<PsiElement> elements,
                 final HashMap<PsiElement, PsiType> types,
-                final PsiTypeVariableFactory factory) {
+                final PsiTypeVariableFactory factory,
+                final Settings settings) {
     myProject = project;
     myElements = elements;
     myTypes = types;
     myTypeVariableFactory = factory;
     myBoundVariables = null;
+    mySettings = settings;
   }
 
   public Project getProject() {
@@ -286,7 +290,7 @@ public class System {
       final int index = node.myComponent;
 
       if (systems[index] == null) {
-        systems[index] = new System(myProject, myElements, myTypes, myTypeVariableFactory);
+        systems[index] = new System(myProject, myElements, myTypes, myTypeVariableFactory, mySettings);
       }
 
       systems[index].addConstraint(constraint, boundVariables.get(constraint));

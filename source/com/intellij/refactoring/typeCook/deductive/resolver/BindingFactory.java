@@ -79,11 +79,11 @@ public class BindingFactory {
 
       myBindings[index] = type;
 
-      if (type instanceof Bottom){
+      if (type instanceof Bottom) {
         final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
 
-        if (cluster != null){
-          for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
+        if (cluster != null) {
+          for (final Iterator<PsiTypeVariable> v = cluster.iterator(); v.hasNext();) {
             myBindings[v.next().getIndex()] = type;
           }
         }
@@ -412,55 +412,92 @@ public class BindingFactory {
     }
 
     public Binding reduceRecursive() {
-      BindingImpl binding = this;
+      final BindingImpl binding = (BindingImpl)create();
 
-      for (int i = 0; i < binding.myBindings.length; i++) {
-        final PsiType type = binding.myBindings[i];
+      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
+        final PsiTypeVariable var = v.next();
+        final int index = var.getIndex();
+        final PsiType type = myBindings[index];
 
-        if (type == null) {
-        continue;
-        }
+        if (type != null) {
+          class Verifier extends PsiExtendedTypeVisitor {
+            boolean myFlag = false;
 
-        final int index = i;
+            public Object visitTypeVariable(final PsiTypeVariable var) {
+              if (var.getIndex() == index) {
+                myFlag = true;
+              }
 
-        class Verifier extends PsiExtendedTypeVisitor {
-          boolean flag = false;
-
-          public Object visitTypeVariable(final PsiTypeVariable var) {
-            if (var.getIndex() == index) {
-              flag = true;
+              return null;
             }
+          }
 
-            return null;
+          final Verifier verifier = new Verifier();
+
+          type.accept(verifier);
+
+          if (verifier.myFlag) {
+            myBindings[index] = Bottom.BOTTOM;
+            binding.myBindings[index] = Bottom.BOTTOM;
+          }
+          else {
+            binding.myBindings[index] = type;
           }
         }
-
-        final Verifier verifier = new Verifier();
-
-        type.accept(verifier);
-
-        if (verifier.flag) {
-          binding = (BindingImpl)binding.compose(create(index, Bottom.BOTTOM));
+        else {
+          binding.myBindings[index] = type;
         }
       }
 
-      return binding;
+      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
+        final PsiTypeVariable var = v.next();
+        final int index = var.getIndex();
+        final PsiType type = myBindings[index];
+
+        if (type != null) {
+          myBindings[index] = binding.apply(type);
+        }
+      }
+
+      return this;
     }
 
     public boolean binds(final PsiTypeVariable var) {
       return myBindings[var.getIndex()] != null;
     }
 
-    public void merge(Binding b) {
-      for (final Iterator<PsiTypeVariable> v=b.getBoundVariables().iterator(); v.hasNext();){
+    public void merge(final Binding b, final boolean removeObject) {
+      for (final Iterator<PsiTypeVariable> v = b.getBoundVariables().iterator(); v.hasNext();) {
         final PsiTypeVariable var = v.next();
         final int index = var.getIndex();
 
-        if (myBindings[index] != null){
-          LOG.error ("Oops... Binding conflict...");
+        if (myBindings[index] != null) {
+          LOG.error("Oops... Binding conflict...");
         }
         else {
-          myBindings[index] = b.apply(var);
+          final PsiType type = b.apply(var);
+          final PsiClassType javaLangObject =
+          PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+
+          if (removeObject &&
+              javaLangObject.equals(type)) {
+            final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(var.getIndex());
+
+            if (cluster != null) {
+              for (final Iterator<PsiTypeVariable> w = cluster.iterator(); w.hasNext();) {
+                final PsiTypeVariable war = (PsiTypeVariable)w.next();
+                final PsiType wtype = b.apply(war);
+
+                if (!javaLangObject.equals(wtype)) {
+                  myBindings[index] = type;
+                break;
+                }
+              }
+            }
+          }
+          else {
+            myBindings[index] = type;
+          }
         }
       }
     }
@@ -568,118 +605,107 @@ public class BindingFactory {
 
     switch (indicator) {
     case 0:
-         if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
-           return unifier.unify(x, y);
-         }
-         else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
-           final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
-           final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
+           if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
+             return unifier.unify(x, y);
+           }
+           else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
+             final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
+             final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
 
-           return unify(xType, yType, unifier);
-         }
-         else if (x instanceof PsiClassType && y instanceof PsiClassType) {
-           final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
-           final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
+             return unify(xType, yType, unifier);
+           }
+           else if (x instanceof PsiClassType && y instanceof PsiClassType) {
+             final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
+             final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
 
-           final PsiClass xClass = resultX.getElement();
-           final PsiClass yClass = resultY.getElement();
+             final PsiClass xClass = resultX.getElement();
+             final PsiClass yClass = resultY.getElement();
 
-           if (xClass != null && yClass != null) {
-             final PsiSubstitutor ySubst = resultY.getSubstitutor();
+             if (xClass != null && yClass != null) {
+               final PsiSubstitutor ySubst = resultY.getSubstitutor();
 
-             PsiSubstitutor xSubst = resultX.getSubstitutor();
+               PsiSubstitutor xSubst = resultX.getSubstitutor();
 
-             if (!xClass.equals(yClass)) {
-               return null;
-             }
-
-             Binding b = create();
-
-             for (Iterator<PsiTypeParameter> p = xSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-               final PsiTypeParameter aParm = p.next();
-               final PsiType xType = xSubst.substitute(aParm);
-               final PsiType yType = ySubst.substitute(aParm);
-
-               final Binding b1 = unify(xType, yType, unifier);
-
-               if (b1 == null) {
+               if (!xClass.equals(yClass)) {
                  return null;
                }
 
-               b = b.compose(b1);
+               Binding b = create();
+
+               for (Iterator<PsiTypeParameter> p = xSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+                 final PsiTypeParameter aParm = p.next();
+                 final PsiType xType = xSubst.substitute(aParm);
+                 final PsiType yType = ySubst.substitute(aParm);
+
+                 final Binding b1 = unify(xType, yType, unifier);
+
+                 if (b1 == null) {
+                   return null;
+                 }
+
+                 b = b.compose(b1);
+               }
+
+               return b;
              }
-
-             return b;
            }
-         }
-         else if (y instanceof Bottom) {
-           return create();
-         }
-         else {
-           return null;
-         }
-
-    case 1:
-         return create((PsiTypeVariable)x, y);
-
-    case 2:
-         return create((PsiTypeVariable)y, x);
-
-    case 3:
-         {
-           final PsiTypeVariable xVar = ((PsiTypeVariable)x);
-           final PsiTypeVariable yVar = ((PsiTypeVariable)y);
-
-           if (xVar.getIndex() == yVar.getIndex()) {
+           else if (y instanceof Bottom) {
              return create();
            }
+           else {
+             return null;
+           }
 
-           return xVar.getIndex() < yVar.getIndex() ? create(xVar, y) : create(yVar, x);
-         }
+    default:
+           return unifier.unify(x, y);
     }
-
-    return null;
   }
 
   public Binding rise(final PsiType x, final PsiType y) {
+    final Binding binding = balance(x, y, new Balancer() {
+                                      public Binding varType(PsiTypeVariable x, PsiType y) {
+                                        if (y instanceof Bottom) {
+                                          return create();
+                                        }
+
+                                        return create(x, y);
+                                      }
+
+                                      public Binding varVar(PsiTypeVariable x, PsiTypeVariable y) {
+                                        final int xi = x.getIndex();
+                                        final int yi = y.getIndex();
+
+                                        if (xi < yi) {
+                                          return create(((PsiTypeVariable)x), y);
+                                        }
+                                        else if (yi < xi) {
+                                          return create(((PsiTypeVariable)y), x);
+                                        }
+                                        else {
+                                          return create();
+                                        }
+                                      }
+
+                                      public Binding typeVar(PsiType x, PsiTypeVariable y) {
+                                        return create(y, x);
+                                      }
+                                    });
+
+    return binding != null ? binding.reduceRecursive() : null;
+  }
+
+  public Binding sink(final PsiType x, final PsiType y) {
     return balance(x, y, new Balancer() {
                      public Binding varType(PsiTypeVariable x, PsiType y) {
                        return create(x, y);
                      }
 
                      public Binding varVar(PsiTypeVariable x, PsiTypeVariable y) {
-                       final int xi = x.getIndex();
-                       final int yi = y.getIndex();
-
-                       if (xi < yi) {
-                         return create(((PsiTypeVariable)x), y);
-                       }
-                       else if (yi < xi) {
-                         return create(((PsiTypeVariable)y), x);
-                       }
-                       else {
-                         return create();
-                       }
-                     }
-
-                     public Binding typeVar(PsiType x, PsiTypeVariable y) {
-                       return create(y, x);
-                     }
-                   });
-  }
-
-  public Binding sink(final PsiType x, final PsiType y) {
-    return balance(x, y, new Balancer() {
-                     public Binding varType(PsiTypeVariable x, PsiType y) {
-                       return create(x, Bottom.BOTTOM);
-                     }
-
-                     public Binding varVar(PsiTypeVariable x, PsiTypeVariable y) {
                        return create(x, Bottom.BOTTOM);
                      }
 
                      public Binding typeVar(PsiType x, PsiTypeVariable y) {
-                       return create(y, x);
+                       return create(y, Bottom.BOTTOM);
                      }
                    });
   }

@@ -471,60 +471,45 @@ public class SystemBuilder {
 
                 system.addSubtypeConstraint(argumenType, theType);
               }
+            }
 
-              //new Object() {
-              //  private void update(final PsiTypeParameter p, final PsiType t) {
-              //    final PsiType binding = mapping.get(p);
-              //
-              //    if (binding == null) {
-              //      mapping.put(p, t);
-              //    }
-              //    else if (t != null) {
-              //      mapping.put(p, new PsiTypeIntersection(binding, t));
-              //    }
-              //  }
+            final PsiType rawType = expr.getType();
 
-              //  void bindTypeParameters(final PsiType formal, PsiType actual) {
-              //    final PsiClassType.ClassResolveResult resultF = Util.resolveType(formal);
-              //    final PsiClass classF = resultF.getElement();
-              //
-              //    if (actual instanceof PsiArrayType){
-              //      actual = ((PsiArrayType)actual).getDeepComponentType();
-              //    }
-              //
-              //    if (classF != null) {
-              //      if (classF instanceof PsiTypeParameter) {
-              //        update((PsiTypeParameter)classF, actual);
-              //        return;
-              //      }
-              //
-              //      final PsiClassType.ClassResolveResult resultA = Util.resolveType(actual);
-              //
-              //      if (resultA.getElement() == null) {
-              //        return;
-              //      }
-              //
-              //      final PsiClass classA = resultA.getElement();
-              //
-              //      if (!classA.equals(classF)) {
-              //        final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(classF, classA,
-              //                                                                                                 PsiSubstitutor.EMPTY);
-              //        final PsiType aligned = classF.getManager().getElementFactory().createType(classF, superClassSubstitutor);
-              //
-              //        bindTypeParameters(formal, Util.substituteType(aligned, resultA.getSubstitutor()));
-              //      }
-              //
-              //      final PsiTypeParameter[] typeParms = Util.getTypeParametersList(classA);
-              //      final PsiSubstitutor substA = resultA.getSubstitutor();
-              //      final PsiSubstitutor substF = resultF.getSubstitutor();
-              //
-              //      for (int i = 0; i < typeParms.length; i++) {
-              //        PsiTypeParameter typeParm = typeParms[i];
-              //        bindTypeParameters(substF.substitute(typeParm), substA.substitute(typeParm));
-              //      }
-              //    }
-              //  }
-              //}.bindTypeParameters(parmType, evaluateType(actualParms[i]));
+            if (rawType != null) {
+              new Object() {
+                void traversePair(final PsiType aType, final PsiType rawType) {
+                  final PsiClassType.ClassResolveResult aResult = Util.resolveType(aType);
+                  final PsiClassType.ClassResolveResult rawResult = Util.resolveType(rawType);
+
+                  final PsiClass aClass = aResult.getElement();
+                  final PsiClass rawClass = rawResult.getElement();
+
+                  if (rawClass != null && aClass != null) {
+                    if (typeParameters.contains(aClass)) {
+                      final PsiTypeParameter parm = (PsiTypeParameter)aClass;
+
+                      if (mapping.get(parm) == null) {
+                        mapping.put(parm, rawType);
+                      }
+                      return;
+                    }
+
+                    final PsiSubstitutor rawSubst = rawResult.getSubstitutor();
+                    final PsiSubstitutor aSubat = aResult.getSubstitutor();
+
+                    for (final Iterator<PsiTypeParameter> p = rawSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+                      final PsiTypeParameter parm = p.next();
+
+                      final PsiType a = aSubat.substitute(parm);
+                      final PsiType raw = rawSubst.substitute(parm);
+
+                      if (a != null && raw != null) {
+                        traversePair(a, raw);
+                      }
+                    }
+                  }
+                }
+              }.traversePair(aType, rawType);
             }
 
             PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
@@ -587,7 +572,7 @@ public class SystemBuilder {
 
                 PsiType aType = fieldType;
 
-                if (!aClass.equals(superClass)) {
+                if (!aClass.equals(superClass) && field.isPhysical()) {
                   aType =
                   Util.substituteType(aType, TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY));
                 }
@@ -848,14 +833,14 @@ public class SystemBuilder {
     }
   }
 
-  public System build (final PsiElement[] scopes) {
+  public System build(final PsiElement[] scopes) {
     return build(collect(scopes));
   }
 
   public System build(final HashSet<PsiElement> victims) {
     final PsiSearchHelper helper = myManager.getSearchHelper();
 
-    System system = new System(myProject, victims, myTypes, myTypeVariableFactory);
+    System system = new System(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 
     for (Iterator<PsiElement> i = victims.iterator(); i.hasNext();) {
       final PsiElement element = i.next();
