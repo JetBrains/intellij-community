@@ -188,14 +188,14 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void storeState() {
     myStructureViewState = new StructureViewState();
-    myStructureViewState.setExpandedElements(getExpandedPsiElements());
-    myStructureViewState.setSelectedElements(getSelectedPsiElements());
+    myStructureViewState.setExpandedElements(getExpandedElements());
+    myStructureViewState.setSelectedElements(getSelectedElements());
     myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
   }
 
-  private Object[] getExpandedPsiElements() {
+  private Object[] getExpandedElements() {
     final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
-    return filterPsiElements(convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()])));
+    return convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()]));
   }
 
 
