@@ -54,6 +54,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
@@ -87,7 +91,7 @@ public abstract class CodeStyleAbstractPanel {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
-    editorSettings.setRightMargin(mySettings.RIGHT_MARGIN);
+    editorSettings.setRightMargin(getRightMargin());
 
     EditorColorsScheme scheme = editor.getColorsScheme();
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
@@ -96,6 +100,8 @@ public abstract class CodeStyleAbstractPanel {
 
     return editor;
   }
+
+  protected abstract int getRightMargin();
 
   protected final void updatePreview() {
     if (!myShouldUpdatePreview) {
@@ -126,6 +132,7 @@ public abstract class CodeStyleAbstractPanel {
           PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), myTextToReformat);
 
           CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
+          clone.RIGHT_MARGIN = getRightMargin();
           apply(clone);
 
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
@@ -185,5 +192,30 @@ public abstract class CodeStyleAbstractPanel {
     wrapCombo.addItem("Wrap if long");
     wrapCombo.addItem("Chop down if long");
     wrapCombo.addItem("Wrap always");
+  }
+
+  protected String readFromFile(final String fileName) {
+    try {
+      final InputStream stream = getClass().getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+      final InputStreamReader reader = new InputStreamReader(stream);
+      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
+      final StringBuffer result;
+      try {
+        String line ;
+        result = new StringBuffer();
+        while ((line = lineNumberReader.readLine()) != null) {
+          result.append(line);
+          result.append("\n");
+        }
+      }
+      finally {
+        lineNumberReader.close();
+      }
+
+      return result.toString();
+    }
+    catch (IOException e) {
+      return "";
+    }
   }
 }
