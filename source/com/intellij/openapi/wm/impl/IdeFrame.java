@@ -151,7 +151,9 @@ public class IdeFrame extends JFrame implements DataProvider {
 
   public Object getData(final String dataId) {
     if (DataConstants.PROJECT.equals(dataId)) {
-      return myProject;
+      if (myProject != null) {
+        return myProject.isInitialized() ? myProject : null;
+      }
     }
     return null;
   }

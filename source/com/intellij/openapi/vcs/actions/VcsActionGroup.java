@@ -20,6 +20,9 @@ public class VcsActionGroup extends DefaultActionGroup {
     if (project == null){
       presentation.setVisible(false);
       presentation.setEnabled(false);
+    } else if (!project.isOpen()) {
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
     } else if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0){
       presentation.setVisible(false);
       presentation.setEnabled(false);
