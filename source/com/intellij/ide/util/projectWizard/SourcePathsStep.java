@@ -366,7 +366,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
-  private List<Pair<String,String>> calcSourcePaths(String contentEntryPath) {
+  private static List<Pair<String,String>> calcSourcePaths(String contentEntryPath) {
     if (contentEntryPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
     }
@@ -379,7 +379,7 @@ public class SourcePathsStep extends ModuleWizardStep {
       return EMPTY_STRING_STRING_ARRAY;
     }
     final List<Pair<File,String>> suggestedRoots = JavaUtil.suggestRoots(entryFile);
-    final java.util.List<Pair<String,String>> paths = new ArrayList<Pair<String, String>>();
+    final List<Pair<String,String>> paths = new ArrayList<Pair<String, String>>();
     for (int idx = 0; idx < suggestedRoots.size(); idx++) {
       final Pair<File,String> suggestedRoot = suggestedRoots.get(idx);
       try {
