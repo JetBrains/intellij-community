@@ -180,6 +180,7 @@ public final class PsiUtil {
   }
 
   public static boolean isConstantExpression(PsiExpression expression) {
+    if (expression == null) return false;
     IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
     expression.accept(visitor);
     return visitor.myIsConstant;

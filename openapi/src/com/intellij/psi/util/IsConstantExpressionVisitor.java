@@ -6,9 +6,13 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import gnu.trove.THashSet;
+
+import java.util.Set;
 
 public class IsConstantExpressionVisitor extends PsiElementVisitor {
   protected boolean myIsConstant;
+  private Set<PsiVariable> visitedVars = new THashSet<PsiVariable>();
 
   public boolean isConstant() {
     return myIsConstant;
@@ -92,6 +96,10 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
       return;
     }
     PsiVariable variable = (PsiVariable)refElement;
+    if (!visitedVars.add(variable)) {
+      myIsConstant = false;
+      return;
+    }
     if (variable instanceof PsiEnumConstant) {
       myIsConstant = true;
       return;
