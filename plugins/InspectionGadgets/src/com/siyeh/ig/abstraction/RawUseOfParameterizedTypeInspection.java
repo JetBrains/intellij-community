@@ -42,6 +42,12 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             checkTypeElement(typeElement);
         }
 
+        public void visitInstanceOfExpression(PsiInstanceOfExpression expression){
+            super.visitInstanceOfExpression(expression);
+            final PsiTypeElement typeElement = expression.getCheckType();
+            checkTypeElement(typeElement);
+        }
+
         public void visitNewExpression(PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiJavaCodeReferenceElement classReference =
@@ -57,7 +63,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             if (!(referent instanceof PsiClass)) {
                 return;
             }
-            if (!((PsiClass) referent).hasTypeParameters()) {
+
+            final PsiClass referredClass = (PsiClass) referent;
+            if (!referredClass.hasTypeParameters()) {
                 return;
             }
             if (newExpression.getTypeArgumentList() != null) {
