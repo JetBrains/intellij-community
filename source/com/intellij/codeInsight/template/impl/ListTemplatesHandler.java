@@ -25,7 +25,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     int contextType = TemplateManager.getInstance(project).getContextType(file, offset);
 
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
-    ArrayList array = new ArrayList();
+    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     for(int i = 0; i < templates.length; i++){
       TemplateImpl template = templates[i];
       if (template.isDeactivated() || template.isSelectionTemplate()) continue;
@@ -35,7 +35,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
         array.add(item);
       }
     }
-    LookupItem[] items = (LookupItem[])array.toArray(new LookupItem[array.size()]);
+    LookupItem[] items = array.toArray(new LookupItem[array.size()]);
 
     if (items.length == 0){
       String text = prefix.length() == 0
