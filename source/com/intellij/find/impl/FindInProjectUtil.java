@@ -68,6 +68,11 @@ public class FindInProjectUtil {
       }
     }
 
+    if (directoryName == null && psiElement instanceof PsiPackage) {
+      final PsiDirectory[] directories = ((PsiPackage)psiElement).getDirectories();
+      directoryName = directories.length > 0 ? directories[0].getVirtualFile().getPresentableUrl():null;
+    }
+
     Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
     if (module != null) {
       model.setModuleName(module.getName());
