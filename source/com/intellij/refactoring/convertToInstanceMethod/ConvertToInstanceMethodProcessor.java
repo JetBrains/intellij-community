@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -64,7 +65,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new ConvertToInstanceMethodViewDescriptor(usages, refreshCommand, myMethod, myTargetParameter, myTargetClass);
+    return new MoveInstanceMethodViewDescriptor(usages, refreshCommand, myMethod, myTargetParameter, myTargetClass);
   }
 
   protected void refreshElements(PsiElement[] elements) {
@@ -90,7 +91,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         }
       }
       else if (ref.getElement() instanceof PsiDocTagValue) {
-        result.add(new JavaDocUsageInfo(ref));
+        result.add(new JavaDocUsageInfo(ref)); //TODO:!!!
       }
     }
 

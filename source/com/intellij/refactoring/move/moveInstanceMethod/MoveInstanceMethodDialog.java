@@ -1,133 +1,74 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.ui.BaseRefactoringDialog;
-import com.intellij.refactoring.ui.VisibilityPanel;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.refactoring.ui.VisibilityPanel;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 /**
- * @author dsl
+ * @author ven
  */
-public class MoveInstanceMethodDialog extends BaseRefactoringDialog {
-  protected final PsiMethod myMethod;
-  private final PsiVariable[] myVariables;
-  private final String myRefactoringName;
-  protected JList myList;
-
-  protected VisibilityPanel myVisibilityPanel;
+public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
+  private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
+  private EditorTextField myOldClassParameterNameField;
 
   public MoveInstanceMethodDialog(final PsiMethod method,
-                              final PsiVariable[] variables,
-                              String refactoringName) {
-    super(method.getProject(), true);
-    myMethod = method;
-    myVariables = variables;
-    myRefactoringName = refactoringName;
-    setTitle(myRefactoringName);
-    init();
+                                  final PsiVariable[] variables) {
+    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME);
+  }
+
+  protected String getDimensionServiceKey() {
+    return KEY;
   }
 
   protected JComponent createCenterPanel() {
-    final Box vBox = Box.createVerticalBox();
-    final Box labelBox = Box.createHorizontalBox();
+    JPanel mainPanel = new JPanel(new GridBagLayout());
     final JLabel jLabel = new JLabel("Select an instance parameter:");
     jLabel.setDisplayedMnemonic('i');
-    labelBox.add(jLabel);
-    labelBox.add(Box.createHorizontalGlue());
-    vBox.add(labelBox);
-    vBox.add(Box.createVerticalStrut(4));
-    myList = new JList(new MyListModel());
-    myList.setCellRenderer(new MyListCellRenderer());
-    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setSelectedIndex(0);
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        getOKAction().setEnabled(!myList.getSelectionModel().isSelectionEmpty());
-      }
-    });
+    mainPanel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+
+    myList = createTargetVariableChooser();
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-    final JPanel hBox = new JPanel(new GridBagLayout());
-    final GridBagConstraints gbConstraints = new GridBagConstraints();
+    mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
 
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 0;
-    gbConstraints.gridheight = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    hBox.add(scrollPane, gbConstraints);
-    hBox.add(Box.createHorizontalStrut(4));
-    gbConstraints.weightx = 0;
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
-    gbConstraints.gridx++;
-    myVisibilityPanel = createVisibilityPanel ();
-    hBox.add (myVisibilityPanel, gbConstraints);
+    myVisibilityPanel = createVisibilityPanel();
+    mainPanel.add(myVisibilityPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0,0,0,0), 0,0));
 
-    vBox.add(hBox);
-    return vBox;
+    final String text = "Select a name for old class parameter";
+    final JLabel jLabel1 = new JLabel(text);
+    jLabel1.setDisplayedMnemonic('n');
+    mainPanel.add(jLabel1, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
+
+    String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(myMethod.getContainingClass());
+    myOldClassParameterNameField = new EditorTextField(suggestedName, myProject, StdFileTypes.JAVA);
+    mainPanel.add(myOldClassParameterNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+
+    jLabel.setLabelFor(myList);
+    jLabel1.setLabelFor(myOldClassParameterNameField);
+    return mainPanel;
   }
 
-  private VisibilityPanel createVisibilityPanel() {
-    final VisibilityPanel visibilityPanel = new VisibilityPanel (false);
-    visibilityPanel.setVisibility (VisibilityUtil.getVisibilityModifier (myMethod.getModifierList()));
-    return visibilityPanel;
-  }
-  
   protected void doAction() {
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
+    final String parameterName = myOldClassParameterNameField.getText().trim();
+    if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
+      Messages.showErrorDialog(myProject, "Please Enter a Valid name for Parameter", myRefactoringName);
+      return;
+    }
+
     final MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(myMethod.getProject(),
                                                                                             myMethod, targetVariable,
-                                                                                            myVisibilityPanel.getVisibility());
+                                                                                            myVisibilityPanel.getVisibility(),
+                                                                                  parameterName);
     if (!verifyTargetClass(processor.getTargetClass())) return;
     invokeRefactoring(processor);
   }
 
-  protected boolean verifyTargetClass (PsiClass targetClass) {
-    if (targetClass.isInterface()) {
-      final String message = UsageViewUtil.getDescriptiveName(targetClass) + " is an interface. \n" +
-                       "Method implementation will be added to all directly implementing classes.\n Proceed?";
-
-      final int result = Messages.showYesNoDialog(myProject, message, myRefactoringName,
-                                     Messages.getQuestionIcon());
-      if (result != 0) return false;
-    }
-
-    return true;
-  }
-
-  private class MyListModel extends AbstractListModel {
-    public int getSize() {
-      return myVariables.length;
-    }
-
-    public Object getElementAt(int index) {
-      return myVariables[index];
-    }
-  }
-
-  private static class MyListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      final PsiVariable psiVariable = (PsiVariable)value;
-      final String text = PsiFormatUtil.formatVariable(psiVariable,
-                                           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
-                                           PsiSubstitutor.EMPTY);
-      setIcon(psiVariable.getIcon(0));
-      setText(text);
-      return this;
-    }
-  }
 }

@@ -18,6 +18,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
+import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.containers.HashSet;
 
@@ -77,7 +78,12 @@ public class MoveHandler implements RefactoringActionHandler {
         return;
       }
       if (element instanceof PsiMethod) {
-        MoveMembersImpl.doMove(project, new PsiElement[] {element}, null, null);
+        PsiMethod method = (PsiMethod)element;
+        if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+          new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
+        } else {
+          MoveMembersImpl.doMove(project, new PsiElement[] {method}, null, null);
+        }
         return;
       }
       if (element instanceof PsiClass) {

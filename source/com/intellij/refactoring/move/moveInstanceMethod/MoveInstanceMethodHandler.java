@@ -1,4 +1,4 @@
-package com.intellij.refactoring.convertToInstanceMethod;
+package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,19 +7,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
- * @author dsl
+ * @author ven
  */
-public class ConvertToInstanceMethodHandler implements RefactoringActionHandler {
+public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler");
-  static final String REFACTORING_NAME = "Convert To Instance Method";
+  static final String REFACTORING_NAME = "Move Instance Method";
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
@@ -38,7 +44,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       return;
     }
     if(LOG.isDebugEnabled()) {
-      LOG.debug("MakeMethodStaticHandler invoked");
+      LOG.debug("Move Instance Method invoked");
     }
     invoke(project, new PsiElement[]{element}, dataContext);
   }
@@ -46,20 +52,31 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
     final PsiMethod method = ((PsiMethod)elements[0]);
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      String message = "Cannot perform the refactoring\n" +
-                       "Method " + method.getName() + " is not static.";
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+    if (method.isConstructor()) {
+      String message = "Cannot perform the refactoring.\n" +
+                       "Move method is not supported for constructors";
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
       return;
     }
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    List<PsiParameter> suitableParameters = new ArrayList<PsiParameter>();
+
+    if (PsiSuperMethodUtil.findSuperMethods(method).length > 0 ||
+        method.getManager().getSearchHelper().findOverridingMethods(method, GlobalSearchScope.allScope(project), true).length > 0) {
+      String message = "Cannot perform the refactoring.\n" +
+                       "Move method is not supported when method is a part of inheritance hierarchy";
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+      return;
+    }
+
+    List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
+    List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
+    allVariables.addAll(Arrays.asList(method.getParameterList().getParameters()));
+    allVariables.addAll(Arrays.asList(method.getContainingClass().getFields()));
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     boolean classesInProjectFound = false;
-    for (int i = 0; i < parameters.length; i++) {
-      final PsiParameter parameter = parameters[i];
-      final PsiType type = parameter.getType();
+    for (Iterator<PsiVariable> iterator = allVariables.iterator(); iterator.hasNext();) {
+      PsiVariable variable = iterator.next();
+      final PsiType type = variable.getType();
       if (type instanceof PsiClassType) {
         classTypesFound = true;
         final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -68,12 +85,13 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
           final boolean inProject = method.getManager().isInProject(psiClass);
           if (inProject) {
             classesInProjectFound = true;
-            suitableParameters.add(parameter);
+            suitableVariables.add(variable);
           }
         }
       }
     }
-    if (suitableParameters.isEmpty()) {
+
+    if (suitableVariables.isEmpty()) {
       String message = null;
       if (!classTypesFound) {
         message = "There are no parameters that have a reference type";
@@ -91,8 +109,17 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       return;
     }
 
-    new ConvertToInstanceMethodDialog(
+    new MoveInstanceMethodDialog(
       method,
-      suitableParameters.toArray(new PsiParameter[suitableParameters.size()])).show();
+      suitableVariables.toArray(new PsiVariable[suitableVariables.size()])).show();
+  }
+
+  public static String suggestParameterNameForThisClass(final PsiClass thisClass) {
+    PsiManager manager = thisClass.getManager();
+    PsiType type = manager.getElementFactory().createType(thisClass);
+    final SuggestedNameInfo suggestedNameInfo = manager.getCodeStyleManager()
+        .suggestVariableName(VariableKind.PARAMETER, null, null, type);
+    String suggestedName = suggestedNameInfo.names.length > 0 ? suggestedNameInfo.names[0] : "";
+    return suggestedName;
   }
 }
