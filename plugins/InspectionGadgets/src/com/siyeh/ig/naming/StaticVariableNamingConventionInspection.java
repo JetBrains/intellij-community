@@ -58,13 +58,13 @@ public class StaticVariableNamingConventionInspection extends ConventionInspecti
         return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
     }
 
-    public ProblemDescriptor[] checkField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
-            return super.checkField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, mgr, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.checkField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         field.accept(visitor);

@@ -109,10 +109,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
             return true;
         }
-        if (VariableAccessUtils.arrayContentsAreAssigned(variable, context)) {
-            return true;
-        }
-        return false;
+        return VariableAccessUtils.arrayContentsAreAssigned(variable, context);
     }
 
     private static boolean isDefaultArrayInitializer(PsiExpression initializer) {
@@ -120,10 +117,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
             return false;
         }
         final PsiNewExpression newExpression = (PsiNewExpression) initializer;
-        if (newExpression.getArrayInitializer() != null) {
-            return false;
-        }
-        return true;
+        return newExpression.getArrayInitializer() == null;
     }
 
     private static boolean arrayContentsAreRead(PsiVariable variable, PsiElement context) {
@@ -143,10 +137,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
             return true;
         }
-        if (VariableAccessUtils.arrayContentsAreAccessed(variable, context)) {
-            return true;
-        }
-        return false;
+        return VariableAccessUtils.arrayContentsAreAccessed(variable, context);
     }
 
 

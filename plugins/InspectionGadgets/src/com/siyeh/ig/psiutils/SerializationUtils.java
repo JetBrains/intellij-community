@@ -86,10 +86,7 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        if(!TypeUtils.typeEquals("void", returnType)){
-            return false;
-        }
-        return true;
+        return TypeUtils.typeEquals("void", returnType);
     }
 
     public static boolean isWriteObject(PsiMethod method){
@@ -107,10 +104,7 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        if(!TypeUtils.typeEquals("void", returnType)){
-            return false;
-        }
-        return true;
+        return TypeUtils.typeEquals("void", returnType);
     }
 
     public static boolean isReadResolve(PsiMethod method){
@@ -124,10 +118,7 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        if(!TypeUtils.isJavaLangObject(returnType)){
-            return false;
-        }
-        return true;
+        return TypeUtils.isJavaLangObject(returnType);
     }
 
     public static boolean isWriteReplace(PsiMethod method){
@@ -141,10 +132,7 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        if(!TypeUtils.isJavaLangObject(returnType)){
-            return false;
-        }
-        return true;
+        return TypeUtils.isJavaLangObject(returnType);
     }
 
     public static boolean typeIsSerializable(PsiType type){

@@ -107,10 +107,7 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
                 return false;
             }
             final PsiType siblingType = sibling.getType();
-            if (!TypeUtils.isJavaLangString(siblingType)) {
-                return false;
-            }
-            return true;
+            return TypeUtils.isJavaLangString(siblingType);
         }
 
         static boolean isArgumentOfStringAppend(PsiExpression expression) {

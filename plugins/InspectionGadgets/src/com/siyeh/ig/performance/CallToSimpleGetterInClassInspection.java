@@ -109,10 +109,6 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
             return false;
         }
         final PsiField field = (PsiField) referent;
-        if(!field.getContainingClass().equals(method.getContainingClass()))
-        {
-            return false;
-        }
-        return true;
+        return field.getContainingClass().equals(method.getContainingClass());
     }
 }

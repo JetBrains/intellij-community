@@ -185,10 +185,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         if (value instanceof Character && ((Character) value).charValue() == 0) {
             return true;
         }
-        if (value instanceof Byte && ((Byte) value).byteValue() == 0) {
-            return true;
-        }
-        return false;
+        return value instanceof Byte && ((Byte) value).byteValue() == 0;
     }
 
     private static boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
@@ -208,10 +205,8 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         if (value instanceof Character && ((Character) value).charValue() == (char) 0xffff) {
             return true;
         }
-        if (value instanceof Byte && ((Byte) value).byteValue() == (byte) 0xff) {
-            return true;
-        }
-        return false;
+        return value instanceof Byte &&
+                        ((Byte) value).byteValue() == (byte) 0xff;
     }
 
 }

@@ -32,41 +32,41 @@ public class DollarSignInNameInspection extends BaseInspection {
         return true;
     }
 
-    public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
         if (aClass instanceof PsiAnonymousClass) {
-            return super.checkClass(aClass, mgr, isOnTheFly);
+            return super.doCheckClass(aClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
-            return super.checkMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, mgr, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.checkMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, mgr, isOnTheFly);
         }
         if (containingClass instanceof PsiAnonymousClass) {
-            return super.checkClass(containingClass, mgr, isOnTheFly);
+            return super.doCheckClass(containingClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] checkField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
-            return super.checkField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, mgr, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.checkField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, mgr, isOnTheFly);
         }
         if (containingClass instanceof PsiAnonymousClass) {
-            return super.checkClass(containingClass, mgr, isOnTheFly);
+            return super.doCheckClass(containingClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         field.accept(visitor);

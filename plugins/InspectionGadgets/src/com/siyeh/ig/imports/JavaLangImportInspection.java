@@ -1,8 +1,6 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.DeleteImportFix;

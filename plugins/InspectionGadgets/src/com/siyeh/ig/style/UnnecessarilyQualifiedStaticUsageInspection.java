@@ -170,10 +170,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
                 containingMethod =
                         (PsiMethod) PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class);
             }
-            if (!qualifierElement.equals(containingClass)) {
-                return false;
-            }
-            return true;
+            return qualifierElement.equals(containingClass);
         }
 
         private boolean isUnnecessarilyQualifiedMethodCall(PsiReferenceExpression expression) {
@@ -189,7 +186,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
             if (!(qualifierExpression instanceof PsiJavaCodeReferenceElement)) {
                 return false;
             }
-            final PsiElement qualifierElement = ((PsiJavaCodeReferenceElement) qualifierExpression).resolve();
+            final PsiElement qualifierElement = ((PsiReference) qualifierExpression).resolve();
             if (!(qualifierElement instanceof PsiClass)) {
                 return false;
             }

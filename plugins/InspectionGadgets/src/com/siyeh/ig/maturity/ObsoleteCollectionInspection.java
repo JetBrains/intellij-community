@@ -77,10 +77,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             if(typeName.indexOf('<') > 0){
                 typeName = typeName.substring(0, typeName.indexOf('<'));
             }
-            if(!s_obsoleteCollectionTypes.contains(typeName)){
-                return false;
-            }
-            return true;
+            return s_obsoleteCollectionTypes.contains(typeName);
         }
 
     }

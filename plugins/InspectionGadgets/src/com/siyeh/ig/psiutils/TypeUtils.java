@@ -47,7 +47,7 @@ public class TypeUtils {
         return typeInherits(type, typeName);
     }
 
-    private static boolean typeInherits(final PsiType type, String typeName) {
+    private static boolean typeInherits(PsiType type, String typeName) {
         final String text = type.getCanonicalText();
         if(typeName.equals(text))
         {

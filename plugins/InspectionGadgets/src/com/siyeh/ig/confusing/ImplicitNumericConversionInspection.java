@@ -154,11 +154,9 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             if (isIntegral(expressionType) && isFloatingPoint(expectedType)) {
                 return true;
             }
-            if (isFloatingPoint(expressionType) && isFloatingPoint(expectedType)) {
-                return true;
-            }
+            return isFloatingPoint(expressionType) &&
+                           isFloatingPoint(expectedType);
 
-            return false;
         }
 
         private static boolean isNegatedLiteral(PsiExpression expression) {

@@ -147,11 +147,8 @@ public class RecursionUtils {
             return true;
         }
         final PsiStatement elseBranch = ifStatement.getElseBranch();
-        if (elseBranch != null &&
-                statementMayReturnBeforeRecursing(elseBranch, method)) {
-            return true;
-        }
-        return false;
+        return elseBranch != null &&
+                       statementMayReturnBeforeRecursing(elseBranch, method);
     }
 
     private static boolean labeledStatementMayReturnBeforeRecursing(PsiLabeledStatement labeledStatement, PsiMethod method) {
@@ -473,10 +470,7 @@ public class RecursionUtils {
             return true;
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-        if (codeBlockMustRecurse(finallyBlock, method)) {
-            return true;
-        }
-        return false;
+        return codeBlockMustRecurse(finallyBlock, method);
     }
 
     private static boolean codeBlockMustRecurse(PsiCodeBlock block, PsiMethod method) {
@@ -528,10 +522,7 @@ public class RecursionUtils {
 
     private static boolean foreachStatementMustRecurse(PsiForeachStatement foreachStatement, PsiMethod method) {
         final PsiExpression iteration = foreachStatement.getIteratedValue();
-        if (expressionMustRecurse(iteration, method)) {
-            return true;
-        }
-        return false;
+        return expressionMustRecurse(iteration, method);
     }
 
     private static boolean whileStatementMustRecurse(PsiWhileStatement whileStatement, PsiMethod method) {

@@ -10,7 +10,7 @@ import com.siyeh.ig.GroupNames;
 
 public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
     public String getID(){
-        return "Finalize called explicitly";
+        return "FinalizeCalledExplicitly";
     }
     public String getDisplayName() {
         return "'finalize()' called explicitly";
@@ -27,7 +27,7 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
     public boolean isEnabledByDefault(){
         return true;
     }
-    
+
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new NoExplicitFinalizeCallsVisitor(this, inspectionManager, onTheFly);
     }

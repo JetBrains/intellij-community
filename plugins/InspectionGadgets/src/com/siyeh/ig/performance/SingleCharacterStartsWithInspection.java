@@ -73,10 +73,7 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
             if (value == null) {
                 return false;
             }
-            if (value.length() != 1) {
-                return false;
-            }
-            return true;
+            return value.length() == 1;
         }
 
     }

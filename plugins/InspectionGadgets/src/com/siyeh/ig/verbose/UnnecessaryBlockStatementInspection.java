@@ -100,7 +100,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             if(brace == null){
                 return;
             }
-            final PsiCodeBlock parentBlock = ((PsiCodeBlock) parent);
+            final PsiCodeBlock parentBlock = (PsiCodeBlock) parent;
             if(parentBlock.getStatements().length > 1 &&
                        containsConflictingDeclarations(codeBlock, parentBlock)){
                 return;

@@ -144,7 +144,7 @@ public class JDBCResourceInspection extends ExpressionInspection {
                 return;
             }
             final PsiElement referent =
-                    ((PsiReferenceExpression) qualifier).resolve();
+                    ((PsiReference) qualifier).resolve();
             if(referent == null){
                 return;
             }

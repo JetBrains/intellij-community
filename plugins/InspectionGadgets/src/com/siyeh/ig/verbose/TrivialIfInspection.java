@@ -76,7 +76,7 @@ public class TrivialIfInspection extends ExpressionInspection{
         return fix;
     }
 
-    private class TrivialIfFix extends InspectionGadgetsFix{
+    private static class TrivialIfFix extends InspectionGadgetsFix{
         public String getName(){
             return "Simplify";
         }
@@ -313,11 +313,8 @@ public class TrivialIfInspection extends ExpressionInspection{
         }
 
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        if(ConditionalUtils.isReturn(thenBranch, "true")
-                   && ConditionalUtils.isReturn(elseBranch, "false")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "true")
+                       && ConditionalUtils.isReturn(elseBranch, "false");
     }
 
     public static boolean isSimplifiableImplicitReturnNegated(PsiIfStatement ifStatement){
@@ -334,11 +331,8 @@ public class TrivialIfInspection extends ExpressionInspection{
             return false;
         }
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        if(ConditionalUtils.isReturn(thenBranch, "false")
-                   && ConditionalUtils.isReturn(elseBranch, "true")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "false")
+                       && ConditionalUtils.isReturn(elseBranch, "true");
     }
 
     public static boolean isSimplifiableReturn(PsiIfStatement ifStatement){
@@ -346,11 +340,8 @@ public class TrivialIfInspection extends ExpressionInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isReturn(thenBranch, "true")
-                   && ConditionalUtils.isReturn(elseBranch, "false")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "true")
+                       && ConditionalUtils.isReturn(elseBranch, "false");
     }
 
     public static boolean isSimplifiableReturnNegated(PsiIfStatement ifStatement){
@@ -358,11 +349,8 @@ public class TrivialIfInspection extends ExpressionInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isReturn(thenBranch, "false")
-                   && ConditionalUtils.isReturn(elseBranch, "true")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "false")
+                       && ConditionalUtils.isReturn(elseBranch, "true");
     }
 
     public static boolean isSimplifiableAssignment(PsiIfStatement ifStatement){

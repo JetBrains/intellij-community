@@ -80,10 +80,7 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
             if (returnType == null) {
                 return false;
             }
-            if (!returnType.equals(PsiType.INT)) {
-                return false;
-            }
-            return true;
+            return returnType.equals(PsiType.INT);
         }
 
     }

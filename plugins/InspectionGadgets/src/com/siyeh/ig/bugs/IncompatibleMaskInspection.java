@@ -168,9 +168,6 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             return true;
         }
         final PsiExpression lhs = binaryExpression.getLOperand();
-        if(PsiUtil.isConstantExpression(lhs)){
-            return true;
-        }
-        return false;
+        return PsiUtil.isConstantExpression(lhs);
     }
 }

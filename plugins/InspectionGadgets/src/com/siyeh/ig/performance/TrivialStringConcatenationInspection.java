@@ -98,7 +98,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
                                                      onTheFly);
     }
 
-    private class TrivialStringConcatenationVisitor
+    private static class TrivialStringConcatenationVisitor
             extends BaseInspectionVisitor{
         private TrivialStringConcatenationVisitor(BaseInspection inspection,
                                                   InspectionManager inspectionManager,

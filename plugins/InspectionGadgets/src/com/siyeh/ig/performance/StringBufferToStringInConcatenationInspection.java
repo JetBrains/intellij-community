@@ -105,10 +105,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             }
             final PsiClass aClass = method.getContainingClass();
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.StringBuffer".equals(className)) {
-                return false;
-            }
-            return true;
+            return "java.lang.StringBuffer".equals(className);
         }
     }
 

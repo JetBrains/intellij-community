@@ -22,10 +22,8 @@ public class UtilityClassUtil {
         if (!allFieldsStatic(aClass)) {
             return false;
         }
-        if (aClass.getMethods().length == 0 && aClass.getFields().length == 0) {
-            return false;
-        }
-        return true;
+        return !(aClass.getMethods().length == 0 &&
+                aClass.getFields().length == 0);
     }
 
     private static boolean allFieldsStatic(PsiClass aClass) {

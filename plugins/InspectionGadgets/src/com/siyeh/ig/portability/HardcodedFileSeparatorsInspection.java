@@ -85,11 +85,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
             return false;
         }
 
-        if(isURLString(str)){
-            return false;
-        }
+        return !isURLString(str);
 
-        return true;
     }
 
     /**
@@ -105,11 +102,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
             return true;
         }
 
-        if(str.indexOf("/>") != -1){
-            return true;
-        }
+        return str.indexOf("/>") != -1;
 
-        return false;
     }
 
     /**

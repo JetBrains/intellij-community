@@ -67,10 +67,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection {
                 return false;
             }
             final PsiType returnType = method.getReturnType();
-            if (!TypeUtils.typeEquals("int", returnType)) {
-                return false;
-            }
-            return true;
+            return TypeUtils.typeEquals("int", returnType);
         }
 
         private static boolean isSubtraction(PsiBinaryExpression exp) {

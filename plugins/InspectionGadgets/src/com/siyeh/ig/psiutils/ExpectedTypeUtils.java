@@ -33,7 +33,7 @@ public class ExpectedTypeUtils{
             final PsiElement parent = ref.getParent();
             if(parent instanceof PsiMethodCallExpression){
                 final PsiMethod psiMethod =
-                        ((PsiMethodCallExpression) parent).resolveMethod();
+                        ((PsiCall) parent).resolveMethod();
                 if(psiMethod == null){
                     return null;
                 }
@@ -42,10 +42,10 @@ public class ExpectedTypeUtils{
                 return factory.createType(aClass);
             } else if(parent instanceof PsiReferenceExpression){
                 final PsiElement elt =
-                        ((PsiReferenceExpression) parent).resolve();
+                        ((PsiReference) parent).resolve();
                 if(elt instanceof PsiField){
                     final PsiClass aClass =
-                            ((PsiField) elt).getContainingClass();
+                            ((PsiMember) elt).getContainingClass();
                     final PsiElementFactory factory =
                             manager.getElementFactory();
                     return factory.createType(aClass);

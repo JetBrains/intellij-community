@@ -1,0 +1,32 @@
+50 unused import
+19 implicit numeric conversion
+17 method may be static
+15 unnecessary funlly qualified name
+11 infinite recursion
+11 Accessing a non-public class of another object
+11 Class references subclass
+10 JDBC resource opened but not safely closed
+8 Non-synchronized method overrides synchronized method
+8 Overly coupled class
+7 Overly coupled method
+7 c-style array declaration
+7 mismatched query and update of collection
+6 Collection declared by class not interface
+6 Field accessed by synchronized and unsynchronized
+6 raw use of parameterized class
+5 Pointless bitwise expression
+5 use of obsolete collection type
+4 casting to incompatible interface
+4 concatenation with empty string
+4 constant string buffer may be string
+4 non-constant string should be stringBuffer
+4 method overrides private method of superclass
+4 pointless arithmetic expression
+4 static method accessed via subclass
+4 use of java.lang.reflect
+3 readObject or writeObject not private
+3 readResolve or writeReplace not protected
+3 setup instead of setUp()
+3 comparison of short and char
+3 overly strong type cast
+3 pointless boolean expression

@@ -8,12 +8,10 @@
     Paired open/close for Sockets
     Paired open/close for Channels
     Paired acquire/release for Locks
-    Duplicate condition
     Empty zip file entry
     Empty jar file entry
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
-    Encapsulatable use of field
 
     Static inheritance quickfix
     Static import quickfix
@@ -21,3 +19,4 @@
     Non non-static initializer quickfix
     Fix the "variable accessed in synchronized and unsynchronized contexts"
        to deal with unsynchronized private methods called only from synchronized contexts
+    Telemetry

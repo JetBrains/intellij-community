@@ -58,9 +58,9 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
     }
 
-    public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
         if (!aClass.isPhysical()) {
-            return super.checkClass(aClass, mgr, isOnTheFly);
+            return super.doCheckClass(aClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);

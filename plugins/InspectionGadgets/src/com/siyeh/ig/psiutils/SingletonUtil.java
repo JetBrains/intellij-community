@@ -17,10 +17,7 @@ public class SingletonUtil {
         if (hasVisibleConstructor(aClass)) {
             return false;
         }
-        if (!containsOneStaticSelfInstance(aClass)) {
-            return false;
-        }
-        return true;
+        return containsOneStaticSelfInstance(aClass);
     }
 
     private static boolean containsOneStaticSelfInstance(PsiClass aClass) {

@@ -154,7 +154,7 @@ public class IOResourceInspection extends ExpressionInspection{
                 return;
             }
             final PsiElement referent =
-                    ((PsiReferenceExpression) qualifier).resolve();
+                    ((PsiReference) qualifier).resolve();
             if(referent.equals(streamToClose)){
                 containsStreamClose = true;
             }

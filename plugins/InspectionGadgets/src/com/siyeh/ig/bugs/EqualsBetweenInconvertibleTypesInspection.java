@@ -87,10 +87,8 @@ public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspect
             if (comparisonType == null) {
                 return false;
             }
-            if (TypeConversionUtil.areTypesConvertible(comparedType, comparisonType)) {
-                return false;
-            }
-            return true;
+            return !TypeConversionUtil.areTypesConvertible(comparedType,
+                                                           comparisonType);
         }
     }
 

@@ -23,11 +23,7 @@ public class WellFormednessUtils{
             return false;
         }
         final PsiJavaToken operationSign = expression.getOperationSign();
-        if(operationSign == null)
-        {
-            return false;
-        }
-        return true;
+        return operationSign != null;
     }
 
     public static boolean isWellFormed(PsiAssignmentExpression expression){
@@ -40,9 +36,6 @@ public class WellFormednessUtils{
             return false;
         }
         final PsiJavaToken operationSign = expression.getOperationSign();
-        if(operationSign == null){
-            return false;
-        }
-        return true;
+        return operationSign != null;
     }
 }

@@ -81,11 +81,8 @@ public class SystemExitInspection extends ExpressionInspection {
             if (className == null) {
                 return false;
             }
-            if (!"java.lang.System".equals(className) &&
-                    !"java.lang.Runtime".equals(className)) {
-                return false;
-            }
-            return true;
+            return !(!"java.lang.System".equals(className) &&
+                    !"java.lang.Runtime".equals(className));
         }
     }
 

@@ -219,10 +219,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final String referenceName = reference.getReferenceName();
-            if(!"next".equals(referenceName)){
-                return false;
-            }
-            return true;
+            return "next".equals(referenceName);
         }
 
         private String createNewVarName(Project project, PsiWhileStatement scope,
@@ -253,7 +250,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
     }
 
-    private class WhileBeForeachVisitor extends BaseInspectionVisitor{
+    private static class WhileBeForeachVisitor extends BaseInspectionVisitor{
         private WhileBeForeachVisitor(BaseInspection inspection,
                                        InspectionManager inspectionManager,
                                        boolean isOnTheFly){
@@ -341,10 +338,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         if(isIteratorRemoveCalled(iteratorName, body)){
             return false;
         }
-        if(isIteratorAssigned(iteratorName, body)){
-            return false;
-        }
-        return true;
+        return !isIteratorAssigned(iteratorName, body);
     }
 
     private static PsiStatement getPreviousStatement(PsiWhileStatement statement){
@@ -410,10 +404,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             return true;
         }
         final String target = qualifier.getText();
-        if(!iterator.equals(target)){
-            return false;
-        }
-        return true;
+        return iterator.equals(target);
     }
 
     private static PsiReferenceExpression getArrayFromCondition(PsiExpression condition){
@@ -446,10 +437,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final PsiExpression operand = prefixExp.getOperand();
-            if(!expressionIsVariableLookup(operand, var)){
-                return false;
-            }
-            return true;
+            return expressionIsVariableLookup(operand, var);
         } else if(exp instanceof PsiPostfixExpression){
             final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
             final PsiJavaToken sign = postfixExp.getOperationSign();
@@ -461,10 +449,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final PsiExpression operand = postfixExp.getOperand();
-            if(!expressionIsVariableLookup(operand, var)){
-                return false;
-            }
-            return true;
+            return expressionIsVariableLookup(operand, var);
         }
         return false;
     }
@@ -491,10 +476,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression rhs = binaryExp.getROperand();
-        if(!expressionIsArrayLengthLookup(rhs)){
-            return false;
-        }
-        return true;
+        return expressionIsArrayLengthLookup(rhs);
     }
 
     private static boolean expressionIsArrayLengthLookup(PsiExpression expression){
@@ -699,7 +681,6 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 final PsiExpression lhs = assignment.getLExpression();
                 if(lhs.equals(arrayAccess)){
                     indexVariableUsedOnlyAsIndex = false;
-                    return;
                 }
             }
         }

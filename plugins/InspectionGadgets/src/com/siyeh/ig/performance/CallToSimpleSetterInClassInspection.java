@@ -92,7 +92,8 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         {
            return false;
         }
-        final PsiAssignmentExpression assignment = ((PsiAssignmentExpression) possibleAssignment);
+        final PsiAssignmentExpression assignment =
+                (PsiAssignmentExpression) possibleAssignment;
         final PsiJavaToken sign = assignment.getOperationSign();
         if(!sign.getTokenType().equals(JavaTokenType.EQ)){
             return false;
@@ -136,10 +137,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         if(rReferent == null){
             return false;
         }
-        if(!(rReferent instanceof PsiParameter)){
-            return false;
-        }
+        return rReferent instanceof PsiParameter;
 
-        return true;
     }
 }

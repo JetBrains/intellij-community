@@ -61,10 +61,8 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor {
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        if (InheritanceUtil.isInheritorOrSelf(referenceContainingClass, methodContainingClass, true)) {
-            return false;
-        }
-        return true;
+        return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
+                                                  methodContainingClass, true);
     }
 
     boolean isFieldStaticallyAccessible(PsiField field) {
@@ -73,9 +71,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor {
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
         final PsiClass fieldContainingClass = field.getContainingClass();
-        if (InheritanceUtil.isInheritorOrSelf(referenceContainingClass, fieldContainingClass, true)) {
-            return false;
-        }
-        return true;
+        return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
+                                                  fieldContainingClass, true);
     }
 }

@@ -44,6 +44,7 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
+import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 
 import java.io.*;
 import java.util.*;
@@ -54,6 +55,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private final List m_inspectionClasses = new ArrayList(NUM_INSPECTIONS);
     private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
+    private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
 
     public static void main(String[] args){
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
@@ -344,6 +346,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
         inspectionClasses.add(AssignmentToNullInspection.class);
+        inspectionClasses.add(DuplicateConditionInspection.class);
         inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
         inspectionClasses.add(ReturnNullInspection.class);
         inspectionClasses.add(StaticCallOnSubclassInspection.class);
@@ -768,5 +771,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public void disposeComponent(){
+    }
+
+    public InspectionGadgetsTelemetry getTelemetry(){
+        return telemetry;
     }
 }

@@ -85,10 +85,7 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
             if(returnType == null){
                 return false;
             }
-            if(!returnType.equals(PsiType.BOOLEAN)){
-                return false;
-            }
-            return true;
+            return returnType.equals(PsiType.BOOLEAN);
         }
     }
 }

@@ -114,10 +114,7 @@ public class MismatchedCollectionQueryUpdateInspection extends VariableInspectio
         if (variableIsPassedAsMethodArgument(variable, context)) {
             return true;
         }
-        if (collectionUpdateCalled(variable, context)) {
-            return true;
-        }
-        return false;
+        return collectionUpdateCalled(variable, context);
     }
 
     private static boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
@@ -137,10 +134,7 @@ public class MismatchedCollectionQueryUpdateInspection extends VariableInspectio
         if (variableIsPassedAsMethodArgument(variable, context)) {
             return true;
         }
-        if (collectionQueryCalled(variable, context)) {
-            return true;
-        }
-        return false;
+        return collectionQueryCalled(variable, context);
     }
 
     private static boolean variableIsAssignedFrom(PsiVariable variable, PsiElement context) {

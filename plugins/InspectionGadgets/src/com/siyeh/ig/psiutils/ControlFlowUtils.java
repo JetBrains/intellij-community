@@ -73,10 +73,7 @@ public class ControlFlowUtils {
         if (test == null) {
             return false;
         }
-        if (BoolUtils.isTrue(test)) {
-            return false;
-        }
-        return true;
+        return !BoolUtils.isTrue(test);
     }
 
     private static boolean foreachStatementMayReturnNormally(PsiForeachStatement loopStatement) {
@@ -129,11 +126,8 @@ public class ControlFlowUtils {
             return true;
         }
         final PsiStatement elseBranch = ifStatement.getElseBranch();
-        if (elseBranch == null ||
-                statementMayCompleteNormally(elseBranch)) {
-            return true;
-        }
-        return false;
+        return elseBranch == null ||
+                       statementMayCompleteNormally(elseBranch);
     }
 
     private static boolean labeledStatementMayCompleteNormally(PsiLabeledStatement labeledStatement) {
@@ -454,10 +448,7 @@ public class ControlFlowUtils {
         if (returnFinder.returnFound()) {
             return false;
         }
-        if (codeBlockMayCompleteNormally(body)) {
-            return false;
-        }
-        return true;
+        return !codeBlockMayCompleteNormally(body);
     }
 
 }

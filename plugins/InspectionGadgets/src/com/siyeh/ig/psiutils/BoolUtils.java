@@ -53,10 +53,6 @@ public class BoolUtils {
             return false;
         }
         final String text = test.getText();
-        if ("true".equals(text)) {
-            return true;
-
-        }
-        return false;
+        return "true".equals(text);
     }
 }

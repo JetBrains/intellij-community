@@ -71,7 +71,8 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                         (PsiBinaryExpression) condition;
                 final PsiExpression lOperand = binaryExpression.getLOperand();
                 final PsiExpression rOperand = binaryExpression.getROperand();
-                return (isSimpleFieldComparison(lOperand) && isLiteral(rOperand)) ||
+                return isSimpleFieldComparison(lOperand) &&
+                               isLiteral(rOperand) ||
                         (isSimpleFieldComparison(rOperand) && isLiteral(lOperand));
             }
             return false;
@@ -106,10 +107,7 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                 return false;
             }
             final PsiField field = (PsiField) referent;
-            if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
-                return false;
-            }
-            return true;
+            return !field.hasModifierProperty(PsiModifier.VOLATILE);
         }
 
         private boolean statementIsEmpty(PsiStatement statement) {

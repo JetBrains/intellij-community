@@ -254,7 +254,7 @@ public class InitializationUtils {
                 return true;
             }
             if (lhs instanceof PsiReferenceExpression) {
-                final PsiElement element = ((PsiReferenceExpression) lhs).resolve();
+                final PsiElement element = ((PsiReference) lhs).resolve();
                 if (element != null &&
                         field != null &&
                         element.equals(field)) {

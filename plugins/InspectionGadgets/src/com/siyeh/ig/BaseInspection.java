@@ -2,12 +2,19 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 
 import java.lang.reflect.Method;
 
 public abstract class BaseInspection extends LocalInspectionTool {
     private final String m_shortName = null;
+    private InspectionRunListener listener = null;
 
     public String getShortName() {
         if (m_shortName == null) {
@@ -35,6 +42,73 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return null;
+    }
+
+    public ProblemDescriptor[] checkMethod(PsiMethod method,
+                                           InspectionManager manager,
+                                           boolean isOnTheFly){
+        bindListener();
+        final long start = System.currentTimeMillis();
+        try{
+            return doCheckMethod(method, manager, isOnTheFly);
+        } finally{
+            final long end = System.currentTimeMillis();
+            listener.reportRun(getDisplayName(), end-start);
+        }
+    }
+
+    protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                              InspectionManager manager,
+                                              boolean isOnTheFly){
+        return super.checkMethod(method, manager, isOnTheFly);
+    }
+
+    public ProblemDescriptor[] checkClass(PsiClass aClass,
+                                          InspectionManager manager,
+                                          boolean isOnTheFly){
+        bindListener();
+        final long start = System.currentTimeMillis();
+        try{
+            return doCheckClass(aClass, manager, isOnTheFly);
+        } finally{
+            final long end = System.currentTimeMillis();
+            listener.reportRun(getDisplayName(), end - start);
+        }
+    }
+
+    protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                              InspectionManager manager,
+                                              boolean isOnTheFly){
+        return super.checkClass(aClass, manager, isOnTheFly);
+    }
+
+    public ProblemDescriptor[] checkField(PsiField field,
+                                          InspectionManager manager,
+                                          boolean isOnTheFly){
+        bindListener();
+        final long start = System.currentTimeMillis();
+        try{
+            return doCheckField(field, manager, isOnTheFly);
+        } finally{
+            final long end = System.currentTimeMillis();
+            listener.reportRun(getDisplayName(), end - start);
+        }
+    }
+
+    private void bindListener(){
+        if(listener== null)
+        {
+            final Application application = ApplicationManager.getApplication();
+            final InspectionGadgetsPlugin plugin =
+                    (InspectionGadgetsPlugin) application.getComponent("InspectionGadgets");
+            listener = plugin.getTelemetry();
+        }
+    }
+
+    protected ProblemDescriptor[] doCheckField(PsiField field,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly){
+        return super.checkField(field, manager, isOnTheFly);
     }
 
     public boolean hasQuickFix() {

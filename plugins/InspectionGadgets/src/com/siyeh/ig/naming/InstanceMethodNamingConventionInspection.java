@@ -62,13 +62,13 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
         return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
     }
 
-    public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
-            return super.checkMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, mgr, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.checkMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         method.accept(visitor);

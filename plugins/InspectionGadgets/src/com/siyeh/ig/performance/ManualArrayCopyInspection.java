@@ -203,10 +203,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (SideEffectChecker.mayHaveSideEffects(rhs)) {
                 return false;
             }
-            if (!isOffsetArrayAccess(rhs, var)) {
-                return false;
-            }
-            return true;
+            return isOffsetArrayAccess(rhs, var);
         }
 
         private static boolean isOffsetArrayAccess(PsiExpression expression, PsiLocalVariable var) {
@@ -219,10 +216,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (index == null) {
                 return false;
             }
-            if (!expressionIsOffsetVariableLookup(index, var)) {
-                return false;
-            }
-            return true;
+            return expressionIsOffsetVariableLookup(index, var);
         }
 
         private static boolean isIncrement(PsiStatement statement, PsiLocalVariable var) {
@@ -242,10 +236,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = prefixExp.getOperand();
-                if (!expressionIsVariableLookup(operand, var)) {
-                    return false;
-                }
-                return true;
+                return expressionIsVariableLookup(operand, var);
             } else if (exp instanceof PsiPostfixExpression) {
                 final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
                 final PsiJavaToken sign = postfixExp.getOperationSign();
@@ -257,10 +248,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = postfixExp.getOperand();
-                if (!expressionIsVariableLookup(operand, var)) {
-                    return false;
-                }
-                return true;
+                return expressionIsVariableLookup(operand, var);
             }
             return true;
         }
@@ -280,10 +268,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression lhs = binaryExp.getLOperand();
-            if (!expressionIsVariableLookup(lhs, var)) {
-                return false;
-            }
-            return true;
+            return expressionIsVariableLookup(lhs, var);
         }
 
         private static boolean expressionIsVariableLookup(PsiExpression expression, PsiLocalVariable var) {
@@ -315,10 +300,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUS) && !tokenType.equals(JavaTokenType.MINUS)) {
-                return false;
-            }
-            return true;
+            return !(!tokenType.equals(JavaTokenType.PLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUS));
         }
 
     }

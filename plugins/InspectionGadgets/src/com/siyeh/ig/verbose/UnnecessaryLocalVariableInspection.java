@@ -135,10 +135,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
             return false;
         }
         final PsiElement referent = ((PsiReference) returnValue).resolve();
-        if (referent == null || !referent.equals(variable)) {
-            return false;
-        }
-        return true;
+        return !(referent == null || !referent.equals(variable));
     }
     private static boolean isImmediatelyThrown(PsiVariable variable) {
 
@@ -174,10 +171,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
             return false;
         }
         final PsiElement referent = ((PsiReference) returnValue).resolve();
-        if (referent == null || !referent.equals(variable)) {
-            return false;
-        }
-        return true;
+        return !(referent == null || !referent.equals(variable));
     }
 
     private static boolean isImmediatelyAssigned(PsiVariable variable) {
