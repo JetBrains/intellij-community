@@ -98,7 +98,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  private List<IntentionAction> getAvailableActions() {
+  protected List<IntentionAction> getAvailableActions() {
     final HighlightInfo[] infos = doHighlighting();
     return getAvailableActions(infos, getEditor(), getFile());
   }
