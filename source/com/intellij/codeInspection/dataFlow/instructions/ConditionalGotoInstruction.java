@@ -9,9 +9,10 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
@@ -40,12 +41,12 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
       condFalse = cond.createNegated();
     }
 
-    if (condTrue == DfaConstValue.Factory.getInstance().getTrue()) {
+    if (condTrue == runner.getFactory().getConstFactory().getTrue()) {
       markBranchReachable(true);
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getOffset()), memState)};
     }
 
-    if (condFalse == DfaConstValue.Factory.getInstance().getTrue()) {
+    if (condFalse == runner.getFactory().getConstFactory().getTrue()) {
       markBranchReachable(false);
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
     }

@@ -15,24 +15,14 @@ import java.util.ArrayList;
 
 public class DfaNewValue extends DfaValue {
   public static class Factory {
-    private static volatile Factory myInstance;
     private final DfaNewValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaNewValue>> myStringToObject;
+    private final DfaValueFactory myFactory;
 
-    private Factory() {
-      mySharedInstance = new DfaNewValue();
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
+      mySharedInstance = new DfaNewValue(factory);
       myStringToObject = new HashMap<String, ArrayList<DfaNewValue>>();
-    }
-
-    public static Factory getInstance() {
-      if (myInstance == null) {
-        myInstance = new Factory();
-      }
-      return myInstance;
-    }
-
-    public static void freeInstance() {
-      myInstance = null;
     }
 
     public DfaValue create(PsiType type) {
@@ -51,7 +41,7 @@ public class DfaNewValue extends DfaValue {
         }
       }
 
-      DfaNewValue result = new DfaNewValue(type);
+      DfaNewValue result = new DfaNewValue(type, myFactory);
       conditions.add(result);
       return result;
     }
@@ -59,11 +49,13 @@ public class DfaNewValue extends DfaValue {
 
   private PsiType myType;
 
-  private DfaNewValue(PsiType myType) {
+  private DfaNewValue(PsiType myType, DfaValueFactory factory) {
+    super(factory);
     this.myType = myType;
   }
 
-  private DfaNewValue() {
+  private DfaNewValue(DfaValueFactory factory) {
+    super(factory);
   }
 
   public String toString() {

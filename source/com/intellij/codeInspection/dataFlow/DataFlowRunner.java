@@ -31,6 +31,7 @@ public class DataFlowRunner {
   private final HashSet myNPEInstructions;
   private DfaVariableValue[] myFields;
   private final HashSet myCCEInstructions;
+  private DfaValueFactory myValueFactory;
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
@@ -39,12 +40,16 @@ public class DataFlowRunner {
   public DataFlowRunner() {
     myNPEInstructions = new HashSet();
     myCCEInstructions = new HashSet();
-    DfaValueFactory.freeInstance();
+    myValueFactory = new DfaValueFactory();
+  }
+
+  public DfaValueFactory getFactory() {
+    return myValueFactory;
   }
 
   public boolean analyzeMethod(PsiCodeBlock psiBlock) {
     try {
-      ControlFlow flow = new ControlFlowAnalyzer().buildControlFlow(psiBlock);
+      ControlFlow flow = new ControlFlowAnalyzer(myValueFactory).buildControlFlow(psiBlock);
       if (flow == null) return false;
 
       myInstructions = flow.getInstructions();
@@ -66,7 +71,7 @@ public class DataFlowRunner {
       if (branchCount > 80) return false; // Do not even try. Definetly will out of time.
 
       final ArrayList queue = new ArrayList();
-      queue.add(new DfaInstructionState(myInstructions[0], DfaMemoryStateImpl.createEmpty()));
+      queue.add(new DfaInstructionState(myInstructions[0], DfaMemoryStateImpl.createEmpty(myValueFactory)));
 
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
@@ -104,9 +109,6 @@ public class DataFlowRunner {
     }
     catch (EmptyStackException e) /* TODO[max] !!! hack (of 18186). Please fix in better times. */ {
       return false;
-    }
-    finally {
-      DfaValueFactory.freeInstance();
     }
   }
 

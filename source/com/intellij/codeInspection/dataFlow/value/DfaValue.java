@@ -2,11 +2,17 @@ package com.intellij.codeInspection.dataFlow.value;
 
 public class DfaValue {
   private final int myID;
+  protected DfaValueFactory myFactory;
 
-  protected DfaValue() {
-    final DfaValueFactory factory = DfaValueFactory.getInstance();
-    myID = factory.createID();
-    factory.registerValue(this);
+  public DfaValue(final DfaValueFactory factory) {
+    myFactory = factory;
+    if (factory != null) {
+      myID = factory.createID();
+      factory.registerValue(this);
+    }
+    else {
+      myID = 0;
+    }
   }
 
   public int getID() {

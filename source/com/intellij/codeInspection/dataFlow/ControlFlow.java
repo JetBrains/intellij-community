@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
@@ -25,6 +26,11 @@ public class ControlFlow {
   private final HashMap myElementToEndOffsetMap = new HashMap();
   private final Stack myElementStack = new Stack();
   private DfaVariableValue[] myFields;
+  private DfaValueFactory myFactory;
+
+  public ControlFlow(final DfaValueFactory factory) {
+    myFactory = factory;
+  }
 
   public Instruction[] getInstructions(){
     addInstruction(new ReturnInstruction());
@@ -50,7 +56,7 @@ public class ControlFlow {
   }
 
   public void removeVariable(PsiVariable variable) {
-    DfaVariableValue var = DfaVariableValue.Factory.getInstance().create(variable, false);
+    DfaVariableValue var = myFactory.getVarFactory().create(variable, false);
     addInstruction(new FlushVariableInstruction(var));
   }
 

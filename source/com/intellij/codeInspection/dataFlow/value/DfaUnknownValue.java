@@ -19,6 +19,7 @@ public class DfaUnknownValue extends DfaValue {
   }
 
   private DfaUnknownValue() {
+    super(null);
   }
 
   public DfaValue createNegated() {

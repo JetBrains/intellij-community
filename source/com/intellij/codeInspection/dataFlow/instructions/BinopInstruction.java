@@ -46,35 +46,35 @@ public class BinopInstruction extends BranchingInstruction {
 
     if (myOperationSign != null) {
       ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
+      final DfaValueFactory factory = runner.getFactory();
       if (("==".equals(myOperationSign) || "!=".equals(myOperationSign)) &&
           dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
         boolean negated = "!=".equals(myOperationSign);
         if (dfaLeft == dfaRight ^ negated) {
-          memState.push(DfaConstValue.Factory.getInstance().getTrue());
+          memState.push(factory.getConstFactory().getTrue());
           setTrueReachable();
         }
         else {
-          memState.push(DfaConstValue.Factory.getInstance().getFalse());
+          memState.push(factory.getConstFactory().getFalse());
           setFalseReachable();
         }
         return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
       }
 
-      DfaRelationValue dfaRelation = DfaRelationValue.Factory.getInstance().create(dfaLeft, dfaRight, myOperationSign,
-                                                                                   false);
+      DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, myOperationSign, false);
       if (dfaRelation != null) {
         myCanBeNullInInstanceof = true;
 
         final DfaMemoryState trueCopy = memState.createCopy();
         if (trueCopy.applyCondition(dfaRelation)) {
-          trueCopy.push(DfaConstValue.Factory.getInstance().getTrue());
+          trueCopy.push(factory.getConstFactory().getTrue());
           setTrueReachable();
           states.add(new DfaInstructionState(next, trueCopy));
         }
 
         final DfaMemoryState falseCopy = memState;
         if (falseCopy.applyCondition(dfaRelation.createNegated())) {
-          falseCopy.push(DfaConstValue.Factory.getInstance().getFalse());
+          falseCopy.push(factory.getConstFactory().getFalse());
           setFalseReachable();
           states.add(new DfaInstructionState(next, falseCopy));
           if (myIsInstanceofRedundant && !falseCopy.isNull(dfaLeft)) {

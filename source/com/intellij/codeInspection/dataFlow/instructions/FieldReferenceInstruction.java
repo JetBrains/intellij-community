@@ -19,24 +19,24 @@ public class FieldReferenceInstruction extends Instruction {
   private PsiExpression myExpression;
   private DfaRelationValue myDfaNotNull;
 
-  public FieldReferenceInstruction(PsiReferenceExpression expression) {
-    this(expression.getQualifierExpression());
+  public FieldReferenceInstruction(PsiReferenceExpression expression, DfaValueFactory factory) {
+    this(expression.getQualifierExpression(), factory);
     myExpression = expression;
   }
 
-  public FieldReferenceInstruction(PsiArrayAccessExpression expression) {
-    this(expression.getArrayExpression());
+  public FieldReferenceInstruction(PsiArrayAccessExpression expression, DfaValueFactory factory) {
+    this(expression.getArrayExpression(), factory);
     myExpression = expression;
   }
 
-  private FieldReferenceInstruction(PsiExpression varReferenceExpression) {
+  private FieldReferenceInstruction(PsiExpression varReferenceExpression, DfaValueFactory factory) {
     myDfaNotNull = null;
     if (varReferenceExpression instanceof PsiReferenceExpression) {
       PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)varReferenceExpression);
       if (psiVariable != null) {
-        DfaVariableValue dfaVariable = DfaVariableValue.Factory.getInstance().create(psiVariable, false);
-        DfaConstValue dfaNull = DfaConstValue.Factory.getInstance().getNull();
-        myDfaNotNull = DfaRelationValue.Factory.getInstance().create(dfaVariable, dfaNull, "==", true);
+        DfaVariableValue dfaVariable = factory.getVarFactory().create(psiVariable, false);
+        DfaConstValue dfaNull = factory.getConstFactory().getNull();
+        myDfaNotNull = factory.getRelationFactory().create(dfaVariable, dfaNull, "==", true);
       }
     }
   }

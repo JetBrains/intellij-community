@@ -19,24 +19,14 @@ public class DfaRelationValue extends DfaValue {
   private boolean myIsNegated;
 
   public static class Factory {
-    private static volatile Factory myInstance;
     private final DfaRelationValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaRelationValue>> myStringToObject;
+    private DfaValueFactory myFactory;
 
-    private Factory() {
-      mySharedInstance = new DfaRelationValue();
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
+      mySharedInstance = new DfaRelationValue(factory);
       myStringToObject = new HashMap<String, ArrayList<DfaRelationValue>>();
-    }
-
-    public static Factory getInstance() {
-      if (myInstance == null) {
-        myInstance = new Factory();
-      }
-      return myInstance;
-    }
-
-    public static void freeInstance() {
-      myInstance = null;
     }
 
     public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, String relation, boolean negated) {
@@ -82,7 +72,7 @@ public class DfaRelationValue extends DfaValue {
         }
       }
 
-      DfaRelationValue result = new DfaRelationValue(dfaLeft, dfaRight, relation, negated);
+      DfaRelationValue result = new DfaRelationValue(dfaLeft, dfaRight, relation, negated, myFactory);
       conditions.add(result);
       return result;
     }
@@ -105,10 +95,13 @@ public class DfaRelationValue extends DfaValue {
     }
   }
 
-  private DfaRelationValue() {
+  private DfaRelationValue(DfaValueFactory factory) {
+    super(factory);
   }
 
-  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, String myRelation, boolean myIsNegated) {
+  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, String myRelation, boolean myIsNegated,
+                           DfaValueFactory factory) {
+    super(factory);
     this.myLeftOperand = myLeftOperand;
     this.myRightOperand = myRightOperand;
     this.myRelation = myRelation;
@@ -128,7 +121,7 @@ public class DfaRelationValue extends DfaValue {
   }
 
   public DfaValue createNegated() {
-    return Factory.getInstance().create(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
+    return myFactory.getRelationFactory().create(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
   }
 
   private boolean hardEquals(DfaRelationValue rel) {

@@ -17,21 +17,18 @@ import gnu.trove.TIntObjectHashMap;
 public class DfaValueFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
 
-  private static volatile DfaValueFactory myInstance = null;
   private int myLastID;
   private TIntObjectHashMap<DfaValue> myValues;
 
-  private DfaValueFactory() {
+  public DfaValueFactory() {
     myValues = new TIntObjectHashMap<DfaValue>();
     myLastID = 0;
-  }
 
-  public static DfaValueFactory getInstance() {
-    if (myInstance == null) {
-      myInstance = new DfaValueFactory();
-    }
-
-    return myInstance;
+    myVarFactory = new DfaVariableValue.Factory(this);
+    myConstFactory = new DfaConstValue.Factory(this);
+    myNewFactory = new DfaNewValue.Factory(this);
+    myTypeFactory = new DfaTypeValue.Factory(this);
+    myRelationFactory = new DfaRelationValue.Factory(this);
   }
 
   int createID() {
@@ -48,7 +45,7 @@ public class DfaValueFactory {
     return myValues.get(id);
   }
 
-  public static DfaValue create(PsiExpression psiExpression) {
+  public DfaValue create(PsiExpression psiExpression) {
     DfaValue result = null;
 
     if (psiExpression instanceof PsiReferenceExpression) {
@@ -56,26 +53,26 @@ public class DfaValueFactory {
 
       if (psiSource != null) {
         if (psiSource instanceof PsiVariable) {
-          DfaConstValue constValue = DfaConstValue.Factory.getInstance().create((PsiVariable)psiSource);
+          DfaConstValue constValue = getConstFactory().create((PsiVariable)psiSource);
           if (constValue != null) return constValue;
         }
 
         PsiVariable psiVariable = resolveVariable((PsiReferenceExpression)psiExpression);
         if (psiVariable != null) {
-          result = DfaVariableValue.Factory.getInstance().create(psiVariable, false);
+          result = getVarFactory().create(psiVariable, false);
         }
       }
     }
     else if (psiExpression instanceof PsiLiteralExpression) {
-      result = DfaConstValue.Factory.getInstance().create((PsiLiteralExpression)psiExpression);
+      result = getConstFactory().create((PsiLiteralExpression)psiExpression);
     }
     else if (psiExpression instanceof PsiNewExpression) {
-      result = DfaNewValue.Factory.getInstance().create(psiExpression.getType());
+      result = getNewFactory().create(psiExpression.getType());
     }
     else {
       final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
       if (value != null) {
-        result = DfaConstValue.Factory.getInstance().createFromValue(value);
+        result = getConstFactory().createFromValue(value);
       }
     }
 
@@ -95,11 +92,32 @@ public class DfaValueFactory {
   }
 
   public static void freeInstance() {
-    DfaVariableValue.Factory.freeInstance();
-    DfaConstValue.Factory.freeInstance();
-    DfaNewValue.Factory.freeInstance();
-    DfaTypeValue.Factory.freeInstance();
-    DfaRelationValue.Factory.freeInstance();
-    myInstance = null;
+  }
+
+  private final DfaVariableValue.Factory myVarFactory;
+  private final DfaConstValue.Factory myConstFactory;
+  private final DfaNewValue.Factory myNewFactory;
+  private final DfaTypeValue.Factory myTypeFactory;
+  private final DfaRelationValue.Factory myRelationFactory;
+
+
+  public DfaVariableValue.Factory getVarFactory() {
+    return myVarFactory;
+  }
+
+  public DfaConstValue.Factory getConstFactory() {
+    return myConstFactory;
+  }
+
+  public DfaNewValue.Factory getNewFactory() {
+    return myNewFactory;
+  }
+
+  public DfaTypeValue.Factory getTypeFactory() {
+    return myTypeFactory;
+  }
+
+  public DfaRelationValue.Factory getRelationFactory() {
+    return myRelationFactory;
   }
 }

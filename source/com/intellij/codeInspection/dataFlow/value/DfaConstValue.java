@@ -18,27 +18,15 @@ public class DfaConstValue extends DfaValue {
     private DfaConstValue dfaNull;
     private DfaConstValue dfaFalse;
     private DfaConstValue dfaTrue;
-
-
-    private static volatile Factory myInstance;
     private final HashMap<Object, DfaConstValue> myValues;
+    private DfaValueFactory myFactory;
 
-    private Factory() {
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
       myValues = new HashMap<Object, DfaConstValue>();
-      dfaNull = new DfaConstValue(null);
-      dfaFalse = new DfaConstValue(Boolean.FALSE);
-      dfaTrue = new DfaConstValue(Boolean.TRUE);
-    }
-
-    public static Factory getInstance() {
-      if (myInstance == null) {
-        myInstance = new Factory();
-      }
-      return myInstance;
-    }
-
-    public static void freeInstance() {
-      myInstance = null;
+      dfaNull = new DfaConstValue(null, factory);
+      dfaFalse = new DfaConstValue(Boolean.FALSE, factory);
+      dfaTrue = new DfaConstValue(Boolean.TRUE, factory);
     }
 
     public DfaConstValue create(PsiLiteralExpression expr) {
@@ -60,7 +48,7 @@ public class DfaConstValue extends DfaValue {
 
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
-        instance = new DfaConstValue(value);
+        instance = new DfaConstValue(value, myFactory);
         myValues.put(value, instance);
       }
 
@@ -82,7 +70,8 @@ public class DfaConstValue extends DfaValue {
 
   private Object myValue;
 
-  private DfaConstValue(Object value) {
+  private DfaConstValue(Object value, DfaValueFactory factory) {
+    super(factory);
     myValue = value;
   }
 
@@ -92,8 +81,8 @@ public class DfaConstValue extends DfaValue {
   }
 
   public DfaValue createNegated() {
-    if (this == Factory.getInstance().getTrue()) return Factory.getInstance().getFalse();
-    if (this == Factory.getInstance().getFalse()) return Factory.getInstance().getTrue();
+    if (this == myFactory.getConstFactory().getTrue()) return myFactory.getConstFactory().getFalse();
+    if (this == myFactory.getConstFactory().getFalse()) return myFactory.getConstFactory() .getTrue();
     return DfaUnknownValue.getInstance();
   }
 }

@@ -22,7 +22,7 @@ public class TypeCastInstruction extends Instruction {
   private final DfaRelationValue myInstanceofRelation;
   private final boolean myIsSemantical;
 
-  public static TypeCastInstruction createInstruction(PsiTypeCastExpression castExpression) {
+  public static TypeCastInstruction createInstruction(PsiTypeCastExpression castExpression, DfaValueFactory factory) {
     PsiExpression expr = castExpression.getOperand();
     PsiType castType = castExpression.getCastType().getType();
 
@@ -32,11 +32,11 @@ public class TypeCastInstruction extends Instruction {
       return new TypeCastInstruction();
     }
 
-    DfaValue dfaExpr = DfaValueFactory.create(expr);
-    DfaTypeValue dfaType = DfaTypeValue.Factory.getInstance().create(castType);
+    DfaValue dfaExpr = factory.create(expr);
+    DfaTypeValue dfaType = factory.getTypeFactory().create(castType);
     if (dfaExpr == null) return null;
 
-    DfaRelationValue dfaInstanceof = DfaRelationValue.Factory.getInstance().create(dfaExpr, dfaType, "instanceof", false);
+    DfaRelationValue dfaInstanceof = factory.getRelationFactory().create(dfaExpr, dfaType, "instanceof", false);
     return dfaInstanceof != null ? new TypeCastInstruction(castExpression, dfaInstanceof) : null;
   }
 

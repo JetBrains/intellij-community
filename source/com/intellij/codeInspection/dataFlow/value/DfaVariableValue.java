@@ -15,24 +15,14 @@ import java.util.ArrayList;
 
 public class DfaVariableValue extends DfaValue {
   public static class Factory {
-    private static volatile Factory myInstance;
     private final DfaVariableValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaVariableValue>> myStringToObject;
+    private DfaValueFactory myFactory;
 
-    private Factory() {
-      mySharedInstance = new DfaVariableValue();
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
+      mySharedInstance = new DfaVariableValue(factory);
       myStringToObject = new HashMap<String, ArrayList<DfaVariableValue>>();
-    }
-
-    public static Factory getInstance() {
-      if (myInstance == null) {
-        myInstance = new Factory();
-      }
-      return myInstance;
-    }
-
-    public static void freeInstance() {
-      myInstance = null;
     }
 
     public DfaVariableValue create(PsiVariable myVariable, boolean isNegated) {
@@ -51,7 +41,7 @@ public class DfaVariableValue extends DfaValue {
         }
       }
 
-      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated);
+      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated, myFactory);
       conditions.add(result);
       return result;
     }
@@ -60,12 +50,14 @@ public class DfaVariableValue extends DfaValue {
   private PsiVariable myVariable;
   private boolean myIsNegated;
 
-  private DfaVariableValue(PsiVariable variable, boolean isNegated) {
+  private DfaVariableValue(PsiVariable variable, boolean isNegated, DfaValueFactory factory) {
+    super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
   }
 
-  private DfaVariableValue() {
+  private DfaVariableValue(DfaValueFactory factory) {
+    super(factory);
     myVariable = null;
     myIsNegated = false;
   }
@@ -79,7 +71,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   public DfaValue createNegated() {
-    return Factory.getInstance().create(getPsiVariable(), !myIsNegated);
+    return myFactory.getVarFactory().create(getPsiVariable(), !myIsNegated);
   }
 
   public String toString() {

@@ -25,7 +25,7 @@ public class MethodCallInstruction extends Instruction {
   private final PsiMethodCallExpression myCall;
   private DfaRelationValue myDfaNotNull;
 
-  public MethodCallInstruction(PsiMethodCallExpression call) {
+  public MethodCallInstruction(PsiMethodCallExpression call, DfaValueFactory factory) {
     myCall = call;
     myDfaNotNull = null;
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
@@ -33,9 +33,9 @@ public class MethodCallInstruction extends Instruction {
       PsiReferenceExpression expression = (PsiReferenceExpression)qualifierExpression;
       PsiVariable psiVariable = DfaValueFactory.resolveVariable(expression);
       if (psiVariable != null) {
-        DfaVariableValue dfaVariable = DfaVariableValue.Factory.getInstance().create(psiVariable, false);
-        DfaConstValue dfaNull = DfaConstValue.Factory.getInstance().getNull();
-        myDfaNotNull = DfaRelationValue.Factory.getInstance().create(dfaVariable, dfaNull, "==", true);
+        DfaVariableValue dfaVariable = factory.getVarFactory().create(psiVariable, false);
+        DfaConstValue dfaNull = factory.getConstFactory().getNull();
+        myDfaNotNull = factory.getRelationFactory().create(dfaVariable, dfaNull, "==", true);
       }
     }
   }

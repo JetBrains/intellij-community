@@ -8,34 +8,21 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 
 public class DfaTypeValue extends DfaValue {
   public static class Factory {
-    private static volatile Factory ourInstance;
     private final DfaTypeValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaTypeValue>> myStringToObject;
+    private DfaValueFactory myFactory;
 
-    private Factory() {
-      mySharedInstance = new DfaTypeValue();
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
+      mySharedInstance = new DfaTypeValue(factory);
       myStringToObject = new HashMap<String, ArrayList<DfaTypeValue>>();
-    }
-
-    public static Factory getInstance() {
-      if (ourInstance == null) {
-        ourInstance = new Factory();
-      }
-      return ourInstance;
-    }
-
-    public static void freeInstance() {
-      ourInstance = null;
     }
 
     public DfaTypeValue create(PsiType myType) {
@@ -57,7 +44,7 @@ public class DfaTypeValue extends DfaValue {
         }
       }
 
-      DfaTypeValue result = new DfaTypeValue(myType);
+      DfaTypeValue result = new DfaTypeValue(myType, myFactory);
       conditions.add(result);
       return result;
     }
@@ -66,10 +53,12 @@ public class DfaTypeValue extends DfaValue {
   private PsiType myType;
   private String myCanonicalText;
 
-  private DfaTypeValue() {
+  private DfaTypeValue(DfaValueFactory factory) {
+    super(factory);
   }
 
-  private DfaTypeValue(PsiType type) {
+  private DfaTypeValue(PsiType type, DfaValueFactory factory) {
+    super(factory);
     myType = type;
     myCanonicalText = type.getCanonicalText();
     if (myCanonicalText == null) {
