@@ -971,7 +971,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
                               "// comment before\n" +
-                              "            protected Object a;//  comment after\n" +
+                              "        protected Object a;//  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
