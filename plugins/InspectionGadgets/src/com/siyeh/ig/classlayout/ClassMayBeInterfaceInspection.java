@@ -2,12 +2,12 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
@@ -79,7 +79,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
             final PsiElementFactory elementFactory = psiManager.getElementFactory();
             final PsiJavaCodeReferenceElement classReference = elementFactory.createClassReferenceElement(oldClass);
-            final GlobalSearchScope searchScope = oldClass.getUseScope();
+            final SearchScope searchScope = oldClass.getUseScope();
             final PsiClass[] inheritors = searchHelper.findInheritors(oldClass, searchScope, false);
             for (int i = 0; i < inheritors.length; i++) {
                 final PsiClass inheritor = inheritors[i];
