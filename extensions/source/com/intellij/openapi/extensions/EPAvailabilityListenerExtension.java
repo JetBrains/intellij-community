@@ -8,7 +8,7 @@ package com.intellij.openapi.extensions;
  * @author AKireyev
  */
 public class EPAvailabilityListenerExtension {
-  public static final String EXTENSION_POINT_NAME = "jetbrains.fabrique.framework.epAvailabilityListener";
+  public static final String EXTENSION_POINT_NAME = "com.intellij.openapi.extensions.epAvailabilityListener";
 
   private String myExtensionPointName;
   private String myListenerClass;
