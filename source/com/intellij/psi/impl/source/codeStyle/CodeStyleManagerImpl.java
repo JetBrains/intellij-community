@@ -96,7 +96,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final PsiElement startElement = element.getContainingFile().findElementAt(startOffset);
     final PsiElement endElement = element.getContainingFile().findElementAt(endOffset);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
-    if (startElement.isValid() && endElement.isValid()) {
+    if (startElement != null && endElement != null && startElement.isValid() && endElement.isValid()) {
       return new BraceEnforcer(getSettings()).process(formatted, startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
     } else {
       return formatted;
