@@ -101,6 +101,8 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
           public void run() {
 
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            int toBeProcessed = updateEnvToVirtualFiles.size();
+            int processed = 0;
             for (Iterator<UpdateEnvironment> iterator = updateEnvToVirtualFiles.keySet().iterator(); iterator.hasNext();) {
               UpdateEnvironment updateEnvironment = iterator.next();
               updateEnvironment.fillGroups(updatedFiles);
@@ -108,6 +110,8 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
               UpdateSession updateSession = updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]),
                                                                                 updatedFiles,
                                                                                 progressIndicator);
+              processed++;
+              progressIndicator.setFraction((double) processed / (double) toBeProcessed);
               vcsExceptions.addAll(updateSession.getExceptions());
               updateSessions.add(updateSession);
             }

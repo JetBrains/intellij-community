@@ -12,6 +12,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.codeFormatting.PseudoText;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
@@ -401,5 +403,26 @@ public class CodeEditUtil {
         helper.makeSpace(parent, child1, child2, " ");
       }
     }
+  }
+
+  public static String getWhiteSpaceBetweenTokens(LeafElement first, LeafElement second) {
+    final PsiElement firstAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(first);
+    LOG.assertTrue(firstAsPsiElement != null);
+    final PsiFile file = firstAsPsiElement.getContainingFile();
+    final FileType fileType = file.getVirtualFile().getFileType();
+    final PseudoTextBuilder pseudoTextBuilder = fileType.getPseudoTextBuilder();
+    LOG.assertTrue(pseudoTextBuilder != null);
+    final Project project = firstAsPsiElement.getProject();
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    final int startOffset = first.getStartOffset();
+    final int endOffset = second.getStartOffset();
+
+    final PseudoText pseudoText = pseudoTextBuilder.build(project,
+                                                          settings,
+                                                          file,
+                                                          0,
+                                                          file.getTextLength());
+
+    return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, fileType, startOffset, endOffset);
   }
 }
