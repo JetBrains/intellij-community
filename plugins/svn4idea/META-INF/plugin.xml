@@ -17,6 +17,10 @@
       <implementation-class>com.qintsoft.svn4idea.SvnVcs</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>com.qintsoft.svn4idea.SvnConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
   </project-components>
 
   <actions>
