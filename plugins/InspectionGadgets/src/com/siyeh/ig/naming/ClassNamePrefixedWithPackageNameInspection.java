@@ -28,7 +28,7 @@ public class ClassNamePrefixedWithPackageNameInspection extends ClassInspection 
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Class name '#ref' begins with it's package name #loc";
+        return "Class name '#ref' begins with its package name #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

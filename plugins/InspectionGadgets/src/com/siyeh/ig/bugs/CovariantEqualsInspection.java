@@ -19,7 +19,7 @@ public class CovariantEqualsInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref should take Object as it's argument #loc";
+        return "#ref should take Object as its argument #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

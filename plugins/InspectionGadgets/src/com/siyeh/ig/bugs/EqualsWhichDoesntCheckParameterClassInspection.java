@@ -19,7 +19,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref should check the class of it's parameter #loc";
+        return "#ref should check the class of its parameter #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

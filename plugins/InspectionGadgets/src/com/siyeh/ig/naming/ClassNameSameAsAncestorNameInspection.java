@@ -29,7 +29,7 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Class name '#ref' is the same as one of it's superclass' names #loc";
+        return "Class name '#ref' is the same as one of its superclass' names #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

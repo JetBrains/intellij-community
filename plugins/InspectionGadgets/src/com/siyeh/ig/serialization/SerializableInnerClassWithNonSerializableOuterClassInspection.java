@@ -26,7 +26,7 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection exten
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Inner class #ref is serializable while it's outer class is not #loc";
+        return "Inner class #ref is serializable while its outer class is not #loc";
     }
 
     public JComponent createOptionsPanel() {

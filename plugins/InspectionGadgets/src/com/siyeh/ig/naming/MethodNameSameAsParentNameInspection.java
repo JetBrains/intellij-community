@@ -27,7 +27,7 @@ public class MethodNameSameAsParentNameInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Method name '#ref' is the same as it's parent class name #loc";
+        return "Method name '#ref' is the same as its parent class name #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

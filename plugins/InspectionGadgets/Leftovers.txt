@@ -20,4 +20,4 @@
     Non non-static initializer quickfix
     Fix the "variable accessed in synchronized and unsynchronized contexts"
        to deal with unsynchronized private methods called only from synchronized contexts
-    Telemetry
+    Telemetry sorting
