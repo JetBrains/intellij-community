@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDirectory;
 import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
-
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -45,6 +44,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public boolean contains(VirtualFile file) {
-    return VfsUtil.isAncestor(getValue().getVirtualFile(), file, false);
+    final PsiDirectory value = getValue();
+    if (value == null) {
+      return false;
+    }
+    else {
+      return VfsUtil.isAncestor(value.getVirtualFile(), file, false);
+    }
   }
 }
