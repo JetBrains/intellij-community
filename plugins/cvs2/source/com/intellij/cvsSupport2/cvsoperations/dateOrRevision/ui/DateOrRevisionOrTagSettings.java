@@ -5,6 +5,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.ui.SelectDateDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

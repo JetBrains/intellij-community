@@ -54,6 +54,7 @@ public class CommitMessage extends JPanel{
               setText(contentChooser.getAllContents().get(selectedIndex));
             }
           }
+          myCommentArea.requestFocus();
         }
       });
     }

@@ -1,10 +1,8 @@
-package com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui;
+package com.intellij.util.ui;
 
 import javax.swing.*;
 
-/**
- * author: lesya
- */
+
 
 class IntegerSpinnerModel extends AbstractSpinnerModel {
   private final int myMinValue;

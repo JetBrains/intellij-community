@@ -1,4 +1,4 @@
-package com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui;
+package com.intellij.util.ui;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
