@@ -8,13 +8,14 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,7 +32,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.SmartList;
-import com.intellij.lang.annotation.HighlightSeverity;
+import gnu.trove.TIntArrayList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -126,9 +127,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public int compare(Object o1, Object o2) {
             RangeHighlighter h1 = (RangeHighlighter)o1;
             RangeHighlighter h2 = (RangeHighlighter)o2;
-            if (h1.getLayer() != h2.getLayer()) {
-              return h2.getLayer() - h1.getLayer();
-            }
             return h1.getStartOffset() - h2.getEndOffset();
           }
         }
@@ -136,18 +134,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     return myCachedSortedHighlighters;
-  }
-
-  private ErrorMarkPileList getErrorMarkPileList() {
-    if (myCachedErrorMarkPileList == null) {
-      myCachedErrorMarkPileList = new ErrorMarkPileList();
-      List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
-      for (int i = 0; i < sortedHighlighters.size(); i++) {
-        RangeHighlighter highlighter = sortedHighlighters.get(i);
-        myCachedErrorMarkPileList.addNextMark(highlighter);
-      }
-    }
-    return myCachedErrorMarkPileList;
   }
 
   private class MyErrorPanel extends JPanel implements MouseMotionListener, MouseListener {
@@ -201,20 +187,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void doMouseClicked(MouseEvent e) {
       myEditor.getContentComponent().requestFocus();
-      //EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-      //int scrollBarHeight = scrollBar.getSize().height;
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
-
       if (lineCount == 0) {
         return;
       }
-
       getErrorMarkPileList().doClick(e, getWidth());
     }
 
     public void mouseMoved(MouseEvent e) {
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-      //int scrollBarHeight = scrollBar.getSize().height;
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
       if (lineCount == 0) {
@@ -321,6 +302,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myCachedErrorMarkPileList = null;
   }
 
+  private ErrorMarkPileList getErrorMarkPileList() {
+    if (myCachedErrorMarkPileList == null) {
+      myCachedErrorMarkPileList = new ErrorMarkPileList();
+      List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
+      for (int i = 0; i < sortedHighlighters.size(); i++) {
+        RangeHighlighter highlighter = sortedHighlighters.get(i);
+        myCachedErrorMarkPileList.addNextMark(highlighter);
+      }
+    }
+    return myCachedErrorMarkPileList;
+  }
+
   private class ErrorMarkPileList {
     private List<ErrorMarkPile> list = new ArrayList<ErrorMarkPile>();
 
@@ -339,13 +332,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int yEndPosition = visibleLineToYPosition(visEndLine, myScrollBarHeight);
 
       final ErrorMarkPile prevPile = list.size() == 0 ? null : list.get(list.size() - 1);
-      int prevPileEnd = prevPile == null ? -100 : prevPile.yEnd;
-      if (yStartPosition - prevPileEnd < getMinHeight()) {
-        prevPile.addMark(mark, yEndPosition);
+      int prevPileStart = prevPile == null ? 0 : prevPile.yStart;
+      if (prevPile != null && yStartPosition - prevPileStart < getMinHeight()) {
+        prevPile.addMark(mark, yStartPosition, yEndPosition);
       }
       else {
         final ErrorMarkPile pile = new ErrorMarkPile(yStartPosition);
-        pile.addMark(mark, yEndPosition);
+        pile.addMark(mark, yStartPosition, yEndPosition);
         list.add(pile);
       }
     }
@@ -383,63 +376,67 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private int yStart;
     private int yEnd;
     private List<RangeHighlighter> markers = new ArrayList<RangeHighlighter>();
+    private TIntArrayList paintingEndOffsets = new TIntArrayList();
     private static final int MAX_TOOLTIP_LINES = 10;
 
     public ErrorMarkPile(final int yStart) {
       this.yStart = yStart;
     }
 
-    public void addMark(final RangeHighlighter mark, int newYEnd) {
+    public void addMark(final RangeHighlighter mark, int newYStart, int newYEnd) {
+      if (newYEnd - newYStart < getMinHeight()) {
+        newYEnd = newYStart + getMinHeight();
+      }
+      yEnd = Math.max(yEnd, newYEnd - yStart < getMinHeight() ? yStart + getMinHeight() : newYEnd);
+      if (markers.size() != 0) {
+        final int prevMarkIndex = markers.size() - 1;
+        final RangeHighlighter prevMark = markers.get(prevMarkIndex);
+        final int prevMarkEnd = paintingEndOffsets.get(prevMarkIndex);
+        if (prevMark.getLayer() < mark.getLayer()) {
+          // prev mark prio is lower, shorten prev mark
+          paintingEndOffsets.set(prevMarkIndex, Math.min(prevMarkEnd, newYStart));
+        }
+        else if (prevMarkEnd > newYEnd) {
+          // just drop new mark as it falls in the middle of higher priority other mark
+          return;
+        }
+      }
       markers.add(mark);
-      if (newYEnd - yStart < getMinHeight()) {
-        yEnd = yStart + getMinHeight();
-      }
-      else {
-        yEnd = newYEnd;
-      }
+      paintingEndOffsets.add(newYEnd);
     }
 
-    public void paint(final Graphics g, int width) {
+    public void paint(final Graphics g, final int width) {
       int y = yStart;
       for (int i = 0; i < markers.size(); i++) {
         RangeHighlighter mark = markers.get(i);
 
-        int yEndPosition;
-        if (i == markers.size()-1) {
-          yEndPosition = yEnd;
-        }
-        else {
-          int visEndLine = myEditor.logicalToVisualPosition(
-            new LogicalPosition(mark.getDocument().getLineNumber(mark.getEndOffset()), 0)
-          ).line;
-
-          yEndPosition = visibleLineToYPosition(visEndLine, myScrollBarHeight);
-        }
+        int yEndPosition = i == markers.size() - 1 ? yEnd : paintingEndOffsets.get(i);
 
         final int height = yEndPosition - y;
         final Color color = mark.getErrorStripeMarkColor();
         g.setColor(color);
 
         int x = 1;
+        int paintWidth = width;
         if (mark.isThinErrorStripeMark()) {
-          width /= 2;
-          x += width / 2;
+          paintWidth /= 2;
+          x += paintWidth / 2;
         }
 
-        g.fillRect(x, y, width - 1, height);
+        g.fillRect(x, y, paintWidth - 1, height);
         Color brighter = color.brighter();
         Color darker = color.darker();
 
         g.setColor(brighter);
         g.drawLine(x, y, x, y + height);
-        if (i == 0) {
-          g.drawLine(x + 1, y, x + width - 1, y);
+        if (i == 0 || markers.get(i-1).isThinErrorStripeMark() != mark.isThinErrorStripeMark()) {
+          g.drawLine(x + 1, y, x + paintWidth - 1, y);
         }
         g.setColor(darker);
-        if (i == markers.size()-1) {
-          g.drawLine(x + 1, y + height, x + width, y + height);
+        if (i == markers.size()-1 || markers.get(i + 1).isThinErrorStripeMark() != mark.isThinErrorStripeMark()) {
+          g.drawLine(x + 1, y + height, x + paintWidth, y + height);
         }
-        g.drawLine(x + width, y, x + width, y + height - 1);
+        g.drawLine(x + paintWidth, y, x + paintWidth, y + height - 1);
 
         y = yEndPosition;
       }
