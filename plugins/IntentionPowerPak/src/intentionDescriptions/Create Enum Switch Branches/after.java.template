@@ -1,0 +1,13 @@
+public class X {
+  int f(Color a) {
+    switch(a)
+    {
+      case Blue:
+        break;
+      case Green:
+        break;
+      case Red:
+        break;
+    }
+  }
+}
