@@ -33,6 +33,7 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -63,16 +64,21 @@ public abstract class CodeStyleAbstractPanel {
                                                        CodeStyleSettings.WRAP_AS_NEEDED,
                                                        CodeStyleSettings.WRAP_ON_EVERY_ITEM,
                                                        CodeStyleSettings.WRAP_ALWAYS};
+  private long myLastDocumentModificationStamp;
+  private String myTextToReformat = null;
 
   public CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
   }
 
-  protected static final Editor createEditor() {
+  protected final Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
+    myTextToReformat = getPreviewText();
+    Document editorDocument = editorFactory.createDocument(myTextToReformat);
+    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
+
+    myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setWhitespacesShown(true);
@@ -81,11 +87,13 @@ public abstract class CodeStyleAbstractPanel {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
+    editorSettings.setRightMargin(mySettings.RIGHT_MARGIN);
 
     EditorColorsScheme scheme = editor.getColorsScheme();
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
 
     editor.setHighlighter(HighlighterFactory.createXMLHighlighter(scheme));
+
     return editor;
   }
 
@@ -93,15 +101,29 @@ public abstract class CodeStyleAbstractPanel {
     if (!myShouldUpdatePreview) {
       return;
     }
-    final String text = getPreviewText();
 
+    if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
+      myTextToReformat = myEditor.getDocument().getText();
+    }
+
+    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
+      new Runnable() {
+        public void run() {
+          replaceText();
+        }
+      }, null, null);
+
+    myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
+  }
+
+  private void replaceText() {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final PsiManager manager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiElementFactory factory = manager.getElementFactory();
         try {
-          PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), text);
+          PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), myTextToReformat);
 
           CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
           apply(clone);
@@ -113,7 +135,6 @@ public abstract class CodeStyleAbstractPanel {
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
           Document document = myEditor.getDocument();
           document.replaceString(0, document.getTextLength(), psiFile.getText());
-
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

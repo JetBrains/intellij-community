@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -85,8 +86,17 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
 
-    presentation.setEnabled((psiFile.getVirtualFile().getFileType().getStructureViewModel(psiFile.getVirtualFile(), project) != null) || AntFileStructureList.canShowFor(psiFile));
+    if (virtualFile == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+    presentation.setEnabled((virtualFile.getFileType().getStructureViewModel(virtualFile, project) != null) || AntFileStructureList.canShowFor(psiFile));
   }
 
   public void setActionActive(String name, boolean state) {

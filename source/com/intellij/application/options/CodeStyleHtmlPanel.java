@@ -31,10 +31,10 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -63,6 +63,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JTextField myKeepWhiteSpacesTagNames;
   private JTextField myTextElementsTagNames;
   private JTextField myDoNotAlignChildrenMinSize;
+  private JCheckBox myShouldKeepBlankLines;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -109,6 +110,13 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myDoNotAlignChildrenMinSize.getDocument().addDocumentListener(documentListener);
     myTextElementsTagNames.getDocument().addDocumentListener(documentListener);
     myKeepWhiteSpacesTagNames.getDocument().addDocumentListener(documentListener);
+    myShouldKeepBlankLines.addActionListener(actionListener);
+
+    myShouldKeepBlankLines.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myKeepBlankLines.setEnabled(myShouldKeepBlankLines.isSelected());
+      }
+    });
   }
 
   public void apply(CodeStyleSettings settings) {
@@ -127,6 +135,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE = getIntValue(myDoNotAlignChildrenMinSize);
     settings.HTML_TEXT_ELEMENTS = myTextElementsTagNames.getText();
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
+    settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -147,6 +156,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myKeepWhiteSpaces.setSelected(mySettings.HTML_KEEP_WHITESPACES);
     mySpacesAroundTagName.setSelected(mySettings.HTML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(mySettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
+    myShouldKeepBlankLines.setSelected(mySettings.HTML_KEEP_LINE_BREAKS);
 
     myInsertNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
     myRemoveNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
@@ -155,6 +165,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myTextElementsTagNames.setText(mySettings.HTML_TEXT_ELEMENTS);
     myKeepWhiteSpacesTagNames.setText(mySettings.HTML_KEEP_WHITESPACES_INSIDE);
 
+    myKeepBlankLines.setEnabled(myShouldKeepBlankLines.isSelected());
   }
 
   public boolean isModified(CodeStyleSettings settings) {
@@ -210,6 +221,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
 
     if (!Comparing.equal(settings.HTML_KEEP_WHITESPACES_INSIDE, myKeepWhiteSpacesTagNames.getText().trim())){
+      return true;
+    }
+
+    if (myShouldKeepBlankLines.isSelected() != mySettings.HTML_KEEP_LINE_BREAKS) {
       return true;
     }
 
