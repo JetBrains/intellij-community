@@ -53,25 +53,26 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
-    Map<String[], List<Module>> groups = new THashMap<String[], List<Module>>();
+    Map<String, List<Module>> groups = new THashMap<String, List<Module>>();
     List<Module> nonGroupedModules = new ArrayList<Module>(Arrays.asList(modules));
     for (int i = 0; i < modules.length; i++) {
       final Module module = modules[i];
-      String[] group = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
-      if (group != null) {
-        List<Module> moduleList = groups.get(group);
+      final String[] path = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
+      if (path != null) {
+        final String topLevelGroupName = path[0];
+        List<Module> moduleList = groups.get(topLevelGroupName);
         if (moduleList == null) {
           moduleList = new ArrayList<Module>();
-          groups.put(group, moduleList);
+          groups.put(topLevelGroupName, moduleList);
         }
         moduleList.add(module);
         nonGroupedModules.remove(module);
       }
     }
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (Iterator iterator = groups.keySet().iterator(); iterator.hasNext();) {
-      String[] groupPath = (String[])iterator.next();
-      result.add(new ModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath[0]}), getSettings(), getModuleNodeClass()));
+    for (Iterator<String> iterator = groups.keySet().iterator(); iterator.hasNext();) {
+      String groupPath = iterator.next();
+      result.add(new ModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings(), getModuleNodeClass()));
     }
     result.addAll(ProjectViewNode.wrap(nonGroupedModules, getProject(), getModuleNodeClass(), getSettings()));
     return result;
