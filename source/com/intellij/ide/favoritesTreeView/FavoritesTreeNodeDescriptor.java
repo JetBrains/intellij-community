@@ -9,12 +9,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+
+import javax.swing.*;
 
 /**
  * User: anna
@@ -35,10 +35,25 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     myElement.update();
     myName = myElement.getPresentation().getPresentableText();
     final Object value = myElement.getValue();
-    if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null){
-      myColor = FileStatusManager.getInstance(myProject).getStatus(((PsiElement)value).getContainingFile().getVirtualFile()).getColor();
+    if (value instanceof PsiElement){
+      if (((PsiElement)value).getContainingFile() != null){
+        myColor = FileStatusManager.getInstance(myProject).getStatus(((PsiElement)value).getContainingFile().getVirtualFile()).getColor();
+        int flags = ((PsiElement)value).getContainingFile() instanceof PsiJavaFile  ?  Iconable.ICON_FLAG_VISIBILITY : 0;
+        if (isMarkReadOnly()) {
+          flags |= Iconable.ICON_FLAG_READ_STATUS;
+        }
+        Icon icon = ((PsiElement)value).getIcon(flags);
+        myOpenIcon = icon;
+        myClosedIcon = icon;
+      }
+
     }
     return true;
+  }
+
+  protected boolean isMarkReadOnly() {
+    final Object parentValue = myElement.getParent() == null ? null : myElement.getParent().getValue();
+    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement;
   }
 
   public String getLocation(){
@@ -88,5 +103,17 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
 
   public int hashCode() {
     return myElement.hashCode();
+  }
+
+  public static FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project, String favoritesViewPane) {
+    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
+    while (node.getParentDescriptor() != null && node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
+      FavoritesTreeNodeDescriptor favoritesDescriptor = (FavoritesTreeNodeDescriptor)node.getParentDescriptor();
+      if (favoritesDescriptor.getElement() == favoritesTreeViewPanel.getFavoritesTreeStructure().getRootElement()) {
+        return node;
+      }
+      node = favoritesDescriptor;
+    }
+    return node;
   }
 }

@@ -74,7 +74,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FAVORITES_VIEW, getComponent(), ToolWindowAnchor.RIGHT);
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
+        toolWindow.setIcon(IconLoader.getIcon("/general/favorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
         if (myName2FavoritesListSet.isEmpty()){
@@ -112,7 +112,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     return keys.toArray(new String[keys.size()]);
   }
 
-  public void addNewFavoritesList(String name){
+  public FavoritesTreeViewPanel addNewFavoritesList(String name){
     final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
     final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myProject, null, name);
     final Content favoritesContent = contentFactory.createContent(panel, name, false);
@@ -121,6 +121,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     final AddToFavoritesAction addAction = new AddToFavoritesAction(name);
     myActions.put(name, addAction);
     ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).add(addAction);
+    return panel;
   }
 
   public void removeCurrentFavoritesList(){
@@ -144,7 +145,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);    
+    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
   }
 
   public String getComponentName() {

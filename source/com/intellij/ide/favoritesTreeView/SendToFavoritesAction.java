@@ -1,7 +1,10 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+
+import java.util.ArrayList;
 
 /**
  * User: anna
@@ -20,7 +23,12 @@ public class SendToFavoritesAction extends AnAction{
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     final FavoritesTreeViewPanel currentTreeViewPanel = favoritesView.getCurrentTreeViewPanel();
     final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = currentTreeViewPanel.getSelectedNodeDescriptors();
-    favoritesView.getAddToFavoritesAction(myName).actionPerformed(e);
+    ArrayList<AbstractTreeNode> nodesToAdd = new ArrayList<AbstractTreeNode>();
+    for (int i = 0; i < selectedNodeDescriptors.length; i++) {
+      final FavoritesTreeNodeDescriptor selectedNodeDescriptor = FavoritesTreeNodeDescriptor.getFavoritesRoot(selectedNodeDescriptors[i], project, currentTreeViewPanel.getName());
+      nodesToAdd.add(selectedNodeDescriptor.getElement());
+    }
+    favoritesView.getAddToFavoritesAction(myName).addNodes(project, nodesToAdd.toArray(new AbstractTreeNode[nodesToAdd.size()]));
     ((DeleteFromFavoritesAction)ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES)).removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
   }
 

@@ -37,7 +37,7 @@ public class DependenciesAnalyzeManager implements ProjectComponent{
                                                                      myContentManager.getComponent(),
                                                                      ToolWindowAnchor.RIGHT);
 
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowModuleDependencies.png"));
         new ContentManagerWatcher(toolWindow, myContentManager);
       }
     });

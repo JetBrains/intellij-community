@@ -7,8 +7,6 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.j2ee.module.view.J2EEProjectViewPane;
-import com.intellij.j2ee.module.view.nodes.J2EENodeDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -49,6 +47,10 @@ public class AddToFavoritesAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final AbstractTreeNode[] nodes = createNodes(dataContext);
+    addNodes(project, nodes);
+  }
+
+  public void addNodes(final Project project, final AbstractTreeNode[] nodes) {
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     if (nodes != null) {
       final FavoritesTreeViewPanel favoritesTreeViewPanel = favoritesView.getFavoritesTreeViewPanel(myFavoritesList);
@@ -81,10 +83,7 @@ public class AddToFavoritesAction extends AnAction {
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
-    if (currentViewId.equals(J2EEProjectViewPane.ID)){
-      J2EENodeDescriptor j2eeNodeDescriptor = (J2EENodeDescriptor)pane.getSelectedDescriptor();
-    }
-
+    
     //on psi element
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiElement != null){

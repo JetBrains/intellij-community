@@ -11,7 +11,7 @@ import com.intellij.openapi.util.IconLoader;
  */
 public class DeleteFromFavoritesAction extends AnAction {
   public DeleteFromFavoritesAction() {
-    super("Remove From Favorites", "Remove Selected Favorite", IconLoader.getIcon("/actions/cancel.png"));
+    super("Remove From Current Favorites", "Remove Selected Favorite", IconLoader.getIcon("/general/remove.png"));
   }
 
   public void actionPerformed(AnActionEvent e) {    
@@ -32,24 +32,14 @@ public class DeleteFromFavoritesAction extends AnAction {
     final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
     for (int i = 0; selectedNodeDescriptors != null && i < selectedNodeDescriptors.length; i++) {
       FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
-      selectedNodeDescriptor = getFavoritesRoot(selectedNodeDescriptor, project, favoritesViewPane);
+      selectedNodeDescriptor = FavoritesTreeNodeDescriptor.getFavoritesRoot(selectedNodeDescriptor, project, favoritesViewPane);
       if (selectedNodeDescriptor != null) {
         favoritesTreeViewPanel.removeFromFavorites((AbstractTreeNode)selectedNodeDescriptor.getElement());
       }
     }
   }
 
-  private FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project, String favoritesViewPane) {
-    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
-    while (node.getParentDescriptor() != null && node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
-      FavoritesTreeNodeDescriptor favoritesDescriptor = (FavoritesTreeNodeDescriptor)node.getParentDescriptor();
-      if (favoritesDescriptor.getElement() == favoritesTreeViewPanel.getFavoritesTreeStructure().getRootElement()) {
-        return node;
-      }
-      node = favoritesDescriptor;
-    }
-    return node;
-  }
+
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

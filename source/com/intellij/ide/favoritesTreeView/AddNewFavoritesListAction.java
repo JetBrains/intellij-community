@@ -7,14 +7,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.LayeredIcon;
 
 /**
  * User: anna
  * Date: Feb 24, 2005
  */
 public class AddNewFavoritesListAction extends AnAction{
+  public static LayeredIcon ourIcon = new LayeredIcon(2);
+  static {
+    ourIcon.setIcon(IconLoader.getIcon("/general/favorites.png"), 1);
+    ourIcon.setIcon(IconLoader.getIcon("/general/add.png"), 0, 2, 2);
+  }
   public AddNewFavoritesListAction() {
-    super("Add New Favorites List", "Add New Favorites List", IconLoader.getIcon("/general/toolWindowMessages.png"));
+    super("Add New Favorites List", "Add New Favorites List", ourIcon);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -33,6 +41,12 @@ public class AddNewFavoritesListAction extends AnAction{
                                        return inputString != null && inputString.trim().length() > 0;
                       }
                     });
-    FavoritesViewImpl.getInstance(project).addNewFavoritesList(s);
+    final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
+    final FavoritesTreeViewPanel favoritesTreeViewPanel = favoritesView.addNewFavoritesList(s);
+    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
+    windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW).activate(null);
+    favoritesView.setSelectedContent(favoritesView.getContent(favoritesTreeViewPanel));
   }
+
+
 }

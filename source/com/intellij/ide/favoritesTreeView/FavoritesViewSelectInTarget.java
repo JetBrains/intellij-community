@@ -102,7 +102,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper{
   }
 
   protected boolean canWorkWithCustomObjects() {
-    return true;
+    return false;
   }
 
   public String getToolWindowId() {
