@@ -863,5 +863,30 @@ public abstract class GenericsHighlightUtil {
     }
     return errorResult;
   }
+
+  public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
+    if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    for (Iterator<MethodSignatureBackedByPsiMethod> iterator = superMethodSignatures.iterator(); iterator.hasNext();) {
+      MethodSignatureBackedByPsiMethod signature = iterator.next();
+      PsiMethod baseMethod = signature.getMethod();
+      PsiSubstitutor substitutor = signature.getSubstitutor();
+      if (PsiUtil.isRawSubstitutor(baseMethod, substitutor)) continue;
+      final PsiType baseReturnType = substitutor.substitute(baseMethod.getReturnType());
+      final PsiType overriderReturnType = overrider.getReturnType();
+      if (baseReturnType == null || overriderReturnType == null) return null;
+      if (isGenericToRaw(baseReturnType, overriderReturnType)) {
+        final String message = MessageFormat.format("Unchecked overriding: return type requires unchecked conversion. Found ''{0}'', required ''{1}''",
+                                                    new Object[]{HighlightUtil.formatType(overriderReturnType),
+                                                        HighlightUtil.formatType(baseReturnType)});
+
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, overrider.getReturnTypeElement(), message);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+        return highlightInfo;
+      }
+    }
+    return null;
+  }
 }
 

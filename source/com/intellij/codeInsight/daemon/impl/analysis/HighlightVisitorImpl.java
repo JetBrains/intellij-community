@@ -572,6 +572,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!myHolder.hasErrorResults()) {
           myHolder.add(HighlightMethodUtil.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
         }
+        if (!myHolder.hasErrorResults()) {
+          myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
+        }
       }
       final PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
