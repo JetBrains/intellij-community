@@ -26,8 +26,8 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.collections50.PriorityQueue;
-import com.intellij.util.containers.collections50.Queue;
+import com.intellij.openapi.editor.impl.collections50.PriorityQueue;
+import com.intellij.openapi.editor.impl.collections50.Queue;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
