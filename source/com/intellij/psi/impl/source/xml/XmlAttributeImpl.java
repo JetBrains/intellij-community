@@ -18,6 +18,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.lang.ASTNode;
 
@@ -55,8 +56,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public void setValue(String valueText) throws IncorrectOperationException{
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = getProject().getModel();
-    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)getManager().getElementFactory().createXmlAttribute("a", valueText));
-    model.runTransaction(new PomTransaction() {
+    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute("a", valueText));
+    model.runTransaction(new PomTransactionBase(this) {
       public PomModelEvent run(){
         if(value != null){
           CodeEditUtil.replaceChild(XmlAttributeImpl.this, value, newValue);
@@ -108,14 +109,14 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = getProject().getModel();
-    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)getManager().getElementFactory().createXmlAttribute(nameText, ""));
-    model.runTransaction(new PomTransaction() {
+    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute(nameText, ""));
+    model.runTransaction(new PomTransactionBase(getParent()) {
       public PomModelEvent run(){
         CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
         return XmlAttributeSet.createXmlAttributeSet(model, getParent(), nameText, getValue());
       }
     }, model.getModelAspect(XmlAspect.class));
-    model.runTransaction(new PomTransaction() {
+    model.runTransaction(new PomTransactionBase(getParent()) {
       public PomModelEvent run(){
         return XmlAttributeSet.createXmlAttributeSet(model, getParent(), oldName, null);
       }

@@ -38,6 +38,7 @@ import com.intellij.pom.PomElement;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomScope;
 import com.intellij.pom.PomTransaction;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.java.PomJavaAspect;
@@ -83,7 +84,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
         final PsiFile file1 = event.getOldParent().getContainingFile();
         final PsiFile file2 = event.getNewParent().getContainingFile();
         firePomEvent(file1);
-        if (!file1.equals(file2)) {
+        if (file1 != null && !file1.equals(file2)) {
           firePomEvent(file2);
         }
       }
@@ -190,7 +191,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     if (isJavaFile(file)) {
       final PomModel model = myProject.getModel();
       try {
-        myProject.getModel().runTransaction(new PomTransaction() {
+        myProject.getModel().runTransaction(new PomTransactionBase(file) {
           public PomModelEvent run() {
             final PomModelEvent event = new PomModelEvent(model);
             final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, file);

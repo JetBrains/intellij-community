@@ -2,6 +2,7 @@ package com.intellij.pom;
 
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,4 +13,5 @@ import com.intellij.util.IncorrectOperationException;
  */
 public interface PomTransaction{
   PomModelEvent run() throws IncorrectOperationException;
+  PsiElement getChangeScope();
 }

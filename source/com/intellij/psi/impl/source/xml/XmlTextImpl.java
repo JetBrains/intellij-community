@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.lang.ASTNode;
 
@@ -196,7 +197,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         final XmlText xmlText = getManager().getElementFactory().createTagFromText("<tag> </tag>").getValue().getTextElements()[0];
         final ASTNode compositeElement = SourceTreeToPsiMap.psiElementToTree(xmlText);
         TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
-        model.runTransaction(new PomTransaction() {
+        model.runTransaction(new PomTransactionBase(this) {
                                public PomModelEvent run() {
                                  ASTNode current = second;
                                  while (current != null) {
@@ -218,7 +219,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
       }
     }
     else {
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(this) {
                              public PomModelEvent run() {
                                retHolder[0] = addInternal((TreeElement)insertedElement, insertedElement, retHolder[0], Boolean.TRUE);
                                return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
@@ -302,7 +303,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     if (start == end) return;
 
     try {
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(getParent()) {
                              public PomModelEvent run() throws IncorrectOperationException {
                                final String oldText = getText();
 
@@ -441,53 +442,53 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     if (child.getElementType() == XmlElementType.XML_TEXT) {
       if (child.getTextLength() == 0) return this;
       final XmlTextImpl text = (XmlTextImpl)child;
-      model.runTransaction(new PomTransaction() {
-                             public PomModelEvent run() {
-                               final String oldText = getText();
-                               ASTNode childBefore = (anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
-                               if (childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()) {
-                                 final LeafElement newText =
-                                 mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(),
-                                               SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
-                                 if (newText != null) {
-                                   replaceChildInternal(childBefore, newText);
-                                   if (text.getLastChildNode() != text.getFirstChildNode()) {
-                                     addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
-                                                 before);
-                                   }
-                                 }
-                                 else {
-                                   addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-                                 }
-                               }
-                               else {
-                                 ASTNode childAfter = (anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
-                                 if (childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()) {
-                                   final LeafElement newText =
-                                   mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter,
-                                                 SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
-                                   if (newText != null) {
-                                     replaceChildInternal(childAfter, newText);
-                                     if (text.getLastChildNode() != text.getFirstChildNode()) {
-                                       addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
-                                                   before);
-                                     }
-                                   }
-                                   else {
-                                     addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-                                   }
-                                 }
+      model.runTransaction(new PomTransactionBase(getParent()) {
+        public PomModelEvent run() {
+          final String oldText = getText();
+          ASTNode childBefore = (anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
+          if (childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()) {
+            final LeafElement newText =
+              mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(),
+                            SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+            if (newText != null) {
+              replaceChildInternal(childBefore, newText);
+              if (text.getLastChildNode() != text.getFirstChildNode()) {
+                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
+                            before);
+              }
+            }
+            else {
+              addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
+            }
+          }
+          else {
+            ASTNode childAfter = (anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
+            if (childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()) {
+              final LeafElement newText =
+                mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter,
+                              SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+              if (newText != null) {
+                replaceChildInternal(childAfter, newText);
+                if (text.getLastChildNode() != text.getFirstChildNode()) {
+                  addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor,
+                              before);
+                }
+              }
+              else {
+                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
+              }
+            }
 
-                                 addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
-                               }
+            addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
+          }
 
-                               retHolder[0] = XmlTextImpl.this;
-                               return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-                             }
-                           }, aspect);
+          retHolder[0] = XmlTextImpl.this;
+          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+        }
+      }, aspect);
     }
     else {
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(this) {
                              public PomModelEvent run() {
                                final String oldText = getText();
                                final TreeElement treeElement = addChildren(XmlTextImpl.this, child, child.getTreeNext(), anchor, before);

@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomTransaction;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -355,15 +356,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public PsiElement setName(final String name) throws IncorrectOperationException {
     final PomModel model = getProject().getModel();
-    model.runTransaction(new PomTransaction() {
+    model.runTransaction(new PomTransactionBase(this) {
       public PomModelEvent run() throws IncorrectOperationException{
         final String oldName = getName();
         final XmlTagImpl dummyTag = (XmlTagImpl)getManager().getElementFactory().createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
-        tag.replaceChild(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        ChangeUtil.replaceChild(tag, (TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
         final ASTNode childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag);
-        if(childByRole != null) tag.replaceChild(childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
+        if(childByRole != null) ChangeUtil.replaceChild(tag, (TreeElement)childByRole, ChangeUtil.copyElement((TreeElement)XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
 
         return XmlTagNameChanged.createXmlTagNameChanged(model, tag, oldName);
       }
@@ -427,7 +428,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     myTags = result.toArray(new XmlTag[result.size()]);
     return myTags;
   }
-    
+
   public XmlTag[] findSubTags(String name) {
     return findSubTags(name, null);
   }
@@ -717,7 +718,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final TreeElement[] retHolder = new TreeElement[1];
     if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(this) {
         public PomModelEvent run(){
           final String value = ((XmlAttribute)child).getValue();
           final String name = ((XmlAttribute)child).getName();
@@ -750,7 +751,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       return transaction.getNewElement();
     }
     else{
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(this) {
         public PomModelEvent run() {
           final TreeElement treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
           retHolder[0] = treeElement;
@@ -774,7 +775,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
           final XmlText xmlText = ((XmlText)SourceTreeToPsiMap.treeElementToPsi(treePrev));
           xmlText.add(SourceTreeToPsiMap.treeElementToPsi(treeNext));
-          model.runTransaction(new PomTransaction() {
+          model.runTransaction(new PomTransactionBase(this) {
             public PomModelEvent run() {
               final PomModelEvent event = new PomModelEvent(model);
               final XmlAspectChangeSet xmlAspectChangeSet = new XmlAspectChangeSet(model, (XmlFile)getContainingFile());
@@ -790,7 +791,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
           // TODO[ik]: remove this hack
           if(fileType != StdFileTypes.XHTML){
-            model.runTransaction(new PomTransaction() {
+            model.runTransaction(new PomTransactionBase(this) {
               public PomModelEvent run() throws IncorrectOperationException{
                 final Project project = getProject();
                 CodeStyleManager instance = CodeStyleManager.getInstance(project);
@@ -808,7 +809,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         }
       }
 
-      model.runTransaction(new PomTransaction() {
+      model.runTransaction(new PomTransactionBase(this) {
         public PomModelEvent run() {
           if(child.getElementType() == XmlElementType.XML_ATTRIBUTE){
             final String name = ((XmlAttribute)child).getName();
@@ -864,7 +865,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return null;
   }
 
-  private class BodyInsertTransaction implements PomTransaction{
+  private class BodyInsertTransaction extends PomTransactionBase{
     private TreeElement myChild;
     private ASTNode myAnchor;
     private ASTNode myNewElement;
@@ -873,6 +874,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     private FileType myFileType ;
 
     public BodyInsertTransaction(PomModel model, TreeElement child, ASTNode anchor, boolean beforeFlag, FileType fileType) {
+      super(XmlTagImpl.this);
       this.myModel = model;
       this.myChild = child;
       this.myAnchor = anchor;
@@ -904,7 +906,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           return null;
         }
       }
-      
+
       if (myAnchor == null) {
         ASTNode anchor = expandTag();
         if(myChild.getElementType() == XmlElementType.XML_TAG){

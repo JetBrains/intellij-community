@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
@@ -48,6 +49,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private SmartPointerManagerImpl mySmartPointerManager;
   private BlockSupportImpl myBlockSupport;
   private boolean myIsCommitInProgress;
+  private final PsiToDocumentSynchronizer mySynchronizer;
 
   private List<Listener> myListeners = new ArrayList<Listener>();
   private Listener[] myCachedListeners = null;
@@ -61,7 +63,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myPsiManager = psiManager;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     myBlockSupport = (BlockSupportImpl)blockSupport;
-    myPsiManager.addPsiTreeChangeListener(new PsiToDocumentSynchronizer(this, mySmartPointerManager));
+    myPsiManager.addPsiTreeChangeListener(mySynchronizer = new PsiToDocumentSynchronizer(this, mySmartPointerManager));
     editorFactory.getEventMulticaster().addDocumentListener(this);
   }
 
@@ -465,5 +467,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public boolean isDocumentCommited(Document doc) {
     if (myIsCommitInProgress) return true;
     return !myUncommittedDocuments.contains(doc);
+  }
+
+  public PsiToDocumentSynchronizer getSynchronizer() {
+    return mySynchronizer;
   }
 }

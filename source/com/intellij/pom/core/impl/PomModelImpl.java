@@ -35,11 +35,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.pom.*;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 
 import java.util.*;
 
@@ -110,12 +114,20 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private final Stack<PomModelAspect> myBlockedAspects = new Stack<PomModelAspect>();
 
-  public synchronized void runTransaction(PomTransaction transaction, PomModelAspect aspect) throws IncorrectOperationException{
+  public synchronized void runTransaction(PomTransaction transaction,
+                                          PomModelAspect aspect) throws IncorrectOperationException{
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
     try{
     synchronized(PsiLock.LOCK){
+      final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
+      final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
+      Document document = null;
+      if(transaction.getChangeScope().getContainingFile() != null) {
+        document = manager.getDocument(transaction.getChangeScope().getContainingFile());
+      }
       myBlockedAspects.push(aspect);
+      if(document != null) synchronizer.startTransaction(document, transaction.getChangeScope());
       final PomModelEvent event;
       try{
         event = transaction.run();
@@ -125,6 +137,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         return;
       }
       finally{
+        if(document != null) synchronizer.commitTransaction(document);
         myBlockedAspects.pop();
       }
 
