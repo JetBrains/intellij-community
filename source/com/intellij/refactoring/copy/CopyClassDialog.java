@@ -35,8 +35,8 @@ class CopyClassDialog extends DialogWrapper{
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
-    init();
     myProject = project;
+    init();
     myDoClone = doClone;
     myInformationLabel.setText((myDoClone ? "Clone " : "Copy ") + UsageViewUtil.getType(aClass) + " " + UsageViewUtil.getLongName(aClass));
     myNameField.setText(UsageViewUtil.getShortName(aClass));
