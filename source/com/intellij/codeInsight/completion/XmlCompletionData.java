@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -64,17 +65,11 @@ public class XmlCompletionData extends CompletionData {
     }
 
     {
-      //final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter("/")));
-      //variant.includeScopeClass(XmlToken.class);
-      //variant.addCompletion(">",TailType.NONE);
-      //registerVariant(variant);
-    }
-
-    {
-      //final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(">")));
-      //variant.includeScopeClass(XmlTag.class, true);
-      //variant.setInsertHandler(new XmlTagInsertHandler());
-      //registerVariant(variant);
+      final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
+      variant.includeScopeClass(XmlToken.class, true);
+      variant.addCompletion(new WordCompletionData.AllWordsGetter());
+      variant.setInsertHandler(WordCompletionData.ourWordInsertHandler);
+      registerVariant(variant);
     }
   }
 

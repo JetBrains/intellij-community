@@ -17,7 +17,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -275,23 +274,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     return;
   }
-
-
-  private void fillWordCompletionSet (final PsiFile file, final LinkedHashSet lookupSet, final String prefix) {
-    final char [] chars = file.getText().toCharArray();
-    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor(){
-      public void run(final char[] chars, final int start, final int end) {
-        final int len = end - start;
-        if (len > prefix.length ()) {
-          final String word = String.valueOf(chars, start, len);
-          if (word.startsWith(prefix)) {
-            LookupItemUtil.addLookupItem(lookupSet, word, prefix); // TODO
-          }
-        }
-      }
-    }, chars, 0, chars.length);
-  }
-
 
   protected LookupData getLookupData(CompletionContext context) {
     final LinkedHashSet<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
