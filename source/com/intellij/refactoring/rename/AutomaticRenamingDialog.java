@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
 import com.intellij.refactoring.ui.StringTableCellEditor;
@@ -71,6 +72,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     box.add(new JLabel(myRenamer.getDialogDescription()));
     box.add(Box.createHorizontalGlue());
     return box;
+  }
+
+  public void show() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    super.show();
   }
 
   protected void handleChanges() {
