@@ -61,9 +61,13 @@ public class ExtendsObjectInspection extends ClassInspection {
                 final PsiJavaCodeReferenceElement[] elements = extendsList.getReferenceElements();
                 for (int i = 0; i < elements.length; i++) {
                     final PsiJavaCodeReferenceElement element = elements[i];
-                    final String text = element.getText();
-                    if ("Object".equals(text) || "java.lang.Object".equals(text)) {
-                        registerClassError(aClass);
+                    final PsiElement referent = element.resolve();
+                    if(referent instanceof PsiClass)
+                    {
+                        final String className = ((PsiClass) referent).getQualifiedName();
+                        if ( "java.lang.Object".equals(className)) {
+                            registerClassError(aClass);
+                        }
                     }
                 }
 

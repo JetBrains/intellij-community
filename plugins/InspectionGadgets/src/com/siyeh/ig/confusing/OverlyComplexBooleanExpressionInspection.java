@@ -3,10 +3,8 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -15,6 +13,8 @@ public class OverlyComplexBooleanExpressionInspection extends StatementInspectio
     private static final int TERM_LIMIT = 3;
 
     public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+
+    private InspectionGadgetsFix fix = new ExtractMethodFix();
 
     public String getDisplayName() {
         return "Overly complex boolean expression";
@@ -31,6 +31,14 @@ public class OverlyComplexBooleanExpressionInspection extends StatementInspectio
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
                 this, "m_limit");
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
     }
 
     protected String buildErrorString(PsiElement location) {

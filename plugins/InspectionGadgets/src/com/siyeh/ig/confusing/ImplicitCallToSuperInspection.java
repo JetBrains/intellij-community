@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
 public class ImplicitCallToSuperInspection extends MethodInspection {
+    private final AddExplicitSuperCall fix = new AddExplicitSuperCall();
 
     public String getDisplayName() {
         return "Implicit call to super()";
@@ -24,7 +25,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new AddExplicitSuperCall();
+        return fix;
     }
 
     private static class AddExplicitSuperCall extends InspectionGadgetsFix {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.RenameFix;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ import java.util.List;
 
 public class QuestionableNameInspection extends ClassInspection{
     public String nameCheckString = "foo,bar,baz";
+    private final RenameFix fix = new RenameFix();
 
     private List nameList = new ArrayList(32);
 
@@ -70,6 +72,14 @@ public class QuestionableNameInspection extends ClassInspection{
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
     }
 
     public String buildErrorString(PsiElement location){

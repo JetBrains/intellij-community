@@ -1,20 +1,18 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.MethodInspection;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
 public class SynchronizedMethodInspection extends MethodInspection {
     public boolean m_includeNativeMethods = true;
+    private SynchronizedMethodFix fix = new SynchronizedMethodFix();
 
     public String getDisplayName() {
         return "'synchronized' method";
@@ -30,6 +28,16 @@ public class SynchronizedMethodInspection extends MethodInspection {
         return "Method " + method.getName() + "() declared '#ref' #loc";
     }
 
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        final PsiMethod method = (PsiMethod) location.getParent().getParent();
+        if(method.getBody()== null)
+        {
+            return null;
+        }
+
+        return fix;
+    }
+
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new SynchronizedMethodVisitor(this, inspectionManager, onTheFly);
     }
@@ -37,6 +45,44 @@ public class SynchronizedMethodInspection extends MethodInspection {
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel("Include native methods",
                 this, "m_includeNativeMethods");
+    }
+
+    public static class SynchronizedMethodFix extends InspectionGadgetsFix{
+        public String getName(){
+            return "Move synchronization into method";
+        }
+
+        public void applyFix(Project project,
+                             ProblemDescriptor problemDescriptor){
+            try{
+                final PsiElement nameElement =
+                        problemDescriptor.getPsiElement();
+                final PsiMethod method =
+                        (PsiMethod) nameElement.getParent().getParent();
+                method.getModifierList()
+                        .setModifierProperty(PsiModifier.SYNCHRONIZED, false);
+                final PsiCodeBlock body = method.getBody();
+                final String text = body.getText();
+                final String replacementText;
+                if(method.hasModifierProperty(PsiModifier.STATIC)){
+                    final PsiClass containingClass = method.getContainingClass();
+                    final String className = containingClass.getName();
+                    replacementText = "{ synchronized(" + className + ".class){" +
+                            text.substring(1) + '}';
+                } else{
+                    replacementText = "{ synchronized(this){" + text.substring(1) + '}';
+                }
+                final PsiManager psiManager = PsiManager.getInstance(project);
+                final PsiElementFactory elementFactory =
+                        psiManager.getElementFactory();
+                final PsiCodeBlock block =
+                        elementFactory.createCodeBlockFromText(replacementText,
+                                                               null);
+                body.replace(block);
+                psiManager.getCodeStyleManager().reformat(method);
+            } catch(IncorrectOperationException e){
+            }
+        }
     }
 
     private class SynchronizedMethodVisitor extends BaseInspectionVisitor {

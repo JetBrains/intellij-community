@@ -114,7 +114,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             final Class aClass = classes[i];
             final String className = aClass.getName();
             final String simpleClassName = className.substring(className.lastIndexOf('.') + 1, className.length() - "Inspection".length());
-            final String fileName = "C:/InspectionGadgetsCVS/src/inspectionDescriptions/" + simpleClassName + ".html";
+            final String fileName = "C:/InspectionGadgetsSVN/src/inspectionDescriptions/" + simpleClassName + ".html";
             if (!new File(fileName).exists()) {
                 out.println("Couldn't find documentation file " + fileName);
             }

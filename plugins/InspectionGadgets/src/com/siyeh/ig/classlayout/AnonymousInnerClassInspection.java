@@ -2,12 +2,12 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 
 public class AnonymousInnerClassInspection extends ClassInspection {
+    private final MoveAnonymousToInnerClassFix fix =
+            new MoveAnonymousToInnerClassFix();
 
     public String getDisplayName() {
         return "Anonymous inner class";
@@ -19,6 +19,10 @@ public class AnonymousInnerClassInspection extends ClassInspection {
 
     public String buildErrorString(PsiElement location) {
         return "Anonymous inner class #ref #loc";
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
