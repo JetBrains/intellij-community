@@ -32,6 +32,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 
 import javax.swing.*;
@@ -728,6 +729,8 @@ public abstract class DialogWrapper {
   }
 
   public void show() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    
     synchronized (ourLock) {
       registerKeyboardShortcuts();
       myPeer.show();
