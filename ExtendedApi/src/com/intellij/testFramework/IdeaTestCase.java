@@ -93,6 +93,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
       Extensions.registerAreaClass("IDEA_PROJECT", null);
       Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
     }
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());    
   }
 
   protected void setUp() throws Exception {
@@ -117,9 +118,6 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     setUpProject();
 
     DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(InspectionProfileImpl.EMPTY_PROFILE);
-    if (Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JUNIT_PATCHER) == null){
-      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
-    }
   }
 
   protected void setUpProject() throws IOException {

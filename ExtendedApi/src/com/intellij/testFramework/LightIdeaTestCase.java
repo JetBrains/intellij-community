@@ -92,6 +92,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
       Extensions.registerAreaClass("IDEA_PROJECT", null);
       Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
     }
+    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
     cleanupApplicationCaches();
   }
 
@@ -191,9 +192,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
-    if (Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JUNIT_PATCHER) == null){
-      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.JUNIT_PATCHER, JUnitPatcher.class.getName());
-    }
+
   }
 
   protected void tearDown() throws Exception {
