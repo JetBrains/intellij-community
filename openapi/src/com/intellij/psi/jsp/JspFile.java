@@ -5,10 +5,7 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.jsp.tagLibrary.JspTagLibraryInfo;
 
 public interface JspFile extends PsiFile, JspElement {
@@ -17,4 +14,6 @@ public interface JspFile extends PsiFile, JspElement {
   WebModuleProperties getWebModuleProperties();
   WebDirectoryElement getParentWebDirectory();
   String getWebPath();
+
+  PsiElement[] getContentsElements();
 }

@@ -625,7 +625,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return setAttribute(name, value);
   }
 
-  public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforseNamespacesDeep) {
+  public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
     String qname;
     final String prefix = getPrefixByNamespace(namespace);
     if (prefix != null && prefix.length() > 0) {
@@ -642,7 +642,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       XmlTag retTag;
       if (bodyText != null && bodyText.length() > 0) {
         retTag = getManager().getElementFactory().createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
-        if (enforseNamespacesDeep) {
+        if (enforceNamespacesDeep) {
           retTag.acceptChildren(new PsiRecursiveElementVisitor() {
             public void visitXmlTag(XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
