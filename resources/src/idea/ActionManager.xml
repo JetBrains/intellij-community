@@ -1120,7 +1120,7 @@
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction" text="Include" description="Include this usage(s) into processing"/>
-      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" text="Exclude" description="Exlude this usage(s) from processing"/>
+      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" text="Exclude" description="Exclude this usage(s) from processing"/>
       <!--todo: include/exclude-->
       <separator/>
       <reference ref="VersionControlsGroup"/>
