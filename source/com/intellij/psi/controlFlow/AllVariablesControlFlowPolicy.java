@@ -26,7 +26,7 @@ public class AllVariablesControlFlowPolicy implements ControlFlowPolicy {
     return true;
   }
 
-  public AllVariablesControlFlowPolicy getInstance() {
+  public static AllVariablesControlFlowPolicy getInstance() {
     return INSTANCE;
   }
 

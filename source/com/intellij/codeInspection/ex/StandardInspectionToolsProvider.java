@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInsight.i18n.StringI18nInspection;
@@ -46,8 +47,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
 
       StringI18nInspection.class,
 
-      DependencyViolationInspection.class
-
-    };
+      DependencyViolationInspection.class,
+      FieldCanBeLocalInspection.class
+      };
   }
 }
