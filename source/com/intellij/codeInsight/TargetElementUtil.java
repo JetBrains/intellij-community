@@ -33,9 +33,7 @@ public class TargetElementUtil {
 
   public static PsiElement findTargetElement(Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement targetElement = findTargetElement(editor, flags, offset);
-    if (targetElement == null || targetElement instanceof PsiAntElement) return targetElement;
-    return targetElement.getNavigationElement();
+    return findTargetElement(editor, flags, offset);
   }
 
   public static PsiReference findReference(Editor editor, int offset) {
