@@ -344,8 +344,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else if (refElement instanceof PsiMethod) {
       if (((PsiMethod)refElement).isConstructor()) {
-        return processConstructorReferences(processor, (PsiMethod)refElement, originalScope, ignoreAccessScope,
-                                            isStrictSignatureSearch);
+        if (!processConstructorReferences(processor, (PsiMethod)refElement, originalScope, ignoreAccessScope,
+                                            isStrictSignatureSearch)) return false;
       }
 
       text = ((PsiMethod)refElement).getName();
