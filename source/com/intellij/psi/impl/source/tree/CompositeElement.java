@@ -155,7 +155,12 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public boolean textContains(char c) {
-    return getText().indexOf(c) >= 0;
+    synchronized (PsiLock.LOCK) {
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        if (child.textContains(c)) return true;
+      }
+      return false;
+    }
   }
 
   public final PsiElement findChildByRoleAsPsiElement(int role) {
