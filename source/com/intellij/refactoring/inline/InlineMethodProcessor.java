@@ -992,11 +992,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor implements I
               String text = "{\n}";
               PsiBlockStatement blockStatement = (PsiBlockStatement)myFactory.createStatementFromText(text, null);
               blockStatement = (PsiBlockStatement)myCodeStyleManager.reformat(blockStatement);
-              blockStatement = (PsiBlockStatement)parent.getParent().addAfter(blockStatement, parent);
+              blockStatement.getCodeBlock().add(parent);
+              blockStatement = (PsiBlockStatement)parent.replace(blockStatement);
 
-              PsiCodeBlock body = blockStatement.getCodeBlock();
-              PsiElement newStatement = body.add(parent);
-              parent.delete();
+              PsiElement newStatement = blockStatement.getCodeBlock().getStatements()[0];
               addMarkedElements(refsVector, newStatement);
               addedBracesVector.add(blockStatement);
               continue RefLoop;
