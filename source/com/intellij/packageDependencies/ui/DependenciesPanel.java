@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Icons;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -211,20 +212,12 @@ public class DependenciesPanel extends JPanel {
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
+    EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
 
     PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree), ActionManager.getInstance());
 
-    tree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.isPopupTrigger() && e.getClickCount() == 2) {
-          Navigatable navigatable = (Navigatable)tree.getData(DataConstants.NAVIGATABLE);
-          if (navigatable != null && navigatable.canNavigate()) {
-            navigatable.navigate(true);
-          }
-        }
-      }
-    });
+
   }
 
   private void updateRightTreeModel() {
@@ -534,8 +527,8 @@ public class DependenciesPanel extends JPanel {
   private static class MyTree extends Tree implements DataProvider {
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (node != null && DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return node.getPsiElement();
+      if (DataConstants.NAVIGATABLE.equals(dataId)) {
+        return node;
       }
       return null;
     }
