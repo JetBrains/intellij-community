@@ -1,7 +1,6 @@
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -12,7 +11,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
@@ -20,17 +18,13 @@ import org.jdom.Element;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DependencyValidationManager extends NamedScopesHolder implements ProjectComponent, JDOMExternalizable {
+public class DependencyValidationManagerImpl extends DependencyValidationManager implements JDOMExternalizable {
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private Project myProject;
   private ContentManager myContentManager;
 
-  public DependencyValidationManager(Project project) {
+  public DependencyValidationManagerImpl(Project project) {
     myProject = project;
-  }
-
-  public static DependencyValidationManager getInstance(Project project) {
-    return project.getComponent(DependencyValidationManager.class);
   }
 
   public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {

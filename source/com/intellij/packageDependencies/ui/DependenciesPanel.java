@@ -12,10 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.DependencyRule;
-import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.*;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.psi.*;
@@ -331,7 +328,7 @@ public class DependenciesPanel extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       myUsagesPanel.dispose();
-      DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }
   }
@@ -441,7 +438,7 @@ public class DependenciesPanel extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

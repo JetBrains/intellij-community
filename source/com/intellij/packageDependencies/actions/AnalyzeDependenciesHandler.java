@@ -3,12 +3,13 @@ package com.intellij.packageDependencies.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependencyValidationManagerImpl;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
-import com.intellij.ui.content.Content;
 import com.intellij.peer.PeerFactory;
+import com.intellij.ui.content.Content;
 
 public class AnalyzeDependenciesHandler {
   private Project myProject;
@@ -31,7 +32,7 @@ public class AnalyzeDependenciesHandler {
                                                                                   "Dependencies of " + forwardBuilder.getScope().getDisplayName(),
                                                                                   false);
       panel.setContent(content);
-      DependencyValidationManager.getInstance(myProject).addContent(content);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
     }
   }
 }

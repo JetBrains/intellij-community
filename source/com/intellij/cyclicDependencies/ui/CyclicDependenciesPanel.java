@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -373,7 +374,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       myUsagesPanel.dispose();
-      DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }
   }
@@ -437,7 +438,7 @@ public class CyclicDependenciesPanel extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      DependencyValidationManager.getInstance(myProject).closeContent(myContent);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

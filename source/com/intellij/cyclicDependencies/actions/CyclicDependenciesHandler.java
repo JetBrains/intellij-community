@@ -6,6 +6,7 @@ import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
@@ -34,7 +35,7 @@ public class CyclicDependenciesHandler {
                                                                                   "Cyclic Dependencies of " + builder.getScope().getDisplayName(),
                                                                                   false);
       panel.setContent(content);
-      DependencyValidationManager.getInstance(myProject).addContent(content);
+      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
     }
   }
 }

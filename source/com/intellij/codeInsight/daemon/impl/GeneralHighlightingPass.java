@@ -3,12 +3,12 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
@@ -21,13 +21,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -37,11 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.application.options.ErrorHighlightingPanel;
-import com.intellij.application.options.ErrorHighlightingOptions;
-import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -287,14 +283,16 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
-            final DependencyRule rule = validationManager.getViolatorDependencyRule(myFile, dependencyFile);
-            if (rule != null) {
+            final DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
+            if (rules.length > 0) {
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
-                                                                     "Illegal dependency. Violated rule: \"" + rule.getDisplayText() +
+                                                                     "Illegal dependency. Violated rules: \"" + rules[0].getDisplayText() +
                                                                      "\"");
               if (info != null) {
                 list.add(info);
-                QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rule));
+                for (int i = 0; i < rules.length; i++) {
+                  QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[i]));
+                }
                 QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
               }
             }
