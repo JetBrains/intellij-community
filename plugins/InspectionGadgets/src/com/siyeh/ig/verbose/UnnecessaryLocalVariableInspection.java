@@ -4,11 +4,16 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAssignedVisitor;
 import com.siyeh.ig.psiutils.VariableUsedVisitor;
 
-public class UnnecessaryLocalVariableInspection extends StatementInspection {
+import javax.swing.*;
+
+public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
+    public boolean m_ignoreImmediatelyReturnedVariables = false;
     private final InlineVariableFix fix = new InlineVariableFix();
 
     public String getDisplayName() {
@@ -19,6 +24,10 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel("Ignore immediately returned variables",
+                                              this, "m_ignoreImmediatelyReturnedVariables");
+    }
     public boolean isEnabledByDefault(){
         return true;
     }
@@ -39,7 +48,7 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
         return true;
     }
 
-    private static class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
+    private  class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
         private UnnecessaryLocalVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -48,7 +57,8 @@ public class UnnecessaryLocalVariableInspection extends StatementInspection {
             super.visitLocalVariable(variable);
             if (isCopyVariable(variable)) {
                 registerVariableError(variable);
-            } else if (isImmediatelyReturned(variable)) {
+            } else if (!m_ignoreImmediatelyReturnedVariables &&
+                               isImmediatelyReturned(variable)) {
                 registerVariableError(variable);
             } else if (isImmediatelyThrown(variable)) {
                 registerVariableError(variable);
