@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -21,7 +20,7 @@ public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
 
-  public IntentionSettingsTree() {
+  protected IntentionSettingsTree() {
     initTree();
   }
 
@@ -51,23 +50,6 @@ public abstract class IntentionSettingsTree {
         selectionChanged(userObject);
       }
     });
-    //myTree.addTreeExpansionListener(new TreeExpansionListener() {
-    //  public void treeCollapsed(TreeExpansionEvent event) {
-    //    treeExpansionChanged();
-    //  }
-    //
-    //  public void treeExpanded(TreeExpansionEvent event) {
-    //    treeExpansionChanged();
-    //  }
-    //
-    //  private void treeExpansionChanged() {
-    //    TreePath path = myTree.getSelectionPath();
-    //    if (path != null) {
-    //      Object userObject = ((CheckedTreeNode)path.getLastPathComponent()).getUserObject();
-    //      selectionChanged(userObject);
-    //    }
-    //  }
-    //});
 
     myComponent = new JScrollPane(myTree);
     SwingUtilities.invokeLater(new Runnable() {
@@ -118,12 +100,11 @@ public abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     treeModel.nodeChanged(root);
-    TreeUtil.expandAll(myTree);
+    //TreeUtil.expandAll(myTree);
   }
 
   private CheckedTreeNode getRoot() {
-    CheckedTreeNode root = (CheckedTreeNode)myTree.getModel().getRoot();
-    return root;
+    return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
   private boolean resetCheckMark(final CheckedTreeNode root) {
