@@ -1,0 +1,94 @@
+package com.intellij.openapi.editor.impl;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+
+/**
+ * @author max
+ */
+public class ComplementaryFontsRegistry {
+  private static ArrayList<String> ourFontNames;
+  private static LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
+  private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
+
+  private static class FontKey {
+    public String myFamilyName;
+    public int mySize;
+    public int myStyle;
+
+    public FontKey(final String familyName, final int size, final int style) {
+      myFamilyName = familyName;
+      mySize = size;
+      myStyle = style;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      final FontKey fontKey = (FontKey)o;
+
+      if (mySize != fontKey.mySize) return false;
+      if (myStyle != fontKey.myStyle) return false;
+      return myFamilyName.equals(fontKey.myFamilyName);
+    }
+
+    public int hashCode() {
+      int result = myFamilyName.hashCode();
+      result = 29 * result + mySize;
+      result = 29 * result + myStyle;
+      return result;
+    }
+  }
+
+  static {
+    ourFontNames = new ArrayList<String>();
+    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
+    for (int i = 0; i < fontNames.length; i++) {
+      final String fontName = fontNames[i];
+      if (!fontName.endsWith(".bold") && !fontName.endsWith(".italic")) {
+        ourFontNames.add(fontName);
+      }
+    }
+    ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();
+  }
+
+  public static FontInfo getFontAbleToDisplay(char c, int size, int style, String defaultFontFamily) {
+    ourSharedKeyInstance.myFamilyName = defaultFontFamily;
+    ourSharedKeyInstance.mySize = size;
+    ourSharedKeyInstance.myStyle = style;
+
+    FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
+    if (defaultFont == null) {
+      defaultFont = new FontInfo(defaultFontFamily, size, style);
+      ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
+      ourSharedKeyInstance = new FontKey(null, 0, 0);
+    }
+
+    if (defaultFont.canDisplay(c)) {
+      return defaultFont;
+    }
+
+    final Collection<FontInfo> descriptors = ourUsedFonts.values();
+    for (Iterator<FontInfo> iterator = descriptors.iterator(); iterator.hasNext();) {
+      FontInfo font = iterator.next();
+      if (font.getSize() == size && font.getStyle() == style && font.canDisplay(c)) {
+        return font;
+      }
+    }
+
+    for (int i = 0; i < ourFontNames.size(); i++) {
+      String name = ourFontNames.get(i);
+      FontInfo font = new FontInfo(name, size, style);
+      if (font.canDisplay(c)) {
+        ourUsedFonts.put(new FontKey(name, size, style), font);
+        ourFontNames.remove(i);
+        return font;
+      }
+    }
+
+    return defaultFont;
+  }
+}

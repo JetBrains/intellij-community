@@ -113,7 +113,7 @@ public class EditorUtil {
         x = editorImpl.nextTabStop(x);
         column += (x - prevX) / spaceSize;
       } else {
-        x += editorImpl.charWidth(fontType, c);
+        x += editorImpl.charWidth(c, fontType);
         column++;
       }
     }
@@ -175,7 +175,7 @@ public class EditorUtil {
         x = editorImpl.nextTabStop(x);
         column += (x - prevX) / spaceSize;
       } else {
-        x += editorImpl.charWidth(fontType, c);
+        x += editorImpl.charWidth(c, fontType);
         column++;
       }
     }

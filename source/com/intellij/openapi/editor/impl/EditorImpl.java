@@ -62,7 +62,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TooManyListenersException;
 
-public class EditorImpl implements EditorEx {
+public final class EditorImpl implements EditorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   private final DocumentImpl myDocument;
@@ -139,12 +139,8 @@ public class EditorImpl implements EditorEx {
 
   private static final int CACHED_CHARS_BUFFER_SIZE = 300;
 
-  private CachedFontContent myPlainCache = new CachedFontContent(Font.PLAIN);
-  private CachedFontContent myBoldCache = new CachedFontContent(Font.BOLD);
-  private CachedFontContent myBoldItalicCache = new CachedFontContent(Font.BOLD + Font.ITALIC);
-  private CachedFontContent myItalicCache = new CachedFontContent(Font.ITALIC);
-
-  private int myCurrentFontType = Font.PLAIN;
+  private ArrayList<CachedFontContent> myFontCache = null;
+  private FontInfo myCurrentFontType = null;
 
   private boolean myIsBlockSelectionMode;
   private EditorSizeContainer mySizeContainer = new EditorSizeContainer();
@@ -320,11 +316,6 @@ public class EditorImpl implements EditorEx {
     myLineHeight = -1;
     myDescent = -1;
     myPlainFontMetrics = null;
-
-    myPlainCache.reinitSettings();
-    myBoldCache.reinitSettings();
-    myItalicCache.reinitSettings();
-    myBoldItalicCache.reinitSettings();
 
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -602,7 +593,7 @@ public class EditorImpl implements EditorEx {
   }
 
   public int getSpaceWidth(int  fontType) {
-    int width = charWidth(fontType, ' ');
+    int width = charWidth(' ', fontType);
     return width > 0 ? width : 1;
   }
 
@@ -638,7 +629,7 @@ public class EditorImpl implements EditorEx {
             char[] placeholder = region.getPlaceholderText().toCharArray();
             for (int j = 0; j < placeholder.length; j++) {
               c = placeholder[j];
-              x += charWidth(fontType, c);
+              x += charWidth(c, fontType);
               if (x >= p.x) break outer;
               column++;
             }
@@ -654,7 +645,7 @@ public class EditorImpl implements EditorEx {
               x = nextTabStop(x);
             }
             else {
-              x += charWidth(fontType, c);
+              x += charWidth(c, fontType);
             }
 
             if (x >= p.x) break;
@@ -670,7 +661,7 @@ public class EditorImpl implements EditorEx {
           }
         }
 
-    int charWidth = charWidth(fontType, c);
+    int charWidth = charWidth(c, fontType);
 
     if (x >= p.x && c == '\t') {
       if (mySettings.isCaretInsideTabs()) {
@@ -787,7 +778,7 @@ public class EditorImpl implements EditorEx {
           if (region != null) {
             char[] placeholder = region.getPlaceholderText().toCharArray();
             for (int j = 0; j < placeholder.length; j++) {
-              x += charWidth(fontType, placeholder[j]);
+              x += charWidth(placeholder[j], fontType);
               column++;
               if (column >= pos.column) break outer;
             }
@@ -804,7 +795,7 @@ public class EditorImpl implements EditorEx {
               column += (x - prevX) / spaceSize;
             }
             else {
-              x += charWidth(fontType, c);
+              x += charWidth(c, fontType);
               column++;
             }
             offset++;
@@ -1335,10 +1326,9 @@ public class EditorImpl implements EditorEx {
     Color effectColor = attributes.getEffectColor();
     EffectType effectType = attributes.getEffectType();
     int fontType = attributes.getFontType();
-    myCurrentFontType = fontType;
-    Font currentFont = getFont(fontType);
+    myCurrentFontType = null;
+    myFontCache = new ArrayList<CachedFontContent>();
     g.setColor(currentColor);
-    g.setFont(currentFont);
     Point position = new Point(0, visibleLineNumber * lineHeight);
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -1409,51 +1399,24 @@ public class EditorImpl implements EditorEx {
   }
 
   private class CachedFontContent {
-    int[] charWidths = null;
     final CharSequence[] data = new CharSequence[CACHED_CHARS_BUFFER_SIZE];
     final int[] x = new int[CACHED_CHARS_BUFFER_SIZE];
     final int[] y = new int[CACHED_CHARS_BUFFER_SIZE];
     final Color[] color = new Color[CACHED_CHARS_BUFFER_SIZE];
 
     int myCount = 0;
-    final int myFontType;
-    private FontMetrics myFontMetrics;
+    final FontInfo myFontType;
 
-    public CachedFontContent(int fontType) {
-      myFontType = fontType;
-    }
-
-    public void reinitSettings() {
-      myFontMetrics = null;
-      charWidths = null;
-    }
-
-    public int charWidth(char c) {
-      if (c >= 256) return fontMetrics().charWidth(c);
-      if (charWidths == null) {
-        charWidths = new int[256];
-        FontMetrics fontMetrics = fontMetrics();
-        for (int i = 0; i < 256; i++) {
-          charWidths[i] = fontMetrics.charWidth(i);
-        }
-      }
-      return charWidths[c];
-    }
-
-    private FontMetrics fontMetrics() {
-      if (myFontMetrics == null) {
-        myFontMetrics = getFontMetrics(myFontType);
-      }
-      return myFontMetrics;
+    public CachedFontContent(FontInfo fontInfo) {
+      myFontType = fontInfo;
     }
 
     public void flushContent(Graphics g) {
       if (myCount != 0) {
         if (myCurrentFontType != myFontType) {
           myCurrentFontType = myFontType;
-          g.setFont(getFont(myFontType));
+          g.setFont(myFontType.getFont());
         }
-
         Color currentColor = null;
         for (int i = 0; i < myCount; i++) {
           if (!color[i].equals(currentColor)) {
@@ -1477,17 +1440,17 @@ public class EditorImpl implements EditorEx {
       this.color[myCount] = color;
 
       myCount++;
-      if (myCount >= CACHED_CHARS_BUFFER_SIZE) {
+      if (myCount >= CACHED_CHARS_BUFFER_SIZE || SystemInfo.isMac) {
         flushContent(g);
       }
     }
   }
 
   private void flushCachedChars(Graphics g) {
-    myPlainCache.flushContent(g);
-    myBoldCache.flushContent(g);
-    myBoldItalicCache.flushContent(g);
-    myItalicCache.flushContent(g);
+    for (int i = 0; i < myFontCache.size(); i++) {
+      myFontCache.get(i).flushContent(g);
+    }
+    myFontCache = null;
   }
 
   private void paintCaretCursor(Graphics g) {
@@ -1585,16 +1548,11 @@ public class EditorImpl implements EditorEx {
 
     int start = 0;
 
-    for (int i = 0; i < text.length(); i++) {
+    final int textLength = text.length();
+    for (int i = 0; i < textLength; i++) {
       if (text.charAt(i) != '\t') continue;
 
-      if (i > start) {
-        drawCharsCached(g, text.subSequence(start, i), x, y, fontType, fontColor);
-        for (int j = start; j < i; j++) {
-          char c = text.charAt(j);
-          x += charWidth(fontType, c);
-        }
-      }
+      x = drawTablessString(text, start, i, g, x, y, fontType, fontColor);
 
       int x1 = nextTabStop(x);
       drawTabPlacer(g, y, x, x1);
@@ -1602,10 +1560,7 @@ public class EditorImpl implements EditorEx {
       start = i + 1;
     }
 
-    if (start < text.length()) {
-      drawCharsCached(g, text.subSequence(start, text.length()), x, y, fontType, fontColor);
-      for (int j = start; j < text.length(); j++) x += charWidth(fontType, text.charAt(j));
-    }
+    x = drawTablessString(text, start, textLength, g, x, y, fontType, fontColor);
 
     if (effectColor != null) {
       Color savedColor = g.getColor();
@@ -1629,29 +1584,46 @@ public class EditorImpl implements EditorEx {
             g.setColor(effectColor);
             drawWave(g, xStart, xStart + w, y + 1);
             g.setColor(savedColor);
-          } /*else {
-            if (effectType == EffectType.BOXED) {
-              int yStart = y - getLineHeight() + getDescent();
-              if (!myBorderEffect.isDetached()) myBorderEffect.start(effectColor, start);
-              myBorderEffect.setEndOffset(offset + length);
-            }
-          }*/
+          }
         }
       }
-    } /*else myBorderEffect.flushBorder(g, this);*/
+    }
 
     return x;
   }
 
-  public int charWidth(int fontType, char c) {
-    switch(fontType) {
-      case Font.PLAIN: return myPlainCache.charWidth(c);
-      case Font.BOLD: return myBoldCache.charWidth(c);
-      case Font.ITALIC: return myItalicCache.charWidth(c);
-      case Font.BOLD | Font.ITALIC: return myBoldItalicCache.charWidth(c);
-    }
+  private int drawTablessString(final CharSequence text,
+                                final int start,
+                                final int end,
+                                final Graphics g,
+                                final int x,
+                                final int y,
+                                final int fontType,
+                                final Color fontColor) {
+    int endX = x;
+    if (start < end) {
+      final FontInfo font = fontForChar(text.charAt(start), fontType);
+      for (int j = start; j < end; j++) {
+        final char c = text.charAt(j);
+        FontInfo newFont = fontForChar(c, fontType);
+        if (font != newFont) {
+          int x1 = drawTablessString(text, start, j, g, x, y, fontType, fontColor);
+          return drawTablessString(text, j, end, g, x1, y, fontType, fontColor);
+        }
+        endX += font.charWidth(c, myEditorComponent);
+      }
 
-    return 0;
+      drawCharsCached(g, text.subSequence(start, end), x, y, fontType, fontColor);
+    }
+    return endX;
+  }
+
+  private FontInfo fontForChar(final char c, int style) {
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, myScheme.getEditorFontSize(), style, myScheme.getEditorFontName());
+  }
+
+  public int charWidth(char c, int fontType) {
+    return fontForChar(c, fontType).charWidth(c, myEditorComponent);
   }
 
   private void drawTabPlacer(Graphics g, int y, int start, int stop) {
@@ -1677,31 +1649,20 @@ public class EditorImpl implements EditorEx {
                                int y,
                                int fontType,
                                Color color) {
-    if (!SystemInfo.isMac) {
-      if (fontType == myCurrentFontType) {
-        drawChars(g, data, x, y);
-      }
-      else if (fontType == Font.PLAIN) {
-        myPlainCache.addContent(g, data, x, y, color);
-      }
-      else if (fontType == Font.BOLD) {
-        myBoldCache.addContent(g, data, x, y, color);
-      }
-      else if (fontType == Font.ITALIC) {
-        myItalicCache.addContent(g, data, x, y, color);
-      }
-      else {
-        myBoldItalicCache.addContent(g, data, x, y, color);
+    FontInfo fnt = fontForChar(data.charAt(0), fontType);
+    CachedFontContent cache = null;
+    for (int i = 0; i < myFontCache.size(); i++) {
+      CachedFontContent cache1 = myFontCache.get(i);
+      if (cache1.myFontType == fnt) {
+        cache = cache1;
+        break;
       }
     }
-    else {
-      if (fontType != myCurrentFontType) {
-        myCurrentFontType = fontType;
-        g.setFont(getFont(fontType));
-      }
-
-      drawChars(g, data, x, y);
+    if (cache == null) {
+      cache = new CachedFontContent(fnt);
+      myFontCache.add(cache);
     }
+    cache.addContent(g, data, x, y, color);
   }
 
   private void drawChars(Graphics g, CharSequence data, int x, int y) {
@@ -1749,14 +1710,14 @@ public class EditorImpl implements EditorEx {
       if (text.charAt(i) != '\t') continue;
 
       if (i > start) {
-        for (int j = start; j < i; j++) x += charWidth(fontType, text.charAt(j));
+        for (int j = start; j < i; j++) x += charWidth(text.charAt(j), fontType);
       }
       x = nextTabStop(x);
       start = i + 1;
     }
 
     if (start < text.length()) {
-      for (int j = start; j < text.length(); j++) x += charWidth(fontType, text.charAt(j));
+      for (int j = start; j < text.length(); j++) x += charWidth(text.charAt(j), fontType);
     }
 
     return x - xStart;
@@ -3849,7 +3810,7 @@ public class EditorImpl implements EditorEx {
           if (collapsed != null) {
             String placeholder = collapsed.getPlaceholderText();
             for (int i = 0; i < placeholder.length(); i++) {
-              x += charWidth(fontType, placeholder.charAt(i));
+              x += charWidth(placeholder.charAt(i), fontType);
             }
             offset = collapsed.getEndOffset();
           }
@@ -3867,7 +3828,7 @@ public class EditorImpl implements EditorEx {
                 line++;
               }
               else {
-                x += charWidth(fontType, c);
+                x += charWidth(c, fontType);
                 offset++;
               }
             }
