@@ -30,6 +30,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl</implementation-class>
+      <test-implementation-class></test-implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter</implementation-class>
