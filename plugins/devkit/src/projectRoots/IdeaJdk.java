@@ -1,18 +1,17 @@
 package org.jetbrains.idea.devkit.projectRoots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.roots.OrderRootType;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -166,6 +165,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       if (jarFile.exists()) {
         JarFileSystem jarFileSystem = JarFileSystem.getInstance();
         String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+        jarFileSystem.setNoCopyJarForPath(path);
         VirtualFile vFile = jarFileSystem.findFileByPath(path);
         sdkModificator.addRoot(vFile, ProjectRootType.SOURCE);
       }
@@ -182,6 +182,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (jarfile.exists()) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
       String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "openapi";
+      jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
       sdkModificator.addRoot(vFile, ProjectRootType.JAVADOC);
     }
@@ -219,9 +220,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   private boolean addOrderEntries(OrderRootType orderRootType, ProjectRootType projectRootType, Sdk sdk, SdkModificator toModificator){
     boolean wasSmthAdded = false;
-    final String[] docs = sdk.getRootProvider().getUrls(orderRootType);
-    for (int i = 0; i < docs.length; i++) {
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(docs[i]);
+    final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
+    for (int i = 0; i < entries.length; i++) {
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(entries[i]);
       toModificator.addRoot(virtualFile, projectRootType);
       wasSmthAdded = true;
     }
