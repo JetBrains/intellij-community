@@ -49,7 +49,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   private final ArrayList<DiffTool> myAdditionTools = new ArrayList<DiffTool>();
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
-  public static final Key EDITOR_IS_DIFF_KEY = new Key("EDITOR_IS_DIFF_KEY");
+  public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<Boolean>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
     public boolean avaliableIn(Editor editor) {
       return editor.getUserData(EDITOR_IS_DIFF_KEY) != null;
