@@ -17,14 +17,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Icons;
 import com.intellij.util.text.CharArrayUtil;
 
 import javax.swing.*;
@@ -190,10 +191,11 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     if (!isValid()) return null;
     PsiElement element = myUsageInfo.getElement();
     VirtualFile virtualFile = getFile();
+    if (virtualFile == null) return null;
+
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-    Module module = fileIndex.getModuleForFile(virtualFile);
-    return module;
+    return fileIndex.getModuleForFile(virtualFile);
   }
 
   public OrderEntry getLibraryEntry() {
