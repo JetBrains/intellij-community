@@ -50,6 +50,7 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.java.JavaLanguage;
 
 import java.util.*;
 
@@ -145,7 +146,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
     if(changeSet == null) return;
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
-    if(!(containingFile instanceof PsiJavaFile)) return;
+    if(!(containingFile.getLanguage() instanceof JavaLanguage)) return; //TODO[ik]: review
     final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, containingFile);
     set.addChange(new JavaTreeChanged(containingFile));
     event.registerChangeSet(PomJavaAspectImpl.this, set);
