@@ -664,6 +664,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerPerformanceInspections(){
         final List inspectionClasses = m_inspectionClasses;
+        inspectionClasses.add(PrivateMemberAccessBetweenOuterAndInnerClassInspection.class);
         inspectionClasses.add(ObjectAllocationInLoopInspection.class);
         inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
         inspectionClasses.add(UnnecessaryTemporaryOnConversionToStringInspection.class);

@@ -20,17 +20,17 @@ public class FloatingPointEqualityInspection
 
     public void foo()
     {
-        if(m_bar == m_baz)
-        {
+        if (m_bar == m_baz) {
             System.out.println("m_bar = " + m_bar);
         }
-        if(m_barf == m_bazf)
-        {
+        if (m_barf == m_bazf) {
             System.out.println("m_barf = " + m_barf);
         }
-        if(m_barf != m_bar)
-        {
+        if (m_barf != m_bar) {
             System.out.println("m_barf = " + m_barf);
         }
+       
     }
+
+
 }
