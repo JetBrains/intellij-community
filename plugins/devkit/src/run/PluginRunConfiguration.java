@@ -85,7 +85,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         if (jdk == null) {
           throw CantRunException.noJdkForModule(myModule);
         }
-        if (!(jdk.getSdkType() instanceof IdeaJdk)){
+        if (!(jdk.getSdkType() instanceof IdeaJdk)) {
           throw new ExecutionException("Wrong jdk type for plugin module");
         }
         final JavaParameters params = new JavaParameters();
@@ -125,6 +125,22 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
+    if (myModule == null) {
+      throw new RuntimeConfigurationException("Plugin module not specified.");
+    }
+    String moduleName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return myModule.getName();
+      }
+    });
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    final ProjectJdk jdk = rootManager.getJdk();
+    if (jdk == null) {
+      throw new RuntimeConfigurationException("No jdk specified for plugin module \'" + moduleName + "\'");
+    }
+    if (!(jdk.getSdkType() instanceof IdeaJdk)) {
+      throw new RuntimeConfigurationException("Wrong jdk type for plugin module \'" + moduleName + "\'");
+    }
   }
 
 
@@ -142,7 +158,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
   public void readExternal(Element element) throws InvalidDataException {
     Element module = element.getChild("module");
-    if (module != null){
+    if (module != null) {
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(module.getAttributeValue("name"));
     }
   }
