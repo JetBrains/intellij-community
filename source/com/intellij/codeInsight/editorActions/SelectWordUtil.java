@@ -271,7 +271,8 @@ public class SelectWordUtil {
         final char prevChar = editorText.charAt(start - 1);
         final char curChar = editorText.charAt(start);
 
-        if (Character.isLowerCase(prevChar) && Character.isUpperCase(curChar) || prevChar == '_' && curChar != '_') {
+        if (Character.isLowerCase(prevChar) && Character.isUpperCase(curChar) || prevChar == '_' && curChar != '_' ||
+            Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(editorText.charAt(start + 1))) {
           break;
         }
         start--;
@@ -280,7 +281,8 @@ public class SelectWordUtil {
       while (end < editorText.length() && Character.isJavaIdentifierPart(editorText.charAt(end))) {
         final char prevChar = editorText.charAt(end - 1);
         final char curChar = editorText.charAt(end);
-        if (Character.isLowerCase(prevChar) && Character.isUpperCase(curChar) || prevChar != '_' && curChar == '_') {
+        if (Character.isLowerCase(prevChar) && Character.isUpperCase(curChar) || prevChar != '_' && curChar == '_' ||
+            Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(editorText.charAt(end + 1))) {
           break;
         }
         end++;

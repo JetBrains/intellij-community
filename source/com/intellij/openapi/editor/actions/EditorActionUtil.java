@@ -121,16 +121,20 @@ public class EditorActionUtil {
     editor.getCaretModel().moveToOffset(newCaretOffset);
   }
 
-  public static boolean isWordStart(char first, char second, boolean isCamel) {
+  public static boolean isWordStart(CharSequence text, int offset, boolean isCamel) {
+    char first = text.charAt(offset - 1);
+    char second = text.charAt(offset);
     final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(first);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(second);
     if (!firstIsIdentifierPart && secondIsIdentifierPart) {
       return true;
     }
-
+    
     if (isCamel) {
       if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (Character.isLowerCase(first) && Character.isUpperCase(second) || first == '_' && second != '_')) {
+          (Character.isLowerCase(first) && Character.isUpperCase(second) ||
+           first == '_' && second != '_' ||
+           offset + 1 < text.length() && Character.isUpperCase(first) && Character.isUpperCase(second)) && Character.isLowerCase(text.charAt(offset + 1))) {
         return true;
       }
     }
@@ -139,7 +143,9 @@ public class EditorActionUtil {
            !Character.isWhitespace(second) && !secondIsIdentifierPart;
   }
 
-  public static boolean isWordEnd(char first, char second, boolean isCamel) {
+  public static boolean isWordEnd(CharSequence text, int offset, boolean isCamel) {
+    char first = text.charAt(offset - 1);
+    char second = text.charAt(offset);
     final boolean firstIsIdentifiePart = Character.isJavaIdentifierPart(first);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(second);
     if (firstIsIdentifiePart && !secondIsIdentifierPart) {
@@ -148,7 +154,9 @@ public class EditorActionUtil {
 
     if (isCamel) {
       if (firstIsIdentifiePart && secondIsIdentifierPart &&
-          (Character.isLowerCase(first) && Character.isUpperCase(second) || first != '_' && second == '_')) {
+          (Character.isLowerCase(first) && Character.isUpperCase(second) || first != '_' && second == '_' ||
+          offset + 1 < text.length() && Character.isUpperCase(first) &&
+          Character.isUpperCase(second)) && Character.isLowerCase(text.charAt(offset + 1))) {
         return true;
       }
     }
@@ -328,7 +336,7 @@ public class EditorActionUtil {
     }
     boolean camel = editor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
-      if (isWordStart(text.charAt(newOffset - 1), text.charAt(newOffset), camel)) {
+      if (isWordStart(text, newOffset, camel)) {
         break;
       }
     }
@@ -372,7 +380,7 @@ public class EditorActionUtil {
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
     boolean camel = editor.getSettings().isCamelWords();
     for (; newOffset > minOffset; newOffset--) {
-      if (isWordStart(text.charAt(newOffset - 1), text.charAt(newOffset), camel)) break;
+      if (isWordStart(text, newOffset, camel)) break;
     }
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

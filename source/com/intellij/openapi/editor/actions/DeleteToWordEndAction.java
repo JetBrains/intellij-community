@@ -51,8 +51,8 @@ public class DeleteToWordEndAction extends EditorAction {
     }
     boolean camel = editor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordEnd(text.charAt(newOffset - 1), text.charAt(newOffset), camel) ||
-          EditorActionUtil.isWordStart(text.charAt(newOffset - 1), text.charAt(newOffset), camel)) {
+      if (EditorActionUtil.isWordEnd(text, newOffset, camel) ||
+          EditorActionUtil.isWordStart(text, newOffset, camel)) {
         break;
       }
     }

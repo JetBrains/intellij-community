@@ -451,7 +451,7 @@ public class SelectionModelImpl implements SelectionModel, DocumentListener {
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
     boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset > minOffset; newOffset--) {
-      if (EditorActionUtil.isWordStart(text.charAt(newOffset - 1), text.charAt(newOffset), camel)) break;
+      if (EditorActionUtil.isWordStart(text, newOffset, camel)) break;
     }
 
     return newOffset;
@@ -474,7 +474,7 @@ public class SelectionModelImpl implements SelectionModel, DocumentListener {
     }
     boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordEnd(text.charAt(newOffset - 1), text.charAt(newOffset), camel)) break;
+      if (EditorActionUtil.isWordEnd(text, newOffset, camel)) break;
     }
 
     return newOffset;
