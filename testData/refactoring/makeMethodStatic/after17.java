@@ -2,9 +2,9 @@ public class Test {
     String field;
 
     /**
-     * @param field1
+     * @param field
      */
-    static String method(String field1) {
-        return field1;
+    static String method(String field) {
+        return field;
     }
 }

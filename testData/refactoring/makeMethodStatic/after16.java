@@ -3,9 +3,9 @@ public class Test {
     String field;
     /**
      * @param anObject
-     * @param field1
+     * @param field
      */
-    static void method(Test anObject, String field1) {
-        anObject.anotherMethod(field1);
+    static void method(Test anObject, String field) {
+        anObject.anotherMethod(field);
     }
 }

@@ -1012,10 +1012,6 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           }
           try {
             scope.accept(new PsiRecursiveElementVisitor() {
-                           public void visitReferenceExpression(PsiReferenceExpression expression) {
-                             visitReferenceElement(expression);
-                           }
-
                            public void visitClass(PsiClass aClass) {
 
                            }
