@@ -67,6 +67,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void disposeComponent() {
+    dispose();
   }
 
   public void projectOpened() {
@@ -153,6 +154,9 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public void projectClosed() {
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
+  }
+
+  private void dispose() {
     for (Iterator<String> iterator = myName2FavoritesListSet.keySet().iterator(); iterator.hasNext();) {
       final String key = iterator.next();
       final Content content = myName2FavoritesListSet.get(key);
