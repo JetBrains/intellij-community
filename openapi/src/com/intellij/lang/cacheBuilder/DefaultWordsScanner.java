@@ -46,7 +46,7 @@ public class DefaultWordsScanner implements WordsScanner {
   }
 
   /**
-   * This code seems strange but it is more effective as Character.isJavaIdentifier_xxx_ quite hard operation due to unicode
+   * This code seems strange but it is more effective as Character.isJavaIdentifier_xxx_ is quite costy operation due to unicode
    */
   private static boolean stripWords(final Processor<WordOccurence> processor,
                                     final CharArrayCharSequence tokenText,
@@ -69,7 +69,6 @@ public class DefaultWordsScanner implements WordsScanner {
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
           if (!Character.isJavaIdentifierPart(c) || c == '$') break;
         }
-        if (index - index1 > 100) continue; // Strange limit but we should have some!
 
         if (!processor.process(new WordOccurence(tokenText.subSequence(index1, index), kind))) return false;
       }
