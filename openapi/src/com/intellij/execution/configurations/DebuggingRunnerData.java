@@ -9,6 +9,10 @@ public interface DebuggingRunnerData {
    * @return a string denoting debug port. In case of socket transport this is a number, in case of shared memory transport this is a string
    */
   String getDebugPort();
-  
+
+  void setDebugPort(String port);
+
   boolean isRemote();
+
+  void setLocal(boolean isLocal);
 }
