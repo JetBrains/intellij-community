@@ -21,7 +21,7 @@ public class AutoUnboxingInspection extends ExpressionInspection {
     private static final Set s_numberTypes = new HashSet(8);
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
-    static {
+    static {  
         s_unboxingMethods.put("int", "intValue");
         s_unboxingMethods.put("short", "shortValue");
         s_unboxingMethods.put("boolean", "booleanValue");
