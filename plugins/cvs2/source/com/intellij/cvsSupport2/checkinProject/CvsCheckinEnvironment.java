@@ -158,12 +158,14 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
                                                  dialog.getPreparedComment(CvsVcs2.getInstance(myProject).getCheckinEnvironment()));
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.setShowErrors(false);
     executor.performActionSync(checkinHandler, new MyCvsOperationExecutorCallback(checkinHandler));
     return executor.getResult().getErrorsAndWarnings();
   }
 
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.setShowErrors(false);
     CvsHandler handler = CommandCvsHandler.createCommitHandler(
           roots,
           new File[]{},
