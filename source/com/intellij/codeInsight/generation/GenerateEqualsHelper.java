@@ -170,13 +170,19 @@ public class GenerateEqualsHelper implements Runnable {
           } else if (type instanceof PsiPrimitiveType) {
             if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
               addDoubleFieldComparison(buffer, field);
-            }
-            else {
+            } else {
               addPrimitiveFieldComparison(buffer, field);
             }
           } else {
-              addFieldComparison(buffer, field);
+            if (type instanceof PsiClassType) {
+              final PsiClass aClass = ((PsiClassType)type).resolve();
+              if (aClass != null && aClass.isEnum()) {
+                addPrimitiveFieldComparison(buffer, field);
+                continue;
+              }
             }
+            addFieldComparison(buffer, field);
+          }
         }
       }
     }
