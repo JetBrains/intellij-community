@@ -14,7 +14,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.ApplicationImpl;                                                        
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -179,6 +179,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       MarkSpot currentSpot = null;
       while (!startQueue.isEmpty() || !endQueue.isEmpty() || index != sortedHighlighters.size()) {
         LOG.assertTrue(startQueue.size() == endQueue.size());
+        final THashSet<PositionedRangeHighlighter> set = new THashSet<PositionedRangeHighlighter>(startQueue);
+        LOG.assertTrue(set.containsAll(endQueue));
+
         final PositionedRangeHighlighter positionedMark;
         boolean addingNew;
         if (index != sortedHighlighters.size()) {
@@ -229,7 +232,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           currentSpot = new MarkSpot(positionedMark.yEnd, -1);
           while (!endQueue.isEmpty() && endQueue.peek().yEnd == positionedMark.yEnd) {
             final PositionedRangeHighlighter highlighter = endQueue.remove();
-            startQueue.remove(highlighter);
+            for (Iterator<PositionedRangeHighlighter> iterator = startQueue.iterator(); iterator.hasNext();) {
+              PositionedRangeHighlighter positioned = iterator.next();
+              if (positioned == highlighter) {
+                iterator.remove();
+                break;
+              }
+            }
+            //startQueue.remove(highlighter);
           }
           if (startQueue.size() == 0)  {
             currentSpot = null;

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -128,6 +129,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
             PsiElement psiAtStartLineEnd = psiFile.findElementAt(start);
             PsiElement psiAtNextLineStart = psiFile.findElementAt(end);
             rc = tryJoinDeclaration(psiAtStartLineEnd, psiAtNextLineStart);
+            if (rc == -1) {
+              rc = tryUnwrapBlockStatement(psiAtStartLineEnd, psiAtNextLineStart);
+            }
           }
 
           if (rc != -1) {
@@ -198,6 +202,34 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     });
   }
 
+  private int tryUnwrapBlockStatement(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
+    if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
+    if (!CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject()).KEEP_CONTROL_STATEMENT_IN_ONE_LINE) return -1;
+    if (!(elementAtStartLineEnd instanceof PsiJavaToken) || ((PsiJavaToken)elementAtStartLineEnd).getTokenType() != JavaTokenType.LBRACE) {
+      return -1;
+    }
+    final PsiElement codeBlock = elementAtStartLineEnd.getParent();
+    if (!(codeBlock instanceof PsiCodeBlock)) return -1;
+    if (!(codeBlock.getParent() instanceof PsiBlockStatement)) return -1;
+    PsiElement foundStatement = null;
+    for (PsiElement element = elementAtStartLineEnd.getNextSibling(); element != null; element = element.getNextSibling()) {
+      if (element instanceof PsiWhiteSpace) continue;
+      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE && element.getParent() == codeBlock) {
+        if (foundStatement == null) return -1;
+        break;
+      }
+      if (foundStatement != null) return -1;
+      foundStatement = element;
+    }
+    try {
+      final PsiElement newStatement = codeBlock.getParent().replace(foundStatement);
+      return newStatement.getTextRange().getStartOffset();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return -1;
+  }
   private int tryJoinDeclaration(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
 
