@@ -9,10 +9,7 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.ReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,8 +42,8 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
   public boolean SHOW_STATIC_FINAL            = false;
   public boolean CHILDREN_PHYSICAL            = true;
 
-  public ClassRenderer() {
-    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
+  public ClassRenderer(RendererProvider provider) {
+    super(provider, UNIQUE_ID);
   }
 
   public ClassRenderer clone() {

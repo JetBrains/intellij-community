@@ -6,7 +6,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
@@ -34,7 +33,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     myChildrenRenderer = childrenRenderer;
   }
 
-  public NodeRenderer clone() {
+  public Renderer clone() {
     CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
     renderer.myLabelRenderer    = myLabelRenderer    != null ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
     renderer.myChildrenRenderer = myChildrenRenderer != null ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
@@ -90,12 +89,8 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     final Element labelRendererElement = NodeRendererExternalizer.writeRenderer(myLabelRenderer);
-    if (labelRendererElement != null) {
-      element.addContent(labelRendererElement);
-    }
+    element.addContent(labelRendererElement);
     final Element childrenRendererElement = NodeRendererExternalizer.writeRenderer(myChildrenRenderer);
-    if (childrenRendererElement != null) {
-      element.addContent(childrenRendererElement);
-    }
+    element.addContent(childrenRendererElement);
   }
 }

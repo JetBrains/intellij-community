@@ -13,10 +13,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.ReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -40,7 +37,7 @@ import java.util.ListIterator;
  * Date: Sep 18, 2003
  * Time: 3:07:19 PM
  */
-public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cloneable{
+public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ArrayRenderer");
   
   public static final String UNIQUE_ID = "ArrayRenderer";
@@ -50,8 +47,8 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
   public int ENTRIES_LIMIT = 100;
   private final static String MORE_ELEMENTS = "...";
 
-  public ArrayRenderer() {
-    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
+  public ArrayRenderer(RendererProvider provider) {
+    super(provider, UNIQUE_ID);
   }
 
   public String getName() {

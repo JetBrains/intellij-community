@@ -28,8 +28,8 @@ public class PrimitiveRenderer extends NodeRendererImpl {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer");
 
-  public PrimitiveRenderer() {
-    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
+  public PrimitiveRenderer(final RendererProvider provider) {
+    super(provider, UNIQUE_ID);
     setName("Default");
   }
 

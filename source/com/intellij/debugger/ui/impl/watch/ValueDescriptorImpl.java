@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -177,7 +176,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     super.displayAs(descriptor);
   }
 
-  public NodeRenderer getLastRenderer() {
+  public com.intellij.debugger.ui.tree.render.Renderer getLastRenderer() {
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
@@ -206,9 +205,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   //returns expression that evaluates tree to this descriptor
   public PsiExpression getTreeEvaluation(DebuggerTreeNodeImpl debuggerTreeNode, DebuggerContextImpl context) throws EvaluateException {
     if(debuggerTreeNode.getParent() != null && debuggerTreeNode.getParent().getDescriptor() instanceof ValueDescriptor) {
-      NodeDescriptorImpl descriptor = ((DebuggerTreeNodeImpl)debuggerTreeNode.getParent()).getDescriptor();
+      NodeDescriptorImpl descriptor = debuggerTreeNode.getParent().getDescriptor();
       ValueDescriptorImpl vDescriptor = ((ValueDescriptorImpl)descriptor);
-      PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation((DebuggerTreeNodeImpl)debuggerTreeNode.getParent(), context);
+      PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(debuggerTreeNode.getParent(), context);
 
       return DebuggerTreeNodeExpression.substituteThis(
               vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(debuggerTreeNode, context),
