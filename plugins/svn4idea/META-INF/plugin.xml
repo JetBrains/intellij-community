@@ -1,10 +1,14 @@
-<idea-plugin>
+<idea-plugin version="2">
   <name>Subversion</name>
   <id>Subversion</id>
   <description>Subversion Integration</description>
   <version>1.0</version>
-  <vendor>JetBrains, Inc</vendor>
+  <vendor>JetBrains</vendor>
   <idea-version min="4.0" max="4.0"/>
+
+  <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
 
   <application-components>
     <component>
