@@ -17,6 +17,7 @@ class StringToCharPredicate implements PsiElementPredicate{
             return false;
         }
         final String value = (String) expression.getValue();
+
         if(value == null || value.length() != 1){
             return false;
         }
