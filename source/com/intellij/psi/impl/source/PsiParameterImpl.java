@@ -9,6 +9,7 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 public class PsiParameterImpl extends IndexedRepositoryPsiElement implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
@@ -138,7 +139,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public boolean isVarArgs() {
-    return TreeUtil.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(getTypeElement()), ELLIPSIS) != null;
+    return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), ELLIPSIS) != null;
   }
 
   public ItemPresentation getPresentation() {

@@ -22,7 +22,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   public PsiStatement findExitedStatement() {
     PsiIdentifier label = getLabelIdentifier();
     if (label == null){
-      for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
+      for(ASTNode parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
         IElementType i = parent.getElementType();
         if (i == FOR_STATEMENT || i == WHILE_STATEMENT || i == DO_WHILE_STATEMENT || i == SWITCH_STATEMENT || i == FOREACH_STATEMENT) {
           return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(parent);

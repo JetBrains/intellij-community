@@ -7,13 +7,13 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.lang.ASTNode;
 
 public class ReplaceExpressionUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil");
 
-  public static boolean isNeedParenthesis(TreeElement oldExpr, ASTNode newExpr) {
+  public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
     if (!ElementType.EXPRESSION_BIT_SET.isInSet(oldExpr.getTreeParent().getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldExpr.getTreeParent());
@@ -21,17 +21,17 @@ public class ReplaceExpressionUtil implements Constants {
     IElementType i = oldExpr.getTreeParent().getElementType();
     if (i == ASSIGNMENT_EXPRESSION) {
       if (priority < parentPriority) return true;
-      return oldExpr.getTreeParent().getChildRole(oldExpr) == ChildRole.LOPERAND ? true : false;
+      return ((CompositeElement)oldExpr.getTreeParent()).getChildRole(oldExpr) == ChildRole.LOPERAND ? true : false;
     }
     else if (i == CONDITIONAL_EXPRESSION) {
-      int role = oldExpr.getTreeParent().getChildRole(oldExpr);
+      int role = ((CompositeElement)oldExpr.getTreeParent()).getChildRole(oldExpr);
       if (role == ChildRole.THEN_EXPRESSION) return false;
       if (priority < parentPriority) return true;
       return role == ChildRole.ELSE_EXPRESSION ? false : true;
     }
     else if (i == BINARY_EXPRESSION) {
       if (priority < parentPriority) return true;
-      return oldExpr.getTreeParent().getChildRole(oldExpr) == ChildRole.LOPERAND ? false : true;
+      return ((CompositeElement)oldExpr.getTreeParent()).getChildRole(oldExpr) == ChildRole.LOPERAND ? false : true;
     }
     else if (i == INSTANCE_OF_EXPRESSION) {
       return priority < parentPriority;
@@ -52,7 +52,7 @@ public class ReplaceExpressionUtil implements Constants {
       return false;
     }
     else if (i == ARRAY_ACCESS_EXPRESSION) {
-      int role = oldExpr.getTreeParent().getChildRole(oldExpr);
+      int role = ((CompositeElement)oldExpr.getTreeParent()).getChildRole(oldExpr);
       if (role == ChildRole.ARRAY_DIMENSION) return false;
       return priority < parentPriority;
     }

@@ -189,7 +189,7 @@ public class DeclarationParsing extends Parsing {
     last = type;
 
     if (lexer.getTokenType() != IDENTIFIER){
-      if (context == CODE_BLOCK_CONTEXT && modifierList.firstChild == null){
+      if (context == CODE_BLOCK_CONTEXT && modifierList.getFirstChildNode() == null){
         ParseUtil.restorePosition(lexer, startPos);
         return null;
       }
@@ -504,7 +504,7 @@ public class DeclarationParsing extends Parsing {
     if (lexer.getTokenType() == AT) {
       result = parseAnnotation(lexer);
     } else if (lexer.getTokenType() == LBRACE) {
-      result = parseArrayMemberValue (lexer);
+      result = (TreeElement)parseArrayMemberValue (lexer);
     } else {
       result = myContext.getExpressionParsing().parseConditionalExpression(lexer);
     }
@@ -516,7 +516,7 @@ public class DeclarationParsing extends Parsing {
     return result;
   }
 
-  private CompositeElement parseArrayMemberValue(Lexer lexer) {
+  private ASTNode parseArrayMemberValue(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == LBRACE);
     CompositeElement memberList = Factory.createCompositeElement(ANNOTATION_ARRAY_INITIALIZER);
     TreeUtil.addChildren(memberList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -573,7 +573,7 @@ public class DeclarationParsing extends Parsing {
     if (lexer.getTokenType() != IDENTIFIER){
       TreeElement errorElement = Factory.createErrorElement("Identifier expected");
       TreeUtil.addChildren(aClass, errorElement);
-      return aClass.firstChild;
+      return (TreeElement)aClass.getFirstChildNode();
     }
 
     TreeUtil.addChildren(aClass, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -583,14 +583,14 @@ public class DeclarationParsing extends Parsing {
     TreeUtil.addChildren(aClass, classParameterList);
 
     if (!isEnum) {
-      TreeElement extendsList = parseExtendsList(lexer);
+      TreeElement extendsList = (TreeElement)parseExtendsList(lexer);
       if (extendsList == null){
         extendsList = Factory.createCompositeElement(EXTENDS_LIST);
       }
       TreeUtil.addChildren(aClass, extendsList);
     }
 
-    TreeElement implementsList = parseImplementsList(lexer);
+    TreeElement implementsList = (TreeElement)parseImplementsList(lexer);
     if (implementsList == null){
       implementsList = Factory.createCompositeElement(IMPLEMENTS_LIST);
     }
@@ -775,7 +775,7 @@ public class DeclarationParsing extends Parsing {
       lexer.advance();
     }
 
-    TreeElement throwsList = parseThrowsList(lexer);
+    TreeElement throwsList = (TreeElement)parseThrowsList(lexer);
     if (throwsList == null){
       throwsList = Factory.createCompositeElement(THROWS_LIST);
     }
@@ -890,15 +890,15 @@ public class DeclarationParsing extends Parsing {
     return paramList;
   }
 
-  public CompositeElement parseExtendsList(Lexer lexer) {
+  public ASTNode parseExtendsList(Lexer lexer) {
     return parseReferenceList(lexer, EXTENDS_LIST, COMMA, EXTENDS_KEYWORD);
   }
 
-  public CompositeElement parseImplementsList(Lexer lexer) {
+  public ASTNode parseImplementsList(Lexer lexer) {
     return parseReferenceList(lexer, IMPLEMENTS_LIST, COMMA, IMPLEMENTS_KEYWORD);
   }
 
-  public CompositeElement parseThrowsList(Lexer lexer) {
+  public ASTNode parseThrowsList(Lexer lexer) {
     return parseReferenceList(lexer, THROWS_LIST, COMMA, THROWS_KEYWORD);
   }
 
@@ -979,7 +979,7 @@ public class DeclarationParsing extends Parsing {
       return param;
     } else{
       TreeUtil.addChildren(param, Factory.createErrorElement("Identifier expected"));
-      return param.firstChild;
+      return (TreeElement)param.getFirstChildNode();
     }
   }
 }

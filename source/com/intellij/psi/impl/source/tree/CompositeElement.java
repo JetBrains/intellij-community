@@ -64,7 +64,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
       clone.lastChild = null;
       clone.myModificationsCount = 0;
       clone.myParentModifications = -1;
-      for (ASTNode child = firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
         TreeUtil.addChildren(clone, (TreeElement)child.clone());
       }
     }
@@ -162,7 +162,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     synchronized (PsiLock.LOCK) {
-      for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (getChildRole(child) == role) return child;
       }
     }
@@ -190,7 +190,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
     }
     final ASTNode[] result = new ASTNode[count];
     count = 0;
-    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())){
         result[count++] = child;
       }
@@ -210,7 +210,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
 
     PsiElement[] result = constructor.newPsiElementArray(count);
     count = 0;
-    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())){
         result[count++] = SourceTreeToPsiMap.treeElementToPsi(child);
       }
@@ -223,7 +223,7 @@ public class CompositeElement extends TreeElement implements Cloneable{
 
     // no lock is needed because all chameleons are expanded already
     int count = 0;
-    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
       if (filter == null || filter.isInSet(child.getElementType())) {
         count++;
       }

@@ -20,7 +20,7 @@ public class ChameleonTransforming implements Constants {
       if (LOG.isDebugEnabled()) {
         LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");
       }
-      final CompositeElement parent = chameleon.getTreeParent();
+      final ASTNode parent = chameleon.getTreeParent();
       parent.getTextLength();
       PsiFileImpl file = (PsiFileImpl)SourceTreeToPsiMap.treeElementToPsi(parent).getContainingFile();
       if (file == null) return null;
@@ -39,7 +39,7 @@ public class ChameleonTransforming implements Constants {
         }
         char[] buffer = new char[length2];
         int offset = 0;
-        for (TreeElement element = newElement; element != null; element = element.getTreeNext()) {
+        for (ASTNode element = newElement; element != null; element = element.getTreeNext()) {
           offset = SourceUtil.toBuffer(element, buffer, offset);
         }
         String text2 = new String(buffer);
@@ -53,13 +53,13 @@ public class ChameleonTransforming implements Constants {
     }
   }
 
-  public static void transformChildren(CompositeElement element) {
+  public static void transformChildren(ASTNode element) {
     transformChildren(element, false);
   }
 
-  public static void transformChildren(CompositeElement element, boolean recursive) {
+  public static void transformChildren(ASTNode element, boolean recursive) {
     synchronized (PsiLock.LOCK) {
-      ASTNode child = element.firstChild;
+      ASTNode child = element.getFirstChildNode();
       while (child != null) {
         if (child instanceof ChameleonElement) {
           ASTNode next = child.getTreeNext();
@@ -70,7 +70,7 @@ public class ChameleonTransforming implements Constants {
           continue;
         }
         if (recursive && child instanceof CompositeElement) {
-          transformChildren((CompositeElement)child, recursive);
+          transformChildren(child, recursive);
         }
         child = child.getTreeNext();
       }

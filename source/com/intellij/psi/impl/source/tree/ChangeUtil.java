@@ -93,7 +93,7 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  public static void registerLeafsInCharTab(CharTable newCharTab, TreeElement child, CharTable oldCharTab) {
+  public static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
     if(newCharTab == oldCharTab) return;
     while(child != null){
       CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
@@ -101,7 +101,7 @@ public class ChangeUtil implements Constants {
         ((LeafElement)child).registerInCharTable(newCharTab, oldCharTab);
       }
       else {
-        registerLeafsInCharTab(newCharTab, ((CompositeElement)child).firstChild, charTable != null ? charTable : oldCharTab);
+        registerLeafsInCharTab(newCharTab, child.getFirstChildNode(), charTable != null ? charTable : oldCharTab);
       }
       if (charTable != null) {
         child.putUserData(CharTable.CHAR_TABLE_KEY, null);
@@ -221,7 +221,7 @@ public class ChangeUtil implements Constants {
     boolean physical = parentPsiElement.isPhysical();
     PsiFile file = parentPsiElement.getContainingFile();
     ChameleonTransforming.transformChildren(newChildrenParent);
-    final TreeElement firstChild = newChildrenParent.firstChild;
+    final ASTNode firstChild = newChildrenParent.getFirstChildNode();
     if (physical){
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
       manager.invalidateFile(file);
@@ -237,7 +237,7 @@ public class ChangeUtil implements Constants {
         RepositoryManager repositoryManager = manager.getRepositoryManager();
         if (repositoryManager != null){
           ChameleonTransforming.transformChildren(parent);
-          for(ASTNode child = parent.firstChild; child != null; child = child.getTreeNext()){
+          for(ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()){
             repositoryManager.beforeChildAddedOrRemoved(file, parent, child);
           }
 
@@ -248,17 +248,17 @@ public class ChangeUtil implements Constants {
       }
     }
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
-    TreeElement oldChild = parent.firstChild;
+    ASTNode oldChild = parent.getFirstChildNode();
     while(oldChild != null){
       oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTab);
       oldChild = oldChild.getTreeNext();
     }
-    TreeUtil.removeRange(parent.firstChild, null);
+    TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
 
     if (firstChild != null){
       final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
       registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
-      TreeUtil.addChildren(parent, firstChild);
+      TreeUtil.addChildren(parent, (TreeElement)firstChild);
     }
     parent.setCachedLength(newLength);
     parent.subtreeChanged();
@@ -306,10 +306,10 @@ public class ChangeUtil implements Constants {
         }
       }
 
-      ChameleonTransforming.transformChildren((CompositeElement)element);
-      ChameleonTransforming.transformChildren((CompositeElement)original);
-      TreeElement child = ((CompositeElement)element).firstChild;
-      ASTNode child1 = ((CompositeElement)original).firstChild;
+      ChameleonTransforming.transformChildren(element);
+      ChameleonTransforming.transformChildren(original);
+      TreeElement child = (TreeElement)element.getFirstChildNode();
+      ASTNode child1 = original.getFirstChildNode();
       while(child != null){
         _encodeInformation(child, child1, encodeRefTargets);
         child = child.getTreeNext();
@@ -356,8 +356,8 @@ public class ChangeUtil implements Constants {
 
   public static TreeElement decodeInformation(TreeElement element) {
     if (element instanceof CompositeElement){
-      ChameleonTransforming.transformChildren((CompositeElement)element);
-      TreeElement child = ((CompositeElement)element).firstChild;
+      ChameleonTransforming.transformChildren(element);
+      TreeElement child = (TreeElement)element.getFirstChildNode();
       while(child != null){
         child = decodeInformation(child);
         child = child.getTreeNext();
@@ -582,28 +582,28 @@ public class ChangeUtil implements Constants {
   }
 
 
-  private static void encodeInfoInTypeElement(CompositeElement typeElement, PsiType type) {
+  private static void encodeInfoInTypeElement(ASTNode typeElement, PsiType type) {
     if (type instanceof PsiPrimitiveType) return;
     LOG.assertTrue(typeElement.getElementType() == TYPE);
     if (type instanceof PsiArrayType) {
-      final ASTNode firstChild = typeElement.firstChild;
+      final ASTNode firstChild = typeElement.getFirstChildNode();
       LOG.assertTrue(firstChild.getElementType() == TYPE);
-      encodeInfoInTypeElement((CompositeElement) firstChild, ((PsiArrayType) type).getComponentType());
+      encodeInfoInTypeElement(firstChild, ((PsiArrayType) type).getComponentType());
       return;
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
       if (bound == null) return;
-      final ASTNode lastChild = typeElement.lastChild;
+      final ASTNode lastChild = typeElement.getLastChildNode();
       if (lastChild.getElementType() != TYPE) return;
-      encodeInfoInTypeElement((CompositeElement)lastChild, bound);
+      encodeInfoInTypeElement(lastChild, bound);
     }
     else if (type instanceof PsiCapturedWildcardType) {
       final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
       if (bound == null) return;
-      final ASTNode lastChild = typeElement.lastChild;
+      final ASTNode lastChild = typeElement.getLastChildNode();
       if (lastChild.getElementType() != TYPE) return;
-      encodeInfoInTypeElement((CompositeElement)lastChild, bound);
+      encodeInfoInTypeElement(lastChild, bound);
     }
     else if (type instanceof PsiIntersectionType) {
       encodeInfoInTypeElement(typeElement, ((PsiIntersectionType)type).getRepresentative());
@@ -615,7 +615,7 @@ public class ChangeUtil implements Constants {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass referencedClass = resolveResult.getElement();
       if (referencedClass == null) return;
-      final ASTNode reference = typeElement.firstChild;
+      final ASTNode reference = typeElement.getFirstChildNode();
       LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
 
       encodeClassTypeInfoInReference((CompositeElement) reference, resolveResult.getElement(), resolveResult.getSubstitutor());
@@ -631,13 +631,13 @@ public class ChangeUtil implements Constants {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     if (typeParameters.length == 0) return;
 
-    final CompositeElement referenceParameterList = (CompositeElement) reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
+    final ASTNode referenceParameterList = reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     int index = 0;
-    for (ASTNode child = referenceParameterList.firstChild; child != null; child = child.getTreeNext()) {
+    for (ASTNode child = referenceParameterList.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == TYPE) {
         final PsiType substitutedType = substitutor.substitute(typeParameters[index]);
         if (substitutedType != null) {
-          encodeInfoInTypeElement((CompositeElement) child, substitutedType);
+          encodeInfoInTypeElement(child, substitutedType);
         }
         index++;
       }
@@ -672,7 +672,7 @@ public class ChangeUtil implements Constants {
     final CompositeElement parent = leafElements[0].getTreeParent();
     if(LOG.isDebugEnabled()){
       for (int i = 0; i < leafElements.length; i++) {
-        final LeafElement leafElement = leafElements[i];
+        final ASTNode leafElement = leafElements[i];
         LOG.assertTrue(leafElement.getTreeParent() == parent);
       }
     }

@@ -53,15 +53,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public void setValue(String valueText) throws IncorrectOperationException{
-    final TreeElement value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
+    final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = getProject().getModel();
-    final TreeElement newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute("a", valueText));
+    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)getManager().getElementFactory().createXmlAttribute("a", valueText));
     model.runTransaction(new PomTransaction() {
       public PomModelEvent run(){
         if(value != null){
-          CodeEditUtil.replaceChild(XmlAttributeImpl.this, value, newValue);
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, (TreeElement)value, (TreeElement)newValue);
         }
-        else CodeEditUtil.addChild(XmlAttributeImpl.this, newValue, null);
+        else {
+          CodeEditUtil.addChild(XmlAttributeImpl.this, (TreeElement)newValue, null);
+        }
         return XmlAttributeSet.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
       }
     }, model.getModelAspect(XmlAspect.class));
@@ -103,13 +105,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public PsiElement setName(final String nameText) throws IncorrectOperationException {
-    final TreeElement name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
+    final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = getProject().getModel();
-    final TreeElement newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute(nameText, ""));
+    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)getManager().getElementFactory().createXmlAttribute(nameText, ""));
     model.runTransaction(new PomTransaction() {
       public PomModelEvent run(){
-        CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
+        CodeEditUtil.replaceChild(XmlAttributeImpl.this, (TreeElement)name, (TreeElement)newName);
         return XmlAttributeSet.createXmlAttributeSet(model, getParent(), nameText, getValue());
       }
     }, model.getModelAspect(XmlAspect.class));

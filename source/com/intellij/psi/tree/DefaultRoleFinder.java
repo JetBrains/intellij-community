@@ -5,6 +5,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 
 public class DefaultRoleFinder implements RoleFinder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.DefaultRoleFinder");
@@ -16,9 +17,9 @@ public class DefaultRoleFinder implements RoleFinder{
     myParentType = parentType;
   }
 
-  public TreeElement findChild(CompositeElement parent) {
+  public ASTNode findChild(ASTNode parent) {
     if(myParentType != null) LOG.assertTrue(parent.getElementType() == myParentType);
-    TreeElement current = parent.firstChild;
+    ASTNode current = parent.getFirstChildNode();
     while(current != null && current.getElementType() != myElementType)
       current = current.getTreeNext();
     return current;

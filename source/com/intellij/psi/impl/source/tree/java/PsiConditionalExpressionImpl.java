@@ -5,7 +5,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.lang.ASTNode;
@@ -79,7 +78,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
         return null;
 
       case ChildRole.CONDITION:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.QUEST:
         return TreeUtil.findChild(this, QUEST);
@@ -93,7 +92,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
             child = child.getTreeNext();
           }
-          return (TreeElement)child;
+          return child;
         }
 
       case ChildRole.COLON:
@@ -103,7 +102,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
         {
           ASTNode colon = findChildByRole(ChildRole.COLON);
           if (colon == null) return null;
-          return EXPRESSION_BIT_SET.isInSet(lastChild.getElementType()) ? lastChild : null;
+          return EXPRESSION_BIT_SET.isInSet(getLastChildNode().getElementType()) ? getLastChildNode() : null;
         }
     }
   }

@@ -35,7 +35,7 @@ public class ImportsTextParsing extends Parsing {
 
     CompositeElement invalidElementsGroup = null;
     while(filterLexer.getTokenType() != null){
-      TreeElement element = parseImportStatement(filterLexer);
+      TreeElement element = (TreeElement)parseImportStatement(filterLexer);
       if (element != null){
         TreeUtil.addChildren(dummyRoot, element);
         invalidElementsGroup = null;
@@ -51,10 +51,10 @@ public class ImportsTextParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  private CompositeElement parseImportStatement(FilterLexer lexer) {
+  private ASTNode parseImportStatement(FilterLexer lexer) {
     if (lexer.getTokenType() != IMPORT_KEYWORD) return null;
 
     final TreeElement importToken = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
@@ -80,10 +80,10 @@ public class ImportsTextParsing extends Parsing {
     }
 
     CompositeElement refElement = parseJavaCodeReference(lexer, true);
-    if (refElement.lastChild.getElementType() == ERROR_ELEMENT){
+    if (refElement.getLastChildNode().getElementType() == ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
-      TreeUtil.remove(refElement.lastChild);
+      TreeUtil.remove((TreeElement)refElement.getLastChildNode());
       TreeUtil.addChildren(statement, (TreeElement)qualifier);
       if (lexer.getTokenType() == ASTERISK){
         TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -116,9 +116,9 @@ public class ImportsTextParsing extends Parsing {
   public CompositeElement convertToImportStaticReference(CompositeElement refElement) {
     final CompositeElement importStaticReference = Factory.createCompositeElement(IMPORT_STATIC_REFERENCE);
     final CompositeElement referenceParameterList = (CompositeElement)refElement.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
-    TreeUtil.addChildren(importStaticReference, refElement.firstChild);
+    TreeUtil.addChildren(importStaticReference, (TreeElement)refElement.getFirstChildNode());
     if (referenceParameterList != null) {
-      if (referenceParameterList.firstChild == null) {
+      if (referenceParameterList.getFirstChildNode() == null) {
         TreeUtil.remove(referenceParameterList);
       }
       else {

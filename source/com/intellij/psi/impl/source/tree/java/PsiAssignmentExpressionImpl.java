@@ -37,10 +37,10 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
         return null;
 
       case ChildRole.LOPERAND:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.ROPERAND:
-        return EXPRESSION_BIT_SET.isInSet(lastChild.getElementType()) ? lastChild : null;
+        return EXPRESSION_BIT_SET.isInSet(getLastChildNode().getElementType()) ? getLastChildNode() : null;
 
       case ChildRole.OPERATION_SIGN:
         return TreeUtil.findChild(this, OUR_OPERATIONS_BIT_SET);
@@ -50,8 +50,8 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
-      if (child == firstChild) return ChildRole.LOPERAND;
-      if (child == lastChild) return ChildRole.ROPERAND;
+      if (child == getFirstChildNode()) return ChildRole.LOPERAND;
+      if (child == getLastChildNode()) return ChildRole.ROPERAND;
       return ChildRole.NONE;
     }
     else if (OUR_OPERATIONS_BIT_SET.isInSet(child.getElementType())) {

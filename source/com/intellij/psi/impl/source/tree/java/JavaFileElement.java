@@ -19,7 +19,7 @@ public class JavaFileElement extends FileElement{
   public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before) {
     ChameleonTransforming.transformChildren(this);
     if (before == null && first == last && first.getElementType() == ElementType.PACKAGE_STATEMENT){ //?
-      anchor = firstChild;
+      anchor = (TreeElement)getFirstChildNode();
       before = Boolean.TRUE;
     }
     return super.addInternal(first, last, anchor, before);

@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ExpressionParsing");
@@ -60,7 +61,7 @@ public class ExpressionParsing extends Parsing {
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE,
                                   myContext);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   public CompositeElement parseExpression(Lexer lexer) {
@@ -342,7 +343,7 @@ public class ExpressionParsing extends Parsing {
 
         if (lexer.getTokenType() == PLUS || lexer.getTokenType() == MINUS ||
             lexer.getTokenType() == PLUSPLUS || lexer.getTokenType() == MINUSMINUS) {
-          if (!PRIMITIVE_TYPE_BIT_SET.isInSet(((CompositeElement)type).firstChild.getElementType())) {
+          if (!PRIMITIVE_TYPE_BIT_SET.isInSet(type.getFirstChildNode().getElementType())) {
             ParseUtil.restorePosition(lexer, pos);
             return parsePostfixExpression(lexer);
           }

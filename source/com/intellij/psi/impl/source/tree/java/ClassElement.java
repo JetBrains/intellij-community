@@ -144,8 +144,8 @@ public class ClassElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (firstChild.getElementType() == DOC_COMMENT) {
-          return firstChild;
+        if (getFirstChildNode().getElementType() == DOC_COMMENT) {
+          return getFirstChildNode();
         }
         else {
           return null;
@@ -171,7 +171,7 @@ public class ClassElement extends RepositoryTreeElement {
         return TreeUtil.findChild(this, TYPE_PARAMETER_LIST);
 
       case ChildRole.CLASS_OR_INTERFACE_KEYWORD:
-        for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+        for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
           if (CLASS_KEYWORD_BIT_SET.isInSet(child.getElementType())) return child;
         }
         LOG.assertTrue(false);
@@ -191,9 +191,9 @@ public class ClassElement extends RepositoryTreeElement {
     }
   }
 
-  private TreeElement findEnumConstantListDelimiter() {
+  private ASTNode findEnumConstantListDelimiter() {
     ASTNode candidate = findEnumConstantListDelimiterPlace();
-    return candidate.getElementType() == SEMICOLON ? (TreeElement)candidate : null;
+    return candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
   private TreeElement findEnumConstantListDelimiterPlace() {
@@ -206,7 +206,7 @@ public class ClassElement extends RepositoryTreeElement {
       else if (childType == COMMA) continue;
       else if (childType == SEMICOLON) return (TreeElement)child;
       else {
-        return (TreeElement)TreeUtil.skipElementsBack((TreeElement)child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        return (TreeElement)TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       }
     }
   }

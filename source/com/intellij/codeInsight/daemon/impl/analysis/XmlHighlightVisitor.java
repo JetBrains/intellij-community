@@ -27,7 +27,6 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -155,7 +154,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
                   if (currentElement!=null) {
                     currentElement = SourceTreeToPsiMap.treeElementToPsi(
                       XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(
-                        (CompositeElement)SourceTreeToPsiMap.psiElementToTree(currentElement)
+                        SourceTreeToPsiMap.psiElementToTree(currentElement)
                       )
                     );
                   }
@@ -232,7 +231,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
                                  List<HighlightInfo> result,
                                  HighlightInfoType type,
                                  IntentionAction quickFixAction) {
-    final CompositeElement tagElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag);
+    final ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
     ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
 
     if(childByRole != null) {
@@ -396,7 +395,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
               }
 
               public void invoke(final Project project, final Editor editor, final PsiFile file) {
-                CompositeElement treeElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag);
+                ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(tag);
                 PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
                   XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
                 );
@@ -537,7 +536,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
     if (attributeDescriptor == null) {
       myResult.add(HighlightInfo.createHighlightInfo(
         HighlightInfoType.WRONG_REF,
-          XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(attribute)),
+          XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
           "Attribute " + localName + " is not allowed here"));
     }
     else {
@@ -548,7 +547,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
          ) {
         myResult.add(HighlightInfo.createHighlightInfo(
           HighlightInfoType.WRONG_REF,
-            XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(attribute)),
+            XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
             "Empty attribute " + localName + " is not allowed")
         );
       }
@@ -565,7 +564,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor{
         final String localName = attribute.getLocalName();
         myResult.add(HighlightInfo.createHighlightInfo(
           HighlightInfoType.WRONG_REF,
-          XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(attribute)),
+          XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
           "Duplicate attribute " + localName));
       }
     }

@@ -99,7 +99,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         PsiAnnotationImpl annotation = (PsiAnnotationImpl)getTreeParent().getTreeParent();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
         return nameRef == null ? null : (PsiClass)nameRef.resolve();
-      };
+      }
 
       public PsiElement getElement() {
         PsiIdentifier nameIdentifier = getNameIdentifier();
@@ -138,10 +138,11 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
           SharedPsiElementImplUtil.setName(nameIdentifier, newElementName);
-        } else if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(firstChild.getElementType())) {
+        }
+        else if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(getFirstChildNode().getElementType())) {
           PsiElementFactory factory = getManager().getElementFactory();
           nameIdentifier = factory.createIdentifier(newElementName);
-          addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(firstChild));
+          addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode()));
         }
 
         return PsiNameValuePairImpl.this;

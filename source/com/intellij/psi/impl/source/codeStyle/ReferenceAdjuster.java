@@ -72,13 +72,13 @@ class ReferenceAdjuster implements Constants {
               PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
               if (ImportHelper.isImplicitlyImported(qName, file)){
                 if (isShort) return element;
-                return makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
+                return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
               }
               if (file instanceof PsiJavaFile){
                 String thisPackageName = ((PsiJavaFile)file).getPackageName();
                 if (ImportHelper.hasPackage(qName, thisPackageName)){
                   if (!isShort) {
-                    return makeShortReference(
+                    return (TreeElement)makeShortReference(
                       (CompositeElement)element,
                       (PsiClass)refElement,
                       addImports,
@@ -87,10 +87,10 @@ class ReferenceAdjuster implements Constants {
                   }
                 }
               }
-              return replaceReferenceWithFQ((CompositeElement)element, (PsiClass)refElement);
+              return (TreeElement)replaceReferenceWithFQ(element, (PsiClass)refElement);
             }
             else{
-              return makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
+              return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
             }
           }
         }
@@ -98,8 +98,8 @@ class ReferenceAdjuster implements Constants {
     }
 
     if (element instanceof CompositeElement){
-      ChameleonTransforming.transformChildren((CompositeElement)element);
-      for(TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()){
+      ChameleonTransforming.transformChildren(element);
+      for(TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()){
         child = process(child, addImports, uncompleteCode);
       }
     }
@@ -132,9 +132,9 @@ class ReferenceAdjuster implements Constants {
       return;
     }
     if (parent instanceof CompositeElement){
-      ChameleonTransforming.transformChildren((CompositeElement)parent);
+      ChameleonTransforming.transformChildren(parent);
       int offset = 0;
-      for(TreeElement child = ((CompositeElement)parent).firstChild; child != null; child = child.getTreeNext()){
+      for(TreeElement child = (TreeElement)parent.getFirstChildNode(); child != null; child = child.getTreeNext()){
         int length = child.getTextLength();
         if (startOffset <= offset + length && offset <= endOffset){
           if (startOffset <= offset && offset + length <= endOffset){
@@ -147,7 +147,7 @@ class ReferenceAdjuster implements Constants {
     }
   }
 
-  private CompositeElement makeShortReference(
+  private ASTNode makeShortReference(
     CompositeElement reference,
     PsiClass refClass,
     boolean addImports,
@@ -206,7 +206,7 @@ class ReferenceAdjuster implements Constants {
     return reference;
   }
 
-  private static boolean isSafeToShortenReference (CompositeElement reference, PsiClass refClass, PsiResolveHelper helper) {
+  private static boolean isSafeToShortenReference (ASTNode reference, PsiClass refClass, PsiResolveHelper helper) {
     PsiClass newRefClass = helper.resolveReferencedClass(
         refClass.getName(),
         SourceTreeToPsiMap.treeElementToPsi(reference)
@@ -220,7 +220,7 @@ class ReferenceAdjuster implements Constants {
     return reference;
   }
 
-  private static CompositeElement replaceReferenceWithFQ(CompositeElement reference, PsiClass refClass) {
+  private static ASTNode replaceReferenceWithFQ(ASTNode reference, PsiClass refClass) {
     ((SourceJavaCodeReference)reference).fullyQualify(refClass);
     return reference;
   }

@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -35,12 +36,12 @@ public class FileTextParsing extends Parsing {
     ParsingContext context = new ParsingContext(dummyRoot.getCharTable());
 
     if (!skipHeader){
-      TreeElement packageStatement = context.getFileTextParsing().parsePackageStatement(filterLexer);
+      TreeElement packageStatement = (TreeElement)context.getFileTextParsing().parsePackageStatement(filterLexer);
       if (packageStatement != null) {
         TreeUtil.addChildren(dummyRoot, packageStatement);
       }
 
-      final TreeElement importList = context.getFileTextParsing().parseImportList(filterLexer);
+      final TreeElement importList = (TreeElement)context.getFileTextParsing().parseImportList(filterLexer);
       TreeUtil.addChildren(dummyRoot, importList);
     }
 
@@ -71,10 +72,10 @@ public class FileTextParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  public CompositeElement parseImportList(Lexer lexer) {
+  public ASTNode parseImportList(Lexer lexer) {
     CompositeElement importList = Factory.createCompositeElement(IMPORT_LIST);
     if (lexer.getTokenType() == IMPORT_KEYWORD) {
       int startPos = lexer.getTokenStart();
@@ -102,7 +103,7 @@ public class FileTextParsing extends Parsing {
     return importList;
   }
 
-  public CompositeElement parsePackageStatement(Lexer lexer) {
+  public ASTNode parsePackageStatement(Lexer lexer) {
     long startPos = ParseUtil.savePosition(lexer);
     CompositeElement packageStatement = Factory.createCompositeElement(PACKAGE_STATEMENT);
 

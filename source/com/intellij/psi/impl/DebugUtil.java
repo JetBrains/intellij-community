@@ -62,8 +62,8 @@ public class DebugUtil {
     }
     buffer.append("\n");
     if (root instanceof CompositeElement){
-      ChameleonTransforming.transformChildren((CompositeElement)root);
-      ASTNode child = ((CompositeElement)root).firstChild;
+      ChameleonTransforming.transformChildren(root);
+      ASTNode child = root.getFirstChildNode();
 
       if (child == null){
         for(int i = 0; i < indent + 2; i++){
@@ -155,26 +155,26 @@ public class DebugUtil {
     }
     if (root instanceof CompositeElement) {
       synchronized (PsiLock.LOCK) {
-        checkSubtree((CompositeElement)root);
+        checkSubtree(root);
       }
     }
   }
 
-  private static void checkSubtree(CompositeElement root) {
-    if (root.firstChild == null){
-      if (root.lastChild != null){
+  private static void checkSubtree(ASTNode root) {
+    if (root.getFirstChildNode() == null){
+      if (root.getLastChildNode() != null){
         throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
       }
     }
     else{
-      for(ASTNode child = root.firstChild; child != null; child = child.getTreeNext()){
+      for(ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()){
         if (child instanceof CompositeElement){
-          checkSubtree((CompositeElement)child);
+          checkSubtree(child);
         }
         if (child.getTreeParent() != root){
           throw new IncorrectTreeStructureException(child, "child has wrong parent value");
         }
-        if (child == root.firstChild){
+        if (child == root.getFirstChildNode()){
           if (child.getTreePrev() != null){
             throw new IncorrectTreeStructureException(root, "firstChild.prev != null");
           }
@@ -188,7 +188,7 @@ public class DebugUtil {
           }
         }
         if (child.getTreeNext() == null){
-          if (root.lastChild != child){
+          if (root.getLastChildNode() != child){
             throw new IncorrectTreeStructureException(child, "not last child has next == null");
           }
         }
@@ -206,7 +206,7 @@ public class DebugUtil {
     //LOG.debug("checked consistence: "+System.identityHashCode(element));
   }
 
-  public static void checkSameCharTabs(TreeElement element1, TreeElement element2) {
+  public static void checkSameCharTabs(ASTNode element1, ASTNode element2) {
     final CharTable fromCharTab = SharedImplUtil.findCharTableByTree(element1);
     final CharTable toCharTab = SharedImplUtil.findCharTableByTree(element2);
     LOG.assertTrue(fromCharTab == toCharTab);

@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
@@ -254,7 +255,7 @@ public class Parsing implements Constants{
       startOffset,
       endOffset, state,
       ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
  }
 }
 

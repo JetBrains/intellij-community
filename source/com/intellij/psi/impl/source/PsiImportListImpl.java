@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.FileView;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -128,7 +127,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
 
   private void calcRepositoryImports() {
     if (myRepositoryImports == null){
-      CompositeElement treeElement = getTreeElement();
+      ASTNode treeElement = getTreeElement();
       if (treeElement != null){
         final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
         int count = imports.length;

@@ -21,7 +21,7 @@ public class ImportStatementBaseElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.IMPORT_KEYWORD:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.IMPORT_ON_DEMAND_DOT:
         return TreeUtil.findChild(this, DOT);

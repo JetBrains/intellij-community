@@ -47,8 +47,8 @@ public class MethodElement extends RepositoryTreeElement{
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (firstChild.getElementType() == DOC_COMMENT){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == DOC_COMMENT){
+          return getFirstChildNode();
         }
         else{
           return null;

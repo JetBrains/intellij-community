@@ -75,9 +75,9 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     }
     final FileElement treeFileElement = fileImpl.getTreeElement();
 
-    final LeafElement leafAtStart = treeFileElement.findLeafElementAt(startOffset);
-    final LeafElement leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
-    TreeElement parent = leafAtStart != null && leafAtEnd != null ? (TreeElement)TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
+    final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
+    final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
+    ASTNode parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
 
     int minErrorLevel = Integer.MAX_VALUE;
     Reparseable bestReparseable = null;
@@ -94,7 +94,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
         int currentErrorLevel = reparseable.getErrorsCount(newFileText, textRange.getStartOffset(), textRange.getEndOffset(), lengthShift);
         if(currentErrorLevel == Reparseable.NO_ERRORS){
-          final FileElement treeElement = new DummyHolder(parent.getManager(), null, treeFileElement.getCharTable()).getTreeElement();
+          final FileElement treeElement = new DummyHolder(((TreeElement)parent).getManager(), null, treeFileElement.getCharTable()).getTreeElement();
           final ChameleonElement chameleon = reparseable.createChameleon(newFileText, textRange.getStartOffset(), textRange.getEndOffset() + lengthShift);
           TreeUtil.addChildren(treeElement, chameleon);
           ChangeUtil.replaceAllChildren((CompositeElement)parent, chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());

@@ -23,13 +23,13 @@ public class SharedImplUtil {
   }
 
   public static PsiElement getFirstChild(CompositeElement element) {
-    if (element.firstChild == null) return null;
-    return SourceTreeToPsiMap.treeElementToPsi(element.firstChild.getTransformedFirstOrSelf());
+    final TreeElement firstChild = element.firstChild;
+    return firstChild != null ? SourceTreeToPsiMap.treeElementToPsi(firstChild.getTransformedFirstOrSelf()) : null;
   }
 
   public static PsiElement getLastChild(CompositeElement element) {
-    if (element.lastChild == null) return null;
-    return SourceTreeToPsiMap.treeElementToPsi(element.lastChild.getTransformedLastOrSelf());
+    final TreeElement lastChild = element.lastChild;
+    return lastChild != null ? SourceTreeToPsiMap.treeElementToPsi(lastChild.getTransformedLastOrSelf()) : null;
   }
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
@@ -66,7 +66,7 @@ public class SharedImplUtil {
     return file != null ? file.isWritable() : true;
   }
 
-  public static CharTable findCharTableByTree(TreeElement tree){
+  public static CharTable findCharTableByTree(ASTNode tree){
     while(tree != null){
       final CharTable userData = tree.getUserData(CharTable.CHAR_TABLE_KEY);
       if(userData != null) return userData;

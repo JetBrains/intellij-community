@@ -593,22 +593,22 @@ public class ImportHelper{
     if (file instanceof PsiJavaFile){
       packageName = ((PsiJavaFile)file).getPackageName();
     }
-    addNamesToImport(names, (CompositeElement)SourceTreeToPsiMap.psiElementToTree(file), packageName, namesToImportStaticly);
+    addNamesToImport(names, SourceTreeToPsiMap.psiElementToTree(file), packageName, namesToImportStaticly);
     addUnresolvedImportNames(names, file, namesToImportStaticly);
 
     return names.toArray(new String[names.size()]);
   }
 
   private void addNamesToImport(HashSet<String> names,
-                                   CompositeElement scope,
+                                   ASTNode scope,
                                    String thisPackageName,
                                    Set<String> namesToImportStaticly){
     if (scope.getElementType() == ElementType.IMPORT_LIST) return;
 
     ChameleonTransforming.transformChildren(scope);
-    for(ASTNode child = scope.firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = scope.getFirstChildNode(); child != null; child = child.getTreeNext()){
       if (child instanceof CompositeElement) {
-        addNamesToImport(names, (CompositeElement)child, thisPackageName, namesToImportStaticly);
+        addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
 
         if (child.getElementType() == ElementType.JAVA_CODE_REFERENCE || child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
           final CompositeElement compositeChild = (CompositeElement)child;

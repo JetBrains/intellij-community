@@ -56,14 +56,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
   public String getValue() {
     if(myDisplayText != null) return myDisplayText;
     StringBuffer buffer = new StringBuffer();
-    ASTNode child = firstChild;
+    ASTNode child = getFirstChildNode();
     final List<Integer> gaps = new ArrayList<Integer>();
     while(child != null){
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
       if(elementType == XmlElementType.XML_CDATA){
-        final CompositeElement cdata = (CompositeElement)child;
-        child = cdata.firstChild;
+        final ASTNode cdata = child;
+        child = cdata.getFirstChildNode();
       }
       else if(elementType == XmlTokenType.XML_CHAR_ENTITY_REF){
         buffer.append(getChar(child.getText()));
@@ -185,7 +185,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       if(second != null){
         final XmlText xmlText = getManager().getElementFactory().createTagFromText("<tag> </tag>").getValue().getTextElements()[0];
         final CompositeElement compositeElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(xmlText);
-        TreeUtil.removeRange(compositeElement.firstChild, null);
+        TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
         model.runTransaction(new PomTransaction() {
           public PomModelEvent run(){
             TreeElement current = second;
@@ -424,31 +424,33 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       model.runTransaction(new PomTransaction() {
         public PomModelEvent run(){
           final String oldText = getText();
-          TreeElement childBefore = anchor != null ? (before ? anchor.getTreePrev() : anchor) : lastChild;
-          if(childBefore != null && childBefore.getElementType() == text.firstChild.getElementType()){
-            final LeafElement newText = mergeElements((LeafElement)childBefore, (LeafElement)text.firstChild, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+          TreeElement childBefore = (TreeElement)(anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
+          if(childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()){
+            final LeafElement newText = mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(), SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
             if(newText != null){
               replaceChildInternal(childBefore, newText);
-              if(text.lastChild != text.firstChild){
-                addChildren(XmlTextImpl.this, text.firstChild.getTreeNext(), null, anchor, before);
+              if(text.getLastChildNode() != text.getFirstChildNode()){
+                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor, before);
               }
+            } else {
+              addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
             }
-            else addChildren(XmlTextImpl.this, text.firstChild, null, anchor, before);
           }
           else{
-            TreeElement childAfter = anchor != null ? (before ? anchor : anchor.getTreeNext()) : lastChild;
-            if(childAfter != null && childAfter.getElementType() == text.firstChild.getElementType()){
-              final LeafElement newText = mergeElements((LeafElement)text.firstChild, (LeafElement)childAfter, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+            TreeElement childAfter = (TreeElement)(anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
+            if(childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()){
+              final LeafElement newText = mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
               if(newText != null){
                 replaceChildInternal(childAfter, newText);
-                if(text.lastChild != text.firstChild){
-                  addChildren(XmlTextImpl.this, text.firstChild.getTreeNext(), null, anchor, before);
+                if(text.getLastChildNode() != text.getFirstChildNode()){
+                  addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode().getTreeNext(), null, anchor, before);
                 }
+              } else {
+                addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
               }
-              else addChildren(XmlTextImpl.this, text.firstChild, null, anchor, before);
             }
 
-            addChildren(XmlTextImpl.this, text.firstChild, null, anchor, before);
+            addChildren(XmlTextImpl.this, (TreeElement)text.getFirstChildNode(), null, anchor, before);
           }
 
           retHolder[0] = XmlTextImpl.this;
@@ -567,7 +569,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText{
       }
     }
 
-    return dummyParent.firstChild;
+    return dummyParent.getFirstChildNode();
   }
 
   private static TreeElement createCharEntity(char ch, CharTable charTable) {

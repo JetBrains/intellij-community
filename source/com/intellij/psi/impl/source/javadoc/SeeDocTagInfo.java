@@ -9,6 +9,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,9 +86,9 @@ class SeeDocTagInfo implements JavadocTagInfo {
     if (place.getParent() instanceof PsiDocMethodOrFieldRef) {
       PsiDocMethodOrFieldRef methodRef = (PsiDocMethodOrFieldRef) place.getParent();
 
-      final IElementType firstChildType = methodRef.firstChild.getElementType();
+      final IElementType firstChildType = methodRef.getFirstChildNode().getElementType();
       if (firstChildType == ElementType.JAVA_CODE_REFERENCE || firstChildType == ElementType.REFERENCE_EXPRESSION) {
-        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) SourceTreeToPsiMap.treeElementToPsi(methodRef.firstChild);
+        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) SourceTreeToPsiMap.treeElementToPsi(methodRef.getFirstChildNode());
         final PsiElement element = referenceElement.resolve();
         if (element instanceof PsiClass) {
           targetContext = element.getFirstChild();

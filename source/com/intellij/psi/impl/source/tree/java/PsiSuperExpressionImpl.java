@@ -88,8 +88,8 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
         return null;
 
       case ChildRole.QUALIFIER:
-        if (firstChild.getElementType() == JAVA_CODE_REFERENCE){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
+          return getFirstChildNode();
         }
         else{
           return null;
@@ -99,7 +99,7 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
         return TreeUtil.findChild(this, DOT);
 
       case ChildRole.SUPER_KEYWORD:
-        return lastChild;
+        return getLastChildNode();
     }
   }
 

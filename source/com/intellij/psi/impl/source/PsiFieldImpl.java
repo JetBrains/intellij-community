@@ -319,7 +319,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   public void normalizeDeclaration() throws IncorrectOperationException{
     CheckUtil.checkWritable(this);
 
-    TreeElement type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
+    ASTNode type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
     ASTNode modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
     ASTNode field = type.getTreeParent();
     while(true){
@@ -336,11 +336,11 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       TreeElement typeClone = (TreeElement)type.clone();
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(type);
       typeClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, typeClone, ((CompositeElement)nextField).firstChild);
+      CodeEditUtil.addChild((CompositeElement)nextField, typeClone, (TreeElement)nextField.getFirstChildNode());
 
       TreeElement modifierListClone = (TreeElement)modifierList.clone();
       modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, modifierListClone, ((CompositeElement)nextField).firstChild);
+      CodeEditUtil.addChild((CompositeElement)nextField, modifierListClone, (TreeElement)nextField.getFirstChildNode());
 
       field = nextField;
     }

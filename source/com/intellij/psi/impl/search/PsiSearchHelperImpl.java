@@ -30,7 +30,6 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.idCache.WordInfo;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.*;
@@ -903,9 +902,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<JspDirective> directives = new ArrayList<JspDirective>();
     PsiElementProcessorEx processor = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        CompositeElement parent = (SourceTreeToPsiMap.psiElementToTree(element)).getTreeParent();
+        ASTNode parent = (SourceTreeToPsiMap.psiElementToTree(element)).getTreeParent();
         if (parent.getElementType() == ElementType.JSP_FILE_REFERENCE) {
-          CompositeElement pparent = parent.getTreeParent();
+          ASTNode pparent = parent.getTreeParent();
           if (SourceTreeToPsiMap.treeElementToPsi(pparent) instanceof JspAttribute &&
               pparent.getTreeParent().getElementType() == ElementType.JSP_DIRECTIVE) {
             JspDirective directive = (JspDirective)SourceTreeToPsiMap.treeElementToPsi(pparent.getTreeParent());

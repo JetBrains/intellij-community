@@ -28,11 +28,11 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
         return null;
 
       case ChildRole.LPARENTH:
-        return firstChild != null && firstChild.getElementType() == LPARENTH ? firstChild : null;
+        return getFirstChildNode() != null && getFirstChildNode().getElementType() == LPARENTH ? getFirstChildNode() : null;
 
       case ChildRole.RPARENTH:
-        if (lastChild != null && lastChild.getElementType() == RPARENTH) {
-          return lastChild;
+        if (getLastChildNode() != null && getLastChildNode().getElementType() == RPARENTH) {
+          return getLastChildNode();
         }
         else {
           return null;

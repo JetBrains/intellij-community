@@ -10,6 +10,7 @@ import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -40,7 +41,7 @@ public class ClassBodyParsing extends Parsing {
     ParsingContext parsingContext = new ParsingContext(table);
     parsingContext.getClassBodyParsing().parseClassBody(dummyRoot, filterLexer, context);
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, parsingContext);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   private void parseEnumConstants(Lexer lexer, CompositeElement dummyRoot) {

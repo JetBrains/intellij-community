@@ -21,9 +21,9 @@ import java.util.*;
 
 class TagNameReference implements PsiReference {
   private final boolean myStartTagFlag;
-  private final TreeElement myNameElement;
+  private final ASTNode myNameElement;
 
-  public TagNameReference(TreeElement nameElement, boolean startTagFlag) {
+  public TagNameReference(ASTNode nameElement, boolean startTagFlag) {
     myStartTagFlag = startTagFlag;
     myNameElement = nameElement;
   }
@@ -38,11 +38,11 @@ class TagNameReference implements PsiReference {
     if (getNameElement() == null){
       return new TextRange(0, 0);
     }
-    final int parentOffset = getNameElement().getStartOffsetInParent();
+    final int parentOffset = ((TreeElement)getNameElement()).getStartOffsetInParent();
     return new TextRange(parentOffset, parentOffset + getNameElement().getTextLength());
   }
 
-  private TreeElement getNameElement() {
+  private ASTNode getNameElement() {
     return myNameElement;
   }
 

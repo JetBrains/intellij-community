@@ -6,12 +6,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
+import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -194,7 +193,7 @@ class FoldingPolicy {
       return element.getTextRange();
     } else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag) element;
-      TreeElement tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(tag));
+      ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(tag));
       if (tagNameElement == null) return null;
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();

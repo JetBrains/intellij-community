@@ -99,7 +99,7 @@ public class LowLevelSearchUtil {
                                          PsiElementProcessorEx processor,
                                          TokenSet elementTypes, ProgressIndicator progress) {
     synchronized (PsiLock.LOCK) {
-      ASTNode child = ((CompositeElement)scope).firstChild;
+      ASTNode child = scope.getFirstChildNode();
       while (child != null) {
         if (child instanceof ChameleonElement) {
           LeafElement leaf = (LeafElement)child;
@@ -116,17 +116,17 @@ public class LowLevelSearchUtil {
       }
     }
 
-    TreeElement child = null;
+    ASTNode child = null;
     while (true) {
       synchronized (PsiLock.LOCK) {
-        child = child != null ? child.getTreeNext() : ((CompositeElement)scope).firstChild;
+        child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
         while (child instanceof ChameleonElement) {
           child = child.getTreeNext();
         }
         if (child == null) break;
       }
 
-      if (!processElementsContainingWordInElement(processor, child, searcher, elementTypes, progress)) return false;
+      if (!processElementsContainingWordInElement(processor, (TreeElement)child, searcher, elementTypes, progress)) return false;
     }
     return true;
   }
@@ -172,10 +172,10 @@ public class LowLevelSearchUtil {
     }
 
     if (scope instanceof CompositeElement) {
-      CompositeElement _scope = (CompositeElement)scope;
+      ASTNode _scope = scope;
       ChameleonTransforming.transformChildren(_scope);
 
-      for (ASTNode child = _scope.firstChild; child != null; child = child.getTreeNext()) {
+      for (ASTNode child = _scope.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (!processIdentifiersBySet(processor, child, elementTypes, namesSet, progress)) return false;
       }
     }

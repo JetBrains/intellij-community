@@ -21,10 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.ASTNode;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
@@ -317,7 +317,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           mySmartPointerManager.synchronizePointers(file);
         }
 
-        CompositeElement treeElement = ((PsiFileImpl)file).calcTreeElement(); // Lock up in local variable so gc wont collect it.
+        ASTNode treeElement = ((PsiFileImpl)file).calcTreeElement(); // Lock up in local variable so gc wont collect it.
         textBlock = getTextBlock(document);
         if (textBlock.isEmpty()) return; // if tree was just loaded above textBlock will be cleared by contentsLoaded
 
@@ -358,7 +358,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myProcessDocumentEvents = processDocumentEvents;
   }
 
-  private final Key<CompositeElement> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
+  private final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
 
   public void beforeDocumentChange(DocumentEvent event) {
     if (!myProcessDocumentEvents) return;

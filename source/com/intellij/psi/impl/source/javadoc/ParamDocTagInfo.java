@@ -9,13 +9,13 @@ import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author mike
@@ -52,7 +52,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(value.getFirstChild()));
-        LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, null);
+        ASTNode newLeaf = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, null);
         return value.getFirstChild().replace(SourceTreeToPsiMap.treeElementToPsi(newLeaf));
       }
 

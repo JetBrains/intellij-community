@@ -35,7 +35,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
           return;
         } else {
           if (SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 1]) == child) {
-            removeCommaBefore((TreeElement)child);
+            removeCommaBefore(child);
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 2]), semicolon, null);
@@ -45,10 +45,10 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
             ASTNode copyChild = ((TreeElement)child).copyElement();
             ASTNode nameChild = ((CompositeElement)copyChild).findChildByRole(ChildRole.NAME);
             removeCommaBefore(next);
-            next.addInternal(((CompositeElement)copyChild).firstChild, (TreeElement)nameChild.getTreePrev(), null, Boolean.FALSE);
+            next.addInternal((TreeElement)copyChild.getFirstChildNode(), (TreeElement)nameChild.getTreePrev(), null, Boolean.FALSE);
           }
           else {
-            removeCommaBefore ((TreeElement)child);
+            removeCommaBefore (child);
           }
         }
       }
@@ -56,8 +56,8 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     super.deleteChildInternal(child);
   }
 
-  private void removeCommaBefore(TreeElement child) {
-    TreeElement prev = child;
+  private void removeCommaBefore(ASTNode child) {
+    ASTNode prev = child;
     do {
       prev = prev.getTreePrev();
     } while (prev != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(prev.getElementType()));

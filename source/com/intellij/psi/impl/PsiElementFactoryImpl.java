@@ -143,7 +143,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     final CompositeElement treeElement = (CompositeElement)ChangeUtil.copyToElement(createTypeElement(type));
     new DummyHolder(myManager, treeElement, null);
-    final ASTNode referenceChild = treeElement.firstChild;
+    final ASTNode referenceChild = treeElement.getFirstChildNode();
     LOG.assertTrue(referenceChild.getElementType() == ElementType.JAVA_CODE_REFERENCE);
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(referenceChild);
   }

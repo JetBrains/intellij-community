@@ -48,7 +48,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
         return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
 
       case ChildRole.FOR_KEYWORD:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.LPARENTH:
         return TreeUtil.findChild(this, LPARENTH);

@@ -17,7 +17,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
 
   public PsiType getType(){
     PsiType type = null;
-    for(ASTNode child = firstChild; child != null; child = child.getTreeNext()){
+    for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
       if (child.getElementType() == JAVA_CODE_REFERENCE){
         LOG.assertTrue(type == null);
         type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child));
@@ -73,7 +73,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   public ResolveResult resolveMethodGenerics() {
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     if (classRef != null){
-      ASTNode argumentList = TreeUtil.skipElements((TreeElement)classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
         PsiType aClass = getManager().getElementFactory().createType(
           (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
@@ -89,7 +89,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       if (anonymousClass != null) {
         PsiType aClass = ((PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass)).getBaseClassType();
         if (aClass != null) {
-          ASTNode argumentList = TreeUtil.findChild((CompositeElement)anonymousClass, EXPRESSION_LIST);
+          ASTNode argumentList = TreeUtil.findChild(anonymousClass, EXPRESSION_LIST);
           return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                     this);
@@ -147,7 +147,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         return TreeUtil.findChild(this, REFERENCE_PARAMETER_LIST);
 
       case ChildRole.QUALIFIER:
-        return firstChild.getElementType() != NEW_KEYWORD ? firstChild : null;
+        return getFirstChildNode().getElementType() != NEW_KEYWORD ? getFirstChildNode() : null;
 
       case ChildRole.DOT:
         return TreeUtil.findChild(this, DOT);
@@ -174,8 +174,8 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         return TreeUtil.findChild(this, RBRACKET);
 
       case ChildRole.ARRAY_INITIALIZER:
-        if (lastChild.getElementType() == ARRAY_INITIALIZER_EXPRESSION){
-          return lastChild;
+        if (getLastChildNode().getElementType() == ARRAY_INITIALIZER_EXPRESSION){
+          return getLastChildNode();
         }
         else{
           return null;
@@ -208,10 +208,10 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       return ChildRole.RBRACKET;
     }
     else if (i == ARRAY_INITIALIZER_EXPRESSION) {
-      if (child == lastChild) {
+      if (child == getLastChildNode()) {
         return ChildRole.ARRAY_INITIALIZER;
       }
-      else if (child == firstChild) {
+      else if (child == getFirstChildNode()) {
         return ChildRole.QUALIFIER;
       }
       else {
@@ -226,7 +226,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         return ChildRole.TYPE_KEYWORD;
       }
       else if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
-        return child == firstChild ? ChildRole.QUALIFIER : ChildRole.ARRAY_DIMENSION;
+        return child == getFirstChildNode() ? ChildRole.QUALIFIER : ChildRole.ARRAY_DIMENSION;
       }
       else {
         return ChildRole.NONE;

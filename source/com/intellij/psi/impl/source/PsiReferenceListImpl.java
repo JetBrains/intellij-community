@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.lang.ASTNode;
 
 import java.lang.ref.Reference;
 
@@ -63,7 +64,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
       types = (PsiClassType[])(myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get());
       if (types == null) {
         String[] refTexts;
-        CompositeElement treeElement = getTreeElement();
+        ASTNode treeElement = getTreeElement();
         final PsiElementFactory factory = getManager().getElementFactory();
         long repositoryId = getRepositoryId();
         if (treeElement == null && repositoryId > 0) {

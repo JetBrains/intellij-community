@@ -22,7 +22,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
   public PsiStatement findContinuedStatement() {
     PsiIdentifier label = getLabelIdentifier();
     if (label == null){
-      for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
+      for(ASTNode parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
         IElementType i = parent.getElementType();
         if (i == FOR_STATEMENT || i == FOREACH_STATEMENT || i == WHILE_STATEMENT || i == DO_WHILE_STATEMENT) {
           return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(parent);

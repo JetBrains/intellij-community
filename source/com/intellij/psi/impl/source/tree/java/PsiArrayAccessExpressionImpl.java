@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
 
@@ -37,7 +36,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
         return null;
 
       case ChildRole.ARRAY:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.INDEX:
         {
@@ -45,7 +44,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
           if (lbracket == null) return null;
           for(ASTNode child = lbracket.getTreeNext(); child != null; child = child.getTreeNext()){
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())){
-              return (TreeElement)child;
+              return child;
             }
           }
           return null;
@@ -70,7 +69,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
     }
     else {
       if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
-        return child == firstChild ? ChildRole.ARRAY : ChildRole.INDEX;
+        return child == getFirstChildNode() ? ChildRole.ARRAY : ChildRole.INDEX;
       }
       else {
         return ChildRole.NONE;

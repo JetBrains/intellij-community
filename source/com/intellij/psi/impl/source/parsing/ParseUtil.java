@@ -182,7 +182,7 @@ public class ParseUtil implements Constants {
       if (tokenType != leaf.getElementType() && processor.isTokenValid(tokenType)) {
         final TreeElement firstMissing = processor.process(lexer, context);
         if (firstMissing != null) {
-          TreeUtil.insertBefore(root.firstChild, firstMissing);
+          TreeUtil.insertBefore((TreeElement)root.getFirstChildNode(), firstMissing);
         }
       }
       passTokenOrChameleon(leaf, lexer, gt);
@@ -193,16 +193,16 @@ public class ParseUtil implements Constants {
       // whitespaces at the end of the file
       final TreeElement firstMissing = processor.process(lexer, context);
       if(firstMissing != null){
-        TreeElement current = root;
+        ASTNode current = root;
         while(current instanceof CompositeElement){
           if(current.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) break;
-          current = ((CompositeElement)current).lastChild;
+          current = current.getLastChildNode();
         }
         if(current instanceof CompositeElement){
           TreeUtil.addChildren((CompositeElement)current, firstMissing);
         }
         else{
-          TreeUtil.insertAfter(root.lastChild, firstMissing);
+          TreeUtil.insertAfter((TreeElement)root.getLastChildNode(), firstMissing);
         }
       }
     }
@@ -214,7 +214,7 @@ public class ParseUtil implements Constants {
                                                    Lexer lexer,
                                                    TokenProcessor processor,
                                                    ParsingContext context,
-                                                   LeafElement endToken) {
+                                                   ASTNode endToken) {
     final CommonParentState commonParents = new CommonParentState();
     while(leaf != null){
       commonParents.strongWhiteSpaceHolder = null;
@@ -230,10 +230,12 @@ public class ParseUtil implements Constants {
         final TreeElement firstMissing = processor.process(lexer, context);
         final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
         if (unclosedElement != null) {
-          if(commonParents.isStrongElementOnRisingSlope || unclosedElement.firstChild == null)
+          if(commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
             TreeUtil.addChildren(unclosedElement, firstMissing);
-          else
-            TreeUtil.insertBefore(unclosedElement.firstChild, firstMissing);
+          }
+          else {
+            TreeUtil.insertBefore((TreeElement)unclosedElement.getFirstChildNode(), firstMissing);
+          }
         }
         else {
           final ASTNode insertBefore = commonParents.nextLeafBranchStart;
@@ -304,7 +306,7 @@ public class ParseUtil implements Constants {
     return nextLeaf(parent, commonParent, searchedType);
   }
 
-  private static void initStrongWhitespaceHolder(CommonParentState commonParent, TreeElement start, boolean slopeSide) {
+  private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
     if(start instanceof CompositeElement
        && (isStrongWhitespaceHolder(start.getElementType())
        || (start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) && slopeSide)){
@@ -321,7 +323,7 @@ public class ParseUtil implements Constants {
       return element;
     }
     else{
-      for(TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()){
+      for(TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()){
         TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
         if (leaf != null) return leaf;
       }
@@ -349,8 +351,8 @@ public class ParseUtil implements Constants {
     return prevLeaf(parent, commonParent);
   }
 
-  static void bindComments(CompositeElement root) {
-    TreeElement child = root.firstChild;
+  static void bindComments(ASTNode root) {
+    TreeElement child = (TreeElement)root.getFirstChildNode();
     while (child != null) {
       if (child.getElementType() == DOC_COMMENT) {
         if (bindDocComment(child)) {
@@ -379,7 +381,7 @@ public class ParseUtil implements Constants {
       }
 
       if (child instanceof CompositeElement) {
-        bindComments((CompositeElement)child);
+        bindComments(child);
       }
       child = child.getTreeNext();
     }
@@ -406,7 +408,7 @@ public class ParseUtil implements Constants {
 
     if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
         element.getElementType() == ENUM_CONSTANT) {
-      TreeElement first = ((CompositeElement)element).firstChild;
+      TreeElement first = (TreeElement)element.getFirstChildNode();
       TreeUtil.remove(docComment);
       TreeUtil.insertBefore(first, docComment);
       if (startSpaces != null) {
@@ -508,7 +510,7 @@ public class ParseUtil implements Constants {
 
       // check if the comment is on separate line
       if (comment.getTreePrev() != null) {
-        TreeElement prev = comment.getTreePrev();
+        ASTNode prev = comment.getTreePrev();
         if (prev.getElementType() != ElementType.WHITE_SPACE) {
           return false;
         }
@@ -517,7 +519,7 @@ public class ParseUtil implements Constants {
         }
       }
 
-      TreeElement first = ((CompositeElement)element).firstChild;
+      TreeElement first = (TreeElement)element.getFirstChildNode();
       TreeElement child = comment;
       while (child != element) {
         TreeElement next = child.getTreeNext();

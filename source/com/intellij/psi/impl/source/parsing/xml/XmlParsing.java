@@ -73,7 +73,7 @@ public class XmlParsing implements ElementType {
       context.getXmlParsing().addToken(holderElement, filterLexer);
     }
     ParseUtil.insertMissingTokens(holderElement, lexer, startOffset, endOffset, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    ASTNode result = holderElement.firstChild;
+    ASTNode result = holderElement.getFirstChildNode();
     return result;
   }
 
@@ -297,7 +297,7 @@ public class XmlParsing implements ElementType {
       addToken(tag, lexer);
     }
     else {
-      TreeUtil.insertAfter(tag.lastChild, Factory.createErrorElement("Element is not closed"));
+      TreeUtil.insertAfter((TreeElement)tag.getLastChildNode(), Factory.createErrorElement("Element is not closed"));
     }
 
     return true;
@@ -709,7 +709,7 @@ public class XmlParsing implements ElementType {
                                   start,
                                   end,
                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   public static class WhiteSpaceAndCommentsProcessor implements ParseUtil.TokenProcessor {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.lang.ASTNode;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl");
@@ -15,7 +16,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   public PsiType getType() {
-    IElementType i = firstChild.getElementType();
+    IElementType i = getFirstChildNode().getElementType();
     if (i == INTEGER_LITERAL) {
       return PsiType.INT;
     }
@@ -51,9 +52,9 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   private static final String _2_IN_63_L = _2_IN_63 + "l";
 
   public Object getValue() {
-    String text = firstChild.getText();
+    String text = getFirstChildNode().getText();
     int textLength = text.length();
-    IElementType i = firstChild.getElementType();
+    IElementType i = getFirstChildNode().getElementType();
     if (i == INTEGER_LITERAL) {
       try {
         if (text.startsWith("0x") || text.startsWith("0X")) {
@@ -173,8 +174,8 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   public String getParsingError() {
     final Object value = getValue();
-    String text = firstChild.getText();
-    IElementType i = firstChild.getElementType();
+    String text = getFirstChildNode().getText();
+    IElementType i = getFirstChildNode().getElementType();
     if (i == INTEGER_LITERAL) {
       text = text.toLowerCase();
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
@@ -254,7 +255,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
    * @return true if floating point literal consists of zeros only
    */
   private boolean isFPZero() {
-    String text = firstChild.getText();
+    String text = getFirstChildNode().getText();
     for(int i = 0; i < text.length(); i++){
       char c = text.charAt(i);
       if (Character.isDigit(c) && c != '0') return false;

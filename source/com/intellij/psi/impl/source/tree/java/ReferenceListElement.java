@@ -13,8 +13,8 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
 
   public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before){
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
-      if (lastChild != null && lastChild.getElementType() == ERROR_ELEMENT){
-        super.deleteChildInternal(lastChild);
+      if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
+        super.deleteChildInternal(getLastChildNode());
       }
     }
 
@@ -46,7 +46,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     keywordText = getKeywordText();
     if (TreeUtil.findChild(this, keywordType) == null && TreeUtil.findChild(this, JAVA_CODE_REFERENCE) != null){
       LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText.toCharArray(), 0, keywordText.length(), SharedImplUtil.findCharTableByTree(this), getManager());
-      super.addInternal(keyword, keyword, firstChild, Boolean.TRUE);
+      super.addInternal(keyword, keyword, (TreeElement)getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;
   }

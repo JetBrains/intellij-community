@@ -68,8 +68,8 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public synchronized CompositeElement getTreeParent() {
-    if(isLast())
-      return (CompositeElement)next;
+    if(isLast()) return (CompositeElement)next;
+
     TreeElement next = this.next;
     while(next instanceof LeafElement && !((LeafElement)next).isLast()) next = next.next;
     if(next != null) return next.getTreeParent();

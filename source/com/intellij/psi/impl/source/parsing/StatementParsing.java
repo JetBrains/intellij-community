@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
@@ -44,7 +45,7 @@ public class StatementParsing extends Parsing {
     CompositeElement block = Factory.createCompositeElement(CODE_BLOCK);
     TreeUtil.addChildren(dummyRoot, block);
     context.getStatementParsing().parseCodeBlockDeep(block, filterLexer, true);
-    if (block.firstChild == null) return null;
+    if (block.getFirstChildNode() == null) return null;
 
     ParseUtil.insertMissingTokens(block, lexer, startOffset, endOffset, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return block;
@@ -73,7 +74,7 @@ public class StatementParsing extends Parsing {
       endOffset,
       state,
       ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   public CompositeElement parseCodeBlock(Lexer lexer, boolean deep) {
@@ -133,7 +134,7 @@ public class StatementParsing extends Parsing {
 
     parseStatements(elementToAdd, lexer, parseToEndOfLexer ? LAST_RBRACE_IS_END : RBRACE_IS_END);
 
-    if (elementToAdd.lastChild == null || elementToAdd.lastChild.getElementType() != RBRACE){
+    if (elementToAdd.getLastChildNode() == null || elementToAdd.getLastChildNode().getElementType() != RBRACE){
       CompositeElement errorElement = Factory.createErrorElement("'}' expected");
       TreeUtil.addChildren(elementToAdd, errorElement);
       elementToAdd.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
@@ -765,7 +766,7 @@ public class StatementParsing extends Parsing {
     while(lexer.getTokenType() == CATCH_KEYWORD){
       CompositeElement catchSection = parseCatchSection(lexer);
       TreeUtil.addChildren(element, catchSection);
-      if (catchSection.lastChild.getElementType() == ERROR_ELEMENT) break;
+      if (catchSection.getLastChildNode().getElementType() == ERROR_ELEMENT) break;
     }
 
     if (lexer.getTokenType() == FINALLY_KEYWORD){

@@ -60,8 +60,8 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
         return null;
 
       case ChildRole.QUALIFIER:
-        if (firstChild.getElementType() == JAVA_CODE_REFERENCE){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
+          return getFirstChildNode();
         }
         else{
           return null;
@@ -71,7 +71,7 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
         return TreeUtil.findChild(this, DOT);
 
       case ChildRole.THIS_KEYWORD:
-        return lastChild;
+        return getLastChildNode();
     }
   }
 

@@ -66,7 +66,7 @@ public abstract class FileElement extends RepositoryTreeElement{
   public void replaceChildInternal(TreeElement child, TreeElement newElement) {
     if (newElement.getElementType() == ElementType.IMPORT_LIST) {
       LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
-      if (((CompositeElement)newElement).firstChild == null) { //empty import list
+      if (newElement.getFirstChildNode() == null) { //empty import list
         TreeElement next = child.getTreeNext();
         if (next.getElementType() == ElementType.WHITE_SPACE) {
           ChangeUtil.removeChild(this, next);

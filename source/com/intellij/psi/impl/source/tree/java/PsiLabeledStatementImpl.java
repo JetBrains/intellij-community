@@ -41,7 +41,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
         return TreeUtil.findChild(this, COLON);
 
       case ChildRole.LABEL_NAME:
-        return firstChild;
+        return getFirstChildNode();
     }
   }
 

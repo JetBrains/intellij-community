@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.ASTNode;
 
 public class JavadocParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.JavadocParsing");
@@ -57,7 +58,7 @@ public class JavadocParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, new TokenProcessor(this), myContext);
-    return dummyRoot.firstChild;
+    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
   private CompositeElement parseTag(PsiManager manager, Lexer lexer) {
@@ -178,7 +179,7 @@ public class JavadocParsing extends Parsing {
     return tagValue;
   }
 
-  private CompositeElement parseMethodRef(Lexer lexer) {
+  private ASTNode parseMethodRef(Lexer lexer) {
     CompositeElement ref = Factory.createCompositeElement(DOC_METHOD_OR_FIELD_REF);
 
     TreeElement sharp = createTokenElement(lexer);
@@ -234,7 +235,7 @@ public class JavadocParsing extends Parsing {
     if (!TAG_VALUE.isInSet(lexer.getTokenType())) return null;
 
     if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
-      return parseMethodRef(lexer);
+      return (TreeElement)parseMethodRef(lexer);
     }
     else if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
       final LeafElement element = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
@@ -243,9 +244,9 @@ public class JavadocParsing extends Parsing {
       lexer.advance();
 
       if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
-        CompositeElement methodRef = parseMethodRef(lexer);
-        TreeUtil.insertBefore(methodRef.firstChild, element);
-        return methodRef;
+        ASTNode methodRef = parseMethodRef(lexer);
+        TreeUtil.insertBefore((TreeElement)methodRef.getFirstChildNode(), element);
+        return (TreeElement)methodRef;
       }
       else {
         return element;

@@ -162,7 +162,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
       }
 
-      CompositeElement treeElement = calcTreeElement();
+      ASTNode treeElement = calcTreeElement();
       return TreeUtil.findChild(treeElement, type) != null;
     }
     else{
@@ -182,7 +182,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 
     CompositeElement treeElement = calcTreeElement();
-    CompositeElement parentTreeElement = treeElement.getTreeParent();
+    ASTNode parentTreeElement = treeElement.getTreeParent();
     if (value){
       if (parentTreeElement.getElementType() == ElementType.FIELD && parentTreeElement.getTreeParent().getElementType() == ElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
         if (type == PUBLIC_KEYWORD || type == STATIC_KEYWORD || type == FINAL_KEYWORD) return;

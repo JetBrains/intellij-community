@@ -37,7 +37,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
         return null;
 
       case ChildRole.PACKAGE_KEYWORD:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.PACKAGE_REFERENCE:
         return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);

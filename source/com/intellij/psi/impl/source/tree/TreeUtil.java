@@ -41,11 +41,11 @@ public class TreeUtil {
     return null;
   }
 
-  public static ASTNode findChildBackward(CompositeElement parent, TokenSet types) {
+  public static ASTNode findChildBackward(ASTNode parent, TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(ASTNode element = parent.lastChild; element != null; element = element.getTreePrev()){
+    for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
       if (types.isInSet(element.getElementType())) return element;
     }
     return null;
@@ -95,7 +95,7 @@ public class TreeUtil {
       return (LeafElement)element;
     }
     else{
-      for(ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()){
+      for(ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
         LeafElement leaf = findFirstLeaf(child);
         if (leaf != null) return leaf;
       }
@@ -108,7 +108,7 @@ public class TreeUtil {
       return (LeafElement)element;
     }
     else{
-      for(ASTNode child = ((CompositeElement)element).lastChild; child != null; child = child.getTreePrev()){
+      for(ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()){
         LeafElement leaf = findLastLeaf(child);
         if (leaf != null) return leaf;
       }
@@ -229,7 +229,7 @@ public class TreeUtil {
     final TreeElement startPrev = start.getTreePrev();
     final TreeElement endPrev = end != null ? end.getTreePrev() : null;
     if (parent != null){
-      if (start == parent.firstChild){
+      if (start == parent.getFirstChildNode()){
         parent.firstChild = end;
       }
       if (end == null){
@@ -308,8 +308,8 @@ public class TreeUtil {
       length += tree.getTextLength(table);
     }
     else{
-      final CompositeElement composite = (CompositeElement)tree;
-      TreeElement firstChild = composite.firstChild;
+      final ASTNode composite = tree;
+      TreeElement firstChild = (TreeElement)composite.getFirstChildNode();
       while(firstChild != null){
         length += getNotCachedLength(firstChild, table);
         firstChild = firstChild.getTreeNext();
@@ -318,12 +318,12 @@ public class TreeUtil {
     return length;
   }
 
-  public static int countLeafs(CompositeElement composite) {
+  public static int countLeafs(ASTNode composite) {
     int count = 0;
-    ASTNode child = composite.firstChild;
+    ASTNode child = composite.getFirstChildNode();
     while(child != null){
       if(child instanceof LeafElement) count++;
-      else count += countLeafs((CompositeElement)child);
+      else count += countLeafs(child);
       child = child.getTreeNext();
     }
     return count;
@@ -332,8 +332,8 @@ public class TreeUtil {
   public static void clearCaches(TreeElement tree) {
     tree.clearCaches();
     if(tree instanceof CompositeElement){
-      final CompositeElement composite = ((CompositeElement)tree);
-      TreeElement child = composite.firstChild;
+      final ASTNode composite = tree;
+      TreeElement child = (TreeElement)composite.getFirstChildNode();
       while(child != null){
         clearCaches(child);
         child = child.getTreeNext();

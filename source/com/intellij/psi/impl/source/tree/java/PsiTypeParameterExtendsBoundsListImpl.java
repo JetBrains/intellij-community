@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author max
@@ -64,14 +65,14 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
     return types;
   }
 
-  private CompositeElement getMirrorTreeElement() {
+  private ASTNode getMirrorTreeElement() {
     CompositeElement mirror = ((PsiTypeParameterImpl) getParent()).getMirrorTreeElement();
-    CompositeElement myselfTree = (CompositeElement) mirror.findChildByRole(ChildRole.EXTENDS_LIST);
+    ASTNode myselfTree = mirror.findChildByRole(ChildRole.EXTENDS_LIST);
     return myselfTree;
   }
 
   private PsiTypeParameterExtendsBoundsListImpl getMirrorElement() {
-    final CompositeElement treeElement = getMirrorTreeElement();
+    final ASTNode treeElement = getMirrorTreeElement();
     return (PsiTypeParameterExtendsBoundsListImpl)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 

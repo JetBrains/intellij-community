@@ -9,11 +9,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.lang.ASTNode;
 
 class SmartPsiElementPointerImpl implements SmartPointerEx {
   private static final Logger LOG = Logger.getInstance(
@@ -123,7 +123,7 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
       anchor = ((PsiVariable)element).getNameIdentifier();
     }
     else if (element instanceof XmlTag) {
-      anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(element)));
+      anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(element)));
     }
     return anchor;
   }

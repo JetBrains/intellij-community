@@ -56,16 +56,16 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        if (lastChild.getElementType() == IDENTIFIER){
-          return lastChild;
+        if (getLastChildNode().getElementType() == IDENTIFIER){
+          return getLastChildNode();
         }
         else{
           return null;
         }
 
       case ChildRole.QUALIFIER:
-        if (firstChild.getElementType() == JAVA_CODE_REFERENCE){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
+          return getFirstChildNode();
         }
         else{
           return null;

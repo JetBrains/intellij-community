@@ -83,7 +83,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
         return null;
 
       case ChildRole.METHOD_EXPRESSION:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.ARGUMENT_LIST:
         return TreeUtil.findChild(this, EXPRESSION_LIST);

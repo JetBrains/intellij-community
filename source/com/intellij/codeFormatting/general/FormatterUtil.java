@@ -40,22 +40,22 @@ import com.intellij.lang.ASTNode;
 
 public class FormatterUtil {
 
-  public static String getWhiteSpaceBefore(TreeElement element) {
-    TreeElement wsCandidate = getWsCandidate(element);
+  public static String getWhiteSpaceBefore(ASTNode element) {
+    ASTNode wsCandidate = getWsCandidate(element);
     final StringBuffer result = new StringBuffer();
     while (wsCandidate != null && isSpaceTextElement(wsCandidate)) {
       result.append(wsCandidate.getText());
-      final TreeElement newValue = getWsCandidate(wsCandidate);
+      final ASTNode newValue = getWsCandidate(wsCandidate);
       if (wsCandidate.getStartOffset() == newValue.getStartOffset()) break;
       wsCandidate = newValue;
     }
     return result.toString();
   }
-  private static TreeElement getWsCandidate(TreeElement element) {
+  private static ASTNode getWsCandidate(ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
-      TreeElement candidate = getLastChildOf(treePrev);
+      ASTNode candidate = getLastChildOf(treePrev);
       if (candidate != null && isSpaceTextElement(candidate)) {
         return candidate;
       }
@@ -66,7 +66,7 @@ public class FormatterUtil {
         return element;
       }
     }
-    final CompositeElement treeParent = element.getTreeParent();
+    final ASTNode treeParent = element.getTreeParent();
 
     if (treeParent == null || treeParent.getTreeParent() == null) {
       return element;
@@ -75,17 +75,17 @@ public class FormatterUtil {
     }
   }
 
-  private static TreeElement getLastChildOf(ASTNode element) {
+  private static ASTNode getLastChildOf(ASTNode element) {
     if (element == null) {
       return null;
     }
     if (element instanceof LeafElement) {
-      return (LeafElement)element;
+      return element;
     }
     else {
-      CompositeElement compositeElement = ((CompositeElement)element);
+      ASTNode compositeElement = element;
       ChameleonTransforming.transformChildren(compositeElement);
-      final ASTNode lastChild = compositeElement.lastChild;
+      final ASTNode lastChild = compositeElement.getLastChildNode();
       if (lastChild == null) {
         return compositeElement;
       }
@@ -110,17 +110,17 @@ public class FormatterUtil {
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(leafElement), null);
 
-    TreeElement treePrev = getWsCandidate(leafElement);
+    ASTNode treePrev = getWsCandidate(leafElement);
     if (treePrev == null) {
       if (whiteSpace.length() > 0) {
         ChangeUtil.addChild(leafElement.getTreeParent(), whiteSpaceElement, leafElement);
       }
     } else if (!isSpaceTextElement(treePrev)) {
-      ChangeUtil.addChild(treePrev.getTreeParent(), whiteSpaceElement, treePrev);
+      ChangeUtil.addChild((CompositeElement)treePrev.getTreeParent(), whiteSpaceElement, (TreeElement)treePrev);
     } else if (!isWhiteSpaceElement(treePrev)){
       return getWhiteSpaceBefore(leafElement);
     } else {
-      ChangeUtil.replaceChild(treePrev.getTreeParent(), treePrev, whiteSpaceElement);
+      ChangeUtil.replaceChild((CompositeElement)treePrev.getTreeParent(), (TreeElement)treePrev, whiteSpaceElement);
     }
 
     return getWhiteSpaceBefore(leafElement);

@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -91,7 +90,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
           if (finallyKeyword == null) return null;
           for(ASTNode child = finallyKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
             if (child.getElementType() == CODE_BLOCK){
-              return (TreeElement)child;
+              return child;
             }
           }
           return null;

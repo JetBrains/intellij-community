@@ -57,16 +57,16 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
         return null;
 
       case ChildRole.LT_IN_TYPE_LIST:
-        if (firstChild != null && firstChild.getElementType() == LT){
-          return firstChild;
+        if (getFirstChildNode() != null && getFirstChildNode().getElementType() == LT){
+          return getFirstChildNode();
         }
         else{
           return null;
         }
 
       case ChildRole.GT_IN_TYPE_LIST:
-        if (lastChild != null && lastChild.getElementType() == GT){
-          return lastChild;
+        if (getLastChildNode() != null && getLastChildNode().getElementType() == GT){
+          return getLastChildNode();
         }
         else{
           return null;
@@ -76,8 +76,8 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
   public TreeElement addInternal(TreeElement first, TreeElement last, TreeElement anchor, Boolean before){
     if (first == last && first.getElementType() == TYPE){
-      if (lastChild != null && lastChild.getElementType() == ERROR_ELEMENT){
-        super.deleteChildInternal(lastChild);
+      if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
+        super.deleteChildInternal(getLastChildNode());
       }
     }
 
@@ -115,13 +115,13 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       }
     }
 
-    if (firstChild.getElementType() != LT){
+    if (getFirstChildNode().getElementType() != LT){
       TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(lt, lt, firstChild, Boolean.TRUE);
+      super.addInternal(lt, lt, (TreeElement)getFirstChildNode(), Boolean.TRUE);
     }
-    if (lastChild.getElementType() != GT){
+    if (getLastChildNode().getElementType() != GT){
       TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(gt, gt, lastChild, Boolean.FALSE);
+      super.addInternal(gt, gt, (TreeElement)getLastChildNode(), Boolean.FALSE);
     }
     return firstAdded;
   }

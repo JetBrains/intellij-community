@@ -10,6 +10,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author mike
@@ -43,10 +44,10 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        final TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(PsiDocParamRef.this);
+        final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(PsiDocParamRef.this);
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
         LeafElement newElement = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
-        replaceChildInternal(firstChild, newElement);
+        replaceChildInternal((TreeElement)getFirstChildNode(), newElement);
         return PsiDocParamRef.this;
       }
 

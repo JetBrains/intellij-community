@@ -90,7 +90,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
           ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
           if (elseKeyword == null) return null;
           for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (STATEMENT_BIT_SET.isInSet(child.getElementType())) return (TreeElement)child;
+            if (STATEMENT_BIT_SET.isInSet(child.getElementType())) return child;
           }
           return null;
         }

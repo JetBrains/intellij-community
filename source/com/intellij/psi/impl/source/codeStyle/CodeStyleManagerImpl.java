@@ -62,9 +62,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
-    TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
     if (treeElement instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren((CompositeElement)treeElement, true); // optimization : parse all first
+      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     }
     PsiFileImpl file = (PsiFileImpl)element.getContainingFile();
     FileType fileType = StdFileTypes.JAVA;
@@ -82,9 +82,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
-    TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
     if (treeElement instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren((CompositeElement)treeElement, true); // optimization : parse all first
+      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     }
     FileType fileType = StdFileTypes.JAVA;
     PsiFile file = element.getContainingFile();
@@ -241,14 +241,14 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       // trick to reduce number of PsiTreeChangeEvent's (Enter action optimization)
       final boolean physical = file.isPhysical();
       CompositeElement parent;
-      TreeElement newSpace;
+      ASTNode newSpace;
       try {
         ((PsiFileImpl)file).setIsPhysicalExplicitly(false);
 
         int spaceStart = element.getTextRange().getStartOffset();
         parent = element.getTreeParent();
-        TreeElement prev = element.getTreePrev();
-        TreeElement next = element.getTreeNext();
+        ASTNode prev = element.getTreePrev();
+        ASTNode next = element.getTreeNext();
         ASTNode space1 = Helper.splitSpaceElement(element, end - spaceStart, charTable);
         TreeElement tempElement = Factory.createSingleLeafElement(
           ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0,
@@ -259,15 +259,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         ChangeUtil.removeChild(parent, tempElement);
         CodeEditUtil.normalizeSpace(helper, parent, prev, next, charTable);
 
-        newSpace = prev != null ? prev.getTreeNext() : parent.firstChild;
+        newSpace = prev != null ? prev.getTreeNext() : parent.getFirstChildNode();
         LOG.assertTrue(newSpace.getElementType() == ElementType.WHITE_SPACE);
-        ChangeUtil.replaceChild(parent, newSpace, element);
+        ChangeUtil.replaceChild(parent, (TreeElement)newSpace, element);
       }
       finally {
         ((PsiFileImpl)file).setIsPhysicalExplicitly(physical);
       }
 
-      ChangeUtil.replaceChild(parent, element, newSpace);
+      ChangeUtil.replaceChild(parent, element, (TreeElement)newSpace);
 
       return offset;
     }

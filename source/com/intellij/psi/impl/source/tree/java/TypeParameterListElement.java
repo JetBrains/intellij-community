@@ -43,13 +43,13 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (lt == null) {
       lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(lt, lt, firstChild, Boolean.TRUE);
+      super.addInternal(lt, lt, (TreeElement)getFirstChildNode(), Boolean.TRUE);
     }
 
     TreeElement gt = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
     if (gt == null) {
       gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(gt, gt, lastChild, Boolean.FALSE);
+      super.addInternal(gt, gt, (TreeElement)getLastChildNode(), Boolean.FALSE);
     }
 
     if (anchor == null) {

@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.xml.*;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -50,9 +50,9 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   public TextRange getTextRange() {
     if(myElements.length == 0){
-      final TreeElement child = XmlChildRole.START_TAG_END_FINDER.findChild( (CompositeElement)myTag);
+      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild( (ASTNode)myTag);
       if(child != null)
-        return new TextRange(child.getTextOffset() + 1, child.getTextOffset() + 1);
+        return new TextRange(child.getStartOffset() + 1, child.getStartOffset() + 1);
       return new TextRange(myTag.getTextRange().getEndOffset(), myTag.getTextRange().getEndOffset());
     }
     return new TextRange(myElements[0].getTextRange().getStartOffset(), myElements[myElements.length - 1].getTextRange().getEndOffset());

@@ -159,12 +159,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        if (lastChild.getElementType() == IDENTIFIER){
-          return lastChild;
+        if (getLastChildNode().getElementType() == IDENTIFIER){
+          return getLastChildNode();
         }
         else{
-          if (lastChild.getElementType() == REFERENCE_PARAMETER_LIST){
-            TreeElement current = lastChild.getTreePrev();
+          if (getLastChildNode().getElementType() == REFERENCE_PARAMETER_LIST){
+            ASTNode current = getLastChildNode().getTreePrev();
             while(current != null && WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(current.getElementType())){
               current = current.getTreePrev();
             }
@@ -176,16 +176,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
-        if (lastChild.getElementType() == REFERENCE_PARAMETER_LIST){
-          return lastChild;
+        if (getLastChildNode().getElementType() == REFERENCE_PARAMETER_LIST){
+          return getLastChildNode();
         }
         else{
           return null;
         }
 
       case ChildRole.QUALIFIER:
-        if (firstChild.getElementType() == JAVA_CODE_REFERENCE){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
+          return getFirstChildNode();
         }
         else{
           return null;
@@ -673,7 +673,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public boolean isQualified() {
-    return getChildRole(firstChild) != ChildRole.REFERENCE_NAME;
+    return getChildRole(getFirstChildNode()) != ChildRole.REFERENCE_NAME;
   }
 
   public ASTNode getTreeQualifier() {

@@ -92,16 +92,16 @@ public class ParameterListElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.LPARENTH:
-        if (firstChild.getElementType() == LPARENTH) {
-          return firstChild;
+        if (getFirstChildNode().getElementType() == LPARENTH) {
+          return getFirstChildNode();
         }
         else {
           return null;
         }
 
       case ChildRole.RPARENTH:
-        if (lastChild.getElementType() == RPARENTH) {
-          return lastChild;
+        if (getLastChildNode().getElementType() == RPARENTH) {
+          return getLastChildNode();
         }
         else {
           return null;

@@ -176,9 +176,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public PsiElement getScope() {
-    CompositeElement treeElement = getTreeElement();
+    ASTNode treeElement = getTreeElement();
     if (treeElement != null){
-      CompositeElement parent = treeElement.getTreeParent();
+      ASTNode parent = treeElement.getTreeParent();
       while(true){
         if (parent instanceof RepositoryTreeElement){
           return SourceTreeToPsiMap.treeElementToPsi(parent);

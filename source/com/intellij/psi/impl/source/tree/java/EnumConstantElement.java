@@ -26,8 +26,8 @@ public class EnumConstantElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (firstChild.getElementType() == JavaTokenType.DOC_COMMENT){
-          return firstChild;
+        if (getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
+          return getFirstChildNode();
         }
         else{
           return null;

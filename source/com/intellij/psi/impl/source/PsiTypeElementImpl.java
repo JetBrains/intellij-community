@@ -35,17 +35,17 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public PsiType getType() {
     if (myCachedType != null) return myCachedType;
 
-    if (firstChild.getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.isInSet(firstChild.getElementType())) {
-      myCachedType = getManager().getElementFactory().createPrimitiveType(firstChild.getText());
+    if (getFirstChildNode().getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.isInSet(getFirstChildNode().getElementType())) {
+      myCachedType = getManager().getElementFactory().createPrimitiveType(getFirstChildNode().getText());
     }
-    else if (firstChild.getElementType() == ElementType.TYPE) {
-      PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(firstChild)).getType();
-      myCachedType = lastChild.getElementType() == ElementType.ELLIPSIS ? new PsiEllipsisType(componentType) : componentType.createArrayType();
+    else if (getFirstChildNode().getElementType() == ElementType.TYPE) {
+      PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode())).getType();
+      myCachedType = getLastChildNode().getElementType() == ElementType.ELLIPSIS ? new PsiEllipsisType(componentType) : componentType.createArrayType();
     }
-    else if (firstChild.getElementType() == ElementType.JAVA_CODE_REFERENCE) {
+    else if (getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE) {
       myCachedType = new PsiClassReferenceType(getReferenceElement());
     }
-    else if (firstChild.getElementType() == ElementType.QUEST) {
+    else if (getFirstChildNode().getElementType() == ElementType.QUEST) {
       PsiType temp = createWildcardType();
       myCachedType = temp;
     }
@@ -66,13 +66,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   private PsiType createWildcardType() {
     final PsiType temp;
-    if (firstChild.getTreeNext() == null) {
+    if (getFirstChildNode().getTreeNext() == null) {
       temp = PsiWildcardType.createUnbounded(getManager());
     }
     else {
-      if (lastChild.getElementType() == TYPE) {
-        PsiTypeElement bound = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(lastChild);
-        ASTNode keyword = firstChild;
+      if (getLastChildNode().getElementType() == TYPE) {
+        PsiTypeElement bound = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getLastChildNode());
+        ASTNode keyword = getFirstChildNode();
         while(keyword != null && (keyword.getElementType() != EXTENDS_KEYWORD && keyword.getElementType() != SUPER_KEYWORD)) {
           keyword = keyword.getTreeNext();
         }
@@ -100,16 +100,16 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
-    if (firstChild.getElementType() == ElementType.TYPE) {
-      return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(firstChild)).getInnermostComponentReferenceElement();
+    if (getFirstChildNode().getElementType() == ElementType.TYPE) {
+      return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode())).getInnermostComponentReferenceElement();
     } else {
       return getReferenceElement();
     }
   }
 
   private PsiJavaCodeReferenceElement getReferenceElement() {
-    if (firstChild.getElementType() != ElementType.JAVA_CODE_REFERENCE) return null;
-    return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(firstChild);
+    if (getFirstChildNode().getElementType() != ElementType.JAVA_CODE_REFERENCE) return null;
+    return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode());
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){

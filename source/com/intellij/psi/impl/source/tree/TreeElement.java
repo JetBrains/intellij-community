@@ -41,7 +41,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
       }
     }
     else {
-      final TreeElement clone = (TreeElement)clone();
+      final ASTNode clone = (ASTNode)clone();
       clone.putUserData(MANAGER_KEY, getManager()); //?
       return clone;
     }
@@ -99,7 +99,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public final int getStartOffsetInParent(){
     if (getTreeParent() == null) return -1;
     int offset = 0;
-    for(ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()){
+    for(ASTNode child = getTreeParent().getFirstChildNode(); child != this; child = child.getTreeNext()){
       offset += child.getTextLength();
     }
     return offset;
@@ -125,7 +125,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
       }
       else {
         int curOffset = startOffset;
-        for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           curOffset = textMatches(child, buffer, curOffset, endOffset);
           if (curOffset == -1) return -1;
         }
@@ -167,14 +167,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public abstract int getTextLength(CharTable charTableByTree);
 
-  public ASTNode getTransformedFirstOrSelf(){
-    return this;
-  }
-
-  public ASTNode getTransformedLastOrSelf(){
-    return this;
-  }
-
   public void clearCaches(){}
 
   public final boolean equals(Object obj){
@@ -183,6 +175,14 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public final int hashCode(){
     return super.hashCode();
+  }
+
+  public ASTNode getTransformedFirstOrSelf() {
+    return this;
+  }
+
+  public ASTNode getTransformedLastOrSelf() {
+    return this;
   }
 }
 

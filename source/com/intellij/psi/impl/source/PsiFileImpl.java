@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.ASTNode;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -105,7 +106,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return myFile == null || myExplicitlySetAsPhysical;
   }
 
-  private CompositeElement _getTreeElement() {
+  private ASTNode _getTreeElement() {
     return super.getTreeElement();
   }
 

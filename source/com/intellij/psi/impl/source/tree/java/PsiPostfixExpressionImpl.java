@@ -34,17 +34,17 @@ public class PsiPostfixExpressionImpl extends CompositePsiElement implements Psi
         return null;
 
       case ChildRole.OPERAND:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.OPERATION_SIGN:
-        return lastChild;
+        return getLastChildNode();
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child == firstChild) return ChildRole.OPERAND;
-    if (child == lastChild) return ChildRole.OPERATION_SIGN;
+    if (child == getFirstChildNode()) return ChildRole.OPERAND;
+    if (child == getLastChildNode()) return ChildRole.OPERATION_SIGN;
     return ChildRole.NONE;
   }
 

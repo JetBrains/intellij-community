@@ -291,14 +291,14 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    IElementType i = lastChild.getElementType();
+    IElementType i = getLastChildNode().getElementType();
     if (i == IDENTIFIER) {
       {
         if (!(element instanceof PsiPackage)) {
           if (!(element instanceof PsiNamedElement)) return false;
           String name = ((PsiNamedElement)element).getName();
           if (name == null) return false;
-          if (!name.equals(lastChild.getText())) return false;
+          if (!name.equals(getLastChildNode().getText())) return false;
         }
       }
     }
@@ -469,11 +469,11 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        return getChildRole(lastChild) == role ? lastChild : null;
+        return getChildRole(getLastChildNode()) == role ? getLastChildNode() : null;
 
       case ChildRole.QUALIFIER:
-        if (getChildRole(firstChild) == ChildRole.QUALIFIER){
-          return firstChild;
+        if (getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER){
+          return getFirstChildNode();
         }
         else{
           return null;
@@ -549,7 +549,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public boolean isQualified() {
-    return getChildRole(firstChild) == ChildRole.QUALIFIER;
+    return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }
 
   public ASTNode getTreeQualifier() {

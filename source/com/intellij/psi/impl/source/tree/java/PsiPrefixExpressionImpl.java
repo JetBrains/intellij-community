@@ -60,17 +60,17 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
         return null;
 
       case ChildRole.OPERATION_SIGN:
-        return firstChild;
+        return getFirstChildNode();
 
       case ChildRole.OPERAND:
-        return EXPRESSION_BIT_SET.isInSet(lastChild.getElementType()) ? lastChild : null;
+        return EXPRESSION_BIT_SET.isInSet(getLastChildNode().getElementType()) ? getLastChildNode() : null;
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child == firstChild) return ChildRole.OPERATION_SIGN;
-    if (child == lastChild && EXPRESSION_BIT_SET.isInSet(child.getElementType())) return ChildRole.OPERAND;
+    if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
+    if (child == getLastChildNode() && EXPRESSION_BIT_SET.isInSet(child.getElementType())) return ChildRole.OPERAND;
     return ChildRole.NONE;
   }
 

@@ -55,7 +55,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public PsiTypeElement getTypeElement() {
-    CompositeElement first = (CompositeElement)TreeUtil.findChild(getTreeParent(), LOCAL_VARIABLE);
+    ASTNode first = TreeUtil.findChild(getTreeParent(), LOCAL_VARIABLE);
     return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(first, TYPE));
   }
 
@@ -124,20 +124,20 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         ChangeUtil.addChild(statement1, variable, null);
 
         TreeElement space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-        ChangeUtil.addChild(variable, space, variable.firstChild);
+        ChangeUtil.addChild(variable, space, (TreeElement)variable.getFirstChildNode());
 
         TreeElement typeClone = (TreeElement)type.clone();
         typeClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        ChangeUtil.addChild(variable, typeClone, variable.firstChild);
+        ChangeUtil.addChild(variable, typeClone, (TreeElement)variable.getFirstChildNode());
 
         if (modifierList.getTextLength() > 0){
           space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
-          ChangeUtil.addChild(variable, space, variable.firstChild);
+          ChangeUtil.addChild(variable, space, (TreeElement)variable.getFirstChildNode());
         }
 
         TreeElement modifierListClone = (TreeElement)modifierList.clone();
         modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, treeCharTab);
-        ChangeUtil.addChild(variable, modifierListClone, variable.firstChild);
+        ChangeUtil.addChild(variable, modifierListClone, (TreeElement)variable.getFirstChildNode());
 
         TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
         ChangeUtil.addChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(variables[i - 1]), semicolon, null);
@@ -222,7 +222,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     if (lastParent == null) return true;
     if (lastParent.getParent() != this) return true;
-    final TreeElement lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
+    final ASTNode lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
 
     if (getChildRole(lastParentTree) == ChildRole.INITIALIZER)
       return processor.execute(this, substitutor);

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
 
@@ -45,8 +44,8 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
         {
           ASTNode colon = findChildByRole(ChildRole.COLON);
           if (colon == null) return null;
-          TreeElement child;
-          for(child = (TreeElement)colon.getTreeNext(); child != null; child = child.getTreeNext()){
+          ASTNode child;
+          for(child = colon.getTreeNext(); child != null; child = child.getTreeNext()){
             if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
           }
           return child;

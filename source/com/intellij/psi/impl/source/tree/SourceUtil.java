@@ -21,7 +21,7 @@ import com.intellij.lang.ASTNode;
 public class SourceUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SourceUtil");
 
-  public static int toBuffer(TreeElement element, char[] buffer, int offset) {
+  public static int toBuffer(ASTNode element, char[] buffer, int offset) {
     return toBuffer(element, buffer, offset, null, SharedImplUtil.findCharTableByTree(element));
   }
 
@@ -37,7 +37,7 @@ public class SourceUtil implements Constants {
       }
       else {
         int curOffset = offset;
-        for (ASTNode child = ((CompositeElement)element).firstChild; child != null; child = child.getTreeNext()) {
+        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           curOffset = toBuffer(child, buffer, curOffset, skipTypes, table);
         }
         return curOffset;
@@ -45,7 +45,7 @@ public class SourceUtil implements Constants {
     }
   }
 
-  public static String getTextSkipWhiteSpaceAndComments(TreeElement element) {
+  public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
     final CharTable table = SharedImplUtil.findCharTableByTree(element);
     int length = toBuffer(element, null, 0, WHITE_SPACE_OR_COMMENT_BIT_SET, table);
     char[] buffer = new char[length];

@@ -136,8 +136,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   private PsiElement getScope(){
     ChameleonTransforming.transformChildren(this);
-    if (firstChild.getElementType() == ElementType.JAVA_CODE_REFERENCE || firstChild.getElementType() == ElementType.REFERENCE_EXPRESSION) {
-      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(firstChild);
+    if (getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE || getFirstChildNode().getElementType() == ElementType.REFERENCE_EXPRESSION) {
+      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode());
       final PsiElement referencedElement = referenceElement.resolve();
       if (referencedElement instanceof PsiClass) {
         return referencedElement;
@@ -178,10 +178,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       final PsiElement element = getNameElement();
-      final TreeElement treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
       LeafElement newToken = Factory.createSingleLeafElement(DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
-      treeElement.getTreeParent().replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(element), newToken);
+      ((CompositeElement)treeElement.getTreeParent()).replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(element), newToken);
       return SourceTreeToPsiMap.treeElementToPsi(newToken);
     }
 
