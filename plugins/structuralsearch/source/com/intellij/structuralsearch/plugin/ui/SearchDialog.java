@@ -219,7 +219,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
     //distinctResults.setSelected(matchOptions.isDistinct());
 
-    maxMatches.setText( String.valueOf(matchOptions.getMaxMatchesCount()) );
+    if (matchOptions.getMaxMatchesCount() != Integer.MAX_VALUE) {
+      maxMatches.setText( String.valueOf(matchOptions.getMaxMatchesCount()) );
+    }
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
     if (matchOptions.hasVariableConstraints()) {

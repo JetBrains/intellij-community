@@ -12,6 +12,8 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -49,6 +51,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox invertFormalArgType;
   private CompletionTextField formalArgType;
   private JTextField customScriptCode;
+  private JCheckBox maxoccursUnlimited;
+  private JCheckBox minoccursUnlimited;
 
   EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
@@ -137,6 +141,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
+    minoccursUnlimited.addChangeListener(
+      new MyChangeListener(minoccurs)
+    );
+
+    maxoccursUnlimited.addChangeListener(
+      new MyChangeListener(maxoccurs)
+    );
+
     init();
 
     if (variables.size()>0) parameterList.setSelectedIndex(0);
@@ -144,7 +156,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateParameters() {
     return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
-           validateIntOccurence(minoccurs) && validateIntOccurence(maxoccurs);
+           (minoccursUnlimited.isSelected() || validateIntOccurence(minoccurs)) &&
+           (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
   }
 
   protected JComponent createCenterPanel() {
@@ -173,8 +186,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setWriteAccess(write.isSelected());
     varInfo.setRegExp(regexp.getText());
     varInfo.setInvertRegExp(notRegexp.isSelected());
-    varInfo.setMinCount(Integer.parseInt( minoccurs.getText() ));;
-    varInfo.setMaxCount(Integer.parseInt( maxoccurs.getText() ));;
+
+    int minCount;
+    if (minoccursUnlimited.isSelected()) minCount = Integer.MAX_VALUE;
+    else minCount = Integer.parseInt( minoccurs.getText() );
+    varInfo.setMinCount(minCount);
+
+    int maxCount;
+    if (maxoccursUnlimited.isSelected()) maxCount = Integer.MAX_VALUE;
+    else maxCount = Integer.parseInt( maxoccurs.getText() );
+
+    varInfo.setMaxCount(maxCount);
     varInfo.setWithinHierarchy(applyWithinTypeHierarchy.isSelected());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
@@ -200,14 +222,19 @@ class EditVarConstraintsDialog extends DialogWrapper {
       notWrite.setSelected(false);
       write.setSelected(false);
       regexp.setText("");
+
       minoccurs.setText("1");
+      minoccursUnlimited.setSelected(false);
       maxoccurs.setText("1");
+      maxoccursUnlimited.setSelected(false);
       applyWithinTypeHierarchy.setSelected(false);
       partOfSearchResults.setSelected(false);
+
       regexprForExprType.setText("");
       notExprType.setSelected(false);
       exprTypeWithinHierarchy.setSelected(false);
       wholeWordsOnly.setSelected(false);
+
       invertFormalArgType.setSelected(false);
       formalArgTypeWithinHierarchy.setSelected(false);
       formalArgType.setText("");
@@ -217,10 +244,26 @@ class EditVarConstraintsDialog extends DialogWrapper {
       read.setSelected(varInfo.isReadAccess());
       notWrite.setSelected(varInfo.isInvertWriteAccess());
       write.setSelected(varInfo.isWriteAccess());
+      
       regexp.setText(varInfo.getRegExp());
       notRegexp.setSelected(varInfo.isInvertRegExp());
-      minoccurs.setText(Integer.toString(varInfo.getMinCount()));
-      maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
+
+      if(varInfo.getMinCount() == Integer.MAX_VALUE) {
+        minoccursUnlimited.setSelected(true);
+        minoccurs.setText("");
+      } else {
+        minoccursUnlimited.setSelected(false);
+        minoccurs.setText(Integer.toString(varInfo.getMinCount()));
+      }
+
+      if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
+        maxoccursUnlimited.setSelected(true);
+        maxoccurs.setText("");
+      } else {
+        maxoccursUnlimited.setSelected(false);
+        maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
+      }
+
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       notRegexp.setSelected( varInfo.isInvertRegExp() );
 
@@ -273,5 +316,24 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("find.structuredSearch");
+  }
+
+  private class MyChangeListener implements ChangeListener {
+    JTextField textField;
+
+    MyChangeListener(JTextField _minoccurs) {
+      textField = _minoccurs;
+    }
+
+    public void stateChanged(ChangeEvent e) {
+      final JCheckBox jCheckBox = (JCheckBox)e.getSource();
+
+      if (jCheckBox.isSelected()) {
+        textField.setEnabled(false);
+      }
+      else {
+        textField.setEnabled(true);
+      }
+    }
   }
 }
