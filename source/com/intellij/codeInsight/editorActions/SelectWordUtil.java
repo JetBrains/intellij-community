@@ -295,6 +295,7 @@ public class SelectWordUtil {
   }
 
   private static TextRange getWordSelectionRange(CharSequence editorText, int cursorOffset) {
+    if (editorText.length() == 0) return null;
     if (cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
         Character.isJavaIdentifierPart(editorText.charAt(cursorOffset - 1))) {
       cursorOffset--;
