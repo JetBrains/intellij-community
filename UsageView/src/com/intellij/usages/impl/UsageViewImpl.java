@@ -659,7 +659,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       Map.Entry<Usage,UsageNode> entry = i.next();
       Usage usage = entry.getKey();
       UsageNode node = entry.getValue();
-      if (!node.isExcluded() && usage.isReadOnly()) {
+      if (node != null && !node.isExcluded() && usage.isReadOnly()) {
         result.add(usage);
       }
     }
