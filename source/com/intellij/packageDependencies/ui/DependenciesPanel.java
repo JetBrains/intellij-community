@@ -478,21 +478,45 @@ public class DependenciesPanel extends JPanel {
       System.out.println("// -----------------------------------------------------------------------------");
 
       Set<PsiFile> files = getSelectedScope(myRightTree);
+
       for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
         PsiFile psiFile = iterator.next();
         if (psiFile instanceof PsiJavaFile) {
           PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
           for (int i = 0; i < classes.length; i++) {
-            String qName = classes[i].getQualifiedName();
-            String instr = qName.substring(0, qName.lastIndexOf(".") + 1) + "^" + classes[i].getName() + "^";
-
-            System.out.println(instr + " !private *(*) and");
-            System.out.println(instr + " !private * and");
+            final PsiClass aClass = classes[i];
+            excludeClass(aClass, false);
           }
         }
       }
 
       System.out.println("// -----------------------------------------------------------------------------");
+    }
+
+    private void excludeClass(final PsiClass aClass, boolean base) {
+      String qName = aClass.getQualifiedName();
+      if (!qName.startsWith("com.intellij")) return;
+
+      String instr = qName.substring(0, qName.lastIndexOf(".") + 1) + "^" + aClass.getName() + "^";
+
+      System.out.print(instr + " !private *(*) and");
+      if (base) System.out.print(" //base");
+      System.out.println();
+      System.out.print(instr + " !private * and");
+      if (base) System.out.print(" //base");
+      System.out.println();
+
+      final PsiClass[] supers = aClass.getSupers();
+      for (int i = 0; i < supers.length; i++) {
+        PsiClass aSuper = supers[i];
+        excludeClass(aSuper, true);
+      }
+
+      final PsiClass[] interfaces = aClass.getInterfaces();
+      for (int i = 0; i < interfaces.length; i++) {
+        PsiClass anInterface = interfaces[i];
+        excludeClass(anInterface, true);
+      }
     }
   }
 
