@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 
@@ -33,7 +32,8 @@ public class DocumentImpl implements DocumentEx {
   private List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
 
   private LineSet myLineSet = new LineSet();
-  private CharArray myText = new CharArray();
+  private CharArray myText;
+
   private boolean myIsReadOnly = false;
   private final THashMap<Object, Object> myUserDataMap = new THashMap<Object, Object>(4);
   private boolean isStripTrailingSpacesEnabled = true;
@@ -64,6 +64,7 @@ public class DocumentImpl implements DocumentEx {
   private boolean myGuardsSuppressed = false;
 
   private DocumentImpl() {
+    setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
@@ -85,7 +86,7 @@ public class DocumentImpl implements DocumentEx {
   }
 
   private void setChars(CharSequence chars) {
-    myText = new CharArray(chars);
+    myText.replaceText(chars);
     DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1);
     myLineSet.documentCreated(event);
   }
@@ -286,9 +287,7 @@ public class DocumentImpl implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    DocumentEvent event = beforeChangedUpdate(offset, null, s);
     myText.insert(s, offset);
-    changedUpdate(event, LocalTimeCounter.currentTime());
   }
 
   public void deleteString(int startOffset, int endOffset) {
@@ -312,16 +311,14 @@ public class DocumentImpl implements DocumentEx {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, null);
-    myText.remove(startOffset, endOffset);
-    changedUpdate(event, LocalTimeCounter.currentTime());
+    myText.remove(startOffset, endOffset,sToDelete);
   }
 
   public void replaceString(int startOffset, int endOffset, CharSequence s) {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime());
   }
 
-  private void replaceString(int startOffset, int endOffset, CharSequence s, long newModificationStamp) {
+  private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp) {
     if (startOffset < 0 || startOffset > getTextLength()) {
       throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset);
     }
@@ -342,20 +339,18 @@ public class DocumentImpl implements DocumentEx {
     final CharSequence chars = getCharsSequence();
     int newStartInString = 0;
     int newEndInString = newStringLength;
-    {
-      while(newStartInString < newStringLength &&
-            startOffset < endOffset &&
-            s.charAt(newStartInString) == chars.charAt(startOffset)){
-        startOffset++;
-        newStartInString++;
-      }
+    while (newStartInString < newStringLength &&
+           startOffset < endOffset &&
+           s.charAt(newStartInString) == chars.charAt(startOffset)) {
+      startOffset++;
+      newStartInString++;
+    }
 
-      while(endOffset > startOffset &&
-            newEndInString > newStartInString &&
-            s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)){
-        newEndInString--;
-        endOffset--;
-      }
+    while(endOffset > startOffset &&
+          newEndInString > newStartInString &&
+          s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)){
+      newEndInString--;
+      endOffset--;
     }
     if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
       setModificationStamp(newModificationStamp);
@@ -369,13 +364,10 @@ public class DocumentImpl implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, s);
-    myText.remove(startOffset, endOffset);
-    myText.insert(s, startOffset);
-    changedUpdate(event, newModificationStamp);
+    myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp);
   }
 
-  private void assertValidSeparators(final CharSequence s) {
+  private static void assertValidSeparators(final CharSequence s) {
     for (int i = 0; i < s.length(); i++) {
       if (s.charAt(i) == '\r') {
         LOG.error("Wrong line separators inserted into Document");
@@ -594,113 +586,29 @@ public class DocumentImpl implements DocumentEx {
     return model;
   }
 
-  //------------------ Class CharArray ---------------------------------------------
-
-  private static class CharArray {
-    private int myCount = 0;
-    private CharSequence myOriginalSequence;
-    private char[] myArray = null;
-    private String myString = null; // buffers String value - for not to generate it every time
-
-    public CharArray(CharSequence chars) {
-      myOriginalSequence = chars;
-      myCount = chars.length();
-    }
-
-    public CharArray() {
-      this("");
-    }
-
-    public void replaceText(CharSequence chars) {
-      myOriginalSequence = chars;
-      myArray = null;
-      myCount = chars.length();
-      myString = null;
-    }
-
-    public void remove(int startIndex, int endIndex) {
-      prepareForModification();
-
-      if (endIndex < myCount) {
-        System.arraycopy(myArray, endIndex, myArray, startIndex, myCount - endIndex);
-      }
-      myCount -= (endIndex - startIndex);
-    }
-
-    public void insert(CharSequence s, int startIndex) {
-      prepareForModification();
-
-      int insertLength = s.length();
-      myArray = relocateArray(myArray, myCount + insertLength);
-      if (startIndex < myCount) {
-        System.arraycopy(myArray, startIndex, myArray, startIndex + insertLength, myCount - startIndex);
-      }
-      CharArrayUtil.getChars(s, myArray,startIndex);
-      myCount += insertLength;
-    }
-
-    private void prepareForModification() {
-      if (myOriginalSequence != null) {
-        myArray = new char[myOriginalSequence.length()];
-        CharArrayUtil.getChars(myOriginalSequence, myArray, 0);
-        myOriginalSequence = null;
-      }
-      myString = null;
-    }
-
-    public int getLength() {
-      return myCount;
-    }
-
-    public CharSequence getCharArray() {
-      if (myOriginalSequence != null) return myOriginalSequence;
-      return new CharArrayCharSequence(myArray, 0, myCount);
-    }
-
-    public String toString() {
-      if (myString == null) {
-        if (myOriginalSequence != null) {
-          myString = myOriginalSequence.toString();
-        }
-        else {
-          myString = new String(myArray, 0, myCount);
-        }
-      }
-      return myString;
-    }
-
-    public char charAt(int i) {
-      if (i < 0 || i >= myCount) {
-        throw new IndexOutOfBoundsException("Wrong offset: " + i);
-      }
-      return myArray[i];
-    }
-
-    public CharSequence substring(int start, int end) {
-      if (myOriginalSequence != null) {
-        return myOriginalSequence.subSequence(start, end);
-      }
-      return new String(myArray, start, end - start);
-    }
-
-    private char[] relocateArray(char[] array, int index) {
-      if (index < array.length) {
-        return array;
-      }
-
-      int newArraySize = array.length;
-      if (newArraySize == 0) {
-        newArraySize = 16;
-      }
-      while (newArraySize <= index) {
-        newArraySize = (newArraySize * 120) / 100 + 1;
-      }
-      char[] newArray = new char[newArraySize];
-      System.arraycopy(array, 0, newArray, 0, array.length);
-      return newArray;
-    }
+  private void setCharArray(final CharArray charArray) {
+    myText = charArray;
   }
-//------------------ End of class CharArray ---------------------------------------------
 
+  public void setCyclicBufferSize(int bufferSize) {
+    final CharArray charArray = bufferSize == 0 ? (CharArray)new CharArray() {
+      protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
+        return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString);
+      }
+
+      protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+        changedUpdate(event, newModificationStamp);
+      }
+    } : new CyclicCharArray(bufferSize) {
+      protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
+        return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString);
+      }
+
+      protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+        changedUpdate(event, newModificationStamp);
+      }
+    };
+    setCharArray(charArray);
+  }
 }
 

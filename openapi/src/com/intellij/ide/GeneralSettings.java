@@ -29,6 +29,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   private PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private String myLastProjectLocation;
+  private boolean myUseCyclicBuffer;
+  private int myCyclicBufferSize = 1024*1024; //1Mb
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
@@ -274,6 +276,24 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
+      if ("useCyclicBuffer".equals(name)){
+        try {
+          myUseCyclicBuffer = new Boolean(value).booleanValue();
+        }
+        catch (Exception ex) {
+          myUseCyclicBuffer = false;
+        }
+      }
+
+      if ("cyclicBufferSize".equals(name)){
+        try {
+          myCyclicBufferSize = Integer.parseInt(value);
+        }
+        catch (Exception ex) {
+          myCyclicBufferSize = 0;
+        }
+      }
+
       if ("lastProjectLocation".equals(name)){
         try {
           myLastProjectLocation = value;
@@ -352,6 +372,16 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     optionElement.setAttribute("value", "" + myUseDefaultBrowser);
     parentNode.addContent(optionElement);
 
+    optionElement = new Element("option");
+    optionElement.setAttribute("name", "useCyclicBuffer");
+    optionElement.setAttribute("value", "" + myUseCyclicBuffer);
+    parentNode.addContent(optionElement);
+
+    optionElement = new Element("option");
+    optionElement.setAttribute("name", "cyclicBufferSize");
+    optionElement.setAttribute("value", "" + myCyclicBufferSize);
+    parentNode.addContent(optionElement);
+
     if (myLastProjectLocation != null) {
       optionElement = new Element("option");
       optionElement.setAttribute("name", "lastProjectLocation");
@@ -375,5 +405,21 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
   public void setUseDefaultBrowser(boolean value) {
     myUseDefaultBrowser = value;
+  }
+
+  public boolean isUseCyclicBuffer() {
+    return myUseCyclicBuffer;
+  }
+
+  public void setUseCyclicBuffer(final boolean useCyclicBuffer) {
+    myUseCyclicBuffer = useCyclicBuffer;
+  }
+
+  public int getCyclicBufferSize() {
+    return myCyclicBufferSize;
+  }
+
+  public void setCyclicBufferSize(final int cyclicBufferSize) {
+    myCyclicBufferSize = cyclicBufferSize;
   }
 }

@@ -89,4 +89,7 @@ public interface Document extends UserDataHolder {
 
   void startGuardedBlockChecking();
   void stopGuardedBlockChecking();
+
+  // pass 0 to make document not cyclic
+  void setCyclicBufferSize(int bufferSize);
 }

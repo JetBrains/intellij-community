@@ -187,4 +187,7 @@ public class MockDocument implements DocumentEx {
   public void unSuppressGuardedExceptions() {
     //To change body of implemented methods use File | Settings | File Templates.
   }
+
+  public void setCyclicBufferSize(int bufferSize) {
+  }
 }

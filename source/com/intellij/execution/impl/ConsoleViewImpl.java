@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.macro.DataAccessor;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -160,7 +161,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.MAKE_VISIBLE);
   }
 
-  private void assertIsDispatchThread() {
+  private static void assertIsDispatchThread() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
   }
 
@@ -368,6 +369,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       public Editor compute() {
         final EditorFactory editorFactory = EditorFactory.getInstance();
         final Document editorDocument = editorFactory.createDocument("");
+
+        final int bufferSize = GeneralSettings.getInstance().isUseCyclicBuffer() ? GeneralSettings.getInstance().getCyclicBufferSize() : 0;
+        editorDocument.setCyclicBufferSize(bufferSize);
+
         final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
         final EditorHighlighter highlighter = new MyHighghlighter();
         editor.setHighlighter(highlighter);
@@ -423,13 +428,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     });
   }
 
-  private void setEditorUpActions(final Editor editor) {
+  private static void setEditorUpActions(final Editor editor) {
     new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, editor.getContentComponent());
     registerActionHandler(editor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
     registerActionHandler(editor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
   }
 
-  private void registerActionHandler(final Editor editor, final String actionId, final AnAction action) {
+  private static void registerActionHandler(final Editor editor, final String actionId, final AnAction action) {
     final Keymap keymap=KeymapManager.getInstance().getActiveKeymap();
     final Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     action.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), editor.getContentComponent());
@@ -726,7 +731,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       return null;
     }
 
-    private boolean containsOffset(final int offset, final RangeHighlighter highlighter) {
+    private static boolean containsOffset(final int offset, final RangeHighlighter highlighter) {
       return highlighter.getStartOffset() <= offset && offset <= highlighter.getEndOffset();
     }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,6 +44,13 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setUseUTFGuessing(myComponent.myChkUTFGuessing.isSelected());
     settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
+    settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
+    try {
+      settings.setCyclicBufferSize(Integer.parseInt(myComponent.myCyclicBufferSize.getText()) * 1024);
+    }
+    catch (NumberFormatException e) {
+      settings.setCyclicBufferSize(0);
+    }
 
     // AutoSave in inactive
 
@@ -86,13 +94,15 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
   public boolean isModified() {
     boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
-    isModified |= !compareStrings(settings.getBrowserPath(), myComponent.myBrowserPathField.getText());
+    isModified |= !Comparing.strEqual(settings.getBrowserPath(), myComponent.myBrowserPathField.getText());
     isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isUseUTFGuessing() != myComponent.myChkUTFGuessing.isSelected();
     isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
+    isModified |= settings.isUseCyclicBuffer() != myComponent.myUseCyclicBuffer.isSelected();
+    isModified |= !Comparing.strEqual(settings.getCyclicBufferSize()/1024 + "", myComponent.myCyclicBufferSize.getText());
 
     int inactiveTimeout = -1;
     try {
@@ -102,7 +112,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
 
-    isModified |= !compareStrings(settings.getCharsetName(), (String)myComponent.myCharsetNameCombo.getSelectedItem());
+    isModified |= !Comparing.strEqual(settings.getCharsetName(), (String)myComponent.myCharsetNameCombo.getSelectedItem());
     isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     isModified |= updateSettings.CHECK_UPDATES == myComponent.myRbNeverCheck.isSelected();
@@ -111,15 +121,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     return isModified || getDiffOptions().isModified();
   }
 
-  private static boolean compareStrings(String string1, String string2) {
-    if (string1 == null) {
-      string1 = "";
-    }
-    if (string2 == null) {
-      string2 = "";
-    }
-    return string1.equals(string2);
-  }
 //----------------------------------------------
   public JComponent createComponent() {
 
@@ -135,13 +136,17 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
         myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
       }
     });
-
+    myComponent.myUseCyclicBuffer.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myComponent.myCyclicBufferSize.setEditable(myComponent.myUseCyclicBuffer.isSelected());
+      }
+    });
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     myComponent.myBrowserPathField.addBrowseFolderListener("Select Path to Browser", null, null, descriptor);
 
     myComponent.myIgnoreFilesField.setText("skdjf arfgvkbdfugbvr");
-    Vector charsets = new Vector();
+    Vector<String> charsets = new Vector<String>();
     charsets.add("System Default");
     SortedMap avaliableCharsets = Charset.availableCharsets();
     for (Iterator iterator = avaliableCharsets.keySet().iterator(); iterator.hasNext();) {
@@ -174,6 +179,9 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
+    myComponent.myUseCyclicBuffer.setSelected(settings.isUseCyclicBuffer());
+    myComponent.myCyclicBufferSize.setEditable(settings.isUseCyclicBuffer());
+    myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize()/1024+"");
 
     myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
     myComponent.myCharsetNameCombo.setSelectedItem(settings.getCharsetName());
@@ -230,6 +238,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     private JRadioButton myRbNeverCheck;
     private JRadioButton myUseSystemDefaultBrowser;
     private JRadioButton myUseUserDefinedBrowser;
+    private JCheckBox myUseCyclicBuffer;
+    private JTextField myCyclicBufferSize;
 
     public MyComponent() {
       ButtonGroup buttonGroup = new ButtonGroup();
