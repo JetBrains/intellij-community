@@ -15,24 +15,16 @@
     </component>
     <component>
       <implementation-class>com.qintsoft.svn4idea.SvnConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
   </project-components>
 
   <actions>
 
-    <group id="SvnFileGroup" text="Subversion">
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
-      <separator/>
-      <action id="CheckoutFromSubversion" class="com.qintsoft.svn4idea.actions.CheckoutAction" text="Check Out from Subversion">
-      </action>
-      <separator/>
-    </group>
-
-
     <action id="Subversion.ShowDiffAction" class="com.qintsoft.svn4idea.actions.ShowDiffAction" text="Show Diff..." description="Show difference with Subversion base version"/>
 
     <group id="SubversionGlobalGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
-      <!--<action id="Subversion.CleanupProject" class="com.qintsoft.svn4idea.actions.CleanupProjectAction" text="Cleanup Workspace" description="Cleanup Subversion workspace from any leftovers"/>-->
+       <!--<action id="Subversion.CleanupProject" class="com.qintsoft.svn4idea.actions.CleanupProjectAction" text="Cleanup Workspace" description="Cleanup Subversion workspace from any leftovers"/>-->
       <!--<action id="Subversion.Refresh" class="com.qintsoft.svn4idea.actions.RefreshAction" text="_Refresh" description="Refresh information from Subversion repository"/>-->
       <action id="Subversion.ShowFilesInProject" class="com.qintsoft.svn4idea.actions.ShowFilesInProjectAction" text="SvnUp.." description="Run SvnUp on project directory"/>
       <action id="Subversion.Help" class="com.qintsoft.svn4idea.actions.HelpAction" text="Help.." description="Subversion plugin readme"/>
