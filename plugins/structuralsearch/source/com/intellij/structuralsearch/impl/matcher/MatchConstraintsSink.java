@@ -1,0 +1,76 @@
+package com.intellij.structuralsearch.impl.matcher;
+
+import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.structuralsearch.MatchingProcess;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.openapi.progress.ProgressIndicator;
+
+import javax.swing.*;
+import java.util.HashMap;
+
+/**
+ * Sink to detect
+ */
+class MatchConstraintsSink implements MatchResultSink {
+  private MatchResultSink delegate;
+  private MatchingProcess process;
+  private boolean distinct;
+  private boolean caseSensitive;
+  private int matchCount;
+  private int maxMatches;
+  private HashMap matches = new HashMap();
+
+  MatchConstraintsSink(MatchResultSink _delegate, int _maxMatches,boolean distinct, boolean _caseSensitive) {
+    delegate = _delegate;
+    maxMatches = _maxMatches;
+    this.distinct = distinct;
+    caseSensitive = _caseSensitive;
+  }
+
+  public void newMatch(MatchResult result) {
+    if (distinct) {
+      String matchImage = result.getMatchImage();
+
+      if (!caseSensitive) matchImage = matchImage.toLowerCase();
+
+      if (matches.get(matchImage)!=null) {
+        return;
+      }
+
+      matches.put(matchImage,result);
+    }
+
+    delegate.newMatch(result);
+    ++matchCount;
+
+    if (matchCount==maxMatches) {
+      JOptionPane.showMessageDialog(null,"Search produced too many results, stopping the search process");
+      process.stop();
+    }
+  }
+
+  /* Notifies sink about starting the matching for given element
+   * @param element the current file
+   * @param task process continuation reference
+   */
+  public void processFile(PsiFile element) {
+    delegate.processFile(element);
+  }
+
+  public void setMatchingProcess(MatchingProcess matchingProcess) {
+    process = matchingProcess;
+    delegate.setMatchingProcess(process);
+  }
+
+  public void matchingFinished() {
+    matchCount = 0;
+    matches.clear();
+    delegate.matchingFinished();
+  }
+
+  public ProgressIndicator getProgressIndicator() {
+    return delegate.getProgressIndicator();
+  }
+
+}

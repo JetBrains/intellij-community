@@ -1,0 +1,58 @@
+package com.intellij.structuralsearch.plugin;
+
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.structuralsearch.plugin.ui.*;
+
+public class StructuralSearchAction extends AnAction {
+  // context of the search
+  private SearchContext searchContext = new SearchContext();
+
+  public StructuralSearchAction() {
+    super("StructuralSearchAction");
+  }
+
+  /** Handles IDEA action event
+   * @param event the event of action
+   */
+  public void actionPerformed(AnActionEvent event) {
+    searchContext.configureFromDataContext(event.getDataContext());
+
+    triggerAction(null,searchContext);
+
+    searchContext.setProject(null);
+    searchContext.setFile(null);
+    searchContext.setCurrentFile(null);
+  }
+
+  public static void triggerAction(Configuration config, SearchContext searchContext) {
+    final SearchDialog searchDialog = new SearchDialog(searchContext);
+
+    if (config!=null) {
+      searchDialog.setUseLastConfiguration(true);
+      searchDialog.setValuesFromConfig(config);
+    }
+
+    searchDialog.show();
+  }
+
+  /** Updates the state of the action
+   * @param event the action event
+   */
+  public void update(AnActionEvent event) {
+    final Presentation presentation = event.getPresentation();
+    final DataContext context = event.getDataContext();
+    final Project project = (Project)context.getData( DataConstants.PROJECT );
+    final StructuralSearchPlugin plugin = project==null ? null:StructuralSearchPlugin.getInstance( project );
+
+    if (plugin == null || plugin.isSearchInProgress()) {
+      presentation.setEnabled( false );
+    } else {
+      presentation.setEnabled( true );
+    }
+
+    super.update(event);
+  }
+
+}
+

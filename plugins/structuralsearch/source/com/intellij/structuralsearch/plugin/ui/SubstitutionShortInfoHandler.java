@@ -1,0 +1,131 @@
+package com.intellij.structuralsearch.plugin.ui;
+
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.template.impl.TemplateImplUtil;
+import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.util.Key;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: Maxim.Mossienko
+ * Date: Apr 23, 2004
+ * Time: 5:20:56 PM
+ * To change this template use File | Settings | File Templates.
+ */
+public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
+  private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
+
+  private long modificationTimeStamp;
+  private ArrayList<Variable> variables = new ArrayList<Variable>();
+  private Editor editor;
+  public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
+
+  SubstitutionShortInfoHandler(Editor _editor) {
+    editor = _editor;
+  }
+
+  public void beforeDocumentChange(DocumentEvent event) {
+  }
+
+  public void documentChanged(DocumentEvent event) {
+  }
+
+  public void mouseMoved(EditorMouseEvent e) {
+    LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
+
+    handleInputFocusMovement(position);
+  }
+
+  private void handleInputFocusMovement(LogicalPosition position) {
+    checkModelValidness();
+    String text = "";
+    final int offset = editor.logicalPositionToOffset(position);
+    final int length = editor.getDocument().getTextLength();
+    final CharSequence elements = editor.getDocument().getCharsSequence();
+
+    int start = offset-1;
+    int end = -1;
+    while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
+
+    if (start >=0 && elements.charAt(start)=='$') {
+      end = offset;
+
+      while(end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end)!='$') end++;
+      if (end < length && elements.charAt(end)=='$') {
+        String varname = elements.subSequence(start + 1, end).toString();
+        Variable foundVar = null;
+
+        for(Iterator<Variable> i=variables.iterator();i.hasNext();) {
+          final Variable var = i.next();
+
+          if (var.getName().equals(varname)) {
+            foundVar = var;
+            break;
+          }
+        }
+
+        if (foundVar!=null) {
+          text = UIUtil.getShortParamString(editor.getUserData(CURRENT_CONFIGURATION_KEY),varname);
+        }
+      }
+    }
+
+    if (text.length() > 0) {
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
+      Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
+
+      Point bestPoint = new Point(top.x, bottom.y + editor.getLineHeight());
+
+      if (!visibleArea.contains(bestPoint)) {
+        int defaultOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(new Point(0,0)));
+        bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+      }
+
+      Point p = SwingUtilities.convertPoint(
+        editor.getContentComponent(),
+        bestPoint,
+        editor.getComponent().getRootPane().getLayeredPane()
+      );
+      HintManager.getInstance().getTooltipController().showTooltip(editor, p, text, false, SS_INFO_TOOLTIP_GROUP);
+    }
+  }
+
+  private void checkModelValidness() {
+    if (modificationTimeStamp != editor.getDocument().getModificationStamp()) {
+      reparse(editor);
+      modificationTimeStamp = editor.getDocument().getModificationStamp();
+    }
+  }
+
+  private void reparse(Editor editor) {
+    if (variables.size() > 0) variables.clear();
+
+    TemplateImplUtil.parseVariables(
+      editor.getDocument().getCharsSequence(),
+      variables,
+      null
+    );
+  }
+
+  public void mouseDragged(EditorMouseEvent e) {
+  }
+
+  public void caretPositionChanged(CaretEvent e) {
+    handleInputFocusMovement(e.getNewPosition());
+  }
+
+  public ArrayList<Variable> getVariables() {
+    checkModelValidness();
+    return variables;
+  }
+}
