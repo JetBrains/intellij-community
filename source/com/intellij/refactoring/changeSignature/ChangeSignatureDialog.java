@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -63,6 +64,9 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private JButton myPropagateExnChangesButton;
   private Set<PsiMethod> myMethodsToPropagateParameters = null;
   private Set<PsiMethod> myMethodsToPropagateExceptions = null;
+
+  private Tree myExceptionPropagationTree;
+  private Tree myParameterPropagationTree;
 
   public ChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation) {
     super(project, true);
@@ -164,9 +168,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myPropagateParamChangesButton = new JButton("Propagate Parameters");
     myPropagateParamChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select New Parameters Propagation End Points") {
+        new CallerChooser(myMethod, "Select Methods To Propagate New Parameters", myParameterPropagationTree) {
           protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateParameters = callers;
+            myParameterPropagationTree = getTree();
           }
         }.show();
       }
@@ -176,9 +181,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     myPropagateExnChangesButton = new JButton("Propagate Exceptions");
     myPropagateExnChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select New Thrown Exceptions Propagation End Points") {
+        new CallerChooser(myMethod, "Select Methods To Propagate New Exceptions", myExceptionPropagationTree) {
           protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateExceptions = callers;
+            myExceptionPropagationTree = getTree();
           }
         }.show();
       }

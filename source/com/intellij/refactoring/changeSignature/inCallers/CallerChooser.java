@@ -35,11 +35,17 @@ public abstract class CallerChooser extends DialogWrapper {
   private Alarm myAlarm = new Alarm();
   private MethodNode myRoot;
   private Project myProject;
+  private Tree myTree;
 
-  public CallerChooser(final PsiMethod method, String title) {
+  public Tree getTree() {
+    return myTree;
+  }
+
+  public CallerChooser(final PsiMethod method, String title, Tree previousTree) {
     super(true);
     myMethod = method;
     myProject = myMethod.getProject();
+    myTree = previousTree;
     setTitle(title);
     init();
   }
@@ -47,31 +53,19 @@ public abstract class CallerChooser extends DialogWrapper {
   protected JComponent createCenterPanel() {
     Splitter splitter = new Splitter(false, ((float)0.6));
     JPanel result = new JPanel(new BorderLayout());
-    final Tree tree = createTree();
-    JScrollPane scrollPane = new JScrollPane(tree);
+    if (myTree == null) {
+      myTree = createTree();
+    } else {
+      final CheckedTreeNode root = (CheckedTreeNode)myTree.getModel().getRoot();
+      myRoot = (MethodNode)root.getFirstChild();
+    }
+    JScrollPane scrollPane = new JScrollPane(myTree);
     splitter.setFirstComponent(scrollPane);
     myEditorField = createCallSitesViewer();
     myEditorField.setText(getText(myMethod));
     myEditorField.setBorder(IdeBorderFactory.createBorder());
     splitter.setSecondComponent(myEditorField);
     result.add(splitter);
-
-    tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        final TreePath path = e.getPath();
-        if (path != null) {
-          MethodNode node = (MethodNode)path.getLastPathComponent();
-          final PsiMethod method = node.getMethod();
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            public void run() {
-              myEditorField.setText(getText(method));
-            }
-          }, 300);
-        }
-      }
-    });
-
     return result;
   }
 
@@ -128,6 +122,22 @@ public abstract class CallerChooser extends DialogWrapper {
     };
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
+    tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        final TreePath path = e.getPath();
+        if (path != null) {
+          MethodNode node = (MethodNode)path.getLastPathComponent();
+          final PsiMethod method = node.getMethod();
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            public void run() {
+              myEditorField.setText(getText(method));
+            }
+          }, 300);
+        }
+      }
+    });
+
     return tree;
   }
 
