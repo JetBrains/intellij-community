@@ -43,6 +43,7 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
+import com.siyeh.ig.jdk.*;
 
 import java.io.*;
 import java.util.ArrayList;
