@@ -73,8 +73,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
             final PsiParameter[] catchBlockParameters =
                     statement.getCatchBlockParameters();
             final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-            final int numBlocks = Math.min(catchBlocks.length, catchBlockParameters.length);
-            for (int i = 0; i < numBlocks; i++) {
+            for (int i = 0; i < catchBlocks.length; i++) {
                 final PsiCodeBlock catchBlock = catchBlocks[i];
                 final PsiParameter parameter = catchBlockParameters[i];
                 if (parameter.hasModifierProperty(PsiModifier.FINAL) &&

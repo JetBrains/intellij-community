@@ -81,7 +81,7 @@ public class UnusedCatchParameterInspection extends StatementInspection {
 
             final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
             final PsiParameter[] params = statement.getCatchBlockParameters();
-            for (int i = 0; i < Math.min(catchBlocks.length, params.length); i++) {
+            for (int i = 0; i < catchBlocks.length; i++) {
                 final PsiCodeBlock block = catchBlocks[i];
                 final PsiParameter param = params[i];
                 if (m_ignoreCatchBlocksWithComments) {

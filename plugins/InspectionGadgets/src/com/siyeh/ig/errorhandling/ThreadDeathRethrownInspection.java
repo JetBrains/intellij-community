@@ -35,12 +35,6 @@ public class ThreadDeathRethrownInspection extends StatementInspection {
             super.visitTryStatement(statement);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();
             final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-            if (parameters == null) {
-                return;
-            }
-            if (catchBlocks == null) {
-                return;
-            }
             final int length = Math.min(parameters.length, catchBlocks.length);
             for (int i = 0; i < length; i++) {
                 final PsiParameter parameter = parameters[i];

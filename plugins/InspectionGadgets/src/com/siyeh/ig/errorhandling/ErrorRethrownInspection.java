@@ -36,13 +36,7 @@ public class ErrorRethrownInspection extends StatementInspection {
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();
-            if (parameters == null) {
-                return;
-            }
             final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-            if (catchBlocks == null) {
-                return;
-            }
             final int length = Math.min(parameters.length, catchBlocks.length);
             for (int i = 0; i < length; i++) {
                 final PsiParameter parameter = parameters[i];
