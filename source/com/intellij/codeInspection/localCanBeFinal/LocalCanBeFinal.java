@@ -270,4 +270,8 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       add(myReportParametersCheckbox, gc);
     }
   }
+
+  public boolean isEnabledByDefault() {
+    return false;
+  }
 }
