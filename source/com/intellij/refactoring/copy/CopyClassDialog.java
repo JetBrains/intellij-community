@@ -8,15 +8,12 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -30,7 +27,7 @@ class CopyClassDialog extends DialogWrapper{
   private JLabel myNameLabel = new JLabel("Name:");
   private EditorTextField myNameField;
   private JLabel myPackageLabel = new JLabel("Destination package:");
-  private TextFieldWithBrowseButton myTfPackage;
+  private ReferenceEditorWithBrowseButton myTfPackage;
   private Project myProject;
   private PsiDirectory myTargetDirectory;
   private boolean myDoClone;
@@ -102,11 +99,7 @@ class CopyClassDialog extends DialogWrapper{
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myTfPackage = new TextFieldWithBrowseButton();
-    myPackageLabel.setLabelFor(myTfPackage.getTextField());
-    myPackageLabel.setDisplayedMnemonic('D');
-
-    myTfPackage.addActionListener(new ActionListener() {
+    myTfPackage = new ReferenceEditorWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PackageChooserDialog chooser=new PackageChooserDialog("Choose Destination Package",myProject);
         chooser.selectPackage(myTfPackage.getText());
@@ -116,7 +109,10 @@ class CopyClassDialog extends DialogWrapper{
           myTfPackage.setText(aPackage.getQualifiedName());
         }
       }
-    });
+    }, "", PsiManager.getInstance(myProject));
+    myPackageLabel.setLabelFor(myTfPackage.getEditorTextField());
+    myPackageLabel.setDisplayedMnemonic('D');
+
     panel.add(myTfPackage, gbConstraints);
 
     return panel;
@@ -126,46 +122,45 @@ class CopyClassDialog extends DialogWrapper{
     return myTargetDirectory;
   }
 
-  private String getPackageName() {
-    String name = myTfPackage.getText();
-    return name != null ? name.trim() : "";
-  }
-
   public String getClassName() {
     return myNameField.getText();
   }
 
   protected void doOKAction(){
-    final String packageName = getPackageName();
+    final String packageName = myTfPackage.getText();
     final String className = getClassName();
 
     final String[] errorString = new String[1];
     final PsiManager manager = PsiManager.getInstance(myProject);
-    if ("".equals(className)) {
+    final PsiNameHelper nameHelper = manager.getNameHelper();
+    if (!nameHelper.isQualifiedName(packageName)) {
+      errorString[0] = "Invalid target package name specified";
+    } else if ("".equals(className)) {
       errorString[0] = "No class name specified";
-    }
-    else if (!manager.getNameHelper().isIdentifier(className)) {
-      errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
-    }
-    else if (!myDoClone) {
-      try {
-        myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myDefaultTargetDirectory, true);
-        if (myTargetDirectory == null) {
-          errorString[0] = ""; // message already reported by PackageUtil
-        } else {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, className);
-                }
-              });
-            }
-          }, "Create directory", null);
-        }
+    } else {
+      if (!nameHelper.isIdentifier(className)) {
+        errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
       }
-      catch (IncorrectOperationException e) {
-        errorString[0] = e.getMessage();
+      else if (!myDoClone) {
+        try {
+          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myDefaultTargetDirectory, true);
+          if (myTargetDirectory == null) {
+            errorString[0] = ""; // message already reported by PackageUtil
+          } else {
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              public void run() {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, className);
+                  }
+                });
+              }
+            }, "Create directory", null);
+          }
+        }
+        catch (IncorrectOperationException e) {
+          errorString[0] = e.getMessage();
+        }
       }
     }
 
