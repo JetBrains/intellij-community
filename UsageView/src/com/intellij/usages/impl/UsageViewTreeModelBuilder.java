@@ -5,6 +5,7 @@ import com.intellij.usages.UsageViewPresentation;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final RootGroupNode myRootNode;
@@ -36,6 +37,25 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myRootNode.addNode(myTargetsNode);
   }
 
+  public UsageNode getFirstUsageNode() {
+    return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
+  }
+
+  private static TreeNode getFirstChildOfType(TreeNode parent, final Class type) {
+    final int childCount = parent.getChildCount();
+    for (int idx = 0; idx < childCount; idx++) {
+      final TreeNode child = parent.getChildAt(idx);
+      if (type.isAssignableFrom(child.getClass())) {
+        return child;
+      }
+      final TreeNode firstChildOfType = getFirstChildOfType(child, type);
+      if (firstChildOfType != null) {
+        return firstChildOfType;
+      }
+    }
+    return null;
+  }
+
   public boolean areTargetsValid() {
     if (myTargets.length == 0) return true;
     for (int i = 0; i < myTargetNodes.length; i++) {
@@ -57,7 +77,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     }
 
     public void addNode(DefaultMutableTreeNode node) {
-      UsageViewTreeModelBuilder.this.insertNodeInto(node, this, getNodeInsertionIndex(node));
+      myTreeModel.insertNodeInto(node, this, getNodeInsertionIndex(node));
     }
   }
 }

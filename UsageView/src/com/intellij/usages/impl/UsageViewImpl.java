@@ -29,6 +29,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -239,6 +240,8 @@ public class UsageViewImpl implements UsageView {
   }
 
   public void rulesChanged() {
+    final ArrayList<UsageState> states = new ArrayList<UsageState>();
+    captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     Collection<Usage> allUsages = myUsageNodes.keySet();
     reset();
     myBuilder.setGroupingRules(getGroupingRuleProvider().getActiveRules(myProject));
@@ -249,6 +252,35 @@ public class UsageViewImpl implements UsageView {
         ((MergeableUsage)usage).reset();
       }
       appendUsage(usage);
+    }
+    restoreUsageExpandState(states);
+  }
+
+  private void captureUsagesExpandState(TreePath pathFrom, final Collection<UsageState> states) {
+    if (!myTree.isExpanded(pathFrom)) {
+      return;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)pathFrom.getLastPathComponent();
+    final int childCount = node.getChildCount();
+    for (int idx = 0; idx < childCount; idx++) {
+      final TreeNode child = node.getChildAt(idx);
+      if (child instanceof UsageNode) {
+        final Usage usage = ((UsageNode)child).getUsage();
+        if (usage != null) {
+          states.add(new UsageState(usage, myTree.getSelectionModel().isPathSelected(pathFrom.pathByAddingChild(child))));
+        }
+      }
+      else {
+        captureUsagesExpandState(pathFrom.pathByAddingChild(child), states);
+      }
+    }
+  }
+
+  private void restoreUsageExpandState(final Collection<UsageState> states) {
+    myTree.getSelectionModel().clearSelection();
+    for (Iterator<UsageState> it = states.iterator(); it.hasNext();) {
+      final UsageState usageState = it.next();
+      usageState.restore();
     }
   }
 
@@ -376,13 +408,6 @@ public class UsageViewImpl implements UsageView {
 
   public void appendUsage(Usage usage) {
     final UsageNode node = myBuilder.appendUsage(usage);
-    if (node != null) {
-      if (myUsageNodes.size() == 0) { //first usage
-        TreePath usagePath = new TreePath(node.getPath());
-        myTree.expandPath(usagePath.getParentPath());
-        myTree.setSelectionPath(usagePath);
-      }
-    }
     myUsageNodes.put(usage, node);
   }
 
@@ -457,8 +482,20 @@ public class UsageViewImpl implements UsageView {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         flush();
+        showFirstUsage();
       }
     });
+
+  }
+
+  private void showFirstUsage() {
+    UsageViewTreeModelBuilder model = (UsageViewTreeModelBuilder)myTree.getModel();
+    final UsageNode firstUsageNode = model.getFirstUsageNode();
+    if (firstUsageNode != null) { //first usage;
+      TreePath usagePath = new TreePath(firstUsageNode.getPath());
+      myTree.expandPath(usagePath.getParentPath());
+      myTree.setSelectionPath(usagePath);
+    }
   }
 
   public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
@@ -791,6 +828,35 @@ public class UsageViewImpl implements UsageView {
         if (component instanceof JButton) {
           final JButton button = (JButton)component;
           button.setEnabled(!isSearchInProgress());
+        }
+      }
+    }
+  }
+
+  private class UsageState {
+    private final Usage myUsage;
+    private final boolean mySelected;
+
+    public UsageState(final Usage usage) {
+      this(usage, false);
+    }
+
+    public UsageState(final Usage usage, boolean isSelected) {
+      myUsage = usage;
+      mySelected = isSelected;
+    }
+
+    public void restore() {
+      final UsageNode node = myUsageNodes.get(myUsage);
+      if (node == null) {
+        return;
+      }
+      final DefaultMutableTreeNode parentGroupingNode = (DefaultMutableTreeNode)node.getParent();
+      if (parentGroupingNode != null) {
+        final TreePath treePath = new TreePath(parentGroupingNode.getPath());
+        myTree.expandPath(treePath);
+        if (mySelected) {
+          myTree.addSelectionPath(treePath.pathByAddingChild(node));
         }
       }
     }

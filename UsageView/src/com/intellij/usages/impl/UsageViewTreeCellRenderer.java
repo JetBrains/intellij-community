@@ -93,7 +93,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
-        append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append((userObject != null) ? userObject.toString() : "", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
