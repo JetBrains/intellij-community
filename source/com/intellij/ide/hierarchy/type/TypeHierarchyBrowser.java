@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
@@ -58,6 +59,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
   private boolean myCachedIsValidBase = false;
 
   private static final String TYPE_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.TypeHierarchyBrowser";
+  private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
 
   public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
     myProject = project;
@@ -102,7 +104,12 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
 
-    myRefreshAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet(), tree);
+    myRefreshAction.registerShortcutOn(tree);
+    myRunOnDisposeList.add(new Runnable() {
+      public void run() {
+        myRefreshAction.unregisterCustomShortcutSet(tree);
+      }
+    });
 
     final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
     baseOnThisTypeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree);
@@ -278,7 +285,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     }
   }
 
-  final class RefreshAction extends AnAction {
+  final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
     }
@@ -403,6 +410,10 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
       final HierarchyTreeBuilder builder = iterator.next();
       builder.dispose();
     }
+    for (Iterator<Runnable> it = myRunOnDisposeList.iterator(); it.hasNext();) {
+      it.next().run();
+    }
+    myRunOnDisposeList.clear();
     myBuilders.clear();
   }
 

@@ -29,6 +29,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public final class MethodHierarchyBrowser extends JPanel implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
@@ -50,6 +51,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   static final String METHOD_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.MethodHierarchyBrowser";
+  private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
 
   public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
@@ -127,8 +129,12 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(tree);
 
-    final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet();
-    myRefreshAction.registerCustomShortcutSet(shortcutSet, tree);
+    myRefreshAction.registerShortcutOn(tree);
+    myRunOnDisposeList.add(new Runnable() {
+      public void run() {
+        myRefreshAction.unregisterCustomShortcutSet(tree);
+      }
+    });
 
     final BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
     baseOnThisMethodAction.registerCustomShortcutSet(
@@ -232,7 +238,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     return toolBar;
   }
 
-  final class RefreshAction extends AnAction {
+  final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
     }
@@ -382,6 +388,10 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       final HierarchyTreeBuilder builder = iterator.next();
       builder.dispose();
     }
+    for (Iterator<Runnable> it = myRunOnDisposeList.iterator(); it.hasNext();) {
+      it.next().run();
+    }
+    myRunOnDisposeList.clear();
     myBuilders.clear();
   }
 
