@@ -48,6 +48,9 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final int selectionEnd = selectionModel.getSelectionEnd();
     final boolean hasSelection = selectionModel.hasSelection();
 
+    // for preventing flicker
+    caretModel.moveToOffset(0);
+
     document.deleteString(start, end);
     document.insertString(insStart, toInsert);
     documentManager.commitDocument(document);
@@ -65,11 +68,12 @@ class MoveStatementHandler extends EditorWriteActionHandler {
         int lineStart = document.getLineStartOffset(line);
         codeStyleManager.adjustLineIndent(file, lineStart);
       }
-      //codeStyleManager.reformatRange(file, insStart, insEnd);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
