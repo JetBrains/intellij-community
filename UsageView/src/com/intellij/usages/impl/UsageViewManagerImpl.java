@@ -45,7 +45,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
   public UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation);
     addContent((UsageViewImpl)usageView, presentation);
-    activateToolwindow();
+    showToolWindow(true);
     return usageView;
   }
 
@@ -90,7 +90,7 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
                                        UsageViewManager.UsageViewStateListener listener
                                        ) {
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
-    final SearchForUsagesRunnable runnable = (SearchForUsagesRunnable)new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
+    final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
 
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
@@ -118,9 +118,12 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     return "Searching for " + presentation.getUsagesString() + " in " + scopeText + "...";
   }
 
-  private void activateToolwindow() {
+  public void showToolWindow(boolean activateWindow) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
-    if (!toolWindow.isActive()) toolWindow.show(null);
+    toolWindow.show(null);
+    if (activateWindow && !toolWindow.isActive()) {
+      toolWindow.activate(null);
+    }
   }
 
   private void appendUsages(Usage[] foundUsages, UsageViewImpl usageView) {
@@ -167,15 +170,20 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
       myListener = listener;
     }
 
-    private void activateView() {
-      if (myUsageView[0] != null) return;
+    private void openView() {
+      if (myUsageView[0] != null) {
+        return;
+      }
 
-      myUsageView[0] = new UsageViewImpl(myPresentation, mySearchFor, mySearcherFactory, myProject);
+      final UsageViewImpl usageView = new UsageViewImpl(myPresentation, mySearchFor, mySearcherFactory, myProject);
+      myUsageView[0] = usageView;
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          addContent(myUsageView[0], myPresentation);
-          if (myListener!=null) myListener.usageViewCreated(myUsageView[0]);
-          activateToolwindow();
+          addContent(usageView, myPresentation);
+          if (myListener!=null) {
+            myListener.usageViewCreated(usageView);
+          }
+          showToolWindow(false);
         }
       });
     }
@@ -187,7 +195,9 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     }
 
     private void searchUsages() {
-      if (!myProcessPresentation.isShowNotFoundMessage()) activateView();
+      if (!myProcessPresentation.isShowNotFoundMessage()) {
+        openView();
+      }
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
@@ -195,9 +205,8 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
           if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage = usage;
           }
-          if (myUsageCount == 2 ||
-              (myProcessPresentation.isShowPanelIfOnlyOneUsage() && myUsageCount == 1)) {
-            activateView();
+          if (myUsageCount == 2 || (myProcessPresentation.isShowPanelIfOnlyOneUsage() && myUsageCount == 1)) {
+            openView();
             if (myFirstUsage != null) {
               myUsageView[0].appendUsageLater(myFirstUsage);
             }
@@ -207,13 +216,17 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
             myUsageView[0].appendUsageLater(usage);
           }
 
-          ProgressIndicator indicator = ProgressManager.getInstance()
-            .getProgressIndicator();
-          return indicator != null
-                 ? !indicator.isCanceled()
-                 : true;
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          return indicator != null ? !indicator.isCanceled() : true;
         }
       });
+      if (myUsageView[0] != null) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            showToolWindow(true);
+          }
+        });
+      }
     }
 
     private void endSearchForUsages() {
