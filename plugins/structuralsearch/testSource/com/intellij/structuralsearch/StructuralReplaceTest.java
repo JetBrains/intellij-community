@@ -96,11 +96,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
              "    checkResultByFile(path + (\"1_after5.\"+ext));";
 
     actualResult = replacer.testReplace(s10,s11,s12,options);
-    //assertEquals(
-    //  "string literal replacement 4",
-    //  expectedResult4,
-    //  actualResult
-    //);
+    assertEquals(
+      "string literal replacement 4",
+      expectedResult4,
+      actualResult
+    );
   }
 
   public void testReplace() {
@@ -150,7 +150,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                              "\n" +
                              "    //options.setLooseMatching(true);\n" +
                              "      // searching for several constructions";
-    
+
     assertEquals("Empty replacement",expectedResult2,actualResult);
 
     String str5 = "testMatcher.findMatches('In,'Pattern, options).size()";
@@ -1062,9 +1062,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s2 = "<a/>";
     String s3 = "<a><b/></a>";
 
-    String expectedResult = "    <a>\n" +
-                            "        <b/>\n" +
-                            "    </a>";
+    String expectedResult = "    <a><b/></a>";
     String actualResult = replacer.testReplace(s1,s2,s3,xmlOptions);
 
     assertEquals(
@@ -1087,16 +1085,15 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s6 = "<reference ref=\"$Value$\"/>";
 
     actualResult = replacer.testReplace(s4,s5,s6,xmlOptions);
-    expectedResult = "    <group id=\"EditorTabPopupMenu\">\n" +
-                     "        <reference ref=\"Compile\"/>\n" +
-                     "        <reference ref=\"RunContextPopupGroup\"/>\n" +
-                     "        <reference ref=\"ValidateXml\"/>\n" +
-                     "        <separator/>\n" +
-                     "        <reference ref=\"VersionControlsGroup\"/>\n" +
-                     "        <separator/>\n" +
-                     "        <reference ref=\"ExternalToolsGroup\"/>\n" +
+    expectedResult = "<group id=\"EditorTabPopupMenu\">\n" +
+                     "    <reference ref=\"Compile\"/>\n" +
+                     "    <reference ref=\"RunContextPopupGroup\"/>\n" +
+                     "    <reference ref=\"ValidateXml\"/>\n" +
+                     "    <separator/>\n" +
+                     "    <reference ref=\"VersionControlsGroup\"/>\n" +
+                     "    <separator/>\n" +
+                     "    <reference ref=\"ExternalToolsGroup\"/>\n" +
                      "    </group>";
-
     assertEquals(
       "Replace tag",
       expectedResult,
