@@ -42,6 +42,7 @@ SET CLASS_PATH=%IDEA_HOME%\lib\idea.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\openapi.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\jdom.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\log4j.jar
+SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\extensions.jar
 
 :: ---------------------------------------------------------------------
 :: You may specify additional class paths in IDEA_CLASS_PATH variable.

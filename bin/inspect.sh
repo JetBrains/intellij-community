@@ -37,6 +37,7 @@ oldcp=$CLASSPATH
 CLASSPATH=../lib/openapi.jar:../lib/idea.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
 CLASSPATH=$CLASSPATH:../lib/log4j.jar
+CLASSPATH=$CLASSPATH:../lib/extensions.jar
 
 # Append old classpath to current classpath
 if [ ! -z "$oldcp" ]; then
