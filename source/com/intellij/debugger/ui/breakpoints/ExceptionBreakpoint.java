@@ -78,7 +78,7 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debugProcess.isAttached() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
 

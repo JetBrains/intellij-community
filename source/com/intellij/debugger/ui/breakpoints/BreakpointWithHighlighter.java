@@ -222,7 +222,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
-    if (!ENABLED || !debugProcess.isAttached() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
 

@@ -22,12 +22,12 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     return "Any exception";
   }
 
-  public void createRequest(DebugProcessImpl debuggerProcess) {
+  public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debuggerProcess.isAttached() || !debuggerProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
-    super.processClassPrepare(debuggerProcess, null);
+    super.processClassPrepare(debugProcess, null);
   }
 
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {

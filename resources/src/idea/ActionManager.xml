@@ -688,6 +688,7 @@
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction" text="Show Frame"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction" text="Resume"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction" text="Freeze"/>
+      <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction" text="Mute Breakpoints" icon="/debugger/muteBreakpoints.png" description="Mute/unmute all breakpoints in a debug session."/>
       <action id="Debugger.ToggleStepThreadSuspendPolicy" class="com.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction" text="Suspend All Threads While Stepping" icon="/debugger/suspend_all.png" description="Toggles whether all threads or only current thread will be suspended while stepping."/>
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" text="Add to Watches"/>
     </group>

@@ -28,6 +28,7 @@ public interface DebuggerActions {
   String EDIT_WATCH = "Debugger.EditWatch";
   String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";
+  String MUTE_BREAKPOINTS = "Debugger.MuteBreakpoints";
   String TOGGLE_STEP_SUSPEND_POLICY = "Debugger.ToggleStepThreadSuspendPolicy";
   String REPRESENTATION_LIST = "Debugger.Representation";
 }

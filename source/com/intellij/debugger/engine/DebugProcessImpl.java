@@ -22,6 +22,7 @@ import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.DescriptorHistoryManager;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
@@ -131,6 +132,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private static int LOCAL_START_TIMEOUT = 15000;
 
   private final Semaphore myWaitFor = new Semaphore();
+  private boolean myBreakpointsMuted = false;
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -1597,6 +1599,39 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public SuspendContextCommandImpl createPopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl stackFrame) {
     return new PopFrameCommand(context, stackFrame);
+  }
+
+  public void setBreakpointsMuted(final boolean muted) {
+    if (isAttached()) {
+      getManagerThread().invokeLater(new DebuggerCommandImpl() {
+        protected void action() throws Exception {
+          // set the flag before enabling/disabling cause it affects if breakpoints will create requests
+          synchronized (DebugProcessImpl.this) {
+            if (myBreakpointsMuted == muted) {
+              return;
+            }
+            myBreakpointsMuted = muted;
+          }
+          final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+          if (muted) {
+            breakpointManager.disableBreakpoints(DebugProcessImpl.this);
+          }
+          else {
+            breakpointManager.enableBreakpoints(DebugProcessImpl.this);
+          }
+        }
+      });
+    }
+    else {
+      synchronized (this) {
+        myBreakpointsMuted = muted;
+      }
+    }
+  }
+
+
+  public synchronized boolean areBreakpointsMuted() {
+    return myBreakpointsMuted;
   }
 }
 

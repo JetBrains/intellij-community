@@ -284,6 +284,8 @@ public class DebuggerSessionTab {
     if (action != null) group.add(action);
     action = actionManager.getAction(DebuggerActions.VIEW_BREAKPOINTS);
     if (action != null) group.add(action);
+    action = actionManager.getAction(DebuggerActions.MUTE_BREAKPOINTS);
+    if (action != null) group.add(action);
     action = actionManager.getAction(DebuggerActions.TOGGLE_STEP_SUSPEND_POLICY);
     if (action != null) group.add(action);
 
