@@ -437,7 +437,7 @@ public class PsiClassImplUtil{
             final PsiClass containingClass = candidateMethod.getContainingClass();
             PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor);
-            if (isRaw) {
+            if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
               final PsiTypeParameterList typeParameterList = candidateMethod.getTypeParameterList();
               PsiTypeParameter[] methodTypeParameters = typeParameterList != null ? typeParameterList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
               for (int i = 0; i < methodTypeParameters.length; i++) {
@@ -507,7 +507,7 @@ public class PsiClassImplUtil{
       final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(), false) : aClass.getMethods();
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];
-        if (isRaw) {
+        if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
           final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
           PsiTypeParameter[] methodTypeParameters = typeParameterList != null
               ? typeParameterList.getTypeParameters()
@@ -694,13 +694,8 @@ public class PsiClassImplUtil{
         return new PsiClassType[]{baseClassType};
       }
       else {
-        PsiClass objectClass = psiClass.getManager().findClass("java.lang.Object", psiClass.getResolveScope());
-        if (objectClass != null) {
-          return new PsiClassType[]{new PsiImmediateClassType(objectClass, PsiSubstitutor.EMPTY), baseClassType};
-        }
-        else {
-          return new PsiClassType[]{baseClassType};
-        }
+        PsiClassType objectType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+        return new PsiClassType[]{objectType, baseClassType};
       }
     }
 
@@ -723,9 +718,9 @@ public class PsiClassImplUtil{
 
     if (noExtends) {
       PsiManager manager = psiClass.getManager();
-      PsiClass objectClass = manager.findClass("java.lang.Object", psiClass.getResolveScope());
-      if (objectClass != null && !manager.areElementsEquivalent(psiClass, objectClass)) {
-        result.add(0, manager.getElementFactory().createType(objectClass));
+      if (!"java.lang.Object".equals(psiClass.getQualifiedName())) {
+        PsiClassType objectType = manager.getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+        result.add(0, objectType);
       }
     }
 
