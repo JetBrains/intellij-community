@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * Time: 8:55:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TldTagDescriptor implements XmlElementDescriptor,Validator {
+public class TldTagDescriptor implements JspElementDescriptor,Validator {
   private XmlTag myTag;
   private String myName;
   private XmlAttributeDescriptor[] myAttributeDescriptors;
