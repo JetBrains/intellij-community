@@ -14,8 +14,8 @@ public class InnerClassConstructor extends InnerClassMethod {
     LOG.assertTrue(method.isConstructor());
   }
 
-  public void createMethod(PsiClass innerClass, PsiClass outerClass) throws IncorrectOperationException {
-    final PsiElementFactory factory = outerClass.getManager().getElementFactory();
+  public void createMethod(PsiClass innerClass) throws IncorrectOperationException {
+    final PsiElementFactory factory = innerClass.getManager().getElementFactory();
     final PsiMethod constructor = factory.createConstructor();
     constructor.getNameIdentifier().replace(innerClass.getNameIdentifier());
     final PsiParameterList parameterList = myMethod.getParameterList();

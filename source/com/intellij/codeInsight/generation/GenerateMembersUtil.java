@@ -290,6 +290,9 @@ public class GenerateMembersUtil {
         newMethod = factory.createMethod(method.getName(), substitutor.substitute(returnType));
       }
 
+      //Hack: the created method is public, while it should not iff original method is not
+      newMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, method.hasModifierProperty(PsiModifier.PUBLIC));
+
       PsiDocComment docComment = ((PsiMethod)method.getNavigationElement()).getDocComment();
       if (docComment != null) {
         newMethod.addAfter(docComment, null);

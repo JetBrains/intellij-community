@@ -9,10 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inheritanceToDelegation.usageInfo.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -34,6 +31,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 
 import java.util.*;
 
@@ -58,11 +56,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private Set<PsiClass> myBaseClassBases;
   private Set<PsiClass> myClassImplementedInterfaces;
   private PsiElementFactory myFactory;
-  private final PsiType myBaseClassType;
+  private final PsiClassType myBaseClassType;
   private final PsiManager myManager;
   private final boolean myIsInnerClassNeeded;
   private Set<PsiClass> myClassInheritors;
   private HashSet<PsiMethod> myAbstractDelegatedMethods;
+  private Map<PsiClass, PsiSubstitutor> mySuperClassesToSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
 
 
   public InheritanceToDelegationProcessor(Project project,
@@ -89,7 +88,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     );
     myBaseClassMembers = getAllBaseClassMembers();
     myBaseClassBases = getAllBases();
-    myBaseClassType = myFactory.createType(myBaseClass);
+    myBaseClassType = myFactory.createType(myBaseClass, getSuperSubstitutor (myBaseClass));
 
     myIsInnerClassNeeded = InheritanceToDelegationUtil.isInnerClassNeeded(myClass, myBaseClass);
 
@@ -103,10 +102,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     addAll(myDelegatedInterfaces, delegatedInterfaces);
     myDelegatedMethods = new LinkedHashSet<PsiMethod>();
     addAll(myDelegatedMethods, delegatedMethods);
-    myDelegatedMethodsVisibility = new com.intellij.util.containers.HashMap<PsiMethod, String>();
+    myDelegatedMethodsVisibility = new HashMap<PsiMethod, String>();
     for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
       PsiMethod method = iterator.next();
-      PsiMethod overridingMethod = myClass.findMethodBySignature(method, false);
+      MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
+      PsiMethod overridingMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
       if (overridingMethod != null) {
         myDelegatedMethodsVisibility.put(method,
                 VisibilityUtil.getVisibilityModifier(overridingMethod.getModifierList()));
@@ -114,6 +114,16 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     myOverridenMethods = getOverriddenMethods();
+  }
+
+  private PsiSubstitutor getSuperSubstitutor(final PsiClass superClass) {
+    PsiSubstitutor result = mySuperClassesToSubstitutors.get(superClass);
+    if (result == null) {
+      result = TypeConversionUtil.getSuperClassSubstitutor(superClass, myClass, PsiSubstitutor.EMPTY);
+      LOG.assertTrue(result != null);
+      mySuperClassesToSubstitutors.put(superClass, result);
+    }
+    return result;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -293,20 +303,27 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     );
     MyClassInheritorMemberReferencesVisitor classMemberVisitor = new MyClassInheritorMemberReferencesVisitor(inheritor, usages, instanceVisitor);
     inheritor.accept(classMemberVisitor);
+    PsiSubstitutor inheritorSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, inheritor, PsiSubstitutor.EMPTY);
 
     PsiMethod[] methods = inheritor.getMethods();
     for (int i = 0; i < methods.length; i++) {
       PsiMethod method = methods[i];
+      final PsiMethod baseMethod = findSuperMethodInBaseClass(method);
 
-      if (method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-      final PsiMethod baseMethod = myBaseClass.findMethodBySignature(method, true);
       if (baseMethod != null) {
-        final PsiMethod classMethod = myClass.findMethodBySignature(method, false);
         if (!baseMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           usages.add(new NoLongerOverridingSubClassMethodUsageInfo(method, baseMethod));
         } else {
-          if (classMethod != null && !classMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            usages.add(new NoLongerOverridingSubClassMethodUsageInfo(method, baseMethod));
+          final PsiMethod[] methodsByName = myClass.findMethodsByName(method.getName(), false);
+          for (int j = 0; j < methodsByName.length; j++) {
+            final PsiMethod classMethod = methodsByName[j];
+            final MethodSignature signature = classMethod.getSignature(inheritorSubstitutor);
+            if (signature.equals(method.getSignature(PsiSubstitutor.EMPTY))) {
+              if (!classMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                usages.add(new NoLongerOverridingSubClassMethodUsageInfo(method, baseMethod));
+                break;
+              }
+            }
           }
         }
       }
@@ -356,7 +373,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     List<InnerClassMethod> innerClassMethods = getInnerClassMethods();
     for (Iterator<InnerClassMethod> iterator = innerClassMethods.iterator(); iterator.hasNext();) {
       InnerClassMethod innerClassMethod = iterator.next();
-      innerClassMethod.createMethod(innerClass, myClass);
+      innerClassMethod.createMethod(innerClass);
     }
   }
 
@@ -464,7 +481,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       PsiMethod method = iterator.next();
 
       if (!myAbstractDelegatedMethods.contains(method)) {
-        PsiMethod methodToAdd = delegateMethod(myFieldName, method);
+        PsiMethod methodToAdd = delegateMethod(myFieldName, method, getSuperSubstitutor(method.getContainingClass()));
 
         String visibility = myDelegatedMethodsVisibility.get(method);
         if (visibility != null) {
@@ -476,58 +493,32 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private String getMethodHeaderText(PsiMethod method) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("public ");
-    PsiTypeElement typeElt = method.getReturnTypeElement();
-    if (typeElt != null) {
-      buf.append(typeElt.getText());
-      buf.append(' ');
-    }
-    buf.append(method.getName());
-    buf.append('(');
-    PsiParameter[] params = method.getParameterList().getParameters();
-    for (int i = 0; i < params.length; i++) {
-      PsiParameter param = params[i];
-      if (i > 0) buf.append(',');
-      buf.append(param.getTypeElement().getText());
-      buf.append(' ');
-      buf.append(param.getName());
-    }
-    buf.append(')');
-    buf.append(method.getThrowsList().getText());
-    return buf.toString();
-  }
+  private PsiMethod delegateMethod(String delegationTarget,
+                                   PsiMethod method,
+                                   PsiSubstitutor substitutor) throws IncorrectOperationException {
+    substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
+    PsiMethod methodToAdd = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
-  private PsiMethod delegateMethod(String delegationTarget, PsiMethod method) throws IncorrectOperationException {
-    PsiMethod methodToAdd = (PsiMethod) method.copy();
+    methodToAdd.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+
+    final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);
+    PsiCodeBlock newBody = myFactory.createCodeBlockFromText(delegationBody, method);
 
     PsiCodeBlock oldBody = methodToAdd.getBody();
-    StringBuffer buffer = new StringBuffer();
-    if (oldBody == null) {
-      buffer.append(getMethodHeaderText(method));
-    }
-
-    appendDelegationBody(buffer, methodToAdd, delegationTarget);
-
-
     if (oldBody != null) {
-      PsiCodeBlock newBody;
-      newBody = myFactory.createCodeBlockFromText(buffer.toString(), method);
       oldBody.replace(newBody);
-    } else {
-      methodToAdd = myFactory.createMethodFromText(buffer.toString(), method);
+    }
+    else {
+      methodToAdd.addBefore(newBody, null);
     }
 
-    if (methodToAdd.getDocComment() != null) {
-      methodToAdd.getDocComment().delete();  // todo: maintain JavaDoc
-    }
-    methodToAdd.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
-    methodToAdd = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(methodToAdd);
+    if (methodToAdd.getDocComment() != null) methodToAdd.getDocComment().delete();
+    methodToAdd = (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(methodToAdd);
     return methodToAdd;
   }
 
-  private void appendDelegationBody(StringBuffer buffer, PsiMethod methodToAdd, String delegationTarget) {
+  private String getDelegationBody(PsiMethod methodToAdd, String delegationTarget) {
+    final StringBuffer buffer = new StringBuffer();
     buffer.append("{\n");
 
     if (methodToAdd.getReturnType() != PsiType.VOID) {
@@ -547,6 +538,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       buffer.append(param.getName());
     }
     buffer.append(");\n}");
+    return buffer.toString();
   }
 
   private void addImplementingInterfaces() throws IncorrectOperationException {
@@ -583,10 +575,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiField field = createField(fieldVisibility, fieldInitializerNeeded, defaultClassFieldType());
 
     if (!myIsInnerClassNeeded) {
-      PsiType fieldType = myBaseClassType;
-      field.getTypeElement().replace(myFactory.createTypeElement(fieldType));
+      field.getTypeElement().replace(myFactory.createTypeElement(myBaseClassType));
       if (fieldInitializerNeeded) {
-        final PsiJavaCodeReferenceElement classReferenceElement = myFactory.createClassReferenceElement(myBaseClass);
+        final PsiJavaCodeReferenceElement classReferenceElement = myFactory.createReferenceElementByType(myBaseClassType);
         PsiNewExpression newExpression = (PsiNewExpression) field.getInitializer();
         newExpression.getClassReference().replace(classReferenceElement);
       }
@@ -744,7 +735,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           super(method);
         }
 
-        public void createMethod(PsiClass innerClass, PsiClass outerClass)
+        public void createMethod(PsiClass innerClass)
                 throws IncorrectOperationException {
           OverridenMethodClassMemberReferencesVisitor visitor = new OverridenMethodClassMemberReferencesVisitor();
           myMethod.accept(visitor);
@@ -773,18 +764,20 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           LOG.assertTrue(method.hasModifierProperty(PsiModifier.ABSTRACT));
         }
 
-        public void createMethod(PsiClass innerClass, PsiClass outerClass)
+        public void createMethod(PsiClass innerClass)
                 throws IncorrectOperationException {
-          PsiMethod method = delegateMethod(outerClass.getName() + ".this", myMethod);
+          PsiSubstitutor substitutor = getSuperSubstitutor(myMethod.getContainingClass());
+          PsiMethod method = delegateMethod(myClass.getName() + ".this", myMethod, substitutor);
           final PsiClass containingClass = myMethod.getContainingClass();
           if (myBaseClass.isInterface() || containingClass.isInterface()) {
             method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
           }
           innerClass.add(method);
-          PsiMethod outerMethod = outerClass.findMethodBySignature(myMethod, false);
+          final MethodSignature signature = myMethod.getSignature(substitutor);
+          PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
           if (outerMethod == null) {
-            final String visibility = checkOuterClassAbstractMethod(myMethod);
-            PsiMethod newOuterMethod = (PsiMethod) outerClass.add(myMethod);
+            final String visibility = checkOuterClassAbstractMethod(signature);
+            PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
             newOuterMethod.getModifierList().setModifierProperty(visibility, true);
             if (newOuterMethod.getDocComment() != null) {
               newOuterMethod.getDocComment().delete();
@@ -798,7 +791,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       for (int i = 0; i < methods.length; i++) {
         PsiMethod method = methods[i];
         if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          PsiMethod classMethod = myClass.findMethodBySignature(method, true);
+          final MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
+          PsiMethod classMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, true);
           if (classMethod == null || classMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
             result.add(new InnerClassAbstractMethod(method));
           }
@@ -832,12 +826,13 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
    * @param methodSignature
    * @return Visibility
    */
-  private String checkOuterClassAbstractMethod(PsiMethod methodSignature) {
+  private String checkOuterClassAbstractMethod(MethodSignature methodSignature) {
     String visibility = PsiModifier.PROTECTED;
     for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
       PsiMethod method = iterator.next();
+      MethodSignature otherSignature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
 
-      if (MethodSignatureUtil.areSignaturesEqual(method, methodSignature)) {
+      if (MethodSignatureUtil.areSignaturesEqual(otherSignature, methodSignature)) {
         visibility = VisibilityUtil.getHighestVisibility(visibility,
                 VisibilityUtil.getVisibilityModifier(method.getModifierList()));
         myAbstractDelegatedMethods.add(method);
@@ -850,21 +845,26 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     LinkedHashSet<PsiMethod> result = new LinkedHashSet<PsiMethod>();
 
     PsiMethod[] methods = myClass.getMethods();
-
     for (int i = 0; i < methods.length; i++) {
       PsiMethod method = methods[i];
+      if (findSuperMethodInBaseClass(method) != null) result.add(method);
+    }
+    return result;
+  }
 
-      if (method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
-      PsiMethod baseMethod = myBaseClass.findMethodBySignature(method, true);
-      if (baseMethod != null) {
-        PsiClass containingClass = baseMethod.getContainingClass();
+  private PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    for (int j = 0; j < superMethods.length; j++) {
+      PsiMethod superMethod = superMethods[j];
+      PsiClass containingClass = superMethod.getContainingClass();
+      if (InheritanceUtil.isInheritorOrSelf(myBaseClass, containingClass, true)) {
         String qName = containingClass.getQualifiedName();
         if (qName == null || !"java.lang.Object".equals(qName)) {
-          result.add(method);
+          return superMethod;
         }
       }
     }
-    return result;
+    return null;
   }
 
 
@@ -906,7 +906,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     final PsiMethod method = (PsiMethod) classMember;
     for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
       PsiMethod delegatedMethod = iterator.next();
-      if (MethodSignatureUtil.areSignaturesEqual(method, delegatedMethod)) return true;
+      //methods reside in base class, so no substitutor needed
+      if (MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
+                                                 delegatedMethod.getSignature(PsiSubstitutor.EMPTY))) return true;
     }
     return false;
   }
@@ -1049,7 +1051,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         final PsiMethod method = (PsiMethod) classMember;
 
         if (method.getContainingClass().equals(myClass)) {
-          final PsiMethod baseMethod = myBaseClass.findMethodBySignature(method, true);
+          final PsiMethod baseMethod = findSuperMethodInBaseClass(method);
           if (baseMethod != null) {
             myPsiActions.add(new QualifyName(classMemberReference, baseMethod.getName()));
           } else if (classMemberReference.getQualifierExpression() instanceof PsiThisExpression) {

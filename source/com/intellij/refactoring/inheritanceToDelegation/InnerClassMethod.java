@@ -10,6 +10,6 @@ abstract class InnerClassMethod {
     myMethod = method;
   }
 
-  public abstract void createMethod(PsiClass innerClass, PsiClass outerClass)
+  public abstract void createMethod(PsiClass innerClass)
           throws IncorrectOperationException;
 }

@@ -27,6 +27,10 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
+  public void testSimpleGenerics() throws Exception {
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+  }
+
   public void testSuperCalls() throws Exception {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
