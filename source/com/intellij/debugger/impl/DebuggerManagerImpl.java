@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -324,23 +323,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (debugPort == null || "".equals(debugPort)) {
       if(useSockets) {
         try {
-          ServerSocket serverSocket = new ServerSocket(0);
-          address  = Integer.toString(serverSocket.getLocalPort());
-          //workaround for linux : calling close() immediately after opening socket
-          //may result that socket is not closed
-          synchronized(parameters) {
-            try {
-              parameters.wait(1);
-            }
-            catch (InterruptedException e) {
-              LOG.error(e);
-            }
-          }
-          serverSocket.close();
+          final int freePort = DebuggerUtils.getInstance().findAvailablePort();
+          address = Integer.toString(freePort);
         }
-        catch (IOException e) {
+        catch (ExecutionException e) {
           if (checkValidity) {
-            throw new ExecutionException(DebugProcessImpl.processError(e));
+            throw e;
           }
         }
       }
@@ -363,7 +351,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if(serverMode && useSockets) {
       try {
         listenTo = InetAddress.getLocalHost().getHostName() + ":" + address;
-      } catch (UnknownHostException e) {
+      }
+      catch (UnknownHostException e) {
         listenTo = "localhost:" + address;
       }
     }

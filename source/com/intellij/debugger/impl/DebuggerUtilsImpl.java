@@ -24,10 +24,13 @@ import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.execution.ExecutionException;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 
 import java.util.HashMap;
+import java.net.ServerSocket;
+import java.io.IOException;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -111,5 +114,28 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   public CompletionEditor createEditor(Project project, PsiElement context, String recentsId) {
     return new DebuggerExpressionComboBox(project, context, recentsId);
+  }
+
+  public final int findAvailablePort() throws ExecutionException {
+    int port;
+    try {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      port = serverSocket.getLocalPort();
+      //workaround for linux : calling close() immediately after opening socket
+      //may result that socket is not closed
+      synchronized(serverSocket) {
+        try {
+          serverSocket.wait(1);
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+      }
+      serverSocket.close();
+    }
+    catch (IOException e) {
+      throw new ExecutionException(DebugProcessImpl.processError(e));
+    }
+    return port;
   }
 }

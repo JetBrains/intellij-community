@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.execution.ExecutionException;
 import com.sun.jdi.*;
 import org.jdom.Element;
 
@@ -301,6 +302,8 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
       }
     }
   }
+
+  public abstract int findAvailablePort() throws ExecutionException;
 
   protected static class ArrayClass {
     public String className;
