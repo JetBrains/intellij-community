@@ -31,6 +31,11 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private static Icon myErrorMessageIcon = IconLoader.getIcon("/debugger/db_error.png");
   private static Icon myInformationMessageIcon = IconLoader.getIcon("/compiler/information.png");
+  private static final SimpleTextAttributes DEFAULT_ATTR = new SimpleTextAttributes(Font.PLAIN, null);
+  private static final SimpleTextAttributes GRAY_ATTR = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
+  private static final SimpleTextAttributes HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myHighlightColor);
+  private static final SimpleTextAttributes EVALUATING_HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myEvaluatingHighlightColor);
+  private static final SimpleTextAttributes EXCEPTION_HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myExceptionHighlightColor);
 
   public DebuggerTreeRenderer() {
   }
@@ -116,24 +121,22 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
 
     if(text.equals(NodeDescriptorImpl.EVALUATING_MESSAGE)) {
-      descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, new SimpleTextAttributes(Font.PLAIN, myEvaluatingHighlightColor));
+      descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, EVALUATING_HIGHLIGHT_ATTR);
       return descriptorText;
     }
 
     String[] strings = breakString(text, nodeName);
 
-    SimpleTextAttributes dflt = new SimpleTextAttributes(Font.PLAIN, null);
-
     if (strings[0] != null) {
       if (descriptor instanceof MessageDescriptor && ((MessageDescriptor)descriptor).getKind() == MessageDescriptor.SPECIAL) {
-        descriptorText.append(strings[0], new SimpleTextAttributes(Font.PLAIN, Color.lightGray));
+        descriptorText.append(strings[0], GRAY_ATTR);
       }
       else {
-        descriptorText.append(strings[0], dflt);
+        descriptorText.append(strings[0], DEFAULT_ATTR);
       }
     }
     if (strings[1] != null) {
-      descriptorText.append(strings[1], new SimpleTextAttributes(Font.PLAIN, myHighlightColor));
+      descriptorText.append(strings[1], HIGHLIGHT_ATTR);
     }
     if (strings[2] != null) {
       if (descriptor instanceof ValueDescriptorImpl) {
@@ -150,14 +153,14 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
         strings = breakString(strings[2], valueLabel);
         if (strings[0] != null) {
-          descriptorText.append(strings[0], dflt);
+          descriptorText.append(strings[0], DEFAULT_ATTR);
         }
         if (appendValue && strings[1] != null) {
           if(valueLabel != null && StringUtil.startsWithChar(valueLabel, '{') && valueLabel.indexOf('}') > 0 && !StringUtil.endsWithChar(valueLabel, '}')) {
             int idx = valueLabel.indexOf('}');
             String objectId = valueLabel.substring(0, idx + 1);
             valueLabel = valueLabel.substring(idx + 1);
-            descriptorText.append(objectId, new SimpleTextAttributes(Font.PLAIN, myEvaluatingHighlightColor));
+            descriptorText.append(objectId, EVALUATING_HIGHLIGHT_ATTR);
           }
 
           valueLabel =  DebuggerUtilsEx.truncateString(valueLabel);
@@ -166,26 +169,26 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             String errorMessage = descriptor.getEvaluateException().getMessage();
 
             if(valueLabel.endsWith(errorMessage)) {
-              descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), dflt);
-              descriptorText.append(errorMessage, new SimpleTextAttributes(Font.PLAIN, myExceptionHighlightColor));
+              descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTR);
+              descriptorText.append(errorMessage, EXCEPTION_HIGHLIGHT_ATTR);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : dflt);
-              descriptorText.append(errorMessage, new SimpleTextAttributes(Font.PLAIN, myExceptionHighlightColor));
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : DEFAULT_ATTR);
+              descriptorText.append(errorMessage, EXCEPTION_HIGHLIGHT_ATTR);
             }
           }
           else {
             if(valueLabel.equals(NodeDescriptorImpl.EVALUATING_MESSAGE)) {
-              descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, new SimpleTextAttributes(Font.PLAIN, myEvaluatingHighlightColor));
+              descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, EVALUATING_HIGHLIGHT_ATTR);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : dflt);
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : DEFAULT_ATTR);
             }
           }
         }
       }
       else {
-        descriptorText.append(strings[2], dflt);
+        descriptorText.append(strings[2], DEFAULT_ATTR);
       }
     }
 
