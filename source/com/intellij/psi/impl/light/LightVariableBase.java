@@ -31,6 +31,10 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myNameIdentifier;
   }
 
+  public boolean isValid() {
+    return myNameIdentifier == null || myNameIdentifier.isValid();
+  }
+
   public String getName() {
     return getNameIdentifier().getText();
   }
