@@ -9,7 +9,10 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.ReferenceRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -43,10 +46,7 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
   public boolean CHILDREN_PHYSICAL            = true;
 
   public ClassRenderer() {
-  }
-
-  public String getUniqueId() {
-    return UNIQUE_ID;
+    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
   }
 
   public ClassRenderer clone() {
@@ -178,19 +178,16 @@ public class ClassRenderer extends ReferenceRenderer implements NodeRenderer{
     return false;
   }
 
-  public boolean isExpandable(Value value,
-                              EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return valueExpandable(value);
   }
 
   public boolean isApplicable(Type type) {
-    if(!(type instanceof ReferenceType) || type instanceof ArrayType) return false;
+    if(!(type instanceof ReferenceType) || type instanceof ArrayType) {
+      return false;
+    }
     return super.isApplicable(type);
-  }
-
-  public RendererProvider getRendererProvider() {
-    return DefaultRendererProvider.getInstance();
   }
 
   public String getName() {

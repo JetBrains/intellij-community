@@ -5,6 +5,10 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.sun.jdi.Type;
 
 public interface Renderer extends Cloneable, JDOMExternalizable {
+  boolean isEnabled();
+
+  void setEnabled(boolean enabled);
+
   RendererProvider getRendererProvider();
 
   String getUniqueId();

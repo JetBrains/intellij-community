@@ -3,7 +3,6 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.render.ArrayRenderer;
 import com.intellij.debugger.ui.impl.watch.render.ClassRenderer;
-import com.intellij.debugger.ui.impl.watch.render.DefaultRendererProvider;
 import com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,18 +25,19 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettingsImpl");
   private static final String AUTO_NODE = "node";
 
-  private String VERSION = "1.0";
+  private static final int VERSION = 2;
 
   private EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-
   private List<AutoRendererNode> myRepresentationNodes = new ArrayList<AutoRendererNode>();
   private PrimitiveRenderer myPrimitiveRenderer = new PrimitiveRenderer();
-  private ArrayRenderer     myArrayRenderer     = new ArrayRenderer    () {
+
+  private ArrayRenderer myArrayRenderer = new ArrayRenderer() {
     public void setClassName(String className) {
       LOG.assertTrue(this != myArrayRenderer, "Cannot change default renderer");
     }
   };
-  private ClassRenderer     myClassRenderer     = new ClassRenderer    () {
+
+  private ClassRenderer myClassRenderer = new ClassRenderer() {
     public void setClassName(String name) {
       LOG.assertTrue(this != myClassRenderer, "Cannot change default renderer");
     }
@@ -102,14 +102,23 @@ public class NodeRendererSettingsImpl extends NodeRendererSettings implements Cl
       autoRendererNode.writeExternal(nodeElement);
       element.addContent(nodeElement);
     }
-    element.setAttribute("VERSION", VERSION);
+    element.setAttribute("VERSION", String.valueOf(VERSION));
   }
 
   public void readExternal(final Element root) {
-    String version = root.getAttributeValue("VERSION");
-    if(version == null || version.compareTo(VERSION) < 0) return;
-
-    VERSION = version;
+    String versionAttrib = root.getAttributeValue("VERSION");
+    int configurationVersion = -1;
+    if (versionAttrib != null) {
+      try {
+        configurationVersion = Integer.parseInt(versionAttrib);
+      }
+      catch (NumberFormatException e) {
+        configurationVersion = -1;
+      }
+    }
+    if(configurationVersion != VERSION) {
+      return;
+    }
 
     List<Element> children = root.getChildren(AUTO_NODE);
 

@@ -23,42 +23,30 @@ import org.jdom.Element;
  * Date: Sep 18, 2003
  * Time: 3:07:27 PM
  */
-public class PrimitiveRenderer implements NodeRenderer, Cloneable {
+public class PrimitiveRenderer extends NodeRendererImpl {
   public static final String UNIQUE_ID = "PrimitiveRenderer";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.PrimitiveRenderer");
 
   public PrimitiveRenderer() {
+    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
+    setName("Default");
   }
 
-  public RendererProvider getRendererProvider() {
-    return DefaultRendererProvider.getInstance();
-  }
-
-  public String getUniqueId() {
-    return UNIQUE_ID;
-  }
-
-  public String getName() {
-    return "Default";
-  }
-
+  /*
   public void setName(String text) {
     LOG.assertTrue(false, "Cannot set name for primitive renderer");
   }
+  */
 
   public PrimitiveRenderer clone(){
-    try {
-      return (PrimitiveRenderer)super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.assertTrue(false);
-      return null;
-    }
+    return (PrimitiveRenderer)super.clone();
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null) return true;
+    if(type == null) {
+      return true;
+    }
     return type instanceof PrimitiveType || type instanceof VoidType;
   }
 
@@ -100,14 +88,6 @@ public class PrimitiveRenderer implements NodeRenderer, Cloneable {
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public ChildrenRenderer getChildrenRenderer() {

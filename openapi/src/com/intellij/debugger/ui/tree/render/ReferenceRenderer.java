@@ -9,15 +9,16 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jdom.Element;
 
-public abstract class ReferenceRenderer implements Renderer {
+public abstract class ReferenceRenderer extends RendererImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ReferenceRenderer");
-  private String myClassName;
+  private String myClassName; // todo: remove from here, use support from RendererImpl
 
-  protected ReferenceRenderer() {
-    this("java.lang.Object");
+  protected ReferenceRenderer(final RendererProvider rendererProvider, final String uniqueId) {
+    this("java.lang.Object", rendererProvider, uniqueId);
   }
 
-  protected ReferenceRenderer(String className) {
+  protected ReferenceRenderer(String className, final RendererProvider rendererProvider, final String uniqueId) {
+    super(rendererProvider, uniqueId);
     LOG.assertTrue(className != null);
     myClassName = className;
   }
@@ -35,25 +36,17 @@ public abstract class ReferenceRenderer implements Renderer {
       return false;
     }
 
-    return DebuggerUtils.instanceOf(type, getClassName());
-  }
-
-  public Renderer clone() {
-    try {
-      return (Renderer)super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
+    return DebuggerUtils.instanceOf(type, myClassName);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "QUALIFIED_NAME", getClassName());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    String className = JDOMExternalizerUtil.readField(element, "QUALIFIED_NAME");
+    super.readExternal(element);
+    final String className = JDOMExternalizerUtil.readField(element, "QUALIFIED_NAME");
     if(className != null) {
       setClassName(className);
     }

@@ -1,18 +1,15 @@
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.DebuggerContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -24,51 +21,24 @@ import java.util.List;
  * Use is subject to license terms.
  */
 
-public class CompoundNodeRenderer implements NodeRenderer{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.CompoundNodeRenderer");
-
+public class CompoundNodeRenderer extends NodeRendererImpl{
   public static final String UNIQUE_ID = "CompoundNodeRenderer";
 
-  private String myName;
-  private RendererProvider myRendererProvider;
-  
   protected ValueLabelRenderer myLabelRenderer;
   protected ChildrenRenderer myChildrenRenderer;
 
   public CompoundNodeRenderer(RendererProvider provider, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
-    myRendererProvider = provider;
-    myName = name;
+    super(provider, UNIQUE_ID);
+    setName(name);
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
   }
 
-  public String getUniqueId() {
-    return UNIQUE_ID;
-  }
-
-  public RendererProvider getRendererProvider() {
-    return myRendererProvider;
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  public void setName(String text) {
-    myName = text;
-  }
-
   public NodeRenderer clone() {
-    try {
-      CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
-      renderer.myLabelRenderer    = myLabelRenderer    != null ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
-      renderer.myChildrenRenderer = myChildrenRenderer != null ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
-      return renderer;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
+    CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
+    renderer.myLabelRenderer    = myLabelRenderer    != null ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
+    renderer.myChildrenRenderer = myChildrenRenderer != null ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
+    return renderer;
   }
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
@@ -108,18 +78,24 @@ public class CompoundNodeRenderer implements NodeRenderer{
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myName = element.getAttributeValue("NAME");
-    if(myName == null) {
-      myName = "<unknown>";
+    super.readExternal(element);
+    if(getName() == null) {
+      setName("<unknown>");
     }
-    List<Element> children = element.getChildren();
-    myLabelRenderer    = (ValueLabelRenderer) NodeRendererExternalizer.readRenderer(children.get(0));
+    List<Element> children = element.getChildren(NodeRendererExternalizer.RENDERER_TAG);
+    myLabelRenderer = (ValueLabelRenderer) NodeRendererExternalizer.readRenderer(children.get(0));
     myChildrenRenderer = (ChildrenRenderer)   NodeRendererExternalizer.readRenderer(children.get(1));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("NAME", myName);
-    element.addContent(NodeRendererExternalizer.writeRenderer(myLabelRenderer));
-    element.addContent(NodeRendererExternalizer.writeRenderer(myChildrenRenderer));
+    super.writeExternal(element);
+    final Element labelRendererElement = NodeRendererExternalizer.writeRenderer(myLabelRenderer);
+    if (labelRendererElement != null) {
+      element.addContent(labelRendererElement);
+    }
+    final Element childrenRendererElement = NodeRendererExternalizer.writeRenderer(myChildrenRenderer);
+    if (childrenRendererElement != null) {
+      element.addContent(childrenRendererElement);
+    }
   }
 }

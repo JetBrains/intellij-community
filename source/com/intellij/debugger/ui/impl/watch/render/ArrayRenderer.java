@@ -7,10 +7,16 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.ReferenceRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,10 +51,7 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
   private final static String MORE_ELEMENTS = "...";
 
   public ArrayRenderer() {
-  }
-
-  public RendererProvider getRendererProvider() {
-    return DefaultRendererProvider.getInstance();
+    super(DefaultRendererProvider.getInstance(), UNIQUE_ID);
   }
 
   public String getName() {
@@ -57,10 +60,6 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
 
   public void setName(String text) {
     LOG.assertTrue(false);
-  }
-
-  public String getUniqueId() {
-    return UNIQUE_ID;
   }
 
   public ArrayRenderer clone() {
