@@ -10,6 +10,8 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 
 public class DfaValueFactory {
@@ -69,6 +71,12 @@ public class DfaValueFactory {
     }
     else if (psiExpression instanceof PsiNewExpression) {
       result = DfaNewValue.Factory.getInstance().create(psiExpression.getType());
+    }
+    else {
+      final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
+      if (value != null) {
+        result = DfaConstValue.Factory.getInstance().createFromValue(value);
+      }
     }
 
     return result;

@@ -740,7 +740,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
   public void visitExpression(PsiExpression expression) {
     startElement(expression);
-    pushUnknown();
+    DfaValue dfaValue = DfaValueFactory.create(expression);
+    addInstruction(new PushInstruction(dfaValue == null ? DfaUnknownValue.getInstance() : dfaValue));
     finishElement(expression);
   }
 
@@ -782,28 +783,34 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(expression);
 
     try {
-      String op = expression.getOperationSign().getText();
-      PsiExpression lExpr = expression.getLOperand();
-      PsiExpression rExpr = expression.getROperand();
-
-      if (lExpr == null || rExpr == null) {
-        pushUnknown();
-        return;
-      }
-
-      if ("&&".equals(op)) {
-        generateAndExpression(lExpr, rExpr);
-      }
-      else if ("||".equals(op)) {
-        generateOrExpression(lExpr, rExpr);
-      }
-      else if ("^".equals(op) && expression.getType() == PsiType.BOOLEAN) {
-        generateXorExpression(expression, lExpr, rExpr);
+      DfaValue dfaValue = DfaValueFactory.create(expression);
+      if (dfaValue != null) {
+        addInstruction(new PushInstruction(dfaValue));
       }
       else {
-        lExpr.accept(this);
-        rExpr.accept(this);
-        addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null));
+        String op = expression.getOperationSign().getText();
+        PsiExpression lExpr = expression.getLOperand();
+        PsiExpression rExpr = expression.getROperand();
+
+        if (lExpr == null || rExpr == null) {
+          pushUnknown();
+          return;
+        }
+
+        if ("&&".equals(op)) {
+          generateAndExpression(lExpr, rExpr);
+        }
+        else if ("||".equals(op)) {
+          generateOrExpression(lExpr, rExpr);
+        }
+        else if ("^".equals(op) && expression.getType() == PsiType.BOOLEAN) {
+          generateXorExpression(expression, lExpr, rExpr);
+        }
+        else {
+          lExpr.accept(this);
+          rExpr.accept(this);
+          addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null));
+        }
       }
     }
     finally {
@@ -855,21 +862,27 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     startElement(expression);
 
-    PsiExpression condition = expression.getCondition();
-
-    PsiExpression thenExpression = expression.getThenExpression();
-    PsiExpression elseExpression = expression.getElseExpression();
-
-    if (condition != null && thenExpression != null && elseExpression != null) {
-      condition.accept(this);
-      addInstruction(new ConditionalGotoInstruction(getStartOffset(elseExpression), true, condition));
-      thenExpression.accept(this);
-
-      addInstruction(new GotoInstruction(getEndOffset(expression)));
-      elseExpression.accept(this);
+    DfaValue dfaValue = DfaValueFactory.create(expression);
+    if (dfaValue != null) {
+      addInstruction(new PushInstruction(dfaValue));
     }
     else {
-      pushUnknown();
+      PsiExpression condition = expression.getCondition();
+
+      PsiExpression thenExpression = expression.getThenExpression();
+      PsiExpression elseExpression = expression.getElseExpression();
+
+      if (condition != null && thenExpression != null && elseExpression != null) {
+        condition.accept(this);
+        addInstruction(new ConditionalGotoInstruction(getStartOffset(elseExpression), true, condition));
+        thenExpression.accept(this);
+
+        addInstruction(new GotoInstruction(getEndOffset(expression)));
+        elseExpression.accept(this);
+      }
+      else {
+        pushUnknown();
+      }
     }
 
     finishElement(expression);
@@ -970,13 +983,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       processMethodParameters(expression);
 
       addInstruction(new MethodCallInstruction(expression));
-      PsiExpression expr = methodExpression;
 
       if (myCatchStack.size() > 0) {
         addMethodThrows((PsiMethod)methodExpression.getReference().resolve());
       }
 
-      pushTypeOrUnknown(expr);
+      pushTypeOrUnknown(methodExpression);
     }
     finally {
       finishElement(expression);
@@ -1057,28 +1069,34 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitPrefixExpression(PsiPrefixExpression expression) {
     startElement(expression);
 
-    PsiExpression operand = expression.getOperand();
+    DfaValue dfaValue = DfaValueFactory.create(expression);
+    if (dfaValue != null) {
+      addInstruction(new PushInstruction(dfaValue));
+    }
+    else {
+      PsiExpression operand = expression.getOperand();
 
-    if (operand != null) {
-      operand.accept(this);
-      if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
-        addInstruction(new NotInstruction());
+      if (operand == null) {
+        pushUnknown();
       }
       else {
-        addInstruction(new PopInstruction());
-        pushUnknown();
+        operand.accept(this);
+        if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+          addInstruction(new NotInstruction());
+        }
+        else {
+          addInstruction(new PopInstruction());
+          pushUnknown();
 
-        if (operand instanceof PsiReferenceExpression) {
-          PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)operand);
-          if (psiVariable != null) {
-            DfaVariableValue dfaVariable = DfaVariableValue.Factory.getInstance().create(psiVariable, false);
-            addInstruction(new FlushVariableInstruction(dfaVariable));
+          if (operand instanceof PsiReferenceExpression) {
+            PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)operand);
+            if (psiVariable != null) {
+              DfaVariableValue dfaVariable = DfaVariableValue.Factory.getInstance().create(psiVariable, false);
+              addInstruction(new FlushVariableInstruction(dfaVariable));
+            }
           }
         }
       }
-    }
-    else {
-      pushUnknown();
     }
 
     finishElement(expression);

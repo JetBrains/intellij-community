@@ -103,15 +103,14 @@ public class DataFlowTest extends InspectionTestCase {
   public void testscrIDEA1() throws Exception {
     doTest();
   }
-  /*
   public void testSCR18186() throws Exception {
     doTest();
   }
-  */
-/*
-  public void testSCR15406() throws Exception {
+  //public void testSCR15406() throws Exception {
+  //  doTest();
+  //}
+  public void testconstantExpr() throws Exception {
     doTest();
   }
-*/
 
 }

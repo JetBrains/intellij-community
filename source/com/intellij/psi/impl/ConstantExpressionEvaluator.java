@@ -9,11 +9,11 @@ import gnu.trove.THashSet;
 import java.util.Set;
 
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
-  protected Set myVisitedVars;
+  protected Set<PsiVariable> myVisitedVars;
   protected boolean myThrowExceptionOnOverflow;
   protected Object myValue;
 
-  protected ConstantExpressionEvaluator(Set visitedVars, boolean throwExceptionOnOverflow) {
+  protected ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
   }
@@ -486,8 +486,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         return;
       }
 
-      Set oldVisitedVars = myVisitedVars;
-      if (myVisitedVars == null) { myVisitedVars = new THashSet(); }
+      Set<PsiVariable> oldVisitedVars = myVisitedVars;
+      if (myVisitedVars == null) { myVisitedVars = new THashSet<PsiVariable>(); }
 
       myVisitedVars.add(variable);
       try {
@@ -545,7 +545,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     if (result instanceof Double && ((Double) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  public static Object computeConstantExpression(PsiExpression expression, Set visitedVars, boolean throwExceptionOnOverflow) {
+  public static Object computeConstantExpression(PsiExpression expression, Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow);
     return _compute(evaluator, expression);
   }

@@ -26,7 +26,7 @@ import java.util.*;
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
 
-  public static final String DISPLAY_NAME = "Constant conditions & exceptions";
+  private static final String DISPLAY_NAME = "Constant conditions & exceptions";
   public static final String SHORT_NAME = "ConstantConditions";
 
   public DataFlowInspection() {
@@ -51,7 +51,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
-  private ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
+  private static ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
     if (body == null) return null;
     DataFlowRunner dfaRunner = new DataFlowRunner();
     if (dfaRunner.analyzeMethod(body)) {
@@ -85,7 +85,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private ProblemDescriptor[] createDescription(DataFlowRunner runner, InspectionManager manager) {
+  private static ProblemDescriptor[] createDescription(DataFlowRunner runner, InspectionManager manager) {
     HashSet[] constConditions = runner.getConstConditionalExpressions();
     HashSet trueSet = constConditions[0];
     HashSet falseSet = constConditions[1];
@@ -180,7 +180,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
           else {
-            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(true);
+            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
             descriptions.add(manager.createProblemDescriptor(psiAnchor,
                                                              "Condition <code>#ref</code> #loc is always true</code>",
                                                              localQuickFix,
@@ -196,7 +196,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
         else if (psiAnchor != null) {
           if (!reportedAnchors.contains(psiAnchor)) {
-            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(trueSet.contains(instruction));
+            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
             descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
                                                                         (trueSet.contains(instruction) ? "true" : "false") +
                                                                         "</code>.", localQuickFix,
@@ -210,18 +210,25 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
   }
 
-  private static LocalQuickFix createSimplifyBooleanExpressionFix(final boolean value) {
+  private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+    if (!(element instanceof PsiExpression)) return null;
+    final PsiExpression expression = (PsiExpression)element;
+    while (element.getParent() instanceof PsiExpression) {
+      element = element.getParent();
+    }
+    final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, Boolean.valueOf(value));
+    // simplify intention already active
+    if (SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) != null) return null;
     return new LocalQuickFix() {
       public String getName() {
-        return new SimplifyBooleanExpressionFix(null,false).getText();
+        return fix.getText();
       }
 
       public void applyFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
         try {
-          final SimplifyBooleanExpressionFix action = new SimplifyBooleanExpressionFix((PsiExpression)psiElement, value);
           LOG.assertTrue(psiElement.isValid());
-          action.invoke(project, null, psiElement.getContainingFile());
+          fix.invoke(project, null, psiElement.getContainingFile());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

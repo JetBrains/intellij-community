@@ -54,7 +54,7 @@ public class DfaConstValue extends DfaValue {
       return createFromValue(value);
     }
 
-    private DfaConstValue createFromValue(Object value) {
+    public DfaConstValue createFromValue(Object value) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
