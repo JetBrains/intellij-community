@@ -1952,10 +1952,10 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, true));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, false));
         if (parent instanceof PsiNewExpression) {
-          TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateClassFromNewAction((PsiNewExpression)parent));
+          QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));
+        } else if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
+          QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         }
-        QuickFixAction.registerQuickFixAction(HighlightInfo.createHighlightInfo(type, refName, description), new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         return info;
       }
 
