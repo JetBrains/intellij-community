@@ -57,8 +57,8 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.EditorHighlighter</interface-class>
-      <implementation-class>com.intellij.ide.impl.EditorHighlighterImpl</implementation-class>
+      <interface-class>com.intellij.ide.SelectInEditorManager</interface-class>
+      <implementation-class>com.intellij.ide.impl.SelectInEditorManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.codeEditor.printing.ExportToHTMLSettings</interface-class>

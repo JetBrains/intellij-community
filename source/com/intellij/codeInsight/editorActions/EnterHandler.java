@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -231,7 +231,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       return false;
     }
 
-    Highlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 2);
     if (iterator.getTokenType() != JspTokenType.JSP_SCRIPTLET_START
         && iterator.getTokenType() != JspTokenType.JSP_DECLARATION_START) {
@@ -284,7 +284,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '{') return false;
 
-    Highlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
 
@@ -324,7 +324,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '>') return false;
 
-    Highlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     if (iterator.getTokenType() != first) return false;
     iterator.advance();

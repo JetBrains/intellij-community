@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -46,7 +46,7 @@ public class TextPainter implements Printable {
   private Font myItalicFont;
   private Font myBoldItalicFont;
   private Font myHeaderFont;
-  private Highlighter myHighlighter;
+  private EditorHighlighter myHighlighter;
   private PrintSettings myPrintSettings;
   private String myFileName;
   private int myPageIndex;
@@ -57,7 +57,7 @@ public class TextPainter implements Printable {
   private FileType myFileType;
   private ProgressIndicator myProgress;
 
-  public TextPainter(DocumentEx editorDocument, Highlighter highlighter, String fileName, final PsiFile psiFile,
+  public TextPainter(DocumentEx editorDocument, EditorHighlighter highlighter, String fileName, final PsiFile psiFile,
                      final Project project) {
     myCodeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     myDocument = editorDocument;

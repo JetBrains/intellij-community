@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author MYakovlev
  * Date: Jul 1, 2002
  */
-public abstract class EditorHighlighter{
-  public static EditorHighlighter getInstance(Project project) {
-    return project.getComponent(EditorHighlighter.class);
+public abstract class SelectInEditorManager{
+  public static SelectInEditorManager getInstance(Project project) {
+    return project.getComponent(SelectInEditorManager.class);
   }
 
   /** Do selection in Editor. This selection is removed automatically, then caret position is changed,

@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -169,7 +169,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private Editor createEditor(){
     Editor editor=EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
-    Highlighter highlighter=HighlighterFactory.createHighlighter(myProject, myFile.getName());
+    EditorHighlighter highlighter=HighlighterFactory.createHighlighter(myProject, myFile.getName());
     ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
@@ -244,7 +244,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * changes its file type.
    */
   private void updateHighlighters(){
-    final Highlighter highlighter = HighlighterFactory.createHighlighter(myProject, myFile.getName());
+    final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, myFile.getName());
     ((EditorEx)myEditor).setHighlighter(highlighter);
   }
 

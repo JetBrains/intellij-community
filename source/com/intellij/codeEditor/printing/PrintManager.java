@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -199,7 +199,7 @@ class PrintManager {
     final String fileName = psiFile.getVirtualFile().getPresentableUrl();
     DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
-    Highlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
     highlighter.setText(doc.getCharsSequence());
     return new TextPainter(doc, highlighter, fileName, psiFile, project);
   }

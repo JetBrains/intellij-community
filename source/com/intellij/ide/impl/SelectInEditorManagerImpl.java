@@ -1,6 +1,6 @@
 package com.intellij.ide.impl;
 
-import com.intellij.ide.EditorHighlighter;
+import com.intellij.ide.SelectInEditorManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -25,12 +25,12 @@ import java.awt.event.FocusListener;
  * @author MYakovlev
  * Date: Jul 1, 2002
  */
-public class EditorHighlighterImpl extends EditorHighlighter implements ProjectComponent, FocusListener, CaretListener{
+public class SelectInEditorManagerImpl extends SelectInEditorManager implements ProjectComponent, FocusListener, CaretListener{
   private Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
 
-  public EditorHighlighterImpl(Project project){
+  public SelectInEditorManagerImpl(Project project){
     myProject = project;
   }
 
@@ -41,7 +41,7 @@ public class EditorHighlighterImpl extends EditorHighlighter implements ProjectC
   }
 
   public String getComponentName(){
-    return "EditorHighlighter";
+    return "SelectInEditorManager";
   }
 
   public void initComponent() { }

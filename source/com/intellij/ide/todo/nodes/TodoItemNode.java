@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -101,7 +101,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     // Update highlighted regions
 
     myHighlightedRegions.clear();
-    Highlighter highlighter = myBuilder.getHighlighter(todoItem.getFile(),document);
+    EditorHighlighter highlighter = myBuilder.getHighlighter(todoItem.getFile(),document);
     HighlighterIterator iterator=highlighter.createIterator(lineStartOffset);
     while(!iterator.atEnd()){
       int start=Math.max(iterator.getStart(),lineStartOffset);

@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -82,7 +82,7 @@ public class BorderEffect {
            myRange.contains(rangeHighlighter.getAffectedAreaEndOffset());
   }
 
-  public void paintHighlighters(Highlighter highlighter) {
+  public void paintHighlighters(EditorHighlighter highlighter) {
     int startOffset = startOfLineByOffset(myStartOffset);
     if (0 > startOffset || startOffset >= myEditor.getDocument().getTextLength()) return;
     RangeIterator iterator = new RangeIterator(new FoldingOrNewLineGaps(myEditor), SAME_COLOR_BOXES,

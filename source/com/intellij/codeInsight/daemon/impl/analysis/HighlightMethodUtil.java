@@ -110,7 +110,7 @@ public class HighlightMethodUtil {
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       final PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
-      // EJB override rules are tricky, they are checked elsewhere in EJB Highlighter
+      // EJB override rules are tricky, they are checked elsewhere in EJB SelectInEditorManager
       if (!Comparing.strEqual(method.getName(), superMethod.getName())
           || method.getParameterList().getParameters().length != superMethod.getParameterList().getParameters().length) {
         continue;

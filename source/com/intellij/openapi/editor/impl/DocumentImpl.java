@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -52,7 +52,7 @@ public class DocumentImpl implements DocumentEx {
 
     private int getPriority(Object o) {
       if (o instanceof FoldingModel) return 1;
-      if (o instanceof Highlighter) return 2;
+      if (o instanceof EditorHighlighter) return 2;
       if (o instanceof CaretModel) return 3;
       if (o instanceof SelectionModel) return 4;
       if (o instanceof EditorImpl.EditorDocumentAdapter) return 5;

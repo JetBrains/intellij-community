@@ -1,6 +1,6 @@
 package com.intellij.usages;
 
-import com.intellij.ide.EditorHighlighter;
+import com.intellij.ide.SelectInEditorManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -152,7 +152,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     if (!isValid()) return;
 
     RangeMarker marker = myRangeMarkers.get(0);
-    EditorHighlighter.getInstance(getProject())
+    SelectInEditorManager.getInstance(getProject())
       .selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
   }
 

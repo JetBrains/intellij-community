@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -601,7 +601,7 @@ public class DefaultInsertHandler implements InsertHandler{
     CharSequence chars = myDocument.getCharsSequence();
     int textLength = myDocument.getTextLength();
 
-    Highlighter highlighter = ((EditorEx) myEditor).getHighlighter();
+    EditorHighlighter highlighter = ((EditorEx) myEditor).getHighlighter();
 
     int existingRParenthOffset = -1;
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
@@ -740,7 +740,7 @@ public class DefaultInsertHandler implements InsertHandler{
     return new TextRange(start, end);
   }
 
-  private static int calcParensBalance(Document document, Highlighter highlighter, int rangeStart, int rangeEnd){
+  private static int calcParensBalance(Document document, EditorHighlighter highlighter, int rangeStart, int rangeEnd){
     LOG.assertTrue(0 <= rangeStart);
     LOG.assertTrue(rangeStart <= rangeEnd);
     LOG.assertTrue(rangeEnd <= document.getTextLength());

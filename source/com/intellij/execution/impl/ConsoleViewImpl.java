@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -369,7 +369,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         final EditorFactory editorFactory = EditorFactory.getInstance();
         final Document editorDocument = editorFactory.createDocument("");
         final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
-        final Highlighter highlighter = new MyHighghlighter();
+        final EditorHighlighter highlighter = new MyHighghlighter();
         editor.setHighlighter(highlighter);
         editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, ConsoleViewImpl.this);
 
@@ -528,7 +528,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     }
   }
 
-  private class MyHighghlighter extends DocumentAdapter implements Highlighter {
+  private class MyHighghlighter extends DocumentAdapter implements EditorHighlighter {
     private boolean myHasEditor;
 
     public HighlighterIterator createIterator(final int startOffset) {

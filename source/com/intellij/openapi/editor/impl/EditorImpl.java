@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.ex.util.EmptyHighlighter;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.*;
@@ -126,7 +126,7 @@ public class EditorImpl implements EditorEx {
 
   private final MarkupModelListener myMarkupModelListener;
 
-  private Highlighter myHighlighter;
+  private EditorHighlighter myHighlighter;
 
   private int myScrollbarOrientation;
   private boolean myMousePressedInsideSelection;
@@ -225,7 +225,7 @@ public class EditorImpl implements EditorEx {
     myFoldingModel.flushCaretShift();
     myScrollbarOrientation = EditorEx.VERTICAL_SCROLLBAR_RIGHT;
 
-    Highlighter highlighter = new EmptyHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
+    EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
     setHighlighter(highlighter);
 
     initComponent();
@@ -515,7 +515,7 @@ public class EditorImpl implements EditorEx {
     }
   }
 
-  public void setHighlighter(Highlighter highlighter) {
+  public void setHighlighter(EditorHighlighter highlighter) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myHighlighter != null) {
       getDocument().removeDocumentListener(myHighlighter);
@@ -530,7 +530,7 @@ public class EditorImpl implements EditorEx {
     }
   }
 
-  public Highlighter getHighlighter() {
+  public EditorHighlighter getHighlighter() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighter;
   }

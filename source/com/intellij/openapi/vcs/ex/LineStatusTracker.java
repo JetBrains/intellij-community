@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -697,7 +697,7 @@ public class LineStatusTracker implements EditorColorsListener {
     if (range.getType() != Range.INSERTED) {
       DocumentEx doc = (DocumentEx)myUpToDateDocument;
       EditorImpl uEditor = new EditorImpl(doc, true, myProject);
-      Highlighter highlighter = HighlighterFactory.createHighlighter(myProject, getFileName());
+      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, getFileName());
       uEditor.setHighlighter(highlighter);
 
       EditorFragmentComponent editorFragmentComponent = EditorFragmentComponent.createEditorFragmentComponent(uEditor,

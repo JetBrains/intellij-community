@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
@@ -79,7 +79,7 @@ public class DiffSideView {
   private void applyHighlighter() {
     EditorEx editor = myEditorSource.getEditor();
     if (editor == null) return;
-    Highlighter highlighter = myHighlighterFactory.createHighlighter();
+    EditorHighlighter highlighter = myHighlighterFactory.createHighlighter();
     if (highlighter != null) editor.setHighlighter(highlighter);
     editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
   }

@@ -231,7 +231,7 @@ public class UpdateHighlightersUtil {
       int offset = e.getOffset();
       Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
       if (editors.length > 0) {
-        Editor editor = editors[0]; // use any editor - just to fetch Highlighter
+        Editor editor = editors[0]; // use any editor - just to fetch SelectInEditorManager
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(Math.max(0, offset - 1));
         if (iterator.atEnd()) return;
         int start = iterator.getStart();

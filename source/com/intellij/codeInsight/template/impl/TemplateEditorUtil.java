@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.LexerHighlighter;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.fileTypes.FileType;
@@ -68,7 +68,7 @@ public class TemplateEditorUtil {
     }
 
     SyntaxHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null));
-    ((EditorEx)editor).setHighlighter(new LexerHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
+    ((EditorEx)editor).setHighlighter(new LexerEditorHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
   }
 
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{TemplateTokenType.TEXT});

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -23,8 +23,8 @@ import java.util.Map;
 /**
  *
  */
-public class LexerHighlighter extends DocumentAdapter implements Highlighter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerHighlighter");
+public class LexerEditorHighlighter extends DocumentAdapter implements EditorHighlighter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private Editor myEditor;
   private Lexer myLexer;
   private Map<IElementType, TextAttributes> myAttributesMap;
@@ -32,7 +32,7 @@ public class LexerHighlighter extends DocumentAdapter implements Highlighter {
   private SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
 
-  public LexerHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
+  public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();

@@ -6,19 +6,19 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
 
-public class EmptyHighlighter extends DocumentAdapter implements Highlighter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyHighlighter");
+public class EmptyEditorHighlighter extends DocumentAdapter implements EditorHighlighter{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter");
 
   private TextAttributes myAttributes;
   private int myTextLength = 0;
   private boolean myHasEditor = false;
 
-  public EmptyHighlighter(TextAttributes attributes) {
+  public EmptyEditorHighlighter(TextAttributes attributes) {
     myAttributes = attributes;
   }
 

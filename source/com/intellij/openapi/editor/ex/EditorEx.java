@@ -24,9 +24,9 @@ public interface EditorEx extends Editor {
 
   EditorGutterComponentEx getGutterComponentEx();
 
-  Highlighter getHighlighter();
+  EditorHighlighter getHighlighter();
 
-  void setHighlighter(Highlighter highlighter);
+  void setHighlighter(EditorHighlighter highlighter);
 
   void setColorsScheme(EditorColorsScheme scheme);
 

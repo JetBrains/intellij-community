@@ -11,7 +11,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -63,7 +63,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     PsiFile psiFile = e.getContainingFile();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(psiFile.getVirtualFile());
 
-    Highlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
     highlighter.setText(editorText);
 
     HighlighterIterator i = highlighter.createIterator(cursorOffset);
@@ -78,7 +78,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     return result;
   }
 
-  private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType, Highlighter highlighter, List<TextRange> result) {
+  private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType, EditorHighlighter highlighter, List<TextRange> result) {
     HighlighterIterator i;
     int start = cursorOffset;
 

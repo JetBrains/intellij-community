@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.Highlighter;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -48,7 +48,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   protected final HashSet myDirtyFileSet;
 
-  protected final com.intellij.util.containers.HashMap<VirtualFile, Highlighter> myFile2Highlighter;
+  protected final com.intellij.util.containers.HashMap<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
   protected final PsiSearchHelper mySearchHelper;
   /**
@@ -69,7 +69,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     myFileTree = new FileTree();
     myDirtyFileSet = new HashSet();
 
-    myFile2Highlighter = new com.intellij.util.containers.HashMap<VirtualFile, Highlighter>();
+    myFile2Highlighter = new com.intellij.util.containers.HashMap<VirtualFile, EditorHighlighter>();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = psiManager.getSearchHelper();
@@ -247,7 +247,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
         if (myFile2Highlighter.containsKey(file)) { // update highlighter's text
           Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-          Highlighter highlighter = myFile2Highlighter.get(file);
+          EditorHighlighter highlighter = myFile2Highlighter.get(file);
           highlighter.setText(document.getCharsSequence());
         }
       }
@@ -507,16 +507,16 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return <code>Highlighter</code> for the specified <code>psiFile</code>. Highlighters are
+   * @return <code>SelectInEditorManager</code> for the specified <code>psiFile</code>. Highlighters are
    *         lazy created and initialized.
    */
-  public Highlighter getHighlighter(PsiFile psiFile, Document document) {
+  public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {
     VirtualFile file = psiFile.getVirtualFile();
     if (myFile2Highlighter.containsKey(file)) {
       return myFile2Highlighter.get(file);
     }
     else {
-      Highlighter highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
+      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
       highlighter.setText(document.getCharsSequence());
       myFile2Highlighter.put(file, highlighter);
       return highlighter;
