@@ -553,7 +553,7 @@ public class ForCanBeForeachInspection extends StatementInspection {
             }
             return true;
         }
-        return true;
+        return false;
     }
 
     private static boolean isArrayLengthComparison(PsiExpression condition, PsiLocalVariable var) {
