@@ -1,6 +1,7 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.util.ui.treetable.TreeTable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,7 +28,7 @@ public class EditSourceOnDoubleClickHandler {
         if (project == null) return;
 
         final TreePath selectionPath = tree.getSelectionPath();
-        if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf()) {
+        if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf() || !expandOnDoubleClick(((TreeNode)selectionPath.getLastPathComponent()))) {
           //Node expansion for non-leafs has a higher priority
           Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
           if (navigatable != null && navigatable.canNavigate()) {
@@ -34,6 +36,17 @@ public class EditSourceOnDoubleClickHandler {
           }
         }
       }
+
+      private boolean expandOnDoubleClick(final TreeNode treeNode) {
+        if (treeNode instanceof DefaultMutableTreeNode) {
+          final Object userObject = ((DefaultMutableTreeNode)treeNode).getUserObject();
+          if (userObject instanceof NodeDescriptor) {
+            return ((NodeDescriptor)userObject).expandOnDoubleClick();
+          }
+        }
+        return true;
+      }
+
     });
   }
   public static void install(final TreeTable treeTable) {
