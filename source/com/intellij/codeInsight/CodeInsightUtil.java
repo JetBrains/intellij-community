@@ -139,8 +139,8 @@ public class CodeInsightUtil {
     if (root instanceof TranslatingChangesDummyHolder) {
       root.accept(new PsiRecursiveElementVisitor(){
         public void visitElement(PsiElement element) {
-          list.add(element);
           super.visitElement(element);
+          list.add(element);
         }
       });
       return list.toArray(new PsiElement[list.size()]);

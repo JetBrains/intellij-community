@@ -167,7 +167,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  private HighlightInfo convertToHighlightInfo(final Annotation annotation) {
+  private static HighlightInfo convertToHighlightInfo(final Annotation annotation) {
     final HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
                                                  annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
     final List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
@@ -180,7 +180,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     return info;
   }
 
-  private HighlightInfoType convertType(Annotation annotation) {
+  private static HighlightInfoType convertType(Annotation annotation) {
     final ProblemHighlightType type = annotation.getHighlightType();
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
@@ -729,9 +729,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor()));
     }
 
-    PsiElement refParent = parent;
-    if (resolved instanceof PsiClass && refParent instanceof PsiReferenceList) {
-      myHolder.add(HighlightUtil.checkReferenceList(ref, (PsiReferenceList)refParent, result));
+    if (resolved instanceof PsiClass && parent instanceof PsiReferenceList) {
+      myHolder.add(HighlightUtil.checkReferenceList(ref, (PsiReferenceList)parent, result));
     }
 
     if (!myHolder.hasErrorResults()) {
@@ -898,7 +897,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitVariable(PsiVariable variable) {
-    myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
 
     myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
   }

@@ -4,19 +4,17 @@ package com.intellij.psi.impl;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 
-public abstract class PsiElementBase extends ElementBase implements PsiElement {
+public abstract class PsiElementBase extends ElementBase implements PsiElement,NavigationItem {
   public PsiElement getFirstChild() {
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
@@ -120,6 +118,10 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   public FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
+  }
+
+  public String getName() {
+    return this instanceof PsiNamedElement ? ((PsiNamedElement)this).getName() : null;
   }
 
   public Project getProject() {
