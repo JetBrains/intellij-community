@@ -17,6 +17,7 @@ public class UsageViewPresentation {
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
+  private boolean myCodeUsages = true;
 
   public UsageViewPresentation() {
   }
@@ -91,6 +92,14 @@ public class UsageViewPresentation {
 
   public void setOpenInNewTab(boolean openInNewTab) {
     myOpenInNewTab = openInNewTab;
+  }
+
+  public boolean isCodeUsages() {
+    return myCodeUsages;
+  }
+
+  public void setCodeUsages(final boolean codeUsages) {
+    myCodeUsages = codeUsages;
   }
 }
 

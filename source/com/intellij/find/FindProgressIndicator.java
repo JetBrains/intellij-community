@@ -30,10 +30,16 @@ public class FindProgressIndicator extends ProgressWindow {
   public void background() {
     myIsBackground = true;
     myStatusBar.addProgress();
+    myStatusBar.showCancelButton(
+      IconLoader.getIcon("/actions/suspend.png"),
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          cancel();
+        }
+      },
+      "Stop background search"
+    );
     super.background();
-
-    ToolWindow toolWindow = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.FIND);
-    if (!toolWindow.isActive()) toolWindow.activate(null);
   }
 
   public void setText(String text) {
@@ -46,7 +52,9 @@ public class FindProgressIndicator extends ProgressWindow {
   }
 
   public void setFraction(double fraction) {
-    if (!myIsBackground) super.setFraction(fraction);
+    if (!myIsBackground) {
+      super.setFraction(fraction);
+    }
     else {
       myStatusBar.setProgressValue(getPercentage(fraction));
     }
@@ -62,7 +70,9 @@ public class FindProgressIndicator extends ProgressWindow {
   }
 
   public synchronized void stop() {
-    if (myIsBackground) myStatusBar.hideProgress();
+    if (myIsBackground) {
+      myStatusBar.hideCancelButton();
+    }
     super.stop();
   }
 }

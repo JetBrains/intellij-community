@@ -50,20 +50,25 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private MyPanel myRootPanel;
   private JTree myTree = new JTree();
   private Content myContent;
+
   private UsageViewPresentation myPresentation;
   private UsageTarget[] myTargets;
   private Factory<UsageSearcher> myUsageSearcherFactory;
   private Project myProject;
+
   private TreeExpander myTreeExpander;
   private boolean mySearchInProgress = true;
   private ExporterToTextFile myTextFileExporter;
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
   private Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private UsageModelTracker myModelTracker;
   private Map<Usage, UsageNode> myUsageNodes = new HashMap<Usage, UsageNode>();
   private ButtonPanel myButtonPanel = new ButtonPanel();
+
   private boolean myChangesDetected = false;
   private List<Usage> myUsagesToFlush = new ArrayList<Usage>();
+  private Factory<ProgressIndicator> myIndicatorFactory;
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -387,24 +392,33 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void doReRun() {
     final Application application = ApplicationManager.getApplication();
 
-    application.runProcessWithProgressSynchronously(
-        new Runnable() {
-        public void run() {
-          setSearchInProgress(true);
+    final Runnable process = new Runnable() {
+      public void run() {
+        setSearchInProgress(true);
 
-          myChangesDetected = false;
-          UsageSearcher usageSearcher = myUsageSearcherFactory.create();
-          usageSearcher.generate(new Processor<Usage>() {
-            public boolean process(final Usage usage) {
-              appendUsageLater(usage);
-              ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-              return indicator != null ? !indicator.isCanceled() : true;
-            }
-          });
+        myChangesDetected = false;
+        UsageSearcher usageSearcher = myUsageSearcherFactory.create();
+        usageSearcher.generate(new Processor<Usage>() {
+          public boolean process(final Usage usage) {
+            appendUsageLater(usage);
+            ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+            return indicator != null ? !indicator.isCanceled() : true;
+          }
+        });
 
-          setSearchInProgress(false);
-        }
-      }, UsageViewManagerImpl.getProgressTitile(myPresentation), true, myProject);
+        setSearchInProgress(false);
+      }
+    };
+
+    if (myIndicatorFactory!=null) {
+      UsageViewImplUtil.runProcessWithProgress(myIndicatorFactory.create(), process, new Runnable() {
+        public void run() {}
+      });
+    }  else {
+      application.runProcessWithProgressSynchronously(
+        process, UsageViewManagerImpl.getProgressTitle(myPresentation), true, myProject
+      );
+    }
   }
 
   private void reset() {
@@ -913,5 +927,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     }
+  }
+
+  public void setProgressIndicatorFactory(final Factory<ProgressIndicator> indicatorFactory) {
+    myIndicatorFactory = indicatorFactory;
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.Patches;
+import com.intellij.usages.impl.UsageViewImplUtil;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -202,7 +203,6 @@ public class FindInProjectUtil {
         ProgressManager.getInstance().checkCanceled();
         final VirtualFile virtualFile = virtualFiles[i];
         final int index = i;
-        final int occurencesBeforeFileSearch = consumer.getCount();
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -224,17 +224,6 @@ public class FindInProjectUtil {
             }
           }
         });
-
-        if (occurencesBeforeFileSearch == consumer.getCount()) {
-          // we have not waited after having found the results so wait a little bit
-          synchronized (project) {
-            try {
-              project.wait(1);
-            }
-            catch (InterruptedException ex) {
-            }
-          }
-        }
       }
     }
     catch (ProcessCanceledException e) {
@@ -262,15 +251,6 @@ public class FindInProjectUtil {
 
           UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
           consumer.foundUsage(info);
-          // we need to sleep a little bit to allow AWT thread to handle added usages
-          // this is especially important iff number of usages grows very quickly
-          synchronized (project) {
-            try {
-              project.wait(2);
-            }
-            catch (InterruptedException ex) {
-            }
-          }
 
           final int prevOffset = offset;
           offset = result.getEndOffset();
@@ -292,27 +272,7 @@ public class FindInProjectUtil {
     final ProgressIndicator progressIndicator1 = Patches.MAC_HIDE_QUIT_HACK
                                                  ? (ProgressIndicator)progressIndicator
                                                  : new SmoothProgressAdapter(progressIndicator, project);
-    Thread thread = new Thread("Process with progress") {
-      public void run() {
-        try {
-          ProgressManager.getInstance().runProcess(findUsagesRunnable, progressIndicator1);
-        }
-        catch (ProcessCanceledException e) {
-        }
-
-        ApplicationManager.getApplication().invokeLater(showResultsRunnable, ModalityState.NON_MMODAL);
-      }
-    };
-
-    synchronized (findUsagesRunnable) {
-      thread.start();
-      try {
-        findUsagesRunnable.wait();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
+    UsageViewImplUtil.runProcessWithProgress(progressIndicator1, findUsagesRunnable, showResultsRunnable);
   }
 
   public static String getTitleForScope(final FindModel findModel) {

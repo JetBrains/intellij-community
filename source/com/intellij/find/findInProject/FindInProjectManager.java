@@ -11,11 +11,19 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.*;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.util.Processor;
 
+import javax.swing.*;
 import java.util.ArrayList;
 
 public class FindInProjectManager implements ProjectComponent {
@@ -98,77 +106,190 @@ public class FindInProjectManager implements ProjectComponent {
       myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
     }
 
-    AsyncFindUsagesCommand command = new AsyncFindUsagesCommand() {
-      FindProgressIndicator progress;
+    com.intellij.usages.UsageViewManager manager = myProject.getComponent(com.intellij.usages.UsageViewManager.class);
+    class StringUsageTarget implements UsageTarget {
+      private String myStringToFind;
+      private ItemPresentation myItemPresentation = new ItemPresentation() {
+        public String getPresentableText() {
+          return "String '" + myStringToFind + "'";
+        }
 
-      public void findUsages(final AsyncFindUsagesProcessListener consumer) {
-        myIsFindInProgress = true;
-        findManager.getFindInProjectModel().copyFrom(findModel);
+        public String getLocationString() {
+          return myStringToFind + "!!";
+        }
 
-        // [jeka] should use a _copy_ of findModel, because of RefreshCommand, findModel is reused by later FindUsages commands!!!!
-        final FindModel findModelCopy = (FindModel)findModel.clone();
-        progress = new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(findModelCopy));
-        final Runnable findUsagesRunnable = new Runnable() {
-          public void run() {
-            FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer);
-          }
-        };
+        public Icon getIcon(boolean open) {
+          return null;
+        }
+      };
 
-        Runnable showUsagesPanelRunnable = new Runnable() {
-          public void run() {
-            myIsFindInProgress = false;
-            if (consumer.getCount()==0) {
-              if (!progress.isCanceled()) {
-                String title = "No occurrences of '" + findModel.getStringToFind() + "' found in " + FindInProjectUtil.getTitleForScope(findModelCopy);
-
-                Messages.showMessageDialog(
-                  myProject,
-                  title,
-                  "Find in Path",
-                  Messages.getInformationIcon()
-                );
-              }
-            }
-          }
-        };
-
-        FindInProjectUtil.runProcessWithProgress(progress, findUsagesRunnable, showUsagesPanelRunnable, myProject);
+      public StringUsageTarget(String _stringToFind) {
+        myStringToFind = _stringToFind;
       }
 
-      public void stopAsyncSearch() {
-        progress.cancel();
-      }
-    };
-
-    showUsagesPanel(
-      new FindInProjectViewDescriptor(findModel,command),
-      toOpenInNewTab[0]
-    );
-  }
-
-  private void showUsagesPanel(final FindInProjectViewDescriptor viewDescriptor, boolean toOpenInNewTab) {
-    String stringToFind = viewDescriptor.getFindModel().getStringToFind();
-    String name = "Search result";
-    if (stringToFind != null) {
-      if (stringToFind.length() > 15) {
-        stringToFind = stringToFind.substring(0, 15) + "...";
-      }
-      name = "Occurrences of '"+stringToFind + "'";
-    }
-
-    if (viewDescriptor.getFindModel().isMultipleFiles() ) {
-      name += " in " +FindInProjectUtil.getTitleForScope(viewDescriptor.getFindModel());
-    }
-    UsageViewManager.getInstance(myProject).addContent(name, viewDescriptor, true, toOpenInNewTab, true, new ProgressFactory () {
-      public ProgressIndicator createProgress() {
-        return new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(viewDescriptor.getFindModel()));
+      public void findUsages() {
+        throw new UnsupportedOperationException();
       }
 
-      public boolean continueOnCancel() {
+      public void findUsagesInEditor(FileEditor editor) {
+        throw new UnsupportedOperationException();
+      }
+
+      public boolean isValid() {
         return true;
       }
-    });
+
+      public boolean isReadOnly() {
+        return true;
+      }
+
+      public VirtualFile[] getFiles() {
+        throw new UnsupportedOperationException();
+      }
+
+      public String getName() {
+        return myStringToFind;
+      }
+
+      public ItemPresentation getPresentation() {
+        return myItemPresentation;
+      }
+
+      public FileStatus getFileStatus() {
+        return null;
+      }
+
+      public void navigate(boolean requestFocus) {
+        throw new UnsupportedOperationException();
+      }
+
+      public boolean canNavigate() {
+        return false;
+      }
+    }
+
+    if (manager!=null) {
+      findManager.getFindInProjectModel().copyFrom(findModel);
+      final FindModel findModelCopy = (FindModel)findModel.clone();
+
+      final UsageViewPresentation presentation = new UsageViewPresentation();
+
+      presentation.setScopeText(FindInProjectUtil.getTitleForScope(findModelCopy));
+      presentation.setUsagesString("occurrences of '" + findModelCopy.getStringToFind() + "'");
+      presentation.setOpenInNewTab(myToOpenInNewTab);
+      presentation.setCodeUsages(false);
+
+      manager.searchAndShowUsages(
+        new UsageTarget[] { new StringUsageTarget(findModel.getStringToFind()) },
+        new Factory<UsageSearcher>() {
+          public UsageSearcher create() {
+            return new UsageSearcher() {
+
+            public void generate(final Processor<Usage> processor) {
+              myIsFindInProgress = true;
+
+              FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, new AsyncFindUsagesProcessListener() {
+                int count;
+
+                public void foundUsage(UsageInfo info) {
+                  ++count;
+                  processor.process(new UsageInfo2UsageAdapter(info));
+                }
+
+                public void findUsagesCompleted() {
+                }
+
+                public int getCount() {
+                  return count;
+                }
+              });
+              myIsFindInProgress = false;
+            }
+          };
+          }
+        },
+        false,
+        true,
+        presentation,
+        new Factory<ProgressIndicator>() {
+        public ProgressIndicator create() {
+          return new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(findModelCopy));
+        }
+      }
+      );
+    }
+
+    //AsyncFindUsagesCommand command = new AsyncFindUsagesCommand() {
+    //  FindProgressIndicator progress;
+    //
+    //  public void findUsages(final AsyncFindUsagesProcessListener consumer) {
+    //    myIsFindInProgress = true;
+    //    findManager.getFindInProjectModel().copyFrom(findModel);
+    //
+    //    // [jeka] should use a _copy_ of findModel, because of RefreshCommand, findModel is reused by later FindUsages commands!!!!
+    //    final FindModel findModelCopy = (FindModel)findModel.clone();
+    //    progress = new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(findModelCopy));
+    //    final Runnable findUsagesRunnable = new Runnable() {
+    //      public void run() {
+    //        FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer);
+    //      }
+    //    };
+    //
+    //    Runnable showUsagesPanelRunnable = new Runnable() {
+    //      public void run() {
+    //        myIsFindInProgress = false;
+    //        if (consumer.getCount()==0) {
+    //          if (!progress.isCanceled()) {
+    //            String title = "No occurrences of '" + findModel.getStringToFind() + "' found in " + FindInProjectUtil.getTitleForScope(findModelCopy);
+    //
+    //            Messages.showMessageDialog(
+    //              myProject,
+    //              title,
+    //              "Find in Path",
+    //              Messages.getInformationIcon()
+    //            );
+    //          }
+    //        }
+    //      }
+    //    };
+    //
+    //    FindInProjectUtil.runProcessWithProgress(progress, findUsagesRunnable, showUsagesPanelRunnable, myProject);
+    //  }
+    //
+    //  public void stopAsyncSearch() {
+    //    progress.cancel();
+    //  }
+    //};
+    //
+    //showUsagesPanel(
+    //  new FindInProjectViewDescriptor(findModel,command),
+    //  toOpenInNewTab[0]
+    //);
   }
+
+  //private void showUsagesPanel(final FindInProjectViewDescriptor viewDescriptor, boolean toOpenInNewTab) {
+  //  String stringToFind = viewDescriptor.getFindModel().getStringToFind();
+  //  String name = "Search result";
+  //  if (stringToFind != null) {
+  //    if (stringToFind.length() > 15) {
+  //      stringToFind = stringToFind.substring(0, 15) + "...";
+  //    }
+  //    name = "Occurrences of '"+stringToFind + "'";
+  //  }
+  //
+  //  if (viewDescriptor.getFindModel().isMultipleFiles() ) {
+  //    name += " in " +FindInProjectUtil.getTitleForScope(viewDescriptor.getFindModel());
+  //  }
+  //  UsageViewManager.getInstance(myProject).addContent(name, viewDescriptor, true, toOpenInNewTab, true, new ProgressFactory () {
+  //    public ProgressIndicator createProgress() {
+  //      return new FindProgressIndicator(myProject, FindInProjectUtil.getTitleForScope(viewDescriptor.getFindModel()));
+  //    }
+  //
+  //    public boolean continueOnCancel() {
+  //      return true;
+  //    }
+  //  });
+  //}
 
   public boolean isWorkInProgress() {
     return myIsFindInProgress;

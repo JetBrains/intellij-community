@@ -51,12 +51,19 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   public AnAction[] createGroupingActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
-    return new AnAction[] {
-      new GroupByUsageTypeAction(impl),
-      new GroupByModuleTypeAction(impl),
-      new GroupByPackageAction(impl),
-      new GroupByFileStructureAction(impl)
-    };
+    if(view.getPresentation().isCodeUsages()) {
+      return new AnAction[] {
+        new GroupByUsageTypeAction(impl),
+        new GroupByModuleTypeAction(impl),
+        new GroupByPackageAction(impl),
+        new GroupByFileStructureAction(impl)
+      };
+    } else {
+      return new AnAction[] {
+        new GroupByModuleTypeAction(impl),
+        new GroupByFileStructureAction(impl)
+      };
+    }
   }
 
   private class GroupByUsageTypeAction extends RuleAction {

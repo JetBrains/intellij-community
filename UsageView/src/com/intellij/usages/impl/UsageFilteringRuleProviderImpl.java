@@ -47,18 +47,22 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
-    final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-    showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+    if(view.getPresentation().isCodeUsages()) {
+      final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
+      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    final ReadWriteState readWriteSharedState = new ReadWriteState();
+      final ReadWriteState readWriteSharedState = new ReadWriteState();
 
-    final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl, readWriteSharedState);
-    showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl, readWriteSharedState);
+      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl, readWriteSharedState);
-    showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl, readWriteSharedState);
+      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
+      return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
+    } else {
+      return AnAction.EMPTY_ARRAY;
+    }
   }
 
   private class ShowImportsAction extends RuleAction {
