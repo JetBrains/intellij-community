@@ -181,15 +181,15 @@ public class OSProcessHandler extends ProcessHandler {
     public void run() {
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          if(myIsClosed) return;
-
-          myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
-          checkTextAvailable();
+          if(!isClosed()) {
+            myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
+            checkTextAvailable();
+          }
         }
       }, NOTIFY_TEXT_DELAY);
 
       try {
-        while (true) {
+        while (!isClosed()) {
           final int c = readNextByte();
           if (c == -1) {
             break;
@@ -231,25 +231,35 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
     public void close() {
-      flushAll();
+      synchronized (this) {
+        if (isClosed()) {
+          return;
+        }
+        myIsClosed = true;
+      }
       try {
-        if(Thread.currentThread() != this) join(0);
+        if(Thread.currentThread() != this) {
+          join(0);
+        }
       }
       catch (InterruptedException e) {
       }
-    }
-
-    private void flushAll() {
-      myIsClosed = true;
+      // must close after the thread finished its execution, cause otherwise
+      // the thread will try to read from the closed (and nulled) stream
       try {
         myReader.close();
       }
-      catch (IOException e) {
-        LOG.error(e);
+      catch (IOException e1) {
+        LOG.error(e1);
       }
       checkTextAvailable();
     }
 
     protected abstract void textAvailable(final String s);
+
+    private synchronized boolean isClosed() {
+      return myIsClosed;
+    }
+
   }
 }
