@@ -46,7 +46,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -71,7 +70,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   protected final String getCompleteActionName(VcsContext dataContext) {
-    return myActionInfo.getActionName() + " " + myScopeInfo.getScopeName(dataContext);
+    return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext));
   }
 
 
@@ -294,7 +293,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
         presentation.setEnabled(false);
         return;
       }
-      if (roots != null && roots.length > 0) {
+      if (roots.length > 0) {
         for (int i = 0; i < roots.length; i++) {
           FilePath file = roots[i];
           AbstractVcs vcs = VcsUtil.getVcsFor(project, file);

@@ -92,6 +92,7 @@
       <reference id="CheckinFiles"/>
       <action id="Cvs.Rollback" class="com.intellij.cvsSupport2.actions.CvsRollbackChangesAction" text="Ro_llback Changes" icon="/actions/rollback.png" description="Rollback local changes"/>
       <reference id="UpdateFiles"/>
+      <reference id="CheckStatusForFiles"/>
       <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction" text="Chec_k Out" description="Check out file or directory (and overwrite local version)"/>
       <action id="Cvs.MergeAction" class="com.intellij.cvsSupport2.actions.MergeAction" text="_Merge" description="Merge file visually"/>
 

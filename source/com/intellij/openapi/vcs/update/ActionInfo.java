@@ -17,6 +17,10 @@ public interface ActionInfo {
       return vcs.getUpdateEnvironment();
     }
 
+    public String getActionName() {
+      return "Update";
+    }
+
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
                                                            LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
@@ -36,8 +40,8 @@ public interface ActionInfo {
       };
     }
 
-    public String getActionName() {
-      return "Update";
+    public String getActionName(String scopeName) {
+      return "Update " + scopeName;
     }
 
     public String getGroupName(FileGroup fileGroup) {
@@ -47,7 +51,7 @@ public interface ActionInfo {
 
   ActionInfo STATUS = new ActionInfo() {
     public boolean showOptions(Project project) {
-      return VcsConfiguration.getInstance(project).SHOW_STATUS_OPTIONS;
+      return false;
     }
 
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
@@ -74,7 +78,11 @@ public interface ActionInfo {
     }
 
     public String getActionName() {
-      return "Check Status for";
+      return "Check Status";
+    }
+
+    public String getActionName(String scopeName) {
+      return "Check " + scopeName + " Status";
     }
 
     public String getGroupName(FileGroup fileGroup) {
@@ -87,6 +95,8 @@ public interface ActionInfo {
   UpdateEnvironment getEnvironment(AbstractVcs vcs);
 
   UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap);
+
+  String getActionName(String scopeName);
 
   String getActionName();
 
