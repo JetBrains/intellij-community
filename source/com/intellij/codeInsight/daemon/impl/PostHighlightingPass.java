@@ -431,7 +431,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (PsiUtil.hasErrorElementChild(importStatement)) return null;
 
     boolean isRedundant = myRefCountHolder.isRedundant(importStatement);
-    if (!isRedundant) {
+    if (!isRedundant && !(importStatement instanceof PsiImportStaticStatement)) {
       //check import from same package
       String packageName = ((PsiJavaFile)importStatement.getContainingFile()).getPackageName();
       PsiElement resolved = importStatement.getImportReference().resolve();
