@@ -23,6 +23,7 @@ public class ImplicitNumericConversionInspection
 
         useDouble(0);
         useDouble(0.0F);
+        useDouble(-0.0F);
         useDouble(i);
         useDouble(ch);
         useDouble(l);
@@ -45,6 +46,10 @@ public class ImplicitNumericConversionInspection
         useLong(l);
         useLong(3L);
         useLong(3L);
+
+        int j = 0;
+        j|=l;
+        System.out.println(j);
     }
 
     private int useLong(long l)
