@@ -32,6 +32,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new InvertIfConditionAction(), new String[]{"Control Flow"});
     registerIntentionAndMetaData(new RemoveRedundantElseAction(), new String[]{"Control Flow"});
 
+    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new ImplementAbstractClassAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new ImplementAbstractMethodAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new SplitDeclarationAction(), new String[]{"Declaration"});
@@ -41,7 +42,6 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new EJBImplementationAction(), new String[]{"EJB"});
     registerIntentionAndMetaData(new EJBDeclarationAction(), new String[]{"EJB"});
 
-    addAction(new CreateFieldFromParameterAction());
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String[] category) {
