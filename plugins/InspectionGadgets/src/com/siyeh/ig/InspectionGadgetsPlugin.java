@@ -608,6 +608,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         final List inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(DoubleCheckedLockingInspection.class);
         inspectionClasses.add(BusyWaitInspection.class);
+        inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
         inspectionClasses.add(ObjectNotifyInspection.class);
         inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
