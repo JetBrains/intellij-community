@@ -22,6 +22,7 @@ import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.*;
@@ -154,7 +155,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isPopupTrigger() && e.getClickCount() == 2) {
-          OpenSourceUtil.openSourcesFrom(InspectionResultsView.this, true);
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), true);
         }
       }
     });
@@ -162,7 +163,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          OpenSourceUtil.openSourcesFrom(InspectionResultsView.this, false);
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
         }
       }
     });
@@ -216,7 +217,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private void syncSource() {
     if (isAutoScrollMode()) {
-      OpenSourceUtil.openSourcesFrom(this, false);
+      OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
     }
   }
 
