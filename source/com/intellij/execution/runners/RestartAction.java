@@ -45,6 +45,7 @@ public class RestartAction extends AnAction {
     myProcessHandler = processHandler;
     myRunner = runner;
     myDescriptor = descritor;
+    // see IDEADEV-698
     myCachedOriginContext = (originContext instanceof CachingDataContext)? (CachingDataContext)originContext : new CachingDataContext(originContext);
   }
 
