@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -14,8 +15,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -113,9 +116,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       String dclType = UsageViewUtil.capitalize(UsageViewUtil.getType(unusedDcl));
       if (dclType == null || dclType.length() == 0) dclType = "Symbol";
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL,
-                                                                            unusedDcl.getNavigationElement(), dclType + message);
-
+      final HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), dclType + message);
       highlights.add(highlightInfo);
     }
 
@@ -228,8 +229,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     int count = myRefCountHolder.getRefCount(variable);
     if (count == 0) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED, new Object[]{identifier.getText()});
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL,
-                                                                            identifier, message);
+      final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable));
       return highlightInfo;
     }
@@ -237,8 +237,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     count = myRefCountHolder.getReadRefCount(variable);
     if (count == 0) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED_FOR_READING, new Object[]{identifier.getText()});
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL,
-                                                                            identifier, message);
+      final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable));
       return highlightInfo;
     }
@@ -247,11 +246,16 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       count = myRefCountHolder.getWriteRefCount(variable);
       if (count == 0) {
         String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_ASSIGNED, new Object[]{identifier.getText()});
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, identifier, message);
+        return createUnusedSymbolInfo(identifier, message);
       }
     }
 
     return null;
+  }
+
+  private static HighlightInfo createUnusedSymbolInfo(final PsiElement element, final String message) {
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element.getTextRange(), message, attributes);
   }
 
   private HighlightInfo processField(PsiField field) {
@@ -262,7 +266,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (count == 0) {
         if (isSerialVersionUIDField(field)) return null;
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, new Object[]{identifier.getText()});
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, identifier, message);
+        final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, field));
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, field));
@@ -273,7 +277,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (count == 0) {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING,
                                               new Object[]{identifier.getText()});
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, identifier, message);
+        final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, field));
         return highlightInfo;
@@ -284,7 +288,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (count == 0) {
           if (!assignedByUIForm(field)) {
             String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, new Object[]{identifier.getText()});
-            HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, identifier, message);
+            HighlightInfo info = createUnusedSymbolInfo(identifier, message);
             QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, field));
             return info;
           }
@@ -333,8 +337,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (count == 0) {
           PsiIdentifier identifier = parameter.getNameIdentifier();
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
-          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL,
-                                                                                identifier, message);
+          final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
           if (method.isConstructor()) {
             QuickFixAction.registerQuickFixAction(highlightInfo, new CreateFieldFromParameterAction(parameter));
           }
@@ -347,7 +350,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (myRefCountHolder.getRefCount(parameter) == 0) {
         PsiIdentifier identifier = parameter.getNameIdentifier();
         String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, identifier, message);
+        return createUnusedSymbolInfo(identifier, message);
       }
     }
 
@@ -370,8 +373,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String pattern = method.isConstructor() ? PRIVATE_CONSTRUCTOR_IS_NOT_USED : PRIVATE_METHOD_IS_NOT_USED;
         String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
         String message = MessageFormat.format(pattern, new Object[]{symbolName});
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, method.getNameIdentifier(),
-                                                                        message);
+        final PsiIdentifier identifier = method.getNameIdentifier();
+        HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method));
         return highlightInfo;
       }
@@ -407,8 +410,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static HighlightInfo formatUnusedSymbolHighlightInfo(PsiClass aClass, String pattern) {
     String symbolName = aClass.getName();
     String message = MessageFormat.format(pattern, new Object[]{symbolName});
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, aClass.getNameIdentifier(),
-                                                                    message);
+    final PsiIdentifier identifier = aClass.getNameIdentifier();
+    HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass));
     return highlightInfo;
   }
@@ -430,7 +433,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String qName = ((PsiClass)resolved).getQualifiedName();
         if (qName != null) {
           String name = ((PsiClass)resolved).getName();
-          isRedundant = qName.equals(packageName + "." + name);
+          isRedundant = qName.equals(packageName + '.' + name);
         }
       }
     }

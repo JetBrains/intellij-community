@@ -11,6 +11,7 @@ import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.PsiPrimitiveTypePattern;
 import com.intellij.aspects.psi.gen.PsiRegularMethodPattern;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspDeclaration;
@@ -1783,9 +1786,8 @@ public class HighlightUtil {
                                                 formatType(qualifierExpression.getType()),
                                                 HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor())
                                               });
-    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE,
-                                                                          expr,
-                                                                          description);
+
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE, expr, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result));
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
     return highlightInfo;
@@ -2040,7 +2042,8 @@ public class HighlightUtil {
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
       HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
 
-    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight, description);
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
     return highlightInfo;
   }

@@ -3,7 +3,6 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -12,24 +11,25 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMExternalizable {
-  private static final int LATEST_VERSION = 1;
-
+public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected  EditorColorsScheme myParentScheme;
 
   protected int myEditorFontSize;
   protected float myLineSpacing;
 
-  protected Map myValuesMap = new HashMap();
+  private Map<EditorFontType, Font> myFonts = new THashMap<EditorFontType, Font>();
+  private String myEditorFontName;
+  private String mySchemeName;
+
   // version influences XML format and triggers migration
   private int myVersion;
 
@@ -56,14 +56,31 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
   public abstract void setColor(ColorKey key, Color color);
   public abstract Color getColor(ColorKey key);
 
-  public abstract String getName();
+  public String getName() {
+    return mySchemeName;
+  }
 
-  public abstract void setFont(EditorFontType key, Font font);
+  public void setFont(EditorFontType key, Font font) {
+    myFonts.put(key, font);
+  }
 
   public abstract Object clone();
 
+  public void copyTo(AbstractColorsScheme newScheme) {
+    newScheme.myEditorFontSize = myEditorFontSize;
+    newScheme.myLineSpacing = myLineSpacing;
+    newScheme.setEditorFontName(getEditorFontName());
+    for (Iterator<Map.Entry<EditorFontType, Font>> iterator = myFonts.entrySet().iterator(); iterator.hasNext();) {
+      Map.Entry<EditorFontType, Font> entry = iterator.next();
+      newScheme.setFont(entry.getKey(), entry.getValue());
+    }
+    newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap);
+    newScheme.myColorsMap = new HashMap<ColorKey, Color>(myColorsMap);
+    newScheme.myVersion = myVersion;
+  }
+
   public void setEditorFontName(String fontName) {
-    myValuesMap.put(EDITOR_FONT_NAME, fontName);
+    myEditorFontName = fontName;
     initFonts();
   }
 
@@ -77,16 +94,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
   }
 
   public Font getFont(EditorFontType key) {
-    return (Font)myValuesMap.get(key);
+    return myFonts.get(key);
   }
 
   public void setName(String name) {
-    myValuesMap.put(SCHEME_NAME, name);
+    mySchemeName = name;
   }
 
   public String getEditorFontName() {
-    String fontName = (String)myValuesMap.get(EDITOR_FONT_NAME);
-    return fontName == null ? AbstractColorsScheme.DEFAULT_FONT_NAME : fontName;
+    return myEditorFontName == null ? AbstractColorsScheme.DEFAULT_FONT_NAME : myEditorFontName;
   }
 
   public int getEditorFontSize() {
@@ -106,10 +122,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
     Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
     Font boldItalicFont = new Font(editorFontName, Font.BOLD + Font.ITALIC, editorFontSize);
 
-    myValuesMap.put(EditorFontType.PLAIN, plainFont);
-    myValuesMap.put(EditorFontType.BOLD, boldFont);
-    myValuesMap.put(EditorFontType.ITALIC, italicFont);
-    myValuesMap.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
+    myFonts.put(EditorFontType.PLAIN, plainFont);
+    myFonts.put(EditorFontType.BOLD, boldFont);
+    myFonts.put(EditorFontType.ITALIC, italicFont);
+    myFonts.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
   }
 
   public String toString() {
@@ -153,30 +169,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
     }
   }
 
-  protected void migrateFromOldVersions() {
-    if (myVersion == 0) {
-      myVersion = LATEST_VERSION;
-      migrateFromVersion0();
-    }
-  }
-
-  private void migrateFromVersion0() {     
-    Map<TextAttributesKey, Color> attributesToErrorStripe = new HashMap<TextAttributesKey, Color>();
-    attributesToErrorStripe.put(CodeInsightColors.ERRORS_ATTRIBUTES, Color.red);
-    attributesToErrorStripe.put(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, Color.red);
-    attributesToErrorStripe.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES, Color.yellow);
-    attributesToErrorStripe.put(CodeInsightColors.DEPRECATED_ATTRIBUTES, Color.yellow);
-    attributesToErrorStripe.put(CodeInsightColors.WARNINGS_ATTRIBUTES, Color.yellow);
-    for (Iterator<Map.Entry<TextAttributesKey, Color>> iterator = attributesToErrorStripe.entrySet().iterator(); iterator.hasNext();) {
-      final Map.Entry<TextAttributesKey, Color> entry = iterator.next();
-      TextAttributesKey key = entry.getKey();
-      Color color = entry.getValue();
-
-      TextAttributes attributes = getAttributes(key);
-      attributes.setErrorStripeColor(color);
-    }
-  }
-
   private void readAttributes(Element childNode) throws InvalidDataException {
     for (Iterator iterator = childNode.getChildren("option").iterator(); iterator.hasNext();) {
       Element e = (Element)iterator.next();
@@ -200,7 +192,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
         try {
           myColorsMap.put(name, new Color(Integer.parseInt(value, 16)));
         } catch (NumberFormatException e) {
-          continue;
         }
       }
     }
@@ -220,7 +211,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, JDOMEx
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     parentNode.setAttribute("name", getName());
-    parentNode.setAttribute("version", ""+myVersion);
+    parentNode.setAttribute("version", Integer.toString(myVersion));
 
     if (myParentScheme != null) {
       parentNode.setAttribute("parent_scheme", myParentScheme.getName());

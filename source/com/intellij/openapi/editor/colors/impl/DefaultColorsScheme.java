@@ -4,7 +4,6 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -52,10 +51,8 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
   }
 
   public Object clone() {
-    EditorColorsScheme newScheme = new EditorColorsSchemeImpl(this, myDefaultColorSchemesManager);
-    newScheme.setEditorFontSize(myEditorFontSize);
-    newScheme.setLineSpacing(myLineSpacing);
-    newScheme.setEditorFontName((String)myValuesMap.get(EDITOR_FONT_NAME));
+    EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this, myDefaultColorSchemesManager);
+    copyTo(newScheme);
     newScheme.setName("Default");
     return newScheme;
   }

@@ -153,7 +153,7 @@ public class HighlightInfo {
     LOG.assertTrue(startOffset <= endOffset);
   }
 
-  public HighlightInfo(final TextAttributesKey textAttributes,
+  public HighlightInfo(final TextAttributesKey textAttributesKey,
                        final HighlightInfoType type,
                        final int startOffset,
                        final int endOffset,
@@ -162,7 +162,7 @@ public class HighlightInfo {
                        final HighlightSeverity severity,
                        final boolean afterEndOfLine,
                        final boolean needsUpdateOnTyping) {
-    this.forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributes);
+    this.forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
