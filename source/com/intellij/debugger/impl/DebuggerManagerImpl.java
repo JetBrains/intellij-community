@@ -65,6 +65,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     }
   };
+  private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   public void addDebuggerManagerListener(DebuggerManagerListener listener) {
     myDispatcher.addListener(listener);
@@ -376,7 +377,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         boolean classicVM = shouldForceClassicVM(parameters.getJdk());
         parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
 
-        parameters.getVMParametersList().replaceOrAppend("-Xdebug", "-Xdebug");
+        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
+        parameters.getVMParametersList().replaceOrAppend(debugKey, debugKey);
 
         if (shouldForceNoJIT(parameters.getJdk())) {
           parameters.getVMParametersList().replaceOrAppend("-Xnoagent", "-Xnoagent");
