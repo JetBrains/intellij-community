@@ -32,7 +32,11 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new GridBagLayout());
+    myPanel = new JPanel(new GridBagLayout()){
+      public Dimension getPreferredSize() {
+        return new Dimension(700, 400);    
+      }
+    };
 
     myExtPanel = new AddEditRemovePanel("Configure External Resources:", new ExtUrlsTableModel(), myPairs) {
       protected Object addItem() {

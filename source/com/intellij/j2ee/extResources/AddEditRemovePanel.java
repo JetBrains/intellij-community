@@ -67,7 +67,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     };
 
     myTable = new Table(myTableModel);
-    myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         if (e.getClickCount() == 2) doEdit();
@@ -146,19 +146,25 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
   }
 
   protected void doRemove() {
-    int selected = myTable.getSelectedRow();
-    if (!removeItem(myData.get(selected))) return;
-
-
-    myData.remove(selected);
-    AbstractTableModel model = (AbstractTableModel)myTable.getModel();
-    model.fireTableRowsDeleted(selected, selected);
-    if (selected >= myData.size()) {
-      selected--;
+    final int[] selected = myTable.getSelectedRows();
+    if (selected == null || selected.length == 0) return;
+    for (int i = selected.length - 1; i >= 0; i--) {
+      int idx = selected[i];
+      if (!removeItem(myData.get(idx))) return;
+      myData.remove(idx);
     }
-    if (selected >= 0) {
-      myTable.setRowSelectionInterval(selected, selected);
+
+    for (int i = selected.length - 1; i >= 0; i--) {
+      int idx = selected[i];
+      myTableModel.fireTableRowsDeleted(idx, idx);
     }
+    int selection = selected[0];
+    if (selection >= myData.size()) {
+      selection = myData.size() - 1;
+    }
+    if (selection >= 0) {
+      myTable.setRowSelectionInterval(selection, selection);
+    }   
   }
 
   public void setData(java.util.List data) {
@@ -172,7 +178,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
 
   private void updateButtons() {
     myEditButton.setEnabled(myTable.getSelectedRowCount() == 1);
-    myRemoveButton.setEnabled(myTable.getSelectedRowCount() == 1);
+    myRemoveButton.setEnabled(myTable.getSelectedRowCount() >= 1);
   }
 
   public static interface TableModel {
