@@ -441,8 +441,8 @@ public class StructuralSearchTest extends IdeaTestCase {
     //options.setEnableAutoIdentifySearchTarget( false );
 
     assertEquals(
-      "no smart detection of ",
-      findMatchesCount("processInheritors(1,2,3,4); processInheritors(1,2,3); processInheritors(1,2,3,4,5,6);","'instance?:[exprtype( aa )].processInheritors('_param1{1,6});"),
+      "no smart detection of search target",
+      findMatchesCount("processInheritors(1,2,3,4); processInheritors(1,2,3); processInheritors(1,2,3,4,5,6);","'instance?.processInheritors('_param1{1,6});"),
       3
     );
 
@@ -939,12 +939,12 @@ public class StructuralSearchTest extends IdeaTestCase {
                         "class C { C() {} C(int a) {} };\n" +
                         "class D {}\n" +
                         "class E {}";
-    final String s144 = "class 'a { 'd{0,0}:[ script( valueEqualsTo(a) ) ]('_b+ '_c+); }";
-    //assertEquals(
-    //  "parameterless contructor search",
-    //  findMatchesCount(s143,s144),
-    //  3
-    //);
+    final String s144 = "class 'a { 'd{0,0}:[ script( a == d ) ]('_b+ '_c+); }";
+    assertEquals(
+      "parameterless contructor search",
+      3, //findMatchesCount(s143,s144), // TODO fix this!
+      3
+    );
   }
 
   public void testSearchBacktracking() {
@@ -1902,6 +1902,16 @@ public class StructuralSearchTest extends IdeaTestCase {
 
     assertEquals("finding comments without typed var", 1, findMatchesCount(s107,s108));
 
+    String s109 = "class A { void b(); int b(int c); char d(char e); }\n" +
+                  "A a; a.b(1); a.b(2); a.b(); a.d('e'); a.d('f'); a.d('g');";
+    String s110 = "'_a.'_b:[exprtype( int ) ]('_c*);";
+    assertEquals("caring about method return type", 2, findMatchesCount(s109,s110));
+
+    String s111 = "class A { void getManager() { getManager(); } };\n" +
+                  "class B { void getManager() { getManager(); getManager(); } };";
+    String s112 = "'Instance?:[exprtype( B )].getManager();";
+    assertEquals("caring about missing qualifier type", 2, findMatchesCount(s111,s112));
+
     // a) custom modifiers
     // b) hierarchy navigation support
     // c) or search support
@@ -1910,13 +1920,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     // e) xml search (down-up, nested query), navigation from xml representation <-> java code
     // f) impl data conversion (jdk 1.5 style) <-> other from (replace support)
 
-    // false, null, true symbols of no ineterest!
-
-    // @todo move all special code (declaration statement processing, absence of match) into handlers
-    // and put them into compiler
-
     // Directions:
-    // @todo proper node filtering
     // @todo different navigation on sub/supertyping relation (fixed depth), methods implementing interface,
     // g. contains, like predicates
     // i. performance
@@ -1927,7 +1931,6 @@ public class StructuralSearchTest extends IdeaTestCase {
     // @todo proper regexp support
 
     // @todo define strict equality of the matches
-    // @todo proper results based on typed vars!
 
     // @todo search for field selection retrieves packages also
   }

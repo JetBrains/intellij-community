@@ -21,7 +21,7 @@ class StringToConstraintsTransformer {
   private static StringBuffer buf = new StringBuffer();
   private static Pattern p = Pattern.compile("(\\w+)\\('(\\w+)\\)");
   private static Pattern p2 = Pattern.compile("(\\w+)");
-  private static Pattern p3 = Pattern.compile("(\\w+)\\(( ?[\\*<>\\.\\?\\:\\\\\\(\\)\\[\\]\\w\\|\\+]+ ?)\\)");
+  private static Pattern p3 = Pattern.compile("(\\w+)\\(( ?[\\\"\\*<>\\.\\?\\:\\\\\\(\\)\\[\\]\\w\\|\\+]+ ?)\\)");
 
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();

@@ -86,24 +86,20 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s10 = "configureByFile(path + \"1.html\");\n" +
              "    checkResultByFile(path + \"1_after.html\");\n" +
              "    checkResultByFile(path + \"1_after2.html\");\n" +
-             "    checkResultByFile(path + \"1_after3.html\");\n" +
-             "    checkResultByFile(path + \"1_after4.html\");\n" +
-             "    checkResultByFile(path + \"1_after5.html\");";
+             "    checkResultByFile(path + \"1_after3.html\");";
     String s11 = "\"$a$.html\"";
     String s12 = "\"$a$.\"+ext";
     String expectedResult4 = "configureByFile(path + (\"1.\"+ext));\n" +
              "    checkResultByFile(path + (\"1_after.\"+ext));\n" +
              "    checkResultByFile(path + (\"1_after2.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after3.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after4.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after5.\"+ext));";
+             "    checkResultByFile(path + (\"1_after3.\"+ext));";
 
     actualResult = replacer.testReplace(s10,s11,s12,options);
-    //assertEquals(
-    //  "string literal replacement 4",
-    //  expectedResult4,
-    //  actualResult
-    //);
+    assertEquals(
+      "string literal replacement 4",
+      expectedResult4,
+      actualResult
+    );
   }
 
   public void testReplace2() {
@@ -139,10 +135,22 @@ public class StructuralReplaceTest extends IdeaTestCase {
       expectedResult,
       actualResult
     );
+
+    String s4 = "myButton.setText(\"Ok\");";
+    String s5 = "'Instance.'MethodCall:[regex( setText )]('Parameter*:[regex( \"Ok\" )]);";
+    String s6 = "$Instance$.$MethodCall$(\"OK\");";
+
+    String expectedResult2 = "    myButton.setText(\"OK\");";
+
+    actualResult = replacer.testReplace(s4,s5,s6,options);
+    assertEquals(
+      "adding comment to statement inside the if body",
+      expectedResult2,
+      actualResult
+    );
   }
 
   public void testReplace() {
-    //if (!IdeaTestUtil.bombExplodes(2005, Calendar.MARCH, 10, 12, 0, "lesya", "method parameter alignment")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
@@ -1068,51 +1076,45 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     // testcase for http://www.jetbrains.net/jira/browse/IDEADEV-298
     // we have correct results, pending for more info from the user
-    //String s34 = "/**\n" +
-    //             " * Some javadocs\n" +
-    //             " */\n" +
-    //             "public interface Test {\n" +
-    //             "    public static final String A = \"HELLO\";\n" +
-    //             "    public static final int B = 1;\n" +
-    //             "}\n" +
-    //             "/**\n" +
-    //             " * Some javadocs2\n" +
-    //             " */\n" +
-    //             "public interface Test2 {\n" +
-    //             "    public static final String C = \"HELLO2\";\n" +
-    //             "    public static final int D = 2;\n" +
-    //             "} ";
-    //
-    //String s35 = "public interface 'MessageInterface {\n" +
-    //             "    public static final String 'X = 'VALUE;\n" +
-    //             "    'blah*" +
-    //             "}";
-    //String s36 = "public interface $MessageInterface$ {\n" +
-    //             "    public static final String HEADER = $VALUE$;\n" +
-    //             "    $blah$\n" +
-    //             "}";
-    //
-    //String expectedResult13 = "/**\n" +
-    //                          " * Some javadocs\n" +
-    //                          " */\n" +
-    //                          "public interface Test {\n" +
-    //                          "    public static final String HEADER = \"HELLO\";\n" +
-    //                          "    public static final int B = 1;\n" +
-    //                          "}\n" +
-    //                          "/**\n" +
-    //                          " * Some javadocs\n" +
-    //                          " */\n" +
-    //                          "public interface Test2 {\n" +
-    //                          "    public static final String HEADER = \"HELLO2\";\n" +
-    //                          "    public static final int D = 2;\n" +
-    //                          "} ";
-    //actualResult = replacer.testReplace(s34,s35,s36,options);
-    //
-    //assertEquals(
-    //  "Replacing comments with javadoc for fields",
-    //  expectedResult13,
-    //  actualResult
-    //);
+    String s34 = "/**\n" +
+                 " * This interface blah blah blah\n" +
+                 " * <p/>\n" +
+                 " * Created On: 04-Feb-2005\n" +
+                 " * @author someone\n" +
+                 " * @see AnotherClass\n" +
+                 " */\n" +
+                 "public interface Test {\n" +
+                 "    public static final String A = \"HELLO\";\n" +
+                 "    public static final int B = 1;\n" +
+                 "}";
+
+    String s35 = "public interface 'MessageInterface {\n" +
+                 "    public static final String 'X = 'VALUE;\n" +
+                 "    'blah*" +
+                 "}";
+    String s36 = "public interface $MessageInterface$ {\n" +
+                 "    public static final String HEADER = $VALUE$;\n" +
+                 "    $blah$\n" +
+                 "}";
+
+    String expectedResult13 = "/**\n" +
+                              " * This interface blah blah blah\n" +
+                              " * <p/>\n" +
+                              " * Created On: 04-Feb-2005\n" +
+                              " * @author someone\n" +
+                              " * @see AnotherClass\n" +
+                              " */\n" +
+                              "public interface Test {\n" +
+                              "    public static final String HEADER = \"HELLO\";\n" +
+                              "    public static final int B = 1;\n" +
+                              "}";
+    actualResult = replacer.testReplace(s34,s35,s36,options);
+
+    assertEquals(
+      "Replacing comments with javadoc for fields",
+      expectedResult13,
+      actualResult
+    );
   }
 
   public void testReplaceExceptions() {

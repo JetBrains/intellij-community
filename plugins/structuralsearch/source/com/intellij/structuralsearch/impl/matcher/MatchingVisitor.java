@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiThisExpressionImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -11,6 +12,8 @@ import com.intellij.structuralsearch.impl.matcher.iterators.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.MatchResult;
 
 import java.util.Iterator;
@@ -569,6 +572,36 @@ public class MatchingVisitor extends PsiElementVisitor {
               ((SubstitutionHandler)handler).getMinOccurs()!=0) {
             result = false;
             return;
+          } else {
+            // we may have not ? expr_type constraint set on qualifier expression so validate it
+            SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+
+            if (substitutionHandler.getPredicate()!=null) {
+              boolean isnot = false;
+              Handler _predicate = substitutionHandler.getPredicate();
+              ExprTypePredicate predicate = null;
+
+              if (_predicate instanceof NotPredicate) {
+                isnot = true;
+                _predicate = ((NotPredicate)_predicate).getHandler();
+              }
+
+              if (_predicate instanceof ExprTypePredicate) {
+                predicate = (ExprTypePredicate)_predicate;
+              }
+
+              if (predicate != null) {
+                PsiMethod method = (PsiMethod)mcallRef2.resolve();
+                if (method != null) {
+                  result = predicate.checkClass((PsiClass)method.getParent(),matchContext);
+                  if (isnot) result = !result;
+                } else {
+                  result = false;
+                }
+
+                if (!result) return;
+              }
+            }
           }
         }
       }

@@ -92,18 +92,22 @@ public final class RegExpPredicate extends Handler {
 
     boolean result = doMatch(text, start, end, context);
 
-    // Short class name is matched with fully qualified name
-    if (!result && (matchedNode instanceof PsiJavaCodeReferenceElement || matchedNode instanceof PsiClass)) {
-      PsiElement element = (matchedNode instanceof PsiJavaCodeReferenceElement)?
-                           ((PsiJavaCodeReferenceElement)matchedNode).resolve():
-                           matchedNode;
+    if (!result) {
+      // Short class name is matched with fully qualified name
+      if(matchedNode instanceof PsiJavaCodeReferenceElement || matchedNode instanceof PsiClass) {
+        PsiElement element = (matchedNode instanceof PsiJavaCodeReferenceElement)?
+                             ((PsiJavaCodeReferenceElement)matchedNode).resolve():
+                             matchedNode;
 
-      if (element instanceof PsiClass) {
-        text = ((PsiClass)element).getQualifiedName();
+        if (element instanceof PsiClass) {
+          text = ((PsiClass)element).getQualifiedName();
 
-        if (text!=null) {
-          result = doMatch(text, start, end, context);
+          if (text!=null) {
+            result = doMatch(text, start, end, context);
+          }
         }
+      } else if (matchedNode instanceof PsiLiteralExpression) {
+        result = doMatch(matchedNode.getText(), start, end, context);
       }
     }
 

@@ -40,7 +40,15 @@ public class ExprTypePredicate extends Handler {
   }
 
   protected PsiType evalType(PsiExpression match, MatchContext context) {
-    final PsiType type = match.getType();
+    PsiType type = null;
+
+    if (match instanceof PsiReferenceExpression &&
+        match.getParent() instanceof PsiMethodCallExpression) {
+      PsiMethod method = ((PsiMethodCallExpression)match.getParent()).resolveMethod();
+      if (method!=null) type = method.getReturnType();
+    }
+
+    if (type==null) type = match.getType();
     return type;
   }
 
@@ -58,7 +66,7 @@ public class ExprTypePredicate extends Handler {
     }
   }
 
-  private boolean checkClass(PsiClass clazz, MatchContext context) {
+  public boolean checkClass(PsiClass clazz, MatchContext context) {
     if (withinHierarchy) {
       final NodeIterator parents = new HierarchyNodeIterator(clazz,true,true);
 
