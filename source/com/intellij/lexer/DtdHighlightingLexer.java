@@ -73,7 +73,7 @@ public class DtdHighlightingLexer implements Lexer {
 
       // TODO: do not know when this happens!
       switch (getState()) {
-        case _XmlLexer.DOCTYPE:
+        case __XmlLexer.DOCTYPE:
           tokenType = XmlTokenType.XML_DECL_START;
           break;
       }

@@ -75,7 +75,7 @@ public class XmlHighlightingLexer implements Lexer {
 
       // TODO: do not know when this happens!
       switch (state) {
-        case _XmlLexer.DOCTYPE:
+        case __XmlLexer.DOCTYPE:
           tokenType = XmlTokenType.XML_DECL_START;
           break;
       }
@@ -86,14 +86,14 @@ public class XmlHighlightingLexer implements Lexer {
 
   static IElementType fixWrongTokenTypes(IElementType tokenType, final int state) {
     if (tokenType == XmlTokenType.XML_NAME) {
-      if (state == _XmlLexer.TAG || state == _XmlLexer.END_TAG) {
+      if (state == __XmlLexer.TAG || state == __XmlLexer.END_TAG) {
         // translate XML names for tags into XmlTagName
         tokenType = XmlTokenType.XML_TAG_NAME;
       }
     } else if (tokenType == XmlTokenType.XML_WHITE_SPACE) {
       switch (state) {
-        case _XmlLexer.ATTR_LIST:
-        case _XmlLexer.ATTR:
+        case __XmlLexer.ATTR_LIST:
+        case __XmlLexer.ATTR:
           tokenType = XmlTokenType.TAG_WHITE_SPACE; break;
         default:
           tokenType = XmlTokenType.XML_REAL_WHITE_SPACE; break;

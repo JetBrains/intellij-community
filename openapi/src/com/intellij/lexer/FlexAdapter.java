@@ -1,53 +1,52 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.io.IOException;
-import java.io.Reader;
 
 /**
  * @author max
  */
-public abstract class FlexAdapter /*implements Lexer*/ {
+public abstract class FlexAdapter implements Lexer {
   private FlexLexer myFlex = null;
   private IElementType myTokenType = null;
-  private CharSequence myText;
+  private CharArrayCharSequence myText;
+  private int myStart;
+  private int myEnd;
+  private char[] myBuffer;
 
-  public void start(CharSequence text) {
-    myText = text;
-    Reader reader = new CharSequenceReader(text);
-    if (myFlex == null) {
-      myFlex = createFlexLexer(reader);
-    }
-    else {
-      myFlex.yyreset(reader);
-    }
+  protected FlexAdapter(final FlexLexer flex) {
+    myFlex = flex;
   }
 
-  public void reset(int offset, int state) {
-    myFlex.yyreset(new CharSequenceReader(myText.subSequence(offset, myText.length())));
-    myFlex.yybegin(state);
+  public FlexLexer getFlex() {
+    return myFlex;
   }
 
-  protected abstract FlexLexer createFlexLexer(final Reader reader);
+  public void start(char[] buffer) {
+    start(buffer, 0, buffer.length, 0);
+  }
 
-  public CharSequence getText() {
-    return myText;
+  public void start(char[] buffer, int startOffset, int endOffset) {
+    start(buffer, startOffset, endOffset, 0);
+  }
+
+  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    myBuffer = buffer;
+    myText = new CharArrayCharSequence(myBuffer, startOffset, endOffset);
+    myStart = startOffset;
+    myEnd = endOffset;
+    myFlex.reset(myText, initialState);
+    myTokenType = null;
   }
 
   public int getState() {
-    return (short)myFlex.yystate();
+    return myFlex.yystate();
   }
 
-  public int getTokenStart() {
-    locateToken();
-    return myFlex.getTokenStart();
-  }
-
-  public int getTokenEnd() {
-    locateToken();
-    return myFlex.getTokenEnd();
+  public int getLastState() {
+    return 0;
   }
 
   public IElementType getTokenType() {
@@ -55,9 +54,35 @@ public abstract class FlexAdapter /*implements Lexer*/ {
     return myTokenType;
   }
 
+  public int getTokenStart() {
+    locateToken();
+    return myFlex.getTokenStart() + myStart;
+  }
+
+  public int getTokenEnd() {
+    locateToken();
+    return myFlex.getTokenEnd() + myStart;
+  }
+
   public void advance() {
     locateToken();
     myTokenType = null;
+  }
+
+  public char[] getBuffer() {
+    return myBuffer;
+  }
+
+  public int getBufferEnd() {
+    return myEnd;
+  }
+
+  public int getSmartUpdateShift() {
+    return 10;
+  }
+
+  public Object clone() {
+    return null;
   }
 
   private void locateToken() {
@@ -65,6 +90,6 @@ public abstract class FlexAdapter /*implements Lexer*/ {
     try {
       myTokenType = myFlex.advance();
     }
-    catch (IOException e) { /* Can't happen */ }
+    catch (IOException e) { /*Can't happen*/ }
   }
 }

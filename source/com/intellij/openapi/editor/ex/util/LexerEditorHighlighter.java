@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,10 +31,13 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
   private SegmentArrayWithData mySegments = new SegmentArrayWithData();
   private SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
+  private int myInitialState;
 
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
+    myLexer.start("".toCharArray());
+    myInitialState = myLexer.getState();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;
   }
@@ -72,7 +74,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
 
   public synchronized void documentChanged(DocumentEvent e) {
     Document document = e.getDocument();
-    if(mySegments.getSegmentCount() == 0 || myLexer.getSmartUpdateShift() < 0) {
+    if(mySegments.getSegmentCount() == 0) {
       setText(document.getCharsSequence());
       return;
     }
@@ -80,11 +82,18 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     int oldStartOffset = e.getOffset();
 
     int startIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
+
+    long data;
+    int lexerState;
+    do {
+      data = mySegments.getSegmentData(startIndex);
+      lexerState = unpackState(data);
+      if (lexerState == myInitialState) break;
+      startIndex--;
+    }
+    while (startIndex > 0);
+
     int startOffset = mySegments.getSegmentStart(startIndex);
-
-    long data = mySegments.getSegmentData(startIndex);
-    final int lexerState = unpackState(data);
-
     int newEndOffset = e.getOffset() + e.getNewLength();
 
     myLexer.start(CharArrayUtil.fromSequence(text), startOffset, text.length(), lexerState);
