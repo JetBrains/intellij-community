@@ -80,7 +80,8 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
                     final PsiParameterList params = method.getParameterList();
                     if (params != null) {
                         if (params.getParameters().length == 0
-                                && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                                && (method.hasModifierProperty(PsiModifier.PUBLIC) ||
+                                    method.hasModifierProperty(PsiModifier.PROTECTED))) {
                             hasNoArgConstructor = true;
                         }
                     }
