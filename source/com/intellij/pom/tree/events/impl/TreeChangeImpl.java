@@ -211,7 +211,7 @@ public class TreeChangeImpl implements TreeChange {
         }
         else {
           myChanges.put(child, change);
-          addChangeAtOffset(child, getOldOffset(pair.getSecond()));
+          addChangeAtOffset(child, getOldOffset(pair.getSecond().intValue()));
         }
       }
       else {
