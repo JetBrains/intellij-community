@@ -32,8 +32,7 @@ public class JavaLangImportInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            final PsiElement importReference = descriptor.getPsiElement();
-            final PsiElement importStatement = importReference.getParent();
+            final PsiElement importStatement = descriptor.getPsiElement();
             deleteElement(importStatement);
         }
     }
@@ -76,7 +75,7 @@ public class JavaLangImportInspection extends ClassInspection {
                             final String parentName = text.substring(0, classNameIndex);
                             if ("java.lang".equals(parentName)) {
                                 if (!ImportUtils.hasOnDemandImportConflict(text, file)) {
-                                    registerError(reference);
+                                    registerError(importStatement);
                                 }
                             }
                         }

@@ -18,7 +18,7 @@ public class UnusedImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Unused import #ref #loc";
+        return "Unused import '#ref' #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -31,8 +31,7 @@ public class UnusedImportInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            final PsiElement importReference = descriptor.getPsiElement();
-            final PsiElement importStatement = importReference.getParent();
+            final PsiElement importStatement = descriptor.getPsiElement();
             deleteElement(importStatement);
         }
     }
@@ -59,10 +58,7 @@ public class UnusedImportInspection extends ClassInspection {
             for (int i = 0; i < importStatements.length; i++) {
                 final PsiImportStatement importStatement = importStatements[i];
                 if (!isNecessaryImport(importStatement, file.getClasses())) {
-                    final PsiJavaCodeReferenceElement importReference
-                            = importStatement.getImportReference();
-
-                    registerError(importReference);
+                    registerError(importStatement);
                 }
             }
         }

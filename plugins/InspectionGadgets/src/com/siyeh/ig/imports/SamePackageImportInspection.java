@@ -18,7 +18,7 @@ public class SamePackageImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Unnecessary import from same package package #loc";
+        return "Unnecessary import from same package '#ref' #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -31,9 +31,7 @@ public class SamePackageImportInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-
-            final PsiElement importReference = descriptor.getPsiElement();
-            final PsiElement importStatement = importReference.getParent();
+            final PsiElement importStatement = descriptor.getPsiElement();
             deleteElement(importStatement);
         }
     }
@@ -72,7 +70,7 @@ public class SamePackageImportInspection extends ClassInspection {
                         final int classNameIndex = text.lastIndexOf((int) '.');
                         final String parentName = classNameIndex < 0 ? "" : text.substring(0, classNameIndex);
                         if (packageName.equals(parentName)) {
-                            registerError(reference);
+                            registerError(importStatement);
                         }
                     }
                 }

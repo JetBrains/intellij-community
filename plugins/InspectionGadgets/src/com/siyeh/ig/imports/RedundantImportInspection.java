@@ -22,7 +22,7 @@ public class RedundantImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Redundant import #ref #loc";
+        return "Redundant import '#ref' #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -35,8 +35,7 @@ public class RedundantImportInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            final PsiElement importReference = descriptor.getPsiElement();
-            final PsiElement importStatement = importReference.getParent();
+            final PsiElement importStatement = descriptor.getPsiElement();
             deleteElement(importStatement);
         }
     }
@@ -79,8 +78,7 @@ public class RedundantImportInspection extends ClassInspection {
                     final String parentName = text.substring(0, classNameIndex);
                     if (imports.contains(parentName)) {
                         if (!ImportUtils.hasOnDemandImportConflict(text, file)) {
-                            final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
-                            registerError(importReference);
+                            registerError(importStatement);
                         }
                     }
                 }
