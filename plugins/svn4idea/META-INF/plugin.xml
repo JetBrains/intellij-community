@@ -35,14 +35,6 @@
 
     <action id="Subversion.ShowDiffAction" class="com.qintsoft.svn4idea.actions.ShowDiffAction" text="Show Diff..." description="Show difference with Subversion base version"/>
 
-    <group id="SubversionGlobalGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
-       <!--<action id="Subversion.CleanupProject" class="com.qintsoft.svn4idea.actions.CleanupProjectAction" text="Cleanup Workspace" description="Cleanup Subversion workspace from any leftovers"/>-->
-      <!--<action id="Subversion.Refresh" class="com.qintsoft.svn4idea.actions.RefreshAction" text="_Refresh" description="Refresh information from Subversion repository"/>-->
-      <action id="Subversion.ShowFilesInProject" class="com.qintsoft.svn4idea.actions.ShowFilesInProjectAction" text="SvnUp.." description="Run SvnUp on project directory"/>
-      <action id="Subversion.Help" class="com.qintsoft.svn4idea.actions.HelpAction" text="Help.." description="Subversion plugin readme"/>
-      <add-to-group group-id="VcsGroups" anchor="last"/>
-    </group>
-
     <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
@@ -67,7 +59,6 @@
       -->
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
-      <add-to-group group-id="SubversionGlobalGroup" anchor="last"/>
     </group>
   </actions>
 </idea-plugin>
