@@ -10,10 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -161,7 +158,7 @@ public class ExternalDocumentValidator {
                 }
                 return;
               } else {
-                currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
+                currentElement = getNodeForMessage(currentElement);
                 assertValidElement(currentElement, originalElement,localizedMessage);
                 if (currentElement!=null) {
                   myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
@@ -185,6 +182,14 @@ public class ExternalDocumentValidator {
     myInfos = new WeakReference<List<ValidationInfo>>(results);
 
     addAllInfos(host,results);
+  }
+
+  private XmlElement getNodeForMessage(final PsiElement currentElement) {
+    XmlElement parentOfType = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class, false);
+    if (parentOfType==null) {
+      parentOfType = PsiTreeUtil.getParentOfType(currentElement, XmlProcessingInstruction.class, false);
+    }
+    return parentOfType;
   }
 
   private void addAllInfos(Validator.ValidationHost host,List<ValidationInfo> highlightInfos) {
