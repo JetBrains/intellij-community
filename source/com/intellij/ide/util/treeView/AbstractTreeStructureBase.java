@@ -22,7 +22,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   public Object[] getChildElements(Object element) {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
-    AbstractTreeNode treeNode = ((AbstractTreeNode)element);
+    AbstractTreeNode treeNode = (AbstractTreeNode)element;
     Collection<AbstractTreeNode> elements = treeNode.getChildren();
     List providers = getProviders();
     ArrayList<AbstractTreeNode> modified = elements != null ? new ArrayList<AbstractTreeNode>(elements) : new ArrayList<AbstractTreeNode>();
@@ -35,7 +35,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
       AbstractTreeNode node = iterator.next();
       node.setParent(treeNode);
     }
-    return (Object[])modified.toArray(new Object[modified.size()]);
+    return modified.toArray(new Object[modified.size()]);
   }
 
   public Object getParentElement(Object element) {
@@ -47,7 +47,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   }
 
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
-    return ((AbstractTreeNode)element);
+    return (AbstractTreeNode)element;
   }
 
   public abstract List<TreeStructureProvider> getProviders();

@@ -18,7 +18,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 public final class ProjectViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
-
   public static final String ID = "ProjectPane";
   private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 

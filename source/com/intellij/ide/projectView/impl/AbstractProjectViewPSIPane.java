@@ -12,7 +12,10 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -121,6 +124,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     });
   }
 
+
   public final void expand(Object[] path) {
     myTreeBuilder.buildNodeForPath(path);
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForPath(path);
@@ -189,6 +193,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     SelectInManager selectInManager = SelectInManager.getInstance(myProject);
     selectInManager.addTarget(createSelectInTarget());
 
+    ((ProjectViewImpl)ProjectView.getInstance(myProject)).setComparator(this);
     initPSITree();
     restoreState();
   }
@@ -196,12 +201,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   protected abstract ProjectViewSelectInTarget createSelectInTarget();
 
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
-                                  (ProjectAbstractTreeStructureBase)myTreeStructure) {
+    return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
       protected AbstractTreeUpdater createUpdater() {
         return createTreeUpdater(this);
       }
-
     };
   }
 
@@ -210,14 +213,14 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   protected abstract ProjectViewTree createTree(DefaultTreeModel treeModel);
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-                                                                            public void run() {
-                                                                              initTree();
-                                                                              final ProjectView projectView =
-                                                                              ProjectView.getInstance(myProject);
-                                                                              projectView.addProjectPane(AbstractProjectViewPSIPane.this);
-                                                                            }
-                                                                          });
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        initTree();
+        final ProjectView projectView = ProjectView.getInstance(myProject);
+        projectView.addProjectPane(AbstractProjectViewPSIPane.this);
+      }
+    };
+    StartupManager.getInstance(myProject).registerPostStartupActivity(runnable);
   }
 
   public void projectClosed() {
@@ -290,63 +293,65 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
     FLAVORS = flavors;
   }
-    private class MyDragGestureListener implements DragGestureListener {
-      public void dragGestureRecognized(DragGestureEvent dge) {
-        if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
-        final Point dragOrigin = dge.getDragOrigin();
-        final AbstractTreeNode draggableObject = findAbstractTreeNodeByLocation(dragOrigin);
-        if (draggableObject != null) {
-          try {
-            FavoritesViewImpl.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject);
-            final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
-            dge.startDrag(DragSource.DefaultMoveNoDrop, new Transferable() {
-              public DataFlavor[] getTransferDataFlavors() {
-                return FLAVORS;
-              }
 
-              public boolean isDataFlavorSupported(DataFlavor flavor) {
-                DataFlavor[] flavors = getTransferDataFlavors();
-                for (int i = 0; i < flavors.length; i++) {
-                  if (flavor.equals(flavors[i])) {
-                    return true;
-                  }
+  private class MyDragGestureListener implements DragGestureListener {
+    public void dragGestureRecognized(DragGestureEvent dge) {
+      if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
+      final Point dragOrigin = dge.getDragOrigin();
+      final AbstractTreeNode draggableObject = findAbstractTreeNodeByLocation(dragOrigin);
+      if (draggableObject != null) {
+        try {
+          FavoritesViewImpl.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject);
+          final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
+          dge.startDrag(DragSource.DefaultMoveNoDrop, new Transferable() {
+            public DataFlavor[] getTransferDataFlavors() {
+              return FLAVORS;
+            }
+
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+              DataFlavor[] flavors = getTransferDataFlavors();
+              for (int i = 0; i < flavors.length; i++) {
+                if (flavor.equals(flavors[i])) {
+                  return true;
                 }
-                return false;
               }
+              return false;
+            }
 
-              public Object getTransferData(DataFlavor flavor) {
-                return null;
-              }
-            }, dragSourceListener);
-          }
-          catch (InvalidDnDOperationException idoe) {
-          }
+            public Object getTransferData(DataFlavor flavor) {
+              return null;
+            }
+          }, dragSourceListener);
+        }
+        catch (InvalidDnDOperationException idoe) {
         }
       }
     }
+  }
 
-    private AbstractTreeNode findAbstractTreeNodeByLocation(final Point point) {
-      final int row = myTree.getRowForLocation(point.x, point.y);
-      final TreePath treePath = myTree.getPathForRow(row);
-      if (treePath != null && treePath.getLastPathComponent() instanceof DefaultMutableTreeNode){
-        return (AbstractTreeNode)((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
-      }
-      return null;
+  private AbstractTreeNode findAbstractTreeNodeByLocation(final Point point) {
+    final int row = myTree.getRowForLocation(point.x, point.y);
+    final TreePath treePath = myTree.getPathForRow(row);
+    if (treePath != null && treePath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+      return (AbstractTreeNode)((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
+    }
+    return null;
+  }
+
+  private static class MyDragSourceListener implements DragSourceListener {
+    public void dragEnter(DragSourceDragEvent dsde) {
+      dsde.getDragSourceContext().setCursor(null);
     }
 
-    private class MyDragSourceListener implements DragSourceListener {
-      public void dragEnter(DragSourceDragEvent dsde) {
-        dsde.getDragSourceContext().setCursor(null);
-      }
-
-      public void dragOver(DragSourceDragEvent dsde) {
-      }
-
-      public void dropActionChanged(DragSourceDragEvent dsde) {
-        dsde.getDragSourceContext().setCursor(null);
-      }
-      public void dragDropEnd(DragSourceDropEvent dsde) { }
-
-      public void dragExit(DragSourceEvent dse) { }
+    public void dragOver(DragSourceDragEvent dsde) {
     }
+
+    public void dropActionChanged(DragSourceDragEvent dsde) {
+      dsde.getDragSourceContext().setCursor(null);
+    }
+
+    public void dragDropEnd(DragSourceDropEvent dsde) { }
+
+    public void dragExit(DragSourceEvent dse) { }
+  }
 }

@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -127,7 +127,7 @@ public class FileReferenceSet {
       if (context instanceof WebDirectoryElement) {
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
         for (int i = 0; i < children.length; i++) {
-          PsiFileSystemItem item = children[i].isDirectory() ? ((PsiFileSystemItem)children[i]) : children[i].getOriginalFile();
+          PsiFileSystemItem item = children[i].isDirectory() ? (PsiFileSystemItem)children[i] : children[i].getOriginalFile();
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       } else if (context instanceof PsiDirectory) {
@@ -138,7 +138,6 @@ public class FileReferenceSet {
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       }
-      return;
     }
 
     public PsiElement resolve() {
@@ -152,7 +151,7 @@ public class FileReferenceSet {
         for (int i = 0; i < children.length; i++) {
           WebDirectoryElement child = children[i];
           if (myText.equals(child.getName())) {
-            return child.isDirectory() ? ((PsiFileSystemItem)child) : child.getOriginalFile();
+            return child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
           }
         }
       } else if (context instanceof PsiDirectory) {
@@ -198,7 +197,7 @@ public class FileReferenceSet {
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
       if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
 
-      final String newName = JspUtil.getDeploymentPath(((PsiFileSystemItem)element));
+      final String newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
       final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
       final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
       return finalElement;
@@ -213,9 +212,9 @@ public class FileReferenceSet {
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
 
-    if (!(file.isPhysical())) file = file.getOriginalFile();
+    if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return null;
-    final WebModuleProperties properties = JspImplUtil.getWebModuleProperties(file);
+    final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
 
     if (myPathString.startsWith(SEPARATOR_STRING)) {
       if (properties != null) {

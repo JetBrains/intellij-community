@@ -11,24 +11,23 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.pom.Navigatable;
+import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
-
-import org.jdom.Element;
+import java.util.List;
 
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider {
@@ -70,7 +69,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public abstract TreePath[] getSelectionPaths();
   public abstract void installAutoScrollToSourceHandler(AutoScrollToSourceHandler autoScrollToSourceHandler);
 
-  public void installAutoScrollFromSourceHandler(AutoScrollFromSourceHandler autoScrollFromSourceHandler) {
+  public static void installAutoScrollFromSourceHandler(AutoScrollFromSourceHandler autoScrollFromSourceHandler) {
     autoScrollFromSourceHandler.install();
   }
 
@@ -154,6 +153,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     return null;
   }
+
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     if (path == null) {
@@ -190,7 +190,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public final Object[] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
-    ArrayList list = new ArrayList(paths.length);
+    ArrayList<Object> list = new ArrayList<Object>(paths.length);
     for (int i = 0; i < paths.length; i++) {
       TreePath path = paths[i];
       Object lastPathComponent = path.getLastPathComponent();

@@ -12,6 +12,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -38,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -69,6 +71,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static final boolean ourFlattenPackagesDefaults = false;
   private Map<String, Boolean> myShowMembers = new HashMap<String, Boolean>();
   private static final boolean ourShowMembersDefaults = false;
+  private Map<String, Boolean> mySortByType = new HashMap<String, Boolean>();
+  private static final boolean ourSortByTypeDefaults = false;
   private Map<String, Boolean> myShowModules = new HashMap<String, Boolean>();
   private static final boolean ourShowModulesDefaults = true;
   private Map<String, Boolean> myShowLibraryContents = new HashMap<String, Boolean>();
@@ -150,6 +154,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     };
 
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
+    AbstractProjectViewPane.installAutoScrollFromSourceHandler(myAutoScrollFromSourceHandler);
   }
 
   public void disposeComponent() {
@@ -239,7 +244,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     newPane.setTreeChangeListener(myTreeChangeListener);
     newPane.installAutoScrollToSourceHandler(myAutoScrollToSourceHandler);
-    newPane.installAutoScrollFromSourceHandler(myAutoScrollFromSourceHandler);
   }
 
   private void setupImpl() {
@@ -331,6 +335,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     myActionGroup.add(myAutoScrollFromSourceHandler.createToggleAction());
     myActionGroup.add(new ShowStructureAction());
+    myActionGroup.add(new SortByTypeAction());
+
     final List<AbstractProjectViewPane> panes = new ArrayList<AbstractProjectViewPane>(myId2Pane.values());
     for (int i = 0; i < panes.size(); i++) {
       AbstractProjectViewPane projectViewPane = panes.get(i);
@@ -929,6 +935,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       readOption(navigatorElement.getChild("showStructure"), myShowStructure);
       readOption(navigatorElement.getChild("autoscrollToSource"), myAutoscrollToSource);
       readOption(navigatorElement.getChild("autoscrollFromSource"), myAutoscrollFromSource);
+      readOption(navigatorElement.getChild("sortByType"), mySortByType);
 
       try {
         mySplitterProportion = Float.parseFloat(navigatorElement.getAttributeValue("splitterProportion"));
@@ -953,6 +960,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     writeOption(navigatorElement, myShowStructure, "showStructure");
     writeOption(navigatorElement, myAutoscrollToSource, "autoscrollToSource");
     writeOption(navigatorElement, myAutoscrollFromSource, "autoscrollFromSource");
+    writeOption(navigatorElement, mySortByType, "sortByType");
 
     navigatorElement.setAttribute("splitterProportion", Float.toString(getSplitterProportion()));
     parentNode.addContent(navigatorElement);
@@ -1118,11 +1126,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     public static SelectionInfo create(final AbstractProjectViewPane viewPane) {
-      List selectedElements = Collections.EMPTY_LIST;
+      List<Object> selectedElements = Collections.EMPTY_LIST;
       if (viewPane != null) {
         final TreePath[] selectionPaths = viewPane.getSelectionPaths();
         if (selectionPaths != null) {
-          selectedElements = new ArrayList();
+          selectedElements = new ArrayList<Object>();
           for (int idx = 0; idx < selectionPaths.length; idx++) {
             TreePath path = selectionPaths[idx];
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -1253,6 +1261,77 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       public Object getSelectorInFile() {
         return getPsiElement();
       }
+    }
+  }
+
+  public boolean isSortByType(String paneId) {
+    return getPaneOptionValue(mySortByType, paneId, ourSortByTypeDefaults);
+  }
+  public void setSortByType(String paneId, final boolean sortByType) {
+    setPaneOption(mySortByType, sortByType, paneId, false);
+    setComparator(getProjectViewPaneById(paneId));
+  }
+
+  private abstract static class MyTypeComparator implements Comparator<NodeDescriptor> {
+    public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
+      if (isSortByType() && o1 instanceof ClassTreeNode && o2 instanceof ClassTreeNode) {
+        final PsiClass aClass1 = ((ClassTreeNode)o1).getValue();
+        final PsiClass aClass2 = ((ClassTreeNode)o2).getValue();
+        int type1 = getClassKind(aClass1);
+        int type2 = getClassKind(aClass2);
+        final int result = type1 - type2;
+        if (result != 0) return result;
+      }
+      else if (isSortByType() && o1 instanceof PsiFileNode && o2 instanceof PsiFileNode) {
+        final PsiFile file1 = ((PsiFileNode)o1).getValue();
+        final PsiFile file2 = ((PsiFileNode)o2).getValue();
+        String type1 = extension(file1);
+        String type2 = extension(file2);
+        if (type1 != null && type2 != null) {
+          return type1.compareTo(type2);
+        }
+      }
+      return AlphaComparator.INSTANCE.compare(o1, o2);
+    }
+
+    protected abstract boolean isSortByType();
+
+    private static int getClassKind(final PsiClass aClass) {
+      return aClass == null ? 0 : ElementBase.getClassKind(aClass);
+    }
+    private static String extension(final PsiFile file) {
+      return file == null || file.getVirtualFile() == null ? null : file.getVirtualFile().getFileType().getDefaultExtension();
+    }
+  }
+
+  void setComparator(final AbstractProjectViewPane pane) {
+    pane.getTreeBuilder().setNodeDescriptorComparator(new MyTypeComparator() {
+      protected boolean isSortByType() {
+        return ProjectView.this.isSortByType(pane.getId());
+      }
+    });
+  }
+
+  private class SortByTypeAction extends ToggleAction {
+    private SortByTypeAction() {
+      super("Sort By Type", "Sort by type", IconLoader.getIcon("/objectBrowser/sortByType.png"));
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return isSortByType(getCurrentViewId());
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setSortByType(getCurrentViewId(), flag);
+      setComparator(getCurrentProjectViewPane());
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
+      final AbstractProjectViewPane pane = projectView.getCurrentProjectViewPane();
+      presentation.setVisible(pane != null && (PackageViewPane.ID.equals(pane.getId()) || ProjectViewPane.ID.equals(pane.getId())));
     }
   }
 }

@@ -26,7 +26,7 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
 
   protected int getWeight(NodeDescriptor descriptor) {
     if (descriptor instanceof PsiDirectoryNode) {
-      return ((PsiDirectoryNode)descriptor).isFQNameShown() ? 7 : 0;
+      return ((PsiDirectoryNode)descriptor).isFQNameShown() ? 70 : 0;
     }
 
     if (descriptor instanceof PackageElementNode) {
@@ -34,7 +34,7 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
     }
 
     if (descriptor instanceof PackageViewLibrariesNode) {
-      return 6;
+      return 60;
     }
 
     // show module groups before other modules
@@ -42,17 +42,17 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
       return 0;
     }
     if (descriptor instanceof PsiFileNode || descriptor instanceof ClassTreeNode) {
-      return 2;
+      return 20;
     }
     if (descriptor instanceof PsiMethodNode) {
-      return ((PsiMethodNode)descriptor).isConstructor() ? 4 : 5;
+      return ((PsiMethodNode)descriptor).isConstructor() ? 40 : 50;
     }
     if (descriptor.getElement() instanceof PropertyGroup) {
-      return 6;
+      return 60;
     }
     if (descriptor instanceof PsiFieldNode) {
-      return 7;
+      return 70;
     }
-    return 3; //??
+    return 30; //??
   }
 }

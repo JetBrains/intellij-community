@@ -132,7 +132,7 @@ public abstract class AbstractTreeBuilder {
     DefaultMutableTreeNode node = null;
     for (int idx = 0; idx < path.length; idx++) {
       final Object pathElement = path[idx];
-      node = (node == null) ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
+      node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
       if (node == null) {
         break;
       }

@@ -56,4 +56,7 @@ public abstract class ProjectView {
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
 
   public abstract void selectModuleGroup(ModuleGroup moduleGroup, boolean requestFocus);
+
+  public abstract boolean isSortByType(String paneId);
+  public abstract void setSortByType(String paneId, final boolean sortByType);
 }
