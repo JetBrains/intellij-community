@@ -47,6 +47,8 @@ abstract class CurrentFileTodosPanel extends TodoPanel{
       return;
     }
 
+    if (file != null && getSelectedFile() == file.getVirtualFile()) return;
+
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)myTodoTreeBuilder;
     builder.setFile(file);

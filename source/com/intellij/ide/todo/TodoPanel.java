@@ -219,7 +219,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   /**
    * @return list of all selected virtual files.
    */
-  private VirtualFile getSelectedFile() {
+  protected VirtualFile getSelectedFile() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) {
       return null;
