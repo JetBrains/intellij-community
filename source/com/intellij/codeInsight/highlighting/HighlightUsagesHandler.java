@@ -18,11 +18,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -30,7 +30,6 @@ import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
 import com.intellij.util.containers.IntArrayList;
 
@@ -381,14 +380,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
     SearchScope searchScope = new LocalSearchScope(file);
-    PsiReference[] refs = PsiReference.EMPTY_ARRAY;
-    if (file instanceof PsiJavaFile || file instanceof JspFile || file instanceof XmlFile) {
-      if (target instanceof PsiMethod) {
-        refs = helper.findReferencesIncludingOverriding((PsiMethod)target, searchScope, true);
-      }
-      else {
-        refs = helper.findReferences(target, searchScope, false);
-      }
+    PsiReference[] refs;
+    if (target instanceof PsiMethod) {
+      refs = helper.findReferencesIncludingOverriding((PsiMethod)target, searchScope, true);
+    }
+    else {
+      refs = helper.findReferences(target, searchScope, false);
     }
 
     return new DoHighlightRunnable(refs, project, target, editor, file);
@@ -499,7 +496,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightRefs(highlightManager, editor, refs, attributes);
     }
 
-    PsiIdentifier identifier = getNameIdentifier(element);
+    PsiElement identifier = getNameIdentifier(element);
     if (identifier != null && PsiUtil.isUnderPsiRoot(file, identifier)) {
       TextAttributes nameAttributes = attributes;
       if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
@@ -543,7 +540,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private PsiIdentifier getNameIdentifier(PsiElement element) {
+  private PsiElement getNameIdentifier(PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getNameIdentifier();
     }
@@ -555,6 +552,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
     if (element instanceof PsiPointcutDef) {
       return ((PsiPointcutDef)element).getNameIdentifier();
+    }
+
+    if (element instanceof PsiNamedElement) {
+      // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
+      final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
+      if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
+        return potentialIdentifier;
+      }
     }
 
     return null;
