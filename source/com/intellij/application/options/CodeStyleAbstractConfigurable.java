@@ -37,7 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
-public abstract class CodeStyleAbstractConfigurable implements Configurable{
+public abstract class CodeStyleAbstractConfigurable implements Configurable {
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
   private final String myDisplayName;
@@ -67,19 +67,28 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable{
   protected abstract CodeStyleAbstractPanel createPanel();
 
   public void apply() throws ConfigurationException {
-    myPanel.apply(mySettings);
+    if (myPanel != null) {
+      myPanel.apply(mySettings);
+    }
   }
 
   public void reset() {
-    myPanel.reset();
+    if (myPanel != null) {
+      myPanel.reset();
+    }
   }
 
   public boolean isModified() {
-    return myPanel.isModified(mySettings);
+    if (myPanel != null) {
+      return myPanel.isModified(mySettings);
+    }
+    else {
+      return false;
+    }
   }
 
   public void disposeUIResources() {
-    if (myPanel != null){
+    if (myPanel != null) {
       myPanel.dispose();
       myPanel = null;
     }
