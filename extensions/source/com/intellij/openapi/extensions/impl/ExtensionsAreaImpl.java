@@ -88,7 +88,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     if (className == null) {
       throw new RuntimeException("No class specified for extension point: " + epName);
     }
-    registerExtensionPoint(epName, className);
+    registerExtensionPoint(epName, className, pluginDescriptor);
   }
 
   public void registerExtension(final String pluginName, final Element extensionElement) {

@@ -9,6 +9,9 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.ReaderConfigurator;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.XppDriver;
+import com.thoughtworks.xstream.core.DefaultClassMapper;
+import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import org.jdom.Element;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoInitializationException;
@@ -38,7 +41,11 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
 
     if (myComponentInstance == null) {
       if (!Element.class.equals(getComponentImplementation())) {
-        XStream xStream = new XStream(new PropertyReflectionProvider());
+        final CompositeClassLoader classLoader = new CompositeClassLoader();
+        if (myPluginDescriptor.getPluginClassLoader() != null) {
+          classLoader.add(myPluginDescriptor.getPluginClassLoader());
+        }
+        XStream xStream = new XStream(new PropertyReflectionProvider(), new DefaultClassMapper(classLoader), new XppDriver());
         xStream.registerConverter(new ElementConverter());
         Object componentInstance = super.getComponentInstance(container);
         if (componentInstance instanceof ReaderConfigurator) {

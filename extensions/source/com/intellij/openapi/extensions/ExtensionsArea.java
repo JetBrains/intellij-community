@@ -41,4 +41,5 @@ public interface ExtensionsArea  {
 
   String getAreaClass();
 
+  void registerExtensionPoint(String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor);
 }
