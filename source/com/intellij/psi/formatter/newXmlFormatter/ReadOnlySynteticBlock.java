@@ -1,0 +1,34 @@
+package com.intellij.psi.formatter.newXmlFormatter;
+
+import com.intellij.newCodeFormatting.Block;
+import com.intellij.newCodeFormatting.Indent;
+import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.openapi.util.TextRange;
+
+import java.util.List;
+import java.util.ArrayList;
+
+public class ReadOnlySynteticBlock extends AbstractSynteticBlock{
+  private final TextRange myTextRange;
+
+  private static final ArrayList<Block> EMPTY = new ArrayList<Block>();
+
+  public ReadOnlySynteticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
+    super(subBlocks, parent, policy, indent);
+
+    myTextRange = calculateTextRange(subBlocks);
+
+  }
+
+  public TextRange getTextRange() {
+    return myTextRange;
+  }
+
+  public List<Block> getSubBlocks() {
+    return EMPTY;
+  }
+
+  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+    return null;
+  }
+}

@@ -24,6 +24,10 @@ public class XmlBlock extends AbstractXmlBlock {
 
     final ArrayList<Block> result = new ArrayList<Block>();
 
+    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+      return result;
+    }
+
     if (myNode.getElementType() == ElementType.XML_TEXT) {
       if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
         return result;

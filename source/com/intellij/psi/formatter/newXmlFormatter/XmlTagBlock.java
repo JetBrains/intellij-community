@@ -57,17 +57,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
-    return new SynteticBlock(localResult, this, myXmlFormattingPolicy.indentChildrenOf(getTag()) ?
+    return AbstractSynteticBlock.createSynteticBlock(localResult, this, myXmlFormattingPolicy.indentChildrenOf(getTag()) ?
            getFormatter().getNormalIndent(1) : getFormatter().getNoneIndent(), myXmlFormattingPolicy);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
-    return new SynteticBlock(localResult, this, null, myXmlFormattingPolicy);
+    return AbstractSynteticBlock.createSynteticBlock(localResult, this, null, myXmlFormattingPolicy);
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    final SynteticBlock synteticBlock1 = ((SynteticBlock)child1);
-    final SynteticBlock synteticBlock2 = ((SynteticBlock)child2);
+    final AbstractSynteticBlock synteticBlock1 = ((AbstractSynteticBlock)child1);
+    final AbstractSynteticBlock synteticBlock2 = ((AbstractSynteticBlock)child2);
 
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return getFormatter().getReadOnlySpace();
 

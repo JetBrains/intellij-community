@@ -37,6 +37,7 @@ class FormatProcessor {
     final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model, affectedRange);
     myInfos = builder.getBlockToInfoMap();
     myCurrentBlock = builder.getFirstTokenBlock();
+    /*
     final Element element = saveToXml(rootBlock);
     try {
       JDOMUtil.writeDocument(new Document(element), new File("c:/temp/format.xml"), "\n");
@@ -44,6 +45,7 @@ class FormatProcessor {
     catch (IOException e) {
       //ignore
     }
+    */
   }
 
   public Element saveToXml(Block root){
