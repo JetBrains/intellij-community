@@ -3,6 +3,7 @@ package com.intellij.usages.impl;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageFilteringRule;
 
 import java.util.Enumeration;
 
@@ -15,10 +16,12 @@ import java.util.Enumeration;
  */
 public class UsageNodeTreeBuilder {
   private GroupNode myRoot;
-  private UsageGroupingRule[] myRules;
+  private UsageGroupingRule[] myGroupingRules;
+  private UsageFilteringRule[] myFilteringRules;
 
-  public UsageNodeTreeBuilder(UsageGroupingRule[] rules, GroupNode root) {
-    myRules = rules;
+  public UsageNodeTreeBuilder(UsageGroupingRule[] groupingRules, UsageFilteringRule[] filteringRules, GroupNode root) {
+    myGroupingRules = groupingRules;
+    myFilteringRules = filteringRules;
     myRoot = root;
   }
 
@@ -29,20 +32,29 @@ public class UsageNodeTreeBuilder {
     }
   }
 
-  public void setRules(UsageGroupingRule[] rules) {
-    myRules = rules;
+  public void setGroupingRules(UsageGroupingRule[] rules) {
+    myGroupingRules = rules;
+  }
+
+  public void setFilteringRules(UsageFilteringRule[] rules) {
+    myFilteringRules = rules;
   }
 
   public UsageNode appendUsage(Usage usage) {
-    GroupNode lastGroupNode = myRoot;
-    for (int i = 0; i < myRules.length; i++) {
-      UsageGroupingRule rule = myRules[i];
-      UsageGroup group = rule.groupUsage(usage);
-      if (group == null) { continue; }
-
-      lastGroupNode = lastGroupNode.addGroup(group, i);
+    for (int idx = 0; idx < myFilteringRules.length; idx++) {
+      final UsageFilteringRule rule = myFilteringRules[idx];
+      if (!rule.isVisible(usage)) {
+        return null;
+      }
     }
-
+    GroupNode lastGroupNode = myRoot;
+    for (int i = 0; i < myGroupingRules.length; i++) {
+      final UsageGroupingRule rule = myGroupingRules[i];
+      final UsageGroup group = rule.groupUsage(usage);
+      if (group != null) {
+        lastGroupNode = lastGroupNode.addGroup(group, i);
+      }
+    }
     return lastGroupNode.addUsage(usage);
   }
 

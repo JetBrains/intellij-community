@@ -7,6 +7,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageFilteringRule;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode("temp"));
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
-    UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, rootNode);
+    UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
     usageNodeTreeBuilder.appendUsages(usages);
     return rootNode;
   }

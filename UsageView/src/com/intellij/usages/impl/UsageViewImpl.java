@@ -20,10 +20,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.content.Content;
 import com.intellij.usages.*;
-import com.intellij.usages.rules.MergeableUsage;
-import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import com.intellij.usages.rules.UsageInFile;
-import com.intellij.usages.rules.UsageInFiles;
+import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
@@ -79,7 +76,7 @@ public class UsageViewImpl implements UsageView {
     myRootPanel = new MyPanel(myTree);
 
     UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myBuilder = new UsageNodeTreeBuilder(getRuleProvider().getActiveRules(project), (GroupNode)model.getRoot());
+    myBuilder = new UsageNodeTreeBuilder(getGroupingRuleProvider().getActiveRules(project), getFilteringRuleProvider().getActiveRules(project), (GroupNode)model.getRoot());
     myTree.setModel(model);
 
     myRootPanel.setLayout(new BorderLayout());
@@ -171,13 +168,19 @@ public class UsageViewImpl implements UsageView {
   }
 
   private JComponent createFiltersToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    AnAction[] actions = createGroupingActions();
-    for (int i = 0; i < actions.length; i++) {
-      group.add(actions[i]);
+    final DefaultActionGroup group = new DefaultActionGroup();
+
+    final AnAction[] groupingActions = createGroupingActions();
+    for (int i = 0; i < groupingActions.length; i++) {
+      group.add(groupingActions[i]);
     }
 
     group.add(new MergeDupLines());
+
+    final AnAction[] filteringActions = createFilteringActions();
+    for (int i = 0; i < filteringActions.length; i++) {
+      group.add(filteringActions[i]);
+    }
 
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR,
                                                                                   group, false);
@@ -219,18 +222,27 @@ public class UsageViewImpl implements UsageView {
     };
   }
 
-  private UsageGroupingRuleProviderImpl getRuleProvider() {
+  private UsageGroupingRuleProviderImpl getGroupingRuleProvider() {
     return (UsageGroupingRuleProviderImpl)ApplicationManager.getApplication().getComponent(UsageGroupingRuleProvider.class);
   }
 
+  private UsageFilteringRuleProviderImpl getFilteringRuleProvider() {
+    return (UsageFilteringRuleProviderImpl)ApplicationManager.getApplication().getComponent(UsageFilteringRuleProvider.class);
+  }
+
   private AnAction[] createGroupingActions() {
-    return getRuleProvider().createFilteringActions(this);
+    return getGroupingRuleProvider().createFilteringActions(this);
+  }
+
+  private AnAction[] createFilteringActions() {
+    return getFilteringRuleProvider().createFilteringActions(this);
   }
 
   public void rulesChanged() {
     Collection<Usage> allUsages = myUsageNodes.keySet();
     reset();
-    myBuilder.setRules(getRuleProvider().getActiveRules(myProject));
+    myBuilder.setGroupingRules(getGroupingRuleProvider().getActiveRules(myProject));
+    myBuilder.setFilteringRules(getFilteringRuleProvider().getActiveRules(myProject));
     for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
       Usage usage = i.next();
       if (usage instanceof MergeableUsage) {

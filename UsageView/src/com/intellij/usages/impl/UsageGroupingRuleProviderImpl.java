@@ -40,7 +40,6 @@ public class UsageGroupingRuleProviderImpl extends UsageGroupingRuleProvider imp
       rules.add(new PackageGroupingRule(project));
     }
     if (GROUP_BY_FILE_STRUCTURE) {
-      //rules.add(new FileOrClassCompositeGroupingRule(project));
       rules.add(new ClassGroupingRule());
       rules.add(new MethodGroupingRule());
     }
