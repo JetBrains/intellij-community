@@ -17,7 +17,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
   private static final String AUTO_NODE = "node";
 
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
 
   private List<AutoRendererNode> myRepresentationNodes = new ArrayList<AutoRendererNode>();
   private final NodeRendererSettings myRendererSettings;

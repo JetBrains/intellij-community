@@ -11,10 +11,7 @@ import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
@@ -61,6 +58,8 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
         createExpressionChildrenRenderer("toArray()", "!isEmpty()")
       )
     };
+  private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
+  private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
 
   public NodeRendererSettings() {
     // default configuration
@@ -111,11 +110,25 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
+    JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
+    JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
     myRendererConfiguration.writeExternal(element);
+
   }
 
   public void readExternal(final Element root) {
+    final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
+    if (hexEnabled != null) {
+      myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
+    }
+
+    final String alternativeEnabled = JDOMExternalizerUtil.readField(root, ALTERNATIVE_COLLECTION_VIEW_ENABLED);
+    if (alternativeEnabled != null) {
+      setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
+    }
+
     myRendererConfiguration.readExternal(root);
+
     myDispatcher.getMulticaster().renderersChanged();
   }
 

@@ -902,23 +902,25 @@ public abstract class DebugProcessImpl implements DebugProcess {
         public void run() {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
-            if (LOG.isDebugEnabled()) {
-              getVirtualMachineProxy().logThreads();
-              LOG.debug("Invoke in " + thread.name());
+            try {
+              if (LOG.isDebugEnabled()) {
+                getVirtualMachineProxy().logThreads();
+                LOG.debug("Invoke in " + thread.name());
+                LOG.assertTrue(thread.isSuspended(), thread.toString());
+                LOG.assertTrue(context.isEvaluating());
+              }
+              result[0] = invokeMethod(invokePolicy);
+              if(result[0] instanceof ObjectReference) {
+                context.keep(((ObjectReference)result[0]));
+              }
+            }
+            finally {
               LOG.assertTrue(thread.isSuspended(), thread.toString());
               LOG.assertTrue(context.isEvaluating());
-            }
-            result[0] = invokeMethod(invokePolicy);
-            if(result[0] instanceof ObjectReference) {
-              context.keep(((ObjectReference)result[0]));
             }
           }
           catch (Exception e) {
             exception[0] = e;
-          }
-          finally{
-            LOG.assertTrue(thread.isSuspended(), thread.toString());
-            LOG.assertTrue(context.isEvaluating());
           }
         }
       });
