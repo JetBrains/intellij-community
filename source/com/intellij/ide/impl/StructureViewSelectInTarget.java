@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 
@@ -29,10 +30,15 @@ public class StructureViewSelectInTarget implements SelectInTarget {
    */
   public boolean canSelect(PsiFile file) {
     StructureView structureView = getStructureView();
-    if (file == null || structureView == null || !FileEditorManager.getInstance(myProject).getSelectedEditor(file.getVirtualFile()).equals(structureView.getFileEditor())) {
+    if (file == null) {
       return false;
+    } else if (structureView == null) {
+      return false;
+    } else if (!Comparing.equal(FileEditorManager.getInstance(myProject).getSelectedEditor(file.getVirtualFile()), structureView.getFileEditor())) {
+      return false;
+    } else {
+      return (file instanceof PsiJavaFile || file instanceof XmlFile) && file.isValid();
     }
-    return (file instanceof PsiJavaFile || file instanceof XmlFile) && file.isValid();
   }
 
   public void select(PsiElement element, final boolean requestFocus) {
