@@ -173,6 +173,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         if (i != 0 && mySpots.get(i-1).yEnd < yStartPosition) {
           mySpots.get(i-1).drawBottomBorder = true;
         }
+        if (i == mySpots.size()-1) {
+          markSpot.drawBottomBorder = true;
+        }
 
         prevEndPosition = yEndPosition;
         prevIsThin = mark.isThinErrorStripeMark();
