@@ -1307,7 +1307,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   void setComparator(final AbstractProjectViewPane pane) {
     pane.getTreeBuilder().setNodeDescriptorComparator(new MyTypeComparator() {
       protected boolean isSortByType() {
-        return ProjectView.this.isSortByType(pane.getId());
+        return ProjectViewImpl.this.isSortByType(pane.getId());
       }
     });
   }
