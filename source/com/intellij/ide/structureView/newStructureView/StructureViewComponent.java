@@ -493,6 +493,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     protected void scrollToSource(JTree tree) {
+      if (myAbstractTreeBuilder == null) return;
       myAutoscrollFeedback = true;
 
       Navigatable editSourceDescriptor = (Navigatable)DataManager.getInstance().getDataContext(getTree())
