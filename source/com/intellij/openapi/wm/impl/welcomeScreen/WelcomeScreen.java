@@ -196,8 +196,8 @@ public class WelcomeScreen {
         ProjectUtil.createNewProject(null);
       }
     };
-    addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "This will start the \"New Project\" Wizard that will lead you through " +
-                                                                             "the steps necessary for project creation.");
+    addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "Start the \"New Project\" Wizard that will lead you through " +
+                                                                             "the steps necessary for new project creation.");
 
     MyActionButton openRecentProject = new ButtonWithExtension(null, REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -213,23 +213,27 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, openRecentProject, "Reopen Recent Project...", "This will open the popup with the list of recent " +
-                                                                                          "projects you were working with.");
+    addButtonToQuickStart(quickStartPanel, openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
+                                                                                          "projects you were working with. Click the icon " +
+                                                                                          "or link to select project from the list.");
 
-    MyActionButton getFromVCS = new MyActionButton(null, FROM_VCS_ICON, null) {
-      protected void onPress(InputEvent e) {
+    MyActionButton getFromVCS = new ButtonWithExtension(null, FROM_VCS_ICON, null) {
+      protected void onPress(InputEvent e, final MyActionButton button) {
         final ActionManager actionManager = ActionManager.getInstance();
-        final AnAction action = actionManager.getAction("Cvs.CheckoutProject");
+        final AnAction action = new GetFromVcsAction();
         action.actionPerformed(new AnActionEvent(e, new DataContext() {
           public Object getData(String dataId) {
-            return null;
+            if (DataConstants.PROJECT.equals(dataId)) {
+              return null;
+            }
+            return button;
           }
-        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action)
-                                                  , actionManager, 0));
+        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From CVS", "This will start the \"Check Out from CVS\" wizard that will " +
-                                                                               "lead you through the steps necessary for getting a project from CVS.");
+    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out the entire project from one of " +
+                                                                                           "the supported Version Control Systems, namely " +
+                                                                                           "CVS or Subversion.");
 
     // Create Documentation panel
     JPanel docsPanel = new JPanel(new GridBagLayout());
@@ -247,7 +251,7 @@ public class WelcomeScreen {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
     };
-    addButtonToDocs(docsPanel, readHelp, "Read Help", "This will open IntelliJ IDEA \"Help Topics\" in the devoted window.");
+    addButtonToDocs(docsPanel, readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in the devoted window.");
 
 // TODO: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
 
