@@ -135,7 +135,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
         if (elementDescriptor!=null) {
           PsiElement declaration = elementDescriptor.getDeclaration();
-          declaration.putUserData(DESCRIPTOR_KEY,elementDescriptor);
+          if (declaration!=null) declaration.putUserData(DESCRIPTOR_KEY,elementDescriptor);
           return declaration;
         }
       }
