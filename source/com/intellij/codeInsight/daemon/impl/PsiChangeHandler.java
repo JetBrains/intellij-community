@@ -7,8 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.xml.util.XmlUtil;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Project myProject;
@@ -24,6 +22,10 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   public void childRemoved(PsiTreeChangeEvent event) {
+    updateByChange(event.getParent());
+  }
+
+  public void childReplaced(PsiTreeChangeEvent event) {
     updateByChange(event.getParent());
   }
 
