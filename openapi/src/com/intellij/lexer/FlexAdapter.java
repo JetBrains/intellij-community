@@ -12,9 +12,11 @@ public class FlexAdapter implements Lexer {
   private FlexLexer myFlex = null;
   private IElementType myTokenType = null;
   private CharArrayCharSequence myText;
+
   private int myStart;
   private int myEnd;
   private char[] myBuffer;
+  private int myState;
 
   public FlexAdapter(final FlexLexer flex) {
     myFlex = flex;
@@ -42,7 +44,8 @@ public class FlexAdapter implements Lexer {
   }
 
   public int getState() {
-    return myFlex.yystate();
+    locateToken();
+    return myState;
   }
 
   public IElementType getTokenType() {
@@ -76,6 +79,7 @@ public class FlexAdapter implements Lexer {
   private void locateToken() {
     if (myTokenType != null) return;
     try {
+      myState = myFlex.yystate();
       myTokenType = myFlex.advance();
     }
     catch (IOException e) { /*Can't happen*/ }

@@ -36,12 +36,12 @@ abstract class BaseHtmlLexer implements Lexer {
   });
 
   interface TokenHandler {
-    void handleElement(Lexer lexer, final int state);
+    void handleElement(Lexer lexer);
   }
 
   class XmlNameHandler implements TokenHandler {
 
-    public void handleElement(Lexer lexer, int state) {
+    public void handleElement(Lexer lexer) {
       final char ch = lexer.getBuffer()[lexer.getTokenStart()];
 
       if (ch!='s' && ch!='o' &&
@@ -66,7 +66,7 @@ abstract class BaseHtmlLexer implements Lexer {
         seenStyle = style;
         seenScript = script;
 
-        state = state & BASE_STATE_MASK;
+        int state = getState() & BASE_STATE_MASK;
 
         if (!isHtmlTagState(state)) {
           seenAttribute=true;
@@ -80,7 +80,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlAttributeValueEndHandler implements TokenHandler {
-    public void handleElement(Lexer lexer, final int state) {
+    public void handleElement(Lexer lexer) {
       if (seenAttribute) {
         seenStyle = false;
         seenScript = false;
@@ -89,7 +89,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlTagClosedHandler implements TokenHandler {
-    public void handleElement(Lexer lexer, final int state) {
+    public void handleElement(Lexer lexer) {
       if (seenAttribute) {
         seenScript=false;
         seenStyle=false;
@@ -104,7 +104,7 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   class XmlTagEndHandler implements TokenHandler {
-    public void handleElement(Lexer lexer, final int state) {
+    public void handleElement(Lexer lexer) {
       seenStyle=false;
       seenScript=false;
     }
@@ -166,11 +166,10 @@ abstract class BaseHtmlLexer implements Lexer {
   }
 
   public void advance() {
-    int prevState = baseLexer.getState();
     baseLexer.advance();
     IElementType type = baseLexer.getTokenType();
     TokenHandler tokenHandler = tokenHandlers.get(type);
-    if (tokenHandler!=null) tokenHandler.handleElement(this, prevState);
+    if (tokenHandler!=null) tokenHandler.handleElement(this);
   }
 
   public char[] getBuffer() {

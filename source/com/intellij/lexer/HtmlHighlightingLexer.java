@@ -21,7 +21,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static FileType ourScriptFileType;
 
   class XmlEmbeddmentHandler implements TokenHandler {
-    public void handleElement(Lexer lexer, final int state) {
+    public void handleElement(Lexer lexer) {
       if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
       final IElementType tokenType = lexer.getTokenType();
 
@@ -38,22 +38,18 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   class ElEmbeddmentHandler implements TokenHandler {
-    public void handleElement(Lexer lexer, final int state) {
+    public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
       embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
     }
   }
 
   public HtmlHighlightingLexer() {
-    this(new FlexAdapter(new _HtmlLexer()),true);
-  }
-
-  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive) {
-    this(lexer,caseInsensitive,false);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()),TOKENS_TO_MERGE),true, false);
   }
 
   protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, boolean withEl) {
-    super(new MergingLexerAdapter(lexer,TOKENS_TO_MERGE),caseInsensitive);
+    super(lexer,caseInsensitive);
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,value);
