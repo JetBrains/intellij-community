@@ -105,7 +105,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
     FileInfo[] result = new FileInfo[files.length];
     for (int i = 0; i < result.length; i++) {
-      result[i] = new FileInfo(files[i], myProject);      
+      final VirtualFile file = files[i];
+      if (!file.isWritable()) {
+        result[i] = new FileInfo(file, myProject);
+      }
     }
     return result;
   }
