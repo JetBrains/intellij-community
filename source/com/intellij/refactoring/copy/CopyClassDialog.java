@@ -133,7 +133,7 @@ class CopyClassDialog extends DialogWrapper{
     final String[] errorString = new String[1];
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiNameHelper nameHelper = manager.getNameHelper();
-    if (!nameHelper.isQualifiedName(packageName)) {
+    if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
       errorString[0] = "Invalid target package name specified";
     } else if ("".equals(className)) {
       errorString[0] = "No class name specified";
