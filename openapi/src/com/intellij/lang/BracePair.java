@@ -11,11 +11,15 @@ import com.intellij.psi.tree.IElementType;
  */
 public class BracePair {
   private IElementType myLeftBrace;
+  private char myLeftBraceChar;
   private IElementType myRightBrace;
+  private char myRightBraceChar;
   private boolean myStructural;
 
-  public BracePair(final IElementType leftBrace, final IElementType rightBrace, final boolean structural) {
+  public BracePair(char leftBraceChar, final IElementType leftBrace,char rightBraceChar,final IElementType rightBrace, final boolean structural) {
+    myLeftBraceChar = leftBraceChar;
     myLeftBrace = leftBrace;
+    myRightBraceChar = rightBraceChar;
     myRightBrace = rightBrace;
     myStructural = structural;
   }
@@ -30,5 +34,13 @@ public class BracePair {
 
   public boolean isStructural() {
     return myStructural;
+  }
+
+  public char getLeftBraceChar() {
+    return myLeftBraceChar;
+  }
+
+  public char getRightBraceChar() {
+    return myRightBraceChar;
   }
 }

@@ -77,8 +77,8 @@ public class TypedHandler implements TypedActionHandler {
   public static class SimpleTokenSetQuoteHandler implements QuoteHandler {
     private TokenSet myLiteralTokenSet;
 
-    public SimpleTokenSetQuoteHandler(TokenSet _literalTokenSet) {
-      myLiteralTokenSet = _literalTokenSet;
+    public SimpleTokenSetQuoteHandler(IElementType[] _literalTokens) {
+      myLiteralTokenSet = TokenSet.create(_literalTokens);
     }
 
     public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
@@ -139,7 +139,7 @@ public class TypedHandler implements TypedActionHandler {
       super(_baseHandler);
 
       myElHandler = new SimpleTokenSetQuoteHandler(
-        TokenSet.create(new IElementType[] {JspTokenType.JSP_EL_STRING_LITERAL})
+        new IElementType[] {JspTokenType.JSP_EL_STRING_LITERAL}
       );
     }
 
@@ -266,7 +266,7 @@ public class TypedHandler implements TypedActionHandler {
 
   static class JavaQuoteHandler extends SimpleTokenSetQuoteHandler {
     public JavaQuoteHandler() {
-      super(TokenSet.create(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL}));
+      super(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL});
     }
   }
 

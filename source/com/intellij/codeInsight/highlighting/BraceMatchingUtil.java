@@ -94,6 +94,14 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
+      final BracePair[] pairs = myMatcher.getPairs();
+
+      for (int i = 0; i < pairs.length; i++) {
+        final BracePair pair = pairs[i];
+
+        if (ch == pair.getRightBraceChar()) return pair.getRightBraceType();
+        if (ch == pair.getLeftBraceChar()) return pair.getLeftBraceType();
+      }
       return null;
     }
   }
