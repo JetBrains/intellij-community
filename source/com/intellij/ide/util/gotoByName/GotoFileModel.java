@@ -78,7 +78,7 @@ public class GotoFileModel implements ChooseByNameModel{
       ArrayList<PsiFile> list = new ArrayList<PsiFile>();
       for(int i = 0; i < psiFiles.length; i++){
         PsiFile file = psiFiles[i];
-        if (file instanceof PsiJavaFile) continue;
+        if (file.getFileType() == StdFileTypes.JAVA) continue;
         list.add(file);
       }
       return (PsiFile[])list.toArray(new PsiFile[list.size()]);
