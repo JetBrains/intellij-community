@@ -56,34 +56,34 @@ public class RenameWrongRefAction implements IntentionAction {
     return !(myRefExpr.multiResolve(true).length > 0);
   }
 
-  class ReferenceNameExpression implements Expression {
-
+  private class ReferenceNameExpression implements Expression {
     class HammingComparator implements Comparator<LookupItem> {
       public int compare(LookupItem lookupItem1, LookupItem lookupItem2) {
         String s1 = lookupItem1.getLookupString(), s2 = lookupItem2.getLookupString();
-        String refName = myRefExpr.getReferenceName();
         int diff1 = 0;
-        for (int i = 0; i < Math.min(s1.length(), refName.length()); i++) {
-          if (s1.charAt(i) != refName.charAt(i)) diff1++;
+        for (int i = 0; i < Math.min(s1.length(), myOldReferenceName.length()); i++) {
+          if (s1.charAt(i) != myOldReferenceName.charAt(i)) diff1++;
         }
         int diff2 = 0;
-        for (int i = 0; i < Math.min(s2.length(), refName.length()); i++) {
-          if (s2.charAt(i) != refName.charAt(i)) diff2++;
+        for (int i = 0; i < Math.min(s2.length(), myOldReferenceName.length()); i++) {
+          if (s2.charAt(i) != myOldReferenceName.charAt(i)) diff2++;
         }
         return diff1 - diff2;
       }
     }
 
-    ReferenceNameExpression(LookupItem[] items) {
+    ReferenceNameExpression(LookupItem[] items, String oldReferenceName) {
       myItems = items;
+      myOldReferenceName = oldReferenceName;
       Arrays.sort(myItems, new HammingComparator ());
     }
 
     LookupItem[] myItems;
+    private final String myOldReferenceName;
 
     public Result calculateResult(ExpressionContext context) {
       if (myItems == null || myItems.length == 0) {
-        return new TextResult(myRefExpr.getReferenceName());
+        return new TextResult(myOldReferenceName);
       }
       return new TextResult(myItems[0].getLookupString());
     }
@@ -159,7 +159,7 @@ public class RenameWrongRefAction implements IntentionAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, scopes);
       LookupItem[] items = collectItems();
-      ReferenceNameExpression refExpr = new ReferenceNameExpression(items);
+      ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
       Document document = editor.getDocument();
       TemplateBuilder builder = new TemplateBuilder(element);

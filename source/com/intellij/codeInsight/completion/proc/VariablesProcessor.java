@@ -26,15 +26,15 @@ public class VariablesProcessor
   private final String myPrefix;
   private boolean myStaticScopeFlag = false;
   private final boolean myStaticSensitiveFlag;
-  private final List myResultList;
+  private final List<PsiVariable> myResultList;
 
   /** Collecting _all_ variables in scope */
   public VariablesProcessor(String _prefix, boolean staticSensitiveFlag){
-    this(_prefix, staticSensitiveFlag, new ArrayList());
+    this(_prefix, staticSensitiveFlag, new ArrayList<PsiVariable>());
   }
 
   /** Collecting _all_ variables in scope */
-  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List lst){
+  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<PsiVariable> lst){
     myPrefix = _prefix;
     myStaticSensitiveFlag = staticSensitiveFlag;
     myResultList = lst;
