@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -258,7 +259,16 @@ public class BraceMatchingUtil {
     }
 
     public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-      final IElementType tokenType = (!iterator.atEnd())?iterator.getTokenType():null;
+      IElementType tokenType = (!iterator.atEnd())?iterator.getTokenType():null;
+
+      if(tokenType == TokenType.WHITE_SPACE) {
+        iterator.retreat();
+
+        if (!iterator.atEnd()) {
+          tokenType = iterator.getTokenType();
+          iterator.advance();
+        }
+      }
 
       if(tokenType instanceof IJavaElementType) {
         if (ch == '}') return JavaTokenType.RBRACE;
