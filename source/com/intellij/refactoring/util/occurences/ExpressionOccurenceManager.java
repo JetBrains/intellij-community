@@ -51,7 +51,7 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
           iterator.remove();
         }
       }
-      return (PsiExpression[])expressions.toArray(new PsiExpression[expressions.size()]);
+      return expressions.toArray(new PsiExpression[expressions.size()]);
     }
     else {
       return expressionOccurrences;
