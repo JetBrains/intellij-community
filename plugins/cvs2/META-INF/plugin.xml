@@ -100,11 +100,9 @@
       <reference id="Cvs.Ignore"/>
 
       <separator/>
-      <action id="Cvs.Diff" class="com.intellij.cvsSupport2.actions.DiffAction" text="Compare with The _Same Version" description="Show local changes to the file"/>
-      <action id="Cvs.CompareWithLastVersion" class="com.intellij.cvsSupport2.actions.DiffWithCvsVersionAction" text="Compare with _Latest Repository Version"
-        description="Compare local copy with the latest version from repository"/>
-      <action id="Cvs.DiffWithSelectedVersion" class="com.intellij.cvsSupport2.actions.DiffWithSelectedVersionAction"
-        text="Compare with Se_lected Version..." description="Compare local copy with some selected version"/>
+      <reference id="Compare.SameVersion"/>
+      <reference id="Compare.LastVersion"/>
+      <reference id="Compare.Selected"/>
 
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>

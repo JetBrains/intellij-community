@@ -150,7 +150,7 @@
     <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction" text="A_nnotate" description="Show information about last modification date and author for each line"/>
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" text="Compare with The Same Repository Version"/>
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion" text="Compare with The Last Repository Version"/>
-    <group id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" text="Compare with..." popup="true"/>
+    <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" text="Compare with..." popup="true"/>
 
     <group id="NewGroup" text="New" popup="true">
       <action id="NewClass" text="Class" class="com.intellij.ide.actions.CreateClassAction"/>

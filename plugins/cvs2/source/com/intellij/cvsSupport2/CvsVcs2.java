@@ -25,6 +25,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -60,6 +61,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   private final CvsStatusEnvironment myCvsStatusEnvironment;
   private final CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
   private final CvsAnnotationProvider myCvsAnnotationProvider;
+  private final CvsDiffProvider myDiffProvider;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
@@ -74,6 +76,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     myStorageComponent = cvsStorageComponent;
     myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
+    myDiffProvider = new CvsDiffProvider(myProject);
   }
 
   /* ======================================= ProjectComponent */
@@ -270,6 +273,10 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
       throw executor.getResult().composeError();
     }
 
+  }
+
+  public DiffProvider getDiffProvider() {
+    return myDiffProvider;
   }
 }
 

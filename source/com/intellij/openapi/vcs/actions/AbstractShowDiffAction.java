@@ -75,6 +75,15 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
     VcsRevisionNumber revisionNumber = getRevisionNumber(diffProvider, selectedFile);
 
+    showDiff(diffProvider, revisionNumber, selectedFile, project);
+
+
+  }
+
+  protected static void showDiff(final DiffProvider diffProvider,
+                        final VcsRevisionNumber revisionNumber,
+                        final VirtualFile selectedFile,
+                        final Project project) {
     try {
       final VcsFileContent fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
       fileRevision.loadContent();
@@ -85,9 +94,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
 
       final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(selectedFile);
-      final VcsRevisionNumber lastRevision = diffProvider.getLastRevision(selectedFile);
 
-      if (lastRevision.compareTo(currentRevision) > 0) {
+      if (revisionNumber.compareTo(currentRevision) > 0) {
         request.setContents(content2, content1);
         request.setContentTitles("Local", revisionNumber.asString());
       } else {
@@ -103,8 +111,6 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     catch (IOException e) {
       AbstractVcsHelper.getInstance(project).showError(new VcsException(e), "Diff");
     }
-
-
   }
 
   protected abstract VcsRevisionNumber getRevisionNumber(DiffProvider diffProvider, VirtualFile file);
