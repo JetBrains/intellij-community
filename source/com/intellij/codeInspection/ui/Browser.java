@@ -23,11 +23,12 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public class Browser extends JPanel {
   private static final String UNDER_CONSTRUCTION = "Under construction";
-  private final ArrayList myClickListeners;
+  private final List<ClickListener> myClickListeners;
   private RefEntity myCurrentEntity;
   private final JEditorPane myHTMLViewer;
   private InspectionResultsView myView;
@@ -113,7 +114,7 @@ public class Browser extends JPanel {
     super(new BorderLayout());
     myView = view;
 
-    myClickListeners = new ArrayList();
+    myClickListeners = new ArrayList<ClickListener>();
     myCurrentEntity = null;
 
     myHTMLViewer = new JEditorPane("text/html", "<HTML><BODY>Select tree node for detailed information</BODY></HTML>");
@@ -192,7 +193,7 @@ public class Browser extends JPanel {
     ClickEvent e = new ClickEvent(file, startPosition, endPosition);
 
     for (int i = 0; i < myClickListeners.size(); i++) {
-      ClickListener listener = (ClickListener)myClickListeners.get(i);
+      ClickListener listener = myClickListeners.get(i);
       listener.referenceClicked(e);
     }
   }
@@ -213,10 +214,14 @@ public class Browser extends JPanel {
 
     uppercaseFirstLetter(buf);
 
-    buf.insert(0, "<HTML><BODY><font style=\"font-family:verdana;\" size = \"3\">");
-    buf.append("</font></BODY></HTML>");
+    insertHeaderFooter(buf);
 
     return buf.toString();
+  }
+
+  private static void insertHeaderFooter(final StringBuffer buf) {
+    buf.insert(0, "<HTML><BODY><font style=\"font-family:verdana;\" size = \"3\">");
+    buf.append("</font></BODY></HTML>");
   }
 
   private String generateHTML(final RefElement refElement, final ProblemDescriptor descriptor) {
@@ -230,13 +235,12 @@ public class Browser extends JPanel {
 
     uppercaseFirstLetter(buf);
 
-    buf.insert(0, "<HTML><BODY><font style=\"font-family:verdana;\" size = \"3\">");
-    buf.append("</font></BODY></HTML>");
+    insertHeaderFooter(buf);
 
     return buf.toString();
   }
 
-  private void uppercaseFirstLetter(final StringBuffer buf) {
+  private static void uppercaseFirstLetter(final StringBuffer buf) {
     if (buf.length() > 1) {
       char[] firstLetter = new char[1];
       buf.getChars(0, 1, firstLetter, 0);

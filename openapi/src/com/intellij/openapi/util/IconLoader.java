@@ -23,7 +23,7 @@ public final class IconLoader {
   /**
    * This cache contains mapping between loaded images and <code>IJImage</code> icons.
    */
-  private static final Map myImage2Icon = new THashMap(200, 0.9f);
+  private static final Map<Image,Icon> myImage2Icon = new THashMap<Image, Icon>(200, 0.9f);
   /**
    * This cache contains mapping between icons and disabled icons.
    */
@@ -41,7 +41,7 @@ public final class IconLoader {
 
   private static Icon getIcon(final Image image) {
     LOG.assertTrue(image != null);
-    Icon icon = (Icon)myImage2Icon.get(image);
+    Icon icon = myImage2Icon.get(image);
     if (icon != null) {
       return icon;
     }
@@ -52,7 +52,7 @@ public final class IconLoader {
     }
   }
 
-  public static Icon getIcon(final String s) {
+  public static Icon getIcon(final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
@@ -61,23 +61,24 @@ public final class IconLoader {
     if (callerClass == null) {
       callerClass = Reflection.getCallerClass(1);
     }
-    return getIcon(s, callerClass);
+    return getIcon(path, callerClass);
   }
 
-  public static Icon getIcon(final String s, final Class aClass) {
+  public static Icon getIcon(final String path, final Class aClass) {
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
       return EMPTY_ICON;
     }
 
-    final Image image = ImageLoader.loadFromResource(s, aClass);
+    final Image image = ImageLoader.loadFromResource(path, aClass);
     if(image == null || image.getHeight(ourFakeComponent) < 1 || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
+      LOG.error("Icon cannot be found at '"+path+"'");
       return null;
     }
 
     final Icon icon = getIcon(image);
     if (icon != null && !ImageLoader.isGoodSize(icon)) {
-      LOG.error("Invalid icon: " + s); // # 22481
+      LOG.error("Invalid icon: " + path); // # 22481
       return EMPTY_ICON;
     }
     return icon;

@@ -488,7 +488,7 @@
         <action id="ToggleLineBreakpoint" class="com.intellij.debugger.actions.ToggleLineBreakpointAction" text="Toggle  _Line Breakpoint" description="Toggle line breakpoint at caret"/>
         <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction" text="Toggle  _Method Breakpoint" description="Toggle method breakpoint for the method at caret"/>
         <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction" text="Toggle  _Field Watchpoint" description="Toggle field watchpoint for the field at caret"/>
-        <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle Breakpoint Enabled" icon="/actions/toggleBreakpoint.png" description="Enable/disable breakpoint at the current line"/>
+        <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle Breakpoint Enabled" description="Enable/disable breakpoint at the current line"/>
         <action id="ViewBreakpoints" class="com.intellij.debugger.actions.ViewBreakpointsAction" text="_View Breakpoints" icon="/debugger/viewBreakpoints.png" description="View and manage all breakpoints and watchpoints"/>
         <separator/>
         <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" text="Export T_hreads..." description="Save all threads information to a text file or clipboard"/>
