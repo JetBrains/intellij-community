@@ -59,21 +59,21 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public Object clone() {
-               CompositeElement clone = (CompositeElement)super.clone();
+    CompositeElement clone = (CompositeElement)super.clone();
 
-  synchronized (PsiLock.LOCK) {
-    clone.clearCaches();
-    clone.parent = null;
-    clone.prev = null;
-    clone.firstChild = null;
-    clone.lastChild = null;
-    clone.myModificationsCount = 0;
-    clone.myParentModifications = -1;
-    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      TreeUtil.addChildren(clone, (TreeElement)child.clone());
+    synchronized (PsiLock.LOCK) {
+      clone.clearCaches();
+      clone.parent = null;
+      clone.prev = null;
+      clone.firstChild = null;
+      clone.lastChild = null;
+      clone.myModificationsCount = 0;
+      clone.myParentModifications = -1;
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        TreeUtil.addChildren(clone, (TreeElement)child.clone());
+      }
     }
-  }
-               return clone;
+    return clone;
   }
 
   public void subtreeChanged() {
@@ -113,23 +113,23 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public LeafElement findLeafElementAt(int offset) {
 
-  synchronized (PsiLock.LOCK) {
-    final CharTable table = SharedImplUtil.findCharTableByTree(this);
-    TreeElement child = firstChild;
-    while (child != null) {
-      final int textLength = child.getTextLength(table);
-      if (textLength > offset) {
-        if (child instanceof ChameleonElement) {
-          child = ChameleonTransforming.transform((ChameleonElement)child);
-        continue;
+    synchronized (PsiLock.LOCK) {
+      final CharTable table = SharedImplUtil.findCharTableByTree(this);
+      TreeElement child = firstChild;
+      while (child != null) {
+        final int textLength = child.getTextLength(table);
+        if (textLength > offset) {
+          if (child instanceof ChameleonElement) {
+            child = ChameleonTransforming.transform((ChameleonElement)child);
+          continue;
+          }
+          return child.findLeafElementAt(offset);
         }
-        return child.findLeafElementAt(offset);
+        offset -= textLength;
+        child = child.getTreeNext();
       }
-      offset -= textLength;
-      child = child.getTreeNext();
+      return null;
     }
-    return null;
-  }
   }
 
   public String getText() {
@@ -137,21 +137,21 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public String getText(CharTable table) {
-  synchronized (PsiLock.LOCK) {
-    // check if all elements are laid out consequently in the same buffer (optimization):
-    char[] buffer = new char[getTextLength()];
-    SourceUtil.toBuffer(this, buffer, 0, table);
-    //return StringFactory.createStringFromConstantArray(buffer);
-    return new String(buffer);
-  }
+    synchronized (PsiLock.LOCK) {
+      // check if all elements are laid out consequently in the same buffer (optimization):
+      char[] buffer = new char[getTextLength()];
+      SourceUtil.toBuffer(this, buffer, 0, table);
+      //return StringFactory.createStringFromConstantArray(buffer);
+      return new String(buffer);
+    }
   }
 
   public char[] textToCharArray() {
-  synchronized (PsiLock.LOCK) {
-    char[] buffer = new char[getTextLength()];
-    SourceUtil.toBuffer(this, buffer, 0);
-    return buffer;
-  }
+    synchronized (PsiLock.LOCK) {
+      char[] buffer = new char[getTextLength()];
+      SourceUtil.toBuffer(this, buffer, 0);
+      return buffer;
+    }
   }
 
   public boolean textContains(char c) {
@@ -165,13 +165,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public ASTNode findChildByRole(int role) {
-               LOG.assertTrue(ChildRole.isUnique(role));
-  synchronized (PsiLock.LOCK) {
-    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (getChildRole(child) == role) return child;
+    LOG.assertTrue(ChildRole.isUnique(role));
+    synchronized (PsiLock.LOCK) {
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        if (getChildRole(child) == role) return child;
+      }
     }
-  }
-               return null;
+    return null;
   }
 
   public int getChildRole(ASTNode child) {
@@ -291,13 +291,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   protected int getLengthInner(CharTable charTableByTree) {
-  synchronized (PsiLock.LOCK) {
-    int length = 0;
-    for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
-      length += child.getTextLength(charTableByTree);
+    synchronized (PsiLock.LOCK) {
+      int length = 0;
+      for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+        length += child.getTextLength(charTableByTree);
+      }
+      return length;
     }
-    return length;
-  }
   }
 
   public void setCachedLength(int length) {

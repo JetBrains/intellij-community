@@ -70,7 +70,7 @@ public class EditorImpl implements EditorEx {
   private EditorComponentImpl myEditorComponent;
   private EditorGutterComponentImpl myGutterComponent;
 
-  
+
   private CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
   private MyScrollBar myHorizontalScrollBar;

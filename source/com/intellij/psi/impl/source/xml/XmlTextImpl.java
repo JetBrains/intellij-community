@@ -198,17 +198,17 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         final ASTNode compositeElement = SourceTreeToPsiMap.psiElementToTree(xmlText);
         TreeUtil.removeRange((TreeElement)compositeElement.getFirstChildNode(), null);
         model.runTransaction(new PomTransactionBase(this) {
-                               public PomModelEvent run() {
-                                 ASTNode current = second;
-                                 while (current != null) {
-                                   final ASTNode next = current.getTreeNext();
-                                   removeChild(current);
-                                   compositeElement.addChild(current, null);
-                                   current = next;
-                                 }
-                                 return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-                               }
-                             }, aspect);
+          public PomModelEvent run() {
+            ASTNode current = second;
+            while (current != null) {
+              final ASTNode next = current.getTreeNext();
+              removeChild(current);
+              compositeElement.addChild(current, null);
+              current = next;
+            }
+            return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+          }
+        }, aspect);
 
         XmlElement xmlElement = (XmlElement)parent.addAfter(element, this);
         parent.addAfter(xmlText, xmlElement);
@@ -220,11 +220,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     }
     else {
       model.runTransaction(new PomTransactionBase(this) {
-                             public PomModelEvent run() {
-                               retHolder[0] = addInternal((TreeElement)insertedElement, insertedElement, retHolder[0], Boolean.TRUE);
-                               return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-                             }
-                           }, aspect);
+        public PomModelEvent run() {
+          retHolder[0] = addInternal((TreeElement)insertedElement, insertedElement, retHolder[0], Boolean.TRUE);
+          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+        }
+      }, aspect);
     }
     return (XmlElement)SourceTreeToPsiMap.treeElementToPsi(retHolder[0]);
   }
@@ -304,79 +304,79 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
     try {
       model.runTransaction(new PomTransactionBase(getParent()) {
-                             public PomModelEvent run() throws IncorrectOperationException {
-                               final String oldText = getText();
+        public PomModelEvent run() throws IncorrectOperationException {
+          final String oldText = getText();
 
-                               final LeafElement firstAffectedLeaf = findLeafElementAt(start);
-                               final LeafElement lastAffectedLeaf;
-                               final int lastAffectedLeafOffset;
-                               final int startOffsetInStartToken = start - firstAffectedLeaf.getStartOffsetInParent();
-                               {
-                                 // remove elements inside the affected area
-                                 LeafElement current = firstAffectedLeaf;
-                                 int endOffset = current.getStartOffsetInParent();
+          final LeafElement firstAffectedLeaf = findLeafElementAt(start);
+          final LeafElement lastAffectedLeaf;
+          final int lastAffectedLeafOffset;
+          final int startOffsetInStartToken = start - firstAffectedLeaf.getStartOffsetInParent();
+          {
+            // remove elements inside the affected area
+            LeafElement current = firstAffectedLeaf;
+            int endOffset = current.getStartOffsetInParent();
 
-                                 while (current != null && (endOffset += current.getTextLength(table)) <= end) {
-                                   final LeafElement toDelete = current;
-                                   current = (LeafElement)current.getTreeNext();
-                                   if (toDelete != firstAffectedLeaf) removeChild(toDelete);
-                                 }
-                                 lastAffectedLeaf = current;
-                                 lastAffectedLeafOffset = endOffset - (current != null ? current.getTextLength(table) : 0);
-                               }
+            while (current != null && (endOffset += current.getTextLength(table)) <= end) {
+              final LeafElement toDelete = current;
+              current = (LeafElement)current.getTreeNext();
+              if (toDelete != firstAffectedLeaf) removeChild(toDelete);
+            }
+            lastAffectedLeaf = current;
+            lastAffectedLeafOffset = endOffset - (current != null ? current.getTextLength(table) : 0);
+          }
 
-                               LeafElement tokenToChange;
-                               int deletedAreaStartOffset = 0;
-                               int deletedAreaEndOffset = 0;
-                               if (lastAffectedLeafOffset < end && lastAffectedLeaf != firstAffectedLeaf) {
-                                 // merging tokens
-                                 final LeafElement merged = mergeElements(firstAffectedLeaf, lastAffectedLeaf, table);
-                                 if (merged == null) {
-                                   removeChild(split(firstAffectedLeaf, startOffsetInStartToken));
-                                   removeChild(split(lastAffectedLeaf, end - lastAffectedLeafOffset).getTreePrev());
-                                 }
-                                 else {
-                                   ChangeUtil.replaceAll(new LeafElement[]{firstAffectedLeaf, lastAffectedLeaf}, merged);
-                                   deletedAreaStartOffset = startOffsetInStartToken;
-                                   deletedAreaEndOffset = end - lastAffectedLeafOffset + firstAffectedLeaf.getTextLength(table) -
-                                                                                                                                startOffsetInStartToken;
-                                 }
-                                 tokenToChange = merged;
-                               }
-                               else {
-                                 // replacing first token
-                                 tokenToChange = firstAffectedLeaf;
-                                 final int textLength = firstAffectedLeaf.getTextLength(table);
-                                 deletedAreaStartOffset = startOffsetInStartToken;
-                                 deletedAreaEndOffset = Math.min(end - firstAffectedLeaf.getStartOffsetInParent(), textLength);
-                               }
+          LeafElement tokenToChange;
+          int deletedAreaStartOffset = 0;
+          int deletedAreaEndOffset = 0;
+          if (lastAffectedLeafOffset < end && lastAffectedLeaf != firstAffectedLeaf) {
+            // merging tokens
+            final LeafElement merged = mergeElements(firstAffectedLeaf, lastAffectedLeaf, table);
+            if (merged == null) {
+              removeChild(split(firstAffectedLeaf, startOffsetInStartToken));
+              removeChild(split(lastAffectedLeaf, end - lastAffectedLeafOffset).getTreePrev());
+            }
+            else {
+              ChangeUtil.replaceAll(new LeafElement[]{firstAffectedLeaf, lastAffectedLeaf}, merged);
+              deletedAreaStartOffset = startOffsetInStartToken;
+              deletedAreaEndOffset = end - lastAffectedLeafOffset + firstAffectedLeaf.getTextLength(table) -
+                                                                                                           startOffsetInStartToken;
+            }
+            tokenToChange = merged;
+          }
+          else {
+            // replacing first token
+            tokenToChange = firstAffectedLeaf;
+            final int textLength = firstAffectedLeaf.getTextLength(table);
+            deletedAreaStartOffset = startOffsetInStartToken;
+            deletedAreaEndOffset = Math.min(end - firstAffectedLeaf.getStartOffsetInParent(), textLength);
+          }
 
-                               if (tokenToChange != null) {
-                                 final int textLength = tokenToChange.getTextLength(table);
-                                 if (deletedAreaStartOffset > 0 || deletedAreaEndOffset < textLength) {
-                                   String text = tokenToChange.getText(table);
-                                   text = text.substring(0, deletedAreaStartOffset) + text.substring(deletedAreaEndOffset);
-                                   final LeafElement newLeaf = Factory.createSingleLeafElement(firstAffectedLeaf.getElementType(),
-                                                                                               text.toCharArray(), 0, text.length(), table,
-                                                                                               null);
-                                   replaceChild(tokenToChange, newLeaf);
-                                 }
-                                 else {
-                                   final ASTNode treeNext = tokenToChange.getTreeNext();
-                                   final ASTNode treePrev = tokenToChange.getTreePrev();
-                                   final LeafElement merged = mergeElements((LeafElement)treePrev, (LeafElement)treeNext, table);
-                                   removeChild(tokenToChange);
-                                   if (merged != null) {
-                                     ChangeUtil.replaceAll(new LeafElement[]{(LeafElement)treePrev,
-                                                               (LeafElement)treeNext},
-                                                           merged);
-                                   }
-                                 }
-                               }
+          if (tokenToChange != null) {
+            final int textLength = tokenToChange.getTextLength(table);
+            if (deletedAreaStartOffset > 0 || deletedAreaEndOffset < textLength) {
+              String text = tokenToChange.getText(table);
+              text = text.substring(0, deletedAreaStartOffset) + text.substring(deletedAreaEndOffset);
+              final LeafElement newLeaf = Factory.createSingleLeafElement(firstAffectedLeaf.getElementType(),
+                                                                          text.toCharArray(), 0, text.length(), table,
+                                                                          null);
+              replaceChild(tokenToChange, newLeaf);
+            }
+            else {
+              final ASTNode treeNext = tokenToChange.getTreeNext();
+              final ASTNode treePrev = tokenToChange.getTreePrev();
+              final LeafElement merged = mergeElements((LeafElement)treePrev, (LeafElement)treeNext, table);
+              removeChild(tokenToChange);
+              if (merged != null) {
+                ChangeUtil.replaceAll(new LeafElement[]{(LeafElement)treePrev,
+                                          (LeafElement)treeNext},
+                                      merged);
+              }
+            }
+          }
 
-                               return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-                             }
-                           }, aspect);
+          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+        }
+      }, aspect);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -448,8 +448,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
           ASTNode childBefore = (anchor != null ? (before ? anchor.getTreePrev() : anchor) : getLastChildNode());
           if (childBefore != null && childBefore.getElementType() == text.getFirstChildNode().getElementType()) {
             final LeafElement newText =
-              mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(),
-                            SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+            mergeElements((LeafElement)childBefore, (LeafElement)text.getFirstChildNode(),
+                          SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
             if (newText != null) {
               replaceChildInternal(childBefore, newText);
               if (text.getLastChildNode() != text.getFirstChildNode()) {
@@ -465,8 +465,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
             ASTNode childAfter = (anchor != null ? (before ? anchor : anchor.getTreeNext()) : getLastChildNode());
             if (childAfter != null && childAfter.getElementType() == text.getFirstChildNode().getElementType()) {
               final LeafElement newText =
-                mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter,
-                              SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+              mergeElements((LeafElement)text.getFirstChildNode(), (LeafElement)childAfter,
+                            SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
               if (newText != null) {
                 replaceChildInternal(childAfter, newText);
                 if (text.getLastChildNode() != text.getFirstChildNode()) {
@@ -489,13 +489,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     }
     else {
       model.runTransaction(new PomTransactionBase(this) {
-                             public PomModelEvent run() {
-                               final String oldText = getText();
-                               final TreeElement treeElement = addChildren(XmlTextImpl.this, child, child.getTreeNext(), anchor, before);
-                               retHolder[0] = treeElement;
-                               return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
-                             }
-                           }, aspect);
+        public PomModelEvent run() {
+          final String oldText = getText();
+          final TreeElement treeElement = addChildren(XmlTextImpl.this, child, child.getTreeNext(), anchor, before);
+          retHolder[0] = treeElement;
+          return XmlTextChanged.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+        }
+      }, aspect);
     }
     return retHolder[0];
   }
