@@ -33,19 +33,16 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 
-public class XmlTagTreeElement extends PsiTreeElementBase{
-  private final XmlTag myTag;
-
+public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
   public XmlTagTreeElement(XmlTag tag) {
-    myTag = tag;
+    super(tag);
   }
 
   public StructureViewTreeElement[] getChildrenBase() {
-    XmlTag[] subTags = myTag.getSubTags();
+    XmlTag[] subTags = getElement().getSubTags();
     StructureViewTreeElement[] result = new StructureViewTreeElement[subTags.length];
     for (int i = 0; i < result.length; i++) {
       result[i] = new XmlTagTreeElement(subTags[i]);
@@ -53,14 +50,10 @@ public class XmlTagTreeElement extends PsiTreeElementBase{
     return result;
   }
 
-  public PsiElement getElement() {
-    return myTag;
-  }
-
   public String getPresentableText() {
     final StringBuffer buffer = new StringBuffer();
-    buffer.append(myTag.getName());
-    final XmlAttribute[] attributes = myTag.getAttributes();
+    buffer.append(getElement().getName());
+    final XmlAttribute[] attributes = getElement().getAttributes();
     for (int i = 0; i < attributes.length; i++) {
       appendAttribute(attributes[i], buffer);
     }

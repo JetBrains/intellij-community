@@ -1,13 +1,15 @@
 package com.intellij.ide.util.treeView.smartTree;
 
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 
 import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
-  private List<CachingChildrenTreeNode> myOldChildren = null;
+  protected List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
 
   public CachingChildrenTreeNode(Project project, Value value, TreeModel treeModel) {
@@ -174,17 +176,37 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     if (myOldChildren != null) {
       for (Iterator<CachingChildrenTreeNode> iterator = myOldChildren.iterator(); iterator.hasNext();) {
         CachingChildrenTreeNode oldInstance = iterator.next();
-        if (myChildren.contains(oldInstance)) {
-          final int newIndex = myChildren.indexOf(oldInstance);
+        final int newIndex = getIndexOfPointerToTheSameValue(oldInstance);
+        if (newIndex >= 0) {
           final CachingChildrenTreeNode newInstance = myChildren.get(newIndex);
-          oldInstance.copyFromNew(newInstance);
+          newInstance.copyFromNewInstance(oldInstance);
+          oldInstance.setValue(newInstance.getValue());
           myChildren.set(newIndex, oldInstance);
         }
       }
     }
   }
 
-  protected abstract void copyFromNew(final CachingChildrenTreeNode newInstance);
+  private int getIndexOfPointerToTheSameValue(final CachingChildrenTreeNode oldInstance) {
+    for (int i = 0; i < myChildren.size(); i++) {
+      CachingChildrenTreeNode newInstance = myChildren.get(0);
+
+      if (newInstance instanceof TreeElementWrapper) {
+        final StructureViewTreeElement newElement = ((StructureViewTreeElement)newInstance.getValue());
+        if (oldInstance instanceof TreeElementWrapper) {
+          final StructureViewTreeElement oldElement = ((StructureViewTreeElement)oldInstance.getValue());
+          if (newElement.getValue() != null) {
+            if (Comparing.equal(newElement.getValue(), oldElement.getValue())) return i;
+          }
+        }
+      } else {
+        if (newInstance.equals(oldInstance)) return i;
+      }
+    }
+    return -1;
+  }
+
+  protected abstract void copyFromNewInstance(final CachingChildrenTreeNode newInstance);
 
   protected abstract void performTreeActions();
 

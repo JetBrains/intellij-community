@@ -33,30 +33,23 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 
-public class XmlFileTreeElement extends PsiTreeElementBase {
-  private final XmlFile myFile;
-
+public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public XmlFileTreeElement(XmlFile file) {
-    myFile = file;
+    super(file);
   }
 
   public StructureViewTreeElement[] getChildrenBase() {
-    XmlDocument document = myFile.getDocument();
+    XmlDocument document = getElement().getDocument();
     if (document != null) {
       return new StructureViewTreeElement[]{new XmlTagTreeElement(document.getRootTag())};
     }
     return new StructureViewTreeElement[0];
   }
 
-  public PsiElement getElement() {
-    return myFile;
-  }
-
   public String getPresentableText() {
-    return myFile.getName();
+    return getElement().getName();
   }
 }

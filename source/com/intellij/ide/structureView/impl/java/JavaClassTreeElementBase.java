@@ -1,21 +1,17 @@
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtil;
 
-import javax.swing.*;
-
-public abstract class JavaClassTreeElementBase extends PsiTreeElementBase implements
+public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements
                                                                           AccessLevelProvider {
   protected final boolean myIsInherited;
 
-  protected JavaClassTreeElementBase(boolean isInherited) {
+  protected JavaClassTreeElementBase(boolean isInherited, PsiElement element) {
+    super(element);
     myIsInherited = isInherited;
   }
 
@@ -24,7 +20,7 @@ public abstract class JavaClassTreeElementBase extends PsiTreeElementBase implem
   }
 
   public boolean isPublic() {
-    PsiElement element = getElement();
+    Value element = getElement();
     if (element instanceof PsiModifierListOwner) {
       return ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PUBLIC);
     }

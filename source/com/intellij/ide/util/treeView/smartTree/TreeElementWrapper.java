@@ -1,6 +1,7 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -9,8 +10,7 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
     super(project, value, treeModel);
   }
 
-  public void copyFromNew(final CachingChildrenTreeNode newInstance) {
-    
+  public void copyFromNewInstance(final CachingChildrenTreeNode oldInstance) {
   }
 
   public void initChildren() {
@@ -27,7 +27,9 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
   }
 
   public void update(PresentationData presentation) {
-    presentation.updateFrom(getValue().getPresentation());
+    if (((StructureViewTreeElement)getValue()).getValue() != null){
+      presentation.updateFrom(getValue().getPresentation());
+    }
   }
 
   protected void performTreeActions() {

@@ -9,7 +9,7 @@ class GroupWrapper extends CachingChildrenTreeNode<Group> {
     super(project, value, treeModel);
   }
 
-  public void copyFromNew(final CachingChildrenTreeNode newInstance) {
+  public void copyFromNewInstance(final CachingChildrenTreeNode newInstance) {
     clearChildren();
     setChildren(newInstance.getChildren());
     synchronizeChildren();

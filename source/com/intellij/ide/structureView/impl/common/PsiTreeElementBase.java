@@ -38,6 +38,8 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -45,12 +47,20 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class PsiTreeElementBase implements StructureViewTreeElement, ItemPresentation {
+public abstract class PsiTreeElementBase<Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation {
+  private final SmartPsiElementPointer mySmartPsiElementPointer;
+
+  protected PsiTreeElementBase(PsiElement psiElement) {
+    mySmartPsiElementPointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
+  }
+
   public ItemPresentation getPresentation() {
     return this;
   }
 
-  public abstract PsiElement getElement();
+  public final Value getElement(){
+    return (Value)mySmartPsiElementPointer.getElement();
+  }
 
   public Icon getIcon(boolean open) {
     final PsiElement element = getElement();
@@ -92,20 +102,4 @@ public abstract class PsiTreeElementBase implements StructureViewTreeElement, It
   }
 
   public abstract  StructureViewTreeElement[] getChildrenBase();
-
-  public int hashCode() {
-    if (getElement() == null) {
-      return 0;
-    } else {
-      return getElement().hashCode();
-    }
-  }
-
-  public boolean equals(Object object) {
-    if (object instanceof PsiTreeElementBase) {
-      return Comparing.equal(getElement(), ((PsiTreeElementBase)object).getElement());
-    } else {
-      return false;
-    }
-  }
 }

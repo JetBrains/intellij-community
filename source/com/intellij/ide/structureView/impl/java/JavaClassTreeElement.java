@@ -7,12 +7,9 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 
 import java.util.*;
 
-public class JavaClassTreeElement extends JavaClassTreeElementBase {
-  private final PsiClass myClass;
-
+public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   public JavaClassTreeElement(PsiClass aClass, boolean inherited) {
-    super(inherited);
-    myClass = aClass;
+    super(inherited,aClass);
   }
 
   public StructureViewTreeElement[] getChildrenBase() {
@@ -23,17 +20,17 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase {
   public Collection<StructureViewTreeElement> getClassChildren() {
     ArrayList<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
 
-    List<PsiElement> ownChildren = Arrays.asList(myClass.getChildren());
+    List<PsiElement> ownChildren = Arrays.asList(getElement().getChildren());
     ArrayList<PsiElement> inherited = new ArrayList<PsiElement>();
     for (Iterator<PsiElement> iterator = ownChildren.iterator(); iterator.hasNext();) {
       PsiElement psiElement = iterator.next();
       if (psiElement.isValid()) inherited.add(psiElement);
     }
-    PsiScopesUtil.processScope(myClass, new AddAllMembersProcessor(inherited, myClass, new AddAllMembersProcessor.MemberFilter() {
+    PsiScopesUtil.processScope(getElement(), new AddAllMembersProcessor(inherited, getElement(), new AddAllMembersProcessor.MemberFilter() {
       protected boolean isVisible(PsiModifierListOwner member) {
         return true;
       }
-    }), PsiSubstitutor.UNKNOWN, null, myClass);
+    }), PsiSubstitutor.UNKNOWN, null, getElement());
 
     for (Iterator iterator = inherited.iterator(); iterator.hasNext();) {
       PsiElement child = (PsiElement)iterator.next();
@@ -61,15 +58,11 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase {
   }
 
   public String getPresentableText() {
-    return myClass.getName();
-  }
-
-  public PsiElement getElement() {
-    return myClass;
+    return getElement().getName();
   }
 
   public boolean isPublic() {
-    if (myClass.getParent() instanceof PsiFile){
+    if (getElement().getParent() instanceof PsiFile){
       return true;
     } else {
       return super.isPublic();
