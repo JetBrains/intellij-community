@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
     private final InspectionGadgetsFix fix = new NonShortCircuitBooleanFix();
@@ -67,10 +68,11 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
+
+            final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.AND) &&
                     !tokenType.equals(JavaTokenType.OR)) {

@@ -54,11 +54,8 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
 
         private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
             final PsiType type = literal.getType();
-            if (type == null) {
-                return false;
-            }
-            if (!type.equals(PsiType.INT) &&
-                    !type.equals(PsiType.LONG)) {
+            if (!PsiType.INT.equals(type) &&
+                    !PsiType.LONG.equals(type)) {
                 return false;
             }
             final String text = literal.getText();
@@ -70,11 +67,7 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
 
         private static boolean isOctalLiteral(PsiLiteralExpression literal) {
             final PsiType type = literal.getType();
-            if (type == null) {
-                return false;
-            }
-            if (!(type.equals(PsiType.INT)
-                    || type.equals(PsiType.LONG))) {
+            if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
                 return false;
             }
             final String text = literal.getText();

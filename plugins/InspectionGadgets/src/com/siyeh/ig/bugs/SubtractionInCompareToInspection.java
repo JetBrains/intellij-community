@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class SubtractionInCompareToInspection extends ExpressionInspection {
 
@@ -35,6 +36,9 @@ public class SubtractionInCompareToInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression exp) {
             super.visitBinaryExpression(exp);
+            if(!WellFormednessUtils.isWellFormed(exp)){
+                return;
+            }
             if (!isSubtraction(exp)) {
                 return;
             }

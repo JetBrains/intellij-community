@@ -9,6 +9,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 
 public class IncompatibleMaskInspection extends ExpressionInspection {
 
@@ -44,16 +46,14 @@ public class IncompatibleMaskInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
+            if(!ComparisonUtils.isEqualityComparison(expression)){
+                return;
+            }
             final PsiType expressionType = expression.getType();
             if (expressionType == null) {
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
-            final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();

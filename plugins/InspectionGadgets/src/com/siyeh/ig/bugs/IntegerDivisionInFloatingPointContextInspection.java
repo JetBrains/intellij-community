@@ -8,9 +8,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class IntegerDivisionInFloatingPointContextInspection extends ExpressionInspection {
     private static final Set s_integralTypes = new HashSet(10);
@@ -52,26 +53,20 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
+            final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.DIV)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiType lhsType = lhs.getType();
             if (!isIntegral(lhsType)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
             final PsiType rhsType = rhs.getType();
             if (!isIntegral(rhsType)) {
                 return;

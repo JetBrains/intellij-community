@@ -4,11 +4,9 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 
 public class StringEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
@@ -44,18 +42,14 @@ public class StringEqualityInspection extends ExpressionInspection {
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
             final PsiJavaToken sign = expression.getOperationSign();
-            if (!(sign.getTokenType() != JavaTokenType.NE)) {
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.NE)) {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
+
             final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
 
             final String expString;
@@ -81,6 +75,9 @@ public class StringEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }

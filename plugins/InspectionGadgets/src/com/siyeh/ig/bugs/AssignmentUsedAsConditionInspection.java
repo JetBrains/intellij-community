@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
     private final AssignmentUsedAsConditionFix fix = new AssignmentUsedAsConditionFix();
@@ -51,14 +52,18 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
 
         public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
+            if(!WellFormednessUtils.isWellFormed(expression)){
+                return;
+            }
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {
                 return;
             }
-            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
+            final PsiElement parent = expression.getParent();
+            if(parent == null)
+            {
                 return;
             }
-            final PsiElement parent = expression.getParent();
             if (parent instanceof PsiIfStatement) {
                 checkIfStatementCondition((PsiIfStatement) parent, expression);
             }
@@ -75,28 +80,28 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
 
         private void checkIfStatementCondition(PsiIfStatement ifStatement, PsiAssignmentExpression expression) {
             final PsiExpression condition = ifStatement.getCondition();
-            if (condition != null && condition.equals(expression)) {
+            if (expression.equals(condition)) {
                 registerError(expression);
             }
         }
 
         private void checkDoWhileStatementCondition(PsiDoWhileStatement doWhileStatement, PsiAssignmentExpression expression) {
             final PsiExpression condition = doWhileStatement.getCondition();
-            if (condition != null && condition.equals(expression)) {
+            if(expression.equals(condition)){
                 registerError(expression);
             }
         }
 
         private void checkForStatementCondition(PsiForStatement forStatement, PsiAssignmentExpression expression) {
             final PsiExpression condition = forStatement.getCondition();
-            if (condition != null && condition.equals(expression)) {
+            if(expression.equals(condition)){
                 registerError(expression);
             }
         }
 
         private void checkWhileStatementCondition(PsiWhileStatement whileStatement, PsiAssignmentExpression expression) {
             final PsiExpression condition = whileStatement.getCondition();
-            if (condition != null && condition.equals(expression)) {
+            if(expression.equals(condition)){
                 registerError(expression);
             }
         }

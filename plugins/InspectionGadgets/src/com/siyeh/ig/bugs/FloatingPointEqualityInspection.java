@@ -1,12 +1,16 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class FloatingPointEqualityInspection extends ExpressionInspection {
 
@@ -33,13 +37,11 @@ public class FloatingPointEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
-            final IElementType tokenType = sign.getTokenType();
-            if (!(tokenType.equals(JavaTokenType.EQEQ) ||
-                    tokenType.equals(JavaTokenType.NE))) {
+            if(!ComparisonUtils.isEqualityComparison(expression))
+            {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
