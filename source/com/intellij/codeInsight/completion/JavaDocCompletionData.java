@@ -21,6 +21,7 @@ import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +101,7 @@ public class JavaDocCompletionData extends CompletionData {
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (int i = 0; i < infos.length; i++) {
         JavadocTagInfo info = infos[i];
+        if (info.getName().equals(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
         if (isInline != (info.isInline())) continue;
         ret.add(info.getName());
       }
