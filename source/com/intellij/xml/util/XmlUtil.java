@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 
@@ -300,7 +301,7 @@ public class XmlUtil {
     return type;
   }
 
-  private static final Key<CachedValue> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
+  private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
 
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
@@ -309,21 +310,21 @@ public class XmlUtil {
                                             final XmlEntityRef entityRef) {
     if (!cacheValue) return entityDecl.parse(targetFile, type, entityRef);
 
-    CachedValue value = entityRef.getUserData(PARSED_DECL_KEY);
+    CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
 //    return entityDecl.parse(targetFile, type);
 
     if (value == null) {
-      value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider() {
+      value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
         public CachedValueProvider.Result compute() {
           final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-          if (res == null) return new Result(res, new Object[]{targetFile});
-          return new CachedValueProvider.Result(res, new Object[]{res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef});
+          if (res == null) return new Result<PsiElement>(res, new Object[]{targetFile});
+          return new CachedValueProvider.Result<PsiElement>(res, new Object[]{res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef});
         }
       }, false);
       entityRef.putUserData(PARSED_DECL_KEY, value);
     }
 
-    return (PsiElement)value.getValue();
+    return value.getValue();
   }
 
   /**
@@ -547,7 +548,7 @@ public class XmlUtil {
       }
       else {
         final XmlAttribute[] attributes = tag.getAttributes();
-        Collections.sort((List)list);
+        Collections.sort(list);
         Arrays.sort(attributes, new Comparator() {
           public int compare(Object o1, Object o2) {
             return ((XmlAttribute)o1).getName().compareTo(((XmlAttribute)o2).getName());
@@ -625,8 +626,8 @@ public class XmlUtil {
 
   public static String generateDocumentDTD(XmlDocument doc) {
     final StringBuffer buffer = new StringBuffer();
-    final Map<String,List<String>> tags = new com.intellij.util.containers.HashMap<String, List<String>>();
-    final Map<String,List<MyAttributeInfo>> attributes = new com.intellij.util.containers.HashMap<String, List<MyAttributeInfo>>();
+    final Map<String,List<String>> tags = new HashMap<String, List<String>>();
+    final Map<String,List<MyAttributeInfo>> attributes = new HashMap<String, List<MyAttributeInfo>>();
     computeTag(doc.getRootTag(), tags, attributes);
     final Iterator<String> iter = tags.keySet().iterator();
     while (iter.hasNext()) {
