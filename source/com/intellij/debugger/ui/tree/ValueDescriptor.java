@@ -1,11 +1,9 @@
 package com.intellij.debugger.ui.tree;
 
-import com.sun.jdi.Value;
-import com.sun.jdi.PrimitiveValue;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
+import com.sun.jdi.Value;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.

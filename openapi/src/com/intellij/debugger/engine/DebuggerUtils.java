@@ -1,30 +1,27 @@
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.CompletitionEditor;
-import com.intellij.debugger.DebuggerContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
+import org.jdom.Element;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jdom.Element;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -313,7 +310,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public abstract PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context) throws EvaluateException;
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
-  public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
+
   public abstract DebuggerContext   getDebuggerContext (DataContext context);
 
   public abstract Element         writeTextWithImports(TextWithImports text);

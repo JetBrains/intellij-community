@@ -13,7 +13,6 @@ import java.util.Enumeration;
  * Time: 7:01:02 PM
  */
 public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.tree.TreeBuilderNode");
   private boolean                    myChildrenBuilt = false;
 
   public TreeBuilderNode(Object userObject) {

@@ -7,6 +7,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -21,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
@@ -335,6 +337,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return null;
     }
   }
+
+  public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
 
   private static class SigReader {
     final String buffer;

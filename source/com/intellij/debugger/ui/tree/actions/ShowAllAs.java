@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree.actions;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
@@ -49,12 +50,12 @@ public class ShowAllAs extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    DebuggerTreeNode selectedNode = DebuggerUtils.getInstance().getSelectedNode(e.getDataContext());
+    DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     e.getPresentation().setVisible(myRenderer != null && selectedNode != null && isPrimitiveArray(selectedNode));
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DebuggerTreeNode selectedNode = DebuggerUtils.getInstance().getSelectedNode(e.getDataContext());
+    DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     if(selectedNode == null) return;
     
     if(!isPrimitiveArray(selectedNode)) return;

@@ -1,12 +1,10 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Field;
-import sun.tools.asm.LocalVariable;
+import com.sun.jdi.ObjectReference;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
