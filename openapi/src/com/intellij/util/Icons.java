@@ -50,7 +50,7 @@ public interface Icons {
   Icon ANONYMOUS_CLASS_ICON = IconLoader.getIcon("/nodes/anonymousClass.png");
   Icon ABSTRACT_CLASS_ICON = IconLoader.getIcon("/nodes/abstractClass.png");
   Icon JUNIT_TEST_CLASS_ICON = IconLoader.getIcon("/nodes/junitTestClass.png");
-  Icon ANNOTATION_TYPE_ICON = IconLoader.getIcon("/nodes/annotationType.png");
+  Icon ANNOTATION_TYPE_ICON = IconLoader.getIcon("/nodes/annotationtype.png");
   Icon ENUM_ICON = IconLoader.getIcon("/nodes/enum.png");
   Icon INTERFACE_ICON = IconLoader.getIcon("/nodes/interface.png");
   Icon METHOD_ICON = IconLoader.getIcon("/nodes/method.png");
