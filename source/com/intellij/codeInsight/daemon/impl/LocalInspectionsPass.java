@@ -90,11 +90,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       myTools = new ArrayList<LocalInspectionTool>();
 
       LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getHighlightingLocalInspectionTools();
-      for (Iterator iterator = workSet.iterator(); iterator.hasNext();) {
+      for (Iterator<PsiElement> iterator = workSet.iterator(); iterator.hasNext();) {
         ProgressManager.getInstance().checkCanceled();
         LocalInspectionTool currentTool = null;
         try {
-          PsiElement element = (PsiElement)iterator.next();
+          PsiElement element = iterator.next();
           if (element instanceof PsiMethod) {
             PsiMethod psiMethod = (PsiMethod)element;
             for (int k = 0; k < tools.length; k++) {
