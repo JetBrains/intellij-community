@@ -307,9 +307,9 @@ public class DependenciesPanel extends JPanel {
   }
 
   private Set<PsiFile> getSelectedScope(final Tree tree) {
-    int[] rows = tree.getSelectionRows();
-    if (rows == null || rows.length != 1) return EMPTY_FILE_SET;
-    PackageDependenciesNode node = (PackageDependenciesNode)tree.getPathForRow(rows[0]).getLastPathComponent();
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length != 1) return EMPTY_FILE_SET;
+    PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
     if (node.isRoot()) return EMPTY_FILE_SET;
     Set<PsiFile> result = new HashSet<PsiFile>();
     node.fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);

@@ -72,6 +72,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
                              " -Production Classes\n" +
                              "  -" + myModule.getName() + "\n" +
                              "   -com.package1\n" +
+                             "    Class2.java\n" +
                              " Test Classes\n", true);
     }
 
