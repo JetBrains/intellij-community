@@ -45,7 +45,7 @@ public class CharTableImpl implements CharTable{
       final int refsLength = myReferences.length;
       if(currentReferencesEnd >= refsLength - 1){
         final CharTableEntry[] oldReferences = myReferences;
-        myReferences = new CharTableEntry[(int)(refsLength + Math.max(5, refsLength * 0.1))];
+        myReferences = new CharTableEntry[refsLength + Math.max(5, (int)(refsLength * 0.1))];
         System.arraycopy(oldReferences, 0, myReferences, 0, refsLength);
       }
       myEntries.put(entry, currentReferencesEnd);
@@ -88,14 +88,20 @@ public class CharTableImpl implements CharTable{
     char[] buffer;
     int offset;
     int length;
+    int hashCode;
 
     public CharTableEntry(char[] buffer, int offset, int length) {
       this.buffer = buffer;
       this.offset = offset;
       this.length = length;
+      hashCode = hashCodeInner();
     }
 
     public int hashCode() {
+      return hashCode;
+    }
+
+    private int hashCodeInner() {
       int off = offset;
       int h = 0;
       for (int i = 0; i < length; i++) {
@@ -105,12 +111,13 @@ public class CharTableImpl implements CharTable{
     }
 
     public boolean equals(Object o) {
+      if(o.hashCode() != hashCode) return false;
       if(o instanceof String){
         String str = (String)o;
         if(str.length() != length) return false;
         int off = offset;
         for (int i = 0; i < length; i++) {
-            if(buffer[off++] != str.charAt(i)) return false;
+          if(buffer[off++] != str.charAt(i)) return false;
         }
         return true;
       }
