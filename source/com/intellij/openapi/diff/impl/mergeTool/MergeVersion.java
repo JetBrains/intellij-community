@@ -2,8 +2,8 @@ package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.impl.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;

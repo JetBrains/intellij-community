@@ -1,6 +1,5 @@
-package com.intellij.openapi.command.impl;
+package com.intellij.openapi.command.undo;
 
-import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;

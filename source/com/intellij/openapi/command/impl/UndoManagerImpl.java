@@ -2,10 +2,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.*;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.NonUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
