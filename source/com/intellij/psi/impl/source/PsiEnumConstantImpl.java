@@ -129,7 +129,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public void normalizeDeclaration() throws IncorrectOperationException { }
 
   public Object computeConstantValue() {
-    return null;
+    return this;
   }
 
   public PsiMethod resolveMethod() {
