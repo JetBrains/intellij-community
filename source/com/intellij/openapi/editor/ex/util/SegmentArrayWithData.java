@@ -1,16 +1,17 @@
 package com.intellij.openapi.editor.ex.util;
 
 public class SegmentArrayWithData extends SegmentArray {
-  private long[] myData;
+  private short[] myData;
 
   public SegmentArrayWithData() {
-    myData = new long[INITIAL_SIZE];
+    myData = new short[INITIAL_SIZE];
   }
 
-  public void setElementAt(int i, int startOffset, int endOffset, long data) {
+  public void setElementAt(int i, int startOffset, int endOffset, int data) {
+    if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
     super.setElementAt(i, startOffset, endOffset);
     myData = relocateArray(myData, i+1);
-    myData[i] = data;
+    myData[i] = (short)data;
   }
 
   public void remove(int startIndex, int endIndex) {
@@ -23,14 +24,15 @@ public class SegmentArrayWithData extends SegmentArray {
     super.insert(segmentArray, startIndex);
   }
 
-  public long getSegmentData(int index) {
+  public short getSegmentData(int index) {
     if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
     return myData[index];
   }
 
-  public void setSegmentData(int index, long data) {
+  public void setSegmentData(int index, int data) {
     if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
-    myData[index] = data;
+    if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
+    myData[index] = (short)data;
   }
 }
 

@@ -60,16 +60,17 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     return new HighlighterIteratorImpl(mySegments, startOffset);
   }
 
-  private long packData(IElementType tokenType, int state) {
-    return tokenType.getIndex() | (((long)state) << 16);
+  private int packData(IElementType tokenType, int state) {
+    final short idx = tokenType.getIndex();
+    return state == myInitialState ? idx : -idx;
   }
 
-  private int unpackState(long data) {
-    return (int)(data >> 16);
+  private boolean isInitialState(int data) {
+    return data >= 0;
   }
 
-  private IElementType unpackToken(long data) {
-    return IElementType.find((short)(data & 0xFFFF));
+  private IElementType unpackToken(int data) {
+    return IElementType.find((short)Math.abs(data));
   }
 
   public synchronized void documentChanged(DocumentEvent e) {
@@ -83,12 +84,10 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
 
     int startIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
 
-    long data;
-    int lexerState;
+    int data;
     do {
       data = mySegments.getSegmentData(startIndex);
-      lexerState = unpackState(data);
-      if (lexerState == myInitialState || startIndex == 0) break;
+      if (isInitialState(data)|| startIndex == 0) break;
       startIndex--;
     }
     while (true);
@@ -96,7 +95,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     int startOffset = mySegments.getSegmentStart(startIndex);
     int newEndOffset = e.getOffset() + e.getNewLength();
 
-    myLexer.start(CharArrayUtil.fromSequence(text), startOffset, text.length(), lexerState);
+    myLexer.start(CharArrayUtil.fromSequence(text), startOffset, text.length(), myInitialState);
     SegmentArrayWithData insertSegments = new SegmentArrayWithData();
     int oldEndIndex = -1;
     int insertSegmentCount = 0;
@@ -112,6 +111,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
       lastTokenStart = tokenStart;
 
       int tokenEnd = myLexer.getTokenEnd();
+      int lexerState;
       lexerState = myLexer.getState();
       data = packData(myLexer.getTokenType(), lexerState);
       if(tokenStart >= newEndOffset && lexerState == myInitialState) {
@@ -166,7 +166,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     int i = 0;
     mySegments.removeAll();
     while(myLexer.getTokenType() != null) {
-      long data = packData(myLexer.getTokenType(), myLexer.getState());
+      int data = packData(myLexer.getTokenType(), myLexer.getState());
       mySegments.setElementAt(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data);
       i++;
       myLexer.advance();

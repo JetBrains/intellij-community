@@ -35,6 +35,21 @@ public class SegmentArray {
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
+  protected static short[] relocateArray(short[] array, int index) {
+    if(index < array.length)
+      return array;
+
+    int newArraySize = array.length;
+    if(newArraySize == 0) {
+      newArraySize = 16;
+    }
+    while(newArraySize <= index) {
+      newArraySize = (newArraySize * 120) / 100;
+    }
+    short[] newArray = new short[newArraySize];
+    System.arraycopy(array, 0, newArray, 0, array.length);
+    return newArray;
+  }
   protected static long[] relocateArray(long[] array, int index) {
     if(index < array.length)
       return array;
@@ -112,6 +127,12 @@ public class SegmentArray {
     }
     return array;
   }
+  protected short[] remove(short[] array, int startIndex, int endIndex) {
+    if(endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    }
+    return array;
+  }
   protected long[] remove(long[] array, int startIndex, int endIndex) {
     if(endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
@@ -127,6 +148,15 @@ public class SegmentArray {
 
   protected int[] insert(int[] array, int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = relocateArray(array, mySegmentCount + insertLength);
+    if(startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
+    }
+    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
+    return newArray;
+  }
+
+  protected short[] insert(short[] array, short[] insertArray, int startIndex, int insertLength) {
+    short[] newArray = relocateArray(array, mySegmentCount + insertLength);
     if(startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
     }
