@@ -28,8 +28,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends Expressio
         final PsiExpression lhs = expression.getLExpression();
         final PsiJavaToken sign = rhs.getOperationSign();
         final PsiExpression rhsRhs = rhs.getROperand();
-        final String newExpression = lhs.getText() + ' ' + sign.getText() + "= " + rhsRhs.getText();
-        return newExpression;
+        return lhs.getText() + ' ' + sign.getText() + "= " + rhsRhs.getText();
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
@@ -75,7 +74,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends Expressio
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.EQ) {
+            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
                 return;
             }
             final PsiExpression lhs = assignment.getLExpression();
@@ -88,8 +87,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends Expressio
             }
             final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
             final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
-            if (operatorSign.getTokenType() == JavaTokenType.OROR ||
-                    operatorSign.getTokenType() == JavaTokenType.ANDAND) {
+            if (operatorSign.getTokenType().equals(JavaTokenType.OROR) ||
+                    operatorSign.getTokenType().equals(JavaTokenType.ANDAND)) {
                 return;
             }
             final PsiExpression lOperand = binaryRhs.getLOperand();

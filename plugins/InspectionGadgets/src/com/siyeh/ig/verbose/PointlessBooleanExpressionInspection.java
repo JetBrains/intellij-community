@@ -113,6 +113,10 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
+        public void visitClass(PsiClass aClass) {
+            //to avoid drilldown
+        }
+        
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
@@ -171,7 +175,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
             }
             final PsiExpression operand = expression.getOperand();
             final IElementType tokenType = sign.getTokenType();
-            if (!(tokenType != JavaTokenType.EXCL || !notExpressionIsPointless(operand))) {
+            if (!(!tokenType.equals(JavaTokenType.EXCL) || !notExpressionIsPointless(operand))) {
                 registerError(expression);
             }
         }

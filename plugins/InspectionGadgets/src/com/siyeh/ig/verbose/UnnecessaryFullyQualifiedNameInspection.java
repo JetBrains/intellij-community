@@ -6,18 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-
-import javax.swing.*;
 
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
-    public boolean m_ignoreJavaDocs = false;
+
     private final UnnecessaryFullyQualifiedNameFix fix = new UnnecessaryFullyQualifiedNameFix();
 
     public String getDisplayName() {
@@ -25,26 +25,19 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return com.siyeh.ig.GroupNames.VERBOSE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Fully qualified name #ref is unnecessary, and can be replace with an import #loc";
+        return "Fully qualified name #ref is unnecessary, and can be replaced with an import #loc";
     }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore fully qualified names in javadoc comments",
-                this, "m_ignoreJavaDocs");
-    }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new UnnecessaryFullyQualifiedNameVisitor(this, inspectionManager, onTheFly);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        if (m_ignoreJavaDocs && PsiTreeUtil.getParentOfType(location, PsiDocTag.class) != null) {
-            return null;
-        }
         return fix;
     }
 
@@ -54,16 +47,25 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
+            final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+            final CodeStyleSettings settings = settingsManager.getCurrentSettings();
+            final boolean oldUseFQNamesInJavadoc = settings.USE_FQ_CLASS_NAMES_IN_JAVADOC;
+            final boolean oldUseFQNames = settings.USE_FQ_CLASS_NAMES;
             try {
-                final PsiManager mgr = PsiManager.getInstance(project);
+                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
+                settings.USE_FQ_CLASS_NAMES = true;
                 final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
-                final CodeStyleManager styleManager = mgr.getCodeStyleManager();
+                final PsiManager psiManager = reference.getManager();
+                final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
                 styleManager.shortenClassReferences(reference);
             } catch (IncorrectOperationException e) {
                 final Class thisClass = getClass();
                 final String className = thisClass.getName();
                 final Logger logger = Logger.getInstance(className);
                 logger.error(e);
+            } finally {
+                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = oldUseFQNamesInJavadoc;
+                settings.USE_FQ_CLASS_NAMES = oldUseFQNames;
             }
         }
     }
@@ -85,45 +87,41 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
             m_inClass = wasInClass;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            final String expressionText = expression.getText();
-            final String text = expressionText;
-            if (text.indexOf((int) '.') < 0) {
-                return;
-            }
-            final PsiElement psiElement = expression.resolve();
-            if (!(psiElement instanceof PsiClass)) {
-                if (qualifier != null) {
-                    qualifier.accept(this);
-                }
-                return;
-            }
-            final PsiReferenceParameterList typeParameters = expression.getParameterList();
-            if(typeParameters!=null)
-            {
-                typeParameters.accept(this);
-            }
-            final PsiClass aClass = (PsiClass) psiElement;
-            final PsiClass outerClass = ClassUtils.getOutermostContainingClass(aClass);
-            final String fqName = outerClass.getQualifiedName();
-            if (!expressionText.startsWith(fqName)) {
-                return;
-            }
-            final PsiJavaFile file = (PsiJavaFile) expression.getContainingFile();
-
-            if (!ImportUtils.nameCanBeImported(text, file)) {
-                return;
-            }
-            registerError(expression);
+        /*
+public void visitReferenceExpression(PsiReferenceExpression expression) {
+    final PsiExpression qualifier = expression.getQualifierExpression();
+    final String expressionText = expression.getText();
+    if (expressionText.indexOf((int) '.') < 0) {
+        return;
+    }
+    final PsiElement psiElement = expression.resolve();
+    if (!(psiElement instanceof PsiClass)) {
+        if (qualifier != null) {
+            qualifier.accept(this);
         }
+        return;
+    }
+    final PsiReferenceParameterList typeParameters = expression.getParameterList();
+    if (typeParameters != null) {
+        typeParameters.accept(this);
+    }
+    final PsiClass aClass = (PsiClass) psiElement;
+    final PsiClass outerClass = ClassUtils.getOutermostContainingClass(aClass);
+    final String fqName = outerClass.getQualifiedName();
+    if (!expressionText.startsWith(fqName)) {
+        return;
+    }
+    final PsiJavaFile file = (PsiJavaFile) expression.getContainingFile();
 
+    if (!ImportUtils.nameCanBeImported(expressionText, file)) {
+        return;
+    }
+    registerError(expression);
+}
+  */
         public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
             final String text = element.getText();
             if (text.indexOf((int) '.') < 0) {
-                return;
-            }
-            if (m_ignoreJavaDocs && PsiTreeUtil.getParentOfType(element, PsiDocTag.class) != null) {
                 return;
             }
             final PsiElement psiElement = element.resolve();

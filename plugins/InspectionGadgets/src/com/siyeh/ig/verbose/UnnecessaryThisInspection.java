@@ -51,11 +51,11 @@ public class UnnecessaryThisInspection extends StatementInspection {
 
         public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            PsiReferenceParameterList parameterList = expression.getParameterList();
+            final PsiReferenceParameterList parameterList = expression.getParameterList();
             if (parameterList != null && parameterList.getTypeArguments().length > 0) {
                 return;
             }
-          
+
             final PsiExpression qualifierExpression = expression.getQualifierExpression();
             if (qualifierExpression == null) {
                 return;

@@ -83,6 +83,10 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
+        public void visitClass(PsiClass aClass) {
+           //to avoid drilldown
+        }
+
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if (TypeUtils.expressionHasType("java.lang.String", expression)) {

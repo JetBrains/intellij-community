@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -65,15 +68,24 @@ public class ForCanBeForeachInspection extends StatementInspection {
 
             final PsiMethodCallExpression initializer =
                     (PsiMethodCallExpression) iterator.getInitializer();
-           final PsiExpression collection = initializer.getMethodExpression().getQualifierExpression();
+            final PsiExpression collection = initializer.getMethodExpression().getQualifierExpression();
             final String typeString = iterator.getTypeElement().getText();
-            final String contentType;
+
+            final String contentTypeString;
             if (typeString.indexOf((int) '<') >= 0) {
                 final int contentTypeStart = typeString.indexOf((int) '<') + 1;
                 final int contentTypeEnd = typeString.lastIndexOf((int) '>');
-                contentType = typeString.substring(contentTypeStart, contentTypeEnd);
+                contentTypeString = typeString.substring(contentTypeStart, contentTypeEnd);
             } else {
-                contentType = "Object";
+                contentTypeString = "Object";
+            }
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory elementFactory = psiManager.getElementFactory();
+            PsiType contentType;
+            try {
+                contentType = elementFactory.createTypeFromText(contentTypeString, forStatement);
+            } catch (IncorrectOperationException e) {
+                contentType = null;
             }
 
             final String iteratorName = iterator.getName();
@@ -90,11 +102,11 @@ public class ForCanBeForeachInspection extends StatementInspection {
                     finalString = "";
                 }
             } else {
-                contentVariableName = createNewVarName(project, forStatement);
+                contentVariableName = createNewVarName(project, forStatement, contentType);
                 finalString = "";
                 statementToSkip = null;
             }
-            out.append("for(" + finalString + contentType + ' ' + contentVariableName + ": " + collection.getText() + ')');
+            out.append("for(" + finalString + contentTypeString + ' ' + contentVariableName + ": " + collection.getText() + ')');
             replaceIteratorNext(body, contentVariableName, iteratorName, statementToSkip, out);
             return out.toString();
         }
@@ -108,7 +120,8 @@ public class ForCanBeForeachInspection extends StatementInspection {
             final PsiReferenceExpression arrayLengthExpression = (PsiReferenceExpression) condition.getROperand();
             final PsiReferenceExpression arrayReference = (PsiReferenceExpression) arrayLengthExpression.getQualifierExpression();
             final PsiArrayType arrayType = (PsiArrayType) arrayReference.getType();
-            final String type = arrayType.getComponentType().getPresentableText();
+            final PsiType componentType = arrayType.getComponentType();
+            final String type = componentType.getPresentableText();
             final String arrayName = arrayReference.getText();
             final PsiStatement body = forStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
@@ -128,7 +141,7 @@ public class ForCanBeForeachInspection extends StatementInspection {
                     finalString = "";
                 }
             } else {
-                contentVariableName = createNewVarName(project, forStatement);
+                contentVariableName = createNewVarName(project, forStatement, componentType);
                 finalString = "";
                 statementToSkip = null;
             }
@@ -288,9 +301,18 @@ public class ForCanBeForeachInspection extends StatementInspection {
             return true;
         }
 
-        private String createNewVarName(Project project, PsiElement position) {
+        private String createNewVarName(Project project, PsiForStatement scope, PsiType type) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-            return codeStyleManager.suggestUniqueVariableName("value", position, true);
+            final SuggestedNameInfo suggestions =
+                    codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
+            final String[] names = suggestions.names;
+            final String baseName;
+            if (names != null && names.length > 0) {
+                baseName = names[0];
+            } else {
+                baseName = "value";
+            }
+            return codeStyleManager.suggestUniqueVariableName(baseName, scope, true);
         }
 
         private PsiStatement getFirstStatement(PsiStatement body) {
@@ -485,8 +507,9 @@ public class ForCanBeForeachInspection extends StatementInspection {
     private static PsiReferenceExpression getArrayFromCondition(PsiExpression condition) {
         final PsiExpression strippedCondition = ParenthesesUtils.stripParentheses(condition);
         final PsiBinaryExpression binaryExp = (PsiBinaryExpression) strippedCondition;
-        final PsiReferenceExpression rhs = (PsiReferenceExpression) binaryExp.getROperand();
-        return (PsiReferenceExpression) rhs.getQualifierExpression();
+        final PsiExpression rhs = binaryExp.getROperand();
+        final PsiReferenceExpression strippedRhs = (PsiReferenceExpression) ParenthesesUtils.stripParentheses(rhs);
+        return (PsiReferenceExpression) strippedRhs.getQualifierExpression();
     }
 
 
@@ -503,7 +526,7 @@ public class ForCanBeForeachInspection extends StatementInspection {
                 return false;
             }
             final IElementType tokenType = sign.getTokenType();
-            if (tokenType != JavaTokenType.PLUSPLUS) {
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
                 return false;
             }
             final PsiExpression operand = prefixExp.getOperand();
@@ -566,6 +589,9 @@ public class ForCanBeForeachInspection extends StatementInspection {
             return false;
         }
         final PsiExpression qualifier = reference.getQualifierExpression();
+        if (!(qualifier instanceof PsiReferenceExpression)) {
+            return false;
+        }
         if (qualifier == null) {
             return false;
         }

@@ -90,6 +90,9 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
+        public void visitClass(PsiClass aClass) {
+            //to avoid drilldown
+        }
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiType expressionType = expression.getType();
