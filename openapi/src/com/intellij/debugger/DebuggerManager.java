@@ -4,18 +4,12 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.actionSystem.DataContext;
 
 /**
  * Created by IntelliJ IDEA.
