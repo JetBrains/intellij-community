@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,5 +59,11 @@ public class XMLLanguage extends Language {
 
   public Commenter getCommenter() {
     return new XmlCommenter();
+  }
+
+  public boolean mayHaveReferences(IElementType token) {
+    if(token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return true;
+    if(token == XmlTokenType.XML_DATA_CHARACTERS) return true;
+    return super.mayHaveReferences(token);
   }
 }

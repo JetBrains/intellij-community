@@ -24,7 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 public class XmlAttributeValueManipulator implements ElementManipulator{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
   public PsiElement handleContentChange(PsiElement element, TextRange range, String newContent) throws IncorrectOperationException{
-    final CompositeElement compositeElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(element);
+    final CompositeElement compositeElement = (CompositeElement)element.getNode();
     final PsiElement nextSibling = element.getFirstChild().getNextSibling();
 
     CheckUtil.checkWritable(element);

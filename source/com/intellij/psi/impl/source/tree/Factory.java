@@ -72,7 +72,7 @@ public class Factory implements Constants {
       element = new PsiIdentifierImpl(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
-      element = new JspText(null, buffer, startOffset, endOffset, table);
+      element = new JspText(buffer, startOffset, endOffset, table);
     }
     else {
       if (KEYWORD_BIT_SET.isInSet(type)) {

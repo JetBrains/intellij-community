@@ -8,9 +8,9 @@ import com.intellij.util.CharTable;
 public class JspText extends LeafPsiElement {
   private XmlText myFollowingText;
 
-  public JspText(XmlText text, char[] buffer, int start, int end, CharTable table) {
+  public JspText(char[] buffer, int start, int end, CharTable table) {
     super(JspElementType.HOLDER_TEMPLATE_DATA, buffer, start, end, -1, table);
-    myFollowingText = text;
+    myFollowingText = null;
   }
 
   public String toString() {

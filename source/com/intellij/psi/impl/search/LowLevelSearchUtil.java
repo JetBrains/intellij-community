@@ -32,7 +32,7 @@ public class LowLevelSearchUtil {
                                                                 ProgressIndicator progress) {
     ProgressManager.getInstance().checkCanceled();
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
-    if (elementTypes.isInSet(scope.getElementType()) || scopePsi.getLanguage() != null && scopePsi.getLanguage().mayHaveReferences(scope.getElementType())) {
+    if (elementTypes.isInSet(scope.getElementType()) || (scopePsi.getLanguage() != null && scopePsi.getLanguage().mayHaveReferences(scope.getElementType()))) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {

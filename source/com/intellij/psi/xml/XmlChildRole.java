@@ -1,12 +1,10 @@
 package com.intellij.psi.xml;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.tree.DefaultRoleFinder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
-import com.intellij.psi.tree.DefaultRoleFinder;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.ASTNode;
 
 public class XmlChildRole {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.xml.XmlChildRole");
@@ -46,9 +44,10 @@ public class XmlChildRole {
     }
   };
 
+  public static final RoleFinder ATTRIBUTE_VALUE_FINDER = new DefaultRoleFinder(XmlElementType.XML_ATTRIBUTE_VALUE, null);
   public static final RoleFinder CLOSING_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_END_TAG_START, null);
   public static final RoleFinder EMPTY_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_EMPTY_ELEMENT_END, null);
   public static final RoleFinder ATTRIBUTE_NAME_FINDER = new DefaultRoleFinder(XmlTokenType.XML_NAME, null);
-  public static final RoleFinder ATTRIBUTE_VALUE_FINDER = new DefaultRoleFinder(XmlElementType.XML_ATTRIBUTE_VALUE, null);
+  public static final RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, null);
   public static final RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_TAG_END, null);
 }

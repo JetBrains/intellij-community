@@ -7,14 +7,9 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.ReplaceableTextPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 
 /**
  * @author Mike

@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EditorPopupHandler;
@@ -269,15 +268,13 @@ final class TextEditorComponent extends JPanel implements DataProvider{
         return null;
       }
 
-      PsiElement targetElement =
-        TargetElementUtil.findTargetElement(editor,
+      return TargetElementUtil.findTargetElement(editor,
                                             TargetElementUtil.THROW_STATEMENT_ACCEPTED | 
                                             TargetElementUtil.THROWS_ACCEPTED |
                                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | 
                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
-      return targetElement == null ? psiFile : targetElement.getNavigationElement();
     }
     else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329

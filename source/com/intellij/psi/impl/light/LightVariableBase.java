@@ -78,4 +78,8 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
 
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
+
+  public boolean isWritable() {
+    return myWritable;
+  }
 }

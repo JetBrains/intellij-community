@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.lang.ASTNode;
 
 class SmartPsiElementPointerImpl implements SmartPointerEx {
   private static final Logger LOG = Logger.getInstance(
@@ -90,6 +89,9 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
 
     if (myElement.getContainingFile() == null) return null;
 
+    if (myElement instanceof ImplicitVariable){
+      return new ImplicitVariableInfo((ImplicitVariable)myElement);
+    }
     if (myElement instanceof PsiImportList) {
       return new ImportListInfo((PsiJavaFile)myElement.getContainingFile());
     }
@@ -295,6 +297,27 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
     public PsiElement restoreElement() {
       if (!myFile.isValid()) return null;
       return myFile.getImportList();
+    }
+
+    public Document getDocumentToSynchronize() {
+      return null;
+    }
+
+    public void documentAndPsiInSync() {
+    }
+  }
+
+  private static class ImplicitVariableInfo implements ElementInfo {
+    private final ImplicitVariable myVar;
+
+    public ImplicitVariableInfo(ImplicitVariable var) {
+      myVar = var;
+    }
+
+    public PsiElement restoreElement() {
+      if (myVar.getNameIdentifier() == null) return myVar;
+      if (myVar.getNameIdentifier().isValid()) return myVar;
+      return null;
     }
 
     public Document getDocumentToSynchronize() {

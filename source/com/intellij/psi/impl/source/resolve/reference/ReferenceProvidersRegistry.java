@@ -154,6 +154,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
 
   public ElementManipulator getManipulator(PsiElement element) {
+    if(element == null) return null;
     final Iterator<Object[]> iter = myManipulators.iterator();
 
     while (iter.hasNext()) {
