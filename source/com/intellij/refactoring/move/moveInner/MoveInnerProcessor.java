@@ -183,7 +183,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)ref.getParent();
           PsiElement parentRefElement = parentRef.resolve();
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
-            parentRef.getFirstChild().delete();
+            parentRef.getQualifier().delete();
             continue;
           }
         }
