@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
  */
 public abstract class BaseLocalInspectionTool extends LocalInspectionTool {
   public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
+    return HighlightDisplayLevel.WARNING;
   }
 
   public boolean isEnabledByDefault() {
