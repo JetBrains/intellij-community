@@ -57,6 +57,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final PsiManagerImpl myManager;
   private final JoinPointSearchHelper myJoinPointSearchHelper;
   private static final TokenSet XML_ATTRIBUTE_VALUE_TOKEN_BIT_SET = TokenSet.create(new IElementType[]{ElementType.XML_ATTRIBUTE_VALUE_TOKEN});
+  private static final TokenSet FILE_NAME_TOKEN_BIT_SET = TokenSet.create(new IElementType[]{ElementType.XML_ATTRIBUTE_VALUE_TOKEN, ElementType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_TOKEN});
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
   private static final short DEFAULT_OCCURENCE_MASK = WordInfo.IN_CODE |
                    WordInfo.JSP_ATTRIBUTE_VALUE |
@@ -430,7 +431,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final CustomSearchHelper customSearchHelper = getCustomSearchHelper(refElement);
 
-    final short occurrenceMask;
+    short occurrenceMask;
 
     if (customSearchHelper!=null) {
       occurrenceMask = customSearchHelper.getOccurenceMask();
@@ -442,7 +443,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       occurrenceMask = DEFAULT_OCCURENCE_MASK;
     }
 
-    final TokenSet elementTypes;
+    if (refElement instanceof PsiFileSystemItem) {
+      occurrenceMask = (short)(occurrenceMask | WordInfo.FILE_NAME);
+    }
+
+    TokenSet elementTypes;
     if (customSearchHelper!=null) {
       elementTypes = customSearchHelper.getElementTokenSet();
     } else if (refElement instanceof XmlAttributeValue) {
@@ -450,6 +455,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else {
       elementTypes = IDENTIFIER_OR_DOC_VALUE_OR_JSP_ATTRIBUTE_VALUE_BIT_SET;
+    }
+
+    if (refElement instanceof PsiFileSystemItem) {
+      elementTypes = FILE_NAME_TOKEN_BIT_SET;
     }
 
     if (!processElementsWithWord(
@@ -1065,7 +1074,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                             searchScope,
                             name,
                             JSP_DIRECTIVE_ATTRIBUTE_BIT_SET,
-                            WordInfo.JSP_INCLUDE_DIRECTIVE_FILE_NAME, false);
+                            WordInfo.FILE_NAME, false);
     return directives.toArray(new JspDirective[directives.size()]);
   }
 

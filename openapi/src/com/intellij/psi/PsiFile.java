@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 
-public interface PsiFile extends PsiElement, PsiNamedElement{
+public interface PsiFile extends PsiElement, PsiFileSystemItem {
   PsiFile[] EMPTY_ARRAY = new PsiFile[0];
 
   VirtualFile getVirtualFile();

@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  *
  */
-public interface PsiDirectory extends PsiElement, PsiNamedElement {
+public interface PsiDirectory extends PsiElement, PsiFileSystemItem {
   PsiDirectory[] EMPTY_ARRAY = new PsiDirectory[0];
 
   VirtualFile getVirtualFile();
