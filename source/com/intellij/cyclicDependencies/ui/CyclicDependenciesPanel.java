@@ -28,6 +28,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -36,7 +37,7 @@ import java.util.*;
 public class CyclicDependenciesPanel extends JPanel {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
 
-  private HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> myDependencies;
+  private HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
   private MyTree myLeftTree = new MyTree();
   private MyTree myRightTree = new MyTree();
   private UsagesPanel myUsagesPanel;
@@ -247,14 +248,14 @@ public class CyclicDependenciesPanel extends JPanel {
       boolean group = mySettings.UI_GROUP_BY_SCOPE_TYPE;
       mySettings.UI_GROUP_BY_SCOPE_TYPE = false;
       final PsiPackage aPackage = (PsiPackage)packageNode.getPsiElement();
-      final Set<ArrayList<PsiPackage>> cyclesOfPackages = myDependencies.get(aPackage);
-      for (Iterator<ArrayList<PsiPackage>> iterator = cyclesOfPackages.iterator(); iterator.hasNext();) {
-        ArrayList<PsiPackage> packCycle = iterator.next();
+      final Set<List<PsiPackage>> cyclesOfPackages = myDependencies.get(aPackage);
+      for (Iterator<List<PsiPackage>> iterator = cyclesOfPackages.iterator(); iterator.hasNext();) {
+        List<PsiPackage> packCycle = iterator.next();
         PackageDependenciesNode[] nodes = new PackageDependenciesNode[packCycle.size()];
-        for (int i = 0; i < packCycle.size(); i++) {
+        for (int i = packCycle.size() - 1; i >=0; i--) {
           final PsiPackage psiPackage = packCycle.get(i);
-          PsiPackage nextPackage = packCycle.get(i == packCycle.size() - 1 ? 0 : i + 1);
-          PsiPackage prevPackage = packCycle.get(i == 0 ? packCycle.size() - 1 : i - 1);
+          PsiPackage nextPackage = packCycle.get(i == 0 ? packCycle.size() - 1 : i - 1);
+          PsiPackage prevPackage = packCycle.get(i == packCycle.size() - 1 ? 0 : i + 1);
           final Set<PsiFile> dependentFilesInPackage = myBuilder.getDependentFilesInPackage(prevPackage, psiPackage, nextPackage);
 
           final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder.createTreeModel(myProject, false, dependentFilesInPackage, new TreeModelBuilder.Marker() {
@@ -268,7 +269,7 @@ public class CyclicDependenciesPanel extends JPanel {
         PackageDependenciesNode cycleNode = new CycleNode();
         for (int i = 0; i < nodes.length; i++) {
           nodes[i].setEquals(true);
-          cycleNode.add(nodes[i]);
+          cycleNode.insert(nodes[i], 0);
         }
         root.add(cycleNode);
       }
@@ -443,7 +444,7 @@ public class CyclicDependenciesPanel extends JPanel {
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          new CyclicDependenciesHandler(myProject, myBuilder.getScope(), myBuilder.getPerPackageCycleCount()).analyze();
+          new CyclicDependenciesHandler(myProject, myBuilder.getScope()).analyze();
         }
       });
     }

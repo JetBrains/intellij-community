@@ -22,4 +22,5 @@ public interface ToolWindowId {
   String HOT_SWAP_VIEW = "Hot Swap";
   String DEPENDENCIES = "Dependency Viewer";
   String VCS = "Version Control";
+  String MODULES_DEPENDENCIES = "Module Dependencies";
 }

@@ -8,14 +8,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
-import javax.swing.text.NumberFormatter;
-import javax.swing.text.DefaultFormatterFactory;
 import java.awt.event.KeyEvent;
 
 /**
@@ -51,16 +48,10 @@ public class CyclicDependenciesAction extends AnAction{
         return;
       }
       AnalysisScope scope = getInspectionScope(dataContext);
-      boolean showChooseScope = true;
-      if (scope.getScopeType() == AnalysisScope.MODULES){
-        showChooseScope = false;
-      }
-      ProjectModuleOrPackageDialog dlg = new ProjectModuleOrPackageDialog(dataContext,
-                                                        module != null ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                        showChooseScope);
-      dlg.show();
-      if (!dlg.isOK()) return;
-      if (showChooseScope){
+      if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
+        ProjectModuleOrPackageDialog dlg = new ProjectModuleOrPackageDialog(module != null ? ModuleUtil.getModuleNameInReadAction(module) : null);
+        dlg.show();
+        if (!dlg.isOK()) return;
         if (dlg.isProjectScopeSelected()) {
           scope = getProjectScope(dataContext);
         }
@@ -73,7 +64,7 @@ public class CyclicDependenciesAction extends AnAction{
 
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      new CyclicDependenciesHandler(project, scope, dlg.getMaxPerPackageCycleCount()).analyze();
+      new CyclicDependenciesHandler(project, scope).analyze();
     }
   }
 
@@ -104,10 +95,21 @@ public class CyclicDependenciesAction extends AnAction{
       return new AnalysisScope(modulesArray, myFileFilter);
     }
 
-    AnalysisScope packageScope = getPackageScope(dataContext);
-    if (packageScope != null){
-      return packageScope;
+    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (psiTarget instanceof PsiDirectory) {
+      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
+      if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
+      return new AnalysisScope(psiDirectory, myFileFilter);
     }
+    else if (psiTarget instanceof PsiPackage) {
+      PsiPackage pack = (PsiPackage)psiTarget;
+      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
+      if (dirs == null || dirs.length == 0) return null;
+      return new AnalysisScope(pack, myFileFilter);
+    } else if (psiTarget != null){
+      return null;
+    }
+
 
     return getProjectScope(dataContext);
   }
@@ -120,60 +122,31 @@ public class CyclicDependenciesAction extends AnAction{
     return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE), myFileFilter);
   }
 
-  private AnalysisScope getPackageScope(DataContext dataContext){
-    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-    if (psiTarget instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
-      if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
-      return new AnalysisScope(psiDirectory, myFileFilter);
-    }
-    else if (psiTarget instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)psiTarget;
-      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
-      if (dirs == null || dirs.length == 0) return null;
-      return new AnalysisScope(pack, myFileFilter);
-    }
-    return null;
-  }
-
   private class ProjectModuleOrPackageDialog extends DialogWrapper {
-    private String myPackageName;
     private String myModuleName;
-    private JRadioButton myPackageButton;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
-    private boolean myShowChooseScope;
-    private JFormattedTextField myPerPackageCycleCount;
 
     private JPanel myScopePanel;
     private JPanel myWholePanel;
 
 
-    public ProjectModuleOrPackageDialog(DataContext dataContext, String moduleName, boolean showChooseScope) {
+    public ProjectModuleOrPackageDialog(String moduleName) {
       super(true);
-      myShowChooseScope = showChooseScope;
       myModuleName = moduleName;
-      final AnalysisScope scope = getPackageScope(dataContext);
-      if (scope != null){
-        myPackageName = scope.getDisplayName();
-      }
       init();
       setTitle("Specify " + myTitle + " Scope");
-      if (scope == null){
-        myPackageButton.setVisible(false);
-        myProjectButton.setSelected(true);
-      } else {
-        myPackageButton.setSelected(true);
-      }
+
       if (moduleName == null){
         myModuleButton.setVisible(false);
+        myProjectButton.setSelected(true);
+      } else {
+        myModuleButton.setSelected(true);
       }
     }
 
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
-      myPackageButton.setText(myAnalysisVerb + StringUtil.decapitalize(myPackageName));
-      myPackageButton.setMnemonic(KeyEvent.VK_K);
       myProjectButton.setText(myAnalysisVerb + " the whole project");
       myProjectButton.setMnemonic(KeyEvent.VK_P);
       ButtonGroup group = new ButtonGroup();
@@ -182,12 +155,6 @@ public class CyclicDependenciesAction extends AnAction{
         myModuleButton.setText(myAnalysisVerb + " module \'" + myModuleName + "\'");
         myModuleButton.setMnemonic(KeyEvent.VK_M);
         group.add(myModuleButton);
-      }
-      group.add(myPackageButton);
-      myPerPackageCycleCount.setFormatterFactory(new DefaultFormatterFactory());
-      myPerPackageCycleCount.setText("1");
-      if (!myShowChooseScope){
-        myScopePanel.setVisible(false);
       }
       return myWholePanel;
     }
@@ -200,8 +167,5 @@ public class CyclicDependenciesAction extends AnAction{
       return myModuleButton != null ? myModuleButton.isSelected() : false;
     }
 
-    public int getMaxPerPackageCycleCount(){
-      return Integer.parseInt(myPerPackageCycleCount.getText());
-    }
   }
 }

@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
-import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.FindDependencyUtil;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,7 @@ import java.util.Set;
  * User: anna
  * Date: Jan 18, 2005
  */
-public class UsagesInAnalyzingDependenciesTestCase extends PsiTestCase{
+public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -68,8 +68,8 @@ public class UsagesInAnalyzingDependenciesTestCase extends PsiTestCase{
       final LexerEditorHighlighter highlighter = getHighlighter(psiFile, document);
       psiUsages[i] = new UTUsageNode(usagesInfos[i], psiFile, highlighter, document, false, false).toString();
     }
-    checkResult(new String []{"(2, 14) import com.a.A;", "(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();",
-                              "(2, 14) import com.a.A;", "(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
+    checkResult(new String []{"(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();",
+                              "(4, 3) A myA = new A();", "(4, 15) A myA = new A();", "(6, 9) myA.aa();"}, psiUsages);
   }
 
    public void testBackwardPackageScope(){

@@ -1,0 +1,389 @@
+package com.intellij.moduleDependencies;
+
+import com.intellij.compiler.Chunk;
+import com.intellij.cyclicDependencies.CyclicDependenciesUtil;
+import com.intellij.cyclicDependencies.CyclicGraphUtil;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.*;
+import com.intellij.ui.content.Content;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
+
+import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+/**
+ * User: anna
+ * Date: Feb 10, 2005
+ */
+public class ModulesDependenciesPanel extends JPanel{
+
+  private Content myContent;
+  private Project myProject;
+  private Tree myLeftTree;
+  private DefaultTreeModel myLeftTreeModel;
+
+  private Tree myRightTree;
+  private DefaultTreeModel myRightTreeModel;
+
+  private Graph<Module> myModulesGraph;
+  private Module[] myModules;
+
+  public ModulesDependenciesPanel(final Project project, final Module[] modules) {
+    super(new BorderLayout());
+    myProject = project;
+    myModules = modules;
+
+    myRightTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode("Root"));
+    myRightTree = new Tree(myRightTreeModel);
+    initTree(myRightTree, true);
+
+    initLeftTree();
+
+    Splitter treeSplitter = new Splitter();
+    treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
+    treeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
+    add(treeSplitter, BorderLayout.CENTER);
+    add(createNorthPanel(), BorderLayout.NORTH);
+  }
+
+  public ModulesDependenciesPanel(final Project project) {
+    this(project, ModuleManager.getInstance(project).getModules());
+  }
+
+  private JComponent createNorthPanel(){
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    group.add(new AnAction("Close", "Close Modules Dependencies Viewer", IconLoader.getIcon("/actions/cancel.png")){
+      public void actionPerformed(AnActionEvent e) {
+        DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
+      }
+    });
+
+    final AnAction rerunAction =
+    new AnAction("Rerun", "Rerun modules dependencies analyzer", IconLoader.getIcon("/actions/refreshUsages.png")) {
+      public void actionPerformed(AnActionEvent e) {
+        initLeftTreeModel();
+        TreeUtil.selectFirstNode(myLeftTree);
+      }
+    };
+    group.add(rerunAction);
+    rerunAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return toolbar.getComponent();
+  }
+
+  private void buildRightTree(){
+    if (myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() != null){
+      final Object userObject = ((DefaultMutableTreeNode)myLeftTree.getSelectionPath().getLastPathComponent()).getUserObject();
+      if (userObject != null && userObject instanceof MyUserObject){
+        buildRightTree(((MyUserObject)userObject).getModule());
+      }
+    }
+  }
+
+  private void buildRightTree(Module module){
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTreeModel.getRoot();
+    root.removeAllChildren();
+    final List<Chunk<Module>> chunks = CyclicDependenciesUtil.buildChunks(myModulesGraph);
+    for (Iterator<Chunk<Module>> iterator = chunks.iterator(); iterator.hasNext();) {
+      Chunk<Module> chunk = iterator.next();
+      if (!chunk.containsNode(module)){
+        continue;
+      }
+      /*final CyclicDependenciesUtil.GraphTraverser<Module> graphTraverser =
+      new CyclicDependenciesUtil.GraphTraverser<Module>(module, chunk, myMaxShownCyclesInRightTree, myModulesGraph);*/
+      final Set<List<Module>> cycles = CyclicGraphUtil.getNodeCycles(myModulesGraph, module);//graphTraverser.convert(graphTraverser.traverse());
+      int index = 1;
+      for (Iterator<List<Module>> cyclesIterator = cycles.iterator(); cyclesIterator.hasNext();) {
+        List<Module> modules = cyclesIterator.next();
+        final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode("Cycle" + Integer.toString(index++).toUpperCase());
+        root.add(cycle);
+        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
+        for (Iterator<Module> inCycleIterator = modules.iterator(); inCycleIterator.hasNext();) {
+          Module module1 = inCycleIterator.next();
+          cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module1)));
+        }
+      }
+    }
+    ((DefaultTreeModel)myRightTree.getModel()).reload();
+    TreeUtil.expandAll(myRightTree);
+  }
+
+  private void initLeftTreeModel(){
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myLeftTreeModel.getRoot();
+    root.removeAllChildren();
+    myModulesGraph = buildGraph();
+    for (Iterator<Module> iterator = myModulesGraph.getNodes().iterator(); iterator.hasNext();) {
+      Module module = iterator.next();
+      final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
+      root.add(moduleNode);
+      final Iterator<Module> out = myModulesGraph.getOut(module);
+      for(;out.hasNext();){
+        moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
+      }
+    }
+    sortSubTree(root);
+    myLeftTreeModel.reload();
+  }
+
+  private void sortSubTree(final DefaultMutableTreeNode root) {
+    TreeUtil.sort(root, new Comparator() {
+      public int compare(final Object o1, final Object o2) {
+        DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)o1;
+        DefaultMutableTreeNode node2 = (DefaultMutableTreeNode)o2;
+        if (!(node1.getUserObject() instanceof MyUserObject)){
+          return 1;
+        }
+        else if (!(node2.getUserObject() instanceof MyUserObject)){
+          return -1;
+        }
+        return (((MyUserObject)node1.getUserObject()).toString().compareTo(((MyUserObject)node2.getUserObject()).toString()));
+      }
+    });
+  }
+
+  private void selectCycleUpward(final DefaultMutableTreeNode selection){
+    ArrayList<DefaultMutableTreeNode> selectionNodes = new ArrayList<DefaultMutableTreeNode>();
+    selectionNodes.add(selection);
+    DefaultMutableTreeNode current = (DefaultMutableTreeNode)selection.getParent();
+    boolean flag = false;
+    while (current != null && current.getUserObject() != null){
+      if (current.getUserObject().equals(selection.getUserObject())){
+        flag = true;
+        selectionNodes.add(current);
+        break;
+      }
+      selectionNodes.add(current);
+      current = (DefaultMutableTreeNode)current.getParent();
+    }
+    if (flag){
+      for (Iterator<DefaultMutableTreeNode> iterator = selectionNodes.iterator(); iterator.hasNext();) {
+        DefaultMutableTreeNode node = iterator.next();
+        ((MyUserObject)node.getUserObject()).setInCycle(true);
+      }
+    }
+    myLeftTree.repaint();
+  }
+
+  private void initLeftTree(){
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
+    myLeftTreeModel = new DefaultTreeModel(root);
+    initLeftTreeModel();
+    myLeftTree = new Tree(myLeftTreeModel);
+    initTree(myLeftTree, false);
+
+    myLeftTree.addTreeExpansionListener(new TreeExpansionListener() {
+      public void treeCollapsed(TreeExpansionEvent event) {
+      }
+
+      public void treeExpanded(TreeExpansionEvent event) {
+        final DefaultMutableTreeNode expandedNode = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
+        for(int i = 0; i < expandedNode.getChildCount(); i++){
+          DefaultMutableTreeNode child = (DefaultMutableTreeNode)expandedNode.getChildAt(i);
+          if (child.getChildCount() == 0){
+            Module module = ((MyUserObject)child.getUserObject()).getModule();
+            final Iterator<Module> out = myModulesGraph.getOut(module);
+            for (; out.hasNext();) {
+              final Module nextModule = out.next();
+              child.add(new DefaultMutableTreeNode(new MyUserObject(false, nextModule)));
+            }
+            sortSubTree(child);
+          }
+        }
+      }
+    });
+
+    myLeftTree.addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        if (myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() != null){
+          TreeUtil.traverseDepth((TreeNode)myLeftTree.getModel().getRoot(), new TreeUtil.Traverse() {
+            public boolean accept(Object node) {
+              DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+              if (treeNode.getUserObject() instanceof MyUserObject){
+                ((MyUserObject)treeNode.getUserObject()).setInCycle(false);
+              }
+              return true;
+            }
+          });
+          final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)myLeftTree.getSelectionPath().getLastPathComponent();
+          selectCycleUpward(selection);
+          buildRightTree(((MyUserObject)selection.getUserObject()).getModule());
+        }
+      }
+    });
+    TreeUtil.selectFirstNode(myLeftTree);
+  }
+
+  private ActionGroup createTreePopupActions(final boolean isRightTree, final Tree tree) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    final TreeExpander treeExpander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(tree);
+      }
+
+      public boolean canExpand() {
+        return isRightTree;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(tree, 3);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
+    if (isRightTree){
+      AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
+      expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), tree);
+      group.add(expandAllToolbarAction);
+    }
+    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
+    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), tree);
+    group.add(collapseAllToolbarAction);
+
+    return group;
+  }
+
+  private void initTree(Tree tree, boolean isRightTree) {
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.setCellRenderer(new MyTreeCellRenderer());
+    tree.setRootVisible(false);
+    tree.setShowsRootHandles(true);
+    tree.putClientProperty("JTree.lineStyle", "Angled");
+
+    TreeToolTipHandler.install(tree);
+    TreeUtil.installActions(tree);
+    SmartExpander.installOn(tree);
+    EditSourceOnDoubleClickHandler.install(tree);
+    new TreeSpeedSearch(tree);
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree, tree), ActionManager.getInstance());
+  }
+
+
+  private Graph<Module> buildGraph() {
+    final Graph<Module> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+      public Collection<Module> getNodes() {
+        return Arrays.asList(myModules);
+      }
+
+      public Iterator<Module> getIn(Module module) {
+        //only in choosen modules scope
+        final HashSet<Module> depModules = new HashSet<Module>(Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()));
+        depModules.retainAll(Arrays.asList(myModules));
+        return depModules.iterator();
+      }
+    }));
+    return graph;
+  }
+
+  public void setContent(final Content content) {
+    myContent = content;
+  }
+
+  private final class CloseAction extends AnAction {
+
+    public CloseAction() {
+      super("Close", "Close Modules Dependencies Viewer", IconLoader.getIcon("/actions/cancel.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
+    }
+  }
+
+  private static class MyUserObject{
+    private boolean myInCycle;
+    private Module myModule;
+
+    public MyUserObject(final boolean inCycle, final Module module) {
+      myInCycle = inCycle;
+      myModule = module;
+    }
+
+    public boolean isInCycle() {
+      return myInCycle;
+    }
+
+    public void setInCycle(final boolean inCycle) {
+      myInCycle = inCycle;
+    }
+
+    public Module getModule() {
+      return myModule;
+    }
+
+    public void setModule(final Module module) {
+      myModule = module;
+    }
+
+    public boolean equals(Object object) {
+      if (!(object instanceof MyUserObject)){
+        return false;
+      }
+      return myModule.equals(((MyUserObject)object).getModule());
+    }
+
+    public int hashCode() {
+      return myModule.hashCode();
+    }
+
+    public String toString() {
+      return myModule.getName();
+    }
+  }
+
+   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(
+    JTree tree,
+    Object value,
+    boolean selected,
+    boolean expanded,
+    boolean leaf,
+    int row,
+    boolean hasFocus
+  ){
+      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (!(userObject instanceof MyUserObject)){
+        if (userObject != null){
+          append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        return;
+      }
+      MyUserObject node = (MyUserObject)userObject;
+      Module module = node.getModule();
+      setIcon(module.getModuleType().getNodeIcon(expanded));
+      if (node.isInCycle()){
+        append(module.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      } else {
+        append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    }
+  }
+}

@@ -30,14 +30,13 @@ public class CyclicDependenciesBuilder{
   private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
   private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myBackwardFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
   private Map<PsiPackage, Set<PsiPackage>> myPackageDependencies = new HashMap<PsiPackage, Set<PsiPackage>>();
-  private HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> myCyclicDependencies = new HashMap<PsiPackage, Set<ArrayList<PsiPackage>>>();
+  private HashMap<PsiPackage, Set<List<PsiPackage>>> myCyclicDependencies = new HashMap<PsiPackage, Set<List<PsiPackage>>>();
   private int myFileCount = 0;
   private ForwardDependenciesBuilder myForwardBuilder;
-  private int myPerPackageCycleCount;
 
   private String myRootNodeNameInUsageView;
 
-  public CyclicDependenciesBuilder(final Project project, final AnalysisScope scope, int perPackageCycleCount) {
+  public CyclicDependenciesBuilder(final Project project, final AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myForwardBuilder = new ForwardDependenciesBuilder(myProject, myScope){
@@ -49,7 +48,6 @@ public class CyclicDependenciesBuilder{
         return "Select package to analyze from the left tree";
       }
     };
-    myPerPackageCycleCount = perPackageCycleCount;
   }
 
   public String getRootNodeNameInUsageView() {
@@ -75,7 +73,6 @@ public class CyclicDependenciesBuilder{
   public void analyze() {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     getScope().accept(new PsiRecursiveElementVisitor() {
-
       public void visitFile(PsiFile file) {
         if (file != null && file instanceof PsiJavaFile) {
           PsiJavaFile psiJavaFile = (PsiJavaFile)file;
@@ -114,18 +111,14 @@ public class CyclicDependenciesBuilder{
               if (packageName == null || packageName.startsWith(pack.getQualifiedName())) {
                 continue;
               }
-              final Set<PsiPackage> depPackages = getPackageHierarhy(packageName);
-              if (depPackages.isEmpty()) { //not from analyze scope
+              final PsiPackage depPackage = findPackage(packageName);
+              if (depPackage == null) { //not from analyze scope
                 continue;
               }
-              pack2Packages.addAll(depPackages);
+              pack2Packages.add(depPackage);
 
-              for (Iterator<PsiPackage> depIt = depPackages.iterator(); depIt.hasNext();) {
-                PsiPackage depPackage = depIt.next();
-                constractFilesInDependenciesPackagesMap(pack, depPackage, psiFile, myFilesInDependentPackages);
-                constractFilesInDependenciesPackagesMap(depPackage, pack, psiJavaFile, myBackwardFilesInDependentPackages);
-              }
-              
+              constractFilesInDependenciesPackagesMap(pack, depPackage, psiFile, myFilesInDependentPackages);
+              constractFilesInDependenciesPackagesMap(depPackage, pack, psiJavaFile, myBackwardFilesInDependentPackages);
               constractWholeDependenciesMap(psiJavaFile, psiFile);
             }
           }
@@ -141,7 +134,7 @@ public class CyclicDependenciesBuilder{
       indicator.setText2("");
       indicator.setIndeterminate(true);
     }
-    myCyclicDependencies = getCycles(myPackages.values(), myPerPackageCycleCount);
+    myCyclicDependencies = getCycles(myPackages.values());
   }
 
   private void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
@@ -171,10 +164,6 @@ public class CyclicDependenciesBuilder{
     wholeDependencies.add(psiFile);
   }
 
-  public int getPerPackageCycleCount() {
-    return myPerPackageCycleCount;
-  }
-
   public Set<PsiFile> getDependentFilesInPackage(PsiPackage pack, PsiPackage depPack) {
     Set<PsiFile> psiFiles = new HashSet<PsiFile>();
     final Map<PsiPackage, Set<PsiFile>> map = myFilesInDependentPackages.get(pack);
@@ -189,13 +178,13 @@ public class CyclicDependenciesBuilder{
 
   public Set<PsiFile> getDependentFilesInPackage(PsiPackage firstPack, PsiPackage middlePack, PsiPackage lastPack) {
     Set<PsiFile> result = new HashSet<PsiFile>();
-    final Map<PsiPackage, Set<PsiFile>> forwardMap = myFilesInDependentPackages.get(middlePack);
-    if (forwardMap != null && forwardMap.get(lastPack) != null){
-      result.addAll(forwardMap.get(lastPack));
+    final Map<PsiPackage, Set<PsiFile>> forwardMap = myFilesInDependentPackages.get(firstPack);
+    if (forwardMap != null && forwardMap.get(middlePack) != null){
+      result.addAll(forwardMap.get(middlePack));
     }
-    final Map<PsiPackage, Set<PsiFile>> backwardMap = myBackwardFilesInDependentPackages.get(middlePack);
-    if (backwardMap != null && backwardMap.get(firstPack) != null){
-      result.addAll(backwardMap.get(firstPack));
+    final Map<PsiPackage, Set<PsiFile>> backwardMap = myBackwardFilesInDependentPackages.get(lastPack);
+    if (backwardMap != null && backwardMap.get(middlePack) != null){
+      result.addAll(backwardMap.get(middlePack));
     }
     return result;
   }
@@ -273,12 +262,12 @@ public class CyclicDependenciesBuilder{
     return result;
   }
 */
-  public HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> getCyclicDependencies() {
+  public HashMap<PsiPackage, Set<List<PsiPackage>>> getCyclicDependencies() {
     return myCyclicDependencies;
   }
 
-  public HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> getCycles(Collection<PsiPackage> packages, int perPackageCycleCount) {
-    final HashMap<PsiPackage, Set<ArrayList<PsiPackage>>> result = new HashMap<PsiPackage, Set<ArrayList<PsiPackage>>>();
+  public HashMap<PsiPackage, Set<List<PsiPackage>>> getCycles(Collection<PsiPackage> packages) {
+    final HashMap<PsiPackage, Set<List<PsiPackage>>> result = new HashMap<PsiPackage, Set<List<PsiPackage>>>();
     final List<Chunk<PsiPackage>> chunks = buildChunks();
     for (Iterator<PsiPackage> iterator = packages.iterator(); iterator.hasNext();) {
       PsiPackage psiPackage = iterator.next();
@@ -288,13 +277,14 @@ public class CyclicDependenciesBuilder{
         if (chunk.getNodes().size() == 1){
           continue;
         }
-        Set<ArrayList<PsiPackage>> paths2Pack = result.get(psiPackage);
+        Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
         if (paths2Pack == null) {
-          paths2Pack = new HashSet<ArrayList<PsiPackage>>();
+          paths2Pack = new HashSet<List<PsiPackage>>();
           result.put(psiPackage, paths2Pack);
         }
-        final GraphTraverser graphTraverser = new GraphTraverser(psiPackage, chunk, perPackageCycleCount);
-        paths2Pack.addAll(graphTraverser.convert(graphTraverser.traverse()));
+        paths2Pack.addAll(CyclicGraphUtil.getNodeCycles(myGraph, psiPackage));
+        /*final CyclicDependenciesUtil.GraphTraverser<PsiPackage> graphTraverser = new CyclicDependenciesUtil.GraphTraverser(psiPackage, chunk, 10, myGraph);
+        paths2Pack.addAll(graphTraverser.convert(graphTraverser.traverse()));*/
       }
     }
     /*for (Iterator<Chunk<PsiPackage>> iterator = chunks.iterator(); iterator.hasNext();) {
@@ -407,116 +397,4 @@ public class CyclicDependenciesBuilder{
     return chunks;
   }
 
-  private class GraphTraverser {
-    private List<Path<PsiPackage>> myCurrentPaths = new ArrayList<Path<PsiPackage>>();
-    private PsiPackage myBegin;
-    private Chunk<PsiPackage> myChunk;
-    private int myMaxPathsCount;
-
-    public GraphTraverser(final PsiPackage begin, final Chunk<PsiPackage> chunk, int maxPathsCount) {
-      myBegin = begin;
-      myChunk = chunk;
-      myMaxPathsCount = maxPathsCount;
-    }
-
-    public Set<Path<PsiPackage>> traverse() {
-      Set<Path<PsiPackage>> result = new HashSet<Path<PsiPackage>>();
-      Path<PsiPackage> firstPath = new Path<PsiPackage>();
-      firstPath.add(myBegin);
-      myCurrentPaths.add(firstPath);
-      while (!myCurrentPaths.isEmpty() && result.size() < myMaxPathsCount) {
-        final Path<PsiPackage> path = myCurrentPaths.get(0);
-        final Set<PsiPackage> nextNodes = getNextNodes(path.getEnd());
-        nextStep(nextNodes, path, result);
-      }
-      return result;
-    }
-
-    public Set<ArrayList<PsiPackage>> convert(Set<Path<PsiPackage>> paths) {
-      Set<ArrayList<PsiPackage>> result = new HashSet<ArrayList<PsiPackage>>();
-      for (Iterator<Path<PsiPackage>> iterator = paths.iterator(); iterator.hasNext();) {
-        Path<PsiPackage> path = iterator.next();
-        result.add(path.getPath());
-      }
-      return result;
-    }
-
-    private void nextStep(final Set<PsiPackage> nextNodes, final Path<PsiPackage> path, Set<Path<PsiPackage>> result) {
-      myCurrentPaths.remove(path);
-      for (Iterator<PsiPackage> iterator = nextNodes.iterator(); iterator.hasNext();) {
-        PsiPackage node = iterator.next();
-        if (path.getEnd() == node) {
-          continue;
-        }
-        if (path.getBeg() == node) {
-          result.add(path);
-          continue;
-        }
-        Path<PsiPackage> newPath = new Path<PsiPackage>(path);
-        newPath.add(node);
-        if (path.contains(node)) {
-          final Set<PsiPackage> nodesAfterInnerCycle = getNextNodes(node);
-          nodesAfterInnerCycle.removeAll(path.getNextNodes(node));
-          nextStep(nodesAfterInnerCycle, newPath, result);
-        }
-        else {
-          myCurrentPaths.add(newPath);
-        }
-      }
-    }
-
-    private Set<PsiPackage> getNextNodes(PsiPackage node) {
-      Set<PsiPackage> result = new HashSet<PsiPackage>();
-      final Iterator<PsiPackage> in = myGraph.getIn(node);
-      for (; in.hasNext();) {
-        final PsiPackage psiPackage = in.next();
-        if (myChunk.containsNode(psiPackage)) {
-          result.add(psiPackage);
-        }
-      }
-      return result;
-    }
-  }
-
-  private static class Path <Node> {
-    private ArrayList<Node> myPath = new ArrayList<Node>();
-
-    public Path() {
-    }
-
-    public Path(Path<Node> path) {
-      myPath = new ArrayList<Node>(path.myPath);
-    }
-
-    public Node getBeg() {
-      return myPath.get(0);
-    }
-
-    public Node getEnd() {
-      return myPath.get(myPath.size() - 1);
-    }
-
-    public boolean contains(Node node) {
-      return myPath.contains(node);
-    }
-
-    public List<Node> getNextNodes(Node node) {
-      List<Node> result = new ArrayList<Node>();
-      for (int i = 0; i < myPath.size() - 1; i++) {
-        Node nodeN = myPath.get(i);
-        if (nodeN == node) {
-          result.add(myPath.get(i + 1));
-        }
-      }
-      return result;
-    }
-
-    public void add(Node node) {
-      myPath.add(node);
-    }
-
-    public ArrayList<Node> getPath() {
-      return myPath;
-    }
-  }
 }
