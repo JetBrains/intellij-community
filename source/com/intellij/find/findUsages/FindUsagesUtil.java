@@ -196,8 +196,7 @@ public class FindUsagesUtil {
       PsiSearchHelper helper = element.getManager().getSearchHelper();
       helper.processReferences(new PsiReferenceProcessor() {
         public boolean execute(PsiReference ref) {
-          addResult(results, ref, options, element);
-          return true;
+          return addResult(results, ref, options, element);
         }
       }, element, options.searchScope, false);
     }
@@ -218,8 +217,7 @@ public class FindUsagesUtil {
     else {
       helper.processReferencesIncludingOverriding(new PsiReferenceProcessor() {
         public boolean execute(PsiReference ref) {
-          addResult(result, ref, options, method);
-          return true;
+          return addResult(result, ref, options, method);
         }
       }, method, searchScope, !options.isIncludeOverloadUsages);
 
@@ -234,8 +232,7 @@ public class FindUsagesUtil {
 
     helper.processReferences(new PsiReferenceProcessor() {
       public boolean execute(PsiReference ref) {
-        addResult(result, ref, options, parentClass);
-        return true;
+        return addResult(result, ref, options, parentClass);
       }
     }, method, searchScope, false);
 
@@ -344,7 +341,10 @@ public class FindUsagesUtil {
 
   private static void addResults(Processor<UsageInfo> results, PsiReference[] refs, FindUsagesOptions options, PsiElement element) {
     for(int i = 0; i < refs.length; i++){
-      addResult(results, refs[i], options, element);
+      final boolean shouldContinue = addResult(results, refs[i], options, element);
+      if (!shouldContinue) {
+        break;
+      }
     }
   }
 
@@ -536,11 +536,12 @@ public class FindUsagesUtil {
     }
   }
 
-  private static void addResult(Processor<UsageInfo> results, PsiReference ref, FindUsagesOptions options, PsiElement refElement) {
+  private static boolean addResult(Processor<UsageInfo> results, PsiReference ref, FindUsagesOptions options, PsiElement refElement) {
     if (filterUsage(ref.getElement(), options, refElement)){
       TextRange rangeInElement = ref.getRangeInElement();
-      results.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+      return results.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
     }
+    return true;
   }
 
   private static boolean filterUsage(PsiElement usage, FindUsagesOptions options, PsiElement refElement) {
