@@ -75,6 +75,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     return new AbstractTreeUpdater(this) {
       protected void updateSubtree(DefaultMutableTreeNode node) {
         if(!myProject.isDisposed()) {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           super.updateSubtree(node);
         }
       }
