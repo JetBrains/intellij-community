@@ -35,6 +35,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 
 public class XmlTagTreeElement extends PsiTreeElementBase{
   private final XmlTag myTag;
@@ -57,6 +58,21 @@ public class XmlTagTreeElement extends PsiTreeElementBase{
   }
 
   public String getPresentableText() {
-    return myTag.getName();
+    final StringBuffer buffer = new StringBuffer();
+    buffer.append(myTag.getName());
+    final XmlAttribute[] attributes = myTag.getAttributes();
+    for (int i = 0; i < attributes.length; i++) {
+      appendAttribute(attributes[i], buffer);
+    }
+    return buffer.toString();
+  }
+
+  private void appendAttribute(final XmlAttribute attribute, final StringBuffer buffer) {
+    buffer.append(" ");
+    buffer.append(attribute.getName());
+    buffer.append("=");
+    buffer.append("\"");
+    buffer.append(attribute.getValue());
+    buffer.append("\"");
   }
 }
