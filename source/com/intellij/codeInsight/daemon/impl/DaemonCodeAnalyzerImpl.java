@@ -324,6 +324,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       if (supportCapabilities!=null) isHighlightingAvailable = supportCapabilities.hasValidation();
     }
 
+    isHighlightingAvailable &= !(file instanceof PsiCompiledElement);
+    isHighlightingAvailable &= file.isPhysical();
     return isHighlightingAvailable;
   }
 
