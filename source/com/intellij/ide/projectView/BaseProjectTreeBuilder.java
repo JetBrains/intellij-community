@@ -63,13 +63,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     buildNodeForElement(parent);
 
     DefaultMutableTreeNode node = getNodeForElement(parent);
-    myTree.expandPath(new TreePath(node.getPath()));
     //expandNodeChildren(node);
 
     if (node == null) {
       return new ArrayList<AbstractTreeNode>();
     }
 
+    myTree.expandPath(new TreePath(node.getPath()));
+    
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (int i = 0; i < node.getChildCount(); i++) {
       javax.swing.tree.TreeNode childAt = node.getChildAt(i);
