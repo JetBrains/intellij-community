@@ -335,10 +335,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
           final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL,
                                                                                 identifier, message);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter));
           if (method.isConstructor()) {
             QuickFixAction.registerQuickFixAction(highlightInfo, new CreateFieldFromParameterAction(parameter));
           }
+          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter));
           return highlightInfo;
         }
       }
