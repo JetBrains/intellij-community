@@ -810,4 +810,36 @@ public class XmlUtil {
       throw new IncorrectOperationException();
     }
   }
+
+  public static String decode(String text){
+    if(text.charAt(0) != '&' || text.length() > 6 || text.length() < 3) return text;
+
+    if(text.equals("&lt;")) {
+      return "<";
+    }
+    if(text.equals("&gt;")) {
+      return ">";
+    }
+    if(text.equals("&nbsp;")) {
+      return "\u00a0";
+    }
+    if(text.equals("&amp;")) {
+      return "&";
+    }
+    if(text.equals("&apos;")) {
+      return "'";
+    }
+    if(text.equals("&quot;")) {
+      return "\"";
+    }
+    if(text.startsWith("&#")) {
+      text.substring(3, text.length() - 1);
+      try{
+        return "" + ((char)Integer.parseInt(text));
+      }
+      catch(NumberFormatException e){}
+    }
+
+    return text;
+  }
 }
