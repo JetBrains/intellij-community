@@ -21,10 +21,10 @@ import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 
 import java.io.*;
+import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
-import java.rmi.Remote;
 
 public class DependencyCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCache");
@@ -455,14 +455,14 @@ public class DependencyCache {
           int newInfoId = getNewClassesCache().getClassId(qName);
           if (newInfoId != Cache.UNKNOWN) { // there is a new class file created
             new DependencyProcessor(project, this, qName).run();
-            ArrayList changed = new ArrayList();
-            ArrayList removed = new ArrayList();
+            ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> changed = new ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo>();
+            ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> removed = new ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo>();
             findModifiedConstants(qName, changed, removed);
             if (changed.size() > 0 || removed.size() > 0) {
               new ChangedConstantsDependencyProcessor(
                 project, searcher, this, qName,
-                (FieldInfo[])changed.toArray(new FieldInfo[changed.size()]),
-                (FieldInfo[])removed.toArray(new FieldInfo[removed.size()])
+                changed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[changed.size()]),
+                removed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[removed.size()])
               ).run();
             }
             changedRetentionPolicyDependencyProcessor.checkAnnotationRetentionPolicyChanges(qName);
@@ -513,20 +513,26 @@ public class DependencyCache {
     }
   }
 
-  private void findModifiedConstants(final int qName, Collection changedConstants, Collection removedConstants) throws CacheCorruptedException {
+  private void findModifiedConstants(
+    final int qName,
+    Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> changedConstants,
+    Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> removedConstants) throws CacheCorruptedException {
+
     int[] fields = getCache().getFieldIds(getCache().getClassDeclarationId(qName));
     for (int idx = 0; idx < fields.length; idx++) {
       final int field = fields[idx];
-      if (ClsUtil.isStatic(getCache().getFieldFlags(field)) && ClsUtil.isFinal(getCache().getFieldFlags(field))) {
+      final int oldFlags = getCache().getFieldFlags(field);
+      if (ClsUtil.isStatic(oldFlags) && ClsUtil.isFinal(oldFlags)) {
         int newField = CacheUtils.findFieldByName(getNewClassesCache(), getNewClassesCache().getClassDeclarationId(qName), getCache().getFieldName(field));
         if (newField == Cache.UNKNOWN) {
           if (!ConstantValue.EMPTY_CONSTANT_VALUE.equals(getCache().getFieldConstantValue(field))) { // if the field was really compile time constant
-            removedConstants.add(getCache().createFieldInfo(field));
+            removedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(getCache().createFieldInfo(field)));
           }
         }
         else {
-          if (!getCache().getFieldConstantValue(field).equals(getNewClassesCache().getFieldConstantValue(newField)) ) {
-            changedConstants.add(getCache().createFieldInfo(field));
+          final boolean visibilityRestricted = MakeUtil.isMoreAccessible(oldFlags, getNewClassesCache().getFieldFlags(newField));
+          if (!getCache().getFieldConstantValue(field).equals(getNewClassesCache().getFieldConstantValue(newField)) || visibilityRestricted) {
+            changedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(getCache().createFieldInfo(field), visibilityRestricted));
           }
         }
       }
@@ -733,5 +739,36 @@ public class DependencyCache {
 
   }
 
+  private static class FieldChangeInfo {
+    final FieldInfo fieldInfo;
+    final boolean isAccessibilityChange;
 
+    public FieldChangeInfo(final FieldInfo fieldId) {
+      this(fieldId, false);
+    }
+
+    public FieldChangeInfo(final FieldInfo fieldInfo, final boolean accessibilityChange) {
+      this.fieldInfo = fieldInfo;
+      isAccessibilityChange = accessibilityChange;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final FieldChangeInfo fieldChangeInfo = (FieldChangeInfo)o;
+
+      if (isAccessibilityChange != fieldChangeInfo.isAccessibilityChange) return false;
+      if (!fieldInfo.equals(fieldChangeInfo.fieldInfo)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = fieldInfo.hashCode();
+      result = 29 * result + (isAccessibilityChange ? 1 : 0);
+      return result;
+    }
+  }
 }

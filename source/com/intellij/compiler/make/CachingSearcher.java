@@ -3,6 +3,7 @@ package com.intellij.compiler.make;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
@@ -18,7 +19,7 @@ import java.util.Map;
  */
 public class CachingSearcher {
   private final Project myProject;
-  private final Map<PsiElement, PsiReference[]> myElementToReferencersMap = new com.intellij.util.containers.HashMap<PsiElement, PsiReference[]>();
+  private final Map<Pair<PsiElement, Boolean>, PsiReference[]> myElementToReferencersMap = new com.intellij.util.containers.HashMap<Pair<PsiElement, Boolean>, PsiReference[]>();
   private final PsiSearchHelper mySearchHelper;
 
   public CachingSearcher(Project project) {
@@ -26,23 +27,24 @@ public class CachingSearcher {
     mySearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
   }
 
-  public PsiReference[] findReferences(PsiElement element) {
-    PsiReference[] psiReferences = myElementToReferencersMap.get(element);
+  public PsiReference[] findReferences(PsiElement element, final boolean ignoreAccessScope) {
+    final Pair<PsiElement, Boolean> key = new Pair<PsiElement, Boolean>(element, ignoreAccessScope? Boolean.TRUE : Boolean.FALSE);
+    PsiReference[] psiReferences = myElementToReferencersMap.get(key);
     if (psiReferences == null) {
-      psiReferences = doFindReferences(element);
-      myElementToReferencersMap.put(element, psiReferences);
+      psiReferences = doFindReferences(element, ignoreAccessScope);
+      myElementToReferencersMap.put(key, psiReferences);
     }
     return psiReferences;
   }
 
-  private PsiReference[] doFindReferences(final PsiElement psiElement) {
+  private PsiReference[] doFindReferences(final PsiElement psiElement, final boolean ignoreAccessScope) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
     final PsiReference[][] references = new PsiReference[][] {null};
 
     currentProgress.startNonCancelableSection();
     try {
-      references[0] = mySearchHelper.findReferences(psiElement, GlobalSearchScope.projectScope(myProject), false);
+      references[0] = mySearchHelper.findReferences(psiElement, GlobalSearchScope.projectScope(myProject), ignoreAccessScope);
     }
     finally {
       currentProgress.finishNonCancelableSection();

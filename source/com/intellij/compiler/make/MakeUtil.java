@@ -94,8 +94,8 @@ public class MakeUtil {
   */
 
   /**
-   * tests if the accessibility, denoted by flags2 is less restricted than the accessibility denoted by flags1
-   * @return true means flags1 is less restricted than flags2
+   * tests if the accessibility, denoted by flags1 is less restricted than the accessibility denoted by flags2
+   * @return true means flags1 is less restricted than flags2 <br>
    *         false means flags1 define more restricted access than flags2 or they have equal accessibility
    */
   public static boolean isMoreAccessible(int flags1, int flags2) {

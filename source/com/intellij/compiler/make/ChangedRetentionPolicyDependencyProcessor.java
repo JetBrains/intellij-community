@@ -40,7 +40,7 @@ public class ChangedRetentionPolicyDependencyProcessor {
             if (!aClass.isAnnotationType()) {
               continue;
             }
-            final PsiReference[] references = mySearcher.findReferences(aClass);
+            final PsiReference[] references = mySearcher.findReferences(aClass, true);
             for (int j = 0; j < references.length; j++) {
               final PsiClass ownerClass = getOwnerClass(references[j].getElement());
               if (ownerClass != null && !ownerClass.equals(aClass)) {

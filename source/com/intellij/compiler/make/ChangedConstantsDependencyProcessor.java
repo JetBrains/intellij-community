@@ -28,11 +28,11 @@ public class ChangedConstantsDependencyProcessor {
   private final CachingSearcher mySearcher;
   private DependencyCache myDependencyCache;
   private final int myQName;
-  private FieldInfo[] myChangedFields;
-  private FieldInfo[] myRemovedFields;
+  private final FieldChangeInfo[] myChangedFields;
+  private final FieldChangeInfo[] myRemovedFields;
 
 
-  public ChangedConstantsDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache, int qName, FieldInfo[] changedFields, FieldInfo[] removedFields) {
+  public ChangedConstantsDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache, int qName, FieldChangeInfo[] changedFields, FieldChangeInfo[] removedFields) {
     myProject = project;
     mySearcher = searcher;
     myDependencyCache = dependencyCache;
@@ -57,12 +57,13 @@ public class ChangedConstantsDependencyProcessor {
             PsiField[] psiFields = aClass.getFields();
             for (int idx = 0; idx < psiFields.length; idx++) {
               PsiField psiField = psiFields[idx];
-              if (isFieldChanged(psiField)) {
-                processFieldChanged(psiField, aClass);
+              final FieldChangeInfo changeInfo = findChangeInfo(psiField);
+              if (changeInfo != null) { // this field has been changed
+                processFieldChanged(psiField, aClass, changeInfo.isAccessibilityChange);
               }
             }
             for (int idx = 0; idx < myRemovedFields.length; idx++) {
-              processFieldRemoved(myRemovedFields[idx], aClass);
+              processFieldRemoved(myRemovedFields[idx].fieldInfo, aClass);
             }
           }
         }
@@ -117,15 +118,15 @@ public class ChangedConstantsDependencyProcessor {
     }
   }
 
-  private void processFieldChanged(PsiField field, PsiClass aClass) throws CacheCorruptedException {
-    if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+  private void processFieldChanged(PsiField field, PsiClass aClass, final boolean isAccessibilityChange) throws CacheCorruptedException {
+    if (!isAccessibilityChange && field.hasModifierProperty(PsiModifier.PRIVATE)) {
       return; // optimization: don't need to search, cause may be used only in this class
     }
     if (ENABLE_TRACING) {
       System.out.println("Processing changed field = " + field);
     }
     Set usages = new HashSet();
-    addUsages(field, usages);
+    addUsages(field, usages, isAccessibilityChange);
     if (LOG.isDebugEnabled()) {
       LOG.debug("++++++++++++++++++++++++++++++++++++++++++++++++");
       LOG.debug("Processing changed field: " + aClass.getQualifiedName() + "." + field.getName());
@@ -160,8 +161,8 @@ public class ChangedConstantsDependencyProcessor {
     }
   }
 
-  private void addUsages(PsiField psiField, Collection usages) {
-    PsiReference[] references = mySearcher.findReferences(psiField)/*doFindReferences(searchHelper, psiField)*/;
+  private void addUsages(PsiField psiField, Collection usages, final boolean ignoreAccessScope) {
+    PsiReference[] references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
     if (ENABLE_TRACING) {
       System.out.println("Found " + references.length + " references to field " + psiField);
     }
@@ -181,7 +182,7 @@ public class ChangedConstantsDependencyProcessor {
           PsiExpression initializer = ownerField.getInitializer();
           if (initializer != null && PsiUtil.isConstantExpression(initializer)) {
             // if the field depends on the compile-time-constant expression and is itself final
-            addUsages(ownerField, usages);
+            addUsages(ownerField, usages, ignoreAccessScope);
           }
         }
       }
@@ -218,14 +219,15 @@ public class ChangedConstantsDependencyProcessor {
     return null;
   }
 
-  private boolean isFieldChanged(PsiField field) throws CacheCorruptedException {
+  private FieldChangeInfo findChangeInfo(PsiField field) throws CacheCorruptedException {
     String name = field.getName();
     for (int idx = 0; idx < myChangedFields.length; idx++) {
-      if (name.equals(myDependencyCache.resolve(myChangedFields[idx].getName()))) {
-        return true;
+      final FieldChangeInfo changeInfo = myChangedFields[idx];
+      if (name.equals(myDependencyCache.resolve(changeInfo.fieldInfo.getName()))) {
+        return changeInfo;
       }
     }
-    return false;
+    return null;
   }
 
   private PsiClass getOwnerClass(PsiElement element) {
@@ -237,4 +239,38 @@ public class ChangedConstantsDependencyProcessor {
     }
     return null;
   }
+
+  public static class FieldChangeInfo {
+    final FieldInfo fieldInfo;
+    final boolean isAccessibilityChange;
+
+    public FieldChangeInfo(final FieldInfo fieldId) {
+      this(fieldId, false);
+    }
+
+    public FieldChangeInfo(final FieldInfo fieldInfo, final boolean accessibilityChange) {
+      this.fieldInfo = fieldInfo;
+      isAccessibilityChange = accessibilityChange;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final FieldChangeInfo fieldChangeInfo = (FieldChangeInfo)o;
+
+      if (isAccessibilityChange != fieldChangeInfo.isAccessibilityChange) return false;
+      if (!fieldInfo.equals(fieldChangeInfo.fieldInfo)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = fieldInfo.hashCode();
+      result = 29 * result + (isAccessibilityChange ? 1 : 0);
+      return result;
+    }
+  }
+
 }
