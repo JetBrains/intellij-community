@@ -81,6 +81,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
 
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
+  private AbstractVcs[] myCachedVCSs = null;
   private final Project myProject;
   private final Map<AbstractVcs, Boolean> myVcsToStatus = new HashMap<AbstractVcs, Boolean>();
   private com.intellij.util.containers.HashMap<Document, LineStatusTracker> myLineStatusTrackers =
@@ -109,6 +110,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myVcsToStatus.put(vcs, Boolean.FALSE);
     }
     myVcss.add(vcs);
+    myCachedVCSs = null;
   }
 
   public AbstractVcs findVcsByName(String name) {
@@ -129,7 +131,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs[] getAllVcss() {
     LOG.assertTrue(!myIsDisposed);
     LOG.assertTrue(myIsInitialized);
-    return myVcss.toArray(new AbstractVcs[myVcss.size()]);
+    if (myCachedVCSs == null) {
+      myCachedVCSs = myVcss.toArray(new AbstractVcs[myVcss.size()]);
+    }
+    return myCachedVCSs;
   }
 
 
@@ -246,6 +251,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       e.printStackTrace();
     }
     myVcss.remove(vcs);
+    myCachedVCSs = null;
   }
 
   private Project getProject() {
