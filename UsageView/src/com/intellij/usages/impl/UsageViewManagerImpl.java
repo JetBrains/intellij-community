@@ -128,11 +128,14 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
     }
   }
 
-  private void appendUsages(Usage[] foundUsages, UsageViewImpl usageView) {
-    for (int i = 0; i < foundUsages.length; i++) {
-      Usage usage = foundUsages[i];
-      usageView.appendUsage(usage);
-    }
+  private void appendUsages(final Usage[] foundUsages, final UsageViewImpl usageView) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        for (int i = 0; i < foundUsages.length; i++) {
+          usageView.appendUsage(foundUsages[i]);
+        }
+      }
+    });
   }
 
 

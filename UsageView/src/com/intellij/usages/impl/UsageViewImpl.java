@@ -273,21 +273,25 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void rulesChanged() {
     final ArrayList<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
-    Collection<Usage> allUsages = myUsageNodes.keySet();
+    final Collection<Usage> allUsages = myUsageNodes.keySet();
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
-    for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
-      Usage usage = i.next();
-      if (!usage.isValid()) {
-        i.remove();
-        continue;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        for (Iterator<Usage> i = allUsages.iterator(); i.hasNext();) {
+          Usage usage = i.next();
+          if (!usage.isValid()) {
+            i.remove();
+            continue;
+          }
+          if (usage instanceof MergeableUsage) {
+            ((MergeableUsage)usage).reset();
+          }
+          appendUsage(usage);
+        }
       }
-      if (usage instanceof MergeableUsage) {
-        ((MergeableUsage)usage).reset();
-      }
-      appendUsage(usage);
-    }
+    });
     restoreUsageExpandState(states);
   }
 
@@ -458,10 +462,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void flush() {
     synchronized (myUsagesToFlush) {
-      for (int i = 0; i < myUsagesToFlush.size(); i++) {
-        Usage usage = myUsagesToFlush.get(i);
-        appendUsage(usage);
-      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (int i = 0; i < myUsagesToFlush.size(); i++) {
+            final Usage usage = myUsagesToFlush.get(i);
+            appendUsage(usage);
+          }
+        }
+      });
       myUsagesToFlush.clear();
     }
   }
@@ -469,6 +477,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private boolean myIsFirstVisibleUsageFound = false;
 
   public void appendUsage(Usage usage) {
+    // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (!usage.isValid()) {
+      // because the view is built incrementally with Alarm, the usage may be already invalid, so need filter such cases
+      return;
+    }
     myUsages.add(usage);
     final UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node);
