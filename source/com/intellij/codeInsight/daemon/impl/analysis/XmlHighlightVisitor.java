@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -179,7 +180,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         elementDescriptor = tag.getDescriptor();
       }
       if (elementDescriptor == null) {
-        addElementsForTag(tag, "Element " + name + " is not allowed here", myResult, HighlightInfoType.WRONG_REF, null);
+        addElementsForTag(
+          tag,
+          "Element " + name + " is not allowed here",
+          myResult,
+          getTagProblemInfoType(tag),
+          null
+        );
         return;
       }
     }
@@ -313,6 +320,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
+  private static HighlightInfoType getTagProblemInfoType(final XmlTag tag) {
+    return (tag instanceof HtmlTag)?HighlightInfoType.WARNING:HighlightInfoType.WRONG_REF;
+  }
+
   private void checkRootTag(XmlTag tag) {
     XmlFile file = (XmlFile)tag.getContainingFile();
 
@@ -368,7 +379,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (attributeDescriptor == null) {
       myResult.add(HighlightInfo.createHighlightInfo(
-        HighlightInfoType.WRONG_REF,
+        getTagProblemInfoType(tag),
           XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
           "Attribute " + localName + " is not allowed here"));
     }
@@ -422,7 +433,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (error != null) {
       myResult.add(HighlightInfo.createHighlightInfo(
-        HighlightInfoType.WRONG_REF,
+          getTagProblemInfoType(tag),
           value,
           error));
       return;
@@ -525,8 +536,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             message = ((GenericReference)reference).getUnresolvedMessage();
           else
             message = UNKNOWN_SYMBOL;
+
           HighlightInfo info = HighlightInfo.createHighlightInfo(
-                      HighlightInfoType.WRONG_REF,
+                      getTagProblemInfoType(PsiTreeUtil.getParentOfType(value,XmlTag.class)),
                       reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
                       reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
                       MessageFormat.format(message, new Object[]{reference.getCanonicalText()}));
