@@ -88,11 +88,10 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    if (!myConstructorCall.isWritable()) return false;
     final PsiElement nameElement = getElement(myConstructorCall);
 
     final PsiFile targetFile = getTargetFile(myConstructorCall);
-    if (targetFile != null && !targetFile.isWritable()) {
+    if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
 

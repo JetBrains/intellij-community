@@ -38,7 +38,7 @@ public class ImportClassAction implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (myRef == null || !myRef.isValid()) return false;
-    if (!file.isWritable()) return false;
+    if (!file.getManager().isInProject(file)) return false;
 
     PsiManager manager = file.getManager();
 

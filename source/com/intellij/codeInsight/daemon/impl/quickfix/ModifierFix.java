@@ -91,8 +91,7 @@ public class ModifierFix implements IntentionAction {
     return myModifierList != null
            && myModifierList.isValid()
            && myModifierList.getManager().isInProject(myModifierList)
-           && myModifier != null
-           && file.isWritable();
+           && myModifier != null;
   }
 
   private void changeModifierList (PsiModifierList modifierList) {
@@ -118,7 +117,7 @@ public class ModifierFix implements IntentionAction {
         public boolean execute(PsiMethod element) {
           PsiMethod inheritor = element;
           PsiModifierList list = inheritor.getModifierList();
-          if (element.isWritable() && PsiUtil.getAccessLevel(list) < accessLevel) {
+          if (element.getManager().isInProject(element) && PsiUtil.getAccessLevel(list) < accessLevel) {
             modifiersList.add(list);
           }
           return true;

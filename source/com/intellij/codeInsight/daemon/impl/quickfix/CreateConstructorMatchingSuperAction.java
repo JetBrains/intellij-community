@@ -36,7 +36,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !myClass.getManager().isInProject(myClass) || !myClass.isWritable()) return false;
+    if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
     setText("Create constructor matching super");
     return true;
   }

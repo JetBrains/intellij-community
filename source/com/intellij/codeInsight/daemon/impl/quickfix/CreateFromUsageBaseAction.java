@@ -282,13 +282,13 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
       List<PsiClass> filtered = new ArrayList<PsiClass>();
       for (int i = 0; i < supers.length; i++) {
         PsiClass aSuper = supers[i];
-        if (!aSuper.isWritable() || !aSuper.getManager().isInProject(aSuper)) continue;
+        if (!aSuper.getManager().isInProject(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
       }
       return filtered.size() > 0 ? filtered.toArray(new PsiClass[filtered.size()]) : null;
     }
     else {
-      return psiClass != null && psiClass.getManager().isInProject(psiClass) && psiClass.isWritable() ? new PsiClass[]{psiClass} : null;
+      return psiClass != null && psiClass.getManager().isInProject(psiClass)? new PsiClass[]{psiClass} : null;
     }
   }
 

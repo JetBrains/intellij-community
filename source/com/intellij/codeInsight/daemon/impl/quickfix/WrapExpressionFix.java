@@ -54,8 +54,8 @@ public class WrapExpressionFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (!myExpression.isValid() || !myExpression.isWritable() ||
-        !myExpression.getManager().isInProject(myExpression) || !myExpectedType.isValid() || myExpression.getType() == null) return false;
+    if (!myExpression.isValid() || !myExpression.getManager().isInProject(myExpression) ||
+        !myExpectedType.isValid() || myExpression.getType() == null) return false;
     return findWrapper(myExpression.getType(), myExpectedType) != null;
   }
 

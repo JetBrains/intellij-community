@@ -177,7 +177,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
     final PsiElement nameElement = getNameElement(myNewExpression);
 
     final PsiFile targetFile = getTargetFile(myNewExpression);
-    if (targetFile != null && !targetFile.isWritable()) {
+    if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
 
