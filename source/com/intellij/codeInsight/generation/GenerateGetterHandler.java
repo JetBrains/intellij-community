@@ -36,7 +36,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
       final PsiManager psiManager = aClass.getManager();
       final PsiElementFactory factory = psiManager.getElementFactory();
 
-      final PsiType objectType = PsiType.getJavaLangObject(psiManager);
+      final PsiType objectType = PsiType.getJavaLangObject(psiManager, aClass.getResolveScope());
       final String methodName = PropertyUtil.suggestGetterName(field.getName(), objectType);
 
       final PsiMethod[] methods = aClass.getMethods();
