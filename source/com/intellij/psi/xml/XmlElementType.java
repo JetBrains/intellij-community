@@ -73,20 +73,20 @@ public interface XmlElementType {
   };
 
 
-  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE"){
+  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", Language.findByID("XML")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDParser parser = new DTDParser();
       try {
         return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
       }
-      catch (ParsingException e) {}
+      catch (ParsingException e) {}       
       return null;
     }
     public boolean isParsable(CharSequence buffer) {return true;}
   };
 
-  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL"){
+  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", Language.findByID("XML")){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDMarkupParser parser = new DTDMarkupParser();
@@ -104,6 +104,7 @@ public interface XmlElementType {
       oldXmlLexer.start(chars, 0, chars.length);
       while(oldXmlLexer.getTokenType() != null && oldXmlLexer.getTokenEnd() != buffer.length()){
         if(oldXmlLexer.getTokenType() == XmlTokenType.XML_MARKUP_END) return false;
+        oldXmlLexer.advance();
       }
       return true;
     }

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 
@@ -18,11 +17,11 @@ class ExceptionTagInfo implements JavadocTagInfo {
   }
 
   public String checkTagValue(PsiDocTagValue value) {
-    if (value == null) return "Exception class expected";
+    if (value == null || value.getFirstChild() == null) return "Exception class expected";
 
-    if (!(value.getFirstChild() instanceof PsiJavaCodeReferenceElement)) return "Wrong tag value";
+    if (!(value.getFirstChild().getFirstChild() instanceof PsiJavaCodeReferenceElement)) return "Wrong tag value";
 
-    final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)value.getFirstChild());
+    final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)value.getFirstChild().getFirstChild());
     final PsiClass exceptionClass = (PsiClass)ref.resolve();
     if (exceptionClass == null) return null;
 
