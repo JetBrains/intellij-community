@@ -27,6 +27,44 @@ public final class TreeUtil {
     collectExpandedPathsImpl(tree, paths, new TreePath(root));
   }
 
+  public static ArrayList<TreePath> collectExpandedPaths(final JTree tree){
+    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final Object root = tree.getModel().getRoot();
+    final TreePath rootPath = new TreePath(root);
+    result.addAll(collectExpandedPaths(tree, rootPath));
+    return result;
+  }
+
+  public static ArrayList<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
+    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final Object lastPathComponent = path.getLastPathComponent();
+    final TreeModel model = tree.getModel();
+    if (model.isLeaf(lastPathComponent)) {
+      result.add(path);
+    } else {
+      boolean pathWasAdded = false;
+      for(int i = model.getChildCount(lastPathComponent) - 1; i >= 0 ; i--){
+        final TreePath childPath = path.pathByAddingChild(model.getChild(lastPathComponent, i));
+        if (model.isLeaf(lastPathComponent)) {
+          if (!pathWasAdded) {
+            result.add(path);
+            pathWasAdded= true;
+          }          
+        }
+        else if (tree.isExpanded(childPath)) {
+          result.addAll(collectExpandedPaths(tree, childPath));
+        } else {
+          if (!pathWasAdded) {
+            result.add(path);
+            pathWasAdded= true;
+          }
+        }
+      }
+
+    }
+    return result;
+  }
+
   private static boolean collectExpandedPathsImpl(final JTree tree, final ArrayList<TreePath> paths, final TreePath path){
     final TreeModel model = tree.getModel();
     final Object lastPathComponent = path.getLastPathComponent();

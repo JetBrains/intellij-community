@@ -204,9 +204,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private Object[] getExpandedPsiElements() {
-    ArrayList<TreePath> paths = new ArrayList<TreePath>();
-    TreeUtil.collectExpandedPaths(getTree(), paths);
-    return filterPsiElements(convertPathsToValues(paths.toArray(new TreePath[paths.size()])));
+    final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
+    return filterPsiElements(convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()])));
   }
 
 
@@ -313,12 +312,21 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     JTree tree = myAbstractTreeBuilder.getTree();
     DefaultMutableTreeNode currentTreeNode = ((DefaultMutableTreeNode)tree.getModel().getRoot());
     pathToElement.remove(0);
-    while (!pathToElement.isEmpty() && currentTreeNode != null) {
-      AbstractTreeNode topPathElement = pathToElement.get(0);
-      pathToElement.remove(0);
+    while (currentTreeNode != null) {
+      AbstractTreeNode topPathElement = null;
+      if (!pathToElement.isEmpty()) {
+        topPathElement = pathToElement.get(0);
+        pathToElement.remove(0);
+      } else {
+        topPathElement = null;
+      }
       TreePath treePath = new TreePath(currentTreeNode.getPath());
       if (!tree.isExpanded(treePath)) tree.expandPath(treePath);
-      currentTreeNode = findInChildren(currentTreeNode, topPathElement);
+      if (topPathElement != null) {
+        currentTreeNode = findInChildren(currentTreeNode, topPathElement);
+      } else {
+        currentTreeNode = null;
+      }
     }
     return currentTreeNode;
   }
