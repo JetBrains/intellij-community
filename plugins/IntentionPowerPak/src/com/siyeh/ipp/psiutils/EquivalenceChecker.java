@@ -564,8 +564,8 @@ public class EquivalenceChecker
         }
     }
 
-    private static boolean methodCallExpressionsAreEquivalent(final PsiMethodCallExpression methodExp1,
-                                                              final PsiMethodCallExpression methodExp2)
+    private static boolean methodCallExpressionsAreEquivalent(PsiMethodCallExpression methodExp1,
+                                                              PsiMethodCallExpression methodExp2)
     {
         final PsiReferenceExpression methodExpression1 = methodExp1.getMethodExpression();
         final PsiReferenceExpression methodExpression2 = methodExp2.getMethodExpression();
@@ -581,7 +581,7 @@ public class EquivalenceChecker
                 args2);
     }
 
-    private static boolean newExpressionsAreEquivalent(final PsiNewExpression newExp1, final PsiNewExpression newExp2)
+    private static boolean newExpressionsAreEquivalent(PsiNewExpression newExp1, PsiNewExpression newExp2)
     {
         final PsiExpression[] arrayDimensions1 = newExp1.getArrayDimensions();
         final PsiExpression[] arrayDimensions2 = newExp2.getArrayDimensions();
@@ -608,16 +608,16 @@ public class EquivalenceChecker
         return expressionListsAreEquivalent(args1, args2);
     }
 
-    private static boolean arrayInitializerExpressionsAreEquivalent(final PsiArrayInitializerExpression arrInitExp1,
-                                                                    final PsiArrayInitializerExpression arrInitExp2)
+    private static boolean arrayInitializerExpressionsAreEquivalent(PsiArrayInitializerExpression arrInitExp1,
+                                                                    PsiArrayInitializerExpression arrInitExp2)
     {
         final PsiExpression[] initializers1 = arrInitExp1.getInitializers();
         final PsiExpression[] initializers2 = arrInitExp2.getInitializers();
         return expressionListsAreEquivalent(initializers1, initializers2);
     }
 
-    private static boolean typecastExpressionsAreEquivalent(final PsiTypeCastExpression typecastExp2,
-                                                            final PsiTypeCastExpression typecastExp1)
+    private static boolean typecastExpressionsAreEquivalent(PsiTypeCastExpression typecastExp2,
+                                                            PsiTypeCastExpression typecastExp1)
     {
         final PsiTypeElement castType2 = typecastExp2.getCastType();
         final PsiTypeElement castType1 = typecastExp1.getCastType();
@@ -630,8 +630,8 @@ public class EquivalenceChecker
         return expressionsAreEquivalent(operand1, operand2);
     }
 
-    private static boolean arrayAccessExpressionsAreEquivalent(final PsiArrayAccessExpression arrAccessExp2,
-                                                               final PsiArrayAccessExpression arrAccessExp1)
+    private static boolean arrayAccessExpressionsAreEquivalent(PsiArrayAccessExpression arrAccessExp2,
+                                                               PsiArrayAccessExpression arrAccessExp1)
     {
         final PsiExpression arrayExpression2 = arrAccessExp2.getArrayExpression();
         final PsiExpression arrayExpression1 = arrAccessExp1.getArrayExpression();
@@ -641,8 +641,8 @@ public class EquivalenceChecker
                 && expressionsAreEquivalent(indexExpression2, indexExpression1);
     }
 
-    private static boolean prefixExpressionsAreEquivalent(final PsiPrefixExpression prefixExp1,
-                                                          final PsiPrefixExpression prefixExp2)
+    private static boolean prefixExpressionsAreEquivalent(PsiPrefixExpression prefixExp1,
+                                                          PsiPrefixExpression prefixExp2)
     {
         final PsiJavaToken sign1 = prefixExp1.getOperationSign();
         final PsiJavaToken sign2 = prefixExp2.getOperationSign();
@@ -655,8 +655,8 @@ public class EquivalenceChecker
         return expressionsAreEquivalent(operand1, operand2);
     }
 
-    private static boolean postfixExpressionsAreEquivalent(final PsiPostfixExpression postfixExp1,
-                                                           final PsiPostfixExpression postfixExp2)
+    private static boolean postfixExpressionsAreEquivalent(PsiPostfixExpression postfixExp1,
+                                                           PsiPostfixExpression postfixExp2)
     {
         final PsiJavaToken sign1 = postfixExp1.getOperationSign();
         final PsiJavaToken sign2 = postfixExp2.getOperationSign();
@@ -669,8 +669,8 @@ public class EquivalenceChecker
         return expressionsAreEquivalent(operand1, operand2);
     }
 
-    private static boolean binaryExpressionsAreEquivalent(final PsiBinaryExpression binaryExp1,
-                                                          final PsiBinaryExpression binaryExp2)
+    private static boolean binaryExpressionsAreEquivalent(PsiBinaryExpression binaryExp1,
+                                                          PsiBinaryExpression binaryExp2)
     {
         final PsiJavaToken sign1 = binaryExp1.getOperationSign();
         final PsiJavaToken sign2 = binaryExp2.getOperationSign();
@@ -686,8 +686,8 @@ public class EquivalenceChecker
                 && expressionsAreEquivalent(rhs1, rhs2);
     }
 
-    private static boolean assignmentExpressionsAreEquivalent(final PsiAssignmentExpression assignExp1,
-                                                              final PsiAssignmentExpression assignExp2)
+    private static boolean assignmentExpressionsAreEquivalent(PsiAssignmentExpression assignExp1,
+                                                              PsiAssignmentExpression assignExp2)
     {
         final PsiJavaToken sign1 = assignExp1.getOperationSign();
         final PsiJavaToken sign2 = assignExp2.getOperationSign();
@@ -703,8 +703,8 @@ public class EquivalenceChecker
                 && expressionsAreEquivalent(rhs1, rhs2);
     }
 
-    private static boolean conditionalExpressionsAreEquivalent(final PsiConditionalExpression condExp1,
-                                                               final PsiConditionalExpression condExp2)
+    private static boolean conditionalExpressionsAreEquivalent(PsiConditionalExpression condExp1,
+                                                               PsiConditionalExpression condExp2)
     {
         final PsiExpression condition1 = condExp1.getCondition();
         final PsiExpression condition2 = condExp2.getCondition();
