@@ -97,12 +97,10 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
 
         final String newTextStr = StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
         if(reparseable.isParsable(newTextStr)){
-          final FileElement treeElement = new DummyHolder(((TreeElement)parent).getManager(), null, treeFileElement.getCharTable()).getTreeElement();
           final ChameleonElement chameleon =
-            (ChameleonElement)Factory.createLeafElement(reparseable, newFileText, textRange.getStartOffset(),
-                                                        textRange.getEndOffset() + lengthShift, -1, treeFileElement.getCharTable());
-          TreeUtil.addChildren(treeElement, chameleon);
-          parent.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer()).getTreeParent());
+            (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
+                                                              textRange.getEndOffset() + lengthShift, null, null);
+          ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
           return;
         }
         else if(reparseable instanceof IErrorCounterChameleonElementType){
