@@ -32,11 +32,17 @@ public class TipManager {
 
     private boolean isOverTip(MouseEvent e) {
       if (myCurrentTooltip != null) {
-        Window tipWindow = SwingUtilities.windowForComponent(myCurrentTooltip);
-        if(!tipWindow.isShowing()) hideTooltip();
-        Point point = e.getComponent().getLocationOnScreen();
+        final Window tipWindow = SwingUtilities.windowForComponent(myCurrentTooltip);
+        if (tipWindow == null) {
+          return false;
+        }
+        if(!tipWindow.isShowing()) {
+          hideTooltip();
+          return false;
+        }
+        final Point point = e.getComponent().getLocationOnScreen();
         point.translate(e.getX(), e.getY());
-        return tipWindow != null && tipWindow.getBounds().contains(point);
+        return tipWindow.getBounds().contains(point);
       }
       return false;
     }
@@ -45,16 +51,20 @@ public class TipManager {
       myAlarm.cancelAllRequests();
       if (isOverTip(e)) {
         ListenerUtil.addMouseListener(myCurrentTooltip, new MouseAdapter() {
-            public void mouseExited(MouseEvent e) {
-              if (myCurrentTooltip != null) {
-                if(!isOverTip(e)) {
-                  SwingUtilities.windowForComponent(myCurrentTooltip).removeMouseListener(this);
-                  hideTooltip();
+          public void mouseExited(MouseEvent e) {
+            if (myCurrentTooltip != null) {
+              if(!isOverTip(e)) {
+                final Window tipWindow = SwingUtilities.windowForComponent(myCurrentTooltip);
+                if (tipWindow != null) {
+                  tipWindow.removeMouseListener(this);
                 }
+                hideTooltip();
               }
             }
-          });
-      } else {
+          }
+        });
+      }
+      else {
         hideTooltip();
       }
     }
@@ -77,7 +87,9 @@ public class TipManager {
 
   private void showTooltip(MouseEvent e) {
     JComponent newTip = myTipFactory.createToolTip(e);
-    if(newTip == myCurrentTooltip) return;
+    if(newTip == myCurrentTooltip) {
+      return;
+    }
 
     hideTooltip();
 
@@ -88,9 +100,7 @@ public class TipManager {
       location.x += sLocation.x;
       location.y += sLocation.y;
 
-      Popup tipPopup = popupFactory.getPopup(myComponent, newTip,
-                                        location.x,
-                                        location.y);
+      Popup tipPopup = popupFactory.getPopup(myComponent, newTip, location.x, location.y);
       tipPopup.show();
       myCurrentTooltip = newTip;
     }
@@ -99,7 +109,9 @@ public class TipManager {
   public void hideTooltip() {
     if (myCurrentTooltip != null) {
       Window window = SwingUtilities.windowForComponent(myCurrentTooltip);
-      if(window != null) window.hide();
+      if(window != null) {
+        window.hide();
+      }
       myCurrentTooltip = null;
     }
   }
