@@ -10,12 +10,17 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jdom.Element;
 
-public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent {
+public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
-  private boolean myJarPlugin = false;
+  public boolean myJarPlugin = false;
 
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
@@ -75,4 +80,12 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void initComponent() {}
 
   public void disposeComponent() {}
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
 }
