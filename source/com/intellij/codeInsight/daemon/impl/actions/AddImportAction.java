@@ -83,16 +83,15 @@ public class AddImportAction implements QuestionAction {
     StatisticsManager.getInstance().incMemberUseCount(null, targetClass);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        final Runnable action = new Runnable() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             _addImport(ref, targetClass);
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
+        });
       }
     },
-        "Add Import",
-        null);
+                                                  "Add Import",
+                                                  null);
   }
 
   private void _addImport(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {
@@ -130,12 +129,12 @@ public class AddImportAction implements QuestionAction {
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-          if (daemonCodeAnalyzer != null) {
-            daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
-          }
+      public void run() {
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+        if (daemonCodeAnalyzer != null) {
+          daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
         }
-      });
+      }
+    });
   }
 }

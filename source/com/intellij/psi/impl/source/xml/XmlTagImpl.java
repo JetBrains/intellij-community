@@ -427,7 +427,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     myTags = result.toArray(new XmlTag[result.size()]);
     return myTags;
   }
-
+    
   public XmlTag[] findSubTags(String name) {
     return findSubTags(name, null);
   }

@@ -6,6 +6,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -19,6 +20,8 @@ import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.*;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
@@ -38,6 +41,8 @@ public class ChangeUtil implements Constants {
     PsiTreeChangeEventImpl event = null;
     PsiElement parentPsiElement = SourceTreeToPsiMap.treeElementToPsi(parent);
     PsiFile file = parentPsiElement.getContainingFile();
+    checkConsistency(file);
+
     boolean physical = parentPsiElement.isPhysical();
     if (physical) {
       PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
@@ -91,6 +96,7 @@ public class ChangeUtil implements Constants {
       if (document != null) {
         PsiDocumentManagerImpl.checkConsistency(file, document);
       }
+      checkTextRanges(file);
     }
   }
 
@@ -700,5 +706,30 @@ public class ChangeUtil implements Constants {
     parent.subtreeChanged();
     if (containingFile.isPhysical()) manager.childrenChanged(event);
     checkConsistency(containingFile);
+  }
+
+  public static int checkTextRanges(PsiElement root) {
+    TextRange range = root.getTextRange();
+    int off = range.getStartOffset();
+    PsiElement[] children = root.getChildren();
+    if (children.length != 0) {
+      for (int i = 0; i < children.length; i++) {
+        PsiElement child = children[i];
+        off += checkTextRanges(child);
+      }
+    }
+    else {
+      off += root.getTextLength();
+    }
+    LOG.assertTrue(off == range.getEndOffset());
+
+    String fileText = root.getContainingFile().getText();
+    LOG.assertTrue(root.getText().equals(fileText.substring(range.getStartOffset(), range.getEndOffset())));
+    if (root instanceof XmlTag) {
+      XmlTagValue value = ((XmlTag)root).getValue();
+      TextRange textRange = value.getTextRange();
+      LOG.assertTrue(value.getText().equals(fileText.substring(textRange.getStartOffset(), textRange.getEndOffset())));
+    }
+    return range.getLength();
   }
 }

@@ -369,7 +369,7 @@ public class XmlUtil {
       while (subTagNum < subTags.length - 1 && subTags[subTagNum + 1].getName().equals(childElementName)) {
         subTagNum++;
       }
-      if (childElementName.equals(child.getName())) {
+      if (childElementName.equals(child.getLocalName())) {
         // insert child just after anchor
         // insert into the position specified by index
         subTagNum = index == -1 || index > subTagNum - prevSubTagNum ? subTagNum : prevSubTagNum + index;

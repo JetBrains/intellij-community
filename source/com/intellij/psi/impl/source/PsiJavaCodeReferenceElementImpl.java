@@ -465,58 +465,50 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (isReferenceTo(element)) return this;
 
     switch (getKind()) {
-    case CLASS_NAME_KIND:
-    case CLASS_FQ_NAME_KIND:
-           {
-             if (!(element instanceof PsiClass)) {
-               throw new IncorrectOperationException();
-             }
-             return bindToClass((PsiClass)element);
-           }
+      case CLASS_NAME_KIND:
+      case CLASS_FQ_NAME_KIND:
+        if (!(element instanceof PsiClass)) {
+          throw new IncorrectOperationException();
+        }
+        return bindToClass((PsiClass)element);
 
-    case PACKAGE_NAME_KIND:
-           {
-             if (!(element instanceof PsiPackage)) {
-               throw new IncorrectOperationException();
-             }
-             return bindToPackage((PsiPackage)element);
-           }
+      case PACKAGE_NAME_KIND:
+        if (!(element instanceof PsiPackage)) {
+          throw new IncorrectOperationException();
+        }
+        return bindToPackage((PsiPackage)element);
 
-    case CLASS_OR_PACKAGE_NAME_KIND:
-    case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-           {
-             if (element instanceof PsiClass) {
-               return bindToClass((PsiClass)element);
-             }
-             else if (element instanceof PsiPackage) {
-               return bindToPackage((PsiPackage)element);
-             }
-             else {
-               throw new IncorrectOperationException();
-             }
-           }
+      case CLASS_OR_PACKAGE_NAME_KIND:
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+        if (element instanceof PsiClass) {
+          return bindToClass((PsiClass)element);
+        }
+        else if (element instanceof PsiPackage) {
+          return bindToPackage((PsiPackage)element);
+        }
+        else {
+          throw new IncorrectOperationException();
+        }
 
-    case CLASS_IN_QUALIFIED_NEW_KIND:
-           {
-             if (element instanceof PsiClass) {
-               final PsiClass aClass = (PsiClass)element;
-               final String name = aClass.getName();
-               if (name == null) {
-                 throw new IncorrectOperationException();
-               }
-               final TreeElement ref =
-               Parsing.parseJavaCodeReferenceText(aClass.getManager(), name.toCharArray(), SharedImplUtil.findCharTableByTree(this));
-               getTreeParent().replaceChildInternal(this, ref);
-               return SourceTreeToPsiMap.treeElementToPsi(ref);
-             }
-             else {
-               throw new IncorrectOperationException();
-             }
-           }
+      case CLASS_IN_QUALIFIED_NEW_KIND:
+        if (element instanceof PsiClass) {
+          final PsiClass aClass = (PsiClass)element;
+          final String name = aClass.getName();
+          if (name == null) {
+            throw new IncorrectOperationException();
+          }
+          final TreeElement ref =
+            Parsing.parseJavaCodeReferenceText(aClass.getManager(), name.toCharArray(), SharedImplUtil.findCharTableByTree(this));
+          getTreeParent().replaceChildInternal(this, ref);
+          return SourceTreeToPsiMap.treeElementToPsi(ref);
+        }
+        else {
+          throw new IncorrectOperationException();
+        }
 
-    default:
-           LOG.assertTrue(false);
-           return null;
+      default:
+        LOG.assertTrue(false);
+        return null;
     }
   }
 
