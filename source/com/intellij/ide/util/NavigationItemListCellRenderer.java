@@ -32,6 +32,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -44,57 +45,89 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public class NavigationItemListCellRenderer extends ColoredListCellRenderer{
-  protected void customizeCellRenderer(
+public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer {
+  public NavigationItemListCellRenderer() {
+    super(new BorderLayout());
+  }
+
+  public Component getListCellRendererComponent(
     JList list,
     Object value,
     int index,
-    boolean selected,
-    boolean hasFocus
-  ){
-    if (value instanceof NavigationItem) {
-      NavigationItem element = (NavigationItem)value;
-      ItemPresentation presentation = element.getPresentation();
-      String name = presentation.getPresentableText();
-      Color color = list.getForeground();
-      FileStatus status = element.getFileStatus();
-      if (status != FileStatus.NOT_CHANGED) {
-        color = status.getColor();
-      }
-
-      final SimpleTextAttributes simpleTextAttributes = NodeRenderer.getSimpleTextAttributes(presentation);
-      final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
-      textAttributes.setForegroundColor(color);
-      append(name,SimpleTextAttributes.fromTextAttributes(textAttributes));
-      setIcon(presentation.getIcon(false));
-
-      String containerText = presentation.getLocationString();
-
-      if (containerText != null && containerText.length() > 0){
-        append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
-      }
+    boolean isSelected,
+    boolean cellHasFocus) {
+    removeAll();
+    final Component leftCellRendererComponent =
+      new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    add(leftCellRendererComponent, BorderLayout.WEST);
+    if  (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION){
+      final Component rightCellRendererComponent =
+        new PsiElementModuleRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      add(rightCellRendererComponent, BorderLayout.EAST);
+      final JPanel spacer = new JPanel();
+      final Dimension size = rightCellRendererComponent.getSize();
+      spacer.setSize(new Dimension((int)(size.width * 0.015 + leftCellRendererComponent.getSize().width * 0.015), size.height));
+      spacer.setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+      add(spacer, BorderLayout.CENTER);
     }
-    else {
-      setIcon(IconUtilEx.getEmptyIcon(false));
-      append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+    setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+    return this;
+  }
+
+  private class LeftRenderer extends ColoredListCellRenderer {
+    protected void customizeCellRenderer(
+      JList list,
+      Object value,
+      int index,
+      boolean selected,
+      boolean hasFocus
+      ) {
+      if (value instanceof NavigationItem) {
+        NavigationItem element = (NavigationItem)value;
+        ItemPresentation presentation = element.getPresentation();
+        String name = presentation.getPresentableText();
+        Color color = list.getForeground();
+        FileStatus status = element.getFileStatus();
+        if (status != FileStatus.NOT_CHANGED) {
+          color = status.getColor();
+        }
+
+        final SimpleTextAttributes simpleTextAttributes = NodeRenderer.getSimpleTextAttributes(presentation);
+        final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+        textAttributes.setForegroundColor(color);
+        append(name, SimpleTextAttributes.fromTextAttributes(textAttributes));
+        setIcon(presentation.getIcon(false));
+
+        String containerText = presentation.getLocationString();
+
+        if (containerText != null && containerText.length() > 0) {
+          append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+        }
+      }
+      else {
+        setIcon(IconUtilEx.getEmptyIcon(false));
+        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+      }
+      setPaintFocusBorder(false);
+      setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
     }
   }
 
-  public Comparator getComparator(){
+  public Comparator getComparator() {
     return new Comparator() {
       public int compare(Object o1, Object o2) {
         return getText(o1).compareTo(getText(o2));
       }
 
-      private String getText(Object o){
-        if (o instanceof NavigationItem){
+      private String getText(Object o) {
+        if (o instanceof NavigationItem) {
           NavigationItem element = (NavigationItem)o;
           ItemPresentation presentation = element.getPresentation();
           String elementText = presentation.getLocationString();
           String containerText = presentation.getLocationString();
           return containerText != null ? elementText + " " + containerText : elementText;
         }
-        else{
+        else {
           return o.toString();
         }
       }

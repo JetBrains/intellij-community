@@ -11,14 +11,14 @@
     <children>
       <vspacer id="64337">
         <constraints>
-          <xy x="218" y="305" width="11" height="115"/>
+          <xy x="218" y="332" width="11" height="88"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <grid id="937be" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="0" right="5"/>
         <constraints>
-          <xy x="458" y="0" width="429" height="178"/>
+          <xy x="458" y="0" width="429" height="191"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -26,7 +26,7 @@
         <children>
           <component id="9264" class="javax.swing.JCheckBox" binding="myAnimateWindowsCheckBox">
             <constraints>
-              <xy x="11" y="27" width="108" height="22"/>
+              <xy x="11" y="28" width="108" height="22"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -37,7 +37,7 @@
           </component>
           <component id="32072" class="javax.swing.JCheckBox" binding="myWindowShortcutsCheckBox">
             <constraints>
-              <xy x="11" y="58" width="145" height="22"/>
+              <xy x="11" y="61" width="145" height="22"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -48,7 +48,7 @@
           </component>
           <component id="e4f17" class="javax.swing.JCheckBox" binding="myShowToolStripesCheckBox">
             <constraints>
-              <xy x="11" y="88" width="135" height="22"/>
+              <xy x="11" y="94" width="135" height="22"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -59,7 +59,7 @@
           </component>
           <component id="44b00" class="javax.swing.JCheckBox" binding="myAlwaysShowWindowButtonsCheckBox">
             <constraints>
-              <xy x="11" y="118" width="215" height="22"/>
+              <xy x="11" y="127" width="215" height="22"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -70,7 +70,7 @@
           </component>
           <component id="42895" class="javax.swing.JCheckBox" binding="myShowMemoryIndicatorCheckBox">
             <constraints>
-              <xy x="11" y="148" width="136" height="22"/>
+              <xy x="11" y="160" width="136" height="22"/>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -84,7 +84,7 @@
       <grid id="26e1c" binding="myTransparencyPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="458" y="183" width="429" height="122"/>
+          <xy x="458" y="196" width="429" height="136"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -92,7 +92,7 @@
         <children>
           <component id="3d7be" class="javax.swing.JLabel">
             <constraints>
-              <xy x="11" y="61" width="55" height="14"/>
+              <xy x="11" y="68" width="55" height="14"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -101,7 +101,7 @@
           </component>
           <component id="78431" class="javax.swing.JLabel">
             <constraints>
-              <xy x="11" y="91" width="29" height="14"/>
+              <xy x="11" y="103" width="29" height="14"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -110,7 +110,7 @@
           </component>
           <component id="7d37d" class="javax.swing.JCheckBox" binding="myEnableAlphaModeCheckBox">
             <constraints>
-              <xy x="11" y="29" width="228" height="18"/>
+              <xy x="11" y="31" width="228" height="18"/>
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -120,14 +120,14 @@
           </component>
           <component id="afb40" class="javax.swing.JSlider" binding="myAlphaModeRatioSlider">
             <constraints>
-              <xy x="76" y="90" width="342" height="16"/>
+              <xy x="76" y="102" width="342" height="16"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
             </constraints>
             <properties/>
           </component>
           <component id="51eca" class="javax.swing.JTextField" binding="myAlphaModeDelayTextField">
             <constraints>
-              <xy x="76" y="58" width="50" height="20"/>
+              <xy x="76" y="65" width="50" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0">
                 <preferred-size width="50" height="-1"/>
               </grid>
@@ -140,10 +140,10 @@
           </component>
         </children>
       </grid>
-      <grid id="d992b" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d992b" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="0" y="0" width="448" height="305"/>
+          <xy x="0" y="0" width="448" height="332"/>
           <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -151,8 +151,8 @@
         <children>
           <component id="c6ad1" class="javax.swing.JCheckBox" binding="myAntialiasingInEditorCheckBox">
             <constraints>
-              <xy x="11" y="134" width="160" height="22"/>
-              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <xy x="11" y="161" width="160" height="22"/>
+              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <text value="Use antialiased font in editor"/>
@@ -161,8 +161,8 @@
           </component>
           <component id="33d7c" class="javax.swing.JCheckBox" binding="myMoveMouseOnDefaultButtonCheckBox">
             <constraints>
-              <xy x="11" y="161" width="281" height="22"/>
-              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <xy x="11" y="188" width="281" height="22"/>
+              <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <text value="Automatically position mouse cursor on default button"/>
@@ -212,8 +212,8 @@
           <grid id="4c401" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="188" width="426" height="23"/>
-              <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="11" y="215" width="426" height="23"/>
+              <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -242,8 +242,8 @@
           <grid id="d9fb" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="243" width="426" height="51"/>
-              <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="11" y="270" width="426" height="51"/>
+              <grid row="9" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -308,8 +308,8 @@
           <grid id="ce348" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="216" width="426" height="22"/>
-              <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="11" y="243" width="426" height="22"/>
+              <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -341,6 +341,16 @@
             </constraints>
             <properties>
               <text value="Hide file extension in editor tabs"/>
+              <margin top="2" left="0" bottom="2" right="2"/>
+            </properties>
+          </component>
+          <component id="a3b32" class="javax.swing.JCheckBox" binding="myHideIconsInQuickNavigation">
+            <constraints>
+              <xy x="11" y="134" width="162" height="22"/>
+              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Show icons in quick navigation"/>
               <margin top="2" left="0" bottom="2" right="2"/>
             </properties>
           </component>

@@ -28,6 +28,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = false;
   public int EDITOR_TAB_PLACEMENT = 1;
   public boolean HIDE_KNOWN_EXTENSION_IN_TABS = false;
+  public boolean SHOW_ICONS_IN_QUICK_NAVIGATION = true;
   public boolean CLOSE_NON_MODIFIED_FILES_FIRST = false;
   public boolean ANTIALIASING_IN_EDITOR;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;

@@ -158,6 +158,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     update |= hide != settings.HIDE_KNOWN_EXTENSION_IN_TABS;
     settings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
 
+    update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
+    settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
+
     boolean shouldRepaintUI = false;
     if (
       settings.ANTIALIASING_IN_EDITOR != myComponent.myAntialiasingInEditorCheckBox.isSelected()
@@ -219,6 +222,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myScrollTabLayoutInEditorCheckBox.setSelected(settings.SCROLL_TAB_LAYOUT_IN_EDITOR);
     myComponent.myEditorTabPlacement.setSelectedItem(new Integer(settings.EDITOR_TAB_PLACEMENT));
     myComponent.myHideKnownExtensions.setSelected(settings.HIDE_KNOWN_EXTENSION_IN_TABS);
+    myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
     myComponent.myAntialiasingInEditorCheckBox.setSelected(settings.ANTIALIASING_IN_EDITOR);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
@@ -259,6 +263,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     int tabPlacement = ((Integer)myComponent.myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != settings.EDITOR_TAB_PLACEMENT;
     isModified |= myComponent.myHideKnownExtensions.isSelected() != settings.HIDE_KNOWN_EXTENSION_IN_TABS;
+    isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
     isModified |= myComponent.myAntialiasingInEditorCheckBox.isSelected() != settings.ANTIALIASING_IN_EDITOR;
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
@@ -360,6 +365,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JCheckBox myOverrideLAFFonts;
     private JLabel myIDEALafFont;
     private JCheckBox myHideKnownExtensions;
+    private JCheckBox myHideIconsInQuickNavigation;
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {
