@@ -34,7 +34,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s2 = "String 'name = \"'string\";";
     String s2_2 = "String 'name = \"'string:[regex( .* )]\";";
     String s3 = "VSegAttribute $name$ = new VSegAttribute(\"$string$\");";
-    String expectedResult = "    VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
+    String expectedResult = "VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
 
     String actualResult = replacer.testReplace(s1,s2,s3,options);
     assertEquals(
@@ -313,7 +313,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s40 = "ParamChecker.instanceOf(queryKey, GroupBySqlTypePolicy.GroupKey.class);";
     String s41 = "ParamChecker.instanceOf('obj, 'class.class);";
     String s42 = "assert $obj$ instanceof $class$ : \"$obj$ is an instance of \" + $obj$.getClass() + \"; expected \" + $class$.class;";
-    String expectedResult15 = "    assert queryKey instanceof GroupBySqlTypePolicy.GroupKey : \"queryKey is an instance of \" + queryKey.getClass() + \"; expected \" + GroupBySqlTypePolicy.GroupKey.class;";
+    String expectedResult15 = "assert queryKey instanceof GroupBySqlTypePolicy.GroupKey : \"queryKey is an instance of \" + queryKey.getClass() + \"; expected \" + GroupBySqlTypePolicy.GroupKey.class;";
 
     actualResult = replacer.testReplace(s40,s41,s42,options);
     assertEquals(
@@ -967,7 +967,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
                               "    // comment before\n" +
-                              "            protected Object a;//  comment after\n" +
+                              "                protected Object a;//  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
