@@ -37,7 +37,7 @@ public class StringConcatenationInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.PLUS) {
+            if (!(sign.getTokenType() == JavaTokenType.PLUS)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
