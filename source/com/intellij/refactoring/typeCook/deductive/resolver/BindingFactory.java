@@ -129,14 +129,10 @@ public class BindingFactory {
         final PsiType bound = wcType.getBound();
 
         if (bound != null) {
-          PsiType abound = apply(bound);
+          final PsiType abound = apply(bound);
 
           if (abound instanceof PsiWildcardType) {
-            //if (!((PsiWildcardType)abound).isExtends() == wcType.isExtends()) {
-              return null;
-            //}
-
-            //abound = ((PsiWildcardType)abound).getBound();
+            return null;
           }
 
           return
@@ -224,7 +220,7 @@ public class BindingFactory {
                  return null;
                }
 
-               final PsiType type1 = b2.apply(type);
+               final PsiType type1 = type;//b2.apply(type);
 
                if (type1 == null) {
                  return null;
@@ -672,14 +668,14 @@ public class BindingFactory {
            case 1:
                 if (((PsiWildcardType)x).isExtends()) {
                   /* ? extends T1, T2 */
-                  if (constraints != null) {
-                    constraints.add(new Subtype(xType, yType));
-                  }
-
                   if (xType instanceof PsiTypeVariable) {
                     return create((PsiTypeVariable)xType, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), yType));
                   }
                   else {
+                    if (constraints != null) {
+                      constraints.add(new Subtype(xType, yType));
+                    }
+
                     return balance(xType, yType, balancer, constraints);
                   }
                 }
@@ -697,14 +693,14 @@ public class BindingFactory {
                   return null;
                 }
                 else {/* T1, ? super T2 */
-                  if (constraints != null) {
-                    constraints.add(new Subtype(yType, xType));
-                  }
-
                   if (yType instanceof PsiTypeVariable) {
                     return create(((PsiTypeVariable)yType), PsiWildcardType.createExtends(PsiManager.getInstance(myProject), xType));
                   }
                   else {
+                    if (constraints != null) {
+                      constraints.add(new Subtype(yType, xType));
+                    }
+
                     return balance(xType, yType, balancer, constraints);
                   }
                 }
@@ -918,7 +914,7 @@ public class BindingFactory {
                                         create(y, PsiWildcardType.createExtends(PsiManager.getInstance(myProject), var));
 
                                         binding.addTypeVariable(var);
-                                        constraints.add(new Subtype(var, x));
+                                        constraints.add(new Subtype(x, var));
 
                                         return binding;
                                       }
