@@ -36,7 +36,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   /** @fabrique **/
   protected Project myProject;
   /** @fabrique **/
-  private VirtualFile[] myChosenFiles;
+  private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
