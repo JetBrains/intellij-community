@@ -406,7 +406,9 @@ public class PsiFormatUtil {
     if (list.hasModifierProperty(PsiModifier.STRICTFP) && (options & JAVADOC_MODIFIERS_ONLY) == 0){
       buffer.append("strictfp ");
     }
-    if (list.hasModifierProperty(PsiModifier.TRANSIENT)){
+    if (list.hasModifierProperty(PsiModifier.TRANSIENT) &&
+        element instanceof PsiVariable // javac 5 puts transient attr for methods
+       ){
       buffer.append("transient ");
     }
     if (list.hasModifierProperty(PsiModifier.VOLATILE)){
