@@ -625,6 +625,20 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
+  public static void collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+    final XmlTag[] subtags = element.getSubTags();
+
+    for (int i = 0; i < subtags.length; i++) {
+      XmlTag tag = subtags[i];
+
+      if (tag.getLocalName().equals("enumeration")) {
+        variants.add(tag.getAttributeValue("value"));
+      } else {
+        collectEnumerationValues(tag,variants);
+      }
+    }
+  }
+
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
     String myName = null;

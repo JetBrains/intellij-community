@@ -16,8 +16,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,8 +27,13 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+
+import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -61,6 +68,14 @@ public class XmlCompletionData extends CompletionData {
       variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
       variant.addCompletion(new XmlAttributeValueGetter());
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
+      registerVariant(variant);
+    }
+
+    {
+      final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
+      variant.includeScopeClass(XmlToken.class, true);
+      variant.addCompletion(new SimpleTagContentEnumerationValuesGetter());
+
       registerVariant(variant);
     }
 
@@ -289,6 +304,48 @@ public class XmlCompletionData extends CompletionData {
 
     private boolean isTagNameToken(PsiElement token) {
       return ((XmlToken)token).getTokenType() == XmlTokenType.XML_NAME;
+    }
+  }
+
+  private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
+    public Object[] get(final PsiElement context, CompletionContext completionContext) {
+      XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+      XmlElementDescriptor descriptor = tag!=null ? tag.getDescriptor() : null;
+
+      if (descriptor instanceof XmlElementDescriptorImpl) {
+        final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
+
+        if (type instanceof ComplexTypeDescriptor) {
+          final XmlTag[] simpleContent = new XmlTag[1];
+
+          XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(),new PsiElementProcessor() {
+            public boolean execute(final PsiElement element) {
+              if (element instanceof XmlTag &&
+                  ((XmlTag)element).getLocalName().equals("simpleContent") &&
+                  ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)
+                 ) {
+                simpleContent[0] = (XmlTag)element;
+                return false;
+              }
+
+              return true;
+            }
+
+            public Object getHint(final Class hintClass) {
+              return null;
+            }
+          },
+          true);
+
+          if (simpleContent[0]!=null) {
+            final HashSet<String> variants = new HashSet<String>();
+            XmlUtil.collectEnumerationValues(simpleContent[0],variants);
+            if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
+          }
+        }
+      }
+
+      return new Object[0];
     }
   }
 }
