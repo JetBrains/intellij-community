@@ -972,7 +972,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                                       Boolean beforeFlag,
                                       FileType fileType) {
     if(first instanceof XmlTagChild && fileType == StdFileTypes.XHTML){
-      if (beforeFlag == null || !beforeFlag.booleanValue()) addChildren(first, last.getTreeNext(), anchor.getTreeNext()); addChildren(first, last.getTreeNext(), anchor);
+      if (beforeFlag == null || !beforeFlag.booleanValue()) {
+        addChildren(first, last.getTreeNext(), anchor.getTreeNext());
+      }
+      else {
+        addChildren(first, last.getTreeNext(), anchor);
+      }
       return first;
     }
     return super.addInternal(first, last, anchor, beforeFlag);
