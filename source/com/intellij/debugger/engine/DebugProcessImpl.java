@@ -1363,7 +1363,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void action() {
-      if (!isAttached()) {
+      if (!isAttached() || getVirtualMachineProxy().isPausePressed()) {
         return;
       }
       logThreads();
@@ -1595,6 +1595,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
         processListener.run();
       }
     }
+  }
+
+  public boolean isPausePressed() {
+    return (myVirtualMachineProxy != null)? myVirtualMachineProxy.isPausePressed() : false;
   }
 
   public DebuggerCommandImpl createPauseCommand() {

@@ -1,7 +1,5 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,7 +24,12 @@ public class PauseAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
-    presentation.setEnabled(debuggerSession != null && (debuggerSession.isEvaluating() || debuggerSession.isRunning()));
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+    if (debuggerSession == null  || debuggerSession.getProcess().isPausePressed()) {
+      presentation.setEnabled(false);
+    }
+    else {
+      presentation.setEnabled(debuggerSession.isEvaluating() || debuggerSession.isRunning());
+    }
   }
 }

@@ -27,6 +27,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
+  private int myPausePressedCount = 0;
 
   // cached data
   private Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
@@ -113,17 +114,21 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       myAllThreads = result;
     }
 
-    return (Collection<ThreadReferenceProxyImpl>)myAllThreads.values();
+    return myAllThreads.values();
   }
 
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    myPausePressedCount++;
     myVirtualMachine.suspend();
     clearCaches();
   }
 
   public void resume() {    
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myPausePressedCount > 0) {
+      myPausePressedCount--;
+    }
     clearCaches();
     if (LOG.isDebugEnabled()) {
       LOG.debug("before resume VM");
@@ -453,13 +458,19 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return sw.getBuffer().toString();
   }
 
+  public boolean isPausePressed() {
+    return myPausePressedCount > 0;
+  }
+
   public boolean isSuspended() {
     //logThreads();
     for (Iterator iterator = allThreads().iterator(); iterator.hasNext();) {
       ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)iterator.next();
-      if(thread.getSuspendCount() > 0) return true;
+      if(thread.getSuspendCount() == 0) {
+        return false;
+      }
     }
-    return false;
+    return true;
   }
 
   public void logThreads() {
