@@ -9,14 +9,14 @@ public class HighlightDisplayKey {
   private static final Map<HighlightDisplayKey, String>  ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
 
   public static final HighlightDisplayKey DEPRECATED_SYMBOL = register("DEPRECATED_SYMBOL", "Deprecated symbol");
-  public static final HighlightDisplayKey UNUSED_IMPORT = register("UNUSED_IMPORT", "Unused import");
+  public static final HighlightDisplayKey UNUSED_IMPORT = register("UNUSED_IMPORT", "Unused import");  //no suppress
   public static final HighlightDisplayKey UNUSED_SYMBOL = register("UNUSED_SYMBOL", "Unused symbol");
   public static final HighlightDisplayKey UNUSED_THROWS_DECL = register("UNUSED_THROWS", "Unused throws declaration");
   public static final HighlightDisplayKey SILLY_ASSIGNMENT = register("SILLY_ASSIGNMENT", "Silly assignment");
   public static final HighlightDisplayKey ACCESS_STATIC_VIA_INSTANCE = register("ACCESS_STATIC_VIA_INSTANCE", "Access static member via instance reference");
-  public static final HighlightDisplayKey WRONG_PACKAGE_STATEMENT = register("WRONG_PACKAGE_STATEMENT", "Wrong package statement");
-  public static final HighlightDisplayKey JAVADOC_ERROR = register("JAVADOC_ERROR", "JavaDoc errors");
-  public static final HighlightDisplayKey UNKNOWN_JAVADOC_TAG = register("UNKNOWN_JAVADOC_TAG", "Unknown javadoc tags");
+  public static final HighlightDisplayKey WRONG_PACKAGE_STATEMENT = register("WRONG_PACKAGE_STATEMENT", "Wrong package statement"); //no suppress
+  public static final HighlightDisplayKey JAVADOC_ERROR = register("JAVADOC_ERROR", "JavaDoc errors");   //no suppress
+  public static final HighlightDisplayKey UNKNOWN_JAVADOC_TAG = register("UNKNOWN_JAVADOC_TAG", "Unknown javadoc tags");  //no suppress
   public static final HighlightDisplayKey EJB_ERROR = register("EJB_ERROR", "EJB errors");
   public static final HighlightDisplayKey EJB_WARNING = register("EJB_WARNING", "EJB warnings");
   public static final HighlightDisplayKey ILLEGAL_DEPENDENCY = register("ILLEGAL_DEPENDENCY", "Illegal package dependencies");

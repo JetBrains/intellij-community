@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
@@ -282,6 +284,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
+          final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(place.getProject()));
+          if (iManager.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;              
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
             final DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
@@ -293,6 +297,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                 for (int i = 0; i < rules.length; i++) {
                   QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[i]));
                 }
+                QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
               }
             }

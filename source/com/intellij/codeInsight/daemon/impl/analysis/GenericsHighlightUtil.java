@@ -2,10 +2,13 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AddNoInspectionCommentAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -396,10 +399,13 @@ public abstract class GenericsHighlightUtil {
     String description = MessageFormat.format("Unchecked assignment: ''{0}'' to ''{1}''",
                                               new Object[]{HighlightUtil.formatType(rType), HighlightUtil.formatType(lType)});
     if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
+      final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
+      if (iManager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       elementToHighlight,
                                                                       description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
       QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
       return highlightInfo;
     }
@@ -428,10 +434,14 @@ public abstract class GenericsHighlightUtil {
       String description = MessageFormat.format("Unchecked cast: ''{0}'' to ''{1}''",
                                                 new Object[]{HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType)});
      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
+        final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(expression.getProject()));
+        if (iManager.inspectionResultSuppressed(expression, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
+
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                         typeCast,
                                                                         description);
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
         QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         return highlightInfo;
       }
@@ -540,8 +550,11 @@ public abstract class GenericsHighlightUtil {
                                                   new Object[]{HighlightUtil.formatMethod(method), HighlightUtil.formatType(type)});
         PsiElement element = call instanceof PsiMethodCallExpression ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression() : call;
         if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
+          final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(call.getProject()));
+          if (iManager.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
           HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
           QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
+          QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
           QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
           return highlightInfo;
         }

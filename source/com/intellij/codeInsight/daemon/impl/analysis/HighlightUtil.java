@@ -14,10 +14,10 @@ import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -1557,6 +1557,8 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
       return null;
     }
+    final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(assignment.getProject()));
+    if (iManager.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
 
     if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
     PsiExpression lExpression = assignment.getLExpression();
@@ -1572,6 +1574,7 @@ public class HighlightUtil {
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
                                                                           assignment,
                                                                           "Silly assignment");
+    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
     return highlightInfo;
   }
@@ -1770,6 +1773,8 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
     }
+    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(expr.getProject()));
+    if (manager.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
 
     if (!(resolved instanceof PsiMember)) return null;
     final PsiExpression qualifierExpression = expr.getQualifierExpression();
@@ -1788,6 +1793,7 @@ public class HighlightUtil {
 
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE, expr, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result));
+    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
     return highlightInfo;
   }
@@ -2034,15 +2040,22 @@ public class HighlightUtil {
                                               PsiElement elementToHighlight,
                                               DaemonCodeAnalyzerSettings settings) {
     if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-
     if (!(refElement instanceof PsiDocCommentOwner)) return null;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
+
+    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
+    if (!manager.isToCheckMember(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (manager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
       HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
+    if (elementToHighlight instanceof PsiDocCommentOwner){
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
+    }
+    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
     return highlightInfo;
   }

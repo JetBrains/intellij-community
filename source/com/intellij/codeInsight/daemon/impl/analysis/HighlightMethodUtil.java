@@ -8,11 +8,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.RefCountHolder;
-import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -298,6 +297,8 @@ public class HighlightMethodUtil {
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
     final PsiMethod method = (PsiMethod)referenceList.getParent();
     if (referenceList != method.getThrowsList()) return null;
+    final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(method.getProject()));
+    if (!iManager.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.toString())) return null;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
 
@@ -346,6 +347,7 @@ public class HighlightMethodUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_THROWS_DECL, referenceElement, description);
 
     QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(method, exceptionType, false));
+    QuickFixAction.registerQuickFixAction(errorResult, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
     QuickFixAction.registerQuickFixAction(errorResult, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_THROWS_DECL));
     return errorResult;
   }
@@ -1126,6 +1128,8 @@ public class HighlightMethodUtil {
                                                       List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                       DaemonCodeAnalyzerSettings settings) {
     if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
+    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(methodSignature.getMethod().getProject()));
+    if (!manager.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     final PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     for (int i = 0; i < superMethodSignatures.size(); i++) {
@@ -1139,6 +1143,7 @@ public class HighlightMethodUtil {
         String description = MessageFormat.format("Overrides deprecated method in ''{0}''", new Object[]{
           HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY)});
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
         QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
         return highlightInfo;
       }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -14,12 +15,20 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-class AddNoInspectionDocTagAction implements IntentionAction {
-  LocalInspectionTool myTool;
-  PsiElement myContext;
+public class AddNoInspectionDocTagAction implements IntentionAction {
+  private String myDisplayName;
+  private String myID;
+  private PsiElement myContext;
 
   public AddNoInspectionDocTagAction(LocalInspectionTool tool, PsiElement context) {
-    myTool = tool;
+    myDisplayName = tool.getDisplayName();
+    myID = tool.getID();
+    myContext = context;
+  }
+
+  public AddNoInspectionDocTagAction(HighlightDisplayKey key, PsiElement context) {
+    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
+    myID = key.toString();
     myContext = context;
   }
 
@@ -27,7 +36,7 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocCommentOwner container = getContainer();
 
     String subj = container instanceof PsiClass ? "class" : container instanceof PsiMethod ? "method" : "field";
-    return "Suppress '" + myTool.getDisplayName() + "' for " + subj;
+    return "Suppress '" + myDisplayName + "' for " + subj;
   }
 
   private PsiDocCommentOwner getContainer() {
@@ -53,7 +62,7 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
-      String commentText = "/** @" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myTool.getID() + "*/";
+      String commentText = "/** @" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
       manager.getCodeStyleManager().reformat(docComment);
       PsiElement firstChild = container.getFirstChild();
@@ -67,10 +76,10 @@ class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (noInspectionTag != null) {
       String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "
-                           + noInspectionTag.getValueElement().getText() + ","+ myTool.getID();
+                           + noInspectionTag.getValueElement().getText() + ","+ myID;
       noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
     } else {
-      String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myTool.getID();
+      String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
       docComment.add(manager.getElementFactory().createDocTagFromText(tagText, null));
     }
   }

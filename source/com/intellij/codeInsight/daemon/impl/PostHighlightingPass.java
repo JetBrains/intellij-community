@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -196,6 +198,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
     if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
+    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(myProject));
+    if (manager.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
+    if (!manager.isToCheckMember(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
     HighlightInfo info;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
@@ -218,6 +223,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     else {
       return null;
     }
+    QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL,
+                                                                                 identifier));
+    QuickFixAction.registerQuickFixAction(info, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL,
+                                                                                   identifier));
     QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
     return info;
   }

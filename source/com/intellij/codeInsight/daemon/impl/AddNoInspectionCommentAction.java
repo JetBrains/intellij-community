@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -12,18 +13,27 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-class AddNoInspectionCommentAction implements IntentionAction {
-  LocalInspectionTool myTool;
+public class AddNoInspectionCommentAction implements IntentionAction {
   PsiElement myContext;
   private static final String COMMENT_START_TEXT = "//noinspection ";
 
+  private String myDisplayName;
+  private String myID;
+
   public AddNoInspectionCommentAction(LocalInspectionTool tool, PsiElement context) {
-    myTool = tool;
+    myDisplayName = tool.getDisplayName();
+    myID = tool.getID();
+    myContext = context;
+  }
+
+  public AddNoInspectionCommentAction(HighlightDisplayKey key, PsiElement context) {
+    myID = key.toString();
+    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     myContext = context;
   }
 
   public String getText() {
-    return "Suppress '" + myTool.getID() + "' for statement";
+    return "Suppress '" + myDisplayName + "' for statement";
   }
 
   private PsiStatement getContainer() {
@@ -46,12 +56,12 @@ class AddNoInspectionCommentAction implements IntentionAction {
     if (prev instanceof PsiComment) {
       String text = prev.getText();
       if (text.startsWith(COMMENT_START_TEXT)) {
-        prev.replace(factory.createCommentFromText(text + "," + myTool.getID(), null));
+        prev.replace(factory.createCommentFromText(text + "," + myID, null));
         return;
       }
     }
 
-    container.addAfter(factory.createCommentFromText(COMMENT_START_TEXT +  myTool.getID(), null), null);
+    container.getParent().addBefore(factory.createCommentFromText(COMMENT_START_TEXT +  myID, null), container);
     QuickFixAction.markDocumentForUndo(file);
   }
 

@@ -8,7 +8,10 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -187,8 +190,15 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return false;
   }
 
-  public boolean isToCheckMember(PsiDocCommentOwner member, String inspectionToolID) {
-    PsiDocComment docComment = member.getDocComment();
+  public boolean isToCheckMember(PsiElement member, String inspectionToolID) {
+    PsiDocCommentOwner owner;
+    if (member instanceof PsiDocCommentOwner){
+      owner = (PsiDocCommentOwner)member;
+    } else {
+      owner = PsiTreeUtil.getParentOfType(member, PsiDocCommentOwner.class);
+    }
+    if (owner == null) return false;
+    PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null) {
@@ -198,7 +208,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       }
     }
 
-    PsiModifierList modifierList = member.getModifierList();
+    PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
       if (annotation != null) {
@@ -218,7 +228,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  public boolean inspectionResultSuppressed(PsiElement place, LocalInspectionTool tool) {
+  public boolean inspectionResultSuppressed(PsiElement place, String id) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
@@ -226,7 +236,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         String text = prev.getText();
         Matcher matcher = SUPPRESS_PATTERN.matcher(text);
         if (matcher.matches()) {
-          return isInspectionToolIdMentioned(matcher.group(1), tool.getID());
+          return isInspectionToolIdMentioned(matcher.group(1), id);
         }
       }
     }

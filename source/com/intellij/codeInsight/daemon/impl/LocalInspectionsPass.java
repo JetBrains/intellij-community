@@ -134,6 +134,27 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
   }
 
+  //for tests only
+  public HighlightInfo[] getHighlights() {
+    final ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
+    for (int i = 0; i < myDescriptors.size(); i++) {
+      ProblemDescriptor problemDescriptor = myDescriptors.get(i);
+      final String message = renderDescriptionMessage(problemDescriptor);
+      final PsiElement psiElement = problemDescriptor.getPsiElement();
+      final HighlightInfo highlightInfo =
+        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message);
+      highlights.add(highlightInfo);
+      if (problemDescriptor.getFix() != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor));
+      }
+      final LocalInspectionTool tool = myTools.get(i);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(tool, psiElement));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(tool, psiElement));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
+    }
+    return highlights.toArray(new HighlightInfo[highlights.size()]);
+  }
+
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     ProgressManager.getInstance().checkCanceled();
 
@@ -144,7 +165,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                         HighlightDisplayLevel.ERROR;
       for (int i = 0; i < problemDescriptors.length; i++) {
         ProblemDescriptor problemDescriptor = problemDescriptors[i];
-        if (!manager.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
+        if (!manager.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
           myDescriptors.add(problemDescriptor);
           ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
           HighlightInfoType type = null;
