@@ -171,17 +171,22 @@ class JavaCompletionData extends CompletionData{
       this.registerVariant(variant);
     }
 
-// Completion after extends in interface and implements in class
+// Completion after extends in interface, type parameter and implements in class
 // position
     {
       final ElementFilter position = new AndFilter(
         new NotFilter(new AfterElementFilter(new TextFilter("{"))),
-        new OrFilter(
+        new OrFilter( new ElementFilter [] {
           new AndFilter(
             new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS, ",")),
             new ScopeFilter(new InterfaceFilter())
           ),
+          new AndFilter(
+            new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS, "&")),
+            new ScopeFilter(new ClassFilter(PsiTypeParameter.class))
+          ),
           new LeftNeighbour(new TextFilter(PsiKeyword.IMPLEMENTS, ","))
+        }
         )
       );
 // completion
