@@ -109,7 +109,7 @@ public class TipManager {
   public void hideTooltip() {
     if (myCurrentTooltip != null) {
       Window window = SwingUtilities.windowForComponent(myCurrentTooltip);
-      if(window != null) {
+      if(window != null && !(window instanceof JFrame)) {
         window.hide();
       }
       myCurrentTooltip = null;
