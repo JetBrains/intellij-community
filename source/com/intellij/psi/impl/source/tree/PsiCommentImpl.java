@@ -24,7 +24,6 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, JavaTo
 
   public Language getLanguage() {
     PsiElement master = getNextSibling();
-    if (master == null) master = getPrevSibling();
     if (master == null) master = getParent();
     return master.getLanguage();
   }
