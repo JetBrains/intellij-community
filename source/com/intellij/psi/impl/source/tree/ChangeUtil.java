@@ -64,10 +64,10 @@ public class ChangeUtil implements Constants {
 
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
     final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(child);
+    TreeUtil.remove(child);
     if (newCharTab != oldCharTab) {
       registerLeafsInCharTab(newCharTab, child, oldCharTab);
     }
-    TreeUtil.remove(child);
     if (anchorBefore != null) {
       TreeUtil.insertBefore(anchorBefore, child);
     }
