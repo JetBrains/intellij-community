@@ -9,7 +9,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 public class ThisEscapedInConstructorInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "'this' reference escaped in constructor";
+        return "'this' reference escaped in object construction";
     }
 
     public String getGroupDisplayName() {
@@ -49,8 +49,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
 
             super.visitNewExpression(psiNewExpression);
 
-            final PsiMember methodOrInitializer = checkConstructorOrInstanceInitializer(psiNewExpression);
-            if (methodOrInitializer == null) {
+            final boolean isInInitialization = checkForInitialization(psiNewExpression);
+            if (!isInInitialization) {
                 return;
             }
 
@@ -82,8 +82,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
 
             super.visitAssignmentExpression(assignment);
 
-            final PsiMember methodOrInitializer = checkConstructorOrInstanceInitializer(assignment);
-            if (methodOrInitializer == null) {
+            final boolean isInInitialization = checkForInitialization(assignment);
+            if (!isInInitialization) {
                 return;
             }
 
@@ -121,8 +121,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
         public void visitMethodCallExpression(PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
 
-            final PsiMember methodOrInitializer = checkConstructorOrInstanceInitializer(call);
-            if (methodOrInitializer == null) {
+            final boolean isInInitialization = checkForInitialization(call);
+            if (!isInInitialization) {
                 return;
             }
 
@@ -139,7 +139,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
             }
 
             final PsiClass calledMethodClass = calledMethod.getContainingClass();
-            final PsiClass methodClass = methodOrInitializer.getContainingClass();
+            final PsiClass methodClass = (PsiClass) PsiTreeUtil.getParentOfType(call, PsiClass.class);
 
             if (calledMethodClass.equals(methodClass))   // compares class types statically?
             {
@@ -196,27 +196,23 @@ public class ThisEscapedInConstructorInspection extends ClassInspection {
 
         /**
          * @param call
-         * @return null unless CallExpression is a Constructor or an Instance
-         *         Initializer. Otherwise it returns the PsiMember representing
-         *         the contructor/initializer
+         * @return true if CallExpression is in a constructor, instance
+         *         initializer, or field initializaer. Otherwise it returns false
          */
-        private static PsiMember checkConstructorOrInstanceInitializer(PsiElement call) {
+        private static boolean checkForInitialization(PsiElement call) {
             final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            PsiMember methodOrInitializer = method;
-            if (method == null) {
-                final PsiClassInitializer classInitializer = (PsiClassInitializer) PsiTreeUtil.getParentOfType(call, PsiClassInitializer.class);
-                if (classInitializer == null) {
-                    return null;
-                }
-                if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    return null;
-                }
-                methodOrInitializer = classInitializer;
-
-            } else if (!method.isConstructor()) {
-                return null;
+            if (method != null) {
+                return method.isConstructor();
             }
-            return methodOrInitializer;
+            final PsiField field = (PsiField) PsiTreeUtil.getParentOfType(call, PsiField.class);
+            if (field != null) {
+                return true;
+            }
+            final PsiClassInitializer classInitializer = (PsiClassInitializer) PsiTreeUtil.getParentOfType(call, PsiClassInitializer.class);
+            if (classInitializer != null) {
+                return !classInitializer.hasModifierProperty(PsiModifier.STATIC);
+            }
+             return false;
         }
 
         // If there are more than two of 'this' as arguments, only marks the first until it is removed. No big deal.

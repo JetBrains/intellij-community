@@ -12,6 +12,7 @@ import com.siyeh.ig.psiutils.InitializationReadUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
+import java.util.List;
 
 public class InstanceVariableUninitializedUseInspection
         extends FieldInspection {
@@ -80,7 +81,7 @@ public class InstanceVariableUninitializedUseInspection
                 }
             }
 
-            final java.util.List badReads = iru.getUninitializedReads();
+            final List badReads = iru.getUninitializedReads();
             for (int i = 0; i < badReads.size(); i++) {
                 final PsiElement element = (PsiElement) badReads.get(i);
                 registerError(element);
