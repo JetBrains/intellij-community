@@ -2,12 +2,10 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.refactoring.ui.VisibilityPanel;
 
 import javax.swing.*;
 import java.awt.*;
