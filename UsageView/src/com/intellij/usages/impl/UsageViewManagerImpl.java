@@ -52,7 +52,8 @@ public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent 
       true,
       usageView.getComponent(),
       presentation.isOpenInNewTab(),
-      true);
+      true
+    );
     usageView.setContent(content);
     return content;
   }
