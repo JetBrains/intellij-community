@@ -8,7 +8,6 @@
  */
 package com.intellij;
 
-import com.intellij.intellijac.CompileProjectTestcase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -197,8 +196,7 @@ public class TestAll implements Test {
     if (test != null) {
       myLastTestClass = null;
 
-      CompileProjectTestcase.setEcho(false);
-
+      
       myLastTestClass = testCaseClass.getName();
       myLastTestStartTime = System.currentTimeMillis();
       myLastTestTestMethodCount = test.countTestCases();
