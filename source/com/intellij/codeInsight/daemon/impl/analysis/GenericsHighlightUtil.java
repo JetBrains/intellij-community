@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ArrayUtil;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -362,22 +363,25 @@ public abstract class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkClassUsedAsTypeParameter(PsiTypeElement typeElement) {
+  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement) {
     final PsiType type = typeElement.getType();
-    if (!(type instanceof PsiPrimitiveType)) return null;
+    if (type instanceof PsiPrimitiveType ||
+        (type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType)) {
+      final PsiElement element = new PsiMatcherImpl(typeElement)
+        .parent(PsiMatcherImpl.hasClass(PsiReferenceParameterList.class))
+        .parent(PsiMatcherImpl.hasClass(PsiJavaCodeReferenceElement.class))
+        .getElement();
+      if (element == null) return null;
 
-    final PsiElement element = new PsiMatcherImpl(typeElement)
-      .parent(PsiMatcherImpl.hasClass(PsiReferenceParameterList.class))
-      .parent(PsiMatcherImpl.hasClass(PsiJavaCodeReferenceElement.class))
-      .getElement();
-    if (element == null) return null;
+      String description = MessageFormat.format("Type argument cannot be of primitive type",
+                                                ArrayUtil.EMPTY_OBJECT_ARRAY);
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                      typeElement,
+                                                                      description);
+      return highlightInfo;
+    }
 
-    String description = MessageFormat.format("Type parameter cannot be of primitive type",
-                                              new Object[]{});
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                    typeElement,
-                                                                    description);
-    return highlightInfo;
+    return null;
   }
 
   /**
