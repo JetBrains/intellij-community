@@ -569,8 +569,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
       if (!profile.myTools.isEmpty()) {
-        final InspectionTool tool = profile.myTools.values().iterator().next();
-        final Project project = tool.getManager().getProject();
+        final Project project = DummyProject.getInstance();
         final InspectionTool[] inspectionTools = getInspectionTools(project);
         for (int i = 0; i < inspectionTools.length; i++) {
           readAndWriteToolsConfigs(inspectionTools[i], profile);
