@@ -14,9 +14,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -28,6 +27,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
@@ -300,7 +300,9 @@ public abstract class BaseRefactoringProcessor {
           RefactoringListenerManagerImpl listenerManager =
               (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
           myTransaction = listenerManager.startTransaction();
+          Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(_usages);
           performRefactoring(_usages);
+          removeRedundantImports(touchedJavaFiles);
           myTransaction.commit();
           performPsiSpoilingRefactoring();
         }
@@ -319,6 +321,35 @@ public abstract class BaseRefactoringProcessor {
         }
       }
     }
+  }
+
+  private void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
+    final CodeStyleManager styleManager = PsiManager.getInstance(myProject).getCodeStyleManager();
+    for (Iterator<PsiJavaFile> iterator = javaFiles.iterator(); iterator.hasNext();) {
+      try {
+        final PsiJavaFile file = iterator.next();
+        if (file.getVirtualFile() != null) {
+          styleManager.removeRedundantImports(file);
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
+    Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
+    for (int i = 0; i < usages.length; i++) {
+      final PsiElement element = usages[i].getElement();
+      if (element != null) {
+        final PsiFile file = element.getContainingFile();
+        if (file instanceof PsiJavaFile) {
+          javaFiles.add((PsiJavaFile)file);
+        }
+      }
+    }
+    return javaFiles;
   }
 
   /**
@@ -365,7 +396,9 @@ public abstract class BaseRefactoringProcessor {
     RefactoringListenerManagerImpl listenerManager =
         (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
     myTransaction = listenerManager.startTransaction();
+    Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(u[0]);
     performRefactoring(u[0]);
+    removeRedundantImports(touchedJavaFiles);
     myTransaction.commit();
     performPsiSpoilingRefactoring();
   }

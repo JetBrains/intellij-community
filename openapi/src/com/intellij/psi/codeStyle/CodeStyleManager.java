@@ -56,4 +56,6 @@ public abstract class CodeStyleManager {
   public abstract boolean checkIdentifierRole(String identifier, IdentifierRole role);
 
   public abstract PsiElement qualifyClassReferences(PsiElement element);
+
+  public abstract void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException;
 }

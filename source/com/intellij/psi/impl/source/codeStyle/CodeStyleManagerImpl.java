@@ -166,6 +166,36 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
+  public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
+    final PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
+    if (imports.length == 0) return;
+
+    final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
+    file.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        if (!reference.isQualified()) {
+          final ResolveResult resolveResult = reference.advancedResolve(false);
+          final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+          if (resolveScope instanceof PsiImportStatementBase)
+          {
+            //noinspection SuspiciousMethodCalls
+            redundants.remove(resolveScope);
+          }
+        }
+        super.visitReferenceElement(reference);
+      }
+    });
+
+    for (Iterator<PsiImportStatementBase> iterator = redundants.iterator(); iterator.hasNext();) {
+      final PsiImportStatementBase importStatement = iterator.next();
+      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+      //Do not remove non-resolving refs
+      if (ref == null || ref.resolve() == null) continue;
+
+      importStatement.delete();
+    }
+  }
+
   public int findEntryIndex(PsiImportStatementBase statement) {
     return new ImportHelper(getSettings()).findEntryIndex(statement);
   }
@@ -504,7 +534,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     };
   }
 
-  private void addNamesFromStatistics(Set names, VariableKind variableKind, String propertyName, PsiType type) {
+  private void addNamesFromStatistics(Set<String> names, VariableKind variableKind, String propertyName, PsiType type) {
     String[] allNames = myStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;
@@ -1079,10 +1109,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       }
     }
 
-    Comparator comparator = new Comparator() {
-      public int compare(Object o1, Object o2) {
-        int count1 = myStatisticsManager.getVariableNameUseCount((String)o1, variableKind, propertyName, type);
-        int count2 = myStatisticsManager.getVariableNameUseCount((String)o2, variableKind, propertyName, type);
+    Comparator<String> comparator = new Comparator<String>() {
+      public int compare(String s1, String s2) {
+        int count1 = myStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
+        int count2 = myStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
         return count2 - count1;
       }
     };

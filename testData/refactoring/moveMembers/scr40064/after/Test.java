@@ -1,4 +1,3 @@
-import static Test1.i;
 
 class Test {
 
