@@ -329,7 +329,8 @@ public class ReplacerImpl {
                       codeStyleManager.reformatRange(
                         elementParent.getContainingFile(),
                         elementParent.getTextOffset(),
-                        elementParent.getTextOffset() + elementParent.getTextLength()
+                        elementParent.getTextOffset() + elementParent.getTextLength(),
+                        true
                       );
                     }
                   }
