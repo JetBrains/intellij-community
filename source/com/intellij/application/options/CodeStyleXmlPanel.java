@@ -120,7 +120,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   protected String getPreviewText() {
-    return readFromFile("preview.xml");
+    return readFromFile("preview.xml.template");
   }
 
   protected FileType getFileType() {
