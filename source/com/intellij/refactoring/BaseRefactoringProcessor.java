@@ -139,7 +139,7 @@ public abstract class BaseRefactoringProcessor {
 
     LOG.assertTrue(usages[0] != null);
     if (!preprocessUsages(usages)) return;
-    ensureFilesWritable(usages[0]);
+    if (!myIsPreviewUsages) ensureFilesWritable(usages[0]);
     boolean toPreview = isPreviewUsages(usages[0]);
     if (toPreview) {
       FindUsagesCommand findUsagesCommand = new FindUsagesCommand() {
@@ -174,7 +174,7 @@ public abstract class BaseRefactoringProcessor {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                doRefactoring(usages, null);
+                doRefactoring(usages, new HashSet<UsageInfo>());
               }
             });
           }
@@ -283,17 +283,12 @@ public abstract class BaseRefactoringProcessor {
 
   private void doRefactoring(UsageInfo[] usages, Set<UsageInfo> excludedUsages) {
     if (usages != null) {
-      ArrayList<UsageInfo> array = new ArrayList<UsageInfo>();
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
-          if (excludedUsages != null && excludedUsages.contains(usage)) {
-            continue;
-          }
-        //if (usage.isExcluded()) continue;
-        final PsiElement element = usage.getElement();
-        if (element == null) continue;
-        if (!element.isWritable()) continue;
-        array.add(usage);
+      ArrayList<UsageInfo> array = new ArrayList<UsageInfo>(Arrays.asList(usages));
+      array.removeAll(excludedUsages);
+
+      for (Iterator<UsageInfo> iterator = array.iterator(); iterator.hasNext();) {
+        final PsiElement element = iterator.next().getElement();
+        if (element == null || !element.isWritable()) iterator.remove();
       }
       usages = array.toArray(new UsageInfo[array.size()]);
     }
