@@ -43,7 +43,7 @@ public class HighlightInfo {
   }
 
   public Color getErrorStripeMarkColor() {
-    if (forcedTextAttributes != null) {
+    if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
     HighlightSeverity severity = getSeverity();

@@ -38,7 +38,6 @@
           <option name="FOREGROUND" value="008000"/>
           <option name="BACKGROUND" value="ffcccc"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
       <option name="JAVA_VALID_STRING_ESCAPE">
@@ -131,7 +130,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
 
@@ -142,7 +140,6 @@
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
 
@@ -153,7 +150,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
 
@@ -202,7 +198,6 @@
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
 
@@ -213,7 +208,6 @@
           <option name="EFFECT_COLOR" value="ff4433"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
 
@@ -224,7 +218,6 @@
           <option name="EFFECT_COLOR" value="ffcccc"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
 
@@ -299,7 +292,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
 
@@ -650,7 +642,6 @@
           <option name="BACKGROUND" value="ffcccc"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
 
@@ -737,7 +728,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="3"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff" />
         </value>
       </option>
 
@@ -748,7 +738,6 @@
           <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR" value="404040"/>
           <option name="EFFECT_TYPE" value="3"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
 
