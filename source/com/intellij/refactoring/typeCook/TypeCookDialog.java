@@ -2,12 +2,10 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
@@ -24,20 +22,14 @@ public class TypeCookDialog extends RefactoringDialog {
 
   public static final String REFACTORING_NAME = "Generify";
 
-  public static interface Callback {
-    void run(TypeCookDialog dialog);
-  }
-
-  private final Callback myCallback;
+  private PsiElement[] myElements;
   private JLabel myClassNameLabel = new JLabel();
   private JCheckBox myCbDropCasts = new JCheckBox("Drop obsolete casts");
   private JCheckBox myCbPreserveRawArrays = new JCheckBox("Preserve raw arrays");
   private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox("Leave Object-parameterized types raw");
 
-  public TypeCookDialog(Project project, PsiElement[] elements, Callback callback) {
+  public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
-
-    myCallback = callback;
 
     setTitle(REFACTORING_NAME);
 
@@ -45,6 +37,7 @@ public class TypeCookDialog extends RefactoringDialog {
 
     StringBuffer name = new StringBuffer("<html>");
 
+    myElements = elements;
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
 
@@ -130,13 +123,12 @@ public class TypeCookDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    myCallback.run(this);
-
     RefactoringSettings settings = RefactoringSettings.getInstance();
-
     settings.TYPE_COOK_DROP_CASTS = myCbDropCasts.isSelected();
     settings.TYPE_COOK_PRESERVE_RAW_ARRAYS = myCbPreserveRawArrays.isSelected();
     settings.TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = myCbLeaveObjectParameterizedTypesRaw.isSelected();
+
+    invokeRefactoring(new TypeCookProcessor(getProject(), myElements, getSettings()));
   }
 
   public Settings getSettings() {

@@ -25,8 +25,7 @@ public class TypeCookHandler implements RefactoringActionHandler {
       }
     }
 
-    TypeCookDialog dialog = new TypeCookDialog(project, elements, new TypeCookProcessor(project, elements));
-    dialog.show();
+    new TypeCookDialog(project, elements).show();
   }
 
   private boolean canCook(PsiElement element, Project project) {

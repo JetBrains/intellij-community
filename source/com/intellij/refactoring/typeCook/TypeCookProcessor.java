@@ -2,36 +2,31 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.typeCook.deductive.builder.*;
-import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
+import com.intellij.refactoring.typeCook.deductive.builder.Result;
 import com.intellij.refactoring.typeCook.deductive.builder.System;
-import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
+import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 
 import java.util.*;
 
-public class TypeCookProcessor extends BaseRefactoringProcessor implements TypeCookDialog.Callback {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.TypeCookProcessor");
-
+public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
+  private final Settings mySettings;
   private SystemBuilder mySystemBuilder;
-  private TypeCookDialog myDialog;
   private Result myResult;
 
-  public TypeCookProcessor(Project project, PsiElement[] elements) {
+  public TypeCookProcessor(Project project, PsiElement[] elements, Settings settings) {
     super(project);
 
     myElements = elements;
+    mySettings = settings;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -39,7 +34,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor implements TypeC
   }
 
   protected UsageInfo[] findUsages() {
-    mySystemBuilder = new SystemBuilder(myProject, myDialog.getSettings());
+    mySystemBuilder = new SystemBuilder(myProject, mySettings);
 
     final System commonSystem = mySystemBuilder.build(myElements);
     myResult = new Result(commonSystem);
@@ -97,20 +92,6 @@ public class TypeCookProcessor extends BaseRefactoringProcessor implements TypeC
 
   protected String getCommandName() {
     return "Generify";
-  }
-
-  public void run(TypeCookDialog dialog) {
-    myDialog = dialog;
-    setPreviewUsages(dialog.isPreviewUsages());
-
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      }
-    };
-
-    setPrepareSuccessfulSwingThreadCallback(runnable);
-    run((Object)null);
   }
 
   public List<PsiElement> getElements() {
