@@ -13,7 +13,7 @@ public class CandidateInfo implements ResolveResult{
   private PsiElement myPlace = null;
   private PsiClass myAccessClass = null;
   private PsiElement myCandidate = null;
-  private boolean myAccessProblem = false;
+  private Boolean myAccessProblem = null;
   private boolean myStaticsProblem = false;
   private PsiSubstitutor mySubstitutor = null;
   private PsiElement myCurrentFileResolveContext = null;
@@ -22,7 +22,7 @@ public class CandidateInfo implements ResolveResult{
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext){
     myCandidate = candidate;
-    myAccessProblem = accessProblem;
+    myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
     myStaticsProblem = staticsProblem;
     mySubstitutor = substitutor;
     myCurrentFileResolveContext = currFileContext;
@@ -84,13 +84,14 @@ public class CandidateInfo implements ResolveResult{
   }
 
   public boolean isAccessible(){
-    if(myPlace != null){
-      if (myCandidate instanceof PsiMember) {
-        myAccessProblem = !myPlace.getManager().getResolveHelper().isAccessible((PsiMember)myCandidate, myPlace, myAccessClass);
+    if(myAccessProblem == null){
+      boolean accessProblem = false;
+      if (myPlace != null && myCandidate instanceof PsiMember) {
+        accessProblem = !myPlace.getManager().getResolveHelper().isAccessible((PsiMember)myCandidate, myPlace, myAccessClass);
       }
-      myPlace = null;
+      myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
     }
-    return !myAccessProblem;
+    return !myAccessProblem.booleanValue();
   }
 
   public boolean isStaticsScopeCorrect(){
