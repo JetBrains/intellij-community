@@ -144,6 +144,7 @@ public class ChangeUtil implements Constants {
   }
 
   private static void repairRemovedElement(final CompositeElement oldParent, final CharTable newCharTable, final TreeElement oldChild) {
+    if(oldChild == null) return;
     final FileElement treeElement = new DummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
     TreeUtil.addChildren(treeElement, oldChild);
   }
