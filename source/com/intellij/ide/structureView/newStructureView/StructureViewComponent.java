@@ -2,10 +2,7 @@ package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.structureView.FileEditorPositionListener;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.java.KindSorter;
@@ -38,7 +35,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider {
+public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private AbstractTreeBuilder myAbstractTreeBuilder;
@@ -661,5 +658,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public StructureViewModel getTreeModel() {
     return myTreeModel;
+  }
+
+  public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
+    return scrollToSelectedElement(requestFocus);
+  }
+
+  public boolean scrollToSelectedElement(boolean requestFocus) {
+    return scrollToSelectedElement(requestFocus);
   }
 }

@@ -1,7 +1,7 @@
 package com.intellij.lang;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -78,7 +78,7 @@ public abstract class Language {
     return null;
   }
 
-  public StructureViewModel getStructureViewModel(final PsiElement psiElement) {
+  public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
     return null;
   }
 

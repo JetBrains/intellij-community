@@ -2,7 +2,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
-import com.intellij.ide.impl.StructureViewWrapper;
+import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -101,7 +101,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
   private JPanel myStructurePanel;
-  private MyStructureViewWrapper myStructureViewWrapper;
+  private MyStructureViewWrapperImpl myStructureViewWrapper;
   private Splitter mySplitter;
 
   private MyPanel myPanel;
@@ -252,7 +252,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myTabbedPane.getComponent());
     myStructurePanel = new JPanel(new BorderLayout());
-    myStructureViewWrapper = new MyStructureViewWrapper();
+    myStructureViewWrapper = new MyStructureViewWrapperImpl();
     myStructureViewWrapper.setFileEditor(null);
     myStructurePanel.add(myStructureViewWrapper.getComponent());
     mySplitter.setSecondComponent(myStructurePanel);
@@ -657,8 +657,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     return "ProjectView";
   }
 
-  private final class MyStructureViewWrapper extends StructureViewWrapper {
-    MyStructureViewWrapper() {
+  private final class MyStructureViewWrapperImpl extends StructureViewWrapperImpl {
+    MyStructureViewWrapperImpl() {
       super(myProject);
     }
 

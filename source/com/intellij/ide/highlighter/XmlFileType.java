@@ -31,6 +31,7 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.xml.XMLLanguage;
@@ -71,7 +72,11 @@ public class XmlFileType extends LanguageFileType {
     return null;
   }
 
-  public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
-    return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
+  public StructureViewBuilder getStructureViewBuilder(final VirtualFile file, final Project project) {
+    return new StructureViewBuilder() {
+      public StructureViewModel getStructureViewModel() {
+        return new XmlStructureViewTreeModel((XmlFile)PsiManager.getInstance(project).findFile(file));
+      }
+    };
   }
 }

@@ -2,10 +2,10 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.impl.StructureViewSelectInTarget;
-import com.intellij.ide.impl.StructureViewWrapper;
-import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -29,7 +29,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
   public String ACTIVE_ACTIONS = "";
 
   private Project myProject;
-  private StructureViewWrapper myStructureViewWrapper;
+  private StructureViewWrapperImpl myStructureViewWrapperImpl;
 
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
 
@@ -37,8 +37,8 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
     myProject = project;
   }
 
-  public StructureView getStructureView() {
-    return myStructureViewWrapper;
+  public StructureViewWrapper getStructureViewWrapper() {
+    return myStructureViewWrapperImpl;
   }
 
   public void disposeComponent() {
@@ -47,11 +47,11 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
   public void initComponent() { }
 
   public void projectOpened() {
-    myStructureViewWrapper = new StructureViewWrapper(myProject);
+    myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject);
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run(){
         ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
-        ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.STRUCTURE_VIEW,myStructureViewWrapper.getComponent(),ToolWindowAnchor.LEFT);
+        ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.STRUCTURE_VIEW,myStructureViewWrapperImpl.getComponent(),ToolWindowAnchor.LEFT);
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowStructure.png"));
         SelectInManager.getInstance(myProject).addTarget(new StructureViewSelectInTarget(myProject));
       }
@@ -60,8 +60,8 @@ public final class StructureViewFactoryImpl extends StructureViewFactory impleme
 
   public void projectClosed() {
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.STRUCTURE_VIEW);
-    myStructureViewWrapper.dispose();
-    myStructureViewWrapper=null;
+    myStructureViewWrapperImpl.dispose();
+    myStructureViewWrapperImpl=null;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

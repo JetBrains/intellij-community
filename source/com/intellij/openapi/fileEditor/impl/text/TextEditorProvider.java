@@ -3,7 +3,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -221,11 +221,10 @@ public final class TextEditorProvider implements FileEditorProvider, Application
       return "Text";
     }
 
-    public StructureViewModel getStructureViewModel() {
+    public StructureViewBuilder getStructureViewBuilder() {
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-      return file.getFileType().getStructureViewModel(file, myEditor.getProject());
+      return file.getFileType().getStructureViewBuilder(file, myEditor.getProject());
     }
-
 
     public FileEditorState getState(FileEditorStateLevel level) {
       TextEditorState state = new TextEditorState();

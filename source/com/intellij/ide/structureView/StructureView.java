@@ -2,12 +2,17 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 
-public interface StructureView {
-  int SORT_ALPHA = 0;
-  int SORT_SOURCE = 1;
-  int SORT_ALPHA_VISIBILITY = 2;
-  int SORT_VISIBILITY = 3;
+import javax.swing.*;
 
-  boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus);
+public interface StructureView{
+
   FileEditor getFileEditor();
+
+  boolean scrollToSelectedElement(boolean requestFocus);
+
+  JComponent getComponent();
+
+  void dispose();
+
+  void centerSelectedRow();
 }

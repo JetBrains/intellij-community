@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -135,7 +135,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     });
   }
 
-  public StructureViewModel getStructureViewModel() {
+  public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 }

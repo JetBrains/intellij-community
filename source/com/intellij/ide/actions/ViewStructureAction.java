@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ant.impl.ui.AntFileStructureList;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
@@ -45,20 +46,20 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    final StructureViewModel structureViewModel = AntFileStructureList.canShowFor(psiFile) ? null : fileEditor.getStructureViewModel();
+    final StructureViewBuilder structureViewBuilder = AntFileStructureList.canShowFor(psiFile) ? null : fileEditor.getStructureViewBuilder();
 
-    DialogWrapper dialog = createDialog(psiFile, structureViewModel, editor, project, (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE));
+    DialogWrapper dialog = createDialog(psiFile, structureViewBuilder, editor, project, (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE));
     dialog.setTitle(psiFile.getVirtualFile().getPresentableUrl());
     dialog.show();
   }
 
    private DialogWrapper createDialog(PsiFile psiFile,
-                                     StructureViewModel structureViewModel,
+                                     StructureViewBuilder structureViewBuilder,
                                      final Editor editor,
                                      Project project,
                                      Navigatable navigatable) {
-    if (structureViewModel != null) {
-      return createStructureViewBasedDialog(structureViewModel, editor, project, navigatable);
+    if (structureViewBuilder != null) {
+      return createStructureViewBasedDialog(structureViewBuilder.getStructureViewModel(), editor, project, navigatable);
     } else {
       return AntFileStructureList.createDialog(editor, psiFile);
     }
@@ -96,7 +97,7 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
       presentation.setEnabled(false);
       return;
     }
-    presentation.setEnabled((virtualFile.getFileType().getStructureViewModel(virtualFile, project) != null) || AntFileStructureList.canShowFor(psiFile));
+    presentation.setEnabled((virtualFile.getFileType().getStructureViewBuilder(virtualFile, project) != null) || AntFileStructureList.canShowFor(psiFile));
   }
 
   public void setActionActive(String name, boolean state) {

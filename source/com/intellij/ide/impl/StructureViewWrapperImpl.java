@@ -1,8 +1,6 @@
 package com.intellij.ide.impl;
 
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.fileEditor.*;
@@ -28,11 +26,11 @@ import java.awt.event.HierarchyListener;
 /**
  * @author Eugene Belyaev
  */
-public class StructureViewWrapper implements StructureView {
+public class StructureViewWrapperImpl implements StructureViewWrapper {
   private Project myProject;
   private FileEditor myFileEditor;
 
-  private StructureViewComponent myStructureView;
+  private StructureView myStructureView;
 
   private JPanel myPanel;
 
@@ -47,7 +45,7 @@ public class StructureViewWrapper implements StructureView {
   // Constructor
   // -------------------------------------------------------------------------
 
-  public StructureViewWrapper(Project project) {
+  public StructureViewWrapperImpl(Project project) {
     myProject = project;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setBackground(UIManager.getColor("Tree.textBackground"));
@@ -78,7 +76,7 @@ public class StructureViewWrapper implements StructureView {
               }
               setFileEditor(newEditor);
               if (myStructureViewFactory.AUTOSCROLL_FROM_SOURCE && myStructureView != null) {
-                myStructureView.scrollToSelectedElement();
+                myStructureView.scrollToSelectedElement(false);
               }
             }
           }, 400
@@ -121,7 +119,7 @@ public class StructureViewWrapper implements StructureView {
         setFileEditor(fileEditor);
         rebuild();
       }
-      return myStructureView.select(myStructureView.getTreeModel().getCurrentEditorElement(), requestFocus);
+      return myStructureView.scrollToSelectedElement(requestFocus);
     } else {
       return false;
     }
@@ -158,8 +156,9 @@ public class StructureViewWrapper implements StructureView {
     }
 
     if (myFileEditor!=null && myFileEditor.isValid()) {
-      StructureViewModel structureViewModel = myFileEditor.getStructureViewModel();
-      if (structureViewModel != null) {
+      final StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();      
+      if (structureViewBuilder != null) {
+        StructureViewModel structureViewModel = structureViewBuilder.getStructureViewModel();
         myStructureView = new StructureViewComponent(myFileEditor, structureViewModel, myProject);
         myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
         if (hadFocus) {

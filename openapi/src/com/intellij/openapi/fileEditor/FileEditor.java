@@ -15,7 +15,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public interface FileEditor extends UserDataHolder, StructureViewBuilder {
+public interface FileEditor extends UserDataHolder {
   /**
    * @see #isModified() 
    */ 
@@ -104,4 +104,5 @@ public interface FileEditor extends UserDataHolder, StructureViewBuilder {
    */
   FileEditorLocation getCurrentLocation();
 
+  StructureViewBuilder getStructureViewBuilder();
 }

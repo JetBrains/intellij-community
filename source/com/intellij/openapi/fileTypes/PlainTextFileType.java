@@ -31,7 +31,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -78,7 +78,7 @@ public class PlainTextFileType implements FileType {
     return null;
   }
 
-  public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     return null;
   }
 

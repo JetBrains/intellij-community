@@ -2,8 +2,8 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -28,7 +28,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final FileEditor fileEditor = context.getFileEditorProvider().openFileEditor();
 
-    final StructureView structureView = getStructureView();
+    final StructureViewWrapper structureView = getStructureViewWrapper();
     ToolWindowManager windowManager=ToolWindowManager.getInstance(context.getProject());
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -44,8 +44,8 @@ public class StructureViewSelectInTarget implements SelectInTarget {
 
   }
 
-  private StructureView getStructureView() {
-    return StructureViewFactory.getInstance(myProject).getStructureView();
+  private StructureViewWrapper getStructureViewWrapper() {
+    return StructureViewFactory.getInstance(myProject).getStructureViewWrapper();
   }
 
   public String getToolWindowId() {

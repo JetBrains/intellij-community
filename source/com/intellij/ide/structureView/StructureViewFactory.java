@@ -13,7 +13,7 @@ public abstract class StructureViewFactory {
     return project.getComponent(StructureViewFactory.class);
   }
 
-  public abstract StructureView getStructureView();
+  public abstract StructureViewWrapper getStructureViewWrapper();
 
   public abstract void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension);
   public abstract void unregisterExtension(Class<? extends PsiElement> type, StructureViewExtension extension);

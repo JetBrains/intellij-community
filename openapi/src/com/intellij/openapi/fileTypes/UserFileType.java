@@ -31,7 +31,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -101,7 +101,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     return null;
   }
 
-  public StructureViewModel getStructureViewModel(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     return null;
   }
 

@@ -4,7 +4,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -31,5 +31,5 @@ public interface FileType {
 
   FileTypeSupportCapabilities getSupportCapabilities();
 
-  StructureViewModel getStructureViewModel(VirtualFile file, Project project);
+  StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project);
 }
