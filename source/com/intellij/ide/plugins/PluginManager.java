@@ -37,7 +37,7 @@ import java.util.zip.ZipFile;
 public class PluginManager {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
-  public static final String COMPONENT_EXTENSION_POINT = "com.intellij.plugins.component";
+  public static final String COMPONENT_EXTENSION_POINT = "com.intellij.component";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
