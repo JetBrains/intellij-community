@@ -125,7 +125,7 @@
       <action id="CreateEJBRelationship" text="EJB _Relationship" class="com.intellij.j2ee.module.view.ejb.actions.CreateEjbRelationshipAction" icon="/nodes/ejbCmrField.png"/>
 
       <action id="CreateJSPAction" text="_Jsp" class="com.intellij.j2ee.module.view.web.CreateJspAction" description="Create new JSP file in this directory" icon="/fileTypes/jsp.png"/>
-      <action id="CreateJSPXAction" text="_Jspx" class="com.intellij.j2ee.module.view.web.CreateJspxAction" description="Create new JSPX file in this directory" icon="/fileTypes/jspx.png"/>
+      <action id="CreateJSPXAction" text="Jsp_x" class="com.intellij.j2ee.module.view.web.CreateJspxAction" description="Create new JSPX file in this directory" icon="/fileTypes/jspx.png"/>
       <action id="CreateServletAction" text="_Servlet" class="com.intellij.j2ee.module.view.web.servlet.CreateServletAction" description="Create new servlet" icon="/nodes/servlet.png"/>
       <action id="CreateFilterAction" text="_Filter" class="com.intellij.j2ee.module.view.web.filter.CreateFilterAction" description="Create new filter" icon="/ant/filter.png"/>
       <action id="CreateListenerAction" text="_Listener" class="com.intellij.j2ee.module.view.web.listener.CreateListenerAction" description="Create new listener" icon="/ant/filter.png"/>
