@@ -219,8 +219,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void startTransaction(Document doc, PsiElement scope) {
-    if(!myTransactionsMap.containsKey(doc))
+    if(!myTransactionsMap.containsKey(doc)){
+      LOG.assertTrue(doc.getText().equals(scope.getContainingFile().getText()),
+                     "Document and PSI not synchronized on transaction start (don't send to IK)");
       myTransactionsMap.put(doc, new DocumentChangeTransaction(doc, scope));
+    }
   }
 
   public void commitTransaction(Document document){
@@ -269,7 +272,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
       ex.setReadOnly(isReadOnly);
       if(documentChangeTransaction.getChangeScope() != null && documentChangeTransaction.getChangeScope().getContainingFile() != null)
-        LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getContainingFile().getText()));
+        LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getContainingFile().getText()),
+                       "Psi to document synchronization failed (send to IK)");
     }
     finally {
       ex.unSuppressGuardedExceptions();

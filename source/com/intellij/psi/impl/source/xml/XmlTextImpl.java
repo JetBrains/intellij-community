@@ -10,6 +10,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -147,7 +148,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   }
 
   public void setValue(String s) throws IncorrectOperationException {
-    final ASTNode firstEncodedElement = getPolicy().encodeXmlTextContents(s);
+    final ASTNode firstEncodedElement = getPolicy().encodeXmlTextContents(s,getManager(), SharedImplUtil.findCharTableByTree(this));
     if(firstEncodedElement == null){
       delete();
       return;

@@ -4,13 +4,14 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.PsiManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText, CharTable table) {
+  public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable table) {
     boolean wsChars = false;
-    final FileElement dummyParent = new DummyHolder(null, null, table).getTreeElement();
+    final FileElement dummyParent = new DummyHolder(manager, null, table).getTreeElement();
     int fragmentStart = 0;
     final char[] chars = displayText.toCharArray();
     for(int i = 0; i < displayText.length(); i++){
@@ -61,9 +62,5 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
 
   public static final boolean toCode(char ch) {
     return "<&>\u00a0".indexOf(ch) >= 0;
-  }
-
-  public ASTNode encodeXmlTextContents(String displayText) {
-    return encodeXmlTextContents(displayText, null);
   }
 }

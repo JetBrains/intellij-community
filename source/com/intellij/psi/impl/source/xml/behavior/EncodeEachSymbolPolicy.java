@@ -7,19 +7,20 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.CharTable;
 
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText) {
-    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText);
-    final FileElement dummyParent = new DummyHolder(null, null).getTreeElement();
+  public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree) {
+    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
+    final FileElement dummyParent = new DummyHolder(manager, null, charTableByTree).getTreeElement();
     int sectionStartOffset = 0;
     int offset = 0;
     while (offset < displayText.length()) {
       if (toCode(displayText.charAt(offset))) {
         final String plainSection = displayText.substring(sectionStartOffset, offset);
         if (plainSection.length() > 0) {
-          TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, dummyParent.getCharTable()));
+          TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, manager, charTableByTree));
         }
         TreeUtil.addChildren(dummyParent, createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
         sectionStartOffset = offset + 1;
@@ -28,7 +29,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
     }
     final String plainSection = displayText.substring(sectionStartOffset, offset);
     if (plainSection.length() > 0) {
-      TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, dummyParent.getCharTable()));
+      TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, manager, charTableByTree));
     }
 
 

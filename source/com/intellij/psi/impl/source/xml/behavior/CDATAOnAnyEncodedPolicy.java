@@ -6,11 +6,13 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.CharTable;
 
 public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText) {
-    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText);
-    final FileElement dummyParent = new DummyHolder(null, null).getTreeElement();
+  public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree) {
+    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
+    final FileElement dummyParent = new DummyHolder(manager, null, charTableByTree).getTreeElement();
     TreeUtil.addChildren(
       dummyParent,
       Factory.createLeafElement(
