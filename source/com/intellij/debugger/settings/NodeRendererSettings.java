@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +15,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,10 +143,6 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     }
   }
 
-  public void iterateUserRenderers(InternalIterator<AutoRendererNode> iterator) {
-    myRendererConfiguration.iterateRenderers(iterator);
-  }
-
   public PrimitiveRenderer getPrimitiveRenderer() {
     return myPrimitiveRenderer;
   }
@@ -167,6 +161,10 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
 
   public ToStringRenderer getToStringRenderer() {
     return myToStringRenderer;
+  }
+
+  public NodeRenderer[] getAlternateCollectionRenderers() {
+    return myAlternateCollectionRenderers;
   }
 
   public void fireRenderersChanged() {
