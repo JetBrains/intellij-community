@@ -1,15 +1,11 @@
 package com.intellij.lang.xml;
 
 import com.intellij.lang.Commenter;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * @author max
  */
 public class XmlCommenter implements Commenter {
-  public IElementType getLineCommentToken() {
-    return null;
-  }
 
   public String getLineCommentPrefix() {
     return null;
@@ -17,10 +13,6 @@ public class XmlCommenter implements Commenter {
 
   public boolean isLineCommentPrefixOnZeroColumn() {
     return false;
-  }
-
-  public IElementType getBlockCommentToken() {
-    return null;
   }
 
   public String getBlockCommentPrefix() {

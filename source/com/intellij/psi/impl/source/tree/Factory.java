@@ -134,7 +134,12 @@ public class Factory implements Constants {
         element = new PsiJavaTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
       }
       else if (type instanceof IJspElementType) {
-        element = new JspTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        if (type == JspTokenType.JSP_COMMENT) {
+          element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
+        }
+        else {
+          element = new JspTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        }
       }
       else if (type instanceof IJavaDocElementType) {
         element = new PsiDocTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);

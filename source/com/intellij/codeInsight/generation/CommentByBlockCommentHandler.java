@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
@@ -110,7 +109,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
 
     TextRange commentedRange = null;
-    PsiElement comment = findCommentAtCaret(commenter);
+    PsiElement comment = findCommentAtCaret();
     if (comment != null) {
       String commentText = comment.getText();
       String prefix = commenter.getBlockCommentPrefix();
@@ -143,11 +142,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return lang.getCommenter();
   }
 
-  private PsiElement findCommentAtCaret(Commenter commenter) {
+  private PsiElement findCommentAtCaret() {
     PsiElement elt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     if (elt == null) return null;
-    final ASTNode node = elt.getNode();
-    if (node != null && commenter.getBlockCommentToken() == node.getElementType()) return elt;
     return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
 
