@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
-  private List<CachingChildrenTreeNode> myChildren;
+  protected List<CachingChildrenTreeNode> myChildren;
   protected List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
 
@@ -173,7 +173,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   protected void synchronizeChildren() {
-    if (myOldChildren != null) {
+    if (myOldChildren != null && myChildren != null) {
       for (Iterator<CachingChildrenTreeNode> iterator = myOldChildren.iterator(); iterator.hasNext();) {
         CachingChildrenTreeNode oldInstance = iterator.next();
         final int newIndex = getIndexOfPointerToTheSameValue(oldInstance);

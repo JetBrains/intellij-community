@@ -31,15 +31,20 @@
  */
 package com.intellij.ide.structureView.impl.xml;
 
-import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 
-public class XmlStructureViewTreeModel implements StructureViewModel{
+public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
 
   public XmlStructureViewTreeModel(XmlFile file) {
+    super(file);
     myFile = file;
   }
 
@@ -59,7 +64,11 @@ public class XmlStructureViewTreeModel implements StructureViewModel{
     return new Filter[0];
   }
 
-  public Object getCurrentEditorElement() {
-    return null;
+  protected PsiFile getPsiFile() {
+    return myFile;
+  }
+
+  protected Class[] getSuitableClasses() {
+    return new Class[]{XmlTag.class};
   }
 }

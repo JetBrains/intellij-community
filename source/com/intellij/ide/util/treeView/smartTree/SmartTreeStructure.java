@@ -54,6 +54,11 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   }
 
   public void rebuildTree() {
+    if (myRootElementWrapper != null) {
+      final TreeElementWrapper newRoot = createTree();
+      newRoot.myOldChildren = myRootElementWrapper.myChildren;
+      newRoot.synchronizeChildren();
+    }
     ((CachingChildrenTreeNode)getRootElement()).rebuildChildren();
   }
 }

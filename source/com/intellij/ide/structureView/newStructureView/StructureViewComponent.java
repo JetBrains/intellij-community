@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -13,18 +14,12 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -382,16 +377,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return null;
   }
 
-  public void scrollToElementAtCaret(final FileEditor editor) {
+  public void scrollToSelectedElement() {
     if (myAutoscrollFeedback) {
       myAutoscrollFeedback = false;
       return;
     }
 
-    if (myFileEditor == null || !Comparing.equal(myFileEditor, editor)) return;
-
-    StructureViewFactoryImpl structureViewFactory
-    = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
+    StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
 
     if (!structureViewFactory.AUTOSCROLL_FROM_SOURCE) return;
 
@@ -512,7 +504,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private CaretListener myEditorCaretListener;
+    private FileEditorPositionListener myFileEditorPositionListener;
 
     private MyAutoScrollFromSourceHandler(Project project) {
       super(project);
@@ -523,24 +515,17 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     public void dispose() {
-      EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myEditorCaretListener);
+      myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
+      myTreeModel.dispose();
     }
 
     private void addEditorCaretListener() {
-      myEditorCaretListener = new CaretListener() {
-        public void caretPositionChanged(final CaretEvent e) {
-          Editor editor = e.getEditor();
-          FileEditor fileEditor = getFileEditorForEditor(editor);
-          scrollToElementAtCaret(fileEditor);
-        }
-
-        private FileEditor getFileEditorForEditor(Editor editor) {
-          VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-          if (file == null) return null;
-          return FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+      myFileEditorPositionListener = new FileEditorPositionListener() {
+        public void onCurrentElementChanged() {
+          scrollToSelectedElement();
         }
       };
-      EditorFactory.getInstance().getEventMulticaster().addCaretListener(myEditorCaretListener);
+      myTreeModel.addEditorPositionListener(myFileEditorPositionListener);
     }
 
     protected boolean isAutoScrollMode() {
@@ -553,7 +538,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       structureViewFactory.AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors != null && selectedEditors.length > 0) {
-        if (state) scrollToElementAtCaret(selectedEditors[0]);
+        if (state) scrollToSelectedElement();
       }
     }
   }

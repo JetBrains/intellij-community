@@ -36,5 +36,11 @@ import com.intellij.ide.util.treeView.smartTree.TreeModel;
 public interface StructureViewModel extends TreeModel{
   Object getCurrentEditorElement();
 
+  void addEditorPositionListener(FileEditorPositionListener listener);
+
+  void removeEditorPositionListener(FileEditorPositionListener listener);
+
   StructureViewTreeElement getRoot();
+
+  void dispose();
 }

@@ -78,8 +78,7 @@ public class StructureViewWrapper implements StructureView {
               }
               setFileEditor(newEditor);
               if (myStructureViewFactory.AUTOSCROLL_FROM_SOURCE && myStructureView != null) {
-                FileEditor newEditor = event.getNewEditor();
-                myStructureView.scrollToElementAtCaret(newEditor);
+                myStructureView.scrollToSelectedElement();
               }
             }
           }, 400

@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.newStructureView;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.FileEditorPositionListener;
 
 import java.util.ArrayList;
 
@@ -53,5 +54,17 @@ public class TreeModelWrapper implements StructureViewModel {
 
   public static boolean shouldRevert(final TreeAction action) {
     return action instanceof Filter && ((Filter)action).isReverted();
+  }
+
+  public void addEditorPositionListener(FileEditorPositionListener listener) {
+    myModel.addEditorPositionListener(listener);
+  }
+
+  public void removeEditorPositionListener(FileEditorPositionListener listener) {
+    myModel.removeEditorPositionListener(listener);
+  }
+
+  public void dispose() {
+    myModel.dispose();
   }
 }

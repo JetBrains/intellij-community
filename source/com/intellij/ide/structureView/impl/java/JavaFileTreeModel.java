@@ -1,21 +1,17 @@
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 
-public class JavaFileTreeModel implements StructureViewModel {
+public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
   private final PsiJavaFile myFile;
 
   public JavaFileTreeModel(PsiJavaFile file) {
+    super(file);
     myFile = file;
   }
 
@@ -37,21 +33,11 @@ public class JavaFileTreeModel implements StructureViewModel {
     return new Sorter[]{KindSorter.INSTANCE, Sorter.ALPHA_SORTER, VisibilitySorter.INSTANCE};
   }
 
-  public Object getCurrentEditorElement() {
-    final Editor editor = FileEditorManager.getInstance(myFile.getProject()).getSelectedTextEditor();
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile.getVirtualFile());
-    if (!Comparing.equal(editor.getDocument(), document)) return null;
-
-    final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = myFile.findElementAt(offset);
-    while (!isSutable(element)) {
-      if (element == null) return null;
-      element = element.getParent();
-    }
-    return element;
+  protected PsiFile getPsiFile() {
+    return myFile;
   }
 
-  private boolean isSutable(final PsiElement element) {
-    return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField;
+  protected Class[] getSuitableClasses() {
+    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class};
   }
 }

@@ -32,5 +32,5 @@
 package com.intellij.ide.structureView;
 
 public interface FileEditorPositionListener {
-  void onCurrentElementChanged(Object currentElement);
+  void onCurrentElementChanged();
 }
