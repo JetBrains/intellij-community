@@ -30,7 +30,8 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     else{
       codeFragement = ControlFlowUtil.findCodeFragment(refElement);
     }
-    if (!myCodeFragment.equals(codeFragement)) return null;
+    if (myCodeFragment.getContainingFile() == codeFragement.getContainingFile() && //In order for jsp includes to work
+        !myCodeFragment.equals(codeFragement)) return null;
     return (PsiVariable)refElement;
   }
 
