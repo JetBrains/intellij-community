@@ -48,7 +48,15 @@ public class CopyReferenceAction extends AnAction {
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    boolean enabled = editor != null;
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    boolean enabled = editor != null && project != null;
+    if (enabled) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+
+      PsiMember member = findMemberToCopy(element);
+      enabled = member != null;
+    }
     e.getPresentation().setEnabled(enabled);
   }
 
@@ -59,22 +67,7 @@ public class CopyReferenceAction extends AnAction {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
-    if (!(element instanceof PsiIdentifier)) return;
-    final PsiElement parent = element.getParent();
-    PsiMember member = null;
-    if (parent instanceof PsiReferenceExpression) {
-      PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
-      if (resolved instanceof PsiMember) {
-        member = (PsiMember)resolved;
-      }
-    }
-    else if (parent instanceof PsiMember) {
-      member = (PsiMember)parent;
-    }
-    else {
-      //todo show error
-      return;
-    }
+    PsiMember member = findMemberToCopy(element);
 
     if (member != null) {
       doCopy(member, project);
@@ -84,6 +77,26 @@ public class CopyReferenceAction extends AnAction {
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
     }
+  }
+
+  private static PsiMember findMemberToCopy(final PsiElement element) {
+    if (!(element instanceof PsiIdentifier)) return null;
+    final PsiElement parent = element.getParent();
+    PsiMember member = null;
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      PsiElement resolved = ((PsiJavaCodeReferenceElement)parent).resolve();
+      if (resolved instanceof PsiMember) {
+        member = (PsiMember)resolved;
+      }
+    }
+    else if (parent instanceof PsiMember) {
+      member = (PsiMember)parent;
+    }
+    else {
+      //todo show error
+      //return;
+    }
+    return member;
   }
 
   public static void doCopy(final PsiElement element, final Project project) {
@@ -310,6 +323,7 @@ public class CopyReferenceAction extends AnAction {
     String className = fqn.substring(0, endIndex);
     if (className == null) return null;
     aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+    if (aClass == null) return null;
     String memberName = fqn.substring(endIndex + 1);
     element = aClass.findFieldByName(memberName, false);
     if (element != null) {
