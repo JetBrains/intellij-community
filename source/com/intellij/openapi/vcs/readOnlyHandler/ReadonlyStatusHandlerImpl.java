@@ -60,10 +60,6 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     if (files.length == 0) {
       return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
     }
-    final FileInfo[] fileInfos = createFileInfos(files);
-    if (fileInfos.length == 0) { // if all files are already writable
-      return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
-    }
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -71,6 +67,12 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     for (int i = 0; i < files.length; i++) {
       modificationStamps[i] = files[i].getModificationStamp();
     }
+
+    final FileInfo[] fileInfos = createFileInfos(files);
+    if (fileInfos.length == 0) { // if all files are already writable
+      return createResultStatus(files, modificationStamps);
+    }
+    
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return createResultStatus(files, modificationStamps);
     }
