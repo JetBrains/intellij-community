@@ -18,31 +18,40 @@ import java.text.MessageFormat;
  * @author ven
  */
 public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspectionToolBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
+  private static final Logger LOG =
+    Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
 
   private void setupPatternMethods(PsiManager manager,
-                                 GlobalSearchScope searchScope,
-                                 List<PsiMethod> patternMethods,
-                                 List<Integer> indices) throws IncorrectOperationException {
+                                   GlobalSearchScope searchScope,
+                                   List<PsiMethod> patternMethods,
+                                   List<Integer> indices) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = manager.getElementFactory();
     final PsiClass collectionClass = manager.findClass("java.util.Collection", searchScope);
     if (collectionClass != null) {
-      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0, patternMethods, indices);
-      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean contains(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0,
+                patternMethods, indices);
+      addMethod(collectionClass.findMethodBySignature(elementFactory.createMethodFromText("boolean contains(Object o);", null), false), 0,
+                patternMethods, indices);
     }
 
     final PsiClass listClass = manager.findClass("java.util.List", searchScope);
     if (listClass != null) {
-      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean indexOf(Object o);", null), false), 0, patternMethods, indices);
-      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean lastIndexOf(Object o);", null), false), 0, patternMethods, indices);
+      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean indexOf(Object o);", null), false), 0,
+                patternMethods, indices);
+      addMethod(listClass.findMethodBySignature(elementFactory.createMethodFromText("boolean lastIndexOf(Object o);", null), false), 0,
+                patternMethods, indices);
     }
 
     final PsiClass mapClass = manager.findClass("java.util.Map", searchScope);
     if (mapClass != null) {
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0, patternMethods, indices);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean get(Object o);", null), false), 0, patternMethods, indices);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsKey(Object o);", null), false), 0, patternMethods, indices);
-      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsValue(Object o);", null), false), 1, patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean remove(Object o);", null), false), 0,
+                patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean get(Object o);", null), false), 0,
+                patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsKey(Object o);", null), false), 0,
+                patternMethods, indices);
+      addMethod(mapClass.findMethodBySignature(elementFactory.createMethodFromText("boolean containsValue(Object o);", null), false), 1,
+                patternMethods, indices);
     }
 
     patternMethods.remove(null);
@@ -73,33 +82,49 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (args.length != 1 || !(args[0].getType() instanceof PsiClassType)) return;
 
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+        final ResolveResult resolveResult = methodExpression.advancedResolve(false);
+        final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
+        if (psiMethod == null) return;
+
         Iterator<Integer> indicesIterator = indices.iterator();
         for (Iterator<PsiMethod> methodsIterator = patternMethods.iterator(); methodsIterator.hasNext();) {
           PsiMethod patternMethod = methodsIterator.next();
           Integer index = indicesIterator.next();
           if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
-          final ResolveResult resolveResult = methodExpression.advancedResolve(false);
-          final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
-          if (psiMethod != null && isInheritorOrSelf(psiMethod, patternMethod)) {
+          if (isInheritorOrSelf(psiMethod, patternMethod)) {
             PsiTypeParameter[] typeParameters = psiMethod.getContainingClass().getTypeParameters();
             int i = index.intValue();
             if (typeParameters.length <= i) return;
             final PsiTypeParameter typeParameter = typeParameters[i];
             PsiType typeParamMapping = resolveResult.getSubstitutor().substitute(typeParameter);
             if (typeParamMapping != null) {
-              if (!typeParamMapping.isConvertibleFrom(args[0].getType())) {
-                final String message = MessageFormat.format("For no non-null object of type ''{0}'' can ''{1}'' return 'true'", new Object[]{
-                  PsiFormatUtil.formatType(args[0].getType(), 0, PsiSubstitutor.EMPTY),
-                  PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(), PsiFormatUtil.SHOW_NAME |
-                                                                                        PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                             PsiFormatUtil.SHOW_TYPE)});
+              String message = null;
+              final PsiType argType = args[0].getType();
+              if (!typeParamMapping.isAssignableFrom(argType)) {
+                if (!typeParamMapping.isConvertibleFrom(args[0].getType())) {
+                  message = MessageFormat.format("For no non-null object of type ''{0}'' can ''{1}'' return 'true'", new Object[]{
+                                                     PsiFormatUtil.formatType(args[0].getType(), 0, PsiSubstitutor.EMPTY),
+                                                     PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                                                                                PsiFormatUtil.SHOW_NAME |
+                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                                                PsiFormatUtil.SHOW_TYPE)});
+                }
+                else {
+                  message = MessageFormat.format("Suspicious call to ''{0}''", new Object[]{
+                                                     PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                                                                                PsiFormatUtil.SHOW_NAME |
+                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                                                PsiFormatUtil.SHOW_TYPE)});
+                }
+              }
+              if (message != null) {
                 problems.add(manager.createProblemDescriptor(args[0], message,
                                                              null,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-                return;
               }
             }
           }
+          return;
         }
       }
 
