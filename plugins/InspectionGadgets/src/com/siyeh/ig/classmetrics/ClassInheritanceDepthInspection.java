@@ -76,8 +76,7 @@ public class ClassInheritanceDepthInspection
                 maxAncestorDepth = ancestorDepth;
             }
         }
-        final int depth = maxAncestorDepth + 1;
-        return depth;
+        return maxAncestorDepth + 1;
     }
 
 }

@@ -19,7 +19,7 @@ import java.text.NumberFormat;
 public class FieldCountInspection
         extends ClassMetricInspection {
     private static final int FIELD_COUNT_LIMIT = 10;
-    private boolean m_countConstantFields = true;
+    public boolean m_countConstantFields = false;
 
     public String getDisplayName() {
         return "Class with too many fields";
