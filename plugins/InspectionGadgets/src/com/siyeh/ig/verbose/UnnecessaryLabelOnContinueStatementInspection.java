@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.siyeh.ig.*;
 
 public class UnnecessaryLabelOnContinueStatementInspection extends StatementInspection {
@@ -31,6 +33,7 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             final PsiElement continueKeywordElement = descriptor.getPsiElement();
             final PsiContinueStatement continueStatement =
                     (PsiContinueStatement) continueKeywordElement.getParent();

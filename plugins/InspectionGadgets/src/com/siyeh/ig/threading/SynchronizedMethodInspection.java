@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -53,10 +55,11 @@ public class SynchronizedMethodInspection extends MethodInspection {
         }
 
         public void applyFix(Project project,
-                             ProblemDescriptor problemDescriptor){
+                             ProblemDescriptor descriptor){
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             try{
                 final PsiElement nameElement =
-                        problemDescriptor.getPsiElement();
+                        descriptor.getPsiElement();
                 final PsiMethod method =
                         (PsiMethod) nameElement.getParent().getParent();
                 method.getModifierList()

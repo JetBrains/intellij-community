@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -35,8 +37,9 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             return "Convert class to interface";
         }
 
-        public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
-            final PsiIdentifier classNameIdentifier = (PsiIdentifier) problemDescriptor.getPsiElement();
+        public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+            final PsiIdentifier classNameIdentifier = (PsiIdentifier) descriptor.getPsiElement();
             final PsiClass interfaceClass = (PsiClass) classNameIdentifier.getParent();
             try {
                 moveSubClassExtendsToImplements(interfaceClass);

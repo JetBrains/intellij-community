@@ -3,6 +3,8 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 
@@ -30,8 +32,9 @@ public class ExtendsObjectInspection extends ClassInspection {
             return "Remove redundant 'extends Object'";
         }
 
-        public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
-            final PsiElement extendClassIdentifier = problemDescriptor.getPsiElement();
+        public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+            final PsiElement extendClassIdentifier = descriptor.getPsiElement();
             final PsiClass element = (PsiClass) extendClassIdentifier.getParent();
             final PsiReferenceList extendsList = element.getExtendsList();
             final PsiJavaCodeReferenceElement[] elements = extendsList.getReferenceElements();

@@ -3,6 +3,8 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -43,6 +45,7 @@ public class ForCanBeForeachInspection extends StatementInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             final PsiElement forElement = descriptor.getPsiElement();
             final PsiForStatement forStatement = (PsiForStatement) forElement.getParent();
             if (isArrayLoopStatement(forStatement)) {

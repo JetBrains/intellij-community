@@ -3,6 +3,8 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,8 +18,9 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
         return "Make class Serializable";
     }
 
-    public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
-        final PsiElement nameElement = problemDescriptor.getPsiElement();
+    public void applyFix(Project project, ProblemDescriptor descriptor) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+        final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(nameElement, PsiClass.class);
         final PsiManager psiManager = containingClass.getManager();
         final PsiElementFactory elementFactory = psiManager.getElementFactory();

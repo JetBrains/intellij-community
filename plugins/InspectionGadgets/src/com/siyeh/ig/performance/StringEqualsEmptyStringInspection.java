@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -33,6 +35,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
             final PsiExpression call = (PsiExpression) expression.getParent();

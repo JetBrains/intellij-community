@@ -9,6 +9,8 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
@@ -39,11 +41,11 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             return "Extract parameter as local variable";
         }
 
-        public void applyFix(Project project,
-                             ProblemDescriptor problemDescriptor){
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             try{
                 final PsiExpression variable =
-                        (PsiExpression) problemDescriptor.getPsiElement();
+                        (PsiExpression) descriptor.getPsiElement();
                 final PsiMethod method =
                         (PsiMethod) PsiTreeUtil.getParentOfType(variable,
                                                                 PsiMethod.class);

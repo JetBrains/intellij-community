@@ -2,6 +2,8 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -14,8 +16,9 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
         return "Extract method";
     }
 
-    public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
-        final PsiExpression expression = (PsiExpression) problemDescriptor.getPsiElement();
+    public void applyFix(Project project, ProblemDescriptor descriptor) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
+        final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
         final RefactoringActionHandlerFactory factory =
                 RefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler inlineHandler = factory.createExtractMethodHandler();

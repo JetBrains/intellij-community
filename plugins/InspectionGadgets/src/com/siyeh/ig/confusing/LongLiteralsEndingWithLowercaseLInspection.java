@@ -3,6 +3,8 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
@@ -38,6 +40,7 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{descriptor.getPsiElement().getContainingFile().getVirtualFile()}).hasReadonlyFiles()) return;
             final PsiExpression literal = (PsiExpression) descriptor.getPsiElement();
             final String text = literal.getText();
             final String newText = text.replace('l', 'L');
