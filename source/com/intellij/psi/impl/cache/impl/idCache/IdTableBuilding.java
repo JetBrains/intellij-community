@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.aspects.lexer._AspectjLexer;
+import com.intellij.aspects.lexer.AspectjLexer;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -98,7 +98,7 @@ public class IdTableBuilding {
 
   static class AspectJIdCacheBuilder extends JavaIdCacheBuilder {
     protected Lexer createLexer() {
-      return new _AspectjLexer(false, false);
+      return new AspectjLexer(false, false);
     }
   }
 
