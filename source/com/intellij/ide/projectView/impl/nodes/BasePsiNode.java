@@ -39,7 +39,8 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
 
   protected boolean isMarkReadOnly() {
-    return getParentValue() instanceof PsiDirectory;
+    final Object parentValue = getParentValue();
+    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement;
   }
 
   public FileStatus getFileStatus() {
