@@ -10,6 +10,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.roots.OrderRootType;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -27,6 +30,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit");
   private static final String VM_EXE_NAME = "java";
+
+  private ProjectJdk myInternalJavaSdk;
+
   public IdeaJdk() {
     super("IDEA JDK");
   }
@@ -72,7 +78,14 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public final String getVersionString(final String sdkHome) {
-    return "1.3";   //todo from ProjectJdkUtil
+    return getInternalJavaSdk(sdkHome).getVersionString();
+  }
+
+  private Sdk getInternalJavaSdk(final String sdkHome) {
+    if (myInternalJavaSdk != null){
+      return myInternalJavaSdk;
+    }
+    return JavaSdk.getInstance().createJdk("", sdkHome + File.separator + "jre");
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
@@ -111,6 +124,14 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   public void setupSdkPaths(Sdk sdk) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
+    final File home = new File(sdk.getHomePath());
+
+    //roots from internal jre
+    addClasses(sdkModificator);
+    addDocs(sdkModificator);
+    addSources(sdkModificator);
+
+    //roots for openapi and other libs
     if (!isFromIDEAProject(sdk.getHomePath())) {
       final VirtualFile[] ideaLib = getIdeaLibrary(sdk.getHomePath());
       if (ideaLib != null) {
@@ -118,107 +139,98 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
           sdkModificator.addRoot(ideaLib[i], ProjectRootType.CLASS);
         }
       }
+      addSources(home, sdkModificator);
+      addDocs(home, sdkModificator);
     }
-    addClasses(new File(new File(sdk.getHomePath()), "jre"), sdkModificator, JarFileSystem.getInstance());
     sdkModificator.commitChanges();
   }
 
-  private static void addClasses(File file, SdkModificator sdkModificator, JarFileSystem jarFileSystem) {
-    VirtualFile[] classes = findClasses(file, jarFileSystem);
+  public static void addSources(File file, SdkModificator sdkModificator) {
+    final File src = new File(new File(file, "lib"), "src");
+    if (!src.exists()) return;
+    File [] srcs = src.listFiles(new FileFilter() {
+      public boolean accept(File pathname) {
+        if (pathname.getPath().indexOf("generics") > -1) return false;
+        if (pathname.getPath().endsWith(".jar") || pathname.getPath().endsWith(".zip")) return true;
+        return false;
+      }
+    });
+    for (int i = 0; srcs != null && i < srcs.length; i++) {
+      File jarFile = srcs[i];
+      if (jarFile.exists()) {
+        JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+        String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+        VirtualFile vFile = jarFileSystem.findFileByPath(path);
+        sdkModificator.addRoot(vFile, ProjectRootType.SOURCE);
+      }
+    }
+  }
+
+  public static void addDocs(File file, SdkModificator sdkModificator) {
+    File jarfile = new File(new File(file, "help"), "openapihelp.jar");
+    if (jarfile.exists()) {
+      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "openapi";
+      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      sdkModificator.addRoot(vFile, ProjectRootType.JAVADOC);
+    }
+  }
+
+  private void addClasses(SdkModificator sdkModificator) {
+    String [] classes = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.CLASSES);
     for (int i = 0; i < classes.length; i++) {
-      VirtualFile virtualFile = classes[i];
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(classes[i]);
       sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
     }
   }
 
-  private static VirtualFile[] findClasses(File file, JarFileSystem jarFileSystem) {
-    FileFilter jarFileFilter = new FileFilter() {
-      public boolean accept(File f) {
-        if (f.isDirectory()) return false;
-        if (f.getName().endsWith(".jar")) return true;
-        return false;
-      }
-    };
-
-    File[] jarDirs;
-    if (SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode()) {
-      File libFile = new File(file, "lib");
-      File classesFile = new File(file, "../Classes");
-      File libExtFile = new File(libFile, "ext");
-      jarDirs = new File[]{libFile, classesFile, libExtFile};
+  private void addDocs(SdkModificator sdkModificator){
+    String [] docs = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.JAVADOC);
+    for (int i = 0; i < docs.length; i++) {
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(docs[i]);
+      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
     }
-    else {
-      File jreLibFile = new File(file, "lib");
-      File jreLibExtFile = new File(jreLibFile, "ext");
-      jarDirs = new File[]{jreLibFile, jreLibExtFile};
-    }
+  }
 
-    ArrayList<File> childrenList = new ArrayList<File>();
-    for (int i = 0; i < jarDirs.length; i++) {
-      File jarDir = jarDirs[i];
-      if ((jarDir != null) && jarDir.isDirectory()) {
-        File[] files = jarDir.listFiles(jarFileFilter);
-        for (int j = 0; j < files.length; j++) {
-          childrenList.add(files[j]);
-        }
-      }
+  private void addSources(SdkModificator sdkModificator){
+    String [] src = getInternalJavaSdk(sdkModificator.getHomePath()).getRootProvider().getUrls(OrderRootType.SOURCES);
+    for (int i = 0; i < src.length; i++) {
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(src[i]);
+      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
     }
-
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < childrenList.size(); i++) {
-      File child = (File)childrenList.get(i);
-      String path = child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      // todo ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      if (vFile != null) {
-        result.add(vFile);
-      }
-    }
-
-    File classesZipFile = new File(new File(file, "lib"), "classes.zip");
-    if ((!classesZipFile.isDirectory()) && classesZipFile.exists()) {
-      String path = classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      //todo ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      if (vFile != null) {
-        result.add(vFile);
-      }
-    }
-
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel) {
+    sdkModel.addListener(new SdkModel.Listener() {
+      public void sdkAdded(Sdk sdk) {
+      }
+      public void beforeSdkRemove(Sdk sdk) {
+      }
+      public void sdkChanged(Sdk sdk) {
+      }
+      public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+        if (sdk.getSdkType() instanceof IdeaJdk){
+          myInternalJavaSdk = JavaSdk.getInstance().createJdk("", newSdkHome);
+        }
+      }
+    });
     return new IdeaJdkConfigurable();
   }
 
   public String getBinPath(Sdk sdk) {
-    return getConvertedHomePath(sdk) + "jre" + File.separator + "bin";
+    return JavaSdk.getInstance().getBinPath(getInternalJavaSdk(sdk.getHomePath()));
   }
 
   public String getToolsPath(Sdk sdk) {
-    final String versionString = sdk.getVersionString();
-    final boolean isJdk1_x = versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1; //todo check
-    return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + (isJdk1_x ? "classes.zip" : "tools.jar");
+    return JavaSdk.getInstance().getToolsPath(getInternalJavaSdk(sdk.getHomePath()));
   }
 
   public String getVMExecutablePath(Sdk sdk) {
-    if ("64".equals(System.getProperty("sun.arch.data.model"))) {
-      return getBinPath(sdk) + File.separator + System.getProperty("os.arch") + File.separator + VM_EXE_NAME;
-    }
-    return getBinPath(sdk) + File.separator + VM_EXE_NAME;
+    return JavaSdk.getInstance().getVMExecutablePath(getInternalJavaSdk(sdk.getHomePath()));
   }
 
   public String getRtLibraryPath(Sdk sdk) {
-    return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + "rt.jar";
-  }
-
-  private String getConvertedHomePath(Sdk sdk) {
-    String path = sdk.getHomePath().replace('/', File.separatorChar);
-    if (!path.endsWith(File.separator)) {
-      path = path + File.separator;
-    }
-    return path;
+    return JavaSdk.getInstance().getRtLibraryPath(getInternalJavaSdk(sdk.getHomePath()));
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {

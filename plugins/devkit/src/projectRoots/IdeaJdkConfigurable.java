@@ -7,8 +7,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -23,7 +25,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable{
 
   private Sdk myIdeaJdk;
 
-  private boolean myModified = false;
+  private boolean myModified;
 
   public void setSdk(Sdk sdk) {
     myIdeaJdk = sdk;
@@ -39,9 +41,15 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable{
         myModified = true;
       }
     });
+    mySandboxHome.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        myModified = true;
+      }
+    });
     mySandboxHome.setText("");
     JPanel doNotExpandPanel = new JPanel(new BorderLayout());
     doNotExpandPanel.add(wholePanel, BorderLayout.NORTH);
+    myModified = true;
     return doNotExpandPanel;
   }
 
@@ -67,8 +75,10 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable{
   public void reset() {
     if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox){
       mySandboxHome.setText(((Sandbox)myIdeaJdk.getSdkAdditionalData()).getSandboxHome());
+      myModified = false;
+    } else {
+      mySandboxHome.setText("");
     }
-    myModified = false;
   }
 
   public void disposeUIResources() {
