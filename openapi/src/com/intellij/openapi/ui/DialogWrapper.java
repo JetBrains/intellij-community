@@ -729,8 +729,6 @@ public abstract class DialogWrapper {
   }
 
   public void show() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    
     synchronized (ourLock) {
       registerKeyboardShortcuts();
       myPeer.show();
