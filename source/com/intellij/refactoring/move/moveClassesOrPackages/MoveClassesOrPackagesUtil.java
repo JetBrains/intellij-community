@@ -240,7 +240,6 @@ public class MoveClassesOrPackagesUtil {
     throws IncorrectOperationException {
 
     PsiFile file = aClass.getContainingFile();
-    PsiDirectory oldDirectory = file.getContainingDirectory();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
 
     PsiClass newClass;
@@ -263,23 +262,21 @@ public class MoveClassesOrPackagesUtil {
       }
     }
 
-    if (!newDirectory.equals(oldDirectory)) {
-      // rename all references
-      for (int i = 0; i < usages.length; i++) {
-        MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
-        if (usage.getElement() == null) continue;
-        PsiReference reference = usage.reference;
-        if (reference != null) {
-          PsiElement parent = reference.getElement().getParent();
-          if (parent instanceof PsiImportStatement) {
-            if (parent.getContainingFile().getContainingDirectory().equals(newDirectory)) {
-              parent.delete(); // remove import statement to the class in the same package
-              continue;
-            }
+    // rebind all references
+    for (int i = 0; i < usages.length; i++) {
+      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
+      if (usage.getElement() == null) continue;
+      PsiReference reference = usage.reference;
+      if (reference != null) {
+        PsiElement parent = reference.getElement().getParent();
+        if (parent instanceof PsiImportStatement) {
+          if (parent.getContainingFile().getContainingDirectory().equals(newDirectory)) {
+            parent.delete(); // remove import statement to the class in the same package
+            continue;
           }
-
-          reference.bindToElement(newClass);
         }
+
+        reference.bindToElement(newClass);
       }
     }
 
