@@ -527,7 +527,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     final LocalInspectionToolWrapper[] tools = myLocalTools.isEmpty()
                                                ? getLocalInspectionToolWrappers()
                                                : myLocalTools.values().toArray(
-                                                 new LocalInspectionToolWrapper[myLocalTools.values().size()]);
+                                                   new LocalInspectionToolWrapper[myLocalTools.values().size()]);
     for (int i = 0; i < tools.length; i++) {
       LocalInspectionToolWrapper tool = tools[i];
       final ToolState state = getToolState(HighlightDisplayKey.find(tool.getShortName()));
@@ -557,10 +557,56 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(profile.myDisplayLevelMap);
     myBaseProfile = profile.myBaseProfile;
     myAdditionalJavadocTags = profile.myAdditionalJavadocTags;
+    copyToolsConfigurations(profile);
   }
 
   public void inheritFrom(InspectionProfileImpl profile) {
     myBaseProfile = profile;
+    copyToolsConfigurations(profile);
+  }
+
+  private void copyToolsConfigurations(InspectionProfileImpl profile) {
+    try {
+      if (!profile.myTools.isEmpty()) {
+        final Project project = profile.myTools.get(0).getManager().getProject();
+        final InspectionTool[] inspectionTools = getInspectionTools(project);
+        for (int i = 0; i < inspectionTools.length; i++) {
+          readAndWriteToolsConfigs(inspectionTools[i], profile);
+        }
+        return;
+      }
+      //only local tools were initialized
+      final LocalInspectionToolWrapper[] localInspectionToolWrappers = getLocalInspectionToolWrappers();
+      for (int i = 0; i < localInspectionToolWrappers.length; i++) {
+        readAndWriteToolsConfigs(localInspectionToolWrappers[i], profile);
+      }
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void readAndWriteToolsConfigs(final InspectionTool inspectionTool, final InspectionProfileImpl profile)
+    throws WriteExternalException, InvalidDataException {
+    final String name = inspectionTool.getShortName();
+    Element config = new Element("config");
+    final InspectionTool tool = profile.getInspectionTool(name);
+    if (tool != null){
+      tool.writeExternal(config);
+      inspectionTool.readExternal(config);
+      addInspectionTool(inspectionTool);
+    }
+  }
+
+  private void addInspectionTool(InspectionTool inspectionTool){
+    if (inspectionTool instanceof LocalInspectionToolWrapper){
+      myLocalTools.put(inspectionTool.getShortName(), (LocalInspectionToolWrapper)inspectionTool);
+    } else {
+      myTools.put(inspectionTool.getShortName(), inspectionTool);
+    }
   }
 
   public void cleanup() {
@@ -570,7 +616,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
         myTools.get(iterator.next()).cleanup();
       }
     }
-    if (!myLocalTools.isEmpty()){
+    if (!myLocalTools.isEmpty()) {
       for (Iterator<String> iterator = myLocalTools.keySet().iterator(); iterator.hasNext();) {
         myLocalTools.get(iterator.next()).cleanup();
       }
