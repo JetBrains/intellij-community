@@ -107,24 +107,24 @@ public class ResolverTree {
 
       final PsiTypeVarCollector collector = new PsiTypeVarCollector();
 
-      new Object() {
-        void setDegree(final HashSet<PsiTypeVariable> set) {
-          for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
-            final PsiTypeVariable var = v.next();
-            final Integer deg = result.get(var);
-
-            if (deg == null) {
-              result.put(var, new Integer(1));
-            }
-            else {
-              result.put(var, new Integer(deg.intValue() + 1));
-            }
-          }
-        }
-      }.setDegree(collector.getSet(constr.getRight()));
+      setDegree(collector.getSet(constr.getRight()), result);
     }
 
     return result;
+  }
+
+  void setDegree(final HashSet<PsiTypeVariable> set, Map<PsiTypeVariable, Integer> result) {
+    for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
+      final PsiTypeVariable var = v.next();
+      final Integer deg = result.get(var);
+
+      if (deg == null) {
+        result.put(var, new Integer(1));
+      }
+      else {
+        result.put(var, new Integer(deg.intValue() + 1));
+      }
+    }
   }
 
   private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> constraints) {
