@@ -259,7 +259,7 @@ class JavaDocInfoGenerator {
     buffer.append("</PRE>");
     //buffer.append("<br>");
 
-    PsiDocComment comment = aClass.getDocComment();
+    PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
       generateDescription(buffer, comment);
       generateDeprecatedSection(buffer, comment);
@@ -268,6 +268,10 @@ class JavaDocInfoGenerator {
     }
 
     generateEpilogue(buffer);
+  }
+
+  private PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
+    return ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
   }
 
   private void generateFieldJavaDoc(StringBuffer buffer, PsiField field) {
@@ -300,7 +304,7 @@ class JavaDocInfoGenerator {
     buffer.append("</PRE>");
     //buffer.append("<br>");
 
-    PsiDocComment comment = field.getDocComment();
+    PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateDescription(buffer, comment);
       generateDeprecatedSection(buffer, comment);
@@ -470,7 +474,7 @@ class JavaDocInfoGenerator {
     buffer.append("</PRE>");
     //buffer.append("<br>");
 
-    PsiDocComment comment = method.getDocComment();
+    PsiDocComment comment = getDocComment(method);
 
     generateMethodDescription(buffer, method);
 
@@ -551,7 +555,7 @@ class JavaDocInfoGenerator {
       }
     };
 
-    PsiDocComment comment = method.getDocComment();
+    PsiDocComment comment = getDocComment(method);
 
     if (comment != null) {
       if (!isEmptyDescription(comment)) {
@@ -768,7 +772,7 @@ class JavaDocInfoGenerator {
   }
 
   private void generateParametersSection(StringBuffer buffer, final PsiMethod method) {
-    PsiDocComment comment = method.getDocComment();
+    PsiDocComment comment = getDocComment(method);
     PsiParameter[] params = method.getParameterList().getParameters();
     PsiDocTag[] localTags = comment != null ? localTags = comment.findTagsByName("param") : PsiDocTag.EMPTY_ARRAY;
 
@@ -839,7 +843,7 @@ class JavaDocInfoGenerator {
   }
 
   private void generateReturnsSection(StringBuffer buffer, PsiMethod method) {
-    PsiDocComment comment = method.getDocComment();
+    PsiDocComment comment = getDocComment(method);
     PsiDocTag tag = comment == null ? null : comment.findTagByName("return");
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair =
       tag == null ? null : new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider);
@@ -881,7 +885,7 @@ class JavaDocInfoGenerator {
   }
 
   private void generateThrowsSection(StringBuffer buffer, PsiMethod method) {
-    PsiDocComment comment = method.getDocComment();
+    PsiDocComment comment = getDocComment(method);
     PsiDocTag[] localTags = getThrowsTags(comment);
 
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags =
@@ -1178,7 +1182,7 @@ class JavaDocInfoGenerator {
       final PsiMethod overriden = extendee.findMethodBySignature(method, false);
 
       if (overriden != null) {
-        T tag = loc.find(overriden.getDocComment());
+        T tag = loc.find(getDocComment(overriden));
 
         if (tag != null) {
           return new Pair<T, InheritDocProvider<T>>
