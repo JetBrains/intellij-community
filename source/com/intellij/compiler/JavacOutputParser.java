@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -15,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class JavacOutputParser extends OutputParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JavacOutputParser");
@@ -53,11 +55,14 @@ public class JavacOutputParser extends OutputParser {
       }
     }
 
-    if (colonIndex1 >= 0){
+    if (colonIndex1 >= 0){ // looks like found something like file path
       String part1 = line.substring(0, colonIndex1).trim();
-
-      if(part1.equals("error")) {
+      if(part1.equalsIgnoreCase("error")) {
         addMessage(callback, CompilerMessageCategory.ERROR, line.substring(colonIndex1));
+        return true;
+      }
+      if(part1.equalsIgnoreCase("warning")) {
+        addMessage(callback, CompilerMessageCategory.WARNING, line.substring(colonIndex1));
         return true;
       }
       if(part1.equals("javac")) {
@@ -65,18 +70,20 @@ public class JavacOutputParser extends OutputParser {
         return true;
       }
 
-      int colonIndex2 = line.indexOf(':', colonIndex1 + 1);
+      final int colonIndex2 = line.indexOf(':', colonIndex1 + 1);
       if (colonIndex2 >= 0){
         final String filePath = part1.replace(File.separatorChar, '/');
-        final VirtualFile[] file = new VirtualFile[1];
-        ApplicationManager.getApplication().runReadAction(new Runnable(){
-          public void run(){
-            file[0] = LocalFileSystem.getInstance().findFileByPath(filePath);
+        final Boolean fileExists = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+          public Boolean compute(){
+            return LocalFileSystem.getInstance().findFileByPath(filePath) != null? Boolean.TRUE : Boolean.FALSE;
           }
         });
-
+        if (!fileExists.booleanValue()) {
+          // the part one turned out to be something else than a file path
+          return true;
+        }
         try {
-          int lineNum = Integer.parseInt(line.substring(colonIndex1 + 1, colonIndex2).trim());
+          final int lineNum = Integer.parseInt(line.substring(colonIndex1 + 1, colonIndex2).trim());
           String message = line.substring(colonIndex2 + 1).trim();
           CompilerMessageCategory category = CompilerMessageCategory.ERROR;
           if (message.startsWith("warning:")){
@@ -84,7 +91,7 @@ public class JavacOutputParser extends OutputParser {
             category = CompilerMessageCategory.WARNING;
           }
 
-          ArrayList messages = new ArrayList();
+          List<String> messages = new ArrayList<String>();
           messages.add(message);
           int colNum = 0;
           String prevLine = null;
@@ -136,13 +143,13 @@ public class JavacOutputParser extends OutputParser {
   }
 
 
-  private static ArrayList convertMessages(ArrayList messages) {
+  private static List<String> convertMessages(List<String> messages) {
     if(messages.size() <= 1) {
       return messages;
     }
-    String line0 = (String)messages.get(0);
-    String line1 = (String)messages.get(1);
-    int colonIndex = line1.indexOf(':');
+    final String line0 = messages.get(0);
+    final String line1 = messages.get(1);
+    final int colonIndex = line1.indexOf(':');
     if (colonIndex > 0){
       String part1 = line1.substring(0, colonIndex).trim();
       if (part1.equals("symbol")){
@@ -151,7 +158,7 @@ public class JavacOutputParser extends OutputParser {
         if(messages.size() >= 2) {
           messages.remove(1);
         }
-        messages.set(0, line0+" " + symbol);
+        messages.set(0, line0 + " " + symbol);
       }
     }
     return messages;
