@@ -56,30 +56,27 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
         if(debugProcess == null || !debugProcess.isAttached()) return;
 
-        ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ?  getSuspendContext().getThread() : null;
+        final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ?  getSuspendContext().getThread() : null;
         VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
 
         EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
 
-        if (currentThread != null && ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS) {
+        if (ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS) {
           ThreadGroupReferenceProxyImpl topCurrentGroup = null;
 
           if (currentThread != null) {
             topCurrentGroup = currentThread.threadGroupProxy();
-            for(;;) {
-              ThreadGroupReferenceProxyImpl parentGroup = topCurrentGroup.parent();
-              if(parentGroup != null) {
+            if (topCurrentGroup != null) {
+              for(ThreadGroupReferenceProxyImpl parentGroup = topCurrentGroup.parent(); parentGroup != null; parentGroup = parentGroup.parent()) {
                 topCurrentGroup = parentGroup;
-              }
-              else {
-                break;
               }
             }
 
             if(topCurrentGroup != null){
               NodeManagerImpl nodeManager = getNodeFactory();
               root.add(nodeManager.createNode(nodeManager.getThreadGroupDescriptor(null, topCurrentGroup), evaluationContext));
-            } else {
+            }
+            else {
               NodeManagerImpl nodeManager = getNodeFactory();
               root.add(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext));
             }
@@ -121,19 +118,22 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
 
       final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
-      final List<ThreadGroupReferenceProxyImpl> groups = new ArrayList<ThreadGroupReferenceProxyImpl>();
-      if (ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS) {
+      final boolean hasThreadToSelect = thread != null && ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS; // thread can be null if pause was pressed
+      final List<ThreadGroupReferenceProxyImpl> groups = hasThreadToSelect? new ArrayList<ThreadGroupReferenceProxyImpl>() : (List<ThreadGroupReferenceProxyImpl>)Collections.EMPTY_LIST;
+      if (hasThreadToSelect) {
         for(ThreadGroupReferenceProxyImpl group = thread.threadGroupProxy(); group != null; group = group.parent()) {
           groups.add(group);
         }
+        Collections.reverse(groups);
       }
-      Collections.reverse(groups);
 
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {
           getMutableModel().setRoot(root);
           treeChanged();
-          selectThread(groups, thread);
+          if (hasThreadToSelect) {
+            selectThread(groups, thread);
+          }
         }
       });
     }
