@@ -137,16 +137,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void projectOpened() {
-    myIsDisposed = false;
-    myIsInitialized = true;
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
     myLineStatusTrackers = new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
 
-    Object[] components = myProject.getComponents(AbstractVcs.class);
-    for (int i = 0; i < components.length; i++) {
-      AbstractVcs vcs = (AbstractVcs)components[i];
-      registerVcs(vcs);
-    }
+    initialize();
 
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
     FileStatusManager.getInstance(getProject()).addFileStatusListener(myFileStatusListener);
@@ -171,6 +165,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for (int i = 0; i < modules.length; i++) {
       Module module = modules[i];
       ModuleLevelVcsManager.getInstance(module).startVcs();
+    }
+  }
+
+  public void initialize() {
+    myIsDisposed = false;
+    myIsInitialized = true;
+
+    Object[] components = myProject.getComponents(AbstractVcs.class);
+    for (int i = 0; i < components.length; i++) {
+      AbstractVcs vcs = (AbstractVcs)components[i];
+      registerVcs(vcs);
     }
   }
 
