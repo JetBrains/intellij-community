@@ -2,6 +2,7 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
@@ -22,14 +23,6 @@ import java.util.Set;
 public class Util {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.Util");
 
-  public static int getArrayLevel(PsiType t) {
-    if (t instanceof PsiArrayType) {
-      return 1 + getArrayLevel(((PsiArrayType)t).getComponentType());
-    }
-
-    return 0;
-  }
-
   public static PsiType createArrayType(PsiType theType, int level) {
     while (level-- > 0) {
       theType = theType.createArrayType();
@@ -39,21 +32,13 @@ public class Util {
   }
 
   public static PsiClassType.ClassResolveResult resolveType(PsiType type) {
-    type = avoidAnonymous(type);
-
-    if (type == null) {
-      return PsiClassType.ClassResolveResult.EMPTY;
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass aClass = resolveResult.getElement();
+    if (aClass instanceof PsiAnonymousClass) {
+      final PsiClassType baseClassType = ((PsiAnonymousClass)aClass).getBaseClassType();
+      return resolveType(resolveResult.getSubstitutor().substitute(baseClassType));
     }
-
-    if (type instanceof PsiClassType) {
-      return ((PsiClassType)type).resolveGenerics();
-    }
-    else if (type instanceof PsiArrayType) {
-      return resolveType(((PsiArrayType)type).getComponentType());
-    }
-    else {
-      return PsiClassType.ClassResolveResult.EMPTY;
-    }
+    return resolveResult;
   }
 
   public static PsiType normalize(PsiType t, boolean objectBottom) {
@@ -276,45 +261,6 @@ public class Util {
     }
   }
 
-  public static PsiType avoidAnonymous(PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
-      final PsiClass aClass = result.getElement();
-
-      if (result.getElement() == null) {
-        return null;
-      }
-
-      if (aClass instanceof PsiAnonymousClass) {
-        return aClass.getSuperTypes()[0];
-      }
-
-      final PsiSubstitutor aSubst = result.getSubstitutor();
-
-      PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-      for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
-        final PsiTypeParameter p = i.next();
-        PsiType t = aSubst.substitute(p);
-
-        if (t != null) {
-          t = avoidAnonymous(t);
-        }
-
-        theSubst = theSubst.put(p, t);
-      }
-
-      return aClass.getManager().getElementFactory().createType(aClass, theSubst);
-    }
-    else if (type instanceof PsiArrayType) {
-      PsiType avoided = avoidAnonymous(((PsiArrayType)type).getComponentType());
-
-      return avoided == null ? null : avoided.createArrayType();
-    }
-
-    return type;
-  }
-
   public static PsiType createParameterizedType(final PsiType t, final PsiTypeVariableFactory factory, final PsiElement context) {
     return createParameterizedType(t, factory, true, context);
   }
@@ -362,6 +308,57 @@ public class Util {
     }
 
     return t;
+  }
+
+  public static PsiType substituteType(final PsiType type, final PsiSubstitutor subst) {
+    if (type == null) return null;
+    if (type instanceof PsiWildcardType) {
+      final PsiWildcardType wcType = ((PsiWildcardType)type);
+      final PsiType bound = wcType.getBound();
+
+      if (bound != null) {
+        final PsiClass aClass = resolveType(bound).getElement();
+
+        if (aClass != null) {
+          final PsiManager manager = aClass.getManager();
+
+          return wcType.isExtends()
+                 ? PsiWildcardType.createExtends(manager, substituteType(bound, subst))
+                 : PsiWildcardType.createSuper(manager, substituteType(bound, subst));
+        }
+      }
+
+      return type;
+    }
+    else {
+      final int level = type.getArrayDimensions();
+      final PsiClassType.ClassResolveResult result = resolveType(type);
+      final PsiClass aClass = result.getElement();
+
+      if (aClass != null) {
+        final PsiSubstitutor aSubst = result.getSubstitutor();
+        final PsiManager manager = aClass.getManager();
+
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
+
+          return createArrayType(sType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : sType, level);
+        }
+
+        final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
+        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+        for (int i = 0; i < aParms.length; i++) {
+          PsiTypeParameter aParm = aParms[i];
+
+          theSubst = theSubst.put(aParm, substituteType(aSubst.substitute(aParm), subst));
+        }
+
+        return createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
+      }
+
+      return type;
+    }
   }
 
   public static boolean bindsTypeVariables(final PsiType t) {
@@ -473,4 +470,3 @@ public class Util {
     }
   }
 }
-
