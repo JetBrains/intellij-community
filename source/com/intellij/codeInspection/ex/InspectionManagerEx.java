@@ -197,8 +197,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
-      if (inspectionTag != null) {
-
+      if (inspectionTag != null && inspectionTag.getValueElement() != null) {
         String valueText = inspectionTag.getValueElement().getText();
         return !isInspectionToolIdMentioned(valueText, inspectionToolID);
       }
