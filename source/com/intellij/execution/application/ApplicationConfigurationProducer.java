@@ -1,10 +1,9 @@
 package com.intellij.execution.application;
 
-import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;

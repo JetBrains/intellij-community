@@ -1,10 +1,10 @@
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.application.ApplicationConfigurationType;
-import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,7 +79,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
                                   GlobalSearchScope.allScope(myProject);
         final PsiClass appletClass = PsiManager.getInstance(project).findClass("java.applet.Applet", scope);
         return new TreeClassChooserDialog.InheritanceClassFilterImpl(appletClass, false, false,
-                                                                   ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
+                                                                     ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
       }
     };
   }
