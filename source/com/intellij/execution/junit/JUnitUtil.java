@@ -137,6 +137,11 @@ public class JUnitUtil {
     return getTestCaseClass(scope, module.getProject());
   }
 
+  public static PsiClass getTestCaseClass(final SourceScope scope) throws NoJUnitException {
+    if (scope == null) throw new NoJUnitException();
+    return getTestCaseClass(scope.getLibrariesScope(), scope.getProject());
+  }
+
   private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
     final PsiClass testCaseClass = PsiManager.getInstance(project).findClass(TESTCASE_CLASS, scope); // TODO do not search in sources;
     if (testCaseClass == null) throw new NoJUnitException();
