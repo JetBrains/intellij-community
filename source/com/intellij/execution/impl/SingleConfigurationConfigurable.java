@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -25,7 +26,7 @@ import java.awt.event.ActionListener;
  *
  * @author dyoma
  */
-public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
+public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
   private final PlainDocument myNameDocument = new PlainDocument();
   private ValidationResult myLastValidationResult = null;
@@ -35,7 +36,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final Icon myIcon;
 
-  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings) {
+  private SingleConfigurationConfigurable(RunnerAndConfigurationSettingsImpl settings) {
     super(new ConfigurationSettingsEditor(settings), settings);
 
     final Config configuration = (Config)getSettings().getConfiguration();
@@ -57,13 +58,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
   }
 
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings) {
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettingsImpl settings) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<Config>(settings);
     configurable.reset();
     return configurable;
   }
 
-  public final void applyTo(final RunnerAndConfigurationSettings configuration) throws ConfigurationException {
+  public final void applyTo(final RunnerAndConfigurationSettingsImpl configuration) throws ConfigurationException {
     LOG.assertTrue(configuration != null);
 
     getEditor().applyTo(configuration);
@@ -83,7 +84,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     super.reset();
   }
 
-  public final void loadFrom(final RunnerAndConfigurationSettings configuration) {
+  public final void loadFrom(final RunnerAndConfigurationSettingsImpl configuration) {
     LOG.assertTrue(configuration != null);
 
     getEditor().resetFrom(configuration);
@@ -170,7 +171,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return (Config)getSettings().getConfiguration();
   }
 
-  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
     return getEditor().getSnapshot();
   }
 

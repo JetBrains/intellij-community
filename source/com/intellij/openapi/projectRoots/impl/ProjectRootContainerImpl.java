@@ -13,7 +13,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.jar.JarFileSystemEx;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -184,7 +183,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       String url = ((SimpleProjectRoot)root).getUrl();
       if (JarFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))){
         String path = VirtualFileManager.extractPath(url);
-        ((JarFileSystemEx)JarFileSystem.getInstance()).setNoCopyJarForPath(path);
+        JarFileSystem.getInstance().setNoCopyJarForPath(path);
       }
     }
     else if (root instanceof CompositeProjectRoot){

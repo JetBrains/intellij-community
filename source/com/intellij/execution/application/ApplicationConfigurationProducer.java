@@ -3,8 +3,9 @@ package com.intellij.execution.application;
 import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -23,7 +24,7 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
     return myPsiElement;
   }
 
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, final ConfigurationContext context) {
     location = ExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
 
@@ -43,9 +44,9 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
     return createConfiguration(aClass, context);
   }
 
-  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass, final ConfigurationContext context) {
+  private RunnerAndConfigurationSettingsImpl createConfiguration(final PsiClass aClass, final ConfigurationContext context) {
     final Project project = aClass.getProject();
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setName(configuration.getGeneratedName());

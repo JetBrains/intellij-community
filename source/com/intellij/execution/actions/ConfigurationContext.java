@@ -1,11 +1,9 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ConfigurationTypeEx;
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManager;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -22,7 +20,7 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
   private final DataContext myDataContext;
-  private RunnerAndConfigurationSettings myConfiguration;
+  private RunnerAndConfigurationSettingsImpl myConfiguration;
 
   public ConfigurationContext(final DataContext dataContext) {
     myDataContext = dataContext;
@@ -44,7 +42,7 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<PsiElement>(project, element);
   }
 
-  public RunnerAndConfigurationSettings getConfiguration() {
+  public RunnerAndConfigurationSettingsImpl getConfiguration() {
     if (myConfiguration == null) createConfiguration();
     return myConfiguration;
   }
@@ -61,14 +59,14 @@ public class ConfigurationContext {
     return myLocation;
   }
 
-  public RunnerAndConfigurationSettings findExisting() {
+  public RunnerAndConfigurationSettingsImpl findExisting() {
     final ConfigurationType type = getConfiguration().getType();
-    if (!(type instanceof ConfigurationTypeEx)) return null;
-    final ConfigurationTypeEx factoryEx = (ConfigurationTypeEx)type;
-    final RunnerAndConfigurationSettings[] configurations = getRunManager().getConfigurationSettings(type);
+    if (!(type instanceof LocatableConfigurationType)) return null;
+    final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
+    final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
     for (int i = 0; i < configurations.length; i++) {
-      final RunnerAndConfigurationSettings existingConfiguration = configurations[i];
-      if (factoryEx.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())){
+      final RunnerAndConfigurationSettingsImpl existingConfiguration = configurations[i];
+      if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())){
         return existingConfiguration;
       }
     }
@@ -96,8 +94,8 @@ public class ConfigurationContext {
     return element;
   }
 
-  public RunManager getRunManager() {
-    return RunManager.getInstance(getProject());
+  public RunManagerEx getRunManager() {
+    return RunManagerEx.getInstanceEx(getProject());
   }
 
   public Project getProject() { return myLocation.getProject(); }
@@ -106,8 +104,8 @@ public class ConfigurationContext {
     return myDataContext;
   }
 
-  public RunnerAndConfigurationSettings getOriginalConfiguration(final ConfigurationType type) {
-    final RunnerAndConfigurationSettings config = (RunnerAndConfigurationSettings)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
+  public RunnerAndConfigurationSettingsImpl getOriginalConfiguration(final ConfigurationType type) {
+    final RunnerAndConfigurationSettingsImpl config = (RunnerAndConfigurationSettingsImpl)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
     return config != null && type.equals(config.getType()) ? config : null ;
   }
 }

@@ -6,6 +6,8 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -54,7 +56,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     myClassName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
-        TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Class", myProject, GlobalSearchScope.allScope(myProject), null, null);
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser("Choose Class", GlobalSearchScope.allScope(myProject), null, null);
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {
@@ -64,7 +66,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
             }
           }
         }
-        chooser.show();
+        chooser.showDialog();
         PsiClass selectedClass = chooser.getSelectedClass();
         if (selectedClass != null) {
           myClassName.setText(selectedClass.getQualifiedName());

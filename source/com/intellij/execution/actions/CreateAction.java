@@ -1,8 +1,10 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.Presentation;
 
 public class CreateAction extends BaseRunConfigurationAction {
@@ -21,7 +23,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   private BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
     final RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) return CREATE_AND_EDIT;
-    final RunManager runManager = context.getRunManager();
+    final RunManagerEx runManager = context.getRunManager();
     if (runManager.getSelectedConfiguration() != configuration) return SELECT;
     if (runManager.isTemporary(configuration.getConfiguration())) return SAVE;
     return SELECTED_STABLE;
@@ -52,7 +54,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettings configuration = context.findExisting();
+      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
       if (configuration == null) return;
       context.getRunManager().setActiveConfiguration(configuration);
     }
@@ -64,8 +66,8 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunManager runManager = context.getRunManager();
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+      final RunManagerEx runManager = context.getRunManager();
+      final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
       runManager.addConfiguration(configuration);
       runManager.setActiveConfiguration(configuration);
     }
@@ -77,7 +79,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+      final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
       if (RunDialog.editConfiguration(context.getProject(), configuration, "Create " + configuration.getName()))
         super.perform(context);
     }

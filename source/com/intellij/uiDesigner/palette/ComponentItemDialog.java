@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -46,8 +48,8 @@ public final class ComponentItemDialog extends DialogWrapper{
     myTfClassName.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Component Class", project);
-          chooser.show();
+          final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser("Choose Component Class");
+          chooser.showDialog();
           final PsiClass result = chooser.getSelectedClass();
           if (result != null) {
             myTfClassName.setText(result.getQualifiedName());

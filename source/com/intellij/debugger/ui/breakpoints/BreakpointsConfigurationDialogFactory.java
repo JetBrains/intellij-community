@@ -3,6 +3,8 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -358,12 +360,10 @@ public class BreakpointsConfigurationDialogFactory {
     private class AddExceptionBreakpointAction implements ActionListener {
       public void actionPerformed(ActionEvent e) {
         final PsiClass throwableClass = PsiManager.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
-        TreeClassChooserDialog chooser =
-          new TreeClassChooserDialog("Enter Exception Class", myProject, GlobalSearchScope.allScope(myProject),
-                                     new TreeClassChooserDialog.InheritanceClassFilter(throwableClass, true, true),
-                                     //null,
-                                     null);
-        chooser.show();
+        TreeClassChooser chooser =
+          TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser("Enter Exception Class", GlobalSearchScope.allScope(myProject),
+                                     throwableClass, true, true, null);
+        chooser.showDialog();
         PsiClass selectedClass = chooser.getSelectedClass();
         String qName = (selectedClass != null)? selectedClass.getQualifiedName() : null;
 

@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,7 @@ import java.util.Map;
 /**
  * @author dyoma
  */
-public class RunnerAndConfigurationSettings implements JDOMExternalizable, Cloneable {
+public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
   private static final String RUNNER_ELEMENT = "RunnerSettings";
@@ -35,11 +36,11 @@ public class RunnerAndConfigurationSettings implements JDOMExternalizable, Clone
   private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<JavaProgramRunner, RunnerSettings>();
   private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<JavaProgramRunner, ConfigurationPerRunnerSettings>();
 
-  public RunnerAndConfigurationSettings(RunManagerImpl manager) {
+  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
   }
 
-  public RunnerAndConfigurationSettings(RunManagerImpl manager, RunConfiguration configuration, boolean isTemplate) {
+  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager, RunConfiguration configuration, boolean isTemplate) {
     myManager = manager;
     myConfiguration = configuration;
     myIsTemplate = isTemplate;
@@ -57,11 +58,11 @@ public class RunnerAndConfigurationSettings implements JDOMExternalizable, Clone
     return myConfiguration;
   }
 
-  public Factory<RunnerAndConfigurationSettings> createFactory() {
-    return new Factory<RunnerAndConfigurationSettings>() {
-      public RunnerAndConfigurationSettings create() {
+  public Factory<RunnerAndConfigurationSettingsImpl> createFactory() {
+    return new Factory<RunnerAndConfigurationSettingsImpl>() {
+      public RunnerAndConfigurationSettingsImpl create() {
         RunConfiguration configuration = myConfiguration.getFactory().createConfiguration("<unnamed>", myConfiguration);
-        RunnerAndConfigurationSettings copy = new RunnerAndConfigurationSettings(myManager, configuration, false);
+        RunnerAndConfigurationSettingsImpl copy = new RunnerAndConfigurationSettingsImpl(myManager, configuration, false);
         return copy;
       }
     };
@@ -175,13 +176,13 @@ public class RunnerAndConfigurationSettings implements JDOMExternalizable, Clone
     return myConfiguration == null ? null : myConfiguration.getType();
   }
 
-  public RunnerAndConfigurationSettings clone() {
-    RunnerAndConfigurationSettings copy = new RunnerAndConfigurationSettings(myManager, myConfiguration.clone(), false);
+  public RunnerAndConfigurationSettingsImpl clone() {
+    RunnerAndConfigurationSettingsImpl copy = new RunnerAndConfigurationSettingsImpl(myManager, myConfiguration.clone(), false);
     copy.importRunnerAndConfigurationSettings(this);
     return copy;
   }
 
-  public void importRunnerAndConfigurationSettings(RunnerAndConfigurationSettings template) {
+  public void importRunnerAndConfigurationSettings(RunnerAndConfigurationSettingsImpl template) {
     try {
       for (Iterator<JavaProgramRunner> iterator = template.myRunnerSettings.keySet().iterator(); iterator.hasNext();) {
         JavaProgramRunner runner = iterator.next();
@@ -225,7 +226,7 @@ public class RunnerAndConfigurationSettings implements JDOMExternalizable, Clone
     }
 
     public RunnerSettings getRunnerSettings() {
-      return RunnerAndConfigurationSettings.this.getRunnerSettings(myRunner);
+      return RunnerAndConfigurationSettingsImpl.this.getRunnerSettings(myRunner);
     }
 
     public ConfigurationPerRunnerSettings getConfigurationSettings() {

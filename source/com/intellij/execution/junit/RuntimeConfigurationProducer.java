@@ -2,10 +2,12 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -16,7 +18,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
   public static final Comparator COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
   private final ConfigurationFactory myConfigurationFactory;
-  private RunnerAndConfigurationSettings myConfiguration;
+  private RunnerAndConfigurationSettingsImpl myConfiguration;
 
   public RuntimeConfigurationProducer(final ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
@@ -30,11 +32,11 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
 
   public abstract PsiElement getSourceElement();
 
-  public RunnerAndConfigurationSettings getConfiguration() {
+  public RunnerAndConfigurationSettingsImpl getConfiguration() {
     return myConfiguration;
   }
 
-  protected abstract RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context);
+  protected abstract RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context);
 
   public RuntimeConfigurationProducer clone() {
     try {
@@ -45,12 +47,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     }
   }
 
-  public RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
+  public RunnerAndConfigurationSettingsImpl cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
     if (context != null) {
-      final RunnerAndConfigurationSettings original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+      final RunnerAndConfigurationSettingsImpl original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null) return original.clone();
     }
-    return RunManager.getInstance(project).createConfiguration("", myConfigurationFactory);
+    return RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
   }
 
   public static PsiMethod getContainingMethod(PsiElement element) {

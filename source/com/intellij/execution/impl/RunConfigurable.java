@@ -1,7 +1,8 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerConfig;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -102,7 +103,7 @@ class RunConfigurable extends BaseConfigurable {
       myTabs[i].reset();
     }
 
-    final RunManager manager = getRunManager();
+    final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
     myCbShowSettingsBeforeRunning.setSelected(config.isShowSettingsBeforeRun());
     myCbCompileBeforeRunning.setSelected(config.isCompileBeforeRunning());
@@ -134,7 +135,7 @@ class RunConfigurable extends BaseConfigurable {
         throw e;
       }
     }
-    final RunManager manager = getRunManager();
+    final RunManagerEx manager = getRunManager();
     manager.setActiveConfigurationFactory(getSelectedConfigType());
 
     manager.getConfig().setShowSettingsBeforeRun(myCbShowSettingsBeforeRunning.isSelected());
@@ -179,7 +180,7 @@ class RunConfigurable extends BaseConfigurable {
     buffer.append(myRunDialog.getRunnerInfo().getId());
     final ConfigurationTab tab = fromComponent(myTabbedPane.getSelectedComponent());
     if (tab != null) {
-      final RunnerAndConfigurationSettings configuration = tab.getSelectedConfiguration();
+      final RunnerAndConfigurationSettingsImpl configuration = tab.getSelectedConfiguration();
       if (configuration != null) {
         buffer.append(" - ");
         buffer.append(configuration.getName());
@@ -189,7 +190,7 @@ class RunConfigurable extends BaseConfigurable {
     myRunDialog.setTitle(buffer.toString());
   }
 
-  public static RunConfiguration createSameConfiguration(RunConfiguration configuration, RunManager runManager) {
+  public static RunConfiguration createSameConfiguration(RunConfiguration configuration, RunManagerEx runManager) {
     return runManager.createConfiguration(configuration.getName(), configuration.getFactory()).getConfiguration();
   }
 

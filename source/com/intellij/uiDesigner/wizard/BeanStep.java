@@ -2,6 +2,8 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,18 +67,16 @@ final class BeanStep extends StepAdapter{
     myTfWitgBtnChooseClass.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final TreeClassChooserDialog chooser = TreeClassChooserDialog.withInnerClasses(
+          final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myData.myProject).createWithInnerClassesScopeChooser(
             "Choose Bean Class",
-            myData.myProject,
             GlobalSearchScope.projectScope(myData.myProject),
-            new TreeClassChooserDialog.ClassFilter() {
+            new TreeClassChooser.ClassFilter() {
               public boolean isAccepted(final PsiClass aClass) {
                 return aClass.getParent() instanceof PsiJavaFile;
               }
             },
-            null
-          );
-          chooser.show();
+            null);
+          chooser.showDialog();
           final PsiClass aClass = chooser.getSelectedClass();
           if (aClass == null) {
             return;

@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.jar.JarFileSystemEx;
 import com.intellij.util.containers.HashMap;
 
 import java.awt.*;
@@ -16,7 +15,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.zip.ZipFile;
 
-public class JarFileSystemImpl extends JarFileSystemEx implements ApplicationComponent {
+public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl");
 
   final Object LOCK = new Object();

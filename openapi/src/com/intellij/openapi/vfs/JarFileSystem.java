@@ -19,4 +19,6 @@ public abstract class JarFileSystem extends VirtualFileSystem {
 
   public abstract VirtualFile getVirtualFileForJar(VirtualFile entryVFile);
   public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
+
+  public abstract void setNoCopyJarForPath(String pathInJar);
 }

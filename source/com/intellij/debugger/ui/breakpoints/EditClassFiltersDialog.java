@@ -9,6 +9,7 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.ui.ClassFilterEditor;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
@@ -20,13 +21,13 @@ public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;
   private ClassFilterEditor myClassExclusionFilterEditor;
   private Project myProject;
-  private TreeClassChooserDialog.ClassFilter myChooserFilter;
+  private TreeClassChooser.ClassFilter myChooserFilter;
 
   public EditClassFiltersDialog(Project project) {
     this(project, null);
   }
 
-  public EditClassFiltersDialog(Project project, TreeClassChooserDialog.ClassFilter filter) {
+  public EditClassFiltersDialog(Project project, TreeClassChooser.ClassFilter filter) {
     super(project, true);
     myChooserFilter = filter;
     myProject = project;

@@ -1,11 +1,12 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ConfigurationTypeEx;
+import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
 import com.intellij.execution.junit.JUnitConfigurationProducer;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,7 @@ import java.util.Iterator;
 class PreferedProducerFind {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
 
-  public RunnerAndConfigurationSettings createConfiguration(final Location location, final ConfigurationContext context) {
+  public RunnerAndConfigurationSettingsImpl createConfiguration(final Location location, final ConfigurationContext context) {
     LOG.assertTrue(location != null);
     final RuntimeConfigurationProducer preferedProducer = findPreferedProducer(location, context);
     if (preferedProducer != null) {
@@ -27,8 +28,8 @@ class PreferedProducerFind {
     final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationFactories();
     for(int i = 0; i < factories.length; i++){
       final ConfigurationType type = factories[i];
-      if (type instanceof ConfigurationTypeEx) {
-        final RunnerAndConfigurationSettings configuration = ((ConfigurationTypeEx)type).createConfigurationByLocation(location);
+      if (type instanceof LocatableConfigurationType) {
+        final RunnerAndConfigurationSettingsImpl configuration = (RunnerAndConfigurationSettingsImpl)((LocatableConfigurationType)type).createConfigurationByLocation(location);
         if (configuration != null) {
           return configuration;
         }

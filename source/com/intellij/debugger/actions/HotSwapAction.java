@@ -1,6 +1,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -32,7 +33,7 @@ public class HotSwapAction extends AnAction{
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
     if(session != null && session.isAttached()) {
-      HotSwapUI.getInstance(project).reloadChangedClasses(session, RunManager.getInstance(project).getConfig().isCompileBeforeRunning());
+      HotSwapUI.getInstance(project).reloadChangedClasses(session, RunManagerEx.getInstanceEx(project).getConfig().isCompileBeforeRunning());
     }
   }
 

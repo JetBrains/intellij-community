@@ -1,12 +1,9 @@
 package com.intellij.execution.application;
 
-import com.intellij.execution.ConfigurationTypeEx;
-import com.intellij.execution.ConfigurationUtil;
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.Location;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -15,7 +12,7 @@ import com.intellij.psi.*;
 
 import javax.swing.*;
 
-public class ApplicationConfigurationType implements ConfigurationTypeEx {
+public class ApplicationConfigurationType implements LocatableConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/application.png");
 

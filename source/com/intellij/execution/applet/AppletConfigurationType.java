@@ -1,12 +1,9 @@
 package com.intellij.execution.applet;
 
-import com.intellij.execution.ConfigurationTypeEx;
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManager;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -20,7 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 import javax.swing.*;
 
-public class AppletConfigurationType implements ConfigurationTypeEx {
+public class AppletConfigurationType implements LocatableConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/applet.png");
 
@@ -61,7 +58,7 @@ public class AppletConfigurationType implements ConfigurationTypeEx {
     final PsiElement element = location.getPsiElement();
     final PsiClass aClass = getAppletClass(element, PsiManager.getInstance(project));
     if (aClass == null) return null;
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration("", getConfigurationFactories()[0]);
+    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", getConfigurationFactories()[0]);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setModule(new JUnitUtil.ModuleOfClass(project).convert(aClass));

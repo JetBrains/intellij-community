@@ -3,8 +3,9 @@ package com.intellij.execution.impl;
 import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.impl.MapDataContext;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerConfig;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -127,7 +128,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   private RunManagerConfig getConfig() {
-    return RunManager.getInstance(myProject).getConfig();
+    return RunManagerEx.getInstanceEx(myProject).getConfig();
   }
 
   public String getComponentName() {

@@ -6,6 +6,8 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,7 +33,7 @@ public class ClassFilterEditor extends JPanel {
   protected JButton myAddPatternButton;
   private JButton myRemoveButton;
   protected Project myProject;
-  private TreeClassChooserDialog.ClassFilter myChooserFilter;
+  private TreeClassChooser.ClassFilter myChooserFilter;
   private JPanel myPanel;
   private JScrollPane myScrollPane;
   private JPanel myScrollPanePlace;
@@ -40,7 +42,7 @@ public class ClassFilterEditor extends JPanel {
     this (project, null);
   }
 
-  public ClassFilterEditor(Project project, TreeClassChooserDialog.ClassFilter classFilter) {
+  public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
     super(new BorderLayout());
     add(myPanel);
     myTable = new Table();
@@ -288,8 +290,8 @@ public class ClassFilterEditor extends JPanel {
   }
 
   protected void addClassFilter() {
-    TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Class", myProject, GlobalSearchScope.allScope(myProject), myChooserFilter, null);
-    chooser.show();
+    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser("Choose Class", GlobalSearchScope.allScope(myProject), myChooserFilter, null);
+    chooser.showDialog();
     PsiClass selectedClass = chooser.getSelectedClass();
     if (selectedClass != null) {
       ClassFilter filter = createFilter(selectedClass.getQualifiedName());

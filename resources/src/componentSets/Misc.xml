@@ -80,6 +80,10 @@
       <implementation-class>com.intellij.ant.impl.AntConfigurationImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.ide.util.TreeClassChooserFactory</interface-class>
+      <implementation-class>com.intellij.ide.util.TreeClassChooserFactoryImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.ant.impl.AntWorkspaceConfiguration</interface-class>
       <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
       <option name="workspace" value="true"/>

@@ -210,6 +210,10 @@ public class AppletConfiguration extends SingleClassConfiguration {
     return Comparing.equal(getName(), getGeneratedName());
   }
 
+  public String suggestedName() {
+    return ExecutionUtil.shortenName(ExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
+  }
+
   public void setMainClassName(final String qualifiedName) {
     final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;

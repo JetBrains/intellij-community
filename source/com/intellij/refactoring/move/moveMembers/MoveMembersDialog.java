@@ -2,6 +2,8 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
@@ -328,13 +330,13 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooserDialog chooser = TreeClassChooserDialog.withInnerClasses("Choose Destination Class", myProject, GlobalSearchScope.projectScope(myProject), new TreeClassChooserDialog.ClassFilter() {
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser("Choose Destination Class", GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
       }, null);
       chooser.selectDirectory(mySourceClass.getContainingFile().getContainingDirectory());
-      chooser.show();
+      chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
       if (aClass != null) {
         myTfTargetClassName.setText(aClass.getQualifiedName());

@@ -1,11 +1,11 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -62,7 +62,7 @@ public class RunConfigurationAction extends ComboBoxAction {
       presentation.setEnabled(false);
     }
     else {
-      final RunManager runManager = RunManager.getInstance(project);
+      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
       RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
       updateButton(selected == null? null : selected.getConfiguration(), project, presentation);
       presentation.setEnabled(true);
@@ -111,14 +111,14 @@ public class RunConfigurationAction extends ComboBoxAction {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = (Project)DataManager.getInstance().getDataContext(button).getData(DataConstants.PROJECT);
     if (project != null) {
-      final RunManager runManager = RunManager.getInstance(project);
+      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
       final ConfigurationType[] types = runManager.getConfigurationFactories();
       for (int i = 0; i < types.length; i++) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
-        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(types[i]);
+        final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(types[i]);
         for (int j = 0; j < configurations.length; j++) {
-          final RunnerAndConfigurationSettings configuration = configurations[j];
+          final RunnerAndConfigurationSettingsImpl configuration = configurations[j];
           //if (runManager.canRunConfiguration(configuration)) {
             final MenuAction action = new MenuAction(configuration, project);
             actionGroup.add(action);
@@ -168,10 +168,10 @@ public class RunConfigurationAction extends ComboBoxAction {
   }
 
   class MenuAction extends AnAction {
-    private RunnerAndConfigurationSettings myConfiguration;
+    private RunnerAndConfigurationSettingsImpl myConfiguration;
     private Project myProject;
 
-    public MenuAction(final RunnerAndConfigurationSettings configuration, final Project project) {
+    public MenuAction(final RunnerAndConfigurationSettingsImpl configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
       String description = getConfigurationDescription(configuration.getConfiguration());
@@ -188,7 +188,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
 
     public void actionPerformed(final AnActionEvent e){
-      RunManager.getInstance(myProject).setActiveConfiguration(myConfiguration);
+      RunManagerEx.getInstanceEx(myProject).setActiveConfiguration(myConfiguration);
       updateButton(myConfiguration.getConfiguration(), myProject, e.getPresentation());
     }
 

@@ -1,9 +1,6 @@
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationInfoProvider;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -12,7 +9,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
-public abstract class RuntimeConfiguration extends RunConfigurationBase implements Cloneable {
+public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
   }
@@ -38,6 +35,14 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
   }
 
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(JavaProgramRunner runner) {
+    return null;
+  }
+
+  public boolean isGeneratedName() {
+    return false;
+  }
+
+  public String suggestedName() {
     return null;
   }
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.jar.JarFileSystemEx;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -289,7 +288,7 @@ public class JavaSdkImpl extends JavaSdk {
     for (int i = 0; i < childrenList.size(); i++){
       File child = (File)childrenList.get(i);
       String path = child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
+      jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
       if (vFile != null){
         result.add(vFile);
@@ -299,7 +298,7 @@ public class JavaSdkImpl extends JavaSdk {
     File classesZipFile = new File(new File(file, "lib"), "classes.zip");
     if((!classesZipFile.isDirectory()) && classesZipFile.exists()){
       String path = classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      ((JarFileSystemEx)jarFileSystem).setNoCopyJarForPath(path);
+      jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
       if (vFile != null){
         result.add(vFile);
@@ -324,7 +323,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
 
     if (jarfile.exists()) {
-      JarFileSystemEx jarFileSystem = (JarFileSystemEx)JarFileSystem.getInstance();
+      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
       String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "src";
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);

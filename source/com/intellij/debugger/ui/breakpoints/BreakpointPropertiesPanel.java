@@ -14,6 +14,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.UIUtil;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
@@ -131,7 +132,7 @@ public abstract class BreakpointPropertiesPanel {
       public void actionPerformed(ActionEvent e) {
         reloadClassFilters();
 
-        TreeClassChooserDialog.ClassFilter classFilter;
+        TreeClassChooser.ClassFilter classFilter;
         classFilter = createClassConditionFilter();
 
         EditClassFiltersDialog _dialog = new EditClassFiltersDialog(myProject, classFilter);
@@ -178,10 +179,10 @@ public abstract class BreakpointPropertiesPanel {
     UIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
   }
 
-  protected TreeClassChooserDialog.ClassFilter createClassConditionFilter() {
-    TreeClassChooserDialog.ClassFilter classFilter;
+  protected TreeClassChooser.ClassFilter createClassConditionFilter() {
+    TreeClassChooser.ClassFilter classFilter;
     if(myBreakpointPsiClass != null) {
-      classFilter = new TreeClassChooserDialog.ClassFilter() {
+      classFilter = new TreeClassChooser.ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
         }

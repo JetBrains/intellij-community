@@ -11,6 +11,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +29,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     myProject = project;
   }
 
-  protected TreeClassChooserDialog.ClassFilter createClassConditionFilter() {
+  protected TreeClassChooser.ClassFilter createClassConditionFilter() {
     return null;
   }
 

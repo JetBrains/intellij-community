@@ -1,6 +1,8 @@
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -143,9 +145,9 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Destination Class", myProject);
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createProjectScopeChooser("Choose Destination Class");
       chooser.selectDirectory(myContainingClass.getContainingFile().getContainingDirectory());
-      chooser.show();
+      chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
       if (aClass != null) {
         myTfTargetClassName.setText(aClass.getQualifiedName());

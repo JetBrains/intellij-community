@@ -7,6 +7,8 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -42,7 +44,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
     myClassChooser.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
-        TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Field's class", myProject, GlobalSearchScope.allScope(myProject), null, null);
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser("Choose Field's class");
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {
@@ -52,7 +54,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
             }
           }
         }
-        chooser.show();
+        chooser.showDialog();
         PsiClass selectedClass = chooser.getSelectedClass();
         if (selectedClass != null) {
           myClassChooser.setText(selectedClass.getQualifiedName());

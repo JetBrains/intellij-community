@@ -70,7 +70,7 @@ public class RunDialog extends DialogWrapper {
     super.setOKActionEnabled(isEnabled);
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title) {
+  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title) {
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, SingleConfigurationConfigurable.editSettings(configuration));
     dialog.setTitle(title);
     dialog.show();

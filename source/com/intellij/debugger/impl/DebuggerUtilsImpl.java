@@ -21,6 +21,8 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -102,8 +104,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public PsiClass chooseClassDialog(String title, Project project) {
-    TreeClassChooserDialog dialog = new TreeClassChooserDialog(title, project);
-    dialog.show();
+    TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser(title);
+    dialog.showDialog();
     return dialog.getSelectedClass();
   }
 

@@ -1,8 +1,8 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.impl.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -17,8 +17,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   protected void perform(final ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
-    final RunManager runManager = context.getRunManager();
+    RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+    final RunManagerEx runManager = context.getRunManager();
     if (configuration == null) {
       configuration = context.getConfiguration();
       if (configuration == null) return;

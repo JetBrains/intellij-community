@@ -6,6 +6,8 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -222,13 +224,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     public SearchScope getScope() {
       if (myCachedScope == null) {
-        TreeClassChooserDialog chooser = new TreeClassChooserDialog("Choose Base Class of the Hierarchy to Search In",
-                                                                    getProject(),
-                                                                    GlobalSearchScope.allScope(getProject()),
-                                                                    null,
-                                                                    null);
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createAllProjectScopeChooser("Choose Base Class of the Hierarchy to Search In");
 
-        chooser.show();
+        chooser.showDialog();
 
         PsiClass aClass = chooser.getSelectedClass();
         if (aClass == null) return null;

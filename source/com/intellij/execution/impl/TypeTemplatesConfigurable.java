@@ -6,6 +6,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -51,7 +52,7 @@ class TypeTemplatesConfigurable implements Configurable {
     final ConfigurationFactory[] factories = getFactories();
     for (int i = 0; i < factories.length; i++) {
       final ConfigurationFactory factory = factories[i];
-      final RunnerAndConfigurationSettings template = myRunManager.getConfigurationTemplate(factory);
+      final RunnerAndConfigurationSettingsImpl template = myRunManager.getConfigurationTemplate(factory);
       final Configurable configurable = new TemplateConfigurable(template);
       myConfigurables[i] = configurable;
       myTabbedPane.addTab(factory.getName(), configurable.getIcon(), configurable.createComponent(), null);
@@ -101,7 +102,7 @@ class TypeTemplatesConfigurable implements Configurable {
   private static class TemplateConfigurable extends SettingsEditorConfigurable {
     private final RunnerAndConfigurationSettings myTemplate;
 
-    public TemplateConfigurable(RunnerAndConfigurationSettings template) {
+    public TemplateConfigurable(RunnerAndConfigurationSettingsImpl template) {
       super(new ConfigurationSettingsEditor(template), template);
       myTemplate = template;
     }
