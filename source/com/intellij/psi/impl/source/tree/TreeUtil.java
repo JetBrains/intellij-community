@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -357,5 +358,9 @@ public class TreeUtil {
         child = child.getTreeNext();
       }
     }
+  }
+
+  public static ASTNode nextLeaf(final ASTNode node) {
+    return ParseUtil.nextLeaf((TreeElement)node, null);
   }
 }
