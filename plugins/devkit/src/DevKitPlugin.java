@@ -36,12 +36,18 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 public class DevKitPlugin implements ApplicationComponent {
+  private ModuleTypeManager myModuleTypeManager;
+
+  public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
+    myModuleTypeManager = moduleTypeManager;
+    myModuleTypeManager.registerModuleType(PluginModuleType.getInstance());
+  }
+
   public String getComponentName() {
     return "DevKit.Plugin";
   }
 
   public void initComponent() {
-    ModuleTypeManager.getInstance().registerModuleType(PluginModuleType.getInstance());
   }
 
   public void disposeComponent() {
