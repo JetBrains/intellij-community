@@ -87,8 +87,6 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     myResult.apply (victims);
 
-    LOG.debug (myResult.getReport());
-
     UndoManager.getInstance(myProject).undoableActionPerformed(new DummyComplexUndoableAction()); // force confirmation dialog for undo
   }
 
