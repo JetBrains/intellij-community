@@ -68,7 +68,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
-  private final Map<PsiParameter, Boolean> myParameterIsMutable = new THashMap<PsiParameter, Boolean>();
+  private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
   public static final String UNKNOWN_SYMBOL = "Cannot resolve symbol ''{0}''";
 
   private final Map<PsiMethod, PsiClass[]> myUnhandledExceptionsForMethod = new HashMap<PsiMethod, PsiClass[]>();
@@ -146,7 +146,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     mySingleImportedMethods.clear();
-    myParameterIsMutable.clear();
+    myParameterIsReassigned.clear();
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -738,8 +738,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) {
       if (resolved instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)resolved;
-        if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isMutable(variable, myFinalVarProblems, myParameterIsMutable)) {
-          myHolder.add(HighlightNamesUtil.highlightMutableVariable(variable, ref));
+        if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
+          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
         }
         else {
           myHolder.add(HighlightNamesUtil.highlightVariable(variable, ref.getReferenceNameElement()));
@@ -911,8 +911,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitVariable(PsiVariable variable) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
 
-    if (HighlightControlFlowUtil.isMutable(variable, myFinalVarProblems, myParameterIsMutable)) {
-      myHolder.add(HighlightNamesUtil.highlightMutableVariable(variable, variable.getNameIdentifier()));
+    if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
+      myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
     }
     else {
       myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));

@@ -79,8 +79,8 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor("Class", CodeInsightColors.CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor("Interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
     new AttributesDescriptor("Local variable", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor("Mutable local variable", CodeInsightColors.MUTABLE_LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor("Mutable parameter", CodeInsightColors.MUTABLE_PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor("Reassigned local variable", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor("Reassigned parameter", CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor("Instance field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
     new AttributesDescriptor("Static field", CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
     new AttributesDescriptor("Parameter", CodeInsightColors.PARAMETER_ATTRIBUTES),
@@ -113,8 +113,8 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ourTags.put("localVar", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
-    ourTags.put("mutableLocalVar", CodeInsightColors.MUTABLE_LOCAL_VARIABLE_ATTRIBUTES);
-    ourTags.put("mutableParameter", CodeInsightColors.MUTABLE_PARAMETER_ATTRIBUTES);
+    ourTags.put("reassignedLocalVar", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
+    ourTags.put("reassignedParameter", CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
     ourTags.put("static", CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
     ourTags.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
     ourTags.put("constructorCall", CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
@@ -166,14 +166,14 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
       "  public static int <static>staticField</static> = 0;\n" +
       "\n" +
-      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <mutableParameter>mutableParam</mutableParameter>) {\n" +
+      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>) {\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <field>field</field> + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
-      "    int <mutableLocalVar>mutableValue</mutableLocalVar> = this.<warning>staticField</warning>; \n" +
-      "    <mutableLocalVar>mutableValue</mutableLocalVar> ++; \n" +
+      "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning>; \n" +
+      "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +
       "    new <constructorCall>SomeClass</constructorCall>();\n" +
-      "    <mutableParameter>mutableParam</mutableParameter> = new int[2];\n" +
+      "    <reassignedParameter>reassignedParam</reassignedParameter> = new int[2];\n" +
       "  }\n" +
       "}\n" +
       "\n" +

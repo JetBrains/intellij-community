@@ -303,7 +303,7 @@
           <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
-      <option name="MUTABLE_LOCAL_VARIABLE_ATTRIBUTES">
+      <option name="REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
@@ -311,7 +311,7 @@
           <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
-      <option name="MUTABLE_PARAMETER_ATTRIBUTES">
+      <option name="REASSIGNED_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>

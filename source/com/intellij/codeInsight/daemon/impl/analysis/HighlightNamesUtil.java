@@ -88,12 +88,12 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  public static HighlightInfo highlightMutableVariable(PsiVariable variable, final PsiElement elementToHighlight) {
+  public static HighlightInfo highlightReassignedVariable(PsiVariable variable, final PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.MUTABLE_LOCAL_VARIABLE, elementToHighlight, null);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
     }
     else if (variable instanceof PsiParameter) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.MUTABLE_PARAMETER, elementToHighlight, null);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER, elementToHighlight, null);
     }
     else {
       return null;

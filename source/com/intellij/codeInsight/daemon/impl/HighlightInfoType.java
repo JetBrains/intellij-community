@@ -54,8 +54,8 @@ public interface HighlightInfoType {
   HighlightInfoType JAVA_KEYWORD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.JAVA_KEYWORD);
   HighlightInfoType ANNOTATION_NAME = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
   HighlightInfoType ANNOTATION_ATTRIBUTE_NAME = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
-  HighlightInfoType MUTABLE_LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.MUTABLE_LOCAL_VARIABLE_ATTRIBUTES);
-  HighlightInfoType MUTABLE_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.MUTABLE_PARAMETER_ATTRIBUTES);
+  HighlightInfoType REASSIGNED_LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
+  HighlightInfoType REASSIGNED_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
 
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
   HighlightInfoType OVERFLOW_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.ERRORS_ATTRIBUTES);

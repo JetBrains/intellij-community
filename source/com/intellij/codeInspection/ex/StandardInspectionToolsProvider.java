@@ -4,7 +4,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.codeInsight.i18n.StringI18nInspection;
+import com.intellij.codeInsight.i18n.I18nInspection;
 
 /**
  * @author max
@@ -45,7 +45,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode.class,
       com.intellij.codeInspection.ejb.EJBInspection.class,
 
-      StringI18nInspection.class,
+      I18nInspection.class,
 
       DependencyViolationInspection.class,
       FieldCanBeLocalInspection.class
