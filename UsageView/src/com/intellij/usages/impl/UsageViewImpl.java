@@ -654,10 +654,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private Set<Usage> getReadOnlyUsages() {
     final Set<Usage> result = new HashSet<Usage>();
-    final Collection<Usage> usages = myUsageNodes.keySet();
-    for (Iterator<Usage> i = usages.iterator(); i.hasNext();) {
-      Usage usage = i.next();
-      if (usage.isReadOnly()) {
+    final Set<Map.Entry<Usage,UsageNode>> usages = myUsageNodes.entrySet();
+    for (Iterator<Map.Entry<Usage,UsageNode>> i = usages.iterator(); i.hasNext();) {
+      Map.Entry<Usage,UsageNode> entry = i.next();
+      Usage usage = entry.getKey();
+      UsageNode node = entry.getValue();
+      if (!node.isExcluded() && usage.isReadOnly()) {
         result.add(usage);
       }
     }
