@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
@@ -260,13 +262,24 @@ public class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
-  protected void updateFileIcon(final VirtualFile file, final boolean b) {
+  protected void updateFileIcon(final VirtualFile file, final boolean useAlarm) {
     LOG.assertTrue(file != null);
-    final EditorWindow[] windows = findWindows(file);
-    if (windows != null) {
-      for (int i = 0; i < windows.length; i++) {
-        windows[i].updateFileIcon(file);
+    Runnable updateRunnable = new Runnable() {
+      public void run() {
+        final EditorWindow[] windows = findWindows(file);
+        if (windows != null) {
+          for (int i = 0; i < windows.length; i++) {
+            windows[i].updateFileIcon(file);
+          }
+        }
       }
+    };
+
+    if (useAlarm) {
+      ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.NON_MMODAL);
+    }
+    else {
+      updateRunnable.run();
     }
   }
 

@@ -1163,7 +1163,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         for (int i = openFiles.length - 1; i >= 0; i--) {
           final VirtualFile file = openFiles[i];
           LOG.assertTrue(file != null);
-          updateFileIcon(file, false);
+          updateFileIcon(file, true);
         }
       }
     }
