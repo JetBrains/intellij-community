@@ -5,6 +5,7 @@ import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.DebuggingRunnerData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -16,12 +17,20 @@ import org.jdom.Element;
  * Use is subject to license terms.
  */
 
-public class GenericDebuggerRunnerSettings implements JDOMExternalizable {
+public class GenericDebuggerRunnerSettings implements JDOMExternalizable, DebuggingRunnerData {
   public String  DEBUG_PORT = "";
   public int     TRANSPORT  = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
 
   public GenericDebuggerRunnerSettings() {
+  }
+
+  public String getDebugPort() {
+    return DEBUG_PORT;
+  }
+
+  public boolean isRemote() {
+    return !LOCAL;
   }
 
   private void updateDefaultAddress() {
