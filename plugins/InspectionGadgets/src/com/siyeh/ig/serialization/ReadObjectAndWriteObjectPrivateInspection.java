@@ -46,14 +46,15 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            if (!SerializationUtils.isReadObject(method) &&
-                    !SerializationUtils.isWriteObject(method)) {
-                return;
-            }
             if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
+
+            if(!SerializationUtils.isReadObject(method) &&
+                       !SerializationUtils.isWriteObject(method)){
+                return;
+            }
+            if(!SerializationUtils.isSerializable(aClass)){
                 return;
             }
             registerMethodError(method);

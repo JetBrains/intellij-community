@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class TextLabelInSwitchStatementInspection extends StatementInspection {
 
@@ -25,7 +22,7 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
         return new TextLabelInSwitchStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class TextLabelInSwitchStatementVisitor extends BaseInspectionVisitor {
+    private static class TextLabelInSwitchStatementVisitor extends StatementInspectionVisitor {
         private TextLabelInSwitchStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

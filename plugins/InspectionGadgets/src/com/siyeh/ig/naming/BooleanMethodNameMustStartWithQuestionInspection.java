@@ -89,7 +89,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     public String buildErrorString(PsiElement location){
-        return "Boolean method name must start with question word #loc";
+        return "Boolean method name '#ref' does not start with question word #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

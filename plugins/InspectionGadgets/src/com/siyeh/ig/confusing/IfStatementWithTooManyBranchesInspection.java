@@ -4,10 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -56,7 +53,7 @@ public class IfStatementWithTooManyBranchesInspection extends StatementInspectio
         return new IfStatementWithTooManyBranchesVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class IfStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
+    private class IfStatementWithTooManyBranchesVisitor extends StatementInspectionVisitor {
         private IfStatementWithTooManyBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -57,6 +57,9 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
+            if(hasSerialVersionUIDField(aClass)){
+                return;
+            }
             final PsiClass containingClass = aClass.getContainingClass();
             if(containingClass==null)
             {
@@ -75,9 +78,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
                     return;
                 }
             }
-            if (hasSerialVersionUIDField(aClass)) {
-                return;
-            }
+
             registerClassError(aClass);
         }
 

@@ -87,6 +87,10 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
             }
 
             final PsiClass targetClass = method.getContainingClass();
+            if(targetClass == null)
+            {
+                return;
+            }
             if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
                 return;
             }

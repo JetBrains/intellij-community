@@ -3,10 +3,7 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class AssertStatementInspection extends StatementInspection {
 
@@ -26,7 +23,7 @@ public class AssertStatementInspection extends StatementInspection {
         return new AssertStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class AssertStatementVisitor extends BaseInspectionVisitor {
+    private static class AssertStatementVisitor extends StatementInspectionVisitor {
         private AssertStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

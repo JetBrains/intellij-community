@@ -2,13 +2,10 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
 
-public class ReturnOfCollectionFieldInspection extends ExpressionInspection{
+public class ReturnOfCollectionFieldInspection extends StatementInspection{
     public String getID(){
         return "ReturnOfCollectionOrArrayField";
     }
@@ -38,7 +35,7 @@ public class ReturnOfCollectionFieldInspection extends ExpressionInspection{
     }
 
     private static class ReturnOfCollectionFieldVisitor
-            extends BaseInspectionVisitor{
+            extends StatementInspectionVisitor{
         private ReturnOfCollectionFieldVisitor(BaseInspection inspection,
                                                InspectionManager inspectionManager,
                                                boolean isOnTheFly){

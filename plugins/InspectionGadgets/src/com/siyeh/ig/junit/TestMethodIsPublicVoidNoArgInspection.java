@@ -57,7 +57,8 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
                 return;
             }
             final PsiClass targetClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
+            if (targetClass == null ||
+                        !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
                 return;
             }
             registerMethodError(method);

@@ -4,8 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -47,42 +47,40 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
 
     private SerialVersionUIDBuilder(PsiClass clazz)
     {
+        super();
         this.clazz = clazz;
         nonPrivateMethods = new HashSet();
         final PsiMethod[] methods = clazz.getMethods();
-        for (int i = 0; i < methods.length; i++)
-        {
+        for(int i = 0; i < methods.length; i++){
             final PsiMethod method = methods[i];
-            if (!method.isConstructor() && !method.hasModifierProperty(PsiModifier.PRIVATE))
-            {
-                final MemberSignature methodSignature = new MemberSignature(method);
+            if(!method.isConstructor() &&
+                       !method.hasModifierProperty(PsiModifier.PRIVATE)){
+                final MemberSignature methodSignature =
+                        new MemberSignature(method);
                 nonPrivateMethods.add(methodSignature);
             }
         }
         nonPrivateFields = new HashSet();
         final PsiField[] fields = clazz.getFields();
-        for (int i = 0; i < fields.length; i++)
-        {
+        for(int i = 0; i < fields.length; i++){
             final PsiField field = fields[i];
-            if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                !(field.hasModifierProperty(PsiModifier.STATIC) |
-                  field.hasModifierProperty(PsiModifier.TRANSIENT)))
-            {
-                final MemberSignature fieldSignature = new MemberSignature(field);
+            if(!field.hasModifierProperty(PsiModifier.PRIVATE) ||
+                       !(field.hasModifierProperty(PsiModifier.STATIC) |
+                       field.hasModifierProperty(PsiModifier.TRANSIENT))){
+                final MemberSignature fieldSignature =
+                        new MemberSignature(field);
                 nonPrivateFields.add(fieldSignature);
             }
         }
 
         staticInitializers = new ArrayList();
         final PsiClassInitializer[] initializers = clazz.getInitializers();
-        if (initializers.length > 0)
-        {
-            for (int i = 0; i < initializers.length; i++)
-            {
+        if(initializers.length > 0){
+            for(int i = 0; i < initializers.length; i++){
                 final PsiClassInitializer initializer = initializers[i];
-                final PsiModifierList modifierList = initializer.getModifierList();
-                if (modifierList.hasModifierProperty(PsiModifier.STATIC))
-                {
+                final PsiModifierList modifierList =
+                        initializer.getModifierList();
+                if(modifierList.hasModifierProperty(PsiModifier.STATIC)){
                     final MemberSignature initializerSignature =
                             MemberSignature.getStaticInitializerMemberSignature();
                     staticInitializers.add(initializerSignature);
@@ -90,14 +88,11 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
                 }
             }
         }
-        if (staticInitializers.isEmpty())
-        {
+        if(staticInitializers.isEmpty()){
             final PsiField[] psiFields = clazz.getFields();
-            for (int i = 0; i < psiFields.length; i++)
-            {
+            for(int i = 0; i < psiFields.length; i++){
                 final PsiField field = psiFields[i];
-                if (hasStaticInitializer(field))
-                {
+                if(hasStaticInitializer(field)){
                     final MemberSignature initializerSignature =
                             MemberSignature.getStaticInitializerMemberSignature();
                     staticInitializers.add(initializerSignature);
@@ -108,26 +103,21 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
 
         nonPrivateConstructors = new HashSet();
         final PsiMethod[] constructors = clazz.getConstructors();
-        if (constructors.length == 0 && !clazz.isInterface())
-        {
+        if(constructors.length == 0 && !clazz.isInterface()){
             // generated empty constructor if no constructor is defined in the source
             final MemberSignature constructorSignature;
-            if (clazz.hasModifierProperty(PsiModifier.PUBLIC))
-            {
+            if(clazz.hasModifierProperty(PsiModifier.PUBLIC)){
                 constructorSignature = MemberSignature.getPublicConstructor();
-            }
-            else
-            {
+            } else{
                 constructorSignature = MemberSignature.getPackagePrivateConstructor();
             }
             nonPrivateConstructors.add(constructorSignature);
         }
-        for (int i = 0; i < constructors.length; i++)
-        {
+        for(int i = 0; i < constructors.length; i++){
             final PsiMethod constructor = constructors[i];
-            if (!constructor.hasModifierProperty(PsiModifier.PRIVATE))
-            {
-                final MemberSignature constructorSignature = new MemberSignature(constructor);
+            if(!constructor.hasModifierProperty(PsiModifier.PRIVATE)){
+                final MemberSignature constructorSignature =
+                        new MemberSignature(constructor);
                 nonPrivateConstructors.add(constructorSignature);
             }
         }
@@ -427,7 +417,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference)
     {
         super.visitReferenceElement(reference);
-        final PsiElement parentClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+        final PsiElement parentClass = ClassUtils.getContainingClass(reference);
         if (reference.getParent() instanceof PsiTypeElement)
         {
             return;
@@ -438,7 +428,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
             return;
         }
         final PsiClass elementParentClass =
-                (PsiClass)PsiTreeUtil.getParentOfType(element, PsiClass.class);
+                ClassUtils.getContainingClass(element);
         if (elementParentClass == null ||
             !elementParentClass.equals(clazz) ||
             element.equals(parentClass))
@@ -461,13 +451,15 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
     {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
-        final PsiElement elementParentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        final PsiElement expressionParentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+        final PsiElement elementParentClass =
+                ClassUtils.getContainingClass(element);
+        final PsiElement expressionParentClass =
+                ClassUtils.getContainingClass(expression);
         if (expressionParentClass == null || expressionParentClass.equals(elementParentClass))
         {
             return;
         }
-        PsiElement parentOfParentClass = PsiTreeUtil.getParentOfType(expressionParentClass, PsiClass.class);
+        PsiElement parentOfParentClass = ClassUtils.getContainingClass(expressionParentClass);
         while (parentOfParentClass != null && !parentOfParentClass.equals(clazz))
         {
             if (!(expressionParentClass instanceof PsiAnonymousClass))
@@ -475,7 +467,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
                 getAccessMethodIndex(expressionParentClass);
             }
             getAccessMethodIndex(parentOfParentClass);
-            parentOfParentClass = PsiTreeUtil.getParentOfType(parentOfParentClass, PsiClass.class);
+            parentOfParentClass = ClassUtils.getContainingClass(parentOfParentClass);
         }
         if (element instanceof PsiField)
         {

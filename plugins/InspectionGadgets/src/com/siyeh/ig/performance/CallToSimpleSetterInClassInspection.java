@@ -2,11 +2,11 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     public String getID(){
@@ -49,8 +49,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
                 return;
             }
             final PsiClass containingClass =
-                    (PsiClass) PsiTreeUtil.getParentOfType(call,
-                                                           PsiClass.class);
+                    ClassUtils.getContainingClass(call);
             if(containingClass == null){
                 return;
             }

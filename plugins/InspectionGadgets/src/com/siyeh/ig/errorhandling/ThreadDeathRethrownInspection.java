@@ -2,10 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 public class ThreadDeathRethrownInspection extends StatementInspection{
@@ -32,7 +29,7 @@ public class ThreadDeathRethrownInspection extends StatementInspection{
     }
 
     private static class ThreadDeathRethrownVisitor
-            extends BaseInspectionVisitor{
+            extends StatementInspectionVisitor{
         private ThreadDeathRethrownVisitor(BaseInspection inspection,
                                            InspectionManager inspectionManager,
                                            boolean isOnTheFly){

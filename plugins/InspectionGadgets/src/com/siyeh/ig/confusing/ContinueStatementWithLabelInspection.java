@@ -4,10 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class ContinueStatementWithLabelInspection extends StatementInspection {
 
@@ -27,7 +24,7 @@ public class ContinueStatementWithLabelInspection extends StatementInspection {
         return new ContinueStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ContinueStatementVisitor extends BaseInspectionVisitor {
+    private static class ContinueStatementVisitor extends StatementInspectionVisitor {
         private ContinueStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

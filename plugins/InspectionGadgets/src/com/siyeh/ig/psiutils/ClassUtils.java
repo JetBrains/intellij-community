@@ -1,103 +1,104 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.openapi.project.Project;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ClassUtils {
-    private ClassUtils() {
-        super();
-    }
+
 
     private static final int NUM_IMMUTABLE_TYPES = 17;
-    private static final Set s_immutableTypes = new HashSet(NUM_IMMUTABLE_TYPES);
-    private static final Set s_primitiveNumericTypes = new HashSet(6);
-    private static final Set s_numericTypes = new HashSet(6);
+    /** @noinspection StaticCollection*/
+    private static final Set immutableTypes = new HashSet(NUM_IMMUTABLE_TYPES);
+    /** @noinspection StaticCollection*/
+    private static final Set primitiveNumericTypes = new HashSet(6);
+    /** @noinspection StaticCollection*/
+    private static final Set numericTypes = new HashSet(6);
+    /** @noinspection StaticCollection*/
+    private static final Set primitiveTypes = new HashSet(9);
+    /** @noinspection StaticCollection*/
+    private static final Set integralTypes = new HashSet(10);
 
-    static {
-        s_primitiveNumericTypes.add("byte");
-        s_primitiveNumericTypes.add("char");
-        s_primitiveNumericTypes.add("short");
-        s_primitiveNumericTypes.add("int");
-        s_primitiveNumericTypes.add("long");
-        s_primitiveNumericTypes.add("float");
-        s_primitiveNumericTypes.add("double");
+    static
+    {
+        primitiveTypes.add(PsiType.BOOLEAN);
+        primitiveTypes.add(PsiType.LONG);
+        primitiveTypes.add(PsiType.INT);
+        primitiveTypes.add(PsiType.SHORT);
+        primitiveTypes.add(PsiType.CHAR);
+        primitiveTypes.add(PsiType.BYTE);
+        primitiveTypes.add(PsiType.FLOAT);
+        primitiveTypes.add(PsiType.DOUBLE);
 
-        s_immutableTypes.add("boolean");
-        s_immutableTypes.add("char");
-        s_immutableTypes.add("short");
-        s_immutableTypes.add("int");
-        s_immutableTypes.add("long");
-        s_immutableTypes.add("float");
-        s_immutableTypes.add("double");
-        s_immutableTypes.add("byte");
-        s_immutableTypes.add("java.lang.Boolean");
-        s_immutableTypes.add("java.lang.Char");
-        s_immutableTypes.add("java.lang.Short");
-        s_immutableTypes.add("java.lang.Integer");
-        s_immutableTypes.add("java.lang.Long");
-        s_immutableTypes.add("java.lang.Float");
-        s_immutableTypes.add("java.lang.Double");
-        s_immutableTypes.add("java.lang.Byte");
-        s_immutableTypes.add("java.lang.String");
-        s_immutableTypes.add("java.awt.Font");
-        s_immutableTypes.add("java.awt.Color");
+        integralTypes.add(PsiType.LONG);
+        integralTypes.add(PsiType.INT);
+        integralTypes.add(PsiType.SHORT);
+        integralTypes.add(PsiType.CHAR);
+        integralTypes.add(PsiType.BYTE);
 
-        s_numericTypes.add("java.lang.Byte");
-        s_numericTypes.add("java.lang.Short");
-        s_numericTypes.add("java.lang.Integer");
-        s_numericTypes.add("java.lang.Long");
-        s_numericTypes.add("java.lang.Float");
-        s_numericTypes.add("java.lang.Double");
+        primitiveNumericTypes.add(PsiType.BYTE);
+        primitiveNumericTypes.add(PsiType.CHAR);
+        primitiveNumericTypes.add(PsiType.SHORT);
+        primitiveNumericTypes.add(PsiType.INT);
+        primitiveNumericTypes.add(PsiType.LONG);
+        primitiveNumericTypes.add(PsiType.FLOAT);
+        primitiveNumericTypes.add(PsiType.DOUBLE);
+
+        immutableTypes.add("boolean");
+        immutableTypes.add("char");
+        immutableTypes.add("short");
+        immutableTypes.add("int");
+        immutableTypes.add("long");
+        immutableTypes.add("float");
+        immutableTypes.add("double");
+        immutableTypes.add("byte");
+        immutableTypes.add("java.lang.Boolean");
+        immutableTypes.add("java.lang.Char");
+        immutableTypes.add("java.lang.Short");
+        immutableTypes.add("java.lang.Integer");
+        immutableTypes.add("java.lang.Long");
+        immutableTypes.add("java.lang.Float");
+        immutableTypes.add("java.lang.Double");
+        immutableTypes.add("java.lang.Byte");
+        immutableTypes.add("java.lang.String");
+        immutableTypes.add("java.awt.Font");
+        immutableTypes.add("java.awt.Color");
+
+        numericTypes.add("java.lang.Byte");
+        numericTypes.add("java.lang.Short");
+        numericTypes.add("java.lang.Integer");
+        numericTypes.add("java.lang.Long");
+        numericTypes.add("java.lang.Float");
+        numericTypes.add("java.lang.Double");
     }
 
+    private ClassUtils(){
+        super();
+    }
     public static boolean isSubclass(PsiClass aClass, String ancestorName) {
-        return isSubclass(aClass, ancestorName, new HashSet());
-    }
-
-    private static boolean isSubclass(PsiClass aClass, String ancestorName, Set alreadyChecked) {
-        PsiClass currentClass = aClass;
-        while (currentClass != null) {
-            final String className = currentClass.getQualifiedName();
-            if (className != null) {
-                if (alreadyChecked.contains(className)) {
-                    return false;
-                } else if (className.equals(ancestorName)) {
-                    return true;
-                }
-            }
-            alreadyChecked.add(className);
-            currentClass = currentClass.getSuperClass();
-        }
-        return false;
+        final PsiManager psiManager = aClass.getManager();
+        final Project project = psiManager.getProject();
+        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        final PsiClass ancestorClass = psiManager.findClass(ancestorName, scope);
+        return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, false);
     }
 
     public static boolean isPrimitive(PsiType type) {
-        return  (type!=null) &&(
-                type.equals(PsiType.BOOLEAN) ||
-                type.equals(PsiType.LONG) ||
-                type.equals(PsiType.INT) ||
-                type.equals(PsiType.SHORT) ||
-                type.equals(PsiType.CHAR) ||
-                type.equals(PsiType.BYTE) ||
-                type.equals(PsiType.FLOAT) ||
-                type.equals(PsiType.DOUBLE));
+        return  primitiveTypes.contains(type);
     }
 
     public static boolean isIntegral(PsiType type) {
-        return (type != null) && (
-                type.equals(PsiType.LONG) ||
-                type.equals(PsiType.INT) ||
-                type.equals(PsiType.SHORT) ||
-                type.equals(PsiType.CHAR) ||
-                type.equals(PsiType.BYTE));
+        return integralTypes.contains(type);
     }
 
     public static boolean isImmutable(PsiType type) {
         final String typeName = type.getCanonicalText();
-        return s_immutableTypes.contains(typeName);
+        return immutableTypes.contains(typeName);
     }
 
     private static boolean inSamePackage(PsiClass class1, PsiClass class2) {
@@ -145,12 +146,11 @@ public class ClassUtils {
 
     public static boolean isBuiltInNumericType(PsiType type) {
         final String typeName = type.getCanonicalText();
-        return s_numericTypes.contains(typeName);
+        return numericTypes.contains(typeName);
     }
 
     public static boolean isPrimitiveNumericType(PsiType type) {
-        final String typeName = type.getCanonicalText();
-        return s_primitiveNumericTypes.contains(typeName);
+        return primitiveNumericTypes.contains(type);
     }
 
     public static boolean isInnerClass(PsiClass aClass) {
@@ -165,18 +165,18 @@ public class ClassUtils {
     public static PsiClass getOutermostContainingClass(PsiClass aClass) {
         PsiClass outerClass = aClass;
         while (true) {
-            final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(outerClass, PsiClass.class);
+            final PsiClass containingClass =
+                    ClassUtils.getContainingClass(outerClass);
             if (containingClass != null) {
                 outerClass = containingClass;
             } else {
-                break;
+                return outerClass;
             }
         }
-        return outerClass;
     }
 
     public static PsiMethod getContainingMethod(PsiElement element){
-       return  (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        return (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
     public static boolean isClassVisibleFromClass(PsiClass baseClass,

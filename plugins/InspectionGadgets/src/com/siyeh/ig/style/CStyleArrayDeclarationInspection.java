@@ -70,13 +70,17 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
 
         public void visitVariable(PsiVariable var) {
             super.visitVariable(var);
+            final PsiType declaredType = var.getType();
+            if(declaredType.getArrayDimensions()==0)
+            {
+                return;
+            }
             final PsiTypeElement typeElement = var.getTypeElement();
             if (typeElement == null) {
                 return; // Could be true for enum constants.
             }
             final PsiType elementType = typeElement.getType();
-            final PsiType declared = var.getType();
-            if (elementType.equals(declared)) {
+            if (elementType.equals(declaredType)) {
                 return;
             }
             registerVariableError(var);

@@ -2,12 +2,9 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
-public class CallToNativeMethodWhileLockedInspection extends StatementInspection {
+public class CallToNativeMethodWhileLockedInspection extends ExpressionInspection {
 
     public String getDisplayName() {
         return "Call to a native method while locked";

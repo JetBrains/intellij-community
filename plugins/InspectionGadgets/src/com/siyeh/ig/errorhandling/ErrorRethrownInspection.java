@@ -3,10 +3,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 
@@ -30,7 +27,7 @@ public class ErrorRethrownInspection extends StatementInspection {
         return new ErrorRethrownVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ErrorRethrownVisitor extends BaseInspectionVisitor {
+    private static class ErrorRethrownVisitor extends StatementInspectionVisitor {
         private ErrorRethrownVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -50,6 +47,10 @@ public class ErrorRethrownInspection extends StatementInspection {
         private void checkCatchBlock(PsiParameter parameter, PsiCodeBlock catchBlock) {
             final PsiType type = parameter.getType();
             final PsiClass aClass = PsiUtil.resolveClassInType(type);
+            if(aClass == null)
+            {
+                return;
+            }
             if (!ClassUtils.isSubclass(aClass, "java.lang.Error")) {
                 return;
             }

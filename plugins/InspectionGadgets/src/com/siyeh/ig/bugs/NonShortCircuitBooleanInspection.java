@@ -23,7 +23,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Non-short-circuit boolean expression #loc";
+        return "Non-short-circuit boolean expression #ref #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {

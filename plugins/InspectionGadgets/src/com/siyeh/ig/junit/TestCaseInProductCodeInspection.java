@@ -46,11 +46,11 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
         }
 
         public void visitClass(PsiClass aClass) {
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-                return;
-            }
             if(TestUtils.isTest(aClass))
             {
+                return;
+            }
+            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
                 return;
             }
             registerClassError(aClass);

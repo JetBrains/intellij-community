@@ -161,8 +161,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
             final PsiClass methodClass =
-                    (PsiClass) PsiTreeUtil.getParentOfType(call,
-                                                           PsiClass.class);
+                    ClassUtils.getContainingClass(call);
 
             if(calledMethodClass.equals(methodClass))   // compares class types statically?
             {

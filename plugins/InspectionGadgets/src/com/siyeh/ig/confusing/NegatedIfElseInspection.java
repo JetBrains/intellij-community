@@ -65,7 +65,7 @@ public class NegatedIfElseInspection extends StatementInspection {
             replaceStatement(project, ifStatement, newStatement);
         }
     }
-    private class NegatedIfElseVisitor extends BaseInspectionVisitor {
+    private class NegatedIfElseVisitor extends StatementInspectionVisitor {
         private NegatedIfElseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -89,7 +89,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
     }
 
     public String buildErrorString(PsiElement location){
-        return "Non-boolean method name must not start with question word #loc";
+        return "Non-boolean method name '#ref' start with a question word #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

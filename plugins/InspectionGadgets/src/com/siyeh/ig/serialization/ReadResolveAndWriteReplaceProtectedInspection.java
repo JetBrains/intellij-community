@@ -44,15 +44,14 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-
-            if (!SerializationUtils.isReadResolve(method) &&
-                    !SerializationUtils.isWriteReplace(method)) {
-                return;
-            }
             if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+                return;
+            }
+            if(!SerializationUtils.isReadResolve(method) &&
+                       !SerializationUtils.isWriteReplace(method)){
+                return;
+            }
+            if(!SerializationUtils.isSerializable(aClass)){
                 return;
             }
             registerMethodError(method);

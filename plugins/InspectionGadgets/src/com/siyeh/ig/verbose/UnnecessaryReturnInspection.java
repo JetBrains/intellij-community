@@ -62,7 +62,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         }
     }
 
-    private static class UnnecessaryReturnVisitor extends BaseInspectionVisitor{
+    private static class UnnecessaryReturnVisitor extends StatementInspectionVisitor{
         private UnnecessaryReturnVisitor(BaseInspection inspection,
                                          InspectionManager inspectionManager,
                                          boolean isOnTheFly){

@@ -2,10 +2,7 @@ package com.siyeh.ig.verbose;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class UnnecessaryDefaultInspection extends StatementInspection {
 
@@ -27,7 +24,7 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
     }
 
     private static class UnnecessaryDefaultVisitor
-            extends BaseInspectionVisitor {
+            extends StatementInspectionVisitor {
         private UnnecessaryDefaultVisitor(BaseInspection inspection,
                                           InspectionManager inspectionManager,
                                           boolean isOnTheFly) {

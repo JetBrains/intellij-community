@@ -2,16 +2,19 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 
-public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor {
+public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor{
     private boolean accessed = false;
     private final PsiVariable variable;
 
-    public ArrayContentsAccessedVisitor(PsiVariable variable) {
+    public ArrayContentsAccessedVisitor(PsiVariable variable){
         super();
         this.variable = variable;
     }
 
     public void visitForeachStatement(PsiForeachStatement statement){
+        if(accessed){
+            return;
+        }
         super.visitForeachStatement(statement);
         final PsiExpression qualifier = statement.getIteratedValue();
         if(!(qualifier instanceof PsiReferenceExpression)){
@@ -28,6 +31,9 @@ public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitArrayAccessExpression(PsiArrayAccessExpression arg){
+        if(accessed){
+            return;
+        }
         super.visitArrayAccessExpression(arg);
         if(arg.getParent() instanceof PsiAssignmentExpression &&
                         ((PsiAssignmentExpression) arg.getParent()).getLExpression()
@@ -47,7 +53,7 @@ public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public boolean isAccessed() {
+    public boolean isAccessed(){
         return accessed;
     }
 }

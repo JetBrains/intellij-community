@@ -13,6 +13,7 @@ public class IOResourceInspection extends ExpressionInspection{
     public String getID(){
         return "IOResourceOpenedButNotSafelyClosed";
     }
+
     public String getDisplayName(){
         return "I/O resource opened but not safely closed";
     }
@@ -26,7 +27,7 @@ public class IOResourceInspection extends ExpressionInspection{
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
         return text +
-                " should be opened in a try block, and closed in a finally block #loc";
+                       " should be opened in a try block, and closed in a finally block #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
@@ -50,7 +51,7 @@ public class IOResourceInspection extends ExpressionInspection{
             if(parent instanceof PsiExpressionList){
                 final PsiElement grandParent = parent.getParent();
                 if(grandParent instanceof PsiNewExpression &&
-                        isIOResource((PsiNewExpression) grandParent)){
+                                isIOResource((PsiNewExpression) grandParent)){
                     return;
                 }
             }
@@ -95,9 +96,9 @@ public class IOResourceInspection extends ExpressionInspection{
         }
 
         private static boolean isArgToResourceCreation(PsiVariable boundVariable,
-                                                PsiElement scope){
+                                                       PsiElement scope){
             final UsedAsIOResourceArgVisitor visitor =
-            new UsedAsIOResourceArgVisitor(boundVariable);
+                    new UsedAsIOResourceArgVisitor(boundVariable);
             scope.accept(visitor);
             return visitor.usedAsArgToResourceCreation();
         }
@@ -122,7 +123,7 @@ public class IOResourceInspection extends ExpressionInspection{
         private static boolean containsResourceClose(PsiCodeBlock finallyBlock,
                                                      PsiVariable boundVariable){
             final StreamCloseVisitor visitor =
-            new StreamCloseVisitor(boundVariable);
+                    new StreamCloseVisitor(boundVariable);
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
@@ -137,7 +138,16 @@ public class IOResourceInspection extends ExpressionInspection{
             this.streamToClose = streamToClose;
         }
 
+        public void visitElement(PsiElement element){
+            if(!containsStreamClose){
+                super.visitElement(element);
+            }
+        }
+
         public void visitMethodCallExpression(PsiMethodCallExpression call){
+            if(containsStreamClose){
+                return;
+            }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
@@ -176,6 +186,9 @@ public class IOResourceInspection extends ExpressionInspection{
         }
 
         public void visitNewExpression(PsiNewExpression expression){
+            if(usedAsArgToResourceCreation){
+                return;
+            }
             super.visitNewExpression(expression);
             if(!isIOResource(expression)){
                 return;
@@ -207,48 +220,51 @@ public class IOResourceInspection extends ExpressionInspection{
 
     private static boolean isIOResource(PsiNewExpression expression){
         return isNonTrivialInputStream(expression) ||
-                isNonTrivialWriter(expression) ||
-                isNonTrivialReader(expression) ||
-                TypeUtils.expressionHasTypeOrSubtype("java.io.RandomAccessFile",
-                                                     expression) ||
-                isNonTrivialOutputStream(expression);
+                       isNonTrivialWriter(expression) ||
+                       isNonTrivialReader(expression) ||
+                       TypeUtils.expressionHasTypeOrSubtype("java.io.RandomAccessFile",
+                                                            expression) ||
+                       isNonTrivialOutputStream(expression);
     }
 
     private static boolean isNonTrivialOutputStream(PsiNewExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype("java.io.OutputStream",
                                                     expression)
-                && !TypeUtils.expressionHasTypeOrSubtype("java.io.ByteArrayOutputStream",
-                                                         expression);
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.ByteArrayOutputStream",
+                                                                                                            expression);
     }
 
     private static boolean isNonTrivialReader(PsiNewExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype("java.io.Reader",
                                                     expression)
-                &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayReader",
-                                                         expression)
-                && !TypeUtils.expressionHasTypeOrSubtype("java.io.StringReader",
-                                                         expression);
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayReader",
+                                                                                                            expression)
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.StringReader",
+                                                                                                            expression);
     }
 
     private static boolean isNonTrivialWriter(PsiNewExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype("java.io.Writer",
                                                     expression)
-                &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayWriter",
-                                                         expression)
-                && !TypeUtils.expressionHasTypeOrSubtype("java.io.StringWriter",
-                                                         expression);
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayWriter",
+                                                                                                            expression)
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.StringWriter",
+                                                                                                            expression);
     }
 
     private static boolean isNonTrivialInputStream(PsiNewExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype("java.io.InputStream",
                                                     expression)
-                &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.ByteArrayInputStream",
-                                                      expression)
-                &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.StringBufferInputStream",
-                                                      expression);
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.ByteArrayInputStream",
+                                                                                                            expression)
+                                                                      &&
+                                                                      !TypeUtils.expressionHasTypeOrSubtype("java.io.StringBufferInputStream",
+                                                                                                            expression);
     }
 }

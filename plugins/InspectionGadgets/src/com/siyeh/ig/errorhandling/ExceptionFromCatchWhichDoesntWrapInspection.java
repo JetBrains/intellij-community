@@ -2,10 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspection {
@@ -28,7 +25,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspec
         return new ExceptionFromCatchWhichDoesntWrapVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ExceptionFromCatchWhichDoesntWrapVisitor extends BaseInspectionVisitor {
+    private static class ExceptionFromCatchWhichDoesntWrapVisitor extends StatementInspectionVisitor {
         private ExceptionFromCatchWhichDoesntWrapVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

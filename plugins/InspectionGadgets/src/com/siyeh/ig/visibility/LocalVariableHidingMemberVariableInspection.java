@@ -89,7 +89,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
                 final PsiMethod aMethod =
-                        (PsiMethod) PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+                        (PsiMethod) PsiTreeUtil.getParentOfType(variable,
+                                                                PsiMethod.class);
                 if (aMethod == null) {
                     return;
                 }

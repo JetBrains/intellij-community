@@ -116,7 +116,7 @@ public class ForeachStatementInspection extends StatementInspection{
         return new ForeachStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ForeachStatementVisitor extends BaseInspectionVisitor{
+    private static class ForeachStatementVisitor extends StatementInspectionVisitor{
         private ForeachStatementVisitor(BaseInspection inspection,
                                         InspectionManager inspectionManager,
                                         boolean isOnTheFly){

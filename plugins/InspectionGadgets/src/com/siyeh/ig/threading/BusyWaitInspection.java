@@ -51,9 +51,8 @@ public class BusyWaitInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass methodClass = method.getContainingClass();
-            final boolean isThreadSubclass =
-                    ClassUtils.isSubclass(methodClass, "java.lang.Thread");
-            if (!isThreadSubclass) {
+            if(methodClass == null ||
+                       !ClassUtils.isSubclass(methodClass, "java.lang.Thread")){
                 return;
             }
             registerMethodCallError(expression);

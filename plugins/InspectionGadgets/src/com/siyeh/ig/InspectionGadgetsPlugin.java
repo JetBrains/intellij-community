@@ -189,11 +189,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             try{
                 final LocalInspectionTool inspection =
                         (LocalInspectionTool) aClass.newInstance();
-                if(inspection instanceof BaseInspection){
                     if(((BaseInspection) inspection).hasQuickFix()){
                         numQuickFixes++;
                     }
-                }
             } catch(InstantiationException e){
                 out.print("Couldn't instantiate ");
                 out.println(className);
@@ -361,6 +359,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
         inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
         inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
+        inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
+        inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
     }
 
     private void registerAbstractionInspections(){
@@ -423,6 +423,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
         inspectionClasses.add(InterfaceNeverImplementedInspection.class);
         inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
+        inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
+        inspectionClasses.add(MissingOverrideAnnotationInspection.class);
+        inspectionClasses.add(ExtendsAnnotationInspection.class);
     }
 
     private void registerCloneInspections(){

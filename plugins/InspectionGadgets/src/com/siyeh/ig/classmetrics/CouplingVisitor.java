@@ -4,29 +4,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 import java.util.HashSet;
 import java.util.Set;
 
 class CouplingVisitor extends PsiRecursiveElementVisitor {
-    private static final Set s_primitiveTypes = new HashSet(8);
     private boolean m_inClass = false;
-
-    static {
-        s_primitiveTypes.add("boolean");
-        s_primitiveTypes.add("byte");
-        s_primitiveTypes.add("char");
-        s_primitiveTypes.add("short");
-        s_primitiveTypes.add("int");
-        s_primitiveTypes.add("long");
-        s_primitiveTypes.add("float");
-        s_primitiveTypes.add("double");
-    }
-
-    private static boolean isPrimitiveType(String typeName) {
-        return s_primitiveTypes.contains(typeName);
-    }
-
     private final PsiClass m_class;
     private final boolean m_includeJavaClasses;
     private final boolean m_includeLibraryClasses;
@@ -144,15 +128,12 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiType baseType = type.getDeepComponentType();
-        final String baseTypeName = baseType.getCanonicalText();
-        if (isPrimitiveType(baseTypeName)) {
+        if (ClassUtils.isPrimitive(baseType)) {
             return;
         }
+        final String baseTypeName = baseType.getCanonicalText();
         final String qualifiedName = m_class.getQualifiedName();
         if (baseTypeName.equals(qualifiedName)) {
-            return;
-        }
-        if (baseTypeName.startsWith(qualifiedName + '.')) {
             return;
         }
         if (!m_includeJavaClasses &&
@@ -172,6 +153,9 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             if (LibraryUtil.classIsInLibrary(aClass)) {
                 return;
             }
+        }
+        if (baseTypeName.startsWith(qualifiedName + '.')) {
+            return;
         }
         m_dependencies.add(baseTypeName);
     }

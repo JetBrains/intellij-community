@@ -63,7 +63,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             if (sign == null) {
                 return;
             }
-            if (!(sign.getTokenType() == JavaTokenType.PLUS)) {
+            if (!(sign.getTokenType().equals(JavaTokenType.PLUS))) {
                 return;
             }
             final PsiExpression rhs = parentBinary.getROperand();

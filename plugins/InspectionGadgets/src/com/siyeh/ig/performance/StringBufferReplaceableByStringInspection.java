@@ -84,7 +84,7 @@ public class StringBufferReplaceableByStringInspection
             final VariableIsModifiedVisitor visitor =
                     new VariableIsModifiedVisitor(variable);
             context.accept(visitor);
-            return visitor.isAppendedTo();
+            return visitor.isModified();
         }
 
         private boolean isNewStringBufferOrStringBuilder(PsiExpression expression){

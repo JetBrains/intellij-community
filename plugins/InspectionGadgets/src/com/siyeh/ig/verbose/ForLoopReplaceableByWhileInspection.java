@@ -64,7 +64,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
         return new ForLoopReplaceableByWhileVisitor(this, inspectionManager, onTheFly);
     }
 
-    private  class ForLoopReplaceableByWhileVisitor extends BaseInspectionVisitor {
+    private  class ForLoopReplaceableByWhileVisitor extends StatementInspectionVisitor {
         private ForLoopReplaceableByWhileVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

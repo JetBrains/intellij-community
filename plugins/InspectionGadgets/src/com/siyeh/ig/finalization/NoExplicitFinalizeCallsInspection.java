@@ -52,7 +52,8 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
                 return;
             }
             final PsiMethod containingMethod =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+                    (PsiMethod) PsiTreeUtil.getParentOfType(expression,
+                                                            PsiMethod.class);
             final String containingMethodName = containingMethod.getName();
             final PsiParameterList parameterList = containingMethod.getParameterList();
             if ("finalize".equals(containingMethodName)

@@ -11,7 +11,7 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
 
-public class TrivialIfInspection extends ExpressionInspection{
+public class TrivialIfInspection extends StatementInspection{
     private final TrivialIfFix fix = new TrivialIfFix();
 
     public String getID(){
@@ -250,7 +250,7 @@ public class TrivialIfInspection extends ExpressionInspection{
         }
     }
 
-    private static class TrivialIfVisitor extends BaseInspectionVisitor{
+    private static class TrivialIfVisitor extends StatementInspectionVisitor{
         private TrivialIfVisitor(BaseInspection inspection,
                                  InspectionManager inspectionManager,
                                  boolean isOnTheFly){
@@ -294,7 +294,6 @@ public class TrivialIfInspection extends ExpressionInspection{
 
             if(isSimplifiableImplicitAssignmentNegated(ifStatement)){
                 registerStatementError(ifStatement);
-                return;
             }
         }
     }

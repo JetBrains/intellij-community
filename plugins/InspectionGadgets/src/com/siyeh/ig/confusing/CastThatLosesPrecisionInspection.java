@@ -2,17 +2,14 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CastThatLosesPrecisionInspection extends StatementInspection {
-
+public class CastThatLosesPrecisionInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
     private static final Map s_typePrecisions = new HashMap(7);
 
     static {
@@ -54,9 +51,6 @@ public class CastThatLosesPrecisionInspection extends StatementInspection {
 
         public void visitTypeCastExpression(PsiTypeCastExpression exp) {
             final PsiType castType = exp.getType();
-            if (castType == null) {
-                return;
-            }
             if (!ClassUtils.isPrimitiveNumericType(castType)) {
                 return;
             }
@@ -64,10 +58,6 @@ public class CastThatLosesPrecisionInspection extends StatementInspection {
             final PsiExpression operand = exp.getOperand();
 
             final PsiType operandType = operand.getType();
-            if (operandType == null) {
-                return;
-            }
-
             if (!ClassUtils.isPrimitiveNumericType(operandType)) {
                 return;
             }

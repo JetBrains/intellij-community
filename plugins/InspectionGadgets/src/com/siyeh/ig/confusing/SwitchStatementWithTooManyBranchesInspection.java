@@ -4,10 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
@@ -46,7 +43,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
         return new SwitchStatementWithTooManyBranchesVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
+    private class SwitchStatementWithTooManyBranchesVisitor extends StatementInspectionVisitor {
         private SwitchStatementWithTooManyBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

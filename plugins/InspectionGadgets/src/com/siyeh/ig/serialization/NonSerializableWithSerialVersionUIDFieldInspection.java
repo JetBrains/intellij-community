@@ -47,9 +47,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            if (SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
+
             final PsiField[] fields = aClass.getFields();
             boolean hasSerialVersionUID = false;
             for (int i = 0; i < fields.length; i++) {
@@ -59,6 +57,9 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
                 }
             }
             if (!hasSerialVersionUID) {
+                return;
+            }
+            if(SerializationUtils.isSerializable(aClass)){
                 return;
             }
             registerClassError(aClass);

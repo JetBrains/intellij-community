@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 public class MakeSerializableFix extends InspectionGadgetsFix {
     private static final Logger s_logger =
@@ -19,7 +19,7 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
     public void applyFix(Project project, ProblemDescriptor descriptor) {
         if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
         final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(nameElement, PsiClass.class);
+        final PsiClass containingClass = ClassUtils.getContainingClass(nameElement);
         final PsiManager psiManager = containingClass.getManager();
         final PsiElementFactory elementFactory = psiManager.getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);

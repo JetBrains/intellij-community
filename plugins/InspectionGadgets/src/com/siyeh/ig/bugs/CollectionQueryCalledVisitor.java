@@ -5,10 +5,13 @@ import com.intellij.psi.*;
 import java.util.HashSet;
 import java.util.Set;
 
-class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
+class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Set queryNames = new HashSet(10);
 
-    static {
+    static{
         queryNames.add("get");
         queryNames.add("contains");
         queryNames.add("containsKey");
@@ -34,13 +37,21 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
     private boolean queried = false;
     private final PsiVariable variable;
 
-    public CollectionQueryCalledVisitor(PsiVariable variable) {
+    CollectionQueryCalledVisitor(PsiVariable variable){
         super();
         this.variable = variable;
     }
 
+    public void visitElement(PsiElement element){
+        if(!queried){
+            super.visitElement(element);
+        }
+    }
 
     public void visitForeachStatement(PsiForeachStatement statement){
+        if(queried){
+            return;
+        }
         super.visitForeachStatement(statement);
         final PsiExpression qualifier = statement.getIteratedValue();
         if(!(qualifier instanceof PsiReferenceExpression)){
@@ -57,6 +68,9 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitMethodCallExpression(PsiMethodCallExpression call){
+        if(queried){
+            return;
+        }
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
@@ -87,7 +101,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public boolean isQueried() {
+    public boolean isQueried(){
         return queried;
     }
 }

@@ -5,10 +5,7 @@ import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class InfiniteLoopStatementInspection extends StatementInspection {
@@ -33,7 +30,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
         return new InfiniteLoopStatementsVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class InfiniteLoopStatementsVisitor extends BaseInspectionVisitor {
+    private static class InfiniteLoopStatementsVisitor extends StatementInspectionVisitor {
         private InfiniteLoopStatementsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

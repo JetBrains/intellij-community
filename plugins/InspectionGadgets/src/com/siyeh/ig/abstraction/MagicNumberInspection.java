@@ -18,6 +18,7 @@ public class MagicNumberInspection extends ExpressionInspection {
                 "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0L",
                 "1L", "2L", "0l", "1l", "2l", "0.0", "1.0", "0.0F", "1.0F", "0.0f", "1.0f"
             };
+    /** @noinspection StaticCollection*/
     private static final Set s_specialCaseLiterals = new HashSet(NUM_SPECIAL_CASE_LITERALS);
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
@@ -59,9 +60,6 @@ public class MagicNumberInspection extends ExpressionInspection {
         public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
             if (!ClassUtils.isPrimitiveNumericType(type)) {
                 return;
             }

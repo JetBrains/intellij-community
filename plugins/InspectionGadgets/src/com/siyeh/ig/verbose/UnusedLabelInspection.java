@@ -6,107 +6,128 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 
-public class UnusedLabelInspection extends StatementInspection {
+public class UnusedLabelInspection extends StatementInspection{
     private final UnusedLabelFix fix = new UnusedLabelFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Unused label";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Unused label #ref #loc";
     }
 
     public boolean isEnabledByDefault(){
         return true;
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
+
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
         return new UnusedLabelVisitor(this, inspectionManager, onTheFly);
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class UnusedLabelFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class UnusedLabelFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Remove unused label";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        public void applyFix(Project project, ProblemDescriptor descriptor){
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiElement label = descriptor.getPsiElement();
-            final PsiLabeledStatement statement = (PsiLabeledStatement) label.getParent();
+            final PsiLabeledStatement statement =
+                    (PsiLabeledStatement) label.getParent();
             final PsiStatement labeledStatement = statement.getStatement();
             final String statementText = labeledStatement.getText();
             replaceStatement(project, statement, statementText);
         }
     }
 
-    private static class UnusedLabelVisitor extends BaseInspectionVisitor {
-        private UnusedLabelVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class UnusedLabelVisitor extends StatementInspectionVisitor{
+        private UnusedLabelVisitor(BaseInspection inspection,
+                                   InspectionManager inspectionManager,
+                                   boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLabeledStatement(PsiLabeledStatement statement) {
-            if (containsBreakOrContinueForLabel(statement)) {
+        public void visitLabeledStatement(PsiLabeledStatement statement){
+            if(containsBreakOrContinueForLabel(statement)){
                 return;
             }
-            final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
+            final PsiIdentifier labelIdentifier =
+                    statement.getLabelIdentifier();
             registerError(labelIdentifier);
         }
 
-        private static boolean containsBreakOrContinueForLabel(PsiLabeledStatement statement) {
+        private static boolean containsBreakOrContinueForLabel(PsiLabeledStatement statement){
             final LabelFinder labelFinder = new LabelFinder(statement);
             statement.accept(labelFinder);
             return labelFinder.jumpFound();
         }
     }
 
-    private static class LabelFinder extends PsiRecursiveElementVisitor {
-        private boolean m_found = false;
-        private String m_label = null;
+    private static class LabelFinder extends PsiRecursiveElementVisitor{
+        private boolean found = false;
+        private String label = null;
 
-        private LabelFinder(PsiLabeledStatement target) {
+        private LabelFinder(PsiLabeledStatement target){
             super();
             final PsiIdentifier labelIdentifier = target.getLabelIdentifier();
-            m_label = labelIdentifier.getText();
+            label = labelIdentifier.getText();
         }
 
-        private boolean jumpFound() {
-            return m_found;
+        public void visitElement(PsiElement element){
+            if(!found){
+                super.visitElement(element);
+            }
         }
 
-        public void visitContinueStatement(PsiContinueStatement continueStatement) {
+        public void visitContinueStatement(PsiContinueStatement continueStatement){
+            if(found){
+                return;
+            }
             super.visitContinueStatement(continueStatement);
 
-            final PsiIdentifier labelIdentifier = continueStatement.getLabelIdentifier();
-            if (labelMatches(labelIdentifier)) {
-                m_found = true;
+            final PsiIdentifier labelIdentifier =
+                    continueStatement.getLabelIdentifier();
+            if(labelMatches(labelIdentifier)){
+                found = true;
             }
         }
 
-        public void visitBreakStatement(PsiBreakStatement breakStatement) {
+        public void visitBreakStatement(PsiBreakStatement breakStatement){
+            if(found){
+                return;
+            }
             super.visitBreakStatement(breakStatement);
 
-            final PsiIdentifier labelIdentifier = breakStatement.getLabelIdentifier();
+            final PsiIdentifier labelIdentifier =
+                    breakStatement.getLabelIdentifier();
 
-            if (labelMatches(labelIdentifier)) {
-                m_found = true;
+            if(labelMatches(labelIdentifier)){
+                found = true;
             }
         }
 
-        private boolean labelMatches(PsiIdentifier labelIdentifier) {
-            if (labelIdentifier == null) {
+        private boolean labelMatches(PsiIdentifier labelIdentifier){
+            if(labelIdentifier == null){
                 return false;
             }
             final String labelText = labelIdentifier.getText();
-            return labelText.equals(m_label);
+            return labelText.equals(label);
         }
 
+        private boolean jumpFound(){
+            return found;
+        }
     }
 }

@@ -5,7 +5,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 
-public class InheritanceUtil{
+class InheritanceUtil{
+    private InheritanceUtil(){
+        super();
+    }
+
     public static boolean existsMutualSubclass(PsiClass class1,
                                                       PsiClass class2){
         final String className = class1.getQualifiedName();

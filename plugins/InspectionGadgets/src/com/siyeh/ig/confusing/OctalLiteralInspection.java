@@ -27,7 +27,7 @@ public class OctalLiteralInspection extends ExpressionInspection{
     }
 
     protected String buildErrorString(PsiElement location){
-        return "Octal integer #loc";
+        return "Octal integer #ref #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

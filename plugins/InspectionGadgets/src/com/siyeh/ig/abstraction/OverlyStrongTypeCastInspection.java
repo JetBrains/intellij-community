@@ -41,9 +41,10 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     (PsiTypeCastExpression) castTypeElement.getParent();
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression);
+            final PsiExpression operand = expression.getOperand();
             final String newExpression =
                     '(' + expectedType.getPresentableText() + ')' +
-                    expression.getOperand().getText();
+                    operand.getText();
             replaceExpression(project, expression, newExpression);
         }
     }
@@ -67,11 +68,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (operandType == null) {
                 return;
             }
-            final PsiTypeElement typeElement = expression.getCastType();
-            if (typeElement == null) {
-                return;
-            }
-            final PsiType type = typeElement.getType();
+            final PsiType type = expression.getType();
             if (type == null) {
                 return;
             }
@@ -83,7 +80,8 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.equals(type)) {
                 return;
             }
-            if ("_Dummy_.__Array__".equals(expectedType.getCanonicalText())) {
+            final String expectedTypeText = expectedType.getCanonicalText();
+            if ("_Dummy_.__Array__".equals(expectedTypeText)) {
                 return;
             }
             if (expectedType.isAssignableFrom(operandType)) {
@@ -105,11 +103,13 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
-            if (TypeConversionUtil.isPrimitiveWrapper(type.getCanonicalText()) ||
-                    TypeConversionUtil.isPrimitiveWrapper(type.getCanonicalText())) {
+            final String typeText = type.getCanonicalText();
+            if (TypeConversionUtil.isPrimitiveWrapper(typeText) ||
+                    TypeConversionUtil.isPrimitiveWrapper(expectedTypeText)) {
                 return;
             }
-            registerError(typeElement);
+            final PsiTypeElement castTypeElement = expression.getCastType();
+            registerError(castTypeElement);
         }
     }
 }

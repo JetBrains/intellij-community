@@ -10,7 +10,7 @@ import com.intellij.psi.PsiThisExpression;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
-public class UnnecessaryQualifierForThisInspection extends StatementInspection {
+public class UnnecessaryQualifierForThisInspection extends ExpressionInspection {
     private final UnnecessaryThisFix fix = new UnnecessaryThisFix();
 
     public String getDisplayName() {

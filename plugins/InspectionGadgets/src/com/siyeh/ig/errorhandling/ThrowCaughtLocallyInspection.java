@@ -3,10 +3,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class ThrowCaughtLocallyInspection extends StatementInspection {
 
@@ -26,7 +23,7 @@ public class ThrowCaughtLocallyInspection extends StatementInspection {
         return new ThrowCaughtLocallyVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ThrowCaughtLocallyVisitor extends BaseInspectionVisitor {
+    private static class ThrowCaughtLocallyVisitor extends StatementInspectionVisitor {
         private ThrowCaughtLocallyVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -10,7 +10,20 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
+import java.util.Set;
+import java.util.HashSet;
+
 public class PointlessArithmeticExpressionInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
+    private static final Set arithmeticTokens = new HashSet(4);
+    static
+    {
+        arithmeticTokens.add(JavaTokenType.PLUS);
+        arithmeticTokens.add(JavaTokenType.MINUS);
+        arithmeticTokens.add(JavaTokenType.ASTERISK);
+        arithmeticTokens.add(JavaTokenType.DIV);
+    }
+
     private final PointlessArithmeticFix fix = new PointlessArithmeticFix();
 
     public String getDisplayName() {
@@ -96,16 +109,17 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
-            if (TypeUtils.expressionHasType("java.lang.String", expression)) {
+            final PsiJavaToken sign = expression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if(!arithmeticTokens.contains(tokenType))
+            {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
+            if (TypeUtils.expressionHasType("java.lang.String", expression)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
             final PsiExpression lhs = expression.getLOperand();
-            final IElementType tokenType = sign.getTokenType();
             final boolean isPointless;
             if (tokenType.equals(JavaTokenType.PLUS)) {
                 isPointless = additionExpressionIsPointless(lhs, rhs);
@@ -141,11 +155,13 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         return isOne(rhs);
     }
 
+    /** @noinspection FloatingPointEquality*/
     private static boolean isZero(PsiExpression expression) {
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value.doubleValue() == 0.0;
     }
 
+    /** @noinspection FloatingPointEquality*/
     private static boolean isOne(PsiExpression expression) {
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value.doubleValue() == 1.0;

@@ -46,7 +46,7 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
         return new UnnecessaryLabelOnBreakStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class UnnecessaryLabelOnBreakStatementVisitor extends BaseInspectionVisitor {
+    private static class UnnecessaryLabelOnBreakStatementVisitor extends StatementInspectionVisitor {
         private PsiStatement currentContainer = null;
 
         private UnnecessaryLabelOnBreakStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {

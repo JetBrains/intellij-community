@@ -43,8 +43,9 @@ public class SubtractionInCompareToInspection extends ExpressionInspection {
                 return;
             }
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(exp, PsiMethod.class);
-            if (!isCompareTo(method)) {
+                    (PsiMethod) PsiTreeUtil.getParentOfType(exp,
+                                                            PsiMethod.class);
+            if(!isCompareTo(method)) {
                 return;
             }
             registerError(exp);

@@ -5,10 +5,13 @@ import com.intellij.psi.*;
 import java.util.HashSet;
 import java.util.Set;
 
-class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
+class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Set updateNames = new HashSet(10);
 
-    static {
+    static{
         updateNames.add("add");
         updateNames.add("put");
         updateNames.add("set");
@@ -31,14 +34,22 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
     private boolean updated = false;
     private final PsiVariable variable;
 
-    public CollectionUpdateCalledVisitor(PsiVariable variable) {
+    CollectionUpdateCalledVisitor(PsiVariable variable){
         super();
         this.variable = variable;
     }
 
+    public void visitElement(PsiElement element){
+        if(!updated){
+            super.visitElement(element);
+        }
+    }
 
     public void visitMethodCallExpression(PsiMethodCallExpression call){
         super.visitMethodCallExpression(call);
+        if(updated){
+            return;
+        }
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         if(methodExpression == null){
@@ -62,7 +73,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public boolean isUpdated() {
+    public boolean isUpdated(){
         return updated;
     }
 }

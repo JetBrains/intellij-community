@@ -18,6 +18,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     public String getID(){
         return "IteratorNextCanNotThrowNoSuchElementException";
     }
+
     public String getDisplayName(){
         return "'Iterator.next()' which can't throw NoSuchElementException";
     }
@@ -95,7 +96,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
 
     private static boolean callsIteratorNext(PsiElement method){
         final CallsIteratorNextVisitor visitor =
-            new CallsIteratorNextVisitor();
+                new CallsIteratorNextVisitor();
         method.accept(visitor);
         return visitor.callsIteratorNext();
     }
@@ -104,7 +105,16 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             extends PsiRecursiveElementVisitor{
         private boolean doesCallIteratorNext = false;
 
+        public void visitElement(PsiElement element){
+            if(!doesCallIteratorNext){
+                super.visitElement(element);
+            }
+        }
+
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
+            if(doesCallIteratorNext){
+                return;
+            }
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
@@ -141,8 +151,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     private static boolean isIterator(PsiClass aClass)
     {
         final String className = aClass.getQualifiedName();
-        if("java.util.Iterator".equals(className))
-        {
+        if("java.util.Iterator".equals(className)){
             return true;
         }
         final PsiManager psiManager = aClass.getManager();

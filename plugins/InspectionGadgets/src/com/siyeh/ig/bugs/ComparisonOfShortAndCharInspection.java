@@ -4,12 +4,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
@@ -34,8 +34,6 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
 
     private static class ComparisonOfShortAndCharVisitor
             extends BaseInspectionVisitor{
-        private static final String SHORT = "short";
-        private static final String CHAR = "char";
 
         private ComparisonOfShortAndCharVisitor(BaseInspection inspection,
                                                 InspectionManager inspectionManager,
@@ -52,12 +50,14 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
+            final PsiType lhsType = lhs.getType();
             final PsiExpression rhs = expression.getROperand();
-            if(TypeUtils.expressionHasType(SHORT, lhs) &&
-                    TypeUtils.expressionHasType(CHAR, rhs)){
+            final PsiType rhsType = rhs.getType();
+            if(PsiType.SHORT.equals(lhsType)&&
+                       PsiType.CHAR.equals(rhsType)){
                 registerError(expression);
-            } else if(TypeUtils.expressionHasType(CHAR, lhs) &&
-                    TypeUtils.expressionHasType(SHORT, rhs)){
+            } else if(PsiType.CHAR.equals(lhsType) &&
+                              PsiType.SHORT.equals(rhsType)){
                 registerError(expression);
             }
         }

@@ -130,4 +130,9 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
             return (ProblemDescriptor[]) errors.toArray(new ProblemDescriptor[numErrors]);
         }
     }
+
+    public void visitWhiteSpace(PsiWhiteSpace space){
+        // none of our inspections need to do anything with white space,
+        // so this is a performance optimization
+    }
 }

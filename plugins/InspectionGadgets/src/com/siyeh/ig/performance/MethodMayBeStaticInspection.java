@@ -3,12 +3,11 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -125,6 +124,10 @@ public class MethodMayBeStaticInspection extends MethodInspection {
                 }
             }
             final PsiClass containingClass = ClassUtils.getContainingClass(method);
+            if(containingClass == null)
+            {
+                return;
+            }
             final PsiElement scope = containingClass.getScope();
             if (!(scope instanceof PsiJavaFile) &&
                     !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -145,50 +148,24 @@ public class MethodMayBeStaticInspection extends MethodInspection {
             if (superMethods.length > 0) {
                 return;
             }
-            final OverridingMethodChecker overridingMethodChecker =
-                    new OverridingMethodChecker(method);
-            if (overridingMethodChecker.hasOverridingMethods()) {
-                return;
-            }
+            // ignore overridden methods
+            final PsiElementProcessor.FindElement processor =
+                    new PsiElementProcessor.FindElement();
+            final PsiManager manager = method.getManager();
+            final PsiSearchHelper helper = manager.getSearchHelper();
+            helper.processOverridingMethods(processor, method,
+                                            GlobalSearchScope.projectScope(manager.getProject()),
+                                            true);
+            if(processor.isFound()) return;
+
             final MethodReferenceVisitor visitor = new MethodReferenceVisitor(method);
             method.accept(visitor);
             if (!visitor.areReferencesStaticallyAccessible()) {
                 return;
             }
-            // ignore overridden methods
-            PsiElementProcessor.FindElement processor = new PsiElementProcessor.FindElement();
-            final PsiManager manager = method.getManager();
-            final PsiSearchHelper helper = manager.getSearchHelper();
-            helper.processOverridingMethods(processor, method, GlobalSearchScope.projectScope(manager.getProject()), true);
-            if (processor.isFound()) return;
-          
+
             registerMethodError(method);
         }
     }
 
-    private static class OverridingMethodChecker implements Runnable {
-        private PsiMethod m_method;
-        private boolean m_hasOverridingMethods = false;
-
-        OverridingMethodChecker(PsiMethod method) {
-            super();
-            m_method = method;
-        }
-
-        public boolean hasOverridingMethods() {
-            final ProgressManager progressManager = ProgressManager.getInstance();
-            progressManager.runProcess(this, null);
-            return m_hasOverridingMethods;
-        }
-
-        public void run() {
-            final PsiManager manager = m_method.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final GlobalSearchScope resolveScope = m_method.getResolveScope();
-            final PsiMethod[] overridingMethods =
-                    searchHelper.findOverridingMethods(m_method,
-                            resolveScope, true);
-            m_hasOverridingMethods = overridingMethods.length > 0;
-        }
-    }
 }

@@ -90,7 +90,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         final PsiClass referredClass = (PsiClass) reference.resolve();
 
         final String exceptionName = referredClass.getName();
-        return "Prohibited exception '" + exceptionName + "' declared. #loc ";
+        return "Prohibited exception '#ref' declared. #loc ";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

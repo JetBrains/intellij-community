@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
 
-public class UnnecessaryThisInspection extends StatementInspection {
+public class UnnecessaryThisInspection extends ExpressionInspection {
     private final UnnecessaryThisFix fix = new UnnecessaryThisFix();
 
     public String getDisplayName() {

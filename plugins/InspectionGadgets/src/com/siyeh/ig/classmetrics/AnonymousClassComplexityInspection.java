@@ -43,7 +43,7 @@ public class AnonymousClassComplexityInspection
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int totalComplexity = calculateTotalComplexity(aClass);
-        return "Overly complex anonymous inner class(cyclomatic complexity = " + totalComplexity + ") #loc";
+        return "Overly complex anonymous inner class (cyclomatic complexity = " + totalComplexity + ") #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

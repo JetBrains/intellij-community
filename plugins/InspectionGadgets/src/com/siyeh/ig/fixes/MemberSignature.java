@@ -33,6 +33,7 @@ public class MemberSignature implements Comparable
 
     public MemberSignature(PsiField field)
     {
+        super();
         modifiers = calculateModifierBitmap(field.getModifierList());
         name = field.getName();
         signature = createTypeSignature(field.getType());
@@ -40,20 +41,19 @@ public class MemberSignature implements Comparable
 
     public MemberSignature(PsiMethod method)
     {
+        super();
         modifiers = calculateModifierBitmap(method.getModifierList());
         signature = createMethodSignature(method).replace('/', '.');
-        if (method.isConstructor())
-        {
+        if(method.isConstructor()){
             name = CONSTRUCTOR_NAME;
-        }
-        else
-        {
+        } else{
             name = method.getName();
         }
     }
 
     public MemberSignature(String name, int modifiers, String signature)
     {
+        super();
         this.name = name;
         this.modifiers = modifiers;
         this.signature = signature;

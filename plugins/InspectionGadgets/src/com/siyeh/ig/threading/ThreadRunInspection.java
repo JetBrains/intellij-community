@@ -82,9 +82,7 @@ public class ThreadRunInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass methodClass = method.getContainingClass();
-            final boolean isThreadSubclass =
-                    ClassUtils.isSubclass(methodClass, "java.lang.Thread");
-            if (!isThreadSubclass) {
+            if (!ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
                 return;
             }
             registerMethodCallError(expression);

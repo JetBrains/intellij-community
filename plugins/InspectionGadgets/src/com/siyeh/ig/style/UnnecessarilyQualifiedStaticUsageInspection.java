@@ -156,7 +156,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
                 parentClass = ClassUtils.getContainingClass(containingClass);
             }
             PsiMethod containingMethod =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+                    (PsiMethod) PsiTreeUtil.getParentOfType(expression,
+                                                            PsiMethod.class);
             while (containingMethod != null) {
                 final PsiParameterList parameterList = containingMethod.getParameterList();
                 final PsiParameter[] parameters = parameterList.getParameters();
@@ -168,7 +169,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
                     }
                 }
                 containingMethod =
-                        (PsiMethod) PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class);
+                        (PsiMethod) PsiTreeUtil.getParentOfType(containingMethod,
+                                                                PsiMethod.class);
             }
             return qualifierElement.equals(containingClass);
         }

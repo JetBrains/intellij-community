@@ -5,7 +5,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 
 public class TestUtils {
     private TestUtils() {
@@ -14,8 +13,7 @@ public class TestUtils {
 
     public static boolean isTest(PsiClass aClass) {
         final PsiManager manager = aClass.getManager();
-        final PsiFile file = (PsiFile) PsiTreeUtil.getParentOfType(aClass,
-                PsiFile.class);
+        final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
         final Project project = manager.getProject();
         return TestUtils.isTest(project, virtualFile);

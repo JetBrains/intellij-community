@@ -42,6 +42,10 @@ public class MisspelledTearDownInspection extends MethodInspection {
 
         public void visitMethod(PsiMethod method) {
             // note: no call to super
+            final String methodName = method.getName();
+            if(!"teardown".equals(methodName)){
+                return;
+            }
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;
@@ -49,10 +53,7 @@ public class MisspelledTearDownInspection extends MethodInspection {
             if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
                 return;
             }
-            final String methodName = method.getName();
-            if (!"teardown".equals(methodName)) {
-                return;
-            }
+
             registerMethodError(method);
         }
 

@@ -3,10 +3,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class SwitchStatementInspection extends StatementInspection {
 
@@ -26,7 +23,7 @@ public class SwitchStatementInspection extends StatementInspection {
         return new SwitchStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class SwitchStatementVisitor extends BaseInspectionVisitor {
+    private static class SwitchStatementVisitor extends StatementInspectionVisitor {
         private SwitchStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -196,7 +196,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgetsSVN.iml" filepath="$PROJECT_DIR$/InspectionGadgetsSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="IDEA 3260" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="IDEA 3273" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
@@ -212,6 +212,11 @@
     <option name="cycleTableSpecificationString" value="" />
   </component>
   <component name="libraryTable" />
+  <component name="org.tmatesoft.tmate.projectComponent">
+    <connections>
+      <connection name="Local Server" host="localhost" path="tmate" port="8080" />
+    </connections>
+  </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />
     <option name="COPY_FORMS_RUNTIME_TO_OUTPUT" value="true" />

@@ -12,7 +12,9 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class PublicMethodWithoutLoggingInspection extends MethodInspection{
-    /** @noinspection PublicField*/
+    /**
+         * @noinspection PublicField
+         */
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName(){
@@ -125,11 +127,17 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             extends PsiRecursiveElementVisitor{
         private boolean containsLoggingCall = false;
 
+        public void visitElement(PsiElement element){
+            if(containsLoggingCall){
+                super.visitElement(element);
+            }
+        }
+
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
             if(containsLoggingCall){
                 return;
             }
+            super.visitMethodCallExpression(expression);
             final PsiMethod method = expression.resolveMethod();
             if(method == null){
                 return;
@@ -138,7 +146,8 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             if(containingClass == null){
                 return;
             }
-            final String containingClassName = containingClass.getQualifiedName();
+            final String containingClassName =
+                    containingClass.getQualifiedName();
             if(containingClassName.equals(loggerClassName)){
                 containsLoggingCall = true;
             }

@@ -86,7 +86,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 final PsiExpression rhs = binaryExp.getROperand();
                 final String rhsText = rhs.getText();
                 final PsiJavaToken sign = binaryExp.getOperationSign();
-                if (sign.getTokenType() == JavaTokenType.MINUS) {
+                if (sign.getTokenType().equals(JavaTokenType.MINUS)) {
                     return '-' + rhsText;
                 } else {
                     return rhsText;
@@ -183,7 +183,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (sign == null) {
                 return false;
             }
-            if (!(sign.getTokenType() == JavaTokenType.EQ)) {
+            if (!(sign.getTokenType().equals(JavaTokenType.EQ))) {
                 return false;
             }
             final PsiExpression lhs = assignment.getLExpression();

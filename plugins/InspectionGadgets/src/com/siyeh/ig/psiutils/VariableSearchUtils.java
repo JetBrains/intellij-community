@@ -22,7 +22,9 @@ public class VariableSearchUtils {
     }
 
     private static boolean existsParameter(String varName, PsiElement element) {
-        PsiMethod ancestor = (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        PsiMethod ancestor =
+                (PsiMethod) PsiTreeUtil.getParentOfType(element,
+                                                        PsiMethod.class);
         while (ancestor != null) {
             final PsiParameterList paramList = ancestor.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
@@ -33,7 +35,8 @@ public class VariableSearchUtils {
                     return true;
                 }
             }
-            ancestor = (PsiMethod) PsiTreeUtil.getParentOfType(ancestor, PsiMethod.class);
+            ancestor = (PsiMethod) PsiTreeUtil.getParentOfType(ancestor,
+                                                               PsiMethod.class);
         }
         return false;
     }

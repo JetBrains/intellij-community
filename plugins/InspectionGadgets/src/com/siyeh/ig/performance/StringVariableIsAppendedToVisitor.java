@@ -13,6 +13,9 @@ public class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisito
     }
 
     public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+        if(appendedTo){
+            return;
+        }
         super.visitAssignmentExpression(assignment);
         final PsiExpression lhs = assignment.getLExpression();
         if (lhs == null) {

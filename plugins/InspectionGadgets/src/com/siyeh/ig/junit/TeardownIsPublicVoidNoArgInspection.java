@@ -44,6 +44,10 @@ public class TeardownIsPublicVoidNoArgInspection extends MethodInspection {
                 return;
             }
             final PsiClass targetClass = method.getContainingClass();
+            if(targetClass == null)
+            {
+                return;
+            }
             if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
                 return;
             }

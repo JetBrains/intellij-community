@@ -145,8 +145,10 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (m_ignoreClassObjects && (isJavaLangClass(rhs) || isJavaLangClass(lhs))) {
                 return;
             }
-            final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            if (method != null) {
+            final PsiMethod method =
+                    (PsiMethod) PsiTreeUtil.getParentOfType(expression,
+                                                            PsiMethod.class);
+            if(method != null) {
                 final String methodName = method.getName();
                 if ("equals".equals(methodName)) {
                     return;

@@ -20,7 +20,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return ".equals(\"\") can be replace by .length()==0 #loc";
+        return ".'#ref'(\"\") can be replace by .length()==0 #loc";
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {

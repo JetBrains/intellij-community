@@ -5,10 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ConfusingElseInspection extends StatementInspection {
@@ -31,7 +28,7 @@ public class ConfusingElseInspection extends StatementInspection {
         return "#ref branch may be unwrapped, or the following statements placed in the else branch, as the if branch never completes #loc";
     }
 
-    private static class UnnecessaryElseVisitor extends BaseInspectionVisitor {
+    private static class UnnecessaryElseVisitor extends StatementInspectionVisitor {
         private UnnecessaryElseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

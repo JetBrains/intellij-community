@@ -79,7 +79,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     }
 
     private static class UnnecessaryBlockStatementVisitor
-            extends BaseInspectionVisitor{
+            extends StatementInspectionVisitor{
         private UnnecessaryBlockStatementVisitor(BaseInspection inspection,
                                                  InspectionManager inspectionManager,
                                                  boolean isOnTheFly){
@@ -170,7 +170,15 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             this.exceptBlock = exceptBlock;
         }
 
+        public void visitElement(PsiElement element){
+            if(!hasConflictingDeclaration)
+                super.visitElement(element);
+        }
         public void visitCodeBlock(PsiCodeBlock block){
+            if(hasConflictingDeclaration)
+            {
+                return;
+            }
             if(block.equals(exceptBlock)){
                 return;
             }
@@ -178,6 +186,9 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         }
 
         public void visitVariable(PsiVariable variable){
+            if(hasConflictingDeclaration){
+                return;
+            }
             super.visitVariable(variable);
             if(variable.getName().equals(variableName)){
                 hasConflictingDeclaration = true;

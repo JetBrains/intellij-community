@@ -30,11 +30,11 @@ public class ConfusingMainMethodInspection extends MethodInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodNameSameAsParentClassNameVisitor(this, inspectionManager, onTheFly);
+        return new ConfusingMainMethodVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class MethodNameSameAsParentClassNameVisitor extends BaseInspectionVisitor {
-        private MethodNameSameAsParentClassNameVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ConfusingMainMethodVisitor extends BaseInspectionVisitor {
+        private ConfusingMainMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
@@ -71,7 +71,6 @@ public class ConfusingMainMethodInspection extends MethodInspection {
             final PsiType paramType = parameters[0].getType();
             if (!TypeUtils.typeEquals("java.lang.String[]", paramType)) {
                 registerMethodError(aMethod);
-                return;
             }
         }
 

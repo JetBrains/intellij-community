@@ -13,8 +13,11 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitAssignmentExpression(PsiAssignmentExpression assignment){
+        if(assigned)
+        {
+            return;
+        }
         super.visitAssignmentExpression(assignment);
-        final PsiJavaToken operationSign = assignment.getOperationSign();
         final PsiExpression arg = assignment.getLExpression();
         if(!(arg instanceof PsiArrayAccessExpression)){
             return;

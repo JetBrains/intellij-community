@@ -11,7 +11,7 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
     private final Set m_overAccessedClasses = new HashSet(2);
     private static final Integer ONE = new Integer(1);
     private static final Integer TWO = new Integer(2);
-    private PsiClass currentClass;
+    private final PsiClass currentClass;
 
     ClassAccessVisitor(PsiClass currentClass) {
         super();

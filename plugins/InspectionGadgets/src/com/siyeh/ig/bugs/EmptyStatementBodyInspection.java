@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
@@ -42,7 +39,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         return new EmptyStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class EmptyStatementVisitor extends BaseInspectionVisitor {
+    private class EmptyStatementVisitor extends StatementInspectionVisitor {
         private EmptyStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

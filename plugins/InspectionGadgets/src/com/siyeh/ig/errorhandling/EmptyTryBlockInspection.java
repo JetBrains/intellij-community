@@ -4,10 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class EmptyTryBlockInspection extends StatementInspection {
 
@@ -27,11 +24,11 @@ public class EmptyTryBlockInspection extends StatementInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EmptyFinallyBlockVisitor(this, inspectionManager, onTheFly);
+        return new EmptyTryBlockVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class EmptyFinallyBlockVisitor extends BaseInspectionVisitor {
-        private EmptyFinallyBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class EmptyTryBlockVisitor extends StatementInspectionVisitor {
+        private EmptyTryBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 

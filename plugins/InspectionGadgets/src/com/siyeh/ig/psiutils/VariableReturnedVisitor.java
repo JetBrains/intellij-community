@@ -13,6 +13,9 @@ public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
 
 
     public void visitReturnStatement(PsiReturnStatement returnStatement){
+        if(returned){
+            return;
+        }
         super.visitReturnStatement(returnStatement);
         final PsiExpression returnValue = returnStatement.getReturnValue();
         if(!(returnValue instanceof PsiReferenceExpression)){

@@ -2,10 +2,19 @@ package com.siyeh.ig.finalization;
 
 import com.intellij.psi.*;
 
-class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor {
-    private boolean m_callToSuperFinalizeFound = false;
+class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
+    private boolean callToSuperFinalizeFound = false;
+
+    public void visitElement(PsiElement element){
+        if(!callToSuperFinalizeFound){
+            super.visitElement(element);
+        }
+    }
 
     public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        if(callToSuperFinalizeFound){
+            return;
+        }
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
@@ -20,11 +29,10 @@ class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor {
         if(!"finalize".equals(methodName)){
             return;
         }
-        m_callToSuperFinalizeFound = true;
+        callToSuperFinalizeFound = true;
     }
 
-
-    public boolean isCallToSuperFinalizeFound() {
-        return m_callToSuperFinalizeFound;
+    public boolean isCallToSuperFinalizeFound(){
+        return callToSuperFinalizeFound;
     }
 }

@@ -42,15 +42,15 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
                     || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-                return;
-            }
             final PsiMethod[] methods = aClass.getMethods();
             for (int i = 0; i < methods.length; i++) {
                 final PsiMethod method = methods[i];
                 if (isTest(method)) {
                     return;
                 }
+            }
+            if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")){
+                return;
             }
             registerClassError(aClass);
         }
@@ -62,17 +62,19 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
                 return false;
             }
-            final String name = method.getName();
-            if (!name.startsWith("test")) {
-                return false;
-            }
+
             final PsiType returnType = method.getReturnType();
             if (!PsiType.VOID.equals(returnType)) {
                 return false;
             }
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            return parameters.length == 0;
+            if(parameters.length != 0){
+                return false;
+            }
+            final String name = method.getName();
+            return name.startsWith("test");
+
         }
 
     }

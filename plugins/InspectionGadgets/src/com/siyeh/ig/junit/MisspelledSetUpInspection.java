@@ -43,16 +43,17 @@ public class MisspelledSetUpInspection extends MethodInspection {
         public void visitMethod(PsiMethod method) {
             //note: no call to super
             final PsiClass aClass = method.getContainingClass();
+            final String methodName = method.getName();
+            if(!"setup".equals(methodName)){
+                return;
+            }
             if (aClass == null) {
                 return;
             }
             if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
                 return;
             }
-            final String methodName = method.getName();
-            if (!"setup".equals(methodName)) {
-                return;
-            }
+
             registerMethodError(method);
         }
 

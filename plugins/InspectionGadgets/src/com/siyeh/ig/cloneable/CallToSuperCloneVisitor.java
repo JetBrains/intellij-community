@@ -2,10 +2,19 @@ package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
 
-class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor {
-    private boolean m_callToSuperCloneFound = false;
+class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
+    private boolean callToSuperCloneFound = false;
+
+    public void visitElement(PsiElement element){
+        if(!callToSuperCloneFound){
+            super.visitElement(element);
+        }
+    }
 
     public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        if(callToSuperCloneFound){
+            return;
+        }
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
@@ -20,10 +29,10 @@ class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor {
         if(!"clone".equals(methodName)){
             return;
         }
-        m_callToSuperCloneFound = true;
+        callToSuperCloneFound = true;
     }
 
-    public boolean isCallToSuperCloneFound() {
-        return m_callToSuperCloneFound;
+    public boolean isCallToSuperCloneFound(){
+        return callToSuperCloneFound;
     }
 }

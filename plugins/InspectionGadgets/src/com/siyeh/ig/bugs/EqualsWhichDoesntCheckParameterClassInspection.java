@@ -71,7 +71,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection
             registerMethodError(method);
         }
 
-        private boolean isParameterChecked(PsiCodeBlock body,
+        private static boolean isParameterChecked(PsiCodeBlock body,
                                            PsiParameter parameter){
             final ParameterClassCheckVisitor visitor =
                     new ParameterClassCheckVisitor(parameter);

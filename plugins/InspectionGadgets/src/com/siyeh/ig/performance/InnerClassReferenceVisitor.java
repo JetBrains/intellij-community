@@ -4,27 +4,27 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 
 class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
-    private PsiClass m_innerClass;
-    private boolean m_referencesStaticallyAccessible = true;
+    private PsiClass innerClass;
+    private boolean referencesStaticallyAccessible = true;
 
     InnerClassReferenceVisitor(PsiClass innerClass) {
         super();
-        m_innerClass = innerClass;
+        this.innerClass = innerClass;
     }
 
     public boolean areReferenceStaticallyAccessible() {
-        return m_referencesStaticallyAccessible;
+        return referencesStaticallyAccessible;
     }
 
     private boolean isClassStaticallyAccessible(PsiClass aClass) {
         if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
             return true;
         }
-        if (InheritanceUtil.isInheritorOrSelf(m_innerClass, aClass, true)) {
+        if (InheritanceUtil.isInheritorOrSelf(innerClass, aClass, true)) {
             return true;
         }
         PsiClass classScope = aClass;
-        final PsiClass outerClass = (PsiClass) m_innerClass.getContext();
+        final PsiClass outerClass = (PsiClass) innerClass.getContext();
         while (classScope != null) {
             if (InheritanceUtil.isInheritorOrSelf(outerClass, classScope, true)) {
                 return false;
@@ -40,16 +40,23 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
     }
 
     public void visitThisExpression(PsiThisExpression expression){
+        if(!referencesStaticallyAccessible)
+        {
+            return;
+        }
         super.visitThisExpression(expression);
         final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
         if(qualifier == null)
         {
             return;
         }
-        m_referencesStaticallyAccessible = false;
+        referencesStaticallyAccessible = false;
     }
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+        if(!referencesStaticallyAccessible){
+            return;
+        }
         super.visitReferenceElement(referenceElement);
         final PsiElement element = referenceElement.resolve();
         if (!(element instanceof PsiClass)) {
@@ -60,11 +67,14 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         if (!(scope instanceof PsiClass)) {
             return;
         }
-        m_referencesStaticallyAccessible &=
+        referencesStaticallyAccessible &=
                 aClass.hasModifierProperty(PsiModifier.STATIC);
     }
 
     public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+        if(!referencesStaticallyAccessible){
+            return;
+        }
         super.visitReferenceExpression(referenceExpression);
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
 
@@ -87,7 +97,7 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
                 return;
             }
             final PsiClass containingClass = member.getContainingClass();
-            m_referencesStaticallyAccessible &=
+            referencesStaticallyAccessible &=
                     isClassStaticallyAccessible(containingClass);
         }
     }

@@ -9,9 +9,23 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
+import java.util.Set;
+import java.util.HashSet;
+
 public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     private final BooleanLiteralComparisonFix fix =
             new BooleanLiteralComparisonFix();
+    private static final Set booleanTokens = new HashSet(10);
+    static
+    {
+        booleanTokens.add(JavaTokenType.ANDAND);
+        booleanTokens.add(JavaTokenType.AND);
+        booleanTokens.add(JavaTokenType.OROR);
+        booleanTokens.add(JavaTokenType.OR);
+        booleanTokens.add(JavaTokenType.XOR);
+        booleanTokens.add(JavaTokenType.EQEQ);
+        booleanTokens.add(JavaTokenType.NE);
+    }
 
     public String getDisplayName(){
         return "Pointless boolean expression";
@@ -33,13 +47,11 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     public String buildErrorString(PsiElement location){
         if(location instanceof PsiBinaryExpression){
-            return "#ref can be simplified to "
-                           +
+            return "#ref can be simplified to " +
                            calculateSimplifiedBinaryExpression((PsiBinaryExpression) location) +
                            " #loc";
         } else{
-            return "#ref can be simplified to "
-                           +
+            return "#ref can be simplified to " +
                            calculateSimplifiedPrefixExpression((PsiPrefixExpression) location) +
                            " #loc";
         }
@@ -136,6 +148,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     private static class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
+
         private PointlessBooleanExpressionVisitor(BaseInspection inspection,
                                                   InspectionManager inspectionManager,
                                                   boolean isOnTheFly){
@@ -152,11 +165,13 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs == null){
+            final IElementType tokenType = sign.getTokenType();
+            if(!booleanTokens.contains(tokenType))
+            {
                 return;
             }
 
+            final PsiExpression rhs = expression.getROperand();
             final PsiType rhsType = rhs.getType();
             if(rhsType == null){
                 return;
@@ -174,7 +189,6 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                        !"java.lang.Boolean".equals(lhsType.getCanonicalText())){
                 return;
             }
-            final IElementType tokenType = sign.getTokenType();
             final boolean isPointless;
             if(tokenType.equals(JavaTokenType.EQEQ) ||
                        tokenType.equals(JavaTokenType.NE)){

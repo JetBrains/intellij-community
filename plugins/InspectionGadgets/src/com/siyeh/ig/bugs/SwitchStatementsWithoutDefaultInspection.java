@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
@@ -14,7 +11,7 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
     public String getID(){
         return "SwitchStatementWithoutDefaultBranch";
     }
-    private boolean m_ignoreFullyCoveredEnums = true;
+    public boolean m_ignoreFullyCoveredEnums = true;
 
     public String getDisplayName() {
         return "'switch' statement without 'default' branch";
@@ -37,7 +34,7 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
         return new SwitchStatementsWithoutDefaultVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class SwitchStatementsWithoutDefaultVisitor extends BaseInspectionVisitor {
+    private class SwitchStatementsWithoutDefaultVisitor extends StatementInspectionVisitor {
         private SwitchStatementsWithoutDefaultVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -41,10 +41,14 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if(aClass == null)
+            {
                 return;
             }
             if (isTrivial(method)) {
+                return;
+            }
+            if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")){
                 return;
             }
             registerMethodError(method);

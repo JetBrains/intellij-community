@@ -21,7 +21,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Instantiating a #ref with default run() method #loc";
+        return "Instantiating a #ref with default 'run()' method #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
@@ -69,7 +69,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
                     return;
                 }
                 for(int i = 0; i < args.length; i++){
-                    if(TypeUtils.expressionHasType("java.lang.Runnable",
+                    if(TypeUtils.expressionHasTypeOrSubtype("java.lang.Runnable",
                                                    args[i])){
                         return;
                     }
@@ -101,7 +101,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
                     return;
                 }
                 for(int i = 0; i < args.length; i++){
-                    if(TypeUtils.expressionHasType("java.lang.Runnable",
+                    if(TypeUtils.expressionHasTypeOrSubtype("java.lang.Runnable",
                                                    args[i])){
                         return;
                     }

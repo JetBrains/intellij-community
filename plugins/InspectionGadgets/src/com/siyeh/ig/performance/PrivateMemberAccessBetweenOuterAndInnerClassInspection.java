@@ -2,12 +2,12 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
@@ -101,13 +101,12 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 return;
             }
             final PsiElement containingClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                    ClassUtils.getContainingClass(expression);
             if(containingClass == null){
                 return;
             }
             final PsiClass memberClass =
-                    (PsiClass) PsiTreeUtil.getParentOfType(member,
-                                                           PsiClass.class);
+                    ClassUtils.getContainingClass(member);
             if(memberClass.equals(containingClass)){
                 return;
             }

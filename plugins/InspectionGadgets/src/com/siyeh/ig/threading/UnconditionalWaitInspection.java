@@ -18,7 +18,7 @@ public class UnconditionalWaitInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Unconditional call to #ref() #loc";
+        return "Unconditional call to '#ref()' #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

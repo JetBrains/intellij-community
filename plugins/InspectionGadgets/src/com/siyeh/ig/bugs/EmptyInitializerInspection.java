@@ -1,10 +1,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -41,7 +38,8 @@ public class EmptyInitializerInspection extends StatementInspection {
             if (!codeBlockIsEmpty(body)) {
                 return;
             }
-            registerError(body.getLBrace());
+            final PsiJavaToken startingBrace = body.getLBrace();
+            registerError(startingBrace);
         }
 
 

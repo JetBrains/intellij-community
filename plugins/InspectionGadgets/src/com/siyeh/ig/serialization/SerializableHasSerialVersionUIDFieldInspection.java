@@ -56,6 +56,17 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
+            final PsiField[] fields = aClass.getFields();
+            boolean hasSerialVersionUID = false;
+            for(int i = 0; i < fields.length; i++){
+                final PsiField field = fields[i];
+                if(isSerialVersionUID(field)){
+                    hasSerialVersionUID = true;
+                }
+            }
+            if(hasSerialVersionUID){
+                return;
+            }
             if (m_ignoreSerializableDueToInheritance) {
                 if (!SerializationUtils.isDirectlySerializable(aClass)) {
                     return;
@@ -65,17 +76,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
                     return;
                 }
             }
-            final PsiField[] fields = aClass.getFields();
-            boolean hasSerialVersionUID = false;
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (isSerialVersionUID(field)) {
-                    hasSerialVersionUID = true;
-                }
-            }
-            if (hasSerialVersionUID) {
-                return;
-            }
+
             registerClassError(aClass);
         }
 

@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class LoopStatementsThatDontLoopInspection extends StatementInspection {
@@ -32,7 +29,7 @@ public class LoopStatementsThatDontLoopInspection extends StatementInspection {
         return new LoopStatementsThatDontLoopVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class LoopStatementsThatDontLoopVisitor extends BaseInspectionVisitor {
+    private static class LoopStatementsThatDontLoopVisitor extends StatementInspectionVisitor {
         private LoopStatementsThatDontLoopVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -3,10 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -69,7 +66,7 @@ public class ReturnNullInspection extends StatementInspection {
         return new ReturnNullVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class ReturnNullVisitor extends BaseInspectionVisitor {
+    private class ReturnNullVisitor extends StatementInspectionVisitor {
         private ReturnNullVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -90,8 +87,10 @@ public class ReturnNullInspection extends StatementInspection {
             if (parent == null || !(parent instanceof PsiReturnStatement)) {
                 return;
             }
-            final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(value, PsiMethod.class);
-            if (method == null) {
+            final PsiMethod method =
+                    (PsiMethod) PsiTreeUtil.getParentOfType(value,
+                                                            PsiMethod.class);
+            if(method == null) {
                 return;
             }
             final PsiType returnType = method.getReturnType();

@@ -4,7 +4,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
@@ -24,10 +23,13 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) location.getParent().getParent();
+        final PsiReferenceExpression methodExpression = (PsiReferenceExpression) location.getParent();
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) methodExpression.getParent();
         final PsiMethod method = methodCall.resolveMethod();
-        final String declaringClass = method.getContainingClass().getName();
-        final String referencedClass = methodCall.getMethodExpression().getQualifier().getText();
+        final PsiClass containingClass = method.getContainingClass();
+        final String declaringClass = containingClass.getName();
+        final PsiElement qualifier = methodExpression.getQualifier();
+        final String referencedClass = qualifier.getText();
         return "Static method '#ref' declared on class " + declaringClass + " but referenced via class" + referencedClass + "    #loc";
     }
 
@@ -49,7 +51,8 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             final String methodName = expression.getReferenceName();
             final PsiClass containingClass = method.getContainingClass();
             final PsiExpressionList argumentList = call.getArgumentList();
-            replaceExpression(project, call, containingClass.getName() + '.' + methodName + argumentList.getText() );
+            final String containingClassName = containingClass.getName();
+            replaceExpression(project, call, containingClassName + '.' + methodName + argumentList.getText() );
         }
     }
 
@@ -65,6 +68,14 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         public void visitMethodCallExpression(PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
+            final PsiMethod method = call.resolveMethod();
+            if(method == null){
+                return;
+            }
+            if(!method.hasModifierProperty(PsiModifier.STATIC))
+            {
+                return;
+            }
             if (methodExpression == null) {
                 return;
             }
@@ -77,17 +88,14 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass referencedClass = (PsiClass) referent;
-            final PsiMethod method = call.resolveMethod();
-            if (method == null) {
-                return;
-            }
+
 
             final PsiClass declaringClass = method.getContainingClass();
             if (declaringClass.equals(referencedClass)) {
                 return;
             }
 
-            final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(call, PsiClass.class);
+            final PsiClass containingClass = ClassUtils.getContainingClass(call);
             if(!ClassUtils.isClassVisibleFromClass(containingClass, declaringClass))
             {
                 return;

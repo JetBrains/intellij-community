@@ -91,7 +91,7 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
 
         public void visitClass(PsiClass aClass) {
             //no recursion to avoid drilldown
-            if(aClass.isInterface() || aClass.isEnum()|| aClass.isInterface())
+            if(aClass.isInterface() || aClass.isEnum()|| aClass.isAnnotationType())
             {
                 return;
             }

@@ -12,6 +12,7 @@
     Empty jar file entry
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
+    Type argument which hides visible type
 
     Static inheritance quickfix
     Static import quickfix

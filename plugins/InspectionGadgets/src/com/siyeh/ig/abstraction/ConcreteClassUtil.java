@@ -4,7 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 
-public class ConcreteClassUtil {
+class ConcreteClassUtil {
     private ConcreteClassUtil() {
         super();
     }

@@ -37,28 +37,36 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
+
+            PsiField badSerialPersistentFields = null;
             final PsiField[] fields = aClass.getFields();
             for (int i = 0; i < fields.length; i++) {
                 final PsiField field = fields[i];
                 if (isSerialPersistentFields(field)) {
+
                     if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
                             !field.hasModifierProperty(PsiModifier.STATIC) ||
                             !field.hasModifierProperty(PsiModifier.FINAL)) {
-                        registerFieldError(field);
+                        badSerialPersistentFields = field;
+                        break;
                     } else {
                         final PsiType type = field.getType();
                         if (type != null) {
                             final String text = type.getCanonicalText();
-                            if (!"java.io.ObjectStreamField[]".equals(text)) {
-                                registerFieldError(field);
-                            }
+                            badSerialPersistentFields = field;
+                            break;
                         }
                     }
                 }
             }
+            if(badSerialPersistentFields == null)
+            {
+                return;
+            }
+            if(!SerializationUtils.isSerializable(aClass)){
+                return;
+            }
+            registerFieldError(badSerialPersistentFields);
         }
 
         private static boolean isSerialPersistentFields(PsiField field) {

@@ -2,10 +2,7 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class InstanceofChainInspection extends StatementInspection {
 
@@ -22,14 +19,14 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     protected String buildErrorString(PsiElement location) {
-        return "Chain of 'instanceof' checks indicates abstraction failure #loc";
+        return "Chain of 'instanceof' checks indicates abstraction failure #ref #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
         return new InstanceofChainVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class InstanceofChainVisitor extends BaseInspectionVisitor {
+    private static class InstanceofChainVisitor extends StatementInspectionVisitor {
         private InstanceofChainVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -5,10 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class NestedSwitchStatementInspection extends StatementInspection {
@@ -29,7 +26,7 @@ public class NestedSwitchStatementInspection extends StatementInspection {
         return new NestedSwitchStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class NestedSwitchStatementVisitor extends BaseInspectionVisitor {
+    private static class NestedSwitchStatementVisitor extends StatementInspectionVisitor {
         private NestedSwitchStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

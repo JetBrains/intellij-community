@@ -132,6 +132,10 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
 
         private static boolean isAssertEquals(PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+            if(methodExpression == null)
+            {
+                return false;
+            }
             final String methodName = methodExpression.getReferenceName();
             if (!"assertEquals".equals(methodName)) {
                 return false;
@@ -142,7 +146,9 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             }
 
             final PsiClass targetClass = method.getContainingClass();
-            return ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
+            return targetClass != null &&
+                           ClassUtils.isSubclass(targetClass,
+                                                 "junit.framework.Assert");
         }
 
     }

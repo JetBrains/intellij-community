@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class DefaultNotLastCaseInSwitchInspection extends StatementInspection {
 
@@ -25,7 +22,7 @@ public class DefaultNotLastCaseInSwitchInspection extends StatementInspection {
         return new DefaultNotLastCaseInSwitchVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class DefaultNotLastCaseInSwitchVisitor extends BaseInspectionVisitor {
+    private static class DefaultNotLastCaseInSwitchVisitor extends StatementInspectionVisitor {
         private DefaultNotLastCaseInSwitchVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

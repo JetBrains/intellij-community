@@ -2,10 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 import javax.swing.*;
@@ -69,7 +66,7 @@ public class UnusedCatchParameterInspection extends StatementInspection{
         return new EmptyCatchBlockVisitor(this, inspectionManager, onTheFly);
     }
 
-    private class EmptyCatchBlockVisitor extends BaseInspectionVisitor{
+    private class EmptyCatchBlockVisitor extends StatementInspectionVisitor{
         private EmptyCatchBlockVisitor(BaseInspection inspection,
                                        InspectionManager inspectionManager,
                                        boolean isOnTheFly){

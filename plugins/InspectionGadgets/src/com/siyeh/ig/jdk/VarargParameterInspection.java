@@ -5,12 +5,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
-public class VarargParameterInspection extends StatementInspection {
+public class VarargParameterInspection extends MethodInspection {
     public String getID(){
         return "VariableArgumentMethod";
     }
@@ -36,7 +33,6 @@ public class VarargParameterInspection extends StatementInspection {
         }
 
         public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {
                 return;

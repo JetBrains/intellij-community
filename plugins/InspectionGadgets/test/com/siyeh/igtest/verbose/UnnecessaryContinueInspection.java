@@ -19,6 +19,7 @@ public class UnnecessaryContinueInspection {
                 continue;
             }
     }
+
     public void foo3() {
         while (true)
         {
@@ -30,5 +31,27 @@ public class UnnecessaryContinueInspection {
         }
     }
 
+    public void foo4() {
+        while (true)
+            try {
+                if (true)
+                {
+                    continue;
+                }
+                System.out.println("");
+            } finally {
+            }
+    }
+
+    public void foo5() {
+        while (true)
+            synchronized(this) {
+                if (true)
+                {
+                    continue;
+                }
+                System.out.println("");
+            }
+    }
 
 }

@@ -8,7 +8,22 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
 
+import java.util.Set;
+import java.util.HashSet;
+
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
+    private static final Set bitwiseTokens = new HashSet(4);
+
+    static
+    {
+        bitwiseTokens.add(JavaTokenType.AND);
+        bitwiseTokens.add(JavaTokenType.OR);
+        bitwiseTokens.add(JavaTokenType.XOR);
+        bitwiseTokens.add(JavaTokenType.LTLT);
+        bitwiseTokens.add(JavaTokenType.GTGT);
+        bitwiseTokens.add(JavaTokenType.GTGTGT);
+    }
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
     public String getDisplayName() {
@@ -97,14 +112,21 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         }
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            final PsiJavaToken sign = expression.getOperationSign();
+            if(sign == null){
+                return;
+            }
+            final IElementType tokenType = sign.getTokenType();
+            if(!bitwiseTokens.contains(tokenType))
+            {
+                return;
+            }
+
             final PsiType expressionType = expression.getType();
             if (expressionType == null) {
                 return;
             }
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
+
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
                 return;
@@ -130,7 +152,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
                     "java.lang.Boolean".equals(lhsType.getCanonicalText())) {
                 return;
             }
-            final IElementType tokenType = sign.getTokenType();
             final boolean isPointless;
             if (tokenType.equals(JavaTokenType.AND)) {
                 isPointless = andExpressionIsPointless(lhs, rhs, expressionType);

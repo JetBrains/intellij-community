@@ -36,15 +36,16 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
 
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
-            final String methodName = method.getName();
-            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                       !method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
             }
-            if (!methodName.startsWith("test")) {
-                return;
-            }
+
             final PsiType returnType = method.getReturnType();
             if (returnType == null) {
+                return;
+            }
+            if(!returnType.equals(PsiType.VOID)){
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
@@ -55,13 +56,16 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
             if (parameters == null) {
                 return;
             }
-            if (parameters.length != 0
-                    ||! returnType.equals(PsiType.VOID)
-                    || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (parameters.length != 0) {
+                return;
+            }
+            final String methodName = method.getName();
+            if(!methodName.startsWith("test")){
                 return;
             }
             final PsiClass targetClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
+            if (targetClass == null ||
+                        !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
                 return;
             }
             final ContainsAssertionVisitor visitor = new ContainsAssertionVisitor();

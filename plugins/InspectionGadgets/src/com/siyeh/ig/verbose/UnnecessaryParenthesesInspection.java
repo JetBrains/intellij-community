@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 
-public class UnnecessaryParenthesesInspection extends StatementInspection {
+public class UnnecessaryParenthesesInspection extends ExpressionInspection {
     private final UnnecessaryParenthesesFix fix = new UnnecessaryParenthesesFix();
 
     public String getDisplayName() {
@@ -38,7 +38,7 @@ public class UnnecessaryParenthesesInspection extends StatementInspection {
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
             if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
-            
+
             final PsiExpression exp = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = ParenthesesUtils.removeParentheses(exp);
             replaceExpression(project, exp, newExpression);

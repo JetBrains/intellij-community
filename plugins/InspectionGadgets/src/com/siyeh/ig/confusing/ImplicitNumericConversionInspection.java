@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ImplicitNumericConversionInspection extends ExpressionInspection {
-
+    /** @noinspection StaticCollection*/
     private static final Map s_typePrecisions = new HashMap(7);
 
     static {
@@ -168,7 +169,8 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             {
                 return false;
             }
-            if(!JavaTokenType.MINUS.equals(sign.getTokenType()))
+            final IElementType tokenType = sign.getTokenType();
+            if(!JavaTokenType.MINUS.equals(tokenType))
             {
                 return false;
             }
@@ -192,40 +194,21 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
         public void visitExpression(PsiExpression exp) {
             super.visitExpression(exp);
-            checkExpression(exp);
-        }
-
-        public void visitReferenceExpression(PsiReferenceExpression expression){
-            super.visitReferenceExpression(expression);
-            checkExpression(expression);
-        }
-
-        private void checkExpression(PsiExpression exp){
-            final PsiElement parent = exp.getParent();
-            if(parent!=null && parent instanceof PsiParenthesizedExpression)
-            {
-                return;
-            }
             final PsiType expressionType = exp.getType();
-            if (expressionType == null) {
-                return;
-            }
             if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
                 return;
             }
-
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(exp);
-            if (expectedType == null) {
+            final PsiElement parent = exp.getParent();
+            if(parent != null && parent instanceof PsiParenthesizedExpression){
                 return;
             }
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(exp);
             if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
-
             if (expectedType.equals(expressionType)) {
                 return;
             }
-
             if (m_ignoreWideningConversions && hasLowerPrecision(expressionType, expectedType)) {
                 return;
             }

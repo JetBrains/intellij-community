@@ -2,10 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 
 import java.util.HashSet;
@@ -32,7 +29,7 @@ public class TooBroadCatchInspection extends StatementInspection {
         return new TooBroadCatchVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class TooBroadCatchVisitor extends BaseInspectionVisitor {
+    private static class TooBroadCatchVisitor extends StatementInspectionVisitor {
         private TooBroadCatchVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

@@ -1,25 +1,37 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 
-class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor {
-    private final PsiParameter m_parameter;
-    private boolean m_used = false;
+class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
+    private final PsiParameter parameter;
+    private boolean used = false;
 
-    public CatchParameterUsedVisitor(PsiParameter variable) {
+    CatchParameterUsedVisitor(PsiParameter variable){
         super();
-        m_parameter = variable;
+        parameter = variable;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression reference) {
-        super.visitReferenceExpression(reference);
-        final PsiElement element = reference.resolve();
-        if (m_parameter.equals(element)) {
-            m_used = true;
+    public void visitElement(PsiElement element){
+        if(!used){
+            super.visitElement(element);
         }
     }
 
-    public boolean isUsed() {
-        return m_used;
+    public void visitReferenceExpression(PsiReferenceExpression reference){
+        if(used){
+            return;
+        }
+        super.visitReferenceExpression(reference);
+        final PsiElement element = reference.resolve();
+        if(parameter.equals(element)){
+            used = true;
+        }
+    }
+
+    public boolean isUsed(){
+        return used;
     }
 }

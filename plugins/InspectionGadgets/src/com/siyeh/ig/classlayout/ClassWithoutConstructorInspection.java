@@ -41,24 +41,25 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
                 final PsiManager psiManager = PsiManager.getInstance(project);
                 final PsiElementFactory factory = psiManager.getElementFactory();
                 final PsiMethod constructor = factory.createConstructor();
+                final PsiModifierList modifierList = constructor.getModifierList();
                 if(psiClass.hasModifierProperty(PsiModifier.PRIVATE))
                 {
-                    constructor.getModifierList().setModifierProperty(PsiModifier.PUBLIC, false);
-                    constructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+                    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+                    modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
                 }
                 else if(psiClass.hasModifierProperty(PsiModifier.PROTECTED))
                 {
-                    constructor.getModifierList().setModifierProperty(PsiModifier.PUBLIC, false);
-                    constructor.getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
+                    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+                    modifierList.setModifierProperty(PsiModifier.PROTECTED, true);
                 } else if(psiClass.hasModifierProperty(PsiModifier.ABSTRACT)){
-                    constructor.getModifierList()
+                    modifierList
                             .setModifierProperty(PsiModifier.PUBLIC, false);
-                    constructor.getModifierList()
+                    modifierList
                             .setModifierProperty(PsiModifier.PROTECTED, true);
                 }
                 else if(!psiClass.hasModifierProperty(PsiModifier.PUBLIC))
                 {
-                    constructor.getModifierList().setModifierProperty(PsiModifier.PUBLIC, false);
+                    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
                 }
 
                 psiClass.add(constructor);

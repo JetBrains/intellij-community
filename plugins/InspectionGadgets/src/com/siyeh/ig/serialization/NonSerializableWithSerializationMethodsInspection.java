@@ -61,14 +61,15 @@ public class NonSerializableWithSerializationMethodsInspection
             if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;
             }
-            if(SerializationUtils.isSerializable(aClass)){
-                return;
-            }
+
             final boolean hasReadObject =
                     SerializationUtils.hasReadObject(aClass);
             final boolean hasWriteObject =
                     SerializationUtils.hasWriteObject(aClass);
             if(!hasWriteObject && !hasReadObject){
+                return;
+            }
+            if(SerializationUtils.isSerializable(aClass)){
                 return;
             }
             registerClassError(aClass);

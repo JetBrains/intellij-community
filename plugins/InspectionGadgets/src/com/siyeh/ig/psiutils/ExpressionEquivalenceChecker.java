@@ -117,8 +117,7 @@ public class ExpressionEquivalenceChecker {
         final PsiExpression[] args1 = argumentList1.getExpressions();
         final PsiExpressionList argumentList2 = methodExp2.getArgumentList();
         final PsiExpression[] args2 = argumentList2.getExpressions();
-        return expressionListsAreEquivalent(args1,
-                args2);
+        return expressionListsAreEquivalent(args1, args2);
     }
 
     private static boolean newExpressionsAreEquivalent(PsiNewExpression newExp1, PsiNewExpression newExp2) {
@@ -254,7 +253,7 @@ public class ExpressionEquivalenceChecker {
             return false;
         }
         for (int i = 0; i < expressions1.length; i++) {
-            if (!expressionsAreEquivalent(expressions1[i], expressions1[i])) {
+            if (!expressionsAreEquivalent(expressions1[i], expressions2[i])) {
                 return false;
             }
         }

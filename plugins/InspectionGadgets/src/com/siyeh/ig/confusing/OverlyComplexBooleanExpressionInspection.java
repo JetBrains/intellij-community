@@ -9,7 +9,7 @@ import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 
-public class OverlyComplexBooleanExpressionInspection extends StatementInspection {
+public class OverlyComplexBooleanExpressionInspection extends ExpressionInspection {
     private static final int TERM_LIMIT = 3;
 
     /** @noinspection PublicField*/

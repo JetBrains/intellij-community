@@ -5,10 +5,7 @@ import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspection {
@@ -32,7 +29,7 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
         return new ContinueOrBreakFromFinallyBlockVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ContinueOrBreakFromFinallyBlockVisitor extends BaseInspectionVisitor {
+    private static class ContinueOrBreakFromFinallyBlockVisitor extends StatementInspectionVisitor {
         private ContinueOrBreakFromFinallyBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

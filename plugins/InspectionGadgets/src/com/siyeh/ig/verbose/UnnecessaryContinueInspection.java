@@ -42,7 +42,9 @@ public class UnnecessaryContinueInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement continueStatement =
                     returnKeywordElement.getParent();
@@ -51,7 +53,7 @@ public class UnnecessaryContinueInspection extends StatementInspection{
     }
 
     private static class UnnecessaryContinueVisitor
-            extends BaseInspectionVisitor{
+            extends StatementInspectionVisitor{
         private UnnecessaryContinueVisitor(BaseInspection inspection,
                                            InspectionManager inspectionManager,
                                            boolean isOnTheFly){
@@ -72,18 +74,19 @@ public class UnnecessaryContinueInspection extends StatementInspection{
                 body = ((PsiWhileStatement) continuedStatement).getBody();
             }
 
-            if(body == null){
-                return;
-            }
-            if(!(body instanceof PsiBlockStatement)){
-                registerStatementError(statement);
-                return;
-            }
-            final PsiCodeBlock block = ((PsiBlockStatement) body).getCodeBlock();
-            if(ControlFlowUtils.blockCompletesWithStatement(block, statement)){
-                registerStatementError(statement);
+            if(body instanceof PsiBlockStatement){
+                final PsiCodeBlock block =
+                        ((PsiBlockStatement) body).getCodeBlock();
+                if(ControlFlowUtils.blockCompletesWithStatement(block,
+                                                                statement)){
+                    registerStatementError(statement);
+                }
+            } else{
+                if(ControlFlowUtils.statementCompletesWithStatement(body,
+                                                                statement)){
+                    registerStatementError(statement);
+                }
             }
         }
-
     }
 }

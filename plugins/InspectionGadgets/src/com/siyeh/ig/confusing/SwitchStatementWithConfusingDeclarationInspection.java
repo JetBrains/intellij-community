@@ -2,10 +2,7 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,7 +34,7 @@ public class SwitchStatementWithConfusingDeclarationInspection
     }
 
     private static class SwitchStatementWithConfusingDeclarationVisitor
-            extends BaseInspectionVisitor{
+            extends StatementInspectionVisitor{
         private SwitchStatementWithConfusingDeclarationVisitor(BaseInspection inspection,
                                                                InspectionManager inspectionManager,
                                                                boolean isOnTheFly){

@@ -2,10 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +46,7 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
         return new ForLoopWithMissingComponentVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ForLoopWithMissingComponentVisitor extends BaseInspectionVisitor {
+    private static class ForLoopWithMissingComponentVisitor extends StatementInspectionVisitor {
         private ForLoopWithMissingComponentVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

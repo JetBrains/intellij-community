@@ -46,7 +46,7 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
         return new UnnecessaryLabelOnContinueStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class UnnecessaryLabelOnContinueStatementVisitor extends BaseInspectionVisitor {
+    private static class UnnecessaryLabelOnContinueStatementVisitor extends StatementInspectionVisitor {
         private PsiStatement currentContainer = null;
 
         private UnnecessaryLabelOnContinueStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {

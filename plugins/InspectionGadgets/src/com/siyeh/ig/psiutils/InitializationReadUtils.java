@@ -256,8 +256,10 @@ public class InitializationReadUtils {
                 return false;
             }
         } else if (expression instanceof PsiMethodCallExpression) {
-            final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            if (method != null) {
+            final PsiMethod method =
+                    (PsiMethod) PsiTreeUtil.getParentOfType(expression,
+                                                            PsiMethod.class);
+            if(method != null) {
                 final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) expression).getMethodExpression();
                 if (methodExpression != null) {
                     final PsiMethod calledMethod = (PsiMethod) methodExpression.resolve();

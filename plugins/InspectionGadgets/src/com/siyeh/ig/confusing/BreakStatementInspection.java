@@ -3,10 +3,7 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.*;
 
 public class BreakStatementInspection extends StatementInspection {
 
@@ -26,7 +23,7 @@ public class BreakStatementInspection extends StatementInspection {
         return new BreakStatementVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class BreakStatementVisitor extends BaseInspectionVisitor {
+    private static class BreakStatementVisitor extends StatementInspectionVisitor {
         private BreakStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

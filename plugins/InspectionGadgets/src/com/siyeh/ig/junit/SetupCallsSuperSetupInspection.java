@@ -10,21 +10,22 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 
-public class SetupCallsSuperSetupInspection extends MethodInspection {
+public class SetupCallsSuperSetupInspection extends MethodInspection{
     private final AddSuperSetUpCall fix = new AddSuperSetUpCall();
 
     public String getID(){
         return "SetUpDoesntCallSuperSetUp";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "'setUp()' doesn't call 'super.setUp()'";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.JUNIT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "#ref() doesn't call super.setUp()";
     }
 
@@ -34,7 +35,9 @@ public class SetupCallsSuperSetupInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             try{
                 final PsiElement methodName = descriptor.getPsiElement();
                 final PsiMethod method = (PsiMethod) methodName.getParent();
@@ -62,41 +65,48 @@ public class SetupCallsSuperSetupInspection extends MethodInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SetupCallsSuperSetupVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
+        return new SetupCallsSuperSetupVisitor(this, inspectionManager,
+                                               onTheFly);
     }
 
-    private static class SetupCallsSuperSetupVisitor extends BaseInspectionVisitor {
-        private SetupCallsSuperSetupVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class SetupCallsSuperSetupVisitor
+            extends BaseInspectionVisitor{
+        private SetupCallsSuperSetupVisitor(BaseInspection inspection,
+                                            InspectionManager inspectionManager,
+                                            boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
-            if (!"setUp".equals(methodName)) {
+            if(!"setUp".equals(methodName)){
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
+            if(parameterList == null){
                 return;
             }
-            if (parameterList.getParameters().length != 0) {
+            if(parameterList.getParameters().length != 0){
                 return;
             }
 
             final PsiClass targetClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
+            if(targetClass == null){
                 return;
             }
-            final CallToSuperSetupVisitor visitor = new CallToSuperSetupVisitor();
+            if(!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")){
+                return;
+            }
+            final CallToSuperSetupVisitor visitor =
+                    new CallToSuperSetupVisitor();
             method.accept(visitor);
-            if (visitor.isCallToSuperSetupFound()) {
+            if(visitor.isCallToSuperSetupFound()){
                 return;
             }
             registerMethodError(method);
         }
-
     }
-
 }

@@ -27,7 +27,6 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         if (m_inInitializer) {
-            return;
         } else if (m_inSynchronizedContext) {
             m_synchronizedAccesses.add(element);
         } else {

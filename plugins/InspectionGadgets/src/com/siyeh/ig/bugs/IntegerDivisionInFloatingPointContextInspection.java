@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IntegerDivisionInFloatingPointContextInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
     private static final Set s_integralTypes = new HashSet(10);
 
     static {

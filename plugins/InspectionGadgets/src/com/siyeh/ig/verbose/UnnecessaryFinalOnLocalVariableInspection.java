@@ -70,7 +70,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
 
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            PsiCatchSection[] catchSections = statement.getCatchSections();
+            final PsiCatchSection[] catchSections = statement.getCatchSections();
             for (int i = 0; i < catchSections.length; i++) {
                 final PsiParameter parameter = catchSections[i].getParameter();
                 final PsiCodeBlock catchBlock = catchSections[i].getCatchBlock();

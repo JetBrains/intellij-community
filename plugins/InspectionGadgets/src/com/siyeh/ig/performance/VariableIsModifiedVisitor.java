@@ -2,17 +2,25 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 
-public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor {
-    private boolean appendedTo = false;
+public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
+    private boolean modified = false;
     private final PsiVariable variable;
 
-    public VariableIsModifiedVisitor(PsiVariable variable) {
+    public VariableIsModifiedVisitor(PsiVariable variable){
         super();
         this.variable = variable;
     }
 
+    public void visitElement(PsiElement element){
+        if(!modified){
+            super.visitElement(element);
+        }
+    }
 
     public void visitMethodCallExpression(PsiMethodCallExpression call){
+        if(modified){
+            return;
+        }
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
@@ -38,12 +46,11 @@ public class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor {
                 (PsiReferenceExpression) qualifier;
         final PsiElement referent = reference.resolve();
         if(variable.equals(referent)){
-            appendedTo = true;
+            modified = true;
         }
     }
 
-
-    public boolean isAppendedTo() {
-        return appendedTo;
+    public boolean isModified(){
+        return modified;
     }
 }

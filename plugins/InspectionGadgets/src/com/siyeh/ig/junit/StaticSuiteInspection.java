@@ -36,6 +36,10 @@ public class StaticSuiteInspection extends MethodInspection {
 
         public void visitMethod(PsiMethod method) {
             //note: no call to super
+            final String methodName = method.getName();
+            if(!"suite".equals(methodName)){
+                return;
+            }
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;
@@ -43,10 +47,7 @@ public class StaticSuiteInspection extends MethodInspection {
             if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
                 return;
             }
-            final String methodName = method.getName();
-            if (!"suite".equals(methodName)) {
-                return;
-            }
+
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {
                 return;
