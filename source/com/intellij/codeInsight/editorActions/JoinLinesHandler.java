@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -256,11 +257,62 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     if (!psiManager.areElementsEquivalent(refResolved, var)) return -1;
     if (!(ref.getParent() instanceof PsiAssignmentExpression)) return -1;
     PsiAssignmentExpression assignment = (PsiAssignmentExpression) ref.getParent();
-    if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return -1;
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
     if (psiManager.getSearchHelper().findReferences(var, new LocalSearchScope(assignment.getRExpression()), false).length > 0) {
       return -1;
+    }
+
+    final PsiElementFactory factory = psiManager.getElementFactory();
+    final PsiExpression initializerExpression;
+    final IElementType originalOpSign = assignment.getOperationSign().getTokenType();
+    if (originalOpSign == JavaTokenType.EQ) {
+      initializerExpression = assignment.getRExpression();
+    }
+    else {
+      if (var.getInitializer() == null) return -1;
+      String opSign = null;
+      if (originalOpSign == JavaTokenType.ANDEQ) {
+        opSign = "&";
+      }
+      else if (originalOpSign == JavaTokenType.ASTERISKEQ) {
+        opSign = "*";
+      }
+      else if (originalOpSign == JavaTokenType.DIVEQ) {
+        opSign = "/";
+      }
+      else if (originalOpSign == JavaTokenType.GTGTEQ) {
+        opSign = ">>";
+      }
+      else if (originalOpSign == JavaTokenType.GTGTGTEQ) {
+        opSign = ">>>";
+      }
+      else if (originalOpSign == JavaTokenType.LTLTEQ) {
+        opSign = "<<";
+      }
+      else if (originalOpSign == JavaTokenType.MINUSEQ) {
+        opSign = "-";
+      }
+      else if (originalOpSign == JavaTokenType.OREQ) {
+        opSign = "|";
+      }
+      else if (originalOpSign == JavaTokenType.PERCEQ) {
+        opSign = "%";
+      }
+      else if (originalOpSign == JavaTokenType.PLUSEQ) {
+        opSign = "+";
+      }
+      else if (originalOpSign == JavaTokenType.XOREQ) {
+        opSign = "^";
+      }
+
+      try {
+        initializerExpression = factory.createExpressionFromText(var.getInitializer().getText() + opSign + assignment.getRExpression().getText(), var);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return -1;
+      }
     }
 
     PsiExpressionStatement statement = (PsiExpressionStatement) assignment.getParent();
@@ -268,9 +320,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     PsiDeclarationStatement newDecl = null;
     int startOffset = decl.getTextRange().getStartOffset();
     try {
-      newDecl = psiManager.getElementFactory().createVariableDeclarationStatement(
+      newDecl = factory.createVariableDeclarationStatement(
           var.getName(), var.getType(),
-          assignment.getRExpression()
+          initializerExpression
       );
       PsiVariable newVar = ((PsiVariable) newDecl.getDeclaredElements()[0]);
       if (var.getModifierList().getText().length() > 0) {

@@ -363,44 +363,11 @@ public class HighlightUtil {
   //@top
   static HighlightInfo checkAssignmentOperatorApplicable(PsiAssignmentExpression assignment) {
     final PsiJavaToken operationSign = assignment.getOperationSign();
-    IElementType operator = null;
-    IElementType i = operationSign.getTokenType();
-    if (i == JavaTokenType.ANDEQ) {
-      operator = JavaTokenType.AND;
-    }
-    else if (i == JavaTokenType.ASTERISKEQ) {
-      operator = JavaTokenType.ASTERISK;
-    }
-    else if (i == JavaTokenType.DIVEQ) {
-      operator = JavaTokenType.DIV;
-    }
-    else if (i == JavaTokenType.GTGTEQ) {
-      operator = JavaTokenType.GTGT;
-    }
-    else if (i == JavaTokenType.GTGTGTEQ) {
-      operator = JavaTokenType.GTGTGT;
-    }
-    else if (i == JavaTokenType.LTLTEQ) {
-      operator = JavaTokenType.LTLT;
-    }
-    else if (i == JavaTokenType.MINUSEQ) {
-      operator = JavaTokenType.MINUS;
-    }
-    else if (i == JavaTokenType.OREQ) {
-      operator = JavaTokenType.OR;
-    }
-    else if (i == JavaTokenType.PERCEQ) {
-      operator = JavaTokenType.PERC;
-    }
-    else if (i == JavaTokenType.PLUSEQ) {
-      operator = JavaTokenType.PLUS;
-    }
-    else if (i == JavaTokenType.XOREQ) {
-      operator = JavaTokenType.XOR;
-    }
-    if (operator == null) return null;
+    IElementType eqOpSign = operationSign.getTokenType();
+     IElementType opSign = convertEQtoOperation(eqOpSign);
+    if (opSign == null) return null;
     HighlightInfo errorResult = null;
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(operator, assignment.getLExpression(), assignment.getRExpression(), true)) {
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = MessageFormat.format(BINARY_OPERATOR_NOT_APPLICABLE,
                                             new Object[]{
@@ -413,6 +380,44 @@ public class HighlightUtil {
                                                       message);
     }
     return errorResult;
+  }
+
+  public static IElementType convertEQtoOperation(final IElementType eqOpSign) {
+    IElementType opSign = null;
+    if (eqOpSign == JavaTokenType.ANDEQ) {
+      opSign = JavaTokenType.AND;
+    }
+    else if (eqOpSign == JavaTokenType.ASTERISKEQ) {
+      opSign = JavaTokenType.ASTERISK;
+    }
+    else if (eqOpSign == JavaTokenType.DIVEQ) {
+      opSign = JavaTokenType.DIV;
+    }
+    else if (eqOpSign == JavaTokenType.GTGTEQ) {
+      opSign = JavaTokenType.GTGT;
+    }
+    else if (eqOpSign == JavaTokenType.GTGTGTEQ) {
+      opSign = JavaTokenType.GTGTGT;
+    }
+    else if (eqOpSign == JavaTokenType.LTLTEQ) {
+      opSign = JavaTokenType.LTLT;
+    }
+    else if (eqOpSign == JavaTokenType.MINUSEQ) {
+      opSign = JavaTokenType.MINUS;
+    }
+    else if (eqOpSign == JavaTokenType.OREQ) {
+      opSign = JavaTokenType.OR;
+    }
+    else if (eqOpSign == JavaTokenType.PERCEQ) {
+      opSign = JavaTokenType.PERC;
+    }
+    else if (eqOpSign == JavaTokenType.PLUSEQ) {
+      opSign = JavaTokenType.PLUS;
+    }
+    else if (eqOpSign == JavaTokenType.XOREQ) {
+      opSign = JavaTokenType.XOR;
+    }
+    return opSign;
   }
 
   //@top
