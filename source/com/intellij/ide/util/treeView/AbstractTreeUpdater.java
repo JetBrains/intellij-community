@@ -54,6 +54,7 @@ public class AbstractTreeUpdater {
           if (myTreeBuilder.isDisposed()) return;
 
           if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
+            myAlarm.cancelAllRequests();
             myAlarm.addRequest(this, myDelay);
             return;
           }
