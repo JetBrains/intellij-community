@@ -57,6 +57,9 @@ public abstract class OutputParser {
   }
 
   private void processParsingMessage(final Callback callback, final String filePath) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Process parsing message: " + filePath);
+    }
     int index = filePath.lastIndexOf('/');
     final String name = index >= 0 ? filePath.substring(index + 1) : filePath;
 

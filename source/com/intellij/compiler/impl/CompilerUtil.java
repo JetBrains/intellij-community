@@ -31,14 +31,6 @@ public class CompilerUtil {
     return path;
   }
 
-  public static String normalizePath(String path, char pathSeparator) {
-    int index = path.lastIndexOf(pathSeparator);
-    if (index >= 0) {
-      return path.substring(0, index).toLowerCase() + path.substring(index);
-    }
-    return path;
-  }
-
   public static boolean startsWith(String path1, String path2) {
     if (path2.length() > path1.length()) {
       return false;

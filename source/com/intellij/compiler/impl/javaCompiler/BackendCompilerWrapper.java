@@ -403,6 +403,12 @@ class BackendCompilerWrapper {
 
   private void runTransformingCompilers(final ModuleChunk chunk) {
     final Compiler[] transformers = CompilerManager.getInstance(myProject).getCompilers(JavaSourceTransformingCompiler.class);
+    if (transformers.length == 0) {
+      return;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Running transforming compilers...");
+    }
     final Module[] modules = chunk.getModules();
     for (int idx = 0; idx < transformers.length; idx++) {
       final JavaSourceTransformingCompiler transformer = (JavaSourceTransformingCompiler)transformers[idx];
@@ -501,6 +507,9 @@ class BackendCompilerWrapper {
         final Set<VirtualFile> compiledWithErrors = getFilesCompiledWithErrors();
         final FileTypeManager typeManager = FileTypeManager.getInstance();
         final String outputDirPath = outputDir.replace(File.separatorChar, '/');
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("myFileNameToSourceMap contains entries: " + myFileNameToSourceMap.size());
+        }
         for (int idx = 0; idx < sourceRoots.length; idx++) {
           final VirtualFile root = sourceRoots[idx];
           final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
@@ -633,6 +642,9 @@ class BackendCompilerWrapper {
   }
 
   private void putName(String sourceFileName, String relativePathToSource, String pathToClass) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Registering [sourceFileName, relativePathToSource, pathToClass] = [" + sourceFileName + "; " + relativePathToSource + "; " + pathToClass + "]");
+    }
     Set<Pair<String, String>> paths = myFileNameToSourceMap.get(sourceFileName);
 
     if (paths == null) {
@@ -643,33 +655,35 @@ class BackendCompilerWrapper {
   }
 
   private void updateOutputItemsList(final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) {
-    final String javaFileName = javaFile.getName();
-    if (myFileNameToSourceMap.containsKey(javaFileName)) {
-      Set<Pair<String, String>> paths = myFileNameToSourceMap.get(javaFileName);
+    final Set<Pair<String, String>> paths = myFileNameToSourceMap.get(javaFile.getName());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Checking java file " + javaFile.getPresentableUrl());
+      LOG.debug("myFileNameToSourceMap contains: " + paths);
+    }
+    if (paths != null && paths.size() > 0) {
+      final String prefix = packagePrefix != null && packagePrefix.length() > 0? packagePrefix.replace('.', '/') + "/" : "";
+      final String filePath = "/" + prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/');
 
-      if (paths != null && paths.size() > 0) {
-        final String prefix = packagePrefix != null && packagePrefix.length() > 0? packagePrefix.replace('.', '/') + "/" : "";
-        final String filePath = !SystemInfo.isFileSystemCaseSensitive ?
-                                "/" + CompilerUtil.normalizePath(prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/'), '/') :
-                                "/" + prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/');
-        for (Iterator<Pair<String, String>> it = paths.iterator(); it.hasNext();) {
-          final Pair<String, String> pair = it.next();
-          if (filePath.equals(pair.getSecond())) {
-            final String outputPath = pair.getFirst().replace(File.separatorChar, '/');
-            final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, javaFile);
-            if (realLocation != null) {
-              myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), javaFile));
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " + realLocation.getSecond() + "; " + javaFile.getPresentableUrl() + "]");
-              }
-              if (!compiledWithErrors.contains(javaFile)) {
-                mySuccesfullyCompiledJavaFiles.add(javaFile);
-              }
+      for (Iterator<Pair<String, String>> it = paths.iterator(); it.hasNext();) {
+        final Pair<String, String> pair = it.next();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Checking pair [pathToClass; relPathToSource] = [" + pair.getFirst() + "; " + pair.getSecond() + "]");
+        }
+        if (CompilerUtil.pathsEqual(filePath, pair.getSecond())) {
+          final String outputPath = pair.getFirst().replace(File.separatorChar, '/');
+          final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, javaFile);
+          if (realLocation != null) {
+            myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), javaFile));
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " + realLocation.getSecond() + "; " + javaFile.getPresentableUrl() + "]");
             }
-            else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to move to real location: " + outputPath + "; from " + outputDir);
-              }
+            if (!compiledWithErrors.contains(javaFile)) {
+              mySuccesfullyCompiledJavaFiles.add(javaFile);
+            }
+          }
+          else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Failed to move to real location: " + outputPath + "; from " + outputDir);
             }
           }
         }
@@ -691,7 +705,7 @@ class BackendCompilerWrapper {
       realOutputDir = getOutputDir(module);
     }
 
-    if (tempOutputDir.equals(realOutputDir)) { // no need to move
+    if (CompilerUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move
       myFilesToRefresh.add(new File(pathToClass));
       return new Pair<String, String>(realOutputDir, pathToClass);
     }

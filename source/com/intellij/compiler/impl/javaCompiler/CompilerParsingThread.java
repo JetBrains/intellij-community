@@ -74,7 +74,9 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
   public final String getNextLine() {
     try {
       final String line = readLine(myErrorStreamReader);
-      //System.out.println("Line read: " + line);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("LIne read: " + line);
+      }
       return TERMINATION_STRING.equals(line)? null : line;
     }
     catch(IOException e) {
