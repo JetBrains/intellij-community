@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -15,11 +16,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.*;
@@ -41,11 +40,15 @@ import java.util.*;
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
   private List<HighlightInfo> myResult = new SmartList<HighlightInfo>();
+  private RefCountHolder myRefCountHolder;
 
   private static boolean ourDoJaxpTesting;
-  private static final Key<HashMap<String,XmlTag>> ID_TO_TAG_MAP_KEY = Key.create("ID_TO_TAG_MAP");
 
   public XmlHighlightVisitor() {
+  }
+
+  public void setRefCountHolder(final RefCountHolder refCountHolder) {
+    myRefCountHolder = refCountHolder;
   }
 
   public List<HighlightInfo> getResult() {
@@ -54,6 +57,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void clearResult() {
     myResult.clear();
+    myRefCountHolder = null;
   }
 
   private static void addElementsForTag(XmlTag tag,
@@ -425,16 +429,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     if (attributeDescriptor.hasIdType()) {
-      HashMap<String,XmlTag> idToTagMap = getIdToTagMap(tag);
-
       String unquotedValue = getUnquotedValue(value, tag);
-      final XmlTag xmlTag = idToTagMap.get(unquotedValue);
+      final XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
 
       if (xmlTag == null ||
           !xmlTag.isValid() ||
           xmlTag == tag
          ) {
-        idToTagMap.put(unquotedValue,tag);
+        myRefCountHolder.registerTagWithId(unquotedValue,tag);
       } else {
         XmlAttribute anotherTagIdValue = xmlTag.getAttribute("id", null);
 
@@ -454,23 +456,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           return;
         } else {
           // tag previously has that id
-          idToTagMap.put(unquotedValue,tag);
+          myRefCountHolder.registerTagWithId(unquotedValue,tag);
         }
-      }
-    }
-
-    if (attributeDescriptor.hasIdRefType()) {
-      HashMap<String,XmlTag> idToTagMap = getIdToTagMap(tag);
-
-      String unquotedValue = getUnquotedValue(value, tag);
-      final XmlTag xmlTag = idToTagMap.get(unquotedValue);
-
-      if (xmlTag == null || !xmlTag.isValid()) {
-        myResult.add(HighlightInfo.createHighlightInfo(
-          HighlightInfoType.WRONG_REF,
-            value,
-            "Invalid id reference")
-        );
       }
     }
 
@@ -479,6 +466,33 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     checkReferences(value, quickFixProvider);
 
+  }
+
+  public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
+    if (!(value.getParent() instanceof XmlAttribute)) return null;
+    XmlAttribute attribute = (XmlAttribute)value.getParent();
+
+    XmlTag tag = attribute.getParent();
+
+    final XmlElementDescriptor elementDescriptor = tag.getDescriptor();
+    if (elementDescriptor == null) return null;
+    final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
+    if (attributeDescriptor == null) return null;
+
+    if (attributeDescriptor.hasIdRefType()) {
+      String unquotedValue = getUnquotedValue(value, tag);
+      final XmlTag xmlTag = holder.getTagById(unquotedValue);
+
+      if (xmlTag == null || !xmlTag.isValid()) {
+        return HighlightInfo.createHighlightInfo(
+          HighlightInfoType.WRONG_REF,
+            value,
+            "Invalid id reference"
+        );
+      }
+    }
+
+    return null;
   }
 
   private static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
@@ -497,17 +511,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     return unquotedValue;
-  }
-
-  private static HashMap<String, XmlTag> getIdToTagMap(XmlTag tag) {
-    XmlDocument document = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
-
-    HashMap<String,XmlTag> idToTagMap = document.getUserData(ID_TO_TAG_MAP_KEY);
-    if (idToTagMap==null) {
-      idToTagMap = new HashMap<String, XmlTag>();
-      document.putUserData(ID_TO_TAG_MAP_KEY,idToTagMap);
-    }
-    return idToTagMap;
   }
 
   private void checkReferences(PsiElement value, QuickFixProvider quickFixProvider) {

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
@@ -96,7 +98,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     if (myCompiled) {
-      myHighlights = new HighlightInfo[0];
+      myHighlights = HighlightInfo.EMPTY_ARRAY;;
       return;
     }
 
@@ -191,7 +193,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     else if (element instanceof PsiImportStatementBase) {
       return processImport((PsiImportStatementBase)element);
     }
-    else {
+    else if (element instanceof XmlAttributeValue) {
+      return XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element,myRefCountHolder);
+    } else {
       return null;
     }
   }

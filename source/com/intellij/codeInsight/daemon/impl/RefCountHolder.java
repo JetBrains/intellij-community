@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.BidirectionalMap;
@@ -17,6 +18,7 @@ public class RefCountHolder {
   private BidirectionalMap<PsiElement,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiElement, PsiElement>();
 
   private HashMap<PsiNamedElement,Boolean> myDclsUsedMap = new HashMap<PsiNamedElement,Boolean>();
+  private HashMap<String,XmlTag> myXmlId2TagMap = new HashMap<String,XmlTag>();
   private Map<PsiElement, PsiImportStatementBase> myImportStatements = new HashMap<PsiElement, PsiImportStatementBase>();
 
   public RefCountHolder(PsiFile file) {
@@ -26,6 +28,8 @@ public class RefCountHolder {
   public void clear() {
     myLocalRefsMap.clear();
     myImportStatements.clear();
+    myDclsUsedMap.clear();
+    myXmlId2TagMap.clear();
   }
 
   public void registerLocallyReferenced(PsiNamedElement result) {
@@ -34,6 +38,14 @@ public class RefCountHolder {
 
   public void registerLocalDcl(PsiNamedElement dcl) {
     myDclsUsedMap.put(dcl,Boolean.FALSE);
+  }
+
+  public void registerTagWithId(String id, XmlTag tag) {
+    myXmlId2TagMap.put(id,tag);
+  }
+
+  public XmlTag getTagById(String id) {
+    return myXmlId2TagMap.get(id);
   }
 
   public void registerReference(PsiElement ref, ResolveResult resolveResult) {
