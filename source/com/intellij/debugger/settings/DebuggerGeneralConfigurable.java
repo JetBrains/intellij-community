@@ -82,9 +82,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
     if (myRbShmem.isSelected()) {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SHMEM_TRANSPORT;
     }
-    else if (myRbSocket.isSelected()) {
-      settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
-    }
     else {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     }
@@ -201,6 +198,9 @@ public class DebuggerGeneralConfigurable implements Configurable{
     myRbSocket.setMnemonic('S');
     myRbShmem = new JRadioButton("Shared memory");
     myRbShmem.setMnemonic('m');
+    final ButtonGroup gr = new ButtonGroup();
+    gr.add(myRbSocket);
+    gr.add(myRbShmem);
     final Box box = Box.createHorizontalBox();
     box.add(myRbSocket);
     box.add(myRbShmem);
