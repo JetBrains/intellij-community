@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -220,7 +221,13 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();
     super.tearDown();
 
-    assertEquals(0, EditorFactory.getInstance().getAllEditors().length);
+    final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+    if (allEditors.length > 0) {
+      for (int i = 0; i < allEditors.length; i++) {
+        EditorFactory.getInstance().releaseEditor(allEditors[i]);
+      }
+      fail("Unreleased editors: " + allEditors.length);
+    }
   }
 
   public final void runBare() throws Throwable {
