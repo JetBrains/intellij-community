@@ -19,7 +19,11 @@ public class Replacer extends ReplacerImpl {
   }
 
   public String testReplace(String in, String what, String by, ReplaceOptions _options) {
-    return super.testReplace(in, what, by, _options);
+    return testReplace(in, what, by, _options,false);
+  }
+
+  public String testReplace(String in, String what, String by, ReplaceOptions _options, boolean filePattern) {
+    return super.testReplace(in, what, by, _options, filePattern);
   }
 
   public void replaceAll(final List<ReplacementInfo> resultPtrList) {

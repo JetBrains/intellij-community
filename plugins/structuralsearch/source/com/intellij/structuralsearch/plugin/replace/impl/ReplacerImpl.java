@@ -46,7 +46,7 @@ public class ReplacerImpl {
     options = _options;
   }
 
-  protected String testReplace(String in, String what, String by, ReplaceOptions _options) {
+  protected String testReplace(String in, String what, String by, ReplaceOptions _options,boolean filePattern) {
     options = _options;
     options.getMatchOptions().setSearchPattern(what);
     options.setReplacement(by);
@@ -65,7 +65,7 @@ public class ReplacerImpl {
 
     Matcher matcher = new Matcher(project);
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(in,false, options.getMatchOptions().getFileType(), project);
+      PsiElement[] elements = MatcherImplUtil.createTreeFromText(in,filePattern, options.getMatchOptions().getFileType(), project);
       PsiElement firstElement = elements[0];
       PsiElement lastElement = elements[elements.length-1];
       PsiElement parent = firstElement.getParent();
@@ -90,7 +90,7 @@ public class ReplacerImpl {
       sink.getMatches().clear();
 
       int startOffset = firstElement.getTextOffset();
-      int endOffset = parent.getTextLength() - (lastElement.getTextOffset() + lastElement.getTextLength());
+      int endOffset = (filePattern)?0: parent.getTextLength() - (lastElement.getTextOffset() + lastElement.getTextLength());
 
       // get nodes from text may contain
       PsiElement prevSibling = firstElement.getPrevSibling();
@@ -401,9 +401,12 @@ public class ReplacerImpl {
       replacement.addRangeAfter(firstElementAfterStatementEnd,el.getLastChild(),replacement.getLastChild());
     }
 
-    if (el.getFirstChild() instanceof PsiComment) {
-      PsiElement lastElementBeforeStatementStart;
-      lastElementBeforeStatementStart = el.getFirstChild();
+    final PsiElement firstChild = el.getFirstChild();
+    if (firstChild instanceof PsiComment &&
+        !(firstChild instanceof PsiDocComment)
+        ) {
+      PsiElement lastElementBeforeStatementStart = firstChild;
+
       for(PsiElement curElement=lastElementBeforeStatementStart.getNextSibling();curElement!=null;curElement = curElement.getNextSibling()) {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;
         lastElementBeforeStatementStart = curElement;

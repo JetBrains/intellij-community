@@ -1074,18 +1074,13 @@ public class StructuralReplaceTest extends IdeaTestCase {
       actualResult
     );
 
-    // testcase for http://www.jetbrains.net/jira/browse/IDEADEV-298
-    // we have correct results, pending for more info from the user
     String s34 = "/**\n" +
-                 " * This interface blah blah blah\n" +
+                 " * This interface stores XXX\n" +
                  " * <p/>\n" +
-                 " * Created On: 04-Feb-2005\n" +
-                 " * @author someone\n" +
-                 " * @see AnotherClass\n" +
                  " */\n" +
-                 "public interface Test {\n" +
-                 "    public static final String A = \"HELLO\";\n" +
-                 "    public static final int B = 1;\n" +
+                 "public interface X {\n" +
+                 "    public static final String HEADER = Headers.HEADER;\n" +
+                 "\n" +
                  "}";
 
     String s35 = "public interface 'MessageInterface {\n" +
@@ -1098,20 +1093,18 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "}";
 
     String expectedResult13 = "/**\n" +
-                              " * This interface blah blah blah\n" +
+                              " * This interface stores XXX\n" +
                               " * <p/>\n" +
-                              " * Created On: 04-Feb-2005\n" +
-                              " * @author someone\n" +
-                              " * @see AnotherClass\n" +
                               " */\n" +
-                              "public interface Test {\n" +
-                              "    public static final String HEADER = \"HELLO\";\n" +
-                              "    public static final int B = 1;\n" +
+                              "    public interface X {\n" +
+                              "    public static final String HEADER = Headers.HEADER;\n" +
+                              "    \n" +
                               "}";
-    actualResult = replacer.testReplace(s34,s35,s36,options);
+
+    actualResult = replacer.testReplace(s34,s35,s36,options, true);
 
     assertEquals(
-      "Replacing comments with javadoc for fields",
+      "Replacing interface with interface, saving comments properly",
       expectedResult13,
       actualResult
     );
