@@ -31,23 +31,24 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
-public class CodeStyleXmlConfigurable implements Configurable{
-  private CodeStyleXmlPanel myPanel;
+public abstract class CodeStyleAbstractConfigurable implements Configurable{
+  private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
+  private final String myDisplayName;
 
-  public CodeStyleXmlConfigurable(CodeStyleSettings settings) {
+  public CodeStyleAbstractConfigurable(CodeStyleSettings settings, final String displayName) {
     mySettings = settings;
+    myDisplayName = displayName;
   }
 
   public String getDisplayName() {
-    return "XML";
+    return myDisplayName;
   }
 
   public Icon getIcon() {
@@ -59,9 +60,11 @@ public class CodeStyleXmlConfigurable implements Configurable{
   }
 
   public JComponent createComponent() {
-    myPanel = new CodeStyleXmlPanel(mySettings);
+    myPanel = createPanel();
     return myPanel.getPanel();
   }
+
+  protected abstract CodeStyleAbstractPanel createPanel();
 
   public void apply() throws ConfigurationException {
     myPanel.apply(mySettings);

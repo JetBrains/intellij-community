@@ -765,6 +765,30 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   // ---------------------------------------------------------------------------------------
 
+  // ---------------------------------- HTML formatting options -------------------------
+  public boolean HTML_KEEP_WHITESPACES = false;
+  public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
+  public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
+
+  public boolean HTML_KEEP_LINE_BREAKS = true;
+  public int HTML_KEEP_BLANK_LINES = 2;
+
+  public boolean HTML_ALIGN_ATTRIBUTES = true;
+  public boolean HTML_ALIGN_TEXT = false;
+
+  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
+  public boolean HTML_SPACE_AROUND_TAG_NAME = false;
+
+  public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
+  public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
+  public String HTML_DO_NOT_ALIGN_CHILDREN_OF = "html,body";
+  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_SIZE = 7000;
+  public String HTML_TEXT_ELEMENTS = "a,b,img,span";
+  public String HTML_KEEP_WHITESPACES_INSIDE = "span";
+
+
+  // ---------------------------------------------------------------------------------------
+
   //-----------------------------------JSPX formatting settings-----------------------------
   public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
   //----------------------------------------------------------------------------------------
