@@ -95,8 +95,9 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     if (!mySetDependencyOnPluginModule.isEmpty()) {
       throw new ConfigurationException("Unable to set dependency on plugin module.");
     }
-    final String toDelete = !myJar.isSelected() ? myBuildProperties.getJarPath() : myBuildProperties.getExplodedPath();
-    if (toDelete != null && new File(toDelete).exists() && Messages.showYesNoDialog(myBuildProperties.getModule().getProject(),
+    final String toDelete = !myJar.isSelected() ? myBuildProperties.getJarPath() != null ? myBuildProperties.getJarPath().replace('/', File.separatorChar) : null :
+                                                  myBuildProperties.getExplodedPath() != null ? myBuildProperties.getExplodedPath().replace('/', File.separatorChar) : null;
+    if (myModified && toDelete != null && new File(toDelete).exists() && Messages.showYesNoDialog(myBuildProperties.getModule().getProject(),
                                                                 !myJar.isSelected() ? "Delete " : "Clear " + toDelete + "?",
                                                                 "Clean up plugin directory", null) == DialogWrapper.OK_EXIT_CODE) {
       CommandProcessor.getInstance().executeCommand(myBuildProperties.getModule().getProject(),
@@ -136,6 +137,9 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void moduleStateChanged(ModifiableRootModel model) {
+    if (model.getModule().equals(myState.getRootModel().getModule())) {
+      return;
+    }
     final String moduleName = myState.getRootModel().getModule().getName();
     final String changedModuleName = model.getModule().getName();
     if (ArrayUtil.find(model.getDependencyModuleNames(),
