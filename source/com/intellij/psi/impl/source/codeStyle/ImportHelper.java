@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -116,25 +115,13 @@ public class ImportHelper{
 
       PsiImportList resultList = dummyFile.getImportList();
       PsiImportList oldList = file.getImportList();
-      if (areListsEquivalent(resultList, oldList)) return null;
+      if (resultList.getText().equals(oldList.getText())) return null;
       return resultList;
     }
     catch(IncorrectOperationException e) {
       LOG.error(e);
       return null;
     }
-  }
-
-  public static boolean areListsEquivalent(final PsiImportList list1, final PsiImportList list2) {
-    final PsiImportStatement[] importStatements1 = list1.getImportStatements();
-    final PsiImportStatement[] importStatements2 = list2.getImportStatements();
-    if (importStatements1.length != importStatements2.length) return false;
-    for (int i = 0; i < importStatements1.length; i++) {
-      PsiImportStatement importStatement1 = importStatements1[i];
-      PsiImportStatement importStatement2 = importStatements2[i];
-      if (!Comparing.strEqual(importStatement1.getQualifiedName(), importStatement2.getQualifiedName())) return false;
-    }
-    return true;
   }
 
   private static Set<String> findSingleImports(final PsiJavaFile file,
