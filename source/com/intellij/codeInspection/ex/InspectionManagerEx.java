@@ -82,7 +82,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   private static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor("Analyzing code in ");
 
 
-  private static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
+  public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   private static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "com.intellij.util.annotations.NoInspection";
 
   //for use in local comments
