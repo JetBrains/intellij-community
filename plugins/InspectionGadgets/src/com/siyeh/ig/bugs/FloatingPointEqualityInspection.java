@@ -61,6 +61,10 @@ public class FloatingPointEqualityInspection extends ExpressionInspection {
                 return false;
             }
             final PsiType type = expression.getType();
+            if(type== null)
+            {
+                return false;
+            }
             return TypeConversionUtil.isDoubleType(type) ||
                     TypeConversionUtil.isFloatType(type);
 

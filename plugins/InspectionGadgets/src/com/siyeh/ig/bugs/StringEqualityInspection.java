@@ -44,7 +44,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign.getTokenType() == JavaTokenType.NE) {
+            if (!(sign.getTokenType() != JavaTokenType.NE)) {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();

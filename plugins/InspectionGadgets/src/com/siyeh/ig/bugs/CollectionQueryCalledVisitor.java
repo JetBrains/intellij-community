@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
-    private static Set queryNames = new HashSet(10);
+    private static final Set queryNames = new HashSet(10);
 
     static {
         queryNames.add("get");

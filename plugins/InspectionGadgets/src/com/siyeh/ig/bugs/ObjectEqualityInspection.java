@@ -6,16 +6,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
-    public boolean m_ignoreEnums = false;
+    public  boolean m_ignoreEnums = false;
+    public  boolean m_ignoreClassObjects = false;
 
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
@@ -28,8 +31,34 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore == between enumerated types",
-                this, "m_ignoreEnums");
+        final GridBagLayout layout = new GridBagLayout();
+        final JPanel panel = new JPanel(layout);
+        final JCheckBox arrayCheckBox = new JCheckBox("Ignore == between enumerated types", m_ignoreEnums);
+        final ButtonModel enumeratedObjectModel = arrayCheckBox.getModel();
+        enumeratedObjectModel.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                m_ignoreEnums = enumeratedObjectModel.isSelected();
+            }
+        });
+        final JCheckBox classObjectCheckbox = new JCheckBox("Ignore == on java.lang.Class objects", m_ignoreClassObjects);
+        final ButtonModel classObjectModel = classObjectCheckbox.getModel();
+        classObjectModel.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                m_ignoreClassObjects = classObjectModel.isSelected();
+            }
+        });
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(arrayCheckBox, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        panel.add(classObjectCheckbox, constraints);
+        return panel;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -58,7 +87,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() == JavaTokenType.NE) {
+            if (sign.getTokenType().equals(JavaTokenType.NE)) {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();
@@ -107,7 +136,10 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (!isObjectType(lhs)) {
                 return;
             }
-            if (m_ignoreEnums && isEnumType(rhs) && isEnumType(lhs)) {
+            if (m_ignoreEnums && (isEnumType(rhs) || isEnumType(lhs))) {
+                return;
+            }
+            if (m_ignoreClassObjects && (isJavaLangClass(rhs) || isJavaLangClass(lhs))) {
                 return;
             }
             final PsiMethod method = (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
@@ -120,6 +152,19 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 return;
             }
             registerError(sign);
+        }
+
+        private boolean isJavaLangClass(PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+
+            final PsiType type = expression.getType();
+            if (type == null) {
+                return false;
+            }
+            final String text = type.getCanonicalText();
+            return "java.lang.Class".equals(text);
         }
 
         private boolean isEnumType(PsiExpression exp) {

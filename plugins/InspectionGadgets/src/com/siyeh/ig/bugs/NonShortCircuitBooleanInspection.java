@@ -32,23 +32,13 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if (descriptor.getPsiElement() instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
-                final PsiExpression lhs = expression.getLOperand();
-                final PsiExpression rhs = expression.getROperand();
-                final PsiJavaToken operationSign = expression.getOperationSign();
-                final IElementType tokenType = operationSign.getTokenType();
-                final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
-                replaceExpression(project, expression, newExpression);
-            } else {
-                final PsiAssignmentExpression expression = (PsiAssignmentExpression) descriptor.getPsiElement();
-                final PsiExpression lhs = expression.getLExpression();
-                final PsiExpression rhs = expression.getRExpression();
-                final PsiJavaToken operationSign = expression.getOperationSign();
-                final IElementType tokenType = operationSign.getTokenType();
-                final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
-                replaceExpression(project, expression, newExpression);
-            }
+            final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
+            final PsiExpression lhs = expression.getLOperand();
+            final PsiExpression rhs = expression.getROperand();
+            final PsiJavaToken operationSign = expression.getOperationSign();
+            final IElementType tokenType = operationSign.getTokenType();
+            final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
+            replaceExpression(project, expression, newExpression);
         }
 
         private static String getShortCircuitOperand(IElementType tokenType) {
@@ -95,27 +85,5 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
             }
             registerError(expression);
         }
-
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
-            final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.ANDEQ) &&
-                    !tokenType.equals(JavaTokenType.OREQ)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!type.equals(PsiType.BOOLEAN)) {
-                return;
-            }
-            registerError(expression);
-        }
-
     }
 }

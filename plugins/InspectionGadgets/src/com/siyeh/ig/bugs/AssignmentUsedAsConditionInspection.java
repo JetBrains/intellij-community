@@ -55,7 +55,7 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
             if (sign == null) {
                 return;
             }
-            if (sign.getTokenType() != JavaTokenType.EQ) {
+            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
                 return;
             }
             final PsiElement parent = expression.getParent();

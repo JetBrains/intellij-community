@@ -33,7 +33,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection {
             "java.math.BigDecimal,.*," +
             "java.net.InetAddress,.*";
 
-    private List callsToCheck = new ArrayList(32);
+    private final List callsToCheck = new ArrayList(32);
 
     {
         parseCallCheckString();

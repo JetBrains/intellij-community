@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
-    private static Set updateNames = new HashSet(10);
+    private static final Set updateNames = new HashSet(10);
 
     static {
         updateNames.add("add");
