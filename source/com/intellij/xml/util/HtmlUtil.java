@@ -177,8 +177,11 @@ public class HtmlUtil {
         if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
 
         text = text.substring(offset,text.length() - offset);
-        int hashInd = text.lastIndexOf('#');
-        if (hashInd != -1) text = text.substring(0,hashInd);
+        int ind = text.lastIndexOf('#');
+        if (ind != -1) text = text.substring(0,ind);
+
+        ind = text.lastIndexOf('?');
+        if (ind!=-1) text = text.substring(0,ind);
 
         if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:")) {
           refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
