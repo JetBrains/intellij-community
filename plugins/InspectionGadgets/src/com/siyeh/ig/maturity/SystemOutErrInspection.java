@@ -1,8 +1,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -19,7 +18,7 @@ public class SystemOutErrInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Uses of #ref should probably be replaced with more robust logging #loc";
+        return "Uses of System.out and System.err should probably be replaced with more robust logging #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
@@ -34,12 +33,23 @@ public class SystemOutErrInspection extends ExpressionInspection {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
 
-            final String text = expression.getText();
-            if (text == null) {
+            final String name = expression.getReferenceName();
+            if (!"out".equals(name) && !"err".equals(name)) {
                 return;
             }
-            if (!"System.out".equals(text) &&
-                    !"System.err".equals(text)) {
+            final PsiElement referent = expression.resolve();
+            if(!(referent instanceof PsiField))
+            {
+               return;
+            }
+            final PsiClass containingClass = ((PsiMember) referent).getContainingClass();
+            if(containingClass == null)
+            {
+                return;
+            }
+            final String className = containingClass.getQualifiedName();
+            if(!"java.lang.System".equals(className))
+            {
                 return;
             }
             registerError(expression);

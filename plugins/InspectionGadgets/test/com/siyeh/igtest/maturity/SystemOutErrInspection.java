@@ -10,7 +10,7 @@ public class SystemOutErrInspection
     }
 
     public void foo() throws IOException
-    {
+    {                 
         System.out.println(0);
         System.err.println(0);
         final PrintStream out = System.out;

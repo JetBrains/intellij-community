@@ -74,6 +74,9 @@ public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
             if(operandClass == null){
                 return;
             }
+            if(operandClass.isInterface()){
+                return;
+            }
             if(existsImplementingSubClass(operandClass, castClass)){
                 return;
             }
