@@ -60,16 +60,12 @@ public class FileStructureDialog extends DialogWrapper {
 
     if (elementAtCursor != null) {
       if (elementAtCursor instanceof PsiClass) {
-        myCommanderPanel.getBuilder().enterElement(elementAtCursor, ((PsiClass)elementAtCursor).getContainingFile().getVirtualFile());
+        myCommanderPanel.getBuilder().enterElement(elementAtCursor, elementAtCursor.getContainingFile().getVirtualFile());
       }
       else {
         myCommanderPanel.getBuilder().selectElement(elementAtCursor);
       }
     }
-
-    AnAction editSourceAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE);
-    editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myCommanderPanel);
-
   }
 
   protected Border createContentPaneBorder(){
@@ -157,12 +153,15 @@ public class FileStructureDialog extends DialogWrapper {
                                 });
     myCommanderPanel.setTitlePanelVisible(false);
 
-    //ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet();
-    //new AnAction() {
-    //  public void actionPerformed(AnActionEvent e){
-    //    myCommanderPanel.performEditSourceAction();
-    //  }
-    //}.registerCustomShortcutSet(shortcutSet, myCommanderPanel);
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        final boolean succeeded = myCommanderPanel.navigateSelectedElement();
+        if (succeeded) {
+          unregisterCustomShortcutSet(myCommanderPanel);
+        }
+      }
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myCommanderPanel);
+
     myCommanderPanel.setPreferredSize(new Dimension(400,500));
 
     JPanel panel = new JPanel(new GridBagLayout());
@@ -227,11 +226,14 @@ public class FileStructureDialog extends DialogWrapper {
         }
       });
 
-
     }
 
-    protected void onNavigatePerformed() {
-      close(CANCEL_EXIT_CODE);
+    public boolean navigateSelectedElement() {
+      final boolean succeeded = super.navigateSelectedElement();
+      if (succeeded) {
+        close(CANCEL_EXIT_CODE);
+      }
+      return succeeded;
     }
 
     public Object getData(String dataId) {

@@ -208,14 +208,8 @@ public class CommanderPanel extends JPanel {
     final AbstractTreeNode element = getSelectedNode();
     if (element.getChildren().size() == 0) {
       if (!shouldDrillDownOnEmptyElement(element.getValue())) {
-        Object selectedValue = getSelectedValue();
-        if (selectedValue instanceof Navigatable && ((Navigatable)selectedValue).canNavigate()) {
-            ((Navigatable)selectedValue).navigate(true);
-            onNavigatePerformed();
-            return;
-        } else {
-          return;
-        }
+        navigateSelectedElement();
+        return;
       }
     }
 
@@ -227,6 +221,15 @@ public class CommanderPanel extends JPanel {
     updateHistory(true);
   }
 
+  public boolean navigateSelectedElement() {
+    final Object selectedValue = getSelectedValue();
+    if (selectedValue instanceof Navigatable && ((Navigatable)selectedValue).canNavigate()) {
+      ((Navigatable)selectedValue).navigate(true);
+      return true;
+    }
+    return false;
+  }
+
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
     return true;
   }
@@ -234,10 +237,6 @@ public class CommanderPanel extends JPanel {
   private boolean topElementIsSelected() {
     int[] selectedIndices = myList.getSelectedIndices();
     return selectedIndices.length == 1 && selectedIndices[0] == 0 && (myModel.getElementAt(selectedIndices[0]) instanceof String);
-  }
-
-  protected void onNavigatePerformed() {
-
   }
 
   public final void setBuilder(final AbstractListBuilder builder) {
