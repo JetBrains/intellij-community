@@ -25,6 +25,11 @@ import java.awt.*;
 public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected final PsiMethod myMethod;
   protected final PsiVariable[] myVariables;
+
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
+  }
+
   protected JList myList;
   protected VisibilityPanel myVisibilityPanel;
   protected String myRefactoringName;
