@@ -2036,7 +2036,6 @@ public class HighlightUtil {
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 
     final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
-    if (!manager.isToCheckMember(((PsiDocCommentOwner)elementToHighlight), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     if (manager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
@@ -2044,9 +2043,8 @@ public class HighlightUtil {
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
-    if (elementToHighlight instanceof PsiDocCommentOwner){
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    }
+
+    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
     return highlightInfo;
