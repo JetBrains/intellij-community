@@ -15,7 +15,11 @@ public class PsiFileUrl extends AbstractUrl {
   }
 
   public Object[] createPath(Project project) {
-    return new Object[]{PsiManager.getInstance(project).findFile(VirtualFileManager.getInstance().findFileByUrl(url))};
+    final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (fileByUrl == null || !fileByUrl.isValid()){
+      return null;
+    }
+    return new Object[]{PsiManager.getInstance(project).findFile(fileByUrl)};
   }
 
   protected AbstractUrl createUrl(String moduleName, String url) {
