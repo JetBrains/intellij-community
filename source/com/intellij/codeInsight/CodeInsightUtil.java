@@ -159,6 +159,10 @@ public class CodeInsightUtil {
     final PsiElementVisitor visitor = new PsiElementVisitor() {
       int offset = currentOffset;
 
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitReferenceElement(expression);
+      }
+
       public void visitElement(PsiElement element) {
         PsiElement child = element.getFirstChild();
         if (child == null) {
