@@ -14,6 +14,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 
@@ -121,4 +122,10 @@ public class IconUtilEx {
   }
 
 
+  public static Icon createLayeredIcon(final Icon backgroundIcon, final Icon foregroundIcon) {
+    final LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(backgroundIcon, 0);
+    layeredIcon.setIcon(foregroundIcon, 1);
+    return layeredIcon;
+  }
 }

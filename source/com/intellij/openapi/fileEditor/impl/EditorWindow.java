@@ -7,9 +7,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
@@ -32,6 +34,8 @@ public class EditorWindow {
   public int myInsideTabChange;
   private MyTabbedContainerChangeListener myChangeListener;
   protected final EditorsSplitters myOwner;
+  private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
+  private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -209,7 +213,7 @@ public class EditorWindow {
     myOwner.setCurrentWindow(this, requestFocus);
   }
 
-  protected class TComp extends JPanel {
+  protected static class TComp extends JPanel {
     final EditorWithProviderComposite myEditor;
 
     TComp(final EditorWithProviderComposite editor) {
@@ -453,12 +457,7 @@ public class EditorWindow {
     LOG.assertTrue(file != null);
 
     final ArrayList<Icon> icons = new ArrayList<Icon>(6);
-    icons.add(IconUtil.getIcon(file, 0, getManager ().myProject));
-
-    // Read-only
-    if (!file.isWritable()) {
-      icons.add(FileEditorManagerImpl.LOCKED_ICON);
-    }
+    icons.add(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().myProject));
 
     // Pinned
     final EditorComposite composite = findFileComposite(file);
@@ -469,10 +468,10 @@ public class EditorWindow {
     // Modified
     if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) {
       if (composite != null && composite.isModified()) {
-        icons.add(FileEditorManagerImpl.MODIFIED_ICON);
+        icons.add(MODIFIED_ICON);
       }
       else {
-        icons.add(FileEditorManagerImpl.GAP_ICON);
+        icons.add(GAP_ICON);
       }
     }
 

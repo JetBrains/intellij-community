@@ -3,6 +3,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit2.configuration.RunConfigurationModule;
+import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
@@ -160,10 +160,7 @@ public class ExecutionUtil {
     final Icon icon = configuration.getFactory().getIcon();
     final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
-      final LayeredIcon layeredIcon = new LayeredIcon(2);
-      layeredIcon.setIcon(configurationIcon, 0);
-      layeredIcon.setIcon(INVALID_CONFIGURATOIN, 1);
-      return layeredIcon;
+      return IconUtilEx.createLayeredIcon(configurationIcon, INVALID_CONFIGURATOIN);
     }
     return configurationIcon;
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ide.IconUtilEx;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ public class ContentImpl implements Content {
   private Hashtable myUserData = new Hashtable();
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
-  private LayeredIcon myLayeredIcon = new LayeredIcon(2);
+  private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposeable myDisposer = null;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
@@ -46,8 +47,7 @@ public class ContentImpl implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon.setIcon(myIcon, 0);
-    myLayeredIcon.setIcon(IconLoader.getIcon("/nodes/tabPin.png"), 1);
+    myLayeredIcon = IconUtilEx.createLayeredIcon(myIcon, IconLoader.getIcon("/nodes/tabPin.png"));
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 

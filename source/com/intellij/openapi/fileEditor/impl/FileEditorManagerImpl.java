@@ -2,7 +2,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -22,7 +21,10 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -35,6 +37,7 @@ import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -55,11 +58,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = new FileEditor[]{};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = new FileEditorProvider[]{};
 
-  static final Icon LOCKED_ICON = IconLoader.getIcon("/nodes/locked.png");
-  static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
-
-  static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(),
-                                                        MODIFIED_ICON.getIconHeight());
   private final JPanel myPanels;
   public Project myProject;
 
@@ -162,7 +160,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
   private void updateFileIcon(final VirtualFile file, boolean useAlarm) {
-    getSplitters ().updateFileIcon(file, useAlarm);
+    getSplitters().updateFileIcon(file, useAlarm);
   }
 
   /**
@@ -211,18 +209,22 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public EditorWindow getNextWindow(final EditorWindow window) {
     final EditorWindow[] windows = getSplitters().getOrderedWindows();
-    for (int i = 0; i != windows.length; ++ i)
-      if (windows[i].equals (window))
-        return windows [(i+1)%windows.length];
+    for (int i = 0; i != windows.length; ++i) {
+      if (windows[i].equals(window)) {
+        return windows[(i + 1) % windows.length];
+      }
+    }
     LOG.error("Not window found");
     return null;
   }
 
   public EditorWindow getPrevWindow(final EditorWindow window) {
     final EditorWindow[] windows = getSplitters().getOrderedWindows();
-    for (int i = 0; i != windows.length; ++ i)
-      if (windows[i].equals (window))
-        return windows [(i+windows.length-1)%windows.length];
+    for (int i = 0; i != windows.length; ++i) {
+      if (windows[i].equals(window)) {
+        return windows[(i + windows.length - 1) % windows.length];
+      }
+    }
     LOG.error("Not window found");
     return null;
   }
@@ -359,7 +361,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
             if (window.getTabCount() == 0) {
               EditorWithProviderComposite newComposite = window.findFileComposite(nextFile);
               if (newComposite == null) {
-                newComposite = newEditorComposite(nextFile, true, null);
+                newComposite = newEditorComposite(nextFile, null);
               }
               window.setEditor(newComposite); // newComposite can be null
             }
@@ -557,9 +559,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return Pair.create(editors, providers);
   }
 
-  private EditorWithProviderComposite newEditorComposite(final VirtualFile file,
-                                                         final boolean focusEditor,
-                                                         final HistoryEntry entry) {
+  private EditorWithProviderComposite newEditorComposite(final VirtualFile file, final HistoryEntry entry) {
     if (file == null) return null;
 
     final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
@@ -1055,7 +1055,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         final FileEditor editor = (FileEditor)e.getSource();
         final EditorComposite composite = getEditorComposite(editor);
         if (composite != null) {
-          updateFileIcon(composite.getFile(), false);
+          updateFileIcon(composite.getFile(), true);
         }
       }
       else if (FileEditor.PROP_VALID.equals(propertyName)) {
@@ -1168,30 +1168,33 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
     }
 
+    public void childAdded(PsiTreeChangeEvent event) {
+      doChange(event);
+    }
+
+    public void childRemoved(PsiTreeChangeEvent event) {
+      doChange(event);
+    }
+
+    public void childReplaced(PsiTreeChangeEvent event) {
+      doChange(event);
+    }
+
+    public void childMoved(PsiTreeChangeEvent event) {
+      doChange(event);
+    }
+
     public void childrenChanged(PsiTreeChangeEvent event) {
-      // use alarm to avoid constant icon update on typing
+      doChange(event);
+    }
+
+    private void doChange(final PsiTreeChangeEvent event) {
+      final PsiFile psiFile = event.getFile();
       final VirtualFile currentFile = getCurrentFile();
-      if (currentFile != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable () {
-          public void run() {
-            updateFileIcon(currentFile, true);
-          }
-        }, ModalityState.NON_MMODAL);
+      if (currentFile != null && psiFile != null && psiFile.getVirtualFile() == currentFile) {
+        updateFileIcon(currentFile, true);
       }
     }
-  }
-
-
-  //===================
-
-  /**
-   * @return file at the specified index in the tabbed container. Never <code>null</code>.
-   */
-  VirtualFile getFileAt(final EditorTabbedContainer tabbedContainer, final int tabIndex) {
-    //final JComponent componentAt = tabbedContainer.getComponentAt(tabIndex);
-    //OpenFile openFile = findOpenFile(componentAt);
-    //return openFile.myFile;
-    return null;
   }
 
   public void closeAllFiles() {
@@ -1199,7 +1202,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     for (int i = 0; i < openFiles.length; i++) {
       closeFile(openFiles[i]);
     }
-    //getSplitters().clear();
   }
 
   public VirtualFile[] getSiblings(VirtualFile file) {

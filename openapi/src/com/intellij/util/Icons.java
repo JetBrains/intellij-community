@@ -59,10 +59,6 @@ public interface Icons {
   Icon VARIABLE_ICON = IconLoader.getIcon("/nodes/variable.png");
   Icon XML_TAG_ICON = IconLoader.getIcon("/nodes/tag.png");
   Icon ANT_TARGET_ICON = IconLoader.getIcon("/ant/target.png");
-  Icon STATIC_CLASS_ICON = IconLoader.getIcon("/nodes/staticClass.png");
-  Icon STATIC_INTERFACE_ICON = IconLoader.getIcon("/nodes/staticInterface.png");
-  Icon STATIC_METHOD_ICON = IconLoader.getIcon("/nodes/staticMethod.png");
-  Icon STATIC_FIELD_ICON = IconLoader.getIcon("/nodes/staticField.png");
   Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   Icon WEB_ICON = IconLoader.getIcon("/nodes/ppWeb.png");
   Icon JAR_ICON = IconLoader.getIcon("/nodes/ppJar.png");

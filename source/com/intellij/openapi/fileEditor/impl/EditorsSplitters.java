@@ -11,16 +11,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -50,11 +51,12 @@ public class EditorsSplitters extends JPanel {
     return myManager;
   }
 
-  public void clear() {
+  private void clear() {
+    cancelUpdateIcon();
     removeAll();
     myWindows.clear();
     myCurrentWindow = null;
-    repaint (); // revalidate doesn't repaint correctly after "Close All" 
+    repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
 
   public VirtualFile getCurrentFile() {
@@ -262,6 +264,7 @@ public class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
+  private static final Alarm ALARM = new Alarm();
   protected void updateFileIcon(final VirtualFile file, final boolean useAlarm) {
     LOG.assertTrue(file != null);
     Runnable updateRunnable = new Runnable() {
@@ -276,11 +279,16 @@ public class EditorsSplitters extends JPanel {
     };
 
     if (useAlarm) {
-      ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.NON_MMODAL);
+      cancelUpdateIcon();
+      ALARM.addRequest(updateRunnable, 200);
     }
     else {
       updateRunnable.run();
     }
+  }
+
+  private static void cancelUpdateIcon() {
+    ALARM.cancelAllRequests();
   }
 
   public void updateFileColor(final VirtualFile file) {

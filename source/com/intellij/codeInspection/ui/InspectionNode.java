@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.LayeredIcon;
 
 import javax.swing.*;
 import java.util.Enumeration;
@@ -15,10 +14,7 @@ public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL;
 
   static {
-    final LayeredIcon layeredIcon = new LayeredIcon(2);
-    layeredIcon.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"), 0);
-    layeredIcon.setIcon(IconUtilEx.getEmptyIcon(false), 1);
-    TOOL = layeredIcon;
+    TOOL = IconUtilEx.createLayeredIcon(IconLoader.getIcon("/general/toolWindowInspection.png"), IconUtilEx.getEmptyIcon(false));
   }
 
   public InspectionNode(InspectionTool tool) {

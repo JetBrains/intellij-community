@@ -31,6 +31,7 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -45,7 +46,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -342,10 +342,7 @@ public class PackageUtil {
       return originalIcon;
     }
     else {
-      LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(originalIcon, 0);
-      icon.setIcon(LOCKED_ICON, 1);
-      return icon;
+      return IconUtilEx.createLayeredIcon(originalIcon, LOCKED_ICON);
     }
   }
 

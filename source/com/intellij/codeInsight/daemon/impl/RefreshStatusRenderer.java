@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ide.IconUtilEx;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,10 +118,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
       final boolean inspecting = !status.inspectionFinished;
       if (inspecting) {
-        final LayeredIcon layeredIcon = new LayeredIcon(2);
-        layeredIcon.setIcon(icon, 0);
-        layeredIcon.setIcon(INSPECTION_ICON, 1);
-        icon = layeredIcon;
+        icon = IconUtilEx.createLayeredIcon(icon, INSPECTION_ICON);
       }
     }
 
