@@ -480,7 +480,7 @@ public class HighlightMethodUtil {
         if (methodCandidate2 == null) {
           registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
         }
-        if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect()) {
+        if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
           HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo);
         }
         if (!resolveResult.isStaticsScopeCorrect()) {

@@ -248,8 +248,7 @@ public class HighlightUtil {
 
     final PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
-      QuickFixAction.registerQuickFixAction(errorResult,
-                                            new ModifierFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true));
+      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true));
       return;
     }
 
