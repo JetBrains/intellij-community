@@ -431,42 +431,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setLocationRelativeTo(getOwner());
       }
 
-      // Request focus into preferred component, move mouse of default button (if configured), etc
-
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          // Do nothing if dialog was already disposed
-          DialogWrapper dialogWrapper = getDialogWrapper();
-          if (dialogWrapper == null || !dialogWrapper.isShowing()) {
-            return;
-          }
-
-          JButton defaultButton = getRootPane().getDefaultButton();
-          JComponent component = dialogWrapper.getPreferredFocusedComponent();
-          if (component == null) {
-            component = defaultButton;
-          }
-          if (component != null) {
-            component.requestFocus();
-          }
-          //
-          Application application = ApplicationManager.getApplication();
-          if (application != null && application.hasComponent(UISettings.class)) {
-            if (defaultButton != null && UISettings.getInstance().MOVE_MOUSE_ON_DEFAULT_BUTTON) {
-              Point p = defaultButton.getLocationOnScreen();
-              Rectangle r = defaultButton.getBounds();
-              try {
-                Robot robot = new Robot();
-                robot.mouseMove(p.x + r.width / 2, p.y + r.height / 2);
-              }
-              catch (AWTException exc) {
-                exc.printStackTrace();
-              }
-            }
-          }
-        }
-      });
-
       super.show();
     }
 
@@ -494,20 +458,53 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       public void windowOpened(WindowEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            // Do nothing if dialog was already disposed
-            DialogWrapper dialogWrapper = getDialogWrapper();
-            if (dialogWrapper == null || !dialogWrapper.isShowing()) {
-              return;
+            final DialogWrapper activeWrapper = getActiveWrapper();
+            if (activeWrapper == null) return;
+
+            JComponent toFocus = activeWrapper.getPreferredFocusedComponent();
+            if (toFocus == null) {
+              toFocus = getRootPane().getDefaultButton();
             }
 
-            selectPreferredFocusedComponent(dialogWrapper.getPreferredFocusedComponent());
+            moveMousePointerOnButton(getRootPane().getDefaultButton());
+            setupSelectionOnPreferredComponent(toFocus);
+            
+            if (toFocus != null) {
+              toFocus.requestFocus();
+            }
           }
         });
+      }
+
+      private DialogWrapper getActiveWrapper() {
+        DialogWrapper activeWrapper = getDialogWrapper();
+        if (activeWrapper == null || !activeWrapper.isShowing()) {
+          return null;
+        }
+
+        return activeWrapper;
+      }
+
+      private void moveMousePointerOnButton(final JButton button) {
+        Application application = ApplicationManager.getApplication();
+        if (application != null && application.hasComponent(UISettings.class)) {
+          if (button != null && UISettings.getInstance().MOVE_MOUSE_ON_DEFAULT_BUTTON) {
+            Point p = button.getLocationOnScreen();
+            Rectangle r = button.getBounds();
+            try {
+              Robot robot = new Robot();
+              robot.mouseMove(p.x + r.width / 2, p.y + r.height / 2);
+            }
+            catch (AWTException exc) {
+              exc.printStackTrace();
+            }
+          }
+        }
       }
     }
   }
 
-  private static void selectPreferredFocusedComponent(final JComponent component) {
+  private static void setupSelectionOnPreferredComponent(final JComponent component) {
     if (component instanceof JTextField) {
       JTextField field = (JTextField)component;
       String text = field.getText();
