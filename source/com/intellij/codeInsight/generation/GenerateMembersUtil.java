@@ -15,6 +15,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -290,8 +292,7 @@ public class GenerateMembersUtil {
         newMethod = factory.createMethod(method.getName(), substitutor.substitute(returnType));
       }
 
-      //Hack: the created method is public, while it should not iff original method is not
-      newMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, method.hasModifierProperty(PsiModifier.PUBLIC));
+      RefactoringUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
 
       PsiDocComment docComment = ((PsiMethod)method.getNavigationElement()).getDocComment();
       if (docComment != null) {
