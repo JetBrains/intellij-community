@@ -18,17 +18,22 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
     if (breakpoint == null){
       return this;
     };
-    setIcon(breakpoint.getIcon());
-    setDisabledIcon(breakpoint.getIcon());
+    final Icon icon = (breakpoint instanceof BreakpointWithHighlighter)?
+                      breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon() : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon() :  
+                      breakpoint.getIcon();
+    setIcon(icon);
+    setDisabledIcon(icon);
 
     if(isSelected){
       setForeground(UIManager.getColor("Table.selectionForeground"));
-    }else{
+    }
+    else{
       Color foreColor;
       if(breakpoint instanceof AnyExceptionBreakpoint){
-        foreColor=myAnyExceptionForeground;
-      }else{
-        foreColor=UIManager.getColor("Table.foreground");
+        foreColor = myAnyExceptionForeground;
+      }
+      else{
+        foreColor = UIManager.getColor("Table.foreground");
       }
       setForeground(foreColor);
     }

@@ -2,7 +2,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
@@ -21,10 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -170,10 +166,10 @@ public class BreakpointsConfigurationDialogFactory {
       myMethodBreakpointsPanel.getAddBreakpointButton().setVisible(false);
       initPanel(myMethodBreakpointsPanel);
 
-      addPanel(myLineBreakpointsPanel);
-      addPanel(myExceptionBreakpointsPanel);
-      addPanel(myFieldBreakpointsPanel);
-      addPanel(myMethodBreakpointsPanel);
+      addPanel(myLineBreakpointsPanel, LINE_BREAKPOINTS_NAME);
+      addPanel(myExceptionBreakpointsPanel, EXCEPTION_BREAKPOINTS_NAME);
+      addPanel(myFieldBreakpointsPanel, FIELD_WATCHPOINTS_NAME);
+      addPanel(myMethodBreakpointsPanel, METHOD_BREAKPOINTS_NAME);
 
       ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet();
       new AnAction() {
@@ -197,7 +193,6 @@ public class BreakpointsConfigurationDialogFactory {
             model.addSelectionInterval(0, 0);
             table.requestFocus();
           }
-          panel.setBorderTitle (myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
         }
       });
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
@@ -219,10 +214,16 @@ public class BreakpointsConfigurationDialogFactory {
       return myPanel;
     }
 
-    private void addPanel(BreakpointPanel panel) {
+    private void addPanel(BreakpointPanel panel, final String title) {
       JPanel jpanel = panel.getPanel();
       jpanel.putClientProperty(BREAKPOINT_PANEL, panel);
-      myTabbedPane.addTab(null, jpanel);
+      myTabbedPane.addTab(title, jpanel);
+      final int tabIndex = myTabbedPane.getTabCount() - 1;
+      panel.getTable().getModel().addTableModelListener(new TableModelListener() {
+        public void tableChanged(TableModelEvent e) {
+          updateTabTitle(tabIndex);
+        }
+      });
     }
 
     private BreakpointPanel getSelectedPanel() {
@@ -287,7 +288,7 @@ public class BreakpointsConfigurationDialogFactory {
       myExceptionBreakpointsPanel.insertBreakpointAt(breakpointManager.getAnyExceptionBreakpoint(), 0);
       myFieldBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(BreakpointManager.FIELD_BREAKPOINTS));
       myMethodBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(BreakpointManager.METHOD_BREAKPOINTS));
-      updateTitles();
+      updateAllTabTitles();
       if (myLastSelectedTabIndex >= myTabbedPane.getTabCount() && myLastSelectedTabIndex < 0) {
         myLastSelectedTabIndex = 0;
       }
@@ -335,26 +336,36 @@ public class BreakpointsConfigurationDialogFactory {
       }
     };
 
-    private void updateTitles() {
+    private void updateAllTabTitles() {
       for (int idx = 0; idx < myTabbedPane.getTabCount(); idx++) {
-        JComponent component = myTabbedPane.getComponentAt(idx);
-        if (component == myLineBreakpointsPanel.getPanel()) {
-          myTabbedPane.setTitleAt(idx, LINE_BREAKPOINTS_NAME + " (" + myLineBreakpointsPanel.getTable().getRowCount() + ")");
-          myLineBreakpointsPanel.setBorderTitle (myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
-        }
-        else if (component == myExceptionBreakpointsPanel.getPanel()) {
-          myTabbedPane.setTitleAt(idx, EXCEPTION_BREAKPOINTS_NAME + " (" + myExceptionBreakpointsPanel.getTable().getRowCount() + ")");
-          myExceptionBreakpointsPanel.setBorderTitle (myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
-        }
-        else if (component == myFieldBreakpointsPanel.getPanel()) {
-          myTabbedPane.setTitleAt(idx, FIELD_WATCHPOINTS_NAME + " (" + myFieldBreakpointsPanel.getTable().getRowCount() + ")");
-          myFieldBreakpointsPanel.setBorderTitle (myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
-        }
-        else if (component == myMethodBreakpointsPanel.getPanel()) {
-          myTabbedPane.setTitleAt(idx, METHOD_BREAKPOINTS_NAME + " (" + myMethodBreakpointsPanel.getTable().getRowCount() + ")");
-          myMethodBreakpointsPanel.setBorderTitle (myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
+        updateTabTitle(idx);
+      }
+    }
+
+    private void updateTabTitle(final int idx) {
+      JComponent component = myTabbedPane.getComponentAt(idx);
+      if (component == myLineBreakpointsPanel.getPanel()) {
+        myTabbedPane.setIconAt(idx, hasEnabledBreakpoints(myLineBreakpointsPanel)? LineBreakpoint.ICON : LineBreakpoint.DISABLED_ICON);
+      }
+      else if (component == myExceptionBreakpointsPanel.getPanel()) {
+        myTabbedPane.setIconAt(idx, hasEnabledBreakpoints(myExceptionBreakpointsPanel)? ExceptionBreakpoint.ICON : ExceptionBreakpoint.DISABLED_ICON);
+      }
+      else if (component == myFieldBreakpointsPanel.getPanel()) {
+        myTabbedPane.setIconAt(idx, hasEnabledBreakpoints(myFieldBreakpointsPanel)? FieldBreakpoint.ICON : FieldBreakpoint.DISABLED_ICON);
+      }
+      else if (component == myMethodBreakpointsPanel.getPanel()) {
+        myTabbedPane.setIconAt(idx, hasEnabledBreakpoints(myMethodBreakpointsPanel)? MethodBreakpoint.ICON : MethodBreakpoint.DISABLED_ICON);
+      }
+    }
+
+    private boolean hasEnabledBreakpoints(BreakpointPanel panel) {
+      final int rowCount = panel.getBreakpointCount();
+      for (int idx = 0; idx < rowCount; idx++) {
+        if (panel.isBreakpointEnabled(idx)) {
+          return true;
         }
       }
+      return false;
     }
 
     private class AddExceptionBreakpointAction implements ActionListener {
@@ -372,7 +383,7 @@ public class BreakpointsConfigurationDialogFactory {
           myExceptionBreakpointsPanel.addBreakpoint(breakpoint);
         }
         myExceptionBreakpointsPanel.getTable().requestFocus();
-        updateTitles();
+        updateAllTabTitles();
       }
     }
 
@@ -402,7 +413,7 @@ public class BreakpointsConfigurationDialogFactory {
                   if (fieldBreakpoint != null) {
                     myFieldBreakpointsPanel.addBreakpoint(fieldBreakpoint);
                     myFieldBreakpointsPanel.getTable().requestFocus();
-                    updateTitles();
+                    updateAllTabTitles();
                     return true;
                   }
                 } else {
@@ -452,7 +463,7 @@ public class BreakpointsConfigurationDialogFactory {
           }
         }
         myPanel.getTable().requestFocus();
-        updateTitles();
+        updateAllTabTitles();
       }
     }
 

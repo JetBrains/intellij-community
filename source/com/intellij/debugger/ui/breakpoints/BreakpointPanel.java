@@ -101,6 +101,7 @@ public class BreakpointPanel {
     myStubPanel.setMinimumSize(myPropertiesPanel.getPanel().getMinimumSize());
 
     myPropertiesPanelPlace.setLayout(new BorderLayout());
+    myBreakPointsPanel.setBorder(IdeBorderFactory.createEmptyBorder(6, 6, 0, 6));
     refreshUI();
   }
 
@@ -235,11 +236,21 @@ public class BreakpointPanel {
     updateButtons();
   }
 
-  public void setBorderTitle(String titleAt) {
-    myBreakPointsPanel.setBorder(IdeBorderFactory.createTitledBorder(titleAt));
-  }
-
   public JComponent getControl(String control) {
     return myPropertiesPanel.getControl(control);
   }
+
+  public int getBreakpointCount() {
+    return myTable.getRowCount();
+  }
+
+  public Breakpoint getBreakpointAt(final int idx) {
+    return ((BreakpointTableModel)myTable.getModel()).getBreakpoint(idx);
+  }
+
+  public boolean isBreakpointEnabled(final int idx) {
+    return ((BreakpointTableModel)myTable.getModel()).isBreakpointEnabled(idx);
+  }
+
+
 }

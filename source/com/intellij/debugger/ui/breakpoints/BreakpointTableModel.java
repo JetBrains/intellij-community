@@ -34,6 +34,10 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
     return (Breakpoint)myBreakpoints.get(index);
   }
 
+  public boolean isBreakpointEnabled(int index) {
+    return ((Boolean)getValueAt(index, ENABLED_STATE)).booleanValue();
+  }
+
   public int getBreakpointIndex(Breakpoint breakpoint) {
     return myBreakpoints.indexOf(breakpoint);
   }

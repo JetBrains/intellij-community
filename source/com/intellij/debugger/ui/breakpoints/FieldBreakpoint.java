@@ -43,8 +43,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private boolean myIsStatic;
   private String myFieldName;
 
-  private static Icon ourSetIcon = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
-  private static Icon ourDisabledIcon = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
+  public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
+  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_field_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_field_breakpoint.png");
 
@@ -67,8 +67,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
 
-  protected Icon getDisabledIcon() { return ourDisabledIcon; }
-  protected Icon getSetIcon     () { return ourSetIcon; }
+  protected Icon getDisabledIcon() { return DISABLED_ICON; }
+  protected Icon getSetIcon     () { return ICON; }
   protected Icon getInvalidIcon () { return ourInvalidIcon; }
   protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
 

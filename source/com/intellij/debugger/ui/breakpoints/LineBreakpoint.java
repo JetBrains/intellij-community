@@ -35,10 +35,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   // icons
+  public static Icon ICON = IconLoader.getIcon("/gutter/db_set_breakpoint.png");
+  public static final Icon DISABLED_ICON = IconLoader.getIcon("/gutter/db_disabled_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_breakpoint.png");
-  private static Icon ourSetIcon = IconLoader.getIcon("/gutter/db_set_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_breakpoint.png");
-  private static final Icon ourDisabledIcon = IconLoader.getIcon("/gutter/db_disabled_breakpoint.png");
 
   private String myMethodName;
 
@@ -50,8 +50,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, highlighter);
   }
 
-  protected Icon getDisabledIcon() { return ourDisabledIcon; }
-  protected Icon getSetIcon     () { return ourSetIcon; }
+  protected Icon getDisabledIcon() { return DISABLED_ICON; }
+  protected Icon getSetIcon     () { return ICON; }
   protected Icon getInvalidIcon () { return ourInvalidIcon; }
   protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
 

@@ -37,8 +37,8 @@ public class ExceptionBreakpoint extends Breakpoint {
   public boolean NOTIFY_UNCAUGHT = true;
   private String myQualifiedName;
 
-  private static Icon ourIcon = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
-  private static Icon ourDisabledExceptionIcon = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
+  public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
+  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = "No class_name for exception breakpoint";
 
   private ExceptionBreakpoint(Project project) {
@@ -68,9 +68,9 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public Icon getIcon() {
     if (!ENABLED) {
-      return ourDisabledExceptionIcon;
+      return DISABLED_ICON;
     }
-    return ourIcon;
+    return ICON;
   }
 
   public void reload() {

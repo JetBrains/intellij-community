@@ -40,8 +40,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   private JVMName mySignature;
   private boolean myIsStatic;
 
-  private static Icon ourSetIcon = IconLoader.getIcon("/gutter/db_method_breakpoint.png");
-  private static Icon ourDisabledIcon = IconLoader.getIcon("/gutter/db_disabled_method_breakpoint.png");
+  public static Icon ICON = IconLoader.getIcon("/gutter/db_method_breakpoint.png");
+  public static Icon DISABLED_ICON = IconLoader.getIcon("/gutter/db_disabled_method_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_method_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_method_breakpoint.png");
 
@@ -169,8 +169,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return getPsiClass();
   }
 
-  protected Icon getDisabledIcon() { return ourDisabledIcon; }
-  protected Icon getSetIcon     () { return ourSetIcon; }
+  protected Icon getDisabledIcon() { return DISABLED_ICON; }
+  protected Icon getSetIcon     () { return ICON; }
   protected Icon getInvalidIcon () { return ourInvalidIcon; }
   protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
 
