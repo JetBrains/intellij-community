@@ -145,7 +145,6 @@
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" text="Move to the next difference" description="Move to the next difference" icon="/actions/moveDown.png"/>
     <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" text="Move to the previous difference" description="Move to the previous difference" icon="/actions/moveUp.png"/>
 
-    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" text="Refresh"/>
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" text="Check In Project">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
     </action>
