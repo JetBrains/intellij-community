@@ -24,7 +24,11 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase {
     ArrayList<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
 
     List<PsiElement> ownChildren = Arrays.asList(myClass.getChildren());
-    ArrayList<PsiElement> inherited = new ArrayList<PsiElement>(ownChildren);
+    ArrayList<PsiElement> inherited = new ArrayList<PsiElement>();
+    for (Iterator<PsiElement> iterator = ownChildren.iterator(); iterator.hasNext();) {
+      PsiElement psiElement = iterator.next();
+      if (psiElement.isValid()) inherited.add(psiElement);
+    }
     PsiScopesUtil.processScope(myClass, new AddAllMembersProcessor(inherited, myClass, new AddAllMembersProcessor.MemberFilter() {
       protected boolean isVisible(PsiModifierListOwner member) {
         return true;
@@ -35,9 +39,11 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase {
       PsiElement child = (PsiElement)iterator.next();
       if (child instanceof PsiClass || child instanceof PsiMethod || child instanceof PsiField) {
         if (child instanceof PsiClass) {
-          array.add(new JavaClassTreeElement((PsiClass)child, !ownChildren.contains(child)));
+          if (child.isValid()) {
+            array.add(new JavaClassTreeElement((PsiClass)child, !ownChildren.contains(child)));
+          }
         }
-        else {
+        else if (child.isValid()){
           addMemeber(child, array, !ownChildren.contains(child));
         }
       }

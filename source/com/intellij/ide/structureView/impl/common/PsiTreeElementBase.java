@@ -68,6 +68,8 @@ public abstract class PsiTreeElementBase implements StructureViewTreeElement, It
   }
 
   public final StructureViewTreeElement[] getChildren() {
+    if (getElement() == null) return new StructureViewTreeElement[0]; 
+    if (!getElement().isValid()) return new StructureViewTreeElement[0];
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     StructureViewTreeElement[] baseChildren = getChildrenBase();
     result.addAll(Arrays.asList(baseChildren));
