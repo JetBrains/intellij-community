@@ -47,7 +47,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
       createCompoundReferenceRenderer(
         "Map", "java.util.Map",
-        createLabelRenderer("size = ", "size()", null),
+        createLabelRenderer(" size = ", "size()", null),
         createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
       ),
       createCompoundReferenceRenderer(
@@ -57,7 +57,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       ),
       createCompoundReferenceRenderer(
         "Collection", "java.util.Collection",
-        createLabelRenderer("size = ", "size()", null),
+        createLabelRenderer(" size = ", "size()", null),
         createExpressionChildrenRenderer("toArray()", "!isEmpty()")
       )
     };
