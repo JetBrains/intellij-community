@@ -48,7 +48,7 @@ public class ResolverTree {
     myConstraints = system.getConstraints();
     myProject = system.getProject();
     myBindingDegree = calculateDegree(system.getConstraints());
-    mySettings = system.getSettings ();
+    mySettings = system.getSettings();
 
     reduceCyclicVariables();
   }
@@ -549,10 +549,12 @@ public class ResolverTree {
       final PsiType type = target.getRight();
       final PsiTypeVariable var = (PsiTypeVariable)target.getLeft();
 
+      // Wildcard sensitive!
       final Binding binding =
         haveLeftBound.contains(var)
         ? myBindingFactory.create(var, type)
-        : myBindingFactory.create(var, type); //PsiWildcardType.createExtends(PsiManager.getInstance(myProject), type));
+      //  : myBindingFactory.create(var, PsiWildcardType.createExtends(PsiManager.getInstance(myProject), type));
+      : myBindingFactory.create(var, type);
 
       myConstraints.remove(target);
 

@@ -42,4 +42,6 @@ public abstract class Binding {
   public abstract int getWidth();
 
   public abstract boolean isValid();
+
+  public abstract void addTypeVariable (PsiTypeVariable var);
 }
