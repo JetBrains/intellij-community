@@ -164,20 +164,17 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "  public static int <static>staticField</static> = 0;\n" +
       "\n" +
       "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>) {\n" +
-      "    <todo>//TODO: something</todo>\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <field>field</field> + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
       "    int <localVar>value</localVar> = this.<warning>staticField</warning>; \n" +
-      "  }\n" +
-      "  void <methodDeclaration>method</methodDeclaration>() {/*  block\n" +
-      "                     comment */\n" +
       "    new <constructorCall>SomeClass</constructorCall>();\n" +
       "  }\n" +
       "}\n" +
       "\n" +
       "interface <interface>AnInterface</interface> {\n" +
       "  int <static>CONSTANT</static> = 2;\n" +
+      "  void <methodDeclaration>method</methodDeclaration>();\n" +
       "}";
 
     return text;
