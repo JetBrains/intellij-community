@@ -10,6 +10,6 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   }
 
   protected boolean isHtmlTagState(int state) {
-    return state == 0;
+    return state == 0 || state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
   }
 }
