@@ -215,7 +215,7 @@ public class CodeEditUtil {
     String newChildText = newChild.getText();
     boolean isMultiline = newChildText.indexOf('\n') >= 0 || newChildText.indexOf('\r') >= 0;
     if (isMultiline) {
-      String spaceText = helper.getSpaceText(parent, prevNonSpace, newChild);
+      String spaceText = Helper.getSpaceText(parent, prevNonSpace, newChild);
       int index = Math.max(spaceText.lastIndexOf('\n'), spaceText.lastIndexOf('\r'));
       if (index >= 0
       || (parent.getTreeParent() == null && prevNonSpace == null && newChild.getTextRange().getStartOffset() == spaceText.length())
@@ -243,8 +243,6 @@ public class CodeEditUtil {
         if( prevWS == null || prevWS.getText().indexOf('\n') < 0 ) return;
     */
     if (clone instanceof CompositeElement) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(manager.getProject());
-
       int origIndent = helper.getIndent(original);
 
       helper.indentSubtree(clone, origIndent, 0, table);
@@ -425,14 +423,14 @@ public class CodeEditUtil {
       }
     }
     else {
-      return getWhiteSpaceBeforeToken(second, language).generateNewWhiteSpace();
+      return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace();
     }
 
   }
 
   public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
                                                           final Language language) {
-    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language));
+    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language), false);
   }
 
   private static Language chooseLanguage(final ASTNode tokenNode, final Language language) {
@@ -455,7 +453,8 @@ public class CodeEditUtil {
   }
 
   public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                    final Language language) {
+                                                    final Language language,
+                                                    final boolean mayChangeLineFeeds) {
     LOG.assertTrue(tokenNode != null);
     final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
     LOG.assertTrue(secondAsPsiElement != null);
@@ -474,7 +473,7 @@ public class CodeEditUtil {
                                                             settings,
                                                             file);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset, mayChangeLineFeeds);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
