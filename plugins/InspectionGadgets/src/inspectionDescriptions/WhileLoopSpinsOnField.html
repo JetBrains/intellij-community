@@ -1,10 +1,10 @@
 <html>
-<body><table height="170"> <tr  height="150"> <td valign = "top" height="150">
+<body><table> <tr> <td valign = "top" height="150">
 <font face="verdana" size="-1">
 This inspection reports on any instances of <b><font color="#000080">while</font></b> loops which spin on the
 value of a non-volatile field, waiting for it to be changed by another thread.  In addition to being extremely CPU intensive, such
 loops are likely have different semantics than intended, as the Java Memory Model allows such field accesses
 to be hoisted out of the loop, causing the loop to never complete even if another thread does change the
 field's value.
-</td> </tr> <tr height="20"> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>
