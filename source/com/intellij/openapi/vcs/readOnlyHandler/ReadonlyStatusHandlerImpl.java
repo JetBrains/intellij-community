@@ -49,7 +49,7 @@ import java.util.List;
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements ProjectComponent, JDOMExternalizable{
   private final Project myProject;
 
-  public boolean SHOW_DIALOG;
+  public boolean SHOW_DIALOG = true;
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
