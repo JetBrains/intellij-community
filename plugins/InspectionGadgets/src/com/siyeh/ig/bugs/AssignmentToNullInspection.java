@@ -37,13 +37,12 @@ public class AssignmentToNullInspection extends ExpressionInspection {
                 return;
             }
             PsiElement parent = value.getParent();
-            while (parent != null &&
-                    (parent instanceof PsiParenthesizedExpression ||
+            while (parent instanceof PsiParenthesizedExpression ||
                     parent instanceof PsiConditionalExpression ||
-                    parent instanceof PsiTypeCastExpression)) {
+                    parent instanceof PsiTypeCastExpression) {
                 parent = parent.getParent();
             }
-            if (parent == null || !(parent instanceof PsiAssignmentExpression)) {
+            if (!(parent instanceof PsiAssignmentExpression)) {
                 return;
             }
             final PsiExpression lhs = ((PsiAssignmentExpression) parent).getLExpression();

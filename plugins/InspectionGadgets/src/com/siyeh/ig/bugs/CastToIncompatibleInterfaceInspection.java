@@ -2,8 +2,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -68,36 +66,11 @@ public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
             if(operandClass == null){
                 return;
             }
-            if(operandClass.isInterface()){
-                return;
-            }
-            if(existsImplementingSubClass(operandClass, castClass)){
+            if(InheritanceUtil.existsMutualSubclass(operandClass, castClass)){
                 return;
             }
             registerError(castTypeElement);
         }
     }
 
-    private static boolean existsImplementingSubClass(PsiClass aClass,
-                                                      PsiClass anInterface){
-        if(aClass.isInheritor(anInterface, true)){
-            return true;
-        }
-        if("java.lang.Object".equals(aClass.getQualifiedName()))
-        {
-            return true;
-        }
-        final PsiManager psiManager = aClass.getManager();
-        final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-        final SearchScope searchScope = aClass.getUseScope();
-        final PsiClass[] inheritors =
-                searchHelper.findInheritors(aClass, searchScope, true);
-        for(int i = 0; i < inheritors.length; i++){
-            final PsiClass inheritor = inheritors[i];
-            if(inheritor.isInheritor(anInterface, true)){
-                return true;
-            }
-        }
-        return false;
-    }
 }

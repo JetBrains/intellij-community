@@ -14,6 +14,8 @@
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
     Encapsulatable use of field
+    Interface never implemented
+    Abstract class never implemented
 
     Static inheritance fix
     Static import fix

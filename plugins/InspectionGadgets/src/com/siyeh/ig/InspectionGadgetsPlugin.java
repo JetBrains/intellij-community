@@ -417,6 +417,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
         inspectionClasses.add(MarkerInterfaceInspection.class);
         inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
+        inspectionClasses.add(InterfaceNeverImplementedInspection.class);
+        inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
     }
 
     private void registerCloneInspections(){
