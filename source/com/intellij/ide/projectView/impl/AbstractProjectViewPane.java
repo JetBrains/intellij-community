@@ -24,6 +24,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Enumeration;
 
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider {
@@ -70,8 +71,44 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   protected final List<AbstractUrl> getExpandedUrls(){
-    return myExpandedElements.getExpandedUrls(myTree, myProject);
+      if (myTree == null) {
+        // this is the case when invoked on partially initialized/disposed ProjectView
+        return new ArrayList<AbstractUrl>();
+      }
+      List<AbstractUrl> urls = new ArrayList<AbstractUrl>();
+      DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)myTree.getModel().getRoot();
+      Enumeration descendants = myTree.getExpandedDescendants(new TreePath(rootNode.getPath()));
+      if (descendants != null) {
+        NextDescendant:
+        while (descendants.hasMoreElements()) {
+          TreePath treePath = (TreePath)descendants.nextElement();
+          // build up path from tree node elements
+          Object[] path = treePath.getPath();
+          List<Object> elementsPath = new ArrayList<Object>(path.length);
+          for (int i = 0; i < path.length; i++) {
+            Object node = path[i];
+            if (node instanceof DefaultMutableTreeNode) {
+              DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
+              if (mutableNode.getUserObject() instanceof AbstractTreeNode) {
+                AbstractTreeNode descriptor = (AbstractTreeNode)mutableNode.getUserObject();
+                Object element = descriptor.getValue();
+                if (element != null) {
+                  elementsPath.add(element);
+                } else {
+                  continue NextDescendant;
+                }
+              }
+            }
+          }
+          AbstractUrl url = myExpandedElements.createUrlByPath(elementsPath);
+          if (url != null) {
+            urls.add(url);
+          }
+        }
+      }
+      return urls;
   }
+
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
   }
@@ -171,7 +208,6 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     return list.toArray(new Object[list.size()]);
   }
-
   public BaseProjectTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
