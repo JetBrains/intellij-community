@@ -425,6 +425,13 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
     else if (element instanceof PsiSuperExpression && mySettings.isMakeClassParameter()) {
       element.replace(factory.createExpressionFromText(mySettings.getClassParameterName(), null));
     }
+    else if (element instanceof PsiNewExpression && mySettings.isMakeClassParameter()) {
+      final PsiNewExpression newExpression = ((PsiNewExpression)element);
+      LOG.assertTrue(newExpression.getQualifier() == null);
+      final String newText = mySettings.getClassParameterName() + "." + newExpression.getText();
+      final PsiExpression expr = factory.createExpressionFromText(newText, null);
+      element.replace(expr);  
+    }
   }
 
   private void changeExternalUsage(UsageInfo usage, PsiElementFactory factory)
