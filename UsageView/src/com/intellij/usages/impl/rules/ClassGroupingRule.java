@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.Usage;
@@ -27,8 +28,9 @@ public class ClassGroupingRule implements UsageGroupingRule {
 
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof PsiElementUsage) {
-      PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-      if (psiElement.getContainingFile() instanceof PsiJavaFile) {
+      final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+      final PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile instanceof PsiJavaFile) {
         PsiElement containingClass = psiElement;
         do {
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
@@ -36,12 +38,34 @@ public class ClassGroupingRule implements UsageGroupingRule {
         }
         while (true);
 
+        if (containingClass == null) {
+          // check whether the element is in the import list
+          PsiImportList importList = PsiTreeUtil.getParentOfType(psiElement, PsiImportList.class, true);
+          if (importList != null) {
+            final String fileName = getFileNameWithoutExtension(containingFile);
+            final PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
+            for (int idx = 0; idx < classes.length; idx++) {
+              final PsiClass aClass = classes[idx];
+              if (fileName.equals(aClass.getName())) {
+                containingClass = aClass;
+                break;
+              }
+            }
+          }
+        }
+
         if (containingClass != null) {
           return new ClassUsageGroup((PsiClass)containingClass);
         }
       }
     }
     return null;
+  }
+
+  private static String getFileNameWithoutExtension(final PsiFile file) {
+    final String name = file.getName();
+    final int index = name.lastIndexOf('.');
+    return index < 0? name : name.substring(0, index);
   }
 
   private static class ClassUsageGroup implements UsageGroup, DataProvider {
