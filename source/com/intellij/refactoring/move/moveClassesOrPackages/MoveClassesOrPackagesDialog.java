@@ -220,13 +220,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void validateOKButton() {
-    String name = myTextFieldWithBrowseButton.getText();
+    String name = myTextFieldWithBrowseButton.getText().trim();
     if (name.length() == 0) {
       setOKActionEnabled(true);
     }
     else {
       PsiManager manager = myManager;
-      setOKActionEnabled(manager.getNameHelper().isQualifiedName(name.trim()));
+      setOKActionEnabled(manager.getNameHelper().isQualifiedName(name));
     }
   }
 

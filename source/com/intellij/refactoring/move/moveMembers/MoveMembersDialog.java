@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,12 +51,12 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private MemberInfo[] myMemberInfos;
   private final TextFieldWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
-  private Set myPreselectMembers;
+  private Set<PsiMember> myPreselectMembers;
 
   VisibilityPanel myVisibilityPanel;
 
   public MoveMembersDialog(Project project, PsiClass sourceClass, final PsiClass initialTargetClass,
-                           Set preselectMembers, Callback callback) {
+                           Set<PsiMember> preselectMembers, Callback callback) {
 
 
     super(project, true);
@@ -199,7 +198,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   }
 
   public String getTargetClassName() {
-    return myTfTargetClassName.getText();
+    return myTfTargetClassName.getText().trim();
   }
 
   protected void doAction() {

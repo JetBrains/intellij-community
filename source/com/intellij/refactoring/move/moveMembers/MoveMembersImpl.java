@@ -33,7 +33,7 @@ public class MoveMembersImpl {
     } else {
       return;
     }
-    final Set preselectMembers = new HashSet();
+    final Set<PsiMember> preselectMembers = new HashSet<PsiMember>();
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (!sourceClass.equals(element.getParent())) {
