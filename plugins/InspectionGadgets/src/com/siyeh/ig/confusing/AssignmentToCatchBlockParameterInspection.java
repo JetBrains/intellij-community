@@ -44,7 +44,7 @@ public class AssignmentToCatchBlockParameterInspection extends ExpressionInspect
             if (!(variable instanceof PsiParameter)) {
                 return;
             }
-            if (!(((PsiParameter)variable).getDeclarationScope() instanceof PsiTryStatement)) {
+            if (!(((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection)) {
                 return;
             }
             registerError(expression);

@@ -1,8 +1,8 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +35,7 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
         public void visitParameter(PsiParameter parameter) {
             super.visitParameter(parameter);
 
-            if (parameter.getDeclarationScope() instanceof PsiTryStatement) {
+            if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
                 return;
             }
             final PsiTypeElement typeElement = parameter.getTypeElement();

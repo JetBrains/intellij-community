@@ -108,7 +108,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
 
         public void visitParameter(PsiParameter variable) {
             super.visitParameter(variable);
-            if (!(variable.getDeclarationScope() instanceof PsiTryStatement)) {
+            if (!(variable.getDeclarationScope() instanceof PsiCatchSection)) {
                 return;
             }
             final PsiClass aClass =

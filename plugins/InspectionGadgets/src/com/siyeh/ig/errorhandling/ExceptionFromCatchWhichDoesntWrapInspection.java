@@ -70,7 +70,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspec
                     final PsiElement referent = ref.resolve();
                     if (referent != null
                             && referent instanceof PsiParameter
-                            && ((PsiParameter)referent).getDeclarationScope() instanceof PsiTryStatement) {
+                            && ((PsiParameter)referent).getDeclarationScope() instanceof PsiCatchSection) {
                         return true;
                     }
                 }
