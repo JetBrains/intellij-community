@@ -63,6 +63,16 @@ class InlineLocalHandler {
       return;
     }
 
+    PsiFile workingFile = local.getContainingFile();
+    for (int i = 0; i < refs.length; i++) {
+      final PsiFile otherFile = refs[i].getElement().getContainingFile();
+      if (!otherFile.equals(workingFile)) {
+        String message = "Variable " + localName + " is referenced in multiple files";
+        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+        return;
+      }
+    }
+
     final ArrayList<PsiReference> toInline = new ArrayList<PsiReference>(refs.length);
     final PsiJavaCodeReferenceElement firstWriteUsage = (PsiJavaCodeReferenceElement)filterUsagesToInline(refs, toInline);
     if (toInline.size() == 0) {
