@@ -88,14 +88,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
-    int occurencesNumber = occurences.length;
     IntroduceConstantDialog dialog = new IntroduceConstantDialog(
-            project, parentClass, expr, localVariable, false, occurencesNumber,
+            project, parentClass, expr, localVariable, false, occurences,
             getParentClass(), new TypeSelectorManagerImpl(project, type, expr, occurences)
     );
     dialog.show();
     if (!dialog.isOK()) {
-      if (occurencesNumber > 1) {
+      if (occurences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
       }
       return null;

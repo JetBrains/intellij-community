@@ -20,8 +20,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.StateRestoringCheckBox;
 
@@ -39,6 +37,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final PsiExpression myInitializerExpression;
   private final PsiLocalVariable myLocalVariable;
   private final boolean myInvokedOnDeclaration;
+  private final PsiExpression[] myOccurrences;
   private final int myOccurrencesCount;
   private final PsiClass myTargetClass;
   private final TypeSelectorManager myTypeSelectorManager;
@@ -53,16 +52,22 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private TypeSelector myTypeSelector;
   private StateRestoringCheckBox myCbDeleteVariable;
-  private NameSuggestionsManager myNameSuggestionsManager;
   private final CodeStyleManager myCodeStyleManager;
   private ReferenceEditorWithBrowseButton myTfTargetClassName;
   private PsiClass myDestinationClass;
+  private JPanel myTypePanel;
+  private JPanel myTargetClassNamePanel;
+  private JPanel myPanel;
+  private JLabel myTypeLabel;
+  private JPanel myNameSuggestionPanel;
+  private JLabel myNameSuggestionLabel;
+  private JLabel myTargetClassNameLabel;
 
   public IntroduceConstantDialog(Project project,
                                  PsiClass parentClass,
                                  PsiExpression initializerExpression,
                                  PsiLocalVariable localVariable, boolean isInvokedOnDeclaration,
-                                 int occurrencesCount, PsiClass targetClass, TypeSelectorManager typeSelectorManager) {
+                                 PsiExpression[] occurrences, PsiClass targetClass, TypeSelectorManager typeSelectorManager) {
 
     super(project, true);
     myProject = project;
@@ -70,7 +75,8 @@ class IntroduceConstantDialog extends DialogWrapper {
     myInitializerExpression = initializerExpression;
     myLocalVariable = localVariable;
     myInvokedOnDeclaration = isInvokedOnDeclaration;
-    myOccurrencesCount = occurrencesCount;
+    myOccurrences = occurrences;
+    myOccurrencesCount = occurrences.length;
     myTargetClass = targetClass;
     myTypeSelectorManager = typeSelectorManager;
     myDestinationClass = null;
@@ -140,173 +146,93 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
-
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
-    gbConstraints.anchor = GridBagConstraints.EAST;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-
-    gbConstraints.insets = new Insets(4, 4, 4, 0);
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    JLabel type = new JLabel("Constant (static final field) of type: ");
-    panel.add(type, gbConstraints);
-
-    gbConstraints.gridx++;
-    gbConstraints.insets = new Insets(4, 0, 4, 4);
+    final NameSuggestionsManager nameSuggestionsManager;
     myTypeSelector = myTypeSelectorManager.getTypeSelector();
-    panel.add(myTypeSelector.getComponent(), gbConstraints);
+    myTypePanel.setLayout(new BorderLayout());
+    myTypePanel.add(myTypeSelector.getComponent(), BorderLayout.CENTER);
     if (myTypeSelector.getFocusableComponent() != null) {
-      type.setDisplayedMnemonic(KeyEvent.VK_T);
-      type.setLabelFor(myTypeSelector.getFocusableComponent());
+      myTypeLabel.setDisplayedMnemonic(KeyEvent.VK_T);
+      myTypeLabel.setLabelFor(myTypeSelector.getFocusableComponent());
     }
 
+    myNameField = new NameSuggestionsField(myProject);
+    myNameSuggestionPanel.setLayout(new BorderLayout());
 
-    final JLabel namePrompt;
-    JPanel nameInputPanel;
-    {
-      nameInputPanel = new JPanel(new GridBagLayout());
-      GridBagConstraints gbc = new GridBagConstraints();
-      gbc.insets = new Insets(0, 0, 0, 2);
-      gbc.anchor = GridBagConstraints.EAST;
-      gbc.fill = GridBagConstraints.BOTH;
-      gbc.gridwidth = 1;
-      gbc.weightx = 0;
-      gbc.weighty = 1;
-      gbc.gridx = 0;
-      gbc.gridy = 0;
-      namePrompt = new JLabel("Name: ");
-      nameInputPanel.add(namePrompt, gbc);
+    myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
+    myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
-      gbc.gridx++;
-      gbc.insets = new Insets(0, 2, 0, 0);
-      gbc.weightx = 1;
-      myNameField = new NameSuggestionsField(myProject);
-      nameInputPanel.add(myNameField.getComponent(), gbc);
-      namePrompt.setDisplayedMnemonic(KeyEvent.VK_N);
-      namePrompt.setLabelFor(myNameField.getFocusableComponent());
-    }
-
-
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.gridwidth = 2;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 1;
-    panel.add(nameInputPanel, gbConstraints);
-
-    {
-      myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
-      JPanel _panel = new JPanel(new BorderLayout());
-      JLabel label = new JLabel("To (fully qualified name):");
-      label.setLabelFor(myTfTargetClassName);
-      _panel.add(label, BorderLayout.NORTH);
-      _panel.add(myTfTargetClassName, BorderLayout.CENTER);
-      gbConstraints.gridy++;
-      panel.add(_panel, gbConstraints);
-    }
-
-    /*gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 1;
-
-    panel.add(namePrompt, gbConstraints);
-
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridx = 1;
-    gbConstraints.gridy = 1;*/
-
-//    panel.add(myNameField.getComponent(), gbConstraints);
+    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
+    myTargetClassNamePanel.setLayout(new BorderLayout());
+    myTargetClassNamePanel.add(myTfTargetClassName, BorderLayout.CENTER);
+    myTargetClassNameLabel.setLabelFor(myTfTargetClassName);
 
     final String propertyName;
-    if(myLocalVariable != null) {
+    if (myLocalVariable != null) {
       propertyName = myCodeStyleManager.variableNameToPropertyName(myLocalVariable.getName(), VariableKind.LOCAL_VARIABLE);
-    } else {
+    }
+    else {
       propertyName = null;
     }
-    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-            new NameSuggestionsGenerator() {
-              public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                return myCodeStyleManager.suggestVariableName(
-                        VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type
-                );
-              }
-
-              public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-                LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                LookupItemPreferencePolicy policy = CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
-                return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
-              }
-            },
-            myProject);
-
-    myNameSuggestionsManager.setMnemonics(type, namePrompt);
-
-    return panel;
-  }
-
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-
-    panel.add(createVisibilityPanel(), gbConstraints);
-    ItemListener itemListener = new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        updateTypeSelector();
-
-        myNameField.requestFocusInWindow();
+    nameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
+                                                          new NameSuggestionsGenerator() {
+      public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+        return myCodeStyleManager.suggestVariableName(
+          VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type
+        );
       }
-    };
+
+      public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
+        LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+        LookupItemPreferencePolicy policy =
+          CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
+        return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
+      }
+    },
+                                                          myProject);
+
+    nameSuggestionsManager.setMnemonics(myTypeLabel, myNameSuggestionLabel);
+    //////////
     if (myOccurrencesCount > 1) {
-      myCbReplaceAll = new NonFocusableCheckBox("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
-      myCbReplaceAll.setMnemonic('A');
-      myCbReplaceAll.setFocusable(false);
-      gbConstraints.gridy++;
-      panel.add(myCbReplaceAll, gbConstraints);
+      ItemListener itemListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          updateTypeSelector();
+
+          myNameField.requestFocusInWindow();
+        }
+      };
       myCbReplaceAll.addItemListener(itemListener);
+      myCbReplaceAll.setText("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
+    }
+    else {
+      myCbReplaceAll.setVisible(false);
     }
 
     if (myLocalVariable != null) {
-      gbConstraints.gridy++;
-      if (myCbReplaceAll != null) {
-        gbConstraints.insets = new Insets(0, 8, 0, 0);
-      }
-      myCbDeleteVariable = new StateRestoringCheckBox("Delete variable declaration");
-      myCbDeleteVariable.setFocusable(false);
-      panel.add(myCbDeleteVariable, gbConstraints);
-      myCbDeleteVariable.setMnemonic(KeyEvent.VK_D);
       if (myInvokedOnDeclaration) {
         myCbDeleteVariable.setEnabled(false);
         myCbDeleteVariable.setSelected(true);
-      } else if (myCbReplaceAll != null) {
+      }
+      else if (myCbReplaceAll != null) {
         updateCbDeleteVariable();
         myCbReplaceAll.addItemListener(
-                new ItemListener() {
-                  public void itemStateChanged(ItemEvent e) {
-                    updateCbDeleteVariable();
-                  }
-                }
+          new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            updateCbDeleteVariable();
+          }
+        }
         );
       }
     }
+    else {
+      myCbDeleteVariable.setVisible(false);
+    }
     updateTypeSelector();
-    return panel;
+    updateVisibilityPanel();
+    return myPanel;
+  }
+
+  protected JComponent createCenterPanel() {
+    return new JPanel();
   }
 
   public boolean isDeleteVariable() {
@@ -331,30 +257,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
   }
 
-  private JComponent createVisibilityPanel() {
-    JPanel visibilityPanel = new JPanel();
-    visibilityPanel.setBorder(IdeBorderFactory.createTitledBorder("Visibility"));
-    visibilityPanel.setLayout(new BoxLayout(visibilityPanel, BoxLayout.Y_AXIS));
-
-
-    myRbPrivate = new JRadioButton("Private");
-    myRbPrivate.setMnemonic('v');
-    myRbPrivate.setFocusable(false);
-    myRbpackageLocal = new JRadioButton("Package local");
-    myRbpackageLocal.setMnemonic('k');
-    myRbpackageLocal.setFocusable(false);
-    myRbProtected = new JRadioButton("Protected");
-    myRbProtected.setMnemonic('o');
-    myRbProtected.setFocusable(false);
-    myRbPublic = new JRadioButton("Public");
-    myRbPublic.setMnemonic('b');
-    myRbPublic.setFocusable(false);
-
-
-    visibilityPanel.add(myRbPrivate);
-    visibilityPanel.add(myRbpackageLocal);
-    visibilityPanel.add(myRbProtected);
-    visibilityPanel.add(myRbPublic);
+  private void updateVisibilityPanel() {
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbPrivate);
     bg.add(myRbpackageLocal);
@@ -369,8 +272,6 @@ class IntroduceConstantDialog extends DialogWrapper {
       myRbPublic.setEnabled(true);
       myRbPublic.setSelected(true);
     }
-
-    return visibilityPanel;
   }
 
   protected void doOKAction() {

@@ -92,7 +92,7 @@ public class LocalToFieldHandler {
     }
     else {
       IntroduceConstantDialog dialog = new IntroduceConstantDialog(myProject, aClass,
-                                                                   local.getInitializer(), local, true, occurences.length, aClass, typeSelectorManager
+                                                                   local.getInitializer(), local, true, occurences, aClass, typeSelectorManager
       );
       dialog.show();
       if (!dialog.isOK()) return false;
