@@ -219,7 +219,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void startTransaction(Document doc, PsiElement scope) {
-    myTransactionsMap.put(doc, new DocumentChangeTransaction(doc, scope));
+    if(!myTransactionsMap.containsKey(doc))
+      myTransactionsMap.put(doc, new DocumentChangeTransaction(doc, scope));
   }
 
   public void commitTransaction(Document document){
