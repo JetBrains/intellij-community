@@ -34,7 +34,7 @@ import java.util.*;
 public class PsiClassImplUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
   private static final Key MAP_IN_CLASS_KEY = Key.create("MAP_IN_CLASS_KEY");
-  private static final Key ALL_MAPS_BUILT_FLAG = Key.create("ALL_MAPS_BUILT_FLAG");
+  private static final Key<String> ALL_MAPS_BUILT_FLAG = Key.create("ALL_MAPS_BUILT_FLAG");
 
   public static PsiField[] getAllFields(final PsiClass aClass) {
     return getAllByMap(aClass, PsiField.class);
@@ -187,7 +187,7 @@ public class PsiClassImplUtil{
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         list.add(new Pair<T, PsiSubstitutor>((T)element, substitutor));
       }
-    }, PsiSubstitutor.EMPTY, new HashSet(), null, psiClass);
+    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass);
 
 
     synchronized (map) {
@@ -245,7 +245,7 @@ public class PsiClassImplUtil{
           classes.add(new Pair<PsiClass, PsiSubstitutor>((PsiClass)element, substitutor));
         }
       }
-    }, PsiSubstitutor.EMPTY, new HashSet(), null, psiClass);
+    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass);
 
     synchronized (PsiLock.LOCK) {
       //This is quite a critical doubled check. Actually, the first check might be removed
@@ -341,7 +341,7 @@ public class PsiClassImplUtil{
   }
 
   public static boolean processDeclarationsInClass(PsiClass aClass, PsiScopeProcessor processor,
-                                                   PsiSubstitutor substitutor, Set visited, PsiElement last,
+                                                   PsiSubstitutor substitutor, Set<PsiClass> visited, PsiElement last,
                                                    PsiElement place) {
     if (visited.contains(aClass)) return true;
     if (last instanceof PsiTypeParameterList) return true; //TypeParameterList doesn't see our declarations
@@ -460,7 +460,7 @@ public class PsiClassImplUtil{
   }
 
   public static boolean processDeclarationsInClassNotCached(PsiClass aClass, PsiScopeProcessor processor,
-                                                   PsiSubstitutor substitutor, Set visited, PsiElement last,
+                                                   PsiSubstitutor substitutor, Set<PsiClass> visited, PsiElement last,
                                                    PsiElement place) {
     if (visited.contains(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
@@ -547,7 +547,7 @@ public class PsiClassImplUtil{
   }
 
   private static boolean processSuperTypes(final PsiClassType[] superTypes, PsiScopeProcessor processor,
-                                           Set visited, PsiElement last, PsiElement place, PsiClass aClass, PsiSubstitutor substitutor) {
+                                           Set<PsiClass> visited, PsiElement last, PsiElement place, PsiClass aClass, PsiSubstitutor substitutor) {
     if (superTypes == null) return true;
     for (int i = 0; i < superTypes.length; i++) {
       final PsiClassType superType = superTypes[i];
