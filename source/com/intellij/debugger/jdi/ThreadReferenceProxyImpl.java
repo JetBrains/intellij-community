@@ -113,11 +113,20 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if (myFrameCount == -1) {
-      try {
-        myFrameCount = getThreadReference().frameCount();
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
+      while (true) {
+        // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleTharedStateException
+        // so keep trying to get frame count if the thread reports itself as "suspended"
+        try {
+          final ThreadReference threadReference = getThreadReference();
+          myFrameCount = threadReference.frameCount();
+          break;
+        }
+        catch (IncompatibleThreadStateException e) {
+          if (!isSuspended()) {
+            // give up because it seems to be really resumed
+            throw EvaluateExceptionUtil.createEvaluateException(e);
+          }
+        }
       }
     }
     return myFrameCount;

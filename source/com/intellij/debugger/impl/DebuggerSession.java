@@ -180,23 +180,25 @@ public class DebuggerSession {
             }
           }
 
-          while (!currentThread.isSuspended()) {
-            // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
-            // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
-            try {
-              Thread.sleep(10);
+          StackFrameProxyImpl proxy = null;
+          if (currentThread != null) {
+            while (!currentThread.isSuspended()) {
+              // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
+              // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
+              try {
+                Thread.sleep(10);
+              }
+              catch (InterruptedException e) {
+              }
             }
-            catch (InterruptedException e) {
-            }
-          }
 
-          StackFrameProxyImpl proxy;
-          try {
-            proxy = (currentThread.frameCount() > 0) ? currentThread.frame(0) : null;
-          }
-          catch (EvaluateException e) {
-            proxy = null;
-            LOG.error(e);
+            try {
+              proxy = (currentThread.frameCount() > 0) ? currentThread.frame(0) : null;
+            }
+            catch (EvaluateException e) {
+              proxy = null;
+              LOG.error(e);
+            }
           }
           positionContext = new SimpleStackFrameContext(proxy, debugProcess);
         }
