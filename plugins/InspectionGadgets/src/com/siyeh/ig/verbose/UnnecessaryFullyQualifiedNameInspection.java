@@ -112,6 +112,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             m_inClass = wasInClass;
         }
+
         public void visitReferenceElement(PsiJavaCodeReferenceElement element){
             if(m_ignoreJavadoc)
             {

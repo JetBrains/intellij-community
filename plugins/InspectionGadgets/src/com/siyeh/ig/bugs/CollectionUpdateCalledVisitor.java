@@ -18,6 +18,14 @@ public class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
         updateNames.add("retainAll");
         updateNames.add("putAll");
         updateNames.add("clear");
+        updateNames.add("addElement");
+        updateNames.add("removeAllElements");
+        updateNames.add("trimToSize");
+        updateNames.add("removeElementAt");
+        updateNames.add("removeRange");
+        updateNames.add("insertElementAt");
+        updateNames.add("setElementAt");
+        updateNames.add("removeRange");
     }
 
     private boolean updated = false;

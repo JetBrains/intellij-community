@@ -178,4 +178,24 @@ public class ClassUtils {
     public static PsiMethod getContainingMethod(PsiElement element){
        return  (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
+
+    public static boolean isClassVisibleFromClass(PsiClass baseClass,
+                                               PsiClass referencedClass){
+        if(referencedClass.hasModifierProperty(PsiModifier.PUBLIC))
+        {
+            return true;
+        }
+        else if(referencedClass.hasModifierProperty(PsiModifier.PROTECTED))
+        {
+            return inSamePackage(baseClass, referencedClass);
+        }
+        else if(referencedClass.hasModifierProperty(PsiModifier.PRIVATE))
+        {
+            return PsiTreeUtil.findCommonParent(baseClass, referencedClass)!=null;
+        }
+        else
+        {
+            return inSamePackage(baseClass, referencedClass);
+        }
+    }
 }

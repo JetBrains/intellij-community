@@ -102,7 +102,8 @@ public class EmptyCatchBlockInspection extends StatementInspection {
                 }
                 return true;
             } else {
-                return block.getStatements().length == 0;
+                final PsiStatement[] statements = block.getStatements();
+                return statements == null || statements.length == 0;
             }
         }
     }

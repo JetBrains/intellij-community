@@ -23,6 +23,12 @@ public class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor {
         queryNames.add("entrySet");
         queryNames.add("keySet");
         queryNames.add("values");
+        queryNames.add("keys");
+        queryNames.add("elements");
+        queryNames.add("subList");
+        queryNames.add("copyInto");
+        queryNames.add("lastElement");
+        queryNames.add("firstElement");
     }
 
     private boolean queried = false;

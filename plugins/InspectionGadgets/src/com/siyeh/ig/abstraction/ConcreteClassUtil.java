@@ -1,9 +1,7 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 
 public class ConcreteClassUtil {
@@ -31,6 +29,10 @@ public class ConcreteClassUtil {
             return false;
         }
         if (aClass.isInterface() || aClass.isEnum()|| aClass.isAnnotationType()) {
+            return false;
+        }
+        if(PsiTreeUtil.getParentOfType(aClass, PsiTypeParameterList.class)!=null)
+        {
             return false;
         }
         if (LibraryUtil.classIsInLibrary(aClass)) {

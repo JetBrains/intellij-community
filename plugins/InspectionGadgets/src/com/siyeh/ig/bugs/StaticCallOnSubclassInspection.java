@@ -2,11 +2,14 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+
 import com.siyeh.ig.*;
+import com.siyeh.ig.psiutils.ClassUtils;
 
 public class StaticCallOnSubclassInspection extends ExpressionInspection {
     private final StaticCallOnSubclassFix fix = new StaticCallOnSubclassFix();
@@ -46,9 +49,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             final String methodName = expression.getReferenceName();
             final PsiClass containingClass = method.getContainingClass();
             final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            final String argText = args[0].getText();
-            replaceExpression(project, call, containingClass.getName() + '.' + methodName + "(" + argText + ")");
+            replaceExpression(project, call, containingClass.getName() + '.' + methodName + argumentList.getText() );
         }
     }
 
@@ -85,8 +86,13 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             if (declaringClass.equals(referencedClass)) {
                 return;
             }
-            registerMethodCallError(call);
 
+            final PsiClass containingClass = (PsiClass) PsiTreeUtil.getParentOfType(call, PsiClass.class);
+            if(!ClassUtils.isClassVisibleFromClass(containingClass, declaringClass))
+            {
+                return;
+            }
+            registerMethodCallError(call);
         }
 
 

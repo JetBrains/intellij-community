@@ -24,11 +24,11 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LocalVariableOfConcreteClassVisitor(this, inspectionManager, onTheFly);
+        return new ParameterOfConcreteClassVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class LocalVariableOfConcreteClassVisitor extends BaseInspectionVisitor {
-        private LocalVariableOfConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ParameterOfConcreteClassVisitor extends BaseInspectionVisitor {
+        private ParameterOfConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
