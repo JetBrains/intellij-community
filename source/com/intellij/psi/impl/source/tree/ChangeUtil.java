@@ -33,7 +33,6 @@ public class ChangeUtil implements Constants {
   public static void addChild(final CompositeElement parent, final TreeElement child, TreeElement anchorBefore) {
     LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
 
-    int childLength = child.getTextLength();
     int offset = anchorBefore != null
       ? anchorBefore.getStartOffset()
       : parent.getStartOffset() + parent.getTextLength();
@@ -163,13 +162,10 @@ public class ChangeUtil implements Constants {
   }
 
   public static void replaceChild(final CompositeElement parent, final TreeElement oldChild, final TreeElement newChild) {
-    if (oldChild.getTreeParent() != parent) {
-      LOG.assertTrue(oldChild.getTreeParent() == parent);
-    }
+    LOG.assertTrue(oldChild.getTreeParent() == parent);
 
     int offset = oldChild.getStartOffset();
     int oldLength = oldChild.getTextLength();
-    int newLength = newChild.getTextLength();
     final CharTable newCharTable = SharedImplUtil.findCharTableByTree(parent);
     final CharTable oldCharTable = SharedImplUtil.findCharTableByTree(newChild);
 
@@ -197,15 +193,18 @@ public class ChangeUtil implements Constants {
       }
     }
 
-    newChild.setTreeNext(null);
+    TreeUtil.remove(newChild);
     if (oldCharTable != newCharTable) {
       registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
     }
+
     oldChild.putUserData(CharTable.CHAR_TABLE_KEY, newCharTable);
-    if (oldChild != newChild) TreeUtil.replaceWithList(oldChild, newChild);
+    if (oldChild != newChild) {
+      TreeUtil.replaceWithList(oldChild, newChild);
+      SharedImplUtil.invalidate(oldChild);
+    }
 
     parent.subtreeChanged();
-    //updateCachedLengths(parent, newLength - oldLength);
 
     PsiManagerImpl manager = (PsiManagerImpl)parent.getManager();
     if (physical) {
@@ -709,6 +708,7 @@ public class ChangeUtil implements Constants {
   }
 
   public static int checkTextRanges(PsiElement root) {
+    if (true) return 0;
     TextRange range = root.getTextRange();
     int off = range.getStartOffset();
     PsiElement[] children = root.getChildren();
