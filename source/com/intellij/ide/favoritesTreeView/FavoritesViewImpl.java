@@ -171,6 +171,8 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
       favoritesTreeViewPanel.getFavoritesTreeStructure().writeExternal(el);
       element.addContent(el);
     }
-    element.setAttribute("current", myCurrentFavoritesList);
+    if (myCurrentFavoritesList != null) {
+      element.setAttribute("current", myCurrentFavoritesList);
+    }
   }
 }
