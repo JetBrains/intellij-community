@@ -10,8 +10,8 @@ import com.intellij.aspects.psi.PsiIntertypeMethod;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.PsiPrimitiveTypePattern;
 import com.intellij.aspects.psi.gen.PsiRegularMethodPattern;
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -19,12 +19,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspDeclaration;
@@ -1941,7 +1941,6 @@ public class HighlightUtil {
             return null;
           }
           type = HighlightInfoType.JAVADOC_WRONG_REF;
-          QuickFixAction.registerQuickFixAction(HighlightInfo.createHighlightInfo(type, refName, description), new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         }
 
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, new Class[]{PsiNewExpression.class, PsiMethod.class});
@@ -1964,6 +1963,7 @@ public class HighlightUtil {
           TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateClassFromNewAction((PsiNewExpression)parent));
         }
+        QuickFixAction.registerQuickFixAction(HighlightInfo.createHighlightInfo(type, refName, description), new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         return info;
       }
 

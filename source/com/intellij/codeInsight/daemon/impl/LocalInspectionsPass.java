@@ -199,9 +199,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(tool, psiElement));
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(tool, psiElement));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
     }
 
     final HighlightInfo[] array = infos.toArray(new HighlightInfo[infos.size()]);
