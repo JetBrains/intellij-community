@@ -12,9 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
@@ -35,7 +32,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 
@@ -262,11 +258,24 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
 
-    final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
-    progressWindow.setTitle("Checking In Files");
+    /*
+    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        performCheckingIn(checkinProjectPanel, abstractVcs, checkinParameters, exceptions);
 
-    final ProgressManager progressManager = ApplicationManager.getApplication().getComponent(ProgressManager.class);
+      }
+    }, "Checking In Files", false, myProject);
+    */
 
+    performCheckingIn(checkinProjectPanel, abstractVcs, checkinParameters, exceptions);
+
+    return exceptions;
+  }
+
+  private void performCheckingIn(final CheckinProjectPanel checkinProjectPanel,
+                                 final AbstractVcs abstractVcs,
+                                 final Object checkinParameters,
+                                 final ArrayList<VcsException> exceptions) {
     Collection<VirtualFile> roots = ((CheckinProjectPanelImpl)checkinProjectPanel).getRoots();
     Collection<VirtualFile> correspondingRoots = new ArrayList<VirtualFile>();
     for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
@@ -274,45 +283,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
       CheckinEnvironment env = vcs.getCheckinEnvironment();
       if (env == abstractVcs.getCheckinEnvironment()) correspondingRoots.add(virtualFile);
-    }                                               
+    }
 
     final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    new Thread("Check In") {
-      public void run() {
-        Runnable checkinAction = new Runnable() {
-          public void run() {
-            try {
-              progressManager.runProcess(new Runnable() {
-                public void run() {
-                  final CheckinHandler checkinHandler = new CheckinHandler(myProject,
-                                                                           abstractVcs);
-                  Collection<VcsOperation> vcsOperations = checkinOperations.get(abstractVcs.getCheckinEnvironment());
-                  if (vcsOperations == null) vcsOperations = new ArrayList<VcsOperation>();
-                  final List<VcsException> abstractVcsExceptions =
-                    checkinHandler.checkin(vcsOperations.toArray(new VcsOperation[vcsOperations.size()]),
-                                           checkinParameters);
-                  exceptions.addAll(abstractVcsExceptions);
-                  semaphore.up();
-                }
-              }, progressWindow);
-            }
-            catch (ProcessCanceledException e) {
-              return;
-            }
-          }
-        };
-        ApplicationManager.getApplication().runReadAction(checkinAction);
-
-      }
-    }.start();
-
-    semaphore.waitFor();
-
-    return exceptions;
+    final CheckinHandler checkinHandler = new CheckinHandler(myProject,
+                                                             abstractVcs);
+    Collection<VcsOperation> vcsOperations = checkinOperations.get(abstractVcs.getCheckinEnvironment());
+    if (vcsOperations == null) vcsOperations = new ArrayList<VcsOperation>();
+    final List<VcsException> abstractVcsExceptions =
+      checkinHandler.checkin(vcsOperations.toArray(new VcsOperation[vcsOperations.size()]),
+                             checkinParameters);
+    exceptions.addAll(abstractVcsExceptions);
   }
 
   public void doCheckinFiles(VirtualFile[] files, Object checkinParameters) {

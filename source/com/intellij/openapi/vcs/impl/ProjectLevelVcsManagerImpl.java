@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -76,12 +77,16 @@ import java.io.File;
 import java.util.*;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent {
+
+  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
+
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
   private final Project myProject;
   private final Map<AbstractVcs, Boolean> myVcsToStatus = new HashMap<AbstractVcs, Boolean>();
   private com.intellij.util.containers.HashMap<Document, LineStatusTracker> myLineStatusTrackers =
     new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
   private boolean myIsDisposed = false;
+  private boolean myIsInitialized = false;
 
   private EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
   private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
@@ -109,17 +114,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
 
-    for (Iterator<AbstractVcs> iterator = myVcss.iterator(); iterator.hasNext();) {
-      AbstractVcs vcs = iterator.next();
+    final AbstractVcs[] allActiveVcss = getAllVcss();
+    for (int i = 0; i < allActiveVcss.length; i++) {
+      AbstractVcs vcs = allActiveVcss[i];
       if (vcs.getName().equals(name)) {
         return vcs;
       }
+
     }
 
     return null;
   }
 
   public AbstractVcs[] getAllVcss() {
+    LOG.assertTrue(!myIsDisposed);
+    LOG.assertTrue(myIsInitialized);
     return myVcss.toArray(new AbstractVcs[myVcss.size()]);
   }
 
@@ -129,6 +138,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void projectOpened() {
     myIsDisposed = false;
+    myIsInitialized = true;
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
     myLineStatusTrackers = new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
 
@@ -156,6 +166,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                                                                           }
                                                                         }
                                                                       });
+
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (int i = 0; i < modules.length; i++) {
+      Module module = modules[i];
+      ModuleLevelVcsManager.getInstance(module).startVcs();
+    }
   }
 
   public void projectClosed() {
@@ -212,6 +228,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     finally {
       myIsDisposed = true;
+      myIsInitialized = false;
     }
 
   }

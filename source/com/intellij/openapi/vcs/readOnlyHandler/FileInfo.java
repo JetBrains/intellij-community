@@ -92,8 +92,8 @@ class FileInfo {
 
   public void handle(){
     final VirtualFile file = getFile();
+    myEditFileProvider.editFiles(new VirtualFile[]{file});
     if (getUseVersionControl()){
-      myEditFileProvider.editFiles(new VirtualFile[]{file});
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           file.refresh(false, false);
