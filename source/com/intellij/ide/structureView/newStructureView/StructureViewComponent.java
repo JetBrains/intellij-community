@@ -24,6 +24,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -66,7 +67,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myTreeModel = structureViewModel;
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper);
-    JTree tree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
+    JTree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
