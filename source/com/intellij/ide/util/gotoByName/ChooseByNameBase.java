@@ -33,7 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public abstract class ChooseByNameBase {
+public abstract class ChooseByNameBase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
 
   protected final Project myProject;
@@ -55,7 +55,7 @@ public abstract class ChooseByNameBase {
   private ArrayList<Pair<String, Integer>> myHistory;
   private ArrayList<Pair<String, Integer>> myFuture;
 
-  protected Callback myActionListener;
+  protected ChooseByNamePopupComponent.Callback myActionListener;
 
   protected final Alarm myAlarm = new Alarm();
   protected boolean myListIsUpToDate = false;
@@ -79,10 +79,7 @@ public abstract class ChooseByNameBase {
 
   private static final Comparator<String> UCS_COMPARATOR = new IgnoreCaseComparator();
 
-  public static abstract class Callback {
-    public abstract void elementChosen(Object element);
-    public void onClose() { }
-  }
+
 
   /**
    * @param initialText initial text which will be in the lookup text field
@@ -94,7 +91,7 @@ public abstract class ChooseByNameBase {
     myExactPrefixLen = 0;
   }
 
-  public void invoke(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  public void invoke(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
@@ -163,7 +160,7 @@ public abstract class ChooseByNameBase {
    * @param modalityState - if not null rebuilds list in given {@link ModalityState}
    * @param allowMultipleSelection
    */
-  protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     myActionListener = callback;
     //myTextFieldPanel = new JPanelProvider(new GridBagLayout());
     myTextFieldPanel = new JPanelProvider();

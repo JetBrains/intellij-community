@@ -13,7 +13,7 @@ public class ChooseByNamePanel extends ChooseByNameBase {
     super(project, model, initialText);
   }
 
-  protected void initUI(ChooseByNameBase.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
+  protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
 
     //myTextFieldPanel.setBorder(new EmptyBorder(0,0,0,0));

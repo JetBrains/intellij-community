@@ -6,11 +6,10 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
-import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
-import com.intellij.ide.util.gotoByName.GotoClassModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.actions.GotoClassAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.navigation.NavigationItem;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -215,7 +215,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         }
       }
 
-      protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
+      protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
@@ -270,6 +270,20 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   public void showDialog() {
     show();
   }
+
+  public void showPopup() {
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, new MyGotoClassModel());
+    popup.invoke(new ChooseByNamePopupComponent.Callback() {
+      public void onClose () {
+
+      }
+      public void elementChosen(Object element) {
+        mySelectedClass = (PsiClass)element;
+        ((NavigationItem)element).navigate(true);
+      }
+    }, getModalityState(), true);
+  }
+
 
   private void selectElementInTree(final PsiElement element) {
     if (element == null)
@@ -350,7 +364,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     }
   }
 
-  private class MyCallback extends ChooseByNameBase.Callback {
+  private class MyCallback extends ChooseByNamePopupComponent.Callback {
     public void elementChosen(Object element) {
       mySelectedClass = (PsiClass)element;
       close(OK_EXIT_CODE);

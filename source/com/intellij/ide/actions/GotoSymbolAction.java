@@ -1,9 +1,11 @@
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -20,7 +22,7 @@ public class GotoSymbolAction extends GotoActionBase {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoSymbolModel2(project));
-    popup.invoke(new ChooseByNameBase.Callback() {
+    popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose ()
       {
         if (GotoSymbolAction.class.equals (myInAction))

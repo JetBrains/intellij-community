@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -14,23 +15,25 @@ import com.intellij.psi.PsiDirectory;
  */
 public interface TreeClassChooser{
 
-  public abstract PsiClass getSelectedClass();
+  PsiClass getSelectedClass();
 
-  public abstract void selectClass(final PsiClass aClass);
+  void selectClass(final PsiClass aClass);
 
-  public abstract void selectDirectory(final PsiDirectory directory);
+  void selectDirectory(final PsiDirectory directory);
 
-  public abstract void showDialog();
+  void showDialog();
 
-  public static interface ClassFilter {
+  void showPopup();
+
+  static interface ClassFilter {
     boolean isAccepted(PsiClass aClass);
   }
 
-  public static interface ClassFilterWithScope extends ClassFilter {
+  static interface ClassFilterWithScope extends ClassFilter {
     GlobalSearchScope getScope();
   }
 
-  public static interface InheritanceClassFilter extends ClassFilter{
+  static interface InheritanceClassFilter extends ClassFilter{
   }
 
 }

@@ -1,10 +1,12 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +24,7 @@ public class GotoFileAction extends GotoActionBase {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project));
-    popup.invoke(new ChooseByNameBase.Callback() {
+    popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
         if (GotoFileAction.class.equals (myInAction))
           myInAction = null;

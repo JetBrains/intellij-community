@@ -2,17 +2,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoSymbolModel;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.openapi.project.Project;
 
 /**
  * Author: msk

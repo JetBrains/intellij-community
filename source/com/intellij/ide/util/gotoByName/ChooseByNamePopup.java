@@ -9,13 +9,13 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import javax.swing.*;
 import java.awt.*;
 
-public class ChooseByNamePopup extends ChooseByNameBase{
+public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final String initialText) {
     super(project, model, initialText);
   }
 
-  protected void initUI(final ChooseByNameBase.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
     //LaterInvocatorEx.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
