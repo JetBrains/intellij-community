@@ -6,15 +6,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.math.BigInteger;
 
 public class ConvertIntegerToOctalIntention extends Intention
 {
-    public ConvertIntegerToOctalIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {

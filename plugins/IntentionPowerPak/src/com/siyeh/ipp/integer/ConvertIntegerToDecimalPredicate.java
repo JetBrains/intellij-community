@@ -1,7 +1,7 @@
 package com.siyeh.ipp.integer;
 
 import com.intellij.psi.*;
-import com.siyeh.ipp.PsiElementPredicate;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
