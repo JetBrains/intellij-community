@@ -401,7 +401,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-  private HighlightInfo formatUnusedSymbolHighlightInfo(PsiClass aClass, String pattern) {
+  private static HighlightInfo formatUnusedSymbolHighlightInfo(PsiClass aClass, String pattern) {
     String symbolName = aClass.getName();
     String message = MessageFormat.format(pattern, new Object[]{symbolName});
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, aClass.getNameIdentifier(),
