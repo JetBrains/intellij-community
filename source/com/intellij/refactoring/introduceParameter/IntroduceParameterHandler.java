@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -27,9 +26,9 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -43,7 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler, IntroduceParameterDialog.Callback {
+public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
   private static final String REFACTORING_NAME = "Introduce Parameter";
   private PsiExpression myParameterInitializer;
@@ -168,7 +167,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       Util.analyzeExpression(expr, localVars, classMemberRefs, params);
     }
 
-    boolean previewUsages = false;
     String parameterName = "anObject";
     boolean replaceAllOccurences = true;
     boolean isDeleteLocalVariable = true;
@@ -192,33 +190,23 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
               new TypeSelectorManagerImpl(project, initializerType, expr, occurences) :
               new TypeSelectorManagerImpl(project, initializerType, occurences));
 
-      final IntroduceParameterDialog dialog =
-              new IntroduceParameterDialog(
-                      myProject, localVars, params, classMemberRefs,
-                      occurences.length,
-                      expr == null, myLocalVar != null,
-                      (myLocalVar != null) && (myLocalVar.getInitializer() != null),
-                      this,
-                      new NameSuggestionsGenerator() {
-                        public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                          return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, initializerType);
-                        }
+      new IntroduceParameterDialog(
+              myProject, classMemberRefs,
+              occurences.length,
+              myLocalVar, expr,
+              new NameSuggestionsGenerator() {
+                public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+                  return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, initializerType);
+                }
 
-                        public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix,
-                                                                                                      PsiType type) {
-                          LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                          LookupItemPreferencePolicy policy = CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.PARAMETER);
-                          return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
-                        }
-                      },
-                      typeSelectorManager);
-      dialog.show();
-
-      if (!dialog.isOK()) {
-        return true;
-      }
-
-      return true;
+                public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix,
+                                                                                              PsiType type) {
+                  LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+                  LookupItemPreferencePolicy policy = CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.PARAMETER);
+                  return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
+                }
+              },
+              typeSelectorManager, myMethodToSearchFor, myMethod).show();
     }
 
     new IntroduceParameterProcessor(
@@ -226,7 +214,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
             myParameterInitializer, myExpressionToSearchFor,
             myLocalVar, isDeleteLocalVariable,
             parameterName, replaceAllOccurences,
-            IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null, null).run(null);
+            IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null).run(null);
     return true;
   }
 
@@ -235,33 +223,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     // Never called
     /* do nothing */
   }
-
-  public void run(final IntroduceParameterDialog dialog) {
-    boolean isDeleteLocalVariable = false;
-
-    if (myLocalVar != null) {
-      if (dialog.isUseInitializer()) {
-        PsiExpression varInitializer = myLocalVar.getInitializer();
-        if (varInitializer != null) {
-          myParameterInitializer = varInitializer;
-        }
-      }
-      isDeleteLocalVariable = dialog.isDeleteLocalVariable();
-    }
-
-    new IntroduceParameterProcessor(
-            myProject, myMethod, myMethodToSearchFor,
-            myParameterInitializer, myExpressionToSearchFor,
-            myLocalVar, isDeleteLocalVariable,
-            dialog.getParameterName(), dialog.isReplaceAllOccurences(),
-            dialog.getReplaceFieldsWithGetters(), dialog.isDeclareFinal(),
-            dialog.getSelectedType(), new Runnable() {
-              public void run() {
-                dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }).run(null);
-  }
-
 
   private static List<PsiMethod> getEnclosingMethods(PsiMethod nearest) {
     List<PsiMethod> enclosingMethods = new ArrayList<PsiMethod>();

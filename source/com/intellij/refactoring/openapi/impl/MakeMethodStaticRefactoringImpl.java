@@ -28,8 +28,7 @@ public class MakeMethodStaticRefactoringImpl extends RefactoringImpl<MakeMethodS
                                   PsiField[] fields,
                                   String[] names) {
     super(new MakeMethodStaticProcessor(project, method,
-                                        new Settings(replaceUsages, classParameterName, fields, names),
-                                        BaseRefactoringProcessor.EMPTY_CALLBACK));
+                                        new Settings(replaceUsages, classParameterName, fields, names)));
   }
 
   public PsiMethod getMethod() {

@@ -153,7 +153,7 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     new MakeMethodStaticProcessor(
             myProject,
             method,
-            new Settings(true, addClassParameter ? "anObject" : null, null), null).testRun();
+            new Settings(true, addClassParameter ? "anObject" : null, null)).testRun();
   }
 
   private void performWithFields() {
@@ -168,7 +168,6 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                                 (ParameterTablePanel.VariableData[])parametersForFields.toArray(
-                                  new ParameterTablePanel.VariableData[parametersForFields.size()])),
-            null).testRun();
+                                  new ParameterTablePanel.VariableData[parametersForFields.size()]))).testRun();
   }
 }

@@ -40,10 +40,9 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
   private Settings mySettings;
 
   public MakeMethodStaticProcessor(Project project,
-                                 PsiMethod method,
-                                 Settings settings,
-                                 Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
+                                   PsiMethod method,
+                                   Settings settings) {
+    super(project);
     myMethod = method;
     mySettings = settings;
     myMethodClass = method.getContainingClass();

@@ -66,19 +66,18 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
    * if expressionToSearch is null, search for localVariable
    */
   public IntroduceParameterProcessor(Project project,
-                                   PsiMethod methodToReplaceIn,
-                                   PsiMethod methodToSearchFor,
-                                   PsiExpression parameterInitializer,
-                                   PsiExpression expressionToSearch,
-                                   PsiLocalVariable localVariable,
-                                   boolean removeLocalVariable,
-                                   String parameterName,
-                                   boolean replaceAllOccurences,
-                                   int replaceFieldsWithGetters,
-                                   boolean declareFinal,
-                                   PsiType forcedType,
-                                   Runnable prepareSuccessfulCallback) {
-    super(project, prepareSuccessfulCallback);
+                                     PsiMethod methodToReplaceIn,
+                                     PsiMethod methodToSearchFor,
+                                     PsiExpression parameterInitializer,
+                                     PsiExpression expressionToSearch,
+                                     PsiLocalVariable localVariable,
+                                     boolean removeLocalVariable,
+                                     String parameterName,
+                                     boolean replaceAllOccurences,
+                                     int replaceFieldsWithGetters,
+                                     boolean declareFinal,
+                                     PsiType forcedType) {
+    super(project);
 
     myMethodToReplaceIn = methodToReplaceIn;
     myMethodToSearchFor = methodToSearchFor;

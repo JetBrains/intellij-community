@@ -10,14 +10,12 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringDialog;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -33,14 +31,14 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
 
-  public static interface Callback {
-    void run(IntroduceParameterDialog dialog);
-  }
-
   private Project myProject;
   private List myClassMembersList;
   private int myOccurenceNumber;
   private final boolean myIsInvokedOnDeclaration;
+  private final PsiMethod myMethodToSearchFor;
+  private final PsiMethod myMethodToReplaceIn;
+  private PsiExpression myExpression;
+  private PsiLocalVariable myLocalVar;
   private boolean myIsLocalVariable;
   private boolean myHasInitializer;
 
@@ -57,24 +55,30 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
 
-  private Callback myCallback;
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
 
 
-  IntroduceParameterDialog(Project project, List localVarsList,
-                           List parameterList, List classMembersList, int occurenceNumber,
-                           boolean isInvokedOnDeclaration, boolean isLocalVariable,
-                           boolean hasInitializer, Callback callback, NameSuggestionsGenerator generator,
-                           TypeSelectorManager typeSelectorManager) {
+  IntroduceParameterDialog(Project project,
+                           List classMembersList,
+                           int occurenceNumber,
+                           PsiLocalVariable onLocalVariable,
+                           PsiExpression onExpression,
+                           NameSuggestionsGenerator generator,
+                           TypeSelectorManager typeSelectorManager,
+                           PsiMethod methodToSearchFor,
+                           PsiMethod methodToReplaceIn) {
     super(project, true);
     myProject = project;
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurenceNumber;
-    myIsInvokedOnDeclaration = isInvokedOnDeclaration;
-    myIsLocalVariable = isLocalVariable;
-    myHasInitializer = hasInitializer;
-    myCallback = callback;
+    myExpression = onExpression;
+    myLocalVar = onLocalVariable;
+    myMethodToReplaceIn = methodToReplaceIn;
+    myIsInvokedOnDeclaration = onExpression != null;
+    myMethodToSearchFor = methodToSearchFor;
+    myIsLocalVariable = onLocalVariable != null;
+    myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
 
@@ -116,8 +120,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if(myCbUseInitializer != null) {
       return myCbUseInitializer.isSelected();
     }
-    else
-      return false;
+    return false;
   }
 
   public String getParameterName() {
@@ -341,8 +344,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    if (!isOKActionEnabled()) return;
-
     final RefactoringSettings settings = RefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             getReplaceFieldsWithGetters();
@@ -353,7 +354,24 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
 
     myNameSuggestionsManager.nameSelected();
-    myCallback.run(this);
+
+    boolean isDeleteLocalVariable = false;
+
+    PsiExpression parameterInitializer = myExpression;
+    if (myLocalVar != null) {
+      if (isUseInitializer()) {
+      parameterInitializer = myLocalVar.getInitializer();      }
+      isDeleteLocalVariable = isDeleteLocalVariable();
+    }
+
+    final IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
+      myProject, myMethodToReplaceIn, myMethodToSearchFor,
+      parameterInitializer, myExpression,
+      myLocalVar, isDeleteLocalVariable,
+      getParameterName(), isReplaceAllOccurences(),
+      getReplaceFieldsWithGetters(), isDeclareFinal(),
+      getSelectedType());
+    invokeRefactoring(processor);
     myParameterNameField.requestFocusInWindow();
   }
 
