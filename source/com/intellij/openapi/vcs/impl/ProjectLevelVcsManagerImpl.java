@@ -449,19 +449,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   }
   
-  public void addMessageToConsoleWindow(String message, TextAttributes attributes) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      getOrCreateConsoleContent(getContentManager());
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-                                                          public void run() {
-                                                            getOrCreateConsoleContent(getContentManager());
-                                                          }
-                                                        }, ModalityState.defaultModalityState());
-    }
-
-    myEditorAdapter.appendString(message, attributes);
+  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                                        public void run() {
+                                                          getOrCreateConsoleContent(getContentManager());
+                                                          myEditorAdapter.appendString(message, attributes);
+                                                        }
+                                                      }, ModalityState.defaultModalityState());
   }
 
   private Content getOrCreateConsoleContent(final ContentManager contentManager) {
