@@ -587,7 +587,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (int i = 0; i < selectedElements.length; i++) {
       Object selectedElement = selectedElements[i];
-      if (selectedElement instanceof PsiElement){
+      if (selectedElement instanceof PsiElement && ((PsiElement)selectedElement).isValid()){
         psiElements.add((PsiElement)selectedElement);
       }
     }
