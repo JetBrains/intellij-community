@@ -133,4 +133,26 @@ public class FormatterUtil {
                                       final int currentTokenPosShift) {
     return new Helper(fileType, project).shiftIndentInside(leafElement, currentTokenPosShift);
   }
+
+  public static ASTNode getNonLeafSpaceBefore(final ASTNode element) {
+    if (element == null) return null;
+    ASTNode treePrev = element.getTreePrev();
+    if (treePrev != null) {
+      ASTNode candidate = getLastChildOf(treePrev);
+      if (candidate != null && !isSpaceTextElement(candidate)) {
+        return candidate;
+      }
+      else {
+        return getNonLeafSpaceBefore(candidate);
+      }
+    }
+    final ASTNode treeParent = element.getTreeParent();
+
+    if (treeParent == null || treeParent.getTreeParent() == null) {
+      return null;
+    } else {
+      return getNonLeafSpaceBefore(treeParent);
+    }
+
+  }
 }
