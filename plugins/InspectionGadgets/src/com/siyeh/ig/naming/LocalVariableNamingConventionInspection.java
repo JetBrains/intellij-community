@@ -18,7 +18,9 @@ import java.text.NumberFormat;
 import java.util.regex.Pattern;
 
 public class LocalVariableNamingConventionInspection extends ConventionInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreForLoopParameters = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreCatchParameters = false;
 
     private static final int DEFAULT_MIN_LENGTH = 1;

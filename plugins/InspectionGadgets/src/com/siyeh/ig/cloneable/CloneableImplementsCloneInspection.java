@@ -14,11 +14,12 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class CloneableImplementsCloneInspection extends ClassInspection {
+    /** @noinspection PublicField*/
+    public boolean m_ignoreCloneableDueToInheritance = false;
+
     public String getID(){
         return "CloneableClassWithoutClone";
     }
-    public boolean m_ignoreCloneableDueToInheritance = false;
-
     public String getDisplayName() {
         return "Cloneable class without 'clone()'";
     }

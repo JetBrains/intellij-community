@@ -13,6 +13,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class StaticVariableInitializationInspection extends FieldInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
     public String getID(){

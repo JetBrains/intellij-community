@@ -95,7 +95,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
 
     }
 
-    static boolean arrayContentsAreWritten(PsiVariable variable, PsiElement context) {
+    private static boolean arrayContentsAreWritten(PsiVariable variable, PsiElement context) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isDefaultArrayInitializer(initializer)) {
             return true;
@@ -126,7 +126,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         return true;
     }
 
-    public static boolean arrayContentsAreRead(PsiVariable variable, PsiElement context) {
+    private static boolean arrayContentsAreRead(PsiVariable variable, PsiElement context) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isDefaultArrayInitializer(initializer)) {
             return true;

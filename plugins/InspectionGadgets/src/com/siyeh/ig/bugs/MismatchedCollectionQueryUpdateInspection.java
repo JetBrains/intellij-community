@@ -100,7 +100,7 @@ public class MismatchedCollectionQueryUpdateInspection extends VariableInspectio
 
     }
 
-    static boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
+    private static boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isEmptyCollectionInitializer(initializer)) {
             return true;
@@ -120,7 +120,7 @@ public class MismatchedCollectionQueryUpdateInspection extends VariableInspectio
         return false;
     }
 
-    static boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
+    private static boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer != null && !isEmptyCollectionInitializer(initializer)) {
             return true;

@@ -14,6 +14,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class InstanceVariableInitializationInspection extends FieldInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
     public String getID(){
@@ -52,8 +53,11 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
             if (field.getInitializer() != null) {
                 return;
             }
-            if (m_ignorePrimitives && ClassUtils.isPrimitive(field.getType())) {
-                return;
+            if (m_ignorePrimitives) {
+                final PsiType fieldType = field.getType();
+                if (ClassUtils.isPrimitive(fieldType)) {
+                    return;
+                }
             }
             final PsiClass aClass = field.getContainingClass();
             if (aClass == null) {

@@ -13,7 +13,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class LocalVariableHidingMemberVariableInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethods = true;
     private final RenameFix fix = new RenameFix();
 
@@ -141,10 +143,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             if (!fieldName.equals(variableName)) {
                 return false;
             }
-            if (m_ignoreInvisibleFields && !ClassUtils.isFieldVisible(field, aClass)) {
-                return false;
-            }
-            return true;
+            return !m_ignoreInvisibleFields ||
+                           ClassUtils.isFieldVisible(field, aClass);
         }
 
     }

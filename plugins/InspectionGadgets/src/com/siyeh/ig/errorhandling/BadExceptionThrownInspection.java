@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionThrownInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public String exceptionCheckString = "java.lang.Throwable," +
             "java.lang.Exception," +
             "java.lang.Error," +
@@ -32,7 +33,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private List exceptionsList = new ArrayList(32);
+    private final List exceptionsList = new ArrayList(32);
 
     {
         parseCallCheckString();
@@ -130,6 +131,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
 
     }
 
+    /** @noinspection PublicInnerClass*/
     public class Form {
         private JPanel contentPanel;
         private JButton addButton;

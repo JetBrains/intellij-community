@@ -300,6 +300,9 @@ public class TrivialIfInspection extends ExpressionInspection{
     }
 
     public static boolean isSimplifiableImplicitReturn(PsiIfStatement ifStatement){
+        if(ifStatement.getElseBranch() != null){
+            return false;
+        }
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
@@ -308,6 +311,7 @@ public class TrivialIfInspection extends ExpressionInspection{
         if(!(nextStatement instanceof PsiStatement)){
             return false;
         }
+
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
         if(ConditionalUtils.isReturn(thenBranch, "true")
                    && ConditionalUtils.isReturn(elseBranch, "false")){
@@ -317,6 +321,9 @@ public class TrivialIfInspection extends ExpressionInspection{
     }
 
     public static boolean isSimplifiableImplicitReturnNegated(PsiIfStatement ifStatement){
+        if(ifStatement.getElseBranch() != null){
+            return false;
+        }
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
 

@@ -14,7 +14,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class EmptyCatchBlockInspection extends StatementInspection {
+    /** @noinspection PublicField*/
     public boolean m_includeComments = true;
+    /** @noinspection PublicField*/
     public boolean m_ignoreTestCases = true;
 
     public String getDisplayName() {

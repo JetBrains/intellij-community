@@ -19,6 +19,7 @@ import java.text.NumberFormat;
 public class FieldCountInspection
         extends ClassMetricInspection {
     private static final int FIELD_COUNT_LIMIT = 10;
+    /** @noinspection PublicField*/
     public boolean m_countConstantFields = false;
 
     public String getID(){
@@ -149,10 +150,7 @@ public class FieldCountInspection
             return false;
         }
         final PsiType type = field.getType();
-        if (!ClassUtils.isImmutable(type)) {
-            return false;
-        }
-        return true;
+        return ClassUtils.isImmutable(type);
     }
 
 }

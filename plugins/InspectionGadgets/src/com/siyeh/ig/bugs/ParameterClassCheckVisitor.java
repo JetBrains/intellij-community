@@ -2,7 +2,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 
-public class ParameterClassCheckVisitor
+class ParameterClassCheckVisitor
         extends PsiRecursiveElementVisitor{
     private final PsiParameter parameter;
 

@@ -14,7 +14,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class ClassWithoutLoggerInspection extends ClassInspection {
-
+    /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName() {

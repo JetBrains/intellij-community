@@ -2,7 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
 
-public class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor {
+class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor {
     private final PsiParameter m_parameter;
     private boolean m_used = false;
 

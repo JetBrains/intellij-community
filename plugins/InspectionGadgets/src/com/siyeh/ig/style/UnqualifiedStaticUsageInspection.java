@@ -12,7 +12,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticFieldAccesses = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethodCalls = false;
 
     public String getDisplayName() {
@@ -143,10 +145,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            if (qualifierExpression != null) {
-                return false;
-            }
-            return true;
+            return qualifierExpression == null;
         }
     }
 }

@@ -28,6 +28,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         s_typePrecisions.put("double", new Integer(6));
     }
 
+    /** @noinspection PublicField*/
     public boolean m_ignoreWideningConversions = false;
 
     public String getDisplayName() {
@@ -174,11 +175,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression operand = prefixExpression.getOperand();
-            if(!(operand instanceof PsiLiteralExpression) )
-            {
-                return false;
-            }
-            return true;
+            return operand instanceof PsiLiteralExpression;
         }
 
         private static boolean isIntegral(PsiType expressionType) {

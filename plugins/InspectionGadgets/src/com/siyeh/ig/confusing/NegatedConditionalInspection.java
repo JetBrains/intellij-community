@@ -12,6 +12,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class NegatedConditionalInspection extends ExpressionInspection{
+    /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
     private final NegatedConditionalFix fix = new NegatedConditionalFix();
 

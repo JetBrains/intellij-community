@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class FieldRepeatedlyAccessedInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreFinalFields = false;
 
     public String getID(){

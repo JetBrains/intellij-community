@@ -20,9 +20,9 @@ import java.util.*;
  */
 public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
 {
-    public static final String ACCESS_METHOD_NAME_PREFIX = "access$";
+    private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
 
-    public static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
+    private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
 
     private PsiClass clazz;
     private int index = -1;

@@ -15,6 +15,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class StringConcatenationInLoopsInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreUnlessAssigned = false;
 
     public String getID(){

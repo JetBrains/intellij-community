@@ -21,12 +21,13 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionCaughtInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public String exceptionCheckString =
             "java.lang.NullPointerException," +
             "java.lang.IllegalMonitorStateException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private List exceptionsList = new ArrayList(32);
+    private final List exceptionsList = new ArrayList(32);
 
     {
         parseExceptionsString();
@@ -119,7 +120,6 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
                     if (text.equals(exceptionClass)) {
                         final PsiTypeElement typeElement = parameter.getTypeElement();
                         registerError(typeElement);
-                        continue;
                     }
                 }
             }
@@ -129,6 +129,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
 
     }
 
+    /** @noinspection PublicInnerClass*/
     public class Form {
         private JPanel contentPanel;
         private JButton addButton;

@@ -83,7 +83,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.equals(type)) {
                 return;
             }
-            if (expectedType.getCanonicalText().equals("_Dummy_.__Array__")) {
+            if ("_Dummy_.__Array__".equals(expectedType.getCanonicalText())) {
                 return;
             }
             if (expectedType.isAssignableFrom(operandType)) {

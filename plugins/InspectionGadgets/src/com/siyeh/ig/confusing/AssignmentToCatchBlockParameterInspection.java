@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 public class AssignmentToCatchBlockParameterInspection
         extends ExpressionInspection{
 
-    private AssignmentToCatchBlockParameterFix fix =
+    private final AssignmentToCatchBlockParameterFix fix =
             new AssignmentToCatchBlockParameterFix();
 
     public String getDisplayName(){
@@ -84,7 +84,7 @@ public class AssignmentToCatchBlockParameterInspection
                 replacementText = '{' + className + ' ' + variableName + " = " +
                         originalVariableName +
                         ';' +
-                        buffer.toString();
+                        buffer;
 
                 final PsiElementFactory elementFactory =
                         psiManager.getElementFactory();

@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionDeclaredInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public String exceptionCheckString = "java.lang.Throwable," +
             "java.lang.Exception," +
             "java.lang.Error," +
@@ -29,7 +30,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private List exceptionsList = new ArrayList(32);
+    private final List exceptionsList = new ArrayList(32);
 
     {
         parseCallCheckString();
@@ -123,7 +124,6 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
                         final String exceptionClass = (String) iterator.next();
                         if (text.equals(exceptionClass)) {
                             registerError(references[i]);
-                            continue;
                         }
                     }
                 }
@@ -132,6 +132,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         }
     }
 
+    /** @noinspection PublicInnerClass*/
     public class Form {
         private JPanel contentPanel;
         private JButton addButton;

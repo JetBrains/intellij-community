@@ -14,7 +14,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class UnusedCatchParameterInspection extends StatementInspection{
+    /** @noinspection PublicField*/
     public boolean m_ignoreCatchBlocksWithComments = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreTestCases = false;
 
     public String getDisplayName(){
@@ -86,29 +88,33 @@ public class UnusedCatchParameterInspection extends StatementInspection{
                 }
             }
 
-            PsiCatchSection[] catchSections = statement.getCatchSections();
+            final PsiCatchSection[] catchSections = statement.getCatchSections();
             for(int i = 0; i < catchSections.length; i++){
-                final PsiParameter param = catchSections[i].getParameter();
-                final PsiCodeBlock block = catchSections[i].getCatchBlock();
-                if(param == null || block == null){
-                    continue;
-                }
-                if(m_ignoreCatchBlocksWithComments){
-                    final PsiElement[] children = block.getChildren();
-                    for(int j = 0; j < children.length; j++){
-                        final PsiElement child = children[j];
-                        if(child instanceof PsiComment){
-                            return;
-                        }
+                checkCatchSection(catchSections[i]);
+            }
+        }
+
+        private void checkCatchSection(PsiCatchSection section){
+            final PsiParameter param = section.getParameter();
+            final PsiCodeBlock block = section.getCatchBlock();
+            if(param == null || block == null){
+                return;
+            }
+            if(m_ignoreCatchBlocksWithComments){
+                final PsiElement[] children = block.getChildren();
+                for(int j = 0; j < children.length; j++){
+                    final PsiElement child = children[j];
+                    if(child instanceof PsiComment){
+                        return;
                     }
                 }
-                final CatchParameterUsedVisitor visitor =
-                        new CatchParameterUsedVisitor(param);
-                block.accept(visitor);
+            }
+            final CatchParameterUsedVisitor visitor =
+                    new CatchParameterUsedVisitor(param);
+            block.accept(visitor);
 
-                if(!visitor.isUsed()){
-                    registerVariableError(param);
-                }
+            if(!visitor.isUsed()){
+                registerVariableError(param);
             }
         }
     }

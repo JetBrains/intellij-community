@@ -11,6 +11,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class ClassWithoutNoArgConstructorInspection extends ClassInspection{
+    /** @noinspection PublicField*/
     public boolean m_ignoreClassesWithNoConstructors = true;
 
 

@@ -6,7 +6,8 @@ import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import javax.swing.*;
 
 public abstract class ClassMetricInspection extends ClassInspection {
-    public int m_limit = getDefaultLimit();  //this is public for the DefaultJDOMSericalization thingy
+    /** @noinspection PublicField*/
+    public int m_limit = getDefaultLimit();
 
     protected abstract int getDefaultLimit();
 
@@ -17,7 +18,8 @@ public abstract class ClassMetricInspection extends ClassInspection {
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(getConfigurationLabel(),
+        final String label = getConfigurationLabel();
+        return new SingleIntegerFieldOptionsPanel(label,
                 this, "m_limit");
     }
 

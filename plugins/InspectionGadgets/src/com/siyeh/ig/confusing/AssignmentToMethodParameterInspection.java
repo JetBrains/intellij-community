@@ -14,7 +14,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class AssignmentToMethodParameterInspection extends ExpressionInspection{
-    private AssignmentToMethodParameterFix fix =
+    private final AssignmentToMethodParameterFix fix =
             new AssignmentToMethodParameterFix();
 
     public String getDisplayName(){
@@ -80,7 +80,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                 replacementText = '{' + className + ' ' + variableName + " = " +
                         originalVariableName +
                         ';' +
-                        buffer.toString();
+                        buffer;
 
                 final PsiElementFactory elementFactory =
                         psiManager.getElementFactory();

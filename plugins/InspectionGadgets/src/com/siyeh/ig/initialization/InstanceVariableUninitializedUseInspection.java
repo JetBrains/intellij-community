@@ -16,6 +16,7 @@ import java.util.List;
 
 public class InstanceVariableUninitializedUseInspection
         extends FieldInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
     public String getID(){
@@ -60,9 +61,11 @@ public class InstanceVariableUninitializedUseInspection
             if (field.getInitializer() != null) {
                 return;
             }
-            if (m_ignorePrimitives &&
-                    ClassUtils.isPrimitive(field.getType())) {
-                return;
+            if (m_ignorePrimitives) {
+                final PsiType fieldType = field.getType();
+                if (ClassUtils.isPrimitive(fieldType)) {
+                    return;
+                }
             }
             final PsiClass aClass = field.getContainingClass();
             if (aClass == null) {

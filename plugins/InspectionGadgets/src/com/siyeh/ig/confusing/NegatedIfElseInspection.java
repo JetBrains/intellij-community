@@ -12,6 +12,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class NegatedIfElseInspection extends StatementInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
     private final NegatedIfElseFix fix = new NegatedIfElseFix();
 

@@ -2,6 +2,7 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -46,7 +47,12 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
+            if(sign == null)
+            {
+                return;
+            }
+            final IElementType tokenType = sign.getTokenType();
+            if (!JavaTokenType.EQ.equals(tokenType)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();

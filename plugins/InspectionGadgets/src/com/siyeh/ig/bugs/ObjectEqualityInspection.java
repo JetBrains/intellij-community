@@ -14,7 +14,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreEnums = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreClassObjects = false;
 
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();

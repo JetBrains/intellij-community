@@ -15,6 +15,7 @@ import javax.swing.*;
 
 public class ParameterNameDiffersFromOverriddenParameterInspection
         extends MethodInspection{
+    /** @noinspection PublicField*/
     public boolean m_ignoreSingleCharacterNames = true;
 
     public String getDisplayName(){

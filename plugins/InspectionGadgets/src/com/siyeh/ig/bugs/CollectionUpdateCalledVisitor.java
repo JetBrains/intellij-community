@@ -5,7 +5,7 @@ import com.intellij.psi.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
+class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor {
     private static final Set updateNames = new HashSet(10);
 
     static {

@@ -12,14 +12,11 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class PublicMethodWithoutLoggingInspection extends MethodInspection{
+    /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
-    public String getID(){
-        return "NonConstantLogger";
-    }
-
     public String getDisplayName(){
-        return "Non-constant logger";
+        return "Public method without logging";
     }
 
     public String getGroupDisplayName(){
@@ -106,6 +103,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             if(method.isConstructor()){
                 return;
             }
+
             if(PropertyUtil.isSimplePropertyAccessor(method)){
                 return;
             }
@@ -121,41 +119,33 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             method.accept(visitor);
             return visitor.containsLoggingCall();
         }
+    }
 
-        private boolean isLogger(PsiField field){
-            final PsiType type = field.getType();
-            if(type == null){
-                return false;
+    private class ContainsLoggingCallVisitor
+            extends PsiRecursiveElementVisitor{
+        private boolean containsLoggingCall = false;
+
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+            super.visitMethodCallExpression(expression);
+            if(containsLoggingCall){
+                return;
             }
-            final String text = type.getCanonicalText();
-            return text.equals(loggerClassName);
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null){
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null){
+                return;
+            }
+            final String containingClassName = containingClass.getQualifiedName();
+            if(containingClassName.equals(loggerClassName)){
+                containsLoggingCall = true;
+            }
         }
 
-        private class ContainsLoggingCallVisitor
-                extends PsiRecursiveElementVisitor{
-            private boolean containsLoggingCall = false;
-
-            public void visitMethodCallExpression(PsiMethodCallExpression expression){
-                super.visitMethodCallExpression(expression);
-                if(containsLoggingCall){
-                    return;
-                }
-                final PsiMethod method = expression.resolveMethod();
-                if(method == null){
-                    return;
-                }
-                final PsiClass containingClass = method.getContainingClass();
-                if(containingClass == null){
-                    return;
-                }
-                if(containingClass.getQualifiedName().equals(loggerClassName)){
-                    containsLoggingCall = true;
-                }
-            }
-
-            public boolean containsLoggingCall(){
-                return containsLoggingCall;
-            }
+        public boolean containsLoggingCall(){
+            return containsLoggingCall;
         }
     }
 }

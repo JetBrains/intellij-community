@@ -11,6 +11,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class SynchronizedMethodInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public boolean m_includeNativeMethods = true;
     private SynchronizedMethodFix fix = new SynchronizedMethodFix();
 
@@ -47,7 +48,7 @@ public class SynchronizedMethodInspection extends MethodInspection {
                 this, "m_includeNativeMethods");
     }
 
-    public static class SynchronizedMethodFix extends InspectionGadgetsFix{
+    private static class SynchronizedMethodFix extends InspectionGadgetsFix{
         public String getName(){
             return "Move synchronization into method";
         }

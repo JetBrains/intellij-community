@@ -96,10 +96,7 @@ public class MagicNumberInspection extends ExpressionInspection {
                 return false;
             }
             final PsiType type = field.getType();
-            if (!ClassUtils.isImmutable(type)) {
-                return false;
-            }
-            return true;
+            return ClassUtils.isImmutable(type);
         }
 
     }

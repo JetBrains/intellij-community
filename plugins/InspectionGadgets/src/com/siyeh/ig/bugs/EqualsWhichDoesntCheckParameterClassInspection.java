@@ -29,7 +29,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection
                                                                onTheFly);
     }
 
-    private class EqualsWhichDoesntCheckParameterClassVisitor
+    private static class EqualsWhichDoesntCheckParameterClassVisitor
             extends BaseInspectionVisitor{
         private static final String EQUALS_METHOD_NAME = "equals";
 

@@ -13,10 +13,15 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ParameterHidingMemberVariableInspection extends MethodInspection{
+    /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreForConstructors = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreForPropertySetters = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreForAbstractMethods = false;
     private final RenameFix fix = new RenameFix();
 
@@ -118,11 +123,8 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             if(!fieldName.equals(variableName)){
                 return false;
             }
-            if(m_ignoreInvisibleFields &&
-                       !ClassUtils.isFieldVisible(field, aClass)){
-                return false;
-            }
-            return true;
+            return !m_ignoreInvisibleFields ||
+                           ClassUtils.isFieldVisible(field, aClass);
         }
     }
 

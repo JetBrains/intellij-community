@@ -11,6 +11,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class EmptyStatementBodyInspection extends StatementInspection {
+    /** @noinspection PublicField*/
     public boolean m_reportEmptyBlocks = false;
 
     public String getID(){

@@ -138,7 +138,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         }
     }
 
-    public static boolean isIterator(PsiClass aClass)
+    private static boolean isIterator(PsiClass aClass)
     {
         final String className = aClass.getQualifiedName();
         if("java.util.Iterator".equals(className))

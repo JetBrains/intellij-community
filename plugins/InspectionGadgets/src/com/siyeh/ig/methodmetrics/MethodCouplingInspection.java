@@ -18,7 +18,9 @@ import java.text.NumberFormat;
 
 public class MethodCouplingInspection
         extends MethodMetricInspection {
+    /** @noinspection PublicField*/
     public boolean m_includeJavaClasses = false;
+    /** @noinspection PublicField*/
     public boolean m_includeLibraryClasses = false;
 
     public String getID(){

@@ -15,6 +15,7 @@ import javax.swing.*;
 public class IfStatementWithTooManyBranchesInspection extends StatementInspection {
     private static final int DEFAULT_BRANCH_LIMIT = 3;
 
+    /** @noinspection PublicField*/
     public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {

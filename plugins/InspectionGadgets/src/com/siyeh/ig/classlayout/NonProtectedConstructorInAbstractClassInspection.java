@@ -12,12 +12,13 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class NonProtectedConstructorInAbstractClassInspection extends MethodInspection {
-    public String getID(){
-        return "ConstructorNotProtectedInAbstractClass";
-    }
+    /** @noinspection PublicField*/
     public boolean m_ignoreNonPublicClasses = false;
     private final MakeProtectedFix fix = new MakeProtectedFix();
 
+    public String getID(){
+        return "ConstructorNotProtectedInAbstractClass";
+    }
     public String getDisplayName() {
         return "Constructor not 'protected' in 'abstract' class";
     }

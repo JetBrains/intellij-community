@@ -14,6 +14,7 @@ import javax.swing.*;
 public class SwitchStatementDensityInspection extends StatementInspection {
     private static final int DEFAULT_DENSITY_LIMIT = 20;
 
+    /** @noinspection PublicField*/
     public int m_limit = DEFAULT_DENSITY_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {

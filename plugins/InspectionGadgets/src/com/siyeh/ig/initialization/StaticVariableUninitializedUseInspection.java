@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class StaticVariableUninitializedUseInspection extends FieldInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
     public String getID(){

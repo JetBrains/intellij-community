@@ -18,8 +18,7 @@
     Static inheritance fix
     Static import fix
     Vararg fix
-    Fix for non-static initializer
-    Better handling of unnecessary block
+    Non non-static initializer fix
     Fix damn "Instanceof Incompatible Interface" inspection
-    Fix the "variable accessed in synchronized and unsynchronized contexts" to deal
-              with unsynchronized private methods called only from synchronized contexts
+    Fix the "variable accessed in synchronized and unsynchronized contexts"
+       to deal with unsynchronized private methods called only from synchronized contexts

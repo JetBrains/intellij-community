@@ -17,8 +17,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ConventionInspection extends BaseInspection {
+    /** @noinspection PublicField*/
     public String m_regex = getDefaultRegex();      // this is public for the DefaultJDomExternalizer
+    /** @noinspection PublicField*/
     public int m_minLength = getDefaultMinLength();  // this is public for the DefaultJDomExternalizer
+    /** @noinspection PublicField*/
     public int m_maxLength = getDefaultMaxLength();    // this is public for the DefaultJDomExternalizer
     protected Pattern m_regexPattern = Pattern.compile(m_regex);
 

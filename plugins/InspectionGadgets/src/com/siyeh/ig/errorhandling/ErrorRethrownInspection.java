@@ -37,12 +37,13 @@ public class ErrorRethrownInspection extends StatementInspection {
 
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            PsiCatchSection[] catchSections = statement.getCatchSections();
+            final PsiCatchSection[] catchSections = statement.getCatchSections();
             for (int i = 0; i < catchSections.length; i++) {
                 final PsiParameter parameter = catchSections[i].getParameter();
                 final PsiCodeBlock catchBlock = catchSections[i].getCatchBlock();
-                if (parameter == null || catchBlock == null) continue;
-                checkCatchBlock(parameter, catchBlock);
+                if(parameter != null && catchBlock != null){
+                    checkCatchBlock(parameter, catchBlock);
+                }
             }
         }
 
@@ -76,10 +77,10 @@ public class ErrorRethrownInspection extends StatementInspection {
                 return;
             }
             final PsiElement element = ((PsiReference) exception).resolve();
-            if (!element.equals(parameter)) {
-                registerError(typeElement);
+            if(element.equals(parameter)){
                 return;
             }
+            registerError(typeElement);
         }
 
     }

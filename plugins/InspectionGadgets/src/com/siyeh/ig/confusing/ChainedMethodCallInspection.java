@@ -13,7 +13,8 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class ChainedMethodCallInspection extends ExpressionInspection {
-    private boolean m_ignoreFieldInitializations = true;
+    /** @noinspection PublicField*/
+    public boolean m_ignoreFieldInitializations = true;
     private final ChainedMethodCallFix fix = new ChainedMethodCallFix();
 
     public String getDisplayName() {

@@ -14,7 +14,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticFieldAccesses = false;
+    /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethodCalls = false;
     private final UnnecessarilyQualifiedStaticCallFix fix = new UnnecessarilyQualifiedStaticCallFix();
 
@@ -206,10 +208,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
                 }
                 parentClass = ClassUtils.getContainingClass(containingClass);
             }
-            if (!qualifierElement.equals(containingClass)) {
-                return false;
-            }
-            return true;
+            return qualifierElement.equals(containingClass);
         }
     }
 }

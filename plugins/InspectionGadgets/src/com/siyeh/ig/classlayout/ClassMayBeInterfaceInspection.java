@@ -146,10 +146,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
                 return false;
             }
 
-            if (!allFieldsPublicStaticFinal(aClass)) {
-                return false;
-            }
-            return true;
+            return allFieldsPublicStaticFinal(aClass);
         }
 
         private static boolean allFieldsPublicStaticFinal(PsiClass aClass) {

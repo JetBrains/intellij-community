@@ -35,9 +35,6 @@ public class ConcreteClassUtil {
         {
             return false;
         }
-        if (LibraryUtil.classIsInLibrary(aClass)) {
-            return false;
-        }
-        return true;
+        return !LibraryUtil.classIsInLibrary(aClass);
     }
 }

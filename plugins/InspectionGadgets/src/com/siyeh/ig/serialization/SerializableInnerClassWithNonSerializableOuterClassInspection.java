@@ -14,6 +14,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class SerializableInnerClassWithNonSerializableOuterClassInspection extends ClassInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreSerializableDueToInheritance = true;
 
     public String getDisplayName() {

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class QuestionableNameInspection extends ClassInspection{
+    /** @noinspection PublicField*/
     public String nameCheckString = "foo,bar,baz";
     private final RenameFix fix = new RenameFix();
 
@@ -133,6 +134,7 @@ public class QuestionableNameInspection extends ClassInspection{
         }
     }
 
+    /** @noinspection PublicInnerClass*/
     public class Form{
         private JPanel contentPanel;
         private JButton addButton;

@@ -13,9 +13,10 @@ import javax.swing.*;
 public class OverlyComplexArithmeticExpressionInspection extends StatementInspection {
     private static final int TERM_LIMIT = 6;
 
+    /** @noinspection PublicField*/
     public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
-    private InspectionGadgetsFix fix = new ExtractMethodFix();
+    private final InspectionGadgetsFix fix = new ExtractMethodFix();
 
     public String getDisplayName() {
         return "Overly complex arithmetic expression";

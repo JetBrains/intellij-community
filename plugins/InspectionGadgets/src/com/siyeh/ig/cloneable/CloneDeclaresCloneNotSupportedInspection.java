@@ -66,7 +66,13 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
             if (!"clone".equals(methodName)) {
                 return;
             }
-            if (method.getParameterList().getParameters().length != 0) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if(parameterList == null)
+            {
+                return;
+            }
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters == null ||parameters.length != 0) {
                 return;
             }
             if (method.hasModifierProperty(PsiModifier.FINAL)) {

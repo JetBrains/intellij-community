@@ -27,8 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IgnoreResultOfCallInspection extends ExpressionInspection{
+    /** @noinspection PublicField*/
     public boolean m_reportAllNonLibraryCalls = false;
 
+    /** @noinspection PublicField*/
     public String callCheckString = "java.io.InputStream,read," +
         "java.io.InputStream,skip," +
         "java.lang.StringBuffer,toString," +
@@ -184,6 +186,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
     }
 
+    /** @noinspection PublicInnerClass*/
     public class Form{
         private JPanel contentPanel;
         private JButton addButton;

@@ -13,6 +13,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import javax.swing.*;
 
 public class InnerClassVariableHidesOuterClassVariableInspection extends FieldInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = false;
     private final RenameFix fix = new RenameFix();
 

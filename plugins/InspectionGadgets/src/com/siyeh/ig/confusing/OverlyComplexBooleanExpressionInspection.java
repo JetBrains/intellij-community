@@ -12,9 +12,10 @@ import javax.swing.*;
 public class OverlyComplexBooleanExpressionInspection extends StatementInspection {
     private static final int TERM_LIMIT = 3;
 
-    public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+    /** @noinspection PublicField*/
+    public int m_limit = TERM_LIMIT;
 
-    private InspectionGadgetsFix fix = new ExtractMethodFix();
+    private final InspectionGadgetsFix fix = new ExtractMethodFix();
 
     public String getDisplayName() {
         return "Overly complex boolean expression";
