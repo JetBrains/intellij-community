@@ -43,7 +43,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
         final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(
                   methodSignature + "{}", null), false);
         assertNotNull(methodBySignature);
-        final RenameProcessor renameProcessor = new RenameProcessor(myProject, methodBySignature, newName, false, false, false);
+        final RenameProcessor renameProcessor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
         renameProcessor.testRun();
         FileDocumentManager.getInstance().saveAllDocuments();
       }

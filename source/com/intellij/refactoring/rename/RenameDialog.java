@@ -43,10 +43,6 @@ public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
   private SuggestedNameInfo mySuggestedNameInfo;
 
-  public static interface Callback {
-    void run(RenameDialog dialog);
-  }
-
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
   private JCheckBox myCbSearchInComments;
@@ -61,16 +57,15 @@ public class RenameDialog extends RefactoringDialog {
   private Project myProject;
   private PsiElement myPsiElement;
   private final PsiElement myNameSuggestionContext;
-  private Callback myCallback;
 
-
-  public RenameDialog(Project project, PsiElement psiElement,
-                      PsiElement nameSuggestionContext, String helpID, Callback callback) {
+  public RenameDialog(Project project,
+                      PsiElement psiElement,
+                      PsiElement nameSuggestionContext,
+                      String helpID) {
     super(project, true);
     myProject = project;
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
-    myCallback = callback;
     setTitle("Rename");
 
     createNewNameComponent();
@@ -195,7 +190,7 @@ public class RenameDialog extends RefactoringDialog {
       list.add(parameterName);
     }
     ContainerUtil.removeDuplicates(list);
-    return (String[])list.toArray(new String[list.size()]);
+    return list.toArray(new String[list.size()]);
   }
 
   private String suggestProperlyCasedName(PsiElement psiElement) {
@@ -416,8 +411,13 @@ public class RenameDialog extends RefactoringDialog {
     if (mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getNewName());
     }
+    final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, getNewName(), isSearchInComments(),
+                                                          isSearchInNonJavaFiles());
+    processor.setShouldRenameInheritors(shouldRenameInheritors());
+    processor.setShouldRenameVariables(shouldRenameVariables());
+    processor.setShouldRenameForms(shouldRenameForms());
 
-    myCallback.run(this);
+    invokeRefactoring(processor);
   }
 
   private boolean checkNameConflicts() {
@@ -495,7 +495,6 @@ public class RenameDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String newName = getNewName();
-    final boolean enabled;
     if (newName == null) {
       return false;
     }

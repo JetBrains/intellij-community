@@ -45,7 +45,7 @@ public class RenamePublicClassFix implements IntentionAction {
 
     VirtualFile vFile = file.getVirtualFile();
     String newName = vFile.getNameWithoutExtension();
-    RenameProcessor processor = new RenameProcessor(project, myClass, newName, false, false, false);
+    RenameProcessor processor = new RenameProcessor(project, myClass, newName, false, false);
     processor.run((Object)null);
   }
 

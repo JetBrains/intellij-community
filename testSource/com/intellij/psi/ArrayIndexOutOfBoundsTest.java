@@ -111,7 +111,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
         assertNotNull("Package bla not found", aPackage);
 
         PsiDirectory dir = aPackage.getDirectories()[0];
-        new RenameProcessor(myProject, dir, "anotherBla", true, true, false).testRun();
+        new RenameProcessor(myProject, dir, "anotherBla", true, true).testRun();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };

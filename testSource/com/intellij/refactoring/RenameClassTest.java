@@ -40,7 +40,7 @@ public class RenameClassTest extends MultiFileTestCase {
     PsiClass aClass = myPsiManager.findClass(qClassName);
     assertNotNull("Class " + qClassName + " not found", aClass);
 
-    new RenameProcessor(myProject, aClass, newName, true, true, false).testRun();
+    new RenameProcessor(myProject, aClass, newName, true, true).testRun();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }

@@ -117,7 +117,7 @@ public final class BindingProperty extends Property {
     myGuiEditor.refreshAndSave(false);
     PsiDocumentManager.getInstance(myGuiEditor.getProject()).commitAllDocuments();
 
-    final RenameProcessor processor = new RenameProcessor(project, oldField, newBinding, true, true, false);
+    final RenameProcessor processor = new RenameProcessor(project, oldField, newBinding, true, true);
     processor.run((Object)null);
   }
 }

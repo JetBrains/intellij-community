@@ -9,11 +9,9 @@ import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -39,35 +37,35 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
-public class RenameProcessor extends BaseRefactoringProcessor implements RenameDialog.Callback {
+public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
   protected ArrayList<PsiElement> myElements = new ArrayList<PsiElement>();
   protected ArrayList<String> myNames = new ArrayList<String>();
 
-  private RenameDialog myDialog;
   private PsiElement myElement;
   private String myNewName = null;
 
   boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
-  private boolean myPreviewUsages;
   private String myCommandName;
   private boolean myShouldRenameVariables;
   private boolean myShouldRenameInheritors;
+
   private boolean myShouldRenameForms;
   private UsageInfo[] myUsagesForNonCodeRenaming;
   private List<AutomaticRenamer<? extends PsiNamedElement>> myRenamers = new ArrayList<AutomaticRenamer<? extends PsiNamedElement>>();
 
-  public RenameProcessor(Project project, PsiElement element, String newName,
-                         boolean isSearchInComments, boolean toSearchInNonJavaFiles, boolean isPreviewUsages) {
+  public RenameProcessor(Project project,
+                         PsiElement element,
+                         String newName,
+                         boolean isSearchInComments,
+                         boolean toSearchInNonJavaFiles) {
     super(project);
-    myDialog = null;
     myElement = element;
 
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = toSearchInNonJavaFiles;
-    myPreviewUsages = isPreviewUsages;
 
     setNewName(newName);
   }
@@ -85,7 +83,9 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
     myShouldRenameInheritors = shouldRenameInheritors;
   }
 
-
+  public void setShouldRenameForms(final boolean shouldRenameForms) {
+    myShouldRenameForms = shouldRenameForms;
+  }
 
   public RenameProcessor(Project project, PsiElement element) {
     super(project);
@@ -142,29 +142,13 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
     return HelpID.getRenameHelpID(myElement);
   }
 
-  public void run(RenameDialog dialog) {
-    myDialog = dialog;
-    setNewName(dialog.getNewName());
-
-    mySearchInComments = dialog.isSearchInComments();
-    mySearchInNonJavaFiles = dialog.isSearchInNonJavaFiles();
-    myPreviewUsages = dialog.isPreviewUsages();
-    myShouldRenameVariables = dialog.shouldRenameVariables();
-    myShouldRenameInheritors = dialog.shouldRenameInheritors();
-    myShouldRenameForms = dialog.shouldRenameForms();
-
-    run((Object) null);
-  }
-
   protected boolean preprocessUsages(UsageInfo[][] usages) {
-    if (myDialog != null) {
-      String[] conflicts = RenameUtil.getConflictDescriptions(usages[0]);
-      if (conflicts.length > 0) {
-        ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts, myProject);
-        conflictsDialog.show();
-        if (!conflictsDialog.isOK()) {
-          return false;
-        }
+    String[] conflicts = RenameUtil.getConflictDescriptions(usages[0]);
+    if (conflicts.length > 0) {
+      ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts, myProject);
+      conflictsDialog.show();
+      if (!conflictsDialog.isOK()) {
+        return false;
       }
     }
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usages[0]));
@@ -172,9 +156,7 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
 
     final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
     if (!myRenamers.isEmpty()) {
-      boolean isOK = findRenamedVariables(variableUsages);
-
-      if (!isOK) return false;
+      if (!findRenamedVariables(variableUsages)) return false;
     }
 
     if (!variableUsages.isEmpty()) {
@@ -182,14 +164,7 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
       usages[0] = usagesSet.toArray(new UsageInfo[usagesSet.size()]);
     }
 
-    if (myDialog != null) {
-      // make sure that dialog is closed in swing thread
-      ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
-        public void run() {
-          myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-        }
-      });
-    }
+    prepareSuccessful();
     return true;
   }
 
@@ -399,15 +374,15 @@ public class RenameProcessor extends BaseRefactoringProcessor implements RenameD
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
-    boolean toPreview = myPreviewUsages;
+    if (super.isPreviewUsages(usages)) return true;
     if (!isNonCodeElements() && UsageViewUtil.hasNonCodeUsages(usages)) {
-      toPreview = true;
       WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in comments, strings and non-java files");
+      return true;
     } else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      toPreview = true;
       WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
+      return true;
     }
-    return toPreview;
+    return false;
   }
 
   private boolean isNonCodeElements() {

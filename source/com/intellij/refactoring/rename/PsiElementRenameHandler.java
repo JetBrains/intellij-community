@@ -158,9 +158,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
       String helpID = HelpID.getRenameHelpID(elementToRename);
       final RenameDialog dialog =
-        new RenameDialog(project, elementToRename, nameSuggestionContext, helpID,
-                         new RenameProcessor(project, elementToRename)
-        );
+        new RenameDialog(project, elementToRename, nameSuggestionContext, helpID);
 
       dialog.show();
   }

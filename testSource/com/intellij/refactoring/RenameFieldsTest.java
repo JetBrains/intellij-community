@@ -36,6 +36,6 @@ public class RenameFieldsTest extends CodeInsightTestCase {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
                                                              TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
-    new RenameProcessor(myProject, element, newName, false, false, false).testRun();
+    new RenameProcessor(myProject, element, newName, false, false).testRun();
   }
 }

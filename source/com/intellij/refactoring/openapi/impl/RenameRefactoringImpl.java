@@ -22,7 +22,7 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
                                String newName,
                                boolean toSearchInComments,
                                boolean toSearchInNonJavaFiles) {
-    super(new RenameProcessor(project, element, newName, toSearchInComments, toSearchInNonJavaFiles, true));
+    super(new RenameProcessor(project, element, newName, toSearchInComments, toSearchInNonJavaFiles));
   }
 
   public void addElement(PsiElement element, String newName) {
