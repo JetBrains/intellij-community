@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.*;
@@ -51,7 +50,7 @@ public class XmlAspectImpl implements XmlAspect {
       ASTNode changedElement = changedElements[i];
       TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
       PsiElement psiElement = null;
-      while (changedElement != null && (psiElement = SourceTreeToPsiMap.treeElementToPsi(changedElement)) == null) {
+      while (changedElement != null && (psiElement = changedElement.getPsi()) == null) {
         final ASTNode parent = changedElement.getTreeParent();
         final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement, table);
         changeInfo.compactChange(changedElement, changesByElement);
@@ -67,10 +66,10 @@ public class XmlAspectImpl implements XmlAspect {
         public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
         public void visitElement(PsiElement element) {
-          final PsiElement parent = element.getParent();
-          if (parent == null) return;
-          final ASTNode treeParent = SourceTreeToPsiMap.psiElementToTree(parent);
-          final ASTNode child = SourceTreeToPsiMap.psiElementToTree(element);
+          final ASTNode child = element.getNode();
+          final ASTNode treeParent = child.getTreeParent();
+          if (treeParent == null) return;
+          final PsiElement parent = treeParent.getPsi();
           final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child, table);
 
           changeInfo.compactChange(child, myChange);
@@ -158,9 +157,9 @@ public class XmlAspectImpl implements XmlAspect {
           xmlChangeSet.add(new XmlDocumentChangedImpl(document));
         }
 
-        public void visitXmlFile(XmlFile file) {
+        public void visitFile(PsiFile file) {
           xmlChangeSet.clear();
-          xmlChangeSet.add(new XmlDocumentChangedImpl(file.getDocument()));
+          xmlChangeSet.add(new XmlDocumentChangedImpl(((XmlFile)file).getDocument()));
         }
       });
     }
