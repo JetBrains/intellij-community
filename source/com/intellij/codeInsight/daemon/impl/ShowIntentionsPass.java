@@ -244,7 +244,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
    */
   public static boolean showAddImportHint(Editor editor, final PsiJavaCodeReferenceElement ref) {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
-    if (isCaretNearRef(editor,ref)) return false;
 
     PsiManager manager = ref.getManager();
     if (manager == null) return false;
@@ -315,7 +314,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset2 = ref.getTextRange().getEndOffset();
     QuestionAction action = new AddImportAction(manager.getProject(), ref, classes, editor);
 
-    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) {
+    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor,ref)) {
       action.execute();
       return false;
     }
