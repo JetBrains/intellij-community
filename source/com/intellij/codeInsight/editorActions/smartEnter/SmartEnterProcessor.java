@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -113,8 +115,12 @@ public class SmartEnterProcessor {
     caretOffset = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}")) {
       commit();
+      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
+      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
       PsiElement elt = PsiTreeUtil.getParentOfType(myPsiFile.findElementAt(caretOffset - 1), PsiCodeBlock.class);
       reformat(elt);
+      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       myEditor.getCaretModel().moveToOffset(caretOffset - 1);
     }
   }
