@@ -205,7 +205,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     sdkModel.addListener(new SdkModel.Listener() {
       public void sdkAdded(Sdk sdk) {
       }
