@@ -9,6 +9,4 @@ public interface NodeRenderer extends ChildrenRenderer, ValueLabelRenderer {
   String getName();
 
   void setName(String text);
-
-  NodeRenderer clone();
 }

@@ -54,6 +54,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public boolean LOG_ENABLED            = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImportsImpl  myLogMessage   = TextWithImportsImpl.EMPTY; // an expression to be evaluated and printed
+  private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
 
   protected Breakpoint(Project project) {
     myProject = project;
@@ -244,7 +245,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
-    String logMessage = JDOMExternalizerUtil.readField(parentNode, "myLogMessage");
+    String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
     if (logMessage != null) {
       setLogMessage(TextWithImportsImpl.createExpressionText(logMessage));
     }
@@ -252,7 +253,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, "myLogMessage", getLogMessage().saveToString());
+    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().saveToString());
   }
 
   public TextWithImportsImpl getLogMessage() {

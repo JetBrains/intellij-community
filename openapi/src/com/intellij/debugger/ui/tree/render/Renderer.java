@@ -13,7 +13,7 @@ public interface Renderer extends Cloneable, JDOMExternalizable {
    * Checks whether this renderer is apllicable to this value
    * @param type
    */
-  public boolean isApplicable(Type type);
+  boolean isApplicable(Type type);
 
-  public Object clone() throws CloneNotSupportedException;
+  Renderer clone();
 }

@@ -10,8 +10,6 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
  * Time: 10:12:39 PM
  */
 public interface ValueLabelRenderer extends Renderer {
-  ValueLabelRenderer clone();
-
   String calcLabel (ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException;
 }

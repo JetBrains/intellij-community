@@ -9,11 +9,6 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jdom.Element;
 
-/**
- * User: lex
- * Date: Oct 10, 2003
- * Time: 9:31:06 PM
- */
 public abstract class ReferenceRenderer implements Renderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ReferenceRenderer");
   private String myClassName;
@@ -36,9 +31,11 @@ public abstract class ReferenceRenderer implements Renderer {
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null || !(type instanceof ReferenceType)) return false;
+    if(type == null || !(type instanceof ReferenceType)) {
+      return false;
+    }
 
-    return DebuggerUtils.instanceOf(((ReferenceType)type), getClassName());
+    return DebuggerUtils.instanceOf(type, getClassName());
   }
 
   public Renderer clone() {
@@ -46,7 +43,7 @@ public abstract class ReferenceRenderer implements Renderer {
       return (Renderer)super.clone();
     }
     catch (CloneNotSupportedException e) {
-      LOG.assertTrue(false);
+      LOG.error(e);
       return null;
     }
   }

@@ -41,6 +41,11 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   public boolean INSTANCE_FILTERS_ENABLED = false;
   protected InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
 
+  private static final String FILTER_OPTION_NAME = "filter";
+  private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
+  private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
+  private static final String CONDITION_OPTION_NAME = "CONDITION";
+
   public FilteredRequestor() {
   }
 
@@ -90,15 +95,15 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
-    String condition = JDOMExternalizerUtil.readField(parentNode, "myCondition");
+    String condition = JDOMExternalizerUtil.readField(parentNode, CONDITION_OPTION_NAME);
     if (condition != null) {
       setCondition(TextWithImportsImpl.createExpressionText(condition));
     }
 
-    myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren("filter"));
-    myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren("exclusion_filter"));
+    myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
+    myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
 
-    final ClassFilter [] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren("instance_id"));
+    final ClassFilter [] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
     final List<InstanceFilter> iFilters = new ArrayList<InstanceFilter>(instanceFilters.length);
 
     for (int i = 0; i < instanceFilters.length; i++) {
@@ -113,10 +118,10 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, "myCondition", getCondition().saveToString());
-    DebuggerUtilsEx.writeFilters(parentNode, "filter", myClassFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, "exclusion_filter", myClassExclusionFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, "instance_id", InstanceFilter.createClassFilters(myInstanceFilters));
+    JDOMExternalizerUtil.writeField(parentNode, CONDITION_OPTION_NAME, getCondition().saveToString());
+    DebuggerUtilsEx.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
+    DebuggerUtilsEx.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
+    DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
   }
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {

@@ -61,8 +61,8 @@ public class CompoundNodeRenderer implements NodeRenderer{
   public NodeRenderer clone() {
     try {
       CompoundNodeRenderer renderer = (CompoundNodeRenderer)super.clone();
-      renderer.myLabelRenderer    = myLabelRenderer    != null ? myLabelRenderer.clone() : null;
-      renderer.myChildrenRenderer = myChildrenRenderer != null ? myChildrenRenderer.clone() : null;
+      renderer.myLabelRenderer    = myLabelRenderer    != null ? (ValueLabelRenderer)myLabelRenderer.clone() : null;
+      renderer.myChildrenRenderer = myChildrenRenderer != null ? (ChildrenRenderer)myChildrenRenderer.clone() : null;
       return renderer;
     }
     catch (CloneNotSupportedException e) {

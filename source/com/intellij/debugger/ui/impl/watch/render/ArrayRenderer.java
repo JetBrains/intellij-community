@@ -81,8 +81,13 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
     if (array.length() > 0) {
       int added = 0;
 
-      if(ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) ENTRIES_LIMIT = END_INDEX - START_INDEX;
-      if(ENTRIES_LIMIT <= 0) ENTRIES_LIMIT = 1;
+      if(ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) {
+        ENTRIES_LIMIT = END_INDEX - START_INDEX;
+      }
+
+      if(ENTRIES_LIMIT <= 0) {
+        ENTRIES_LIMIT = 1;
+      }
 
       if(array.length() - 1 >= START_INDEX) {
         int start = START_INDEX;
@@ -130,10 +135,12 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
       }
 
       if (added == 0) {
-        if(START_INDEX == 0 && array.length() - 1 <= END_INDEX)
+        if(START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
           children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_RANGE_ARE_NULL.getLabel()));
-        else
+        }
+        else {
           children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_VISIBLE_RANGE_ARE_NULL.getLabel()));
+        }
       }
       else {
         if(START_INDEX > 0) {
@@ -178,9 +185,13 @@ public class ArrayRenderer extends ReferenceRenderer implements NodeRenderer, Cl
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null || !(type instanceof ArrayType)) return false;
+    if(type == null || !(type instanceof ArrayType)) {
+      return false;
+    }
 
-    if("[]".equals(getClassName())) return true;
+    if("[]".equals(getClassName())) {
+      return true;
+    }
 
     return super.isApplicable(type);
   }

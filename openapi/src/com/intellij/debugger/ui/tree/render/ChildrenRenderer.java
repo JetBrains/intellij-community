@@ -12,8 +12,6 @@ import com.sun.jdi.Value;
 import com.sun.tools.corba.se.idl.constExpr.EvaluationException;
 
 public interface ChildrenRenderer extends Renderer {
-  ChildrenRenderer clone();
-
   void buildChildren(Value value, ChildrenBuilder  builder, EvaluationContext evaluationContext);
 
   /**
