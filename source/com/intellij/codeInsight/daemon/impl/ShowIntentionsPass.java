@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -224,8 +225,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     element = element.getParent();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
-    // [dsl]todo[cdr]: please review this
-    //  if (element.getTextOffset() != info.startOffset || element.getTextRange().getEndOffset() != info.endOffset) return false;
 
     if (info.type == HighlightInfoType.WRONG_REF) {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
@@ -314,13 +313,20 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset2 = ref.getTextRange().getEndOffset();
     QuestionAction action = new AddImportAction(manager.getProject(), ref, classes, editor);
 
-    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) {
+    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor,ref)) {
       action.execute();
       return false;
     }
     HintManager hintManager = HintManager.getInstance();
     hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
     return true;
+  }
+
+  private static boolean isCaretNearRef(final Editor editor, final PsiJavaCodeReferenceElement ref) {
+    final TextRange range = ref.getTextRange();
+    final int offset = editor.getCaretModel().getOffset();
+
+    return range.grown(1).contains(offset);
   }
 
   private static boolean canBeHint(HighlightInfoType type) {
