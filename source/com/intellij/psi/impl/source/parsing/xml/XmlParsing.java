@@ -693,11 +693,11 @@ public class XmlParsing implements ElementType {
     return element;
   }
 
-  public TreeElement parseMarkupDecl(Lexer originalLexer, char[] text, int start, int end) {
+  public TreeElement parseMarkupDecl(Lexer originalLexer, char[] text, int start, int end, PsiManager manager) {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
 
-    final FileElement dummyRoot = new DummyHolder(null, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     parseMarkupContent(lexer, dummyRoot);
     while (lexer.getTokenType() != null) {
       TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable()));
