@@ -187,7 +187,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
       for (int i = 0; i < myIcons.length; i++) {
         final IdeMessagePanel.IconPane each = myIcons[i];
         each.getIconWrapper().setVisible(aVisible || !each.shouldBlink());
-        each.paintImmediately(each.getBounds());
       }
     }
   }
@@ -241,7 +240,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     }
   }
 
-  private static class IconWrapper implements Icon {
+  private class IconWrapper implements Icon {
     private Icon myIcon;
     private boolean myEnabled;
     private boolean myShouldPaint = true;
@@ -269,6 +268,13 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     }
 
     public void setVisible(final boolean visible) {
+      if (myShouldPaint != visible) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            repaint();
+          }
+        });
+      }
       myShouldPaint = visible;
     }
   }
