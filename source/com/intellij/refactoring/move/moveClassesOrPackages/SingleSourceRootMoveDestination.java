@@ -19,12 +19,12 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination");
   private final PackageWrapper myPackage;
-  private final PsiDirectory myTagretDirectory;
+  private final PsiDirectory myTargetDirectory;
 
-  public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory tagretDirectory) {
-    LOG.assertTrue(aPackage.equalToPackage(tagretDirectory.getPackage()));
+  public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory targetDirectory) {
+    LOG.assertTrue(aPackage.equalToPackage(targetDirectory.getPackage()));
     myPackage = aPackage;
-    myTagretDirectory = tagretDirectory;
+    myTargetDirectory = targetDirectory;
   }
 
   public PackageWrapper getTargetPackage() {
@@ -32,15 +32,15 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
-    return myTagretDirectory;
+    return myTargetDirectory;
   }
 
   public PsiDirectory getTargetIfExists(PsiFile source) {
-    return myTagretDirectory;
+    return myTargetDirectory;
   }
 
   public PsiDirectory getTargetDirectory(PsiDirectory source) {
-    return myTagretDirectory;
+    return myTargetDirectory;
   }
 
   public String verify(PsiFile source) {
@@ -57,10 +57,10 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      ArrayList<String> conflicts) {
-    RefactoringUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, myTagretDirectory, conflicts);
+    RefactoringUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, myTargetDirectory, conflicts);
   }
 
   public PsiDirectory getTargetDirectory(PsiFile source) {
-    return myTagretDirectory;
+    return myTargetDirectory;
   }
 }
