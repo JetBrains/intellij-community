@@ -18,6 +18,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -423,25 +424,10 @@ public class PullUpHelper {
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
         final PsiElement resolved = referenceElement.resolve();
         PsiClass containingClass = null;
-        if (resolved instanceof PsiField) {
-          containingClass = ((PsiField) resolved).getContainingClass();
-        } else if (resolved instanceof PsiMethod) {
-          containingClass = ((PsiMethod) resolved).getContainingClass();
-        } else if (resolved instanceof PsiClass) {
-          final PsiElement parent = resolved.getParent();
-          if (parent instanceof PsiClass && !((PsiClass) resolved).hasModifierProperty(PsiModifier.STATIC)) {
-            containingClass = (PsiClass) resolved;
-          } else {
-            return;
-          }
+        if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          containingClass = ((PsiMember) resolved).getContainingClass();
         }
-        if (containingClass != null) {
-          myIsMovable =
-                  myManager.areElementsEquivalent(myTargetSuperClass, containingClass)
-                  || myTargetSuperClass.isInheritor(containingClass, true);
-        } else {
-          myIsMovable = false;
-        }
+        myIsMovable = containingClass != null && InheritanceUtil.isInheritorOrSelf(myTargetSuperClass, containingClass, true);
       } else {
         qualifier.accept(this);
       }
