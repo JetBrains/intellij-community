@@ -131,6 +131,16 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     msg += "</body></html>";
 
+    addIntroduceConstantFix(foundExpr, originalExpression, manager, msg, allProblems);
+
+    //addReplaceWithConstantFixes(foundExpr, originalExpression, manager, allProblems);
+  }
+
+  private static void addIntroduceConstantFix(final List<PsiExpression> foundExpr,
+                                              final PsiLiteralExpression originalExpression,
+                                              final InspectionManager manager,
+                                              final String msg,
+                                              final List<ProblemDescriptor> allProblems) {
     final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size()+1]);
     expressions[foundExpr.size()] = originalExpression;
     final LocalQuickFix introduceQuickFix = new LocalQuickFix() {
@@ -165,7 +175,12 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     };
     ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, introduceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     allProblems.add(problemDescriptor);
+  }
 
+  private static void addReplaceWithConstantFixes(final List<PsiExpression> foundExpr,
+                                                  final PsiLiteralExpression originalExpression,
+                                                  final InspectionManager manager,
+                                                  final List<ProblemDescriptor> allProblems) {
     Set<PsiField> constants = new THashSet<PsiField>();
     for (Iterator<PsiExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
       PsiExpression expression = iterator.next();
@@ -201,7 +216,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           }
         }
       };
-      problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, replaceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      String msg = "Duplicate constant found";
+      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, replaceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       allProblems.add(problemDescriptor);
     }
   }
