@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 
@@ -20,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -61,6 +64,8 @@ public class WelcomeScreen {
   private static final String REOPEN_RECENT_ICON = "/general/reopenRecentProject.png";
   private static final String FROM_VCS_ICON = "/general/getProjectFromVCS.png";
   private static final String READ_HELP_ICON = "/general/readHelp.png";
+  private static final String KEYMAP_ICON = "/general/defaultKeymap.png";
+  private static final String KEYMAP_URL = PathManager.getHomePath() + File.separator + "help" + File.separator + "4.5_ReferenceCard.pdf";
   private static final String DEFAULT_ICON_PATH = "/general/configurableDefault.png";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
@@ -115,7 +120,7 @@ public class WelcomeScreen {
       for (int i = 0; i < myInstalledPlugins.length; i++) {
         PluginDescriptor plugin = myInstalledPlugins[i];
         addListItemToPlugins(pluginsListPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(), plugin.getUrl());
-        // TODO: check whether plugin has a welcome-action, and if yes, add it to 'ourPluginsWithActions' ArrayList
+        // TODO[pti]: check whether plugin has a welcome-action, and if yes, add it to 'ourPluginsWithActions' ArrayList
       }
     }
 
@@ -232,8 +237,8 @@ public class WelcomeScreen {
       }
     };
     addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out the entire project from one of " +
-                                                                                           "the supported Version Control Systems, namely " +
-                                                                                           "CVS or Subversion.");
+                                                                                              "the supported Version Control Systems, namely " +
+                                                                                              "CVS or Subversion.");
 
     // Create Documentation panel
     JPanel docsPanel = new JPanel(new GridBagLayout());
@@ -253,7 +258,19 @@ public class WelcomeScreen {
     };
     addButtonToDocs(docsPanel, readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in the devoted window.");
 
-// TODO: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
+    MyActionButton defaultKeymap = new MyActionButton(null, KEYMAP_ICON, null) {
+      protected void onPress(InputEvent e) {
+        try {
+          BrowserUtil.launchBrowser(KEYMAP_URL);
+        }
+        catch (IllegalThreadStateException ex) {
+          // it's not a problem
+        }
+      }
+    };
+    addButtonToDocs(docsPanel, defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card (27 Kb).");
+
+// TODO[pti]: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
 
     JPanel emptyPanel_2 = new JPanel();
     emptyPanel_2.setBackground(MAIN_PANEL_COLOR);
@@ -436,7 +453,9 @@ public class WelcomeScreen {
     }
     else {
       logoImage = IconLoader.getIcon(iconPath);
+      if (logoImage == null) logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
+    // TODO[pti]: check the length of the name, and add a line break if necessary
     JLabel logoName = new JLabel(name, logoImage, SwingConstants.LEFT);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
