@@ -38,6 +38,7 @@ import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -45,15 +46,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.Element;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.File;
 
 public class PluginRunConfiguration extends RunConfigurationBase {
   private Module myModule;
@@ -119,6 +119,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
         params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
         params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "extensions.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
 
         params.setMainClass("com.intellij.idea.Main");
