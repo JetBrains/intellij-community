@@ -36,7 +36,7 @@ public class DeleteUtil {
       }
     }
 
-    ArrayList filteredElements = new ArrayList();
+    ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
       filteredElements.add(element);
@@ -45,10 +45,10 @@ public class DeleteUtil {
     int previousSize;
     do {
       previousSize = filteredElements.size();
-      outer: for (Iterator iterator1 = filteredElements.iterator(); iterator1.hasNext();) {
-        PsiElement element1 = (PsiElement)iterator1.next();
-        for (Iterator iterator2 = filteredElements.iterator(); iterator2.hasNext();) {
-          PsiElement element2 = (PsiElement)iterator2.next();
+      outer: for (Iterator<PsiElement> iterator1 = filteredElements.iterator(); iterator1.hasNext();) {
+        PsiElement element1 = iterator1.next();
+        for (Iterator<PsiElement> iterator2 = filteredElements.iterator(); iterator2.hasNext();) {
+          PsiElement element2 = iterator2.next();
           if (element1 == element2) continue;
           if (PsiTreeUtil.isAncestor(element1, element2, false)) {
             if (LOG.isDebugEnabled()) {
@@ -62,13 +62,13 @@ public class DeleteUtil {
     } while (filteredElements.size() != previousSize);
 
     if (LOG.isDebugEnabled()) {
-      for (Iterator iterator = filteredElements.iterator(); iterator.hasNext();) {
-        PsiElement element = (PsiElement)iterator.next();
+      for (Iterator<PsiElement> iterator = filteredElements.iterator(); iterator.hasNext();) {
+        PsiElement element = iterator.next();
         LOG.debug("filtered element = "+element);
       }
     }
 
-    return (PsiElement[])filteredElements.toArray(new PsiElement[filteredElements.size()]);
+    return filteredElements.toArray(new PsiElement[filteredElements.size()]);
   }
 
   public static String generateWarningMessage(String actionName, final PsiElement[] elements) {

@@ -28,9 +28,19 @@ public class RefactoringMessageUtil {
     return checkReadOnlyStatus(element, project, "Refactoring cannot be performed");
   }
 
-  public static boolean checkReadOnlyStatus(PsiElement element,
-                                                 Project project,
-                                                 final String messagePrefix) {
+  public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
+    return checkReadOnlyStatus(element, project, messagePrefix, false);
+  }
+
+  public static boolean checkReadOnlyStatusRecursively (Project project, PsiElement element) {
+    return checkReadOnlyStatus(element, project, "Refactoring cannot be performed", true);
+  }
+
+  private static boolean checkReadOnlyStatus(PsiElement element,
+                                            Project project,
+                                            final String messagePrefix,
+                                            boolean recursively
+    ) {
     if (element instanceof PsiDirectory) {
       PsiDirectory dir = (PsiDirectory)element;
       final VirtualFile vFile = dir.getVirtualFile();
@@ -40,10 +50,18 @@ public class RefactoringMessageUtil {
         return false;
       }
       else {
-        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{vFile});
-        if (status.hasReadonlyFiles()) {
-          String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is read-only.";
-          showErrorMessage("Read-only Directory", message1, null, project);
+        VirtualFile[] vFiles;
+        if (recursively) {
+          List<VirtualFile> list = new ArrayList<VirtualFile>();
+          addVirtualFiles(vFile, list);
+          vFiles = list.toArray(new VirtualFile[list.size()]);
+        } else vFiles = new VirtualFile[]{vFile};
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFiles);
+        final VirtualFile[] readonlyFiles = status.getReadonlyFiles();
+        if (readonlyFiles.length > 0) {
+          String subj = readonlyFiles[0].isDirectory() ? "Directory" : "File";
+          String message1 = messagePrefix + ".\n " + subj + " " + readonlyFiles[0].getPresentableUrl() + " is read-only.";
+          showErrorMessage("Read-only " + subj, message1, null, project);
           return false;
         }
         return true;
@@ -51,20 +69,31 @@ public class RefactoringMessageUtil {
     }
     else if (element instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage) element).getDirectories();
-      final List<VirtualFile> readOnlyDirs = new ArrayList<VirtualFile>();
+      final List<VirtualFile> readonlyList = new ArrayList<VirtualFile>();
       final List<VirtualFile> failedDirs = new ArrayList<VirtualFile>();
       for (int i = 0; i < directories.length; i++) {
         PsiDirectory directory = directories[i];
-        if (!directory.isWritable()) {
-          final VirtualFile virtualFile = directory.getVirtualFile();
+        VirtualFile virtualFile = directory.getVirtualFile();
+        if (recursively) {
           if (virtualFile.getFileSystem() instanceof JarFileSystem) {
             failedDirs.add(virtualFile);
-          } else {
-            readOnlyDirs.add(virtualFile);
+          }
+          else {
+            addVirtualFiles(virtualFile, readonlyList);
+          }
+        }
+        else {
+          if (!directory.isWritable()) {
+            if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+              failedDirs.add(virtualFile);
+            }
+            else {
+              readonlyList.add(virtualFile);
+            }
           }
         }
       }
-      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyDirs.toArray(new VirtualFile[readOnlyDirs.size()]));
+      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonlyList.toArray(new VirtualFile[readonlyList.size()]));
       failedDirs.addAll(Arrays.asList(status.getReadonlyFiles()));
       if (failedDirs.size() > 0) {
         StringBuffer message = new StringBuffer(messagePrefix);
@@ -72,12 +101,12 @@ public class RefactoringMessageUtil {
         for (Iterator<VirtualFile> iterator = failedDirs.iterator(); iterator.hasNext();) {
           VirtualFile virtualFile = iterator.next();
           final String presentableUrl = virtualFile.getPresentableUrl();
+          final String subj = virtualFile.isDirectory() ? "Directory " : "File ";
           if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-            message.append("Directory " + presentableUrl + " is located in a jar file.\n");
+            message.append(subj + presentableUrl + " is located in a jar file.\n");
           }
           else {
-            message.append("Directory " + presentableUrl + " is read-only.\n");
-            readOnlyDirs.add(virtualFile);
+            message.append(subj + presentableUrl + " is read-only.\n");
           }
         }
         return false;
@@ -119,6 +148,18 @@ public class RefactoringMessageUtil {
           return false;
         }
         return true;
+      }
+    }
+  }
+
+  private static void addVirtualFiles(final VirtualFile vFile, final List<VirtualFile> list) {
+    if (!vFile.isWritable()) {
+      list.add(vFile);
+    }
+    final VirtualFile[] children = vFile.getChildren();
+    if (children != null) {
+      for (int i = 0; i < children.length; i++) {
+        addVirtualFiles(children[i], list);
       }
     }
   }

@@ -47,9 +47,7 @@ public class MoveFilesOrDirectoriesUtil {
       if (element instanceof PsiDirectory) {
         PsiPackage aPackage = ((PsiDirectory)element).getPackage();
         LOG.assertTrue(aPackage == null);
-        if (!element.isWritable()) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
-        }
+        if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, element)) return;
       }
       else if (element instanceof PsiFile) {
         PsiFile aFile = (PsiFile)element;

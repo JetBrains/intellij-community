@@ -194,10 +194,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
           return;
         }
         for (int i = 0; i < elements.length; i++) {
-          PsiElement element = elements[i];
-          if (!element.isWritable()) {
-            if (RefactoringMessageUtil.checkReadOnlyStatus(myProject, element)) return;
-          }
+          if (RefactoringMessageUtil.checkReadOnlyStatusRecursively(myProject, elements[i])) return;
         }
         ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
         updateView();

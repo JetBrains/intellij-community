@@ -83,10 +83,7 @@ public class DeleteHandler {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {
           for (int i = 0; i < elements.length; i++) {
-            PsiElement element = elements[i];
-            if (!element.isWritable()) {
-              if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
-            }
+            if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, elements[i])) return;
           }
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             public void run() {
@@ -144,7 +141,7 @@ public class DeleteHandler {
               VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
               if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
 
-                ArrayList readOnlyFiles = new ArrayList();
+                ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
                 getReadOnlyVirtualFiles(virtualFile, readOnlyFiles);
 
                 if (readOnlyFiles.size() > 0) {
@@ -158,7 +155,7 @@ public class DeleteHandler {
 
                   boolean success = true;
                   for (int j = 0; j < readOnlyFiles.size(); j++) {
-                    VirtualFile file = (VirtualFile)readOnlyFiles.get(j);
+                    VirtualFile file = readOnlyFiles.get(j);
                     success = clearReadOnlyFlag(file, project);
                     if (!success) break;
                   }
@@ -243,7 +240,7 @@ public class DeleteHandler {
   /**
    * Fills readOnlyFiles with VirtualFiles
    */
-  private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList readOnlyFiles) {
+  private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList<VirtualFile> readOnlyFiles) {
     if (!file.isWritable()) {
       readOnlyFiles.add(file);
     }
