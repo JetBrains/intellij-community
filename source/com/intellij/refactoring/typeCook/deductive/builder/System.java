@@ -3,14 +3,15 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeCook.Util;
+import com.intellij.refactoring.typeCook.TypeNode;
+import com.intellij.refactoring.typeCook.Bottom;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeIntersection;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
+import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
+import com.intellij.openapi.project.Project;
 
-import java.util.LinkedList;
-import java.util.Iterator;
-import java.util.HashSet;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,19 +25,27 @@ public class System {
   final HashSet<PsiElement> myElements;
   final HashMap<PsiElement, PsiType> myTypes;
   final PsiTypeVariableFactory myTypeVariableFactory;
+  final Project myProject;
 
-  public System(final HashSet<PsiElement> elements, final HashMap<PsiElement, PsiType> types, final PsiTypeVariableFactory factory) {
+  HashSet<PsiTypeVariable> myBoundVariables;
+
+  public System(final Project project,
+                final HashSet<PsiElement> elements,
+                final HashMap<PsiElement, PsiType> types,
+                final PsiTypeVariableFactory factory) {
+    myProject = project;
     myElements = elements;
     myTypes = types;
     myTypeVariableFactory = factory;
+    myBoundVariables = null;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   public HashSet<Constraint> getConstraints() {
     return myConstraints;
-  }
-
-  private void addConstraint(final Constraint constraint) {
-    myConstraints.add(constraint);
   }
 
   public void addSubtypeConstraint(final PsiType left, final PsiType right) {
@@ -98,6 +107,17 @@ public class System {
     }
 
     buffer.append("Variables: " + myTypeVariableFactory.getNumber() + "\n");
+    buffer.append("Bound variables: ");
+
+    if (myBoundVariables == null) {
+      buffer.append(" not specified\n");
+    }
+    else {
+      for (Iterator<PsiTypeVariable> i = myBoundVariables.iterator(); i.hasNext();) {
+        buffer.append(i.next().getIndex() + ", ");
+      }
+    }
+
     buffer.append("Constraints: " + myConstraints.size() + "\n");
 
     for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
@@ -109,101 +129,122 @@ public class System {
 
   public System[] isolate() {
     class Node {
-      int myVar;
       int myComponent = -1;
+      Constraint myConstraint;
       HashSet<Node> myNeighbours = new HashSet<Node>();
 
-      public Node(int var) {
-        myVar = var;
+      public Node() {
+        myConstraint = null;
+      }
+
+      public Node(final Constraint c) {
+        myConstraint = c;
+      }
+
+      public Constraint getConstraint() {
+        return myConstraint;
       }
 
       public void addEdge(final Node n) {
         if (!myNeighbours.contains(n)) {
           myNeighbours.add(n);
+          n.addEdge(this);
         }
-      }
-
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Node)) return false;
-
-        final Node node = (Node)o;
-
-        if (myVar != node.myVar) return false;
-
-        return true;
-      }
-
-      public int hashCode() {
-        return myVar;
       }
     }
 
-    final Node[] nodes = new Node[myTypeVariableFactory.getNumber()];
+    final Node[] typeVariableNodes = new Node[myTypeVariableFactory.getNumber()];
+    final Node[] constraintNodes = new Node[myConstraints.size()];
+    final HashMap<Constraint, HashSet<PsiTypeVariable>> boundVariables = new HashMap<Constraint, HashSet<PsiTypeVariable>>();
 
-    for (int i = 0; i < nodes.length; i++) {
-      nodes[i] = new Node(i);
+    for (int i = 0; i < typeVariableNodes.length; i++) {
+      typeVariableNodes[i] = new Node();
     }
 
-    final HashMap<Constraint, Integer> constraintVar = new HashMap<Constraint, Integer>();
+    {
+      int j = 0;
 
-    for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
-      final HashSet<Integer> boundVariables = new HashSet<Integer>();
+      for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
+        constraintNodes[j++] = new Node(c.next());
+      }
+    }
 
-      new Object () {
-        private Constraint myCurrent;
+    {
+      int l = 0;
 
-        void visit(final Constraint c){
-          myCurrent = c;
+      for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
+        final HashSet<PsiTypeVariable> boundVars = new HashSet<PsiTypeVariable>();
 
-          visit(c.getLeft());
-          visit(c.getRight());
-        }
+        final Constraint constraint = i.next();
+        final Node constraintNode = constraintNodes[l++];
 
-        private void visit(final PsiType t) {
-          if (t instanceof PsiTypeVariable) {
-            final Integer index = new Integer(((PsiTypeVariable)t).getIndex());
+        new Object() {
+          void visit(final Constraint c) {
+            visit(c.getLeft());
+            visit(c.getRight());
+          }
 
-            boundVariables.add(index);
+          private void visit(final PsiType t) {
+            if (t instanceof PsiTypeVariable) {
+              boundVars.add((PsiTypeVariable)t);
+            }
+            else if (t instanceof PsiArrayType) {
+              visit(((PsiArrayType)t).getDeepComponentType());
+            }
+            else if (t instanceof PsiClassType) {
+              final PsiSubstitutor subst = Util.resolveType(t).getSubstitutor();
 
-            if (constraintVar.get(myCurrent) == null){
-              constraintVar.put(myCurrent, index);
+              for (Iterator<PsiType> j = subst.getSubstitutionMap().values().iterator(); j.hasNext();) {
+                visit(j.next());
+              }
+            }
+            else if (t instanceof PsiTypeIntersection) {
+              visit(((PsiTypeIntersection)t).getLeft());
+              visit(((PsiTypeIntersection)t).getRight());
             }
           }
-          else if (t instanceof PsiArrayType) {
-            visit(((PsiArrayType)t).getDeepComponentType());
-          }
-          else if (t instanceof PsiClassType) {
-            final PsiSubstitutor subst = Util.resolveType(t).getSubstitutor();
+        }.visit(constraint);
 
-            for (Iterator<PsiType> j = subst.getSubstitutionMap().values().iterator(); j.hasNext();) {
-              visit(j.next());
-            }
-          }
-          else if (t instanceof PsiTypeIntersection){
-            visit (((PsiTypeIntersection)t).getLeft());
-            visit (((PsiTypeIntersection)t).getRight());
+        final PsiTypeVariable[] bound = boundVars.toArray(new PsiTypeVariable[]{});
+
+        for (int j = 0; j < bound.length; j++) {
+          final int x = bound[j].getIndex();
+          final Node typeVariableNode = typeVariableNodes[x];
+
+          typeVariableNode.addEdge(constraintNode);
+
+          for (int k = j + 1; k < bound.length; k++) {
+            final int y = bound[k].getIndex();
+
+            typeVariableNode.addEdge(typeVariableNodes[y]);
           }
         }
-      }.visit (i.next ());
 
-      final Integer[] bound = boundVariables.toArray(new Integer[]{});
+        boundVariables.put(constraint, boundVars);
+      }
+    }
 
-      for (int j = 0; j < bound.length; j++) {
-        final int x = bound[j].intValue();
+    final LinkedList<HashSet<PsiTypeVariable>> clusters = myTypeVariableFactory.getClusters();
 
-        for (int k = j + 1; k < bound.length; k++) {
-          final int y = bound[k].intValue();
+    for (final Iterator<HashSet<PsiTypeVariable>> c=clusters.iterator(); c.hasNext();){
+      final HashSet<PsiTypeVariable> cluster = c.next();
+      Node prev = null;
 
-          nodes[x].addEdge(nodes[y]);
+      for (final Iterator<PsiTypeVariable> v=cluster.iterator(); v.hasNext();){
+        final Node curr = typeVariableNodes[v.next().getIndex()];
+
+        if (prev != null){
+          prev.addEdge(curr);
         }
+
+        prev = curr;
       }
     }
 
     int currComponent = 0;
 
-    for (int i = 0; i < nodes.length; i++) {
-      final Node node = nodes[i];
+    for (int i = 0; i < typeVariableNodes.length; i++) {
+      final Node node = typeVariableNodes[i];
 
       if (node.myComponent == -1) {
         final int component = currComponent;
@@ -235,22 +276,177 @@ public class System {
 
     final System[] systems = new System[currComponent];
 
-    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();){
-      final Constraint constraint = c.next();
-      final Integer variable = constraintVar.get(constraint);
-      final int index = nodes[variable.intValue()].myComponent;
+    for (int i = 0; i < constraintNodes.length; i++) {
+      final Node node = constraintNodes[i];
+      final Constraint constraint = node.getConstraint();
+      final int index = node.myComponent;
 
-      if (systems[index] == null){
-        systems[index] = new System(myElements, myTypes, myTypeVariableFactory);
+      if (systems[index] == null) {
+        systems[index] = new System(myProject, myElements, myTypes, myTypeVariableFactory);
       }
 
-      systems[index].addConstraint(constraint);
+      systems[index].addConstraint(constraint, boundVariables.get(constraint));
     }
 
     return systems;
   }
 
+  private void addConstraint(final Constraint constraint, final HashSet<PsiTypeVariable> vars) {
+    if (myBoundVariables == null) {
+      myBoundVariables = vars;
+    }
+    else {
+      myBoundVariables.addAll(vars);
+    }
+
+    myConstraints.add(constraint);
+  }
+
   public PsiTypeVariableFactory getVariableFactory() {
     return myTypeVariableFactory;
+  }
+
+  public HashSet<PsiTypeVariable> getBoundVariables() {
+    return myBoundVariables;
+  }
+
+  public String dumpString() {
+    final String[] data = new String[myElements.size()];
+
+    int i = 0;
+
+    for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
+      final PsiElement element = e.next();
+      data[i++] =
+      (element instanceof PsiVariable ? ((PsiVariable)element).getType() :
+       element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : ((PsiExpression)element).getType()).getCanonicalText() +
+      "\\n" +
+      elementString(element);
+    }
+
+    Arrays.sort(data,
+                new Comparator() {
+                  public int compare(Object x, Object y) {
+                    return ((String)x).compareTo((String)y);
+                  }
+                });
+
+
+    final StringBuffer repr = new StringBuffer();
+
+    for (int j = 0; j < data.length; j++) {
+      repr.append(data[j]);
+      repr.append("\n");
+    }
+
+    return repr.toString();
+  }
+
+  private String elementString(final PsiElement element) {
+    if (element instanceof PsiNewExpression)
+      return "new";
+
+    if (element instanceof PsiParameter){
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element,  PsiMethod.class);
+
+      if (method != null){
+        return "parameter " + (method.getParameterList().getParameterIndex(((PsiParameter)element))) + " of " + method.getName();
+      }
+    }
+
+    if (element instanceof PsiMethod){
+      return "return of " + ((PsiMethod)element).getName();  
+    }
+
+    return element.toString();
+  }
+
+  public String dumpResult(final Binding[] bindings) {
+    final String[] data = new String[myElements.size()];
+
+    class Substitutor {
+      PsiType substitute(final PsiType t) {
+        if (t instanceof PsiWildcardType){
+          final PsiWildcardType wcType = (PsiWildcardType)t;
+          final PsiType bound = wcType.getBound();
+
+          if (bound == null){
+            return t;
+          }
+
+          final PsiManager manager = PsiManager.getInstance(myProject);
+          final PsiType subst = substitute(bound);
+          return wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
+        }
+        else if (t instanceof PsiTypeVariable) {
+          if (bindings.length > 0) {
+            final PsiType b = bindings[0].apply(t);
+
+            if (b instanceof Bottom || b instanceof PsiTypeVariable) {
+              return null;
+            }
+
+            return substitute(b);
+          }
+
+          return null;
+        }
+        else if (t instanceof Bottom) {
+          return null;
+        }
+        else if (t instanceof PsiArrayType) {
+          return substitute(((PsiArrayType)t).getComponentType()).createArrayType();
+        }
+        else if (t instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult result = ((PsiClassType)t).resolveGenerics();
+
+          final PsiClass aClass = result.getElement();
+          final PsiSubstitutor aSubst = result.getSubstitutor();
+
+          if (aClass == null) {
+            return t;
+          }
+
+          PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+          for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+            final PsiTypeParameter parm = p.next();
+            final PsiType type = aSubst.substitute(parm);
+
+            theSubst = theSubst.put(parm, substitute(type));
+          }
+
+          return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+        }
+        else {
+          return t;
+        }
+      }
+    }
+
+    final Substitutor binding = new Substitutor();
+    int i = 0;
+
+    for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
+      final PsiElement element = e.next();
+      data[i++] = binding.substitute(myTypes.get(element)).getCanonicalText() + "\\n" + elementString(element);
+    }
+
+    Arrays.sort(data,
+                new Comparator() {
+                  public int compare(Object x, Object y) {
+                    return ((String)x).compareTo((String)y);
+                  }
+                });
+
+
+    final StringBuffer repr = new StringBuffer();
+
+    for (int j = 0; j < data.length; j++) {
+      repr.append(data[j]);
+      repr.append("\n");
+    }
+
+    return repr.toString();
   }
 }

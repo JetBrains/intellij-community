@@ -11,7 +11,23 @@ import com.intellij.refactoring.typeCook.deductive.PsiTypeVariable;
  * Time: 3:44:56 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface Binding {
-  PsiType apply (PsiType type);
-  Binding compose (Binding b);
+public abstract class Binding {
+  public abstract PsiType apply(PsiType type);
+
+  abstract Binding compose(Binding b);
+
+  final static int BETTER = 0;
+  final static int WORSE = 1;
+  final static int SAME = 2;
+  final static int NONCOMPARABLE = 3;
+
+  abstract int compare(Binding b);
+
+  public abstract boolean nonEmpty();
+
+  public abstract boolean isCyclic();
+
+  public abstract Binding reduceRecursive();
+
+  public abstract boolean binds(final PsiTypeVariable var);
 }

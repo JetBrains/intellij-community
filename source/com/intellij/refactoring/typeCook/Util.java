@@ -228,34 +228,32 @@ public class Util {
     return result.getElement() instanceof PsiTypeParameter;
   }
 
-  public static PsiType banalize(PsiType t) {
+  public static PsiType banalize(final PsiType t) {
     if (t instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = resolveType(t);
+      final PsiClassType.ClassResolveResult result = resolveType(t);
+      final PsiClass theClass = result.getElement();
 
-      if (result == null) {
-        return null;
+      if (theClass == null){
+        return t;
       }
 
-      PsiClass theClass = result.getElement();
-      PsiSubstitutor theSubst = result.getSubstitutor();
-      PsiManager theManager = theClass.getManager();
+      final PsiSubstitutor theSubst = result.getSubstitutor();
+      final PsiManager theManager = theClass.getManager();
 
-      PsiTypeParameter[] theParms = Util.getTypeParametersList(theClass);
       PsiSubstitutor subst = PsiSubstitutor.EMPTY;
 
-      for (int i = 0; i < theParms.length; i++) {
-        PsiTypeParameter theParm = theParms[i];
+      for (final Iterator<PsiTypeParameter> p=theSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();){
+        final PsiTypeParameter theParm = p.next();
+        final PsiType actualType = theSubst.substitute(theParm);
 
-        PsiType actualType = theSubst.substitute(theParm);
-
-        if (actualType == null || actualType instanceof PsiWildcardType) {// || isTypeParameter(actualType)) {
+        if (actualType == null || actualType instanceof PsiWildcardType) {
           subst = subst.put(theParm, Bottom.BOTTOM);
         }
         else {
-          PsiType banType = banalize(actualType);
+          final PsiType banType = banalize(actualType);
 
           if (banType == null) {
-            return null;
+            return t;
           }
 
           subst = subst.put(theParm, banType);
@@ -263,6 +261,9 @@ public class Util {
       }
 
       return theManager.getElementFactory().createType(theClass, subst);
+    }
+    else if (t instanceof PsiArrayType){
+      return banalize(((PsiArrayType)t).getComponentType()).createArrayType();
     }
 
     return t;
@@ -664,9 +665,21 @@ public class Util {
 
       PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
+      final HashSet<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
+
       for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
         final PsiTypeParameter parm = i.next();
-        theSubst = theSubst.put(parm, createParameterizedType(aSubst.substitute(parm), factory));
+        final PsiType type = createParameterizedType(aSubst.substitute(parm), factory);
+
+        if (type instanceof PsiTypeVariable){
+          cluster.add((PsiTypeVariable)type);
+        }
+
+        theSubst = theSubst.put(parm, type);
+      }
+
+      if (cluster.size() > 1){
+        factory.registerCluster(cluster);
       }
 
       return aClass.getManager().getElementFactory().createType(aClass, theSubst);
@@ -679,7 +692,7 @@ public class Util {
   }
 
   public static PsiType substituteType(final PsiType type, final PsiSubstitutor subst) {
-    final int level = getArrayLevel(type);          
+    final int level = getArrayLevel(type);
     final PsiClassType.ClassResolveResult result = resolveType(type);
 
     if (result.getElement() != null) {
@@ -690,7 +703,7 @@ public class Util {
       if (aClass instanceof PsiTypeParameter) {
         final PsiType sType = subst.substitute(((PsiTypeParameter)aClass));
 
-        return createArrayType(sType == null ? PsiType.getJavaLangObject(manager): sType, level);
+        return createArrayType(sType == null ? PsiType.getJavaLangObject(manager) : sType, level);
       }
 
       final PsiTypeParameter[] aParms = getTypeParametersList(aClass);
@@ -709,7 +722,7 @@ public class Util {
   }
 
   public static boolean bindsTypeVariables(final PsiType t) {
-    if (t == null){
+    if (t == null) {
       return false;
     }
 
@@ -717,7 +730,15 @@ public class Util {
       return true;
     }
 
-    if (t instanceof PsiTypeIntersection){
+    if (t instanceof PsiArrayType) {
+      return bindsTypeVariables(((PsiArrayType)t).getComponentType());
+    }
+
+    if (t instanceof PsiWildcardType) {
+      return bindsTypeVariables(((PsiWildcardType)t).getBound());
+    }
+
+    if (t instanceof PsiTypeIntersection) {
       final PsiTypeIntersection itype = ((PsiTypeIntersection)t);
 
       return bindsTypeVariables(itype.getLeft()) || bindsTypeVariables(itype.getRight());

@@ -1,5 +1,5 @@
 class List<Z>{
-  void <T extends Z> put(T t){
+  <T extends Z> void put(T t){
   }
 
   void mut(List<? extends Z> t){

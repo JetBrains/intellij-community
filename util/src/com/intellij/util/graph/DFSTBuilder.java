@@ -23,6 +23,8 @@ public class DFSTBuilder<Node> {
   private Comparator<Node> myComparator = null;
   private boolean myNBuilt = false;
   private boolean myTBuilt = false;
+  private LinkedList<Pair<Integer, Integer>> mySCCs = null;
+  private Node[] myInvT;
 
   public DFSTBuilder(Graph<Node> graph) {
     myGraph = graph;
@@ -119,18 +121,30 @@ public class DFSTBuilder<Node> {
 
   private void build_T() {
     if (myTBuilt) return;
+
+    myInvT = (Node[])new Object[myGraph.getNodes().size()];
+    mySCCs = new LinkedList<Pair<Integer, Integer>> ();
+
     int currT = 0;
     int size = myGraph.getNodes().size();
+
     myNodeToTNumber = new HashMap<Node, Integer>(size);
+
     for (int i = 0; i < size; i++) {
       Node v = myInvN[i];
       if (!myNodeToTNumber.containsKey(v)) {
-        myNodeToTNumber.put(v, new Integer(currT++));
-        Set<Node> region = region(v);
+        final Set<Node> region = region(v);
+
+        mySCCs.addLast(new Pair<Integer, Integer>(new Integer(currT), new Integer (region.size())));
+
+        myNodeToTNumber.put(v, new Integer(currT));
+        myInvT[currT++]=v;
+
         for (Iterator<Node> iterator = region.iterator(); iterator.hasNext();) {
           Node w = iterator.next();
           if (w != v) {
-            myNodeToTNumber.put(w, new Integer(currT++));
+            myNodeToTNumber.put(w, new Integer(currT));
+            myInvT[currT++]=w;
           }
         }
       }
@@ -145,5 +159,25 @@ public class DFSTBuilder<Node> {
 
   public boolean isAcyclic () {
     return getCircularDependency() == null;
+  }
+
+  public Node getNodeByNNumber (final int n){
+    return myInvN[n];
+  }
+
+  public Node getNodeByTNumber (final int n){
+      return myInvT[n];
+    }
+
+  public LinkedList<Pair<Integer, Integer>> getSCCs (){
+    if (!myNBuilt){
+      buildDFST();
+    }
+
+    if (!myTBuilt){
+      build_T();
+    }
+
+    return mySCCs;
   }
 }
