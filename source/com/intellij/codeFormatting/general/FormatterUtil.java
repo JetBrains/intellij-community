@@ -31,33 +31,35 @@
  */
 package com.intellij.codeFormatting.general;
 
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.codeStyle.Helper;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.*;
 
 public class FormatterUtil {
 
-  public static String getWhiteSpaceBefore(TreeElement element, final IElementType fileElementType) {
-    final TreeElement wsCandidate = getWsCandidate(element, fileElementType);
-    if (wsCandidate == null || !isSpace(wsCandidate)) {
-      return "";
-    } else {
-      return wsCandidate.getText();
+  public static String getWhiteSpaceBefore(TreeElement element) {
+    TreeElement wsCandidate = getWsCandidate(element);
+    final StringBuffer result = new StringBuffer();
+    while (wsCandidate != null && isSpaceTextElement(wsCandidate)) {
+      result.append(wsCandidate.getText());
+      final TreeElement newValue = getWsCandidate(wsCandidate);
+      if (wsCandidate == newValue) break;
+      wsCandidate = newValue;
     }
+    return result.toString();
   }
-  private static TreeElement getWsCandidate(TreeElement element, IElementType fileElementType) {
+  private static TreeElement getWsCandidate(TreeElement element) {
     if (element == null) return null;
     TreeElement treePrev = element.getTreePrev();
     if (treePrev != null) {
       TreeElement candidate = getLastChildOf(treePrev);
-      if (candidate != null && isSpace(candidate)) {
+      if (candidate != null && isSpaceTextElement(candidate)) {
         return candidate;
       }
       else if (candidate != null && candidate.getTextLength() == 0) {
-        return getWsCandidate(candidate, fileElementType);
+        return getWsCandidate(candidate);
       }
       else {
         return element;
@@ -65,10 +67,10 @@ public class FormatterUtil {
     }
     final CompositeElement treeParent = element.getTreeParent();
 
-    if (treeParent == null || treeParent.getTreeParent() == null || treeParent.getElementType() == fileElementType) {
+    if (treeParent == null || treeParent.getTreeParent() == null) {
       return element;
     } else {
-      return getWsCandidate(treeParent, fileElementType);
+      return getWsCandidate(treeParent);
     }
   }
 
@@ -92,25 +94,35 @@ public class FormatterUtil {
     }
   }
 
-  private static boolean isSpace(TreeElement treePrev) {
+  private static boolean isWhiteSpaceElement(TreeElement treePrev) {
     return treePrev.getElementType() == ElementType.WHITE_SPACE;
   }
 
-  public static void replaceWhiteSpace(final String whiteSpace, final TreeElement leafElement, IElementType fileElementType) {
+  private static boolean isSpaceTextElement(TreeElement treePrev) {
+    if (isWhiteSpaceElement(treePrev)) return true;
+    final String text = treePrev.getText();
+    return text.length() > 0 && text.trim().length() == 0;
+  }
+
+  public static String replaceWhiteSpace(final String whiteSpace, final TreeElement leafElement) {
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(leafElement), null);
 
-    TreeElement treePrev = getWsCandidate(leafElement, fileElementType);
+    TreeElement treePrev = getWsCandidate(leafElement);
     if (treePrev == null) {
       if (whiteSpace.length() > 0) {
         ChangeUtil.addChild(leafElement.getTreeParent(), whiteSpaceElement, leafElement);
       }
-    } else if (!isSpace(treePrev)) {
+    } else if (!isSpaceTextElement(treePrev)) {
       ChangeUtil.addChild(treePrev.getTreeParent(), whiteSpaceElement, treePrev);
+    } else if (!isWhiteSpaceElement(treePrev)){
+      return getWhiteSpaceBefore(leafElement);
     } else {
       ChangeUtil.replaceChild(treePrev.getTreeParent(), treePrev, whiteSpaceElement);
     }
+
+    return getWhiteSpaceBefore(leafElement);
   }
 
   public static TreeElement shiftTokenIndent(final Project project,
