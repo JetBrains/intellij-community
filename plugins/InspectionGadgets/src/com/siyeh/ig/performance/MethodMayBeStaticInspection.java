@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -154,6 +155,13 @@ public class MethodMayBeStaticInspection extends MethodInspection {
             if (!visitor.areReferencesStaticallyAccessible()) {
                 return;
             }
+            // ignore overridden methods
+            PsiElementProcessor.FindElement processor = new PsiElementProcessor.FindElement();
+            final PsiManager manager = method.getManager();
+            final PsiSearchHelper helper = manager.getSearchHelper();
+            helper.processOverridingMethods(processor, method, GlobalSearchScope.projectScope(manager.getProject()), true);
+            if (processor.isFound()) return;
+          
             registerMethodError(method);
         }
     }
