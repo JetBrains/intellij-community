@@ -521,4 +521,10 @@ public class StringUtil {
     }
     return result;
   }
+
+  public static String repeatSymbol(final char aChar, final int count) {
+    final StringBuffer buffer = new StringBuffer();
+    repeatSymbol(buffer,aChar, count);
+    return buffer.toString();
+  }
 }
