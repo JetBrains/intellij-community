@@ -328,6 +328,33 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         if(initialValue == null){
             return false;
         }
+        if(!(initialValue instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        final PsiMethodCallExpression initialCall =
+                (PsiMethodCallExpression) initialValue;
+        final PsiReferenceExpression initialMethodExpression =
+                initialCall.getMethodExpression();
+        if(initialMethodExpression == null){
+            return false;
+        }
+        final String initialCallName =
+                initialMethodExpression.getReferenceName();
+        if(!"iterator".equals(initialCallName)){
+            return false;
+        }
+        final PsiExpression qualifier =
+                initialMethodExpression.getQualifierExpression();
+        final PsiType qualifierType = qualifier.getType();
+        if(!(qualifierType instanceof PsiClassType)){
+            return false;
+        }
+
+        final PsiClass qualifierClass =
+                ((PsiClassType) qualifierType).resolve();
+        if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable")){
+            return false;
+        }
         final String iteratorName = declaredVar.getName();
         final PsiExpression condition = whileStatement.getCondition();
         if(!isHasNext(condition, iteratorName)){

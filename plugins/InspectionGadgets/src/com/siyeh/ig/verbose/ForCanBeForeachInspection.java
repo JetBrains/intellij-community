@@ -497,6 +497,33 @@ public class ForCanBeForeachInspection extends StatementInspection{
         if(initialValue == null){
             return false;
         }
+        if(!(initialValue instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        final PsiMethodCallExpression initialCall =
+                (PsiMethodCallExpression) initialValue;
+        final PsiReferenceExpression initialMethodExpression =
+                initialCall.getMethodExpression();
+        if(initialMethodExpression == null){
+            return false;
+        }
+        final String initialCallName =
+                initialMethodExpression.getReferenceName();
+        if(!"iterator".equals(initialCallName)){
+            return false;
+        }
+        final PsiExpression qualifier =
+                initialMethodExpression.getQualifierExpression();
+        final PsiType qualifierType = qualifier.getType();
+        if(!(qualifierType instanceof PsiClassType)){
+            return false;
+        }
+
+        final PsiClass qualifierClass =
+                ((PsiClassType) qualifierType).resolve();
+        if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable")){
+            return false;
+        }
         final String iteratorName = declaredVar.getName();
         final PsiExpression condition = forStatement.getCondition();
         if(!isHasNext(condition, iteratorName)){
@@ -694,8 +721,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         public void visitElement(PsiElement element){
-            if(!arrayAssigned)
-            super.visitElement(element);
+            if(!arrayAssigned){
+                super.visitElement(element);
+            }
         }
 
         public void visitAssignmentExpression(PsiAssignmentExpression exp){
@@ -766,9 +794,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         public void visitElement(PsiElement element){
-            if(!iteratorAssigned)
+            if(!iteratorAssigned){
                 super.visitElement(element);
+            }
         }
+
         public void visitAssignmentExpression(PsiAssignmentExpression exp){
             if(iteratorAssigned){
                 return;
@@ -799,9 +829,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         public void visitElement(PsiElement element){
-            if(!removeCalled)
+            if(!removeCalled){
                 super.visitElement(element);
+            }
         }
+
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
             if(removeCalled){
                 return;
@@ -842,9 +874,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         public void visitElement(PsiElement element){
-            if(indexVariableUsedOnlyAsIndex)
+            if(indexVariableUsedOnlyAsIndex){
                 super.visitElement(element);
+            }
         }
+
         public void visitReferenceExpression(PsiReferenceExpression ref){
             if(!indexVariableUsedOnlyAsIndex){
                 return;

@@ -75,7 +75,7 @@ public class ClassUtils {
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClass ancestorClass = psiManager.findClass(ancestorName, scope);
-        return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, false);
+        return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
 
     public static boolean isPrimitive(PsiType type) {
