@@ -13,6 +13,7 @@ import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.refactoring.typeCook.Bottom;
 import com.intellij.refactoring.typeCook.Util;
+import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.ArrayUtil;
@@ -35,6 +36,8 @@ public class ResolverTree {
   private Binding myCurrentBinding;
   private SolutionHolder mySolutions;
   private Project myProject;
+  private HashMap<PsiTypeVariable, Integer> myBindingDegree;
+  private Settings mySettings;
 
   private HashSet<Constraint> myConstraints;
 
@@ -44,6 +47,8 @@ public class ResolverTree {
     myCurrentBinding = myBindingFactory.create();
     myConstraints = system.getConstraints();
     myProject = system.getProject();
+    myBindingDegree = calculateDegree(system.getConstraints());
+    mySettings = system.getSettings ();
 
     reduceCyclicVariables();
   }
@@ -54,6 +59,70 @@ public class ResolverTree {
     mySolutions = parent.mySolutions;
     myConstraints = constraints;
     myProject = parent.myProject;
+    myBindingDegree = calculateDegree(constraints);
+    mySettings = parent.mySettings;
+  }
+
+  private static class PsiTypeVarCollector extends PsiExtendedTypeVisitor {
+    final HashSet<PsiTypeVariable> mySet = new HashSet<PsiTypeVariable>();
+
+    public Object visitTypeVariable(final PsiTypeVariable var) {
+      mySet.add(var);
+
+      return null;
+    }
+
+    public HashSet<PsiTypeVariable> getSet(final PsiType type) {
+      type.accept(this);
+      return mySet;
+    }
+  }
+
+  private boolean isBoundElseWhere(final PsiTypeVariable var) {
+    final Integer deg = myBindingDegree.get(var);
+
+    return deg == null || deg.intValue() > 1;
+  }
+
+  private boolean canBePruned(final Binding b) {
+    for (final Iterator<PsiTypeVariable> v = b.getBoundVariables().iterator(); v.hasNext();) {
+      final PsiTypeVariable var = v.next();
+      final PsiType type = b.apply(var);
+
+      if (!(type instanceof PsiTypeVariable) && isBoundElseWhere(var)) {
+        return false;
+      }
+    }
+
+    return !mySettings.exhaustive();
+  }
+
+  private HashMap<PsiTypeVariable, Integer> calculateDegree(final HashSet<Constraint> constraints) {
+    final HashMap<PsiTypeVariable, Integer> result = new HashMap<PsiTypeVariable, Integer>();
+
+    for (final Iterator<Constraint> c = constraints.iterator(); c.hasNext();) {
+      final Constraint constr = c.next();
+
+      final PsiTypeVarCollector collector = new PsiTypeVarCollector();
+
+      new Object() {
+        void setDegree(final HashSet<PsiTypeVariable> set) {
+          for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
+            final PsiTypeVariable var = v.next();
+            final Integer deg = result.get(var);
+
+            if (deg == null) {
+              result.put(var, new Integer(1));
+            }
+            else {
+              result.put(var, new Integer(deg.intValue() + 1));
+            }
+          }
+        }
+      }.setDegree(collector.getSet(constr.getRight()));
+    }
+
+    return result;
   }
 
   private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> constraints) {
@@ -190,21 +259,6 @@ public class ResolverTree {
     }
   }
 
-  private static class PsiTypeVarCollector extends PsiExtendedTypeVisitor {
-    final HashSet<PsiTypeVariable> mySet = new HashSet<PsiTypeVariable>();
-
-    public Object visitTypeVariable(final PsiTypeVariable var) {
-      mySet.add (var);
-
-      return null;
-    }
-
-    public HashSet<PsiTypeVariable> getSet (final PsiType type){
-      type.accept(this);
-      return mySet;
-    }
-  }
-
   private void reduceTypeType(final Constraint constr) {
     final PsiType left = constr.getLeft();
     final PsiType right = constr.getRight();
@@ -217,21 +271,11 @@ public class ResolverTree {
     if (indicator == 0) {
       return;
     }
-    else if (indicator == 2){// && riseBinding.equals(sinkBinding)) {
-      switch (riseBinding.compare(sinkBinding)) {
-      case Binding.SAME:
-      //case Binding.BETTER:
-           indicator = 1;
-           sinkBinding = null;
-      break;
-
-      //case Binding.WORSE:
-      //     indicator = 1;
-      //     riseBinding = null;
-      //break;
-      }
+    else if ((indicator == 2 && riseBinding.equals(sinkBinding)) || canBePruned(riseBinding)) {
+      indicator = 1;
+      sinkBinding = null;
     }
-    
+
     myConstraints.remove(constr);
 
     mySons = new ResolverTree[indicator];
@@ -327,18 +371,9 @@ public class ResolverTree {
     if (indicator == 0) {
       return;
     }
-    else if (indicator == 2){// && riseBinding.equals(sinkBinding)) {
-      switch (riseBinding.compare(sinkBinding)) {
-      case Binding.SAME:
-           indicator = 1;
-           sinkBinding = null;
-      break;
-
-           //case Binding.WORSE:
-           //  indicator = 1;
-           //  riseBinding = null;
-           //  break;
-      }
+    else if ((indicator == 2 && riseBinding.equals(sinkBinding)) || canBePruned(riseBinding)) {
+      indicator = 1;
+      sinkBinding = null;
     }
 
     PsiType[] riseRange = new PsiType[]{};
@@ -629,10 +664,10 @@ public class ResolverTree {
 
     if (mySons.length > 0) {
       for (int i = 0; i < mySons.length; i++) {
-        final ResolverTree son = mySons[i];
 
-        if (son != null) {
-          son.resolve();
+        if (mySons[i] != null) {
+          mySons[i].resolve();
+          mySons[i] = null;
         }
       }
     }
@@ -645,7 +680,7 @@ public class ResolverTree {
     }
   }
 
-  public Binding[] getSolutions() {
-    return mySolutions.getBestSolutions();
+  public Binding getBestSolution() {
+    return mySolutions.getBestSolution();
   }
 }

@@ -21,7 +21,8 @@ public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> 
                           PsiElement[] elements,
                           final boolean dropObsoleteCasts,
                           final boolean leaveObjectsRaw,
-                          final boolean preserveRawArrays) {
+                          final boolean preserveRawArrays,
+                          final boolean exh) {
     super(new TypeCookProcessor(project, elements, new Settings() {
       public boolean dropObsoleteCasts() {
         return dropObsoleteCasts;
@@ -29,6 +30,10 @@ public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> 
 
       public boolean leaveObjectParameterizedTypesRaw() {
         return leaveObjectsRaw;
+      }
+
+      public boolean exhaustive() {
+        return exh;
       }
 
       public boolean preserveRawArrays() {

@@ -168,21 +168,7 @@ public class SystemBuilder {
       return t;
     }
 
-    if (e instanceof PsiVariable) {
-      t = ((PsiVariable)e).getType();
-    }
-    else if (e instanceof PsiTypeCastExpression) {
-      t = ((PsiTypeCastExpression)e).getCastType().getType();
-    }
-    else if (e instanceof PsiNewExpression) {
-      t = ((PsiNewExpression)e).getType();
-    }
-    else if (e instanceof PsiMethod) {
-      t = ((PsiMethod)e).getReturnType();
-    }
-    else {
-      LOG.error("Variable, method, new or cast expected but found " + (e == null ? " null" : e.getClass().getName()));
-    }
+    t = Util.getType(e);
 
     final PsiType parameterizedType = Util.createParameterizedType(t, myTypeVariableFactory);
 
@@ -198,17 +184,7 @@ public class SystemBuilder {
       return t;
     }
 
-    if (e instanceof PsiVariable) {
-      return Util.banalize(((PsiVariable)e).getType());
-    }
-    else if (e instanceof PsiExpression) {
-      return Util.banalize(((PsiExpression)e).getType());
-    }
-    else if (e instanceof PsiMethod) {
-      return Util.banalize(((PsiMethod)e).getReturnType());
-    }
-
-    return null;
+    return Util.banalize(Util.getType(e));
   }
 
   private boolean isCooked(final PsiElement element) {
@@ -699,11 +675,6 @@ public class SystemBuilder {
                                                     e.valuateType(expression.getThenExpression()));
                       }
 
-                      //public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
-                      //  super.visitMethodCallExpression(expression);
-                      //  e.valuateType(expression);
-                      //}
-
                       public void visitCallExpression(final PsiCallExpression expression) {
                         super.visitCallExpression(expression);
                         e.valuateType(expression);
@@ -722,7 +693,18 @@ public class SystemBuilder {
                       public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
                         super.visitTypeCastExpression(expression);
 
+                        system.addCast(expression);
                         system.addSubtypeConstraint(e.valuateType(expression.getOperand()), e.valuateType(expression));
+                      }
+
+                      public void visitVariable(final PsiVariable variable) {
+                        super.visitVariable(variable);
+
+                        final PsiExpression init = variable.getInitializer();
+
+                        if (init != null) {
+                          system.addSubtypeConstraint(e.valuateType(init), getType(variable));
+                        }
                       }
 
                       public void visitNewExpression(final PsiNewExpression expression) {
@@ -755,9 +737,7 @@ public class SystemBuilder {
   }
 
   private void addBoundConstraints(final System system, final PsiType definedType, final PsiElement element) {
-    final PsiType elemenType =
-      (element instanceof PsiMethod) ? ((PsiMethod)element).getReturnType() :
-      (element instanceof PsiVariable) ? ((PsiVariable)element).getType() : null;
+    final PsiType elemenType = Util.getType(element);
 
     if (elemenType != null) {
       new Object() {

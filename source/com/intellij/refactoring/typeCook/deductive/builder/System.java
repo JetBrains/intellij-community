@@ -24,6 +24,7 @@ import java.util.*;
 public class System {
   final HashSet<Constraint> myConstraints = new HashSet<Constraint>();
   final HashSet<PsiElement> myElements;
+  final HashSet<PsiTypeCastExpression> myCasts;
   final HashMap<PsiElement, PsiType> myTypes;
   final PsiTypeVariableFactory myTypeVariableFactory;
   final Project myProject;
@@ -42,6 +43,7 @@ public class System {
     myTypeVariableFactory = factory;
     myBoundVariables = null;
     mySettings = settings;
+    myCasts = new HashSet<PsiTypeCastExpression> ();
   }
 
   public Project getProject() {
@@ -50,6 +52,10 @@ public class System {
 
   public HashSet<Constraint> getConstraints() {
     return myConstraints;
+  }
+
+  public void addCast (final PsiTypeCastExpression cast){
+    myCasts.add(cast);
   }
 
   public void addSubtypeConstraint(final PsiType left, final PsiType right) {
@@ -330,11 +336,7 @@ public class System {
 
     for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
-      data[i++] =
-        (element instanceof PsiVariable ? ((PsiVariable)element).getType() :
-          element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : ((PsiExpression)element).getType()).getCanonicalText() +
-                                                                                                                   "\\n" +
-                                                                                                                   elementString(element);
+      data[i++] = Util.getType(element).getCanonicalText() + "\\n" + elementString(element);
     }
 
     Arrays.sort(data,
@@ -375,7 +377,7 @@ public class System {
     return element.toString();
   }
 
-  public String dumpResult(final Binding[] bindings) {
+  public String dumpResult(final Binding bestBinding) {
     final String[] data = new String[myElements.size()];
 
     class Substitutor {
@@ -395,8 +397,8 @@ public class System {
                                                                              : PsiWildcardType.createSuper(manager, subst);
         }
         else if (t instanceof PsiTypeVariable) {
-          if (bindings.length > 0) {
-            final PsiType b = bindings[0].apply(t);
+          if (bestBinding != null) {
+            final PsiType b = bestBinding.apply(t);
 
             if (b instanceof Bottom || b instanceof PsiTypeVariable) {
               return null;
@@ -470,5 +472,9 @@ public class System {
     }
 
     return repr.toString();
+  }
+
+  public Settings getSettings() {
+    return mySettings;
   }
 }

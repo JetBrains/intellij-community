@@ -232,7 +232,7 @@ public class BindingFactory {
       final BindingImpl b2 = (BindingImpl)binding;
       final BindingImpl b1 = this;
 
-      int directoin = Binding.SAME;
+      int directoin = Binding.NONCOMPARABLE;
       boolean first = true;
 
       for (int i = 0; i < myBoundVariableIndices.length; i++) {
@@ -526,6 +526,76 @@ public class BindingFactory {
     public HashSet<PsiTypeVariable> getBoundVariables() {
       return myBoundVariables;
     }
+
+    public int getWidth() {
+      int w = 0;
+
+      for (int i = 0; i < myBindings.length; i++) {
+        final PsiType type = substitute(myBindings[i]);
+
+        if (type != null) {
+          w++;
+        }
+      }
+
+      return w;
+    }
+
+    public PsiType substitute(final PsiType t) {
+      if (t instanceof PsiWildcardType) {
+        final PsiWildcardType wcType = (PsiWildcardType)t;
+        final PsiType bound = wcType.getBound();
+
+        if (bound == null) {
+          return t;
+        }
+
+        final PsiManager manager = PsiManager.getInstance(myProject);
+        final PsiType subst = substitute(bound);
+        return subst instanceof PsiWildcardType ? subst : wcType.isExtends()
+                                                          ? PsiWildcardType.createExtends(manager, subst)
+                                                          : PsiWildcardType.createSuper(manager, subst);
+      }
+      else if (t instanceof PsiTypeVariable) {
+        final PsiType b = apply(t);
+
+        if (b instanceof Bottom || b instanceof PsiTypeVariable) {
+          return null;
+        }
+
+        return substitute(b);
+      }
+      else if (t instanceof Bottom) {
+        return null;
+      }
+      else if (t instanceof PsiArrayType) {
+        return substitute(((PsiArrayType)t).getComponentType()).createArrayType();
+      }
+      else if (t instanceof PsiClassType) {
+        final PsiClassType.ClassResolveResult result = ((PsiClassType)t).resolveGenerics();
+
+        final PsiClass aClass = result.getElement();
+        final PsiSubstitutor aSubst = result.getSubstitutor();
+
+        if (aClass == null) {
+          return t;
+        }
+
+        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+        for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+          final PsiTypeParameter parm = p.next();
+          final PsiType type = aSubst.substitute(parm);
+
+          theSubst = theSubst.put(parm, substitute(type));
+        }
+
+        return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+      }
+      else {
+        return t;
+      }
+    }
   }
 
   interface Balancer {
@@ -711,7 +781,7 @@ public class BindingFactory {
                                       }
 
                                       public Binding typeVar(PsiType x, PsiTypeVariable y) {
-                                        if (x == null){
+                                        if (x == null) {
                                           return create(y, Bottom.BOTTOM);
                                         }
 

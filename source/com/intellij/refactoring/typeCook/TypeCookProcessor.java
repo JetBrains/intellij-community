@@ -49,10 +49,10 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
         tree.resolve();
 
-        final Binding[] solutions = tree.getSolutions();
+        final Binding solution = tree.getBestSolution();
 
-        if (solutions.length > 0) {
-          myResult.incorporateSolution(solutions[0]);
+        if (solution!= null) {
+          myResult.incorporateSolution(solution);
         }
       }
     }
@@ -86,6 +86,8 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     }
 
     myResult.apply (victims);
+
+    LOG.debug (myResult.getReport());
 
     UndoManager.getInstance(myProject).undoableActionPerformed(new DummyComplexUndoableAction()); // force confirmation dialog for undo
   }

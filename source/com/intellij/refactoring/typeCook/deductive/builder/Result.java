@@ -28,76 +28,19 @@ public class Result {
 
   private final HashSet<PsiElement> myVictims;
   private final HashMap<PsiElement, PsiType> myTypes;
-  private final Project myProject;
   private final Settings mySettings;
-  private final PsiTypeVariableFactory myFactory;
+  private final HashSet<PsiTypeCastExpression> myCasts;
+
+  private int myCookedNumber = -1;
+  private int myCastsRemoved = -1;
 
   private Binding myBinding;
 
   public Result(final System system) {
     myVictims = system.myElements;
     myTypes = system.myTypes;
-    myProject = system.myProject;
     mySettings = system.mySettings;
-    myFactory = system.getVariableFactory();
-  }
-
-  final private PsiType substitute(final PsiType t) {
-    if (t instanceof PsiWildcardType) {
-      final PsiWildcardType wcType = (PsiWildcardType)t;
-      final PsiType bound = wcType.getBound();
-
-      if (bound == null) {
-        return t;
-      }
-
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      final PsiType subst = substitute(bound);
-      return subst instanceof  PsiWildcardType ? subst : wcType.isExtends() ? PsiWildcardType.createExtends(manager, subst) : PsiWildcardType.createSuper(manager, subst);
-    }
-    else if (t instanceof PsiTypeVariable) {
-      if (myBinding == null) {
-        return null;
-      }
-
-      final PsiType b = myBinding.apply(t);
-
-      if (b instanceof Bottom || b instanceof PsiTypeVariable) {
-        return null;
-      }
-
-      return substitute(b);
-    }
-    else if (t instanceof Bottom) {
-      return null;
-    }
-    else if (t instanceof PsiArrayType) {
-      return substitute(((PsiArrayType)t).getComponentType()).createArrayType();
-    }
-    else if (t instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)t).resolveGenerics();
-
-      final PsiClass aClass = result.getElement();
-      final PsiSubstitutor aSubst = result.getSubstitutor();
-
-      if (aClass == null) {
-        return t;
-      }
-
-      PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-      for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-        final PsiTypeParameter parm = p.next();
-        final PsiType type = aSubst.substitute(parm);
-
-        theSubst = theSubst.put(parm, substitute(type));
-      }
-
-      return aClass.getManager().getElementFactory().createType(aClass, theSubst);
-    }
-    else {
-      return t;
-    }
+    myCasts = system.myCasts;
   }
 
   public void incorporateSolution(final Binding binding) {
@@ -110,24 +53,26 @@ public class Result {
   }
 
   public PsiType getCookedType(final PsiElement element) {
-    return substitute(myTypes.get(element));
+    if (myBinding != null) {
+      return myBinding.substitute(myTypes.get(element));
+    }
+
+    return Util.getType(element);
   }
 
   public HashSet<PsiElement> getCookedElements() {
+    myCookedNumber = 0;
+
     final HashSet<PsiElement> set = new HashSet<PsiElement>();
 
     for (final Iterator<PsiElement> e = myVictims.iterator(); e.hasNext();) {
       final PsiElement element = e.next();
-      final PsiType originalType =
-        element instanceof PsiMethod
-        ? ((PsiMethod)element).getReturnType()
-        : element instanceof PsiVariable
-        ? ((PsiVariable)element).getType()
-        : ((PsiExpression)element).getType();
+      final PsiType originalType = Util.getType(element);
 
       final PsiType cookedType = getCookedType(element);
       if (cookedType != null && !originalType.equals(cookedType)) {
         set.add(element);
+        myCookedNumber++;
       }
     }
 
@@ -139,19 +84,33 @@ public class Result {
       final PsiElement element = e.next();
 
       Util.changeType(element, getCookedType(element));
+    }
 
-      if (mySettings.dropObsoleteCasts() && element instanceof PsiTypeCastExpression){
-        final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
+    if (mySettings.dropObsoleteCasts()) {
+      myCastsRemoved = 0;
 
-        if (cast.getType().equals(cast.getOperand().getType())){
+      for (final Iterator<PsiTypeCastExpression> c = myCasts.iterator(); c.hasNext();) {
+        final PsiTypeCastExpression cast = c.next();
+
+        if (cast.getType().equals(cast.getOperand().getType())) {
           try {
             cast.replace(cast.getOperand());
+            myCastsRemoved++;
           }
           catch (IncorrectOperationException e1) {
-            LOG.error (e1);
+            LOG.error(e1);
           }
         }
       }
     }
+  }
+
+  private String getRatio(final int x, final int y) {
+    return x != -1 ? x + " of " + y + (y != 0 ? " (" + (x * 100 / y) + "%)" : "") : "not calculated";
+  }
+
+  public String getReport() {
+    return "Items cooked : " + getRatio(myCookedNumber, myVictims.size()) + "\n" +
+           "Casts removed: " + getRatio(myCastsRemoved, myCasts.size()) + "\n";
   }
 }

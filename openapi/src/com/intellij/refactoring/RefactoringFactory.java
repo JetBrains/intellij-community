@@ -63,7 +63,8 @@ public abstract class RefactoringFactory {
   public abstract TypeCookRefactoring createTypeCook(PsiElement[] elements,
                                                      boolean dropObsoleteCasts,
                                                      boolean leaveObjectsRaw,
-                                                     boolean preserveRawArrays);
+                                                     boolean preserveRawArrays,
+                                                     boolean exhaustive);
 
   /**
    * Creates Introduce Parameter refactoring that replaces local variable with parameter.

@@ -54,6 +54,7 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public boolean TYPE_COOK_DROP_CASTS = true;
   public boolean TYPE_COOK_PRESERVE_RAW_ARRAYS = true;
   public boolean TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = true;
+  public boolean TYPE_COOK_EXHAUSTIVE = false;
 
   public boolean TYPE_MIGRATION_PREVIEW_USAGES = true;
 

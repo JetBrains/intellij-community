@@ -19,7 +19,6 @@ import java.awt.*;
  * To change this template use Options | File Templates.
  */
 public class TypeCookDialog extends RefactoringDialog {
-
   public static final String REFACTORING_NAME = "Generify";
 
   private PsiElement[] myElements;
@@ -27,6 +26,7 @@ public class TypeCookDialog extends RefactoringDialog {
   private JCheckBox myCbDropCasts = new JCheckBox("Drop obsolete casts");
   private JCheckBox myCbPreserveRawArrays = new JCheckBox("Preserve raw arrays");
   private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox("Leave Object-parameterized types raw");
+  private JCheckBox myCbExhaustive = new JCheckBox("Perform exhaustive search");
 
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
@@ -91,9 +91,15 @@ public class TypeCookDialog extends RefactoringDialog {
         RefactoringSettings.getInstance().TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW);
     }
 
+    if (myCbExhaustive.isEnabled()) {
+      myCbExhaustive.setSelected(
+        RefactoringSettings.getInstance().TYPE_COOK_EXHAUSTIVE);
+    }
+
     myCbDropCasts.setMnemonic('D');
     myCbPreserveRawArrays.setMnemonic('P');
     myCbLeaveObjectParameterizedTypesRaw.setMnemonic('L');
+    myCbExhaustive.setMnemonic('E');
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
 
@@ -119,6 +125,10 @@ public class TypeCookDialog extends RefactoringDialog {
     gbConstraints.gridwidth = 2;
     optionsPanel.add(myCbLeaveObjectParameterizedTypesRaw, gbConstraints);
 
+    gbConstraints.gridx = 0;
+    gbConstraints.gridwidth = 2;
+    optionsPanel.add(myCbExhaustive, gbConstraints);
+
     return optionsPanel;
   }
 
@@ -135,6 +145,7 @@ public class TypeCookDialog extends RefactoringDialog {
     final boolean dropCasts = myCbDropCasts.isSelected();
     final boolean preserveRawArrays = true; //myCbPreserveRawArrays.isSelected();
     final boolean leaveObjectParameterizedTypesRaw = myCbLeaveObjectParameterizedTypesRaw.isSelected();
+    final boolean exh = myCbExhaustive.isSelected();
 
     return new Settings() {
       public boolean dropObsoleteCasts() {
@@ -147,6 +158,10 @@ public class TypeCookDialog extends RefactoringDialog {
 
       public boolean leaveObjectParameterizedTypesRaw() {
         return leaveObjectParameterizedTypesRaw;
+      }
+
+      public boolean exhaustive() {
+        return exh;
       }
     };
   }

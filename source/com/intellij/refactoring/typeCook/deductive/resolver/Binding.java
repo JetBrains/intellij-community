@@ -16,6 +16,8 @@ import java.util.HashSet;
 public abstract class Binding {
   public abstract PsiType apply(PsiType type);
 
+  public abstract PsiType substitute(PsiType type);
+
   abstract Binding compose(Binding b);
 
   final static int BETTER = 0;
@@ -33,7 +35,9 @@ public abstract class Binding {
 
   public abstract boolean binds(final PsiTypeVariable var);
 
-  public abstract void merge (Binding b, boolean removeObject);
+  public abstract void merge(Binding b, boolean removeObject);
 
-  public abstract HashSet<PsiTypeVariable> getBoundVariables ();
+  public abstract HashSet<PsiTypeVariable> getBoundVariables();
+
+  public abstract int getWidth();
 }

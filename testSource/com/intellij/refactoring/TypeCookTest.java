@@ -647,6 +647,10 @@ public class TypeCookTest extends MultiFileTestCase {
                                           public boolean leaveObjectParameterizedTypesRaw() {
                                             return false;
                                           }
+
+                                          public boolean exhaustive() {
+                                            return false;
+                                          }
                                         });
 
     final com.intellij.refactoring.typeCook.deductive.builder.System commonSystem = b.build(new PsiElement[]{aClass});
@@ -668,14 +672,14 @@ public class TypeCookTest extends MultiFileTestCase {
       }
     }
 
-    Binding[] bindings = null;
+    Binding binding = null;
 
     if (system != null) {
       final ResolverTree tree = new ResolverTree(system);
 
       tree.resolve();
 
-      bindings = tree.getSolutions();
+      binding = tree.getBestSolution();
     }
 
     //System.out.println("" + system);
@@ -715,7 +719,7 @@ public class TypeCookTest extends MultiFileTestCase {
     //d.analyze();
     //d.relax();
 
-    itemRepr = system != null ? system.dumpResult(bindings) : commonSystem.dumpString(); //d.resultString();
+    itemRepr = system != null ? system.dumpResult(binding) : commonSystem.dumpString(); //d.resultString();
 
     itemName = className + ".1.items";
     patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;

@@ -11,4 +11,5 @@ public interface Settings {
   boolean dropObsoleteCasts();
   boolean preserveRawArrays();
   boolean leaveObjectParameterizedTypesRaw();
+  boolean exhaustive();
 }
