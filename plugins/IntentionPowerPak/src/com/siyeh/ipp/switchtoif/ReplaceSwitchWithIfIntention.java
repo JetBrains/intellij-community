@@ -6,6 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.*;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 
@@ -13,10 +15,6 @@ import java.util.*;
 
 public class ReplaceSwitchWithIfIntention extends Intention
 {
-    public ReplaceSwitchWithIfIntention(Project project)
-    {
-        super(project);
-    }
 
     public String getText()
     {
