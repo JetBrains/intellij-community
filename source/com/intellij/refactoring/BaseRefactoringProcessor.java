@@ -181,7 +181,8 @@ public abstract class BaseRefactoringProcessor {
   private void showUsageView(final UsageViewDescriptor viewDescriptor, boolean showReadAccessIcon, boolean showWriteAccessIcon) {
     UsageViewManager viewManager = myProject.getComponent(UsageViewManager.class);
 
-    final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(viewDescriptor.getElements());
+    final PsiElement[] initialElements = viewDescriptor.getElements();
+    final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
 
     Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
       boolean myRequireRefresh = false;
@@ -189,6 +190,7 @@ public abstract class BaseRefactoringProcessor {
       public UsageSearcher create() {
         UsageSearcher usageSearcher = new UsageSearcher() {
           public void generate(Processor<Usage> processor) {
+            final PsiElement[] currentElements;
             if (myRequireRefresh) {
               List<PsiElement> elements = new ArrayList<PsiElement>();
               for (int i = 0; i < targets.length; i++) {
@@ -197,14 +199,16 @@ public abstract class BaseRefactoringProcessor {
                   elements.add(((PsiElement2UsageTargetAdapter)target).getElement());
                 }
               }
-              viewDescriptor.refresh(elements.toArray(new PsiElement[elements.size()]));
+              currentElements = elements.toArray(new PsiElement[elements.size()]);
+              viewDescriptor.refresh(currentElements);
             }
             else {
+              currentElements = initialElements;
               myRequireRefresh = true;
             }
 
             UsageInfo[] usageInfos = viewDescriptor.getUsages();
-            final Usage[] usages = UsageInfoToUsageConverter.convert(usageInfos);
+            final Usage[] usages = UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(currentElements), usageInfos);
 
             for (int i = 0; i < usages.length; i++) {
               Usage usage = usages[i];

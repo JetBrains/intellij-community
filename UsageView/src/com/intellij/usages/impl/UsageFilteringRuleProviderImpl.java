@@ -12,7 +12,6 @@ import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.Icons;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -59,57 +58,45 @@ public class UsageFilteringRuleProviderImpl extends UsageFilteringRuleProvider i
     return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
   }
 
-  private class ShowImportsAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class ShowImportsAction extends RuleAction {
     public ShowImportsAction(UsageViewImpl view) {
-      super("Show import statements", null, IconLoader.getIcon("/actions/showImportStatements.png"));
-      myView = view;
+      super(view, "Show import statements", IconLoader.getIcon("/actions/showImportStatements.png"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return SHOW_IMPORTS;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_IMPORTS = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      SHOW_IMPORTS = value;
     }
   }
 
-  private class ShowReadAccessUsagesAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class ShowReadAccessUsagesAction extends RuleAction {
     public ShowReadAccessUsagesAction(UsageViewImpl view) {
-      super("Show read access", null, IconLoader.getIcon("/actions/showReadAccess.png"));
-      myView = view;
+      super(view, "Show read access", IconLoader.getIcon("/actions/showReadAccess.png"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return SHOW_READ_ACCESS;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_READ_ACCESS = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      SHOW_READ_ACCESS = value;
     }
   }
 
-  private class ShowWriteAccessUsagesAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class ShowWriteAccessUsagesAction extends RuleAction {
     public ShowWriteAccessUsagesAction(UsageViewImpl view) {
-      super("Show write access", null, IconLoader.getIcon("/actions/showWriteAccess.png"));
-      myView = view;
+      super(view, "Show write access", IconLoader.getIcon("/actions/showWriteAccess.png"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return SHOW_WRITE_ACCESS;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_WRITE_ACCESS = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      SHOW_WRITE_ACCESS = value;
     }
   }
 

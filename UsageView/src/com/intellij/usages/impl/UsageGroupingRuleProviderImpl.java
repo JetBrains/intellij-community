@@ -11,6 +11,7 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.jdom.Element;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,75 +60,53 @@ public class UsageGroupingRuleProviderImpl extends UsageGroupingRuleProvider imp
     };
   }
 
-  private class GroupByUsageTypeAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class GroupByUsageTypeAction extends RuleAction {
     public GroupByUsageTypeAction(UsageViewImpl view) {
-      super("Group by usage type", null, IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
-      myView = view;
+      super(view, "Group by usage type", IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
-
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return GROUP_BY_USAGE_TYPE;
     }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      GROUP_BY_USAGE_TYPE = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      GROUP_BY_USAGE_TYPE = value;
     }
   }
 
-  private class GroupByModuleTypeAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class GroupByModuleTypeAction extends RuleAction {
     public GroupByModuleTypeAction(UsageViewImpl view) {
-      super("Group by module", null, IconLoader.getIcon("/objectBrowser/showModules.png"));
-      myView = view;
+      super(view, "Group by module", IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return GROUP_BY_MODULE;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-      GROUP_BY_MODULE = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      GROUP_BY_MODULE = value;
     }
   }
 
-  private class GroupByPackageAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class GroupByPackageAction extends RuleAction {
     public GroupByPackageAction(UsageViewImpl view) {
-      super("Group by package", null, IconLoader.getIcon("/toolbar/folders.png"));
-      myView = view;
+      super(view, "Group by package", IconLoader.getIcon("/toolbar/folders.png"));
     }
-
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return GROUP_BY_PACKAGE;
     }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      GROUP_BY_PACKAGE = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      GROUP_BY_PACKAGE = value;
     }
   }
 
-  private class GroupByFileStructureAction extends ToggleAction {
-    private UsageViewImpl myView;
-
+  private class GroupByFileStructureAction extends RuleAction {
     public GroupByFileStructureAction(UsageViewImpl view) {
-      super("Group by file structure", null, IconLoader.getIcon("/actions/groupByMethod.png"));
-      myView = view;
+      super(view, "Group by file structure", IconLoader.getIcon("/actions/groupByMethod.png"));
     }
-
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return GROUP_BY_FILE_STRUCTURE;
     }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      GROUP_BY_FILE_STRUCTURE = state;
-      myView.rulesChanged();
+    protected void setOptionValue(boolean value) {
+      GROUP_BY_FILE_STRUCTURE = value;
     }
   }
 

@@ -13,6 +13,7 @@ import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -57,10 +58,15 @@ public class UsagesPanel extends JPanel {
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
                   public void run() {
                     UsageInfo[] usages = new UsageInfo[0];
+                    Set<PsiFile> elementsToSearch = null;
+
                     try {
                       if (myBuilder.isBackward()){
+                        elementsToSearch = searchIn;
                         usages = FindDependencyUtil.findBackwardDependencies(myBuilder, searchFor, searchIn);
-                      } else {
+                      }
+                      else {
+                        elementsToSearch = searchFor;
                         usages = FindDependencyUtil.findDependencies(myBuilder, searchIn, searchFor);
                       }
                     }
@@ -72,9 +78,10 @@ public class UsagesPanel extends JPanel {
 
                     if (!progress.isCanceled()) {
                       final UsageInfo[] finalUsages = usages;
+                      final PsiElement[] _elementsToSearch = elementsToSearch != null? elementsToSearch.toArray(new PsiElement[elementsToSearch.size()]) : PsiElement.EMPTY_ARRAY;
                       ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {
-                          showUsages(finalUsages);
+                          showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(_elementsToSearch), finalUsages);
                         }
                       }, ModalityState.stateForComponent(UsagesPanel.this));
                     }
@@ -95,9 +102,9 @@ public class UsagesPanel extends JPanel {
     }
   }
 
-  private void showUsages(final UsageInfo[] usageInfos) {
+  private void showUsages(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final UsageInfo[] usageInfos) {
     try {
-      Usage[] usages = UsageInfoToUsageConverter.convert(usageInfos);
+      Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
       UsageView usageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],

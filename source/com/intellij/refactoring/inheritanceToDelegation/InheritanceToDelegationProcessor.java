@@ -821,9 +821,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     presentation.setTabText("Instances upcasted to Object");
 
     UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
-    manager.showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
-                       UsageInfoToUsageConverter.convert(usages),
-                       presentation);
+    manager.showUsages(
+      new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
+      UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myClass), usages), 
+      presentation
+    );
 
     WindowManager.getInstance().getStatusBar(myProject).setInfo("Instances upcasted to java.lang.Object found");
   }

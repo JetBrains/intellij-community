@@ -313,18 +313,17 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  private class MergeDupLines extends ToggleAction {
+  private class MergeDupLines extends RuleAction {
     public MergeDupLines() {
-      super("Merge usages from the same line", null, IconLoader.getIcon("/toolbar/filterdups.png"));
+      super(UsageViewImpl.this, "Merge usages from the same line", IconLoader.getIcon("/toolbar/filterdups.png"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
-      UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE = state;
-      rulesChanged();
+    protected void setOptionValue(boolean value) {
+      UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE = value;
     }
   }
 
