@@ -784,6 +784,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       if (child.getElementType() != XmlElementType.XML_TEXT) {
         if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
           final XmlTextImpl xmlText = (XmlTextImpl)SourceTreeToPsiMap.treeElementToPsi(treePrev);
+          final String oldText = xmlText.getText();
           model.runTransaction(new PomTransactionBase(this) {
             public PomModelEvent run() throws IncorrectOperationException{
               final int displayOffset = xmlText.getValue().length();
@@ -807,6 +808,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                 final XmlAspectChangeSet xmlAspectChangeSet = new XmlAspectChangeSet(model, (XmlFile)getContainingFile());
                 xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)treeNext));
                 xmlAspectChangeSet.add(new XmlTagChildRemoved(XmlTagImpl.this, (XmlTagChild)child));
+                xmlAspectChangeSet.add(new XmlTextChanged(xmlText, oldText));
                 event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
               }
               return event;
