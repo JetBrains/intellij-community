@@ -1,8 +1,10 @@
 package com.intellij.lang.dtd;
 
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 
@@ -25,5 +27,9 @@ public class DTDLanguage extends Language {
 
   public ParserDefinition getParserDefinition() {
     return new DTDParserDefinition();
+  }
+
+  public FindUsagesProvider getFindUsagesProvider() {
+    return new FindUsagesManager.HtmlFindUsagesHandler();
   }
 }

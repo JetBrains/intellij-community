@@ -2,9 +2,11 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
@@ -45,5 +47,9 @@ public class XMLLanguage extends Language {
 
   public ParserDefinition getParserDefinition() {
     return new XMLParserDefinition();
+  }
+
+  public FindUsagesProvider getFindUsagesProvider() {
+    return new FindUsagesManager.HtmlFindUsagesHandler();
   }
 }

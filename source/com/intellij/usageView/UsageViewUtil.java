@@ -6,8 +6,9 @@ import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.gen.PsiErrorIntroduction;
 import com.intellij.aspects.psi.gen.PsiVerificationIntroduction;
 import com.intellij.aspects.psi.gen.PsiWarningIntroduction;
+import com.intellij.lang.Language;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,6 @@ import com.intellij.psi.xml.XmlTag;
 import gnu.trove.THashSet;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -29,15 +29,7 @@ public class UsageViewUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageViewUtil");
   public static final String DEFAULT_PACKAGE_NAME = "<default>";
 
-  public interface UsageViewHandler {
-    String getType(PsiElement element);
-
-    String getDescriptiveName(PsiElement element);
-
-    String getNodeText(PsiElement element, boolean useFullName);
-  }
-
-  private static final HashMap<FileType, UsageViewHandler> usageViewHandlers = new HashMap<FileType, UsageViewHandler>();
+  private UsageViewUtil() { }
 
   public static String createNodeText(PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
@@ -45,9 +37,6 @@ public class UsageViewUtil {
     }
     if (element instanceof PsiPackage) {
       return getPackageName((PsiPackage)element);
-    }
-    if (element instanceof PsiFile) {
-      return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
     }
     if (element instanceof PsiFile) {
       return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
@@ -150,18 +139,16 @@ public class UsageViewUtil {
       return ((XmlAttributeValue)element).getValue();
     }
     else if (element != null) {
-      PsiFile containingFile = element.getContainingFile();
-      UsageViewHandler handler = (containingFile != null) ? usageViewHandlers.get(containingFile.getFileType()) : null;
-      if (handler != null) {
-        return handler.getNodeText(element, useFullName);
+      final Language lang = element.getLanguage();
+      if (lang != null) {
+        FindUsagesProvider provider = lang.getFindUsagesProvider();
+        if (provider != null) {
+          return provider.getNodeText(element, useFullName);
+        }
       }
     }
 
     return "";
-  }
-
-  public static void registerUsageViewHandler(FileType fileType, UsageViewHandler handler) {
-    usageViewHandlers.put(fileType, handler);
   }
 
   public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
@@ -370,10 +357,12 @@ public class UsageViewUtil {
       return ((PsiAntElement)psiElement).getRole().getName();
     }
 
-    PsiFile containingFile = psiElement.getContainingFile();
-    UsageViewHandler handler = (containingFile!=null)?usageViewHandlers.get(containingFile.getFileType()):null;
-    if (handler != null) {
-      return handler.getType(psiElement);
+    final Language lang = psiElement.getLanguage();
+    if (lang != null) {
+      FindUsagesProvider provider = lang.getFindUsagesProvider();
+      if (provider != null) {
+        return provider.getType(psiElement);
+      }
     }
 
     return "";
@@ -487,10 +476,12 @@ public class UsageViewUtil {
       ret = ((PsiLabeledStatement)psiElement).getName();
     }
     else {
-      PsiFile containingFile = psiElement.getContainingFile();
-      UsageViewHandler handler = (containingFile != null) ? usageViewHandlers.get(containingFile.getFileType()) : null;
-      if (handler != null) {
-        return handler.getDescriptiveName(psiElement);
+      final Language lang = psiElement.getLanguage();
+      if (lang != null) {
+        FindUsagesProvider provider = lang.getFindUsagesProvider();
+        if (provider != null) {
+          return provider.getDescriptiveName(psiElement);
+        }
       }
     }
 

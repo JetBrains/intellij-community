@@ -6,6 +6,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.impl.HelpID;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,8 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,9 +37,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
@@ -53,12 +51,13 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class FindUsagesManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
-
-  private static HashMap<FileType, FindUsagesHandler> findHandlers = new HashMap<FileType, FindUsagesHandler>();
 
   public static final int FROM_START = 0;
   public static final int FROM_END = 3;
@@ -80,24 +79,11 @@ public class FindUsagesManager {
     public FindUsagesOptions myLastOptions = null;
   }
 
-  public interface FindUsagesHandler extends UsageViewUtil.UsageViewHandler {
-    boolean canFindUsagesFor(PsiElement element);
+  static public class HtmlFindUsagesHandler implements FindUsagesProvider {
+    private FindUsagesProvider styleHandler;
 
-    FindUsagesDialog createFindUsagesDialog(PsiElement element,
-                                            Project project,
-                                            FindUsagesOptions findUsagesOptions,
-                                            boolean isSingleFile,
-                                            boolean isOpenInNewTab,
-                                            boolean isOpenInNewTabEnabled);
-
-    String getHelpId(PsiElement element);
-  }
-
-  static public class HtmlFindUsagesHandler implements FindUsagesHandler {
-    private FindUsagesHandler styleHandler;
-
-    public void setStyleHandler(FindUsagesHandler handler) {
-      styleHandler = handler;
+    public void setStyleHandler(FindUsagesProvider provider) {
+      styleHandler = provider;
     }
 
     public boolean canFindUsagesFor(PsiElement element) {
@@ -107,43 +93,6 @@ public class FindUsagesManager {
         result = styleHandler.canFindUsagesFor(element);
       }
       return result;
-    }
-
-    public FindUsagesDialog createFindUsagesDialog(final PsiElement element,
-                                                   Project project,
-                                                   FindUsagesOptions findUsagesOptions,
-                                                   boolean isSingleFile,
-                                                   boolean isOpenInNewTab,
-                                                   boolean isOpenInNewTabEnabled) {
-      if (styleHandler != null && styleHandler.canFindUsagesFor(element)) {
-        return styleHandler.createFindUsagesDialog(element, project, findUsagesOptions, isSingleFile, isOpenInNewTab,
-                                                   isOpenInNewTabEnabled);
-      }
-
-      return new FindUsagesDialog(element,project,findUsagesOptions,isOpenInNewTab,isOpenInNewTabEnabled,isSingleFile) {
-        private StateRestoringCheckBox myCbUsages;
-
-        public FindUsagesOptions getShownOptions() {
-          return new FindUsagesOptions(element.getProject(), SearchScopeCache.getInstance(element.getProject()));
-        }
-
-        protected void update() {
-          //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        protected JPanel createFindWhatPanel() {
-          JPanel findWhatPanel = new JPanel();
-          findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder("Find"));
-          findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
-
-          myCbUsages = addCheckboxToPanel("Usages", myFindUsagesOptions.isUsages, findWhatPanel, true, 'U');
-          return findWhatPanel;
-        }
-
-        protected JComponent getPreferredFocusedControl() {
-          return myCbUsages;
-        }
-      };
     }
 
     public String getType(PsiElement element) {
@@ -183,19 +132,6 @@ public class FindUsagesManager {
     }
   }
 
-  static {
-    HtmlFindUsagesHandler handler = new HtmlFindUsagesHandler();
-    registerFindHandler(StdFileTypes.HTML, handler);
-    registerFindHandler(StdFileTypes.XHTML, handler);
-    registerFindHandler(StdFileTypes.DTD, handler);
-    registerFindHandler(StdFileTypes.XML, handler);
-
-    UsageViewUtil.registerUsageViewHandler(StdFileTypes.HTML, handler);
-    UsageViewUtil.registerUsageViewHandler(StdFileTypes.XHTML, handler);
-    UsageViewUtil.registerUsageViewHandler(StdFileTypes.DTD, handler);
-    UsageViewUtil.registerUsageViewHandler(StdFileTypes.XML, handler);
-  }
-
   private LastSearchData myLastSearchData = new LastSearchData();
 
   public FindUsagesManager(Project project, SearchScopeCache searchScopeCache, com.intellij.usages.UsageViewManager anotherManager) {
@@ -209,12 +145,9 @@ public class FindUsagesManager {
     myFindPointcutOptions = createFindUsagesOptions(searchScopeCache);
   }
 
-  public static void registerFindHandler(FileType fileType, FindUsagesHandler handler) {
-    findHandlers.put(fileType, handler);
-  }
-
-  public static FindUsagesHandler getFindHandler(FileType fileType) {
-    return findHandlers.get(fileType);
+  public static FindUsagesProvider getFindHandler(PsiElement elt) {
+    final Language lang = elt.getLanguage();
+    return lang != null ? lang.getFindUsagesProvider() : null;
   }
 
   private FindUsagesOptions createFindUsagesOptions(SearchScopeCache searchScopeCache) {
@@ -241,9 +174,8 @@ public class FindUsagesManager {
            (element instanceof PsiPackage) ||
            (ThrowSearchUtil.isSearchable(element)) ||
            (element instanceof PsiMethod))) {
-      PsiFile containingFile = element.getContainingFile();
-      FindUsagesHandler handler = (containingFile != null) ? getFindHandler(containingFile.getFileType()) : null;
-      if (handler != null && handler.canFindUsagesFor(element)) return true;
+      FindUsagesProvider provider = getFindHandler(element);
+      if (provider != null && provider.canFindUsagesFor(element)) return true;
       return false;
     }
 
@@ -862,7 +794,7 @@ public class FindUsagesManager {
       helpID = HelpID.FIND_PARAMETER_USAGES;
     }
     else {
-      final FindUsagesHandler findHandler = getFindHandler(element.getContainingFile().getFileType());
+      final FindUsagesProvider findHandler = getFindHandler(element);
       if (findHandler != null) {
         helpID = findHandler.getHelpId(element);
       }
@@ -899,11 +831,10 @@ public class FindUsagesManager {
                                        isOpenInNewTabEnabled, isSingleFile);
     }
     else {
-      PsiFile containingFile = element.getContainingFile();
-      FindUsagesHandler handler = (containingFile != null) ? getFindHandler(containingFile.getFileType()) : null;
+      FindUsagesProvider handler = getFindHandler(element);
       if (handler != null) {
-        return handler.createFindUsagesDialog(element, myProject, createFindUsagesOptions(SearchScopeCache.getInstance(myProject)),
-                                              isSingleFile, isOpenInNewTab, isOpenInNewTabEnabled);
+        return new CommonFindUsagesDialog(element, myProject, createFindUsagesOptions(SearchScopeCache.getInstance(myProject)),
+                                          isSingleFile, isOpenInNewTab, isOpenInNewTabEnabled);
       }
       return null;
     }

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight;
 
-import com.intellij.ant.PsiAntElement;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -14,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 
 public class TargetElementUtil {
@@ -83,8 +83,8 @@ public class TargetElementUtil {
     PsiElement element = file.findElementAt(offset);
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
+      PsiElement parent = element.getParent();
       if (element instanceof PsiIdentifier) {
-        PsiElement parent = element.getParent();
         if (parent instanceof PsiClass && element.equals(((PsiClass) parent).getNameIdentifier())) {
           return parent;
         }
@@ -95,6 +95,11 @@ public class TargetElementUtil {
           return parent;
         }
         else if (parent instanceof PsiPointcutDef && element.equals(((PsiPointcutDef) parent).getNameIdentifier())) {
+          return parent;
+        }
+      }
+      else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
+        if (parent.getTextOffset() == element.getTextOffset() && Comparing.equal(((PsiNamedElement)parent).getName(), element.getText())) {
           return parent;
         }
       }
