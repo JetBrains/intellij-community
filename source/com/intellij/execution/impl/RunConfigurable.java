@@ -192,7 +192,7 @@ class RunConfigurable extends BaseConfigurable {
 
   public static RunConfiguration createSameConfiguration(RunConfiguration configuration, RunManagerEx runManager) {
     return runManager.createConfiguration(configuration.getName(), configuration.getFactory()).getConfiguration();
-  }
+  }                   
 
   private RunManagerImpl getRunManager() {
     return RunManagerImpl.getInstanceImpl(myProject);

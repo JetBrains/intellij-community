@@ -445,11 +445,11 @@ public class TabbedPaneWrapper {
     }
 
     public final void removeTabAt (final int index) {
-      final int oldIndex = getSelectedIndex ();
       super.removeTabAt (index);
-      if (getSelectedIndex () == oldIndex) {
-        fireStateChanged();
-      }
+      //This event should be fired necessarily because when swing fires an event
+      // page to be removed is still in the tabbed pane. There can be a situation when
+      // event fired according to swing event contains invalid information about selected page.
+      fireStateChanged();
     }
 
     private void _requestDefaultFocus() {

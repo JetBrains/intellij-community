@@ -60,18 +60,26 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     });
 
     myEditorManagerListener = new FileEditorManagerAdapter() {
+      private FileEditorManagerEvent myLastEvent;
       public void selectionChanged(final FileEditorManagerEvent event) {
-        final FileEditor newEditor = event.getNewEditor();
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        myLastEvent = event;
+        //System.out.println(event.getNewFile().getPath());
         final PsiManager psiManager = PsiManager.getInstance(myProject);
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(
           new Runnable() {
             public void run() {
-              if (psiManager.isDisposed()) {
-                return; // project may have been closed
+              try {
+                myAlarm.cancelAllRequests();
+                if (psiManager.isDisposed()) {
+                  return; // project may have been closed
+                }
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                setFileEditor(myLastEvent.getNewEditor());
               }
-              setFileEditor(newEditor);
+              finally {
+                myLastEvent = null;
+              }
             }
           }, 400
         );
