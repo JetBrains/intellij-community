@@ -44,8 +44,9 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    DialogWrapper dialog;
-    dialog = createDialog(psiFile, fileEditor.getStructureViewModel(), editor, project, (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE));
+    final StructureViewModel structureViewModel = AntFileStructureList.canShowFor(psiFile) ? null : fileEditor.getStructureViewModel();
+
+    DialogWrapper dialog = createDialog(psiFile, structureViewModel, editor, project, (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE));
     dialog.setTitle(psiFile.getVirtualFile().getPresentableUrl());
     dialog.show();
   }
