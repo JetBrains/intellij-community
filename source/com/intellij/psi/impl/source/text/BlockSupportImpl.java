@@ -70,6 +70,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
   public void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
+    final CharTable charTable = fileImpl.getTreeElement().getCharTable();
     // hack
     final int textLength = file.getTextLength() + lengthShift;
 
@@ -101,7 +102,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
         if(reparseable.isParsable(newTextStr, project)){
           final ChameleonElement chameleon =
             (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
-                                                              textRange.getEndOffset() + lengthShift, null, null);
+                                                              textRange.getEndOffset() + lengthShift, charTable, file.getManager());
           ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
           return;
         }
