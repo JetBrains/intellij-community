@@ -6,15 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class AutoBoxingInspection extends ExpressionInspection {
+    /** @noinspection StaticCollection*/
     private static final Map s_boxingClasses = new HashMap(8);
     private final AutoBoxingFix fix = new AutoBoxingFix();
 
@@ -77,19 +77,8 @@ public class AutoBoxingInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
-            super.visitReferenceExpression(expression);
-            checkExpression(expression);
-        }
-
         public void visitExpression(PsiExpression expression) {
             super.visitExpression(expression);
-            checkExpression(expression);
-        }
-
-        private void checkExpression(PsiExpression expression)
-        {
-
             final PsiType expressionType = expression.getType();
             if(expressionType == null){
                 return;
