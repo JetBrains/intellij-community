@@ -94,13 +94,6 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     return myJavaDocPanel.getPolicy();
   }
 
-  protected boolean getInitialPreviewResults() {
-    return false;
-  }
-
-  protected void setInitialPreviewResults(boolean value) {
-  }
-
   protected JComponent createNorthPanel() {
     Box box = Box.createVerticalBox();
 
