@@ -9,9 +9,7 @@ import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -46,22 +44,18 @@ import java.util.List;
 
 public abstract class Breakpoint extends FilteredRequestor implements ClassPrepareRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.Breakpoint");
-  protected final Project myProject;
 
   public boolean ENABLED      = true;
 
   public String  SUSPEND_POLICY         = DebuggerSettings.SUSPEND_ALL;
   public boolean LOG_ENABLED            = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
-  private TextWithImportsImpl  myLogMessage   = TextWithImportsImpl.EMPTY; // an expression to be evaluated and printed
+  private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
 
   protected Breakpoint(Project project) {
-    myProject = project;
-  }
-
-  public Project getProject() {
-    return myProject;
+    super(project);
+    myLogMessage = EvaluationManager.getInstance().getEmptyExpressionFragment();
   }
 
   public abstract PsiClass getPsiClass();
@@ -165,7 +159,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
           public void run() {
             DebuggerSession session = DebuggerManagerEx.getInstanceEx(getProject()).getSession(context.getDebugProcess());
-            DebuggerPanelsManager.getInstance(myProject).toFront(session);
+            DebuggerPanelsManager.getInstance(getProject()).toFront(session);
             final StringBuffer text = new StringBuffer(128);
             text.append("'Breakpoint '");
             text.append(getDisplayName());
@@ -176,7 +170,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
               LOG.debug(text.toString());
             }
             shouldResume[0] = Messages.showYesNoDialog(
-                myProject,
+                getProject(),
               text.toString(),
               errorMsg[0],
               Messages.getQuestionIcon()
@@ -208,7 +202,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
         String result;
         try {
-          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
             public ExpressionEvaluator compute() throws EvaluateException {
               return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context));
             }
@@ -247,20 +241,20 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     super.readExternal(parentNode);
     String logMessage = JDOMExternalizerUtil.readField(parentNode, LOG_MESSAGE_OPTION_NAME);
     if (logMessage != null) {
-      setLogMessage(TextWithImportsImpl.createExpressionText(logMessage));
+      setLogMessage(EvaluationManager.getInstance().createExpressionFragment(logMessage));
     }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().saveToString());
+    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toString());
   }
 
-  public TextWithImportsImpl getLogMessage() {
+  public TextWithImports getLogMessage() {
     return myLogMessage;
   }
 
-  public void setLogMessage(TextWithImportsImpl logMessage) {
+  public void setLogMessage(TextWithImports logMessage) {
     myLogMessage = logMessage;
   }
 }

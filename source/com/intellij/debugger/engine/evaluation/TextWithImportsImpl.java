@@ -1,11 +1,9 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerEditorImpl;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 
 /**
@@ -18,35 +16,9 @@ import com.intellij.psi.*;
 public class TextWithImportsImpl implements TextWithImports{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.TextWithImportsImpl");
 
-  private final String myText;
+  private String myText;
   private final String myImports;
   private final CodeFragmentFactory myCodeFragmentFactory;
-
-  public static final CodeFragmentFactory EXPRESSION_FACTORY = new CodeFragmentFactory() {
-    public PsiCodeFragment createCodeFragment(TextWithImportsImpl item, PsiElement context, Project project) {
-      String text = item.getText();
-      if (StringUtil.endsWithChar(text, ';')) {
-        text = text.substring(0, text.length() - 1);
-      }
-      PsiExpressionCodeFragment expressionCodeFragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment(
-              text, context, true);
-      initCodeFragment(item, expressionCodeFragment);
-      return expressionCodeFragment;
-    }
-  };
-  public static final CodeFragmentFactory CODE_BLOCK_FACTORY = new CodeFragmentFactory() {
-    public PsiCodeFragment createCodeFragment(TextWithImportsImpl item, PsiElement context, Project project) {
-      PsiCodeFragment codeFragment = PsiManager.getInstance(project).getElementFactory().createCodeBlockCodeFragment(
-              item.getText(), context, true);
-
-      initCodeFragment(item, codeFragment);
-      return codeFragment;
-    }
-  };
-
-  public final static TextWithImportsImpl EMPTY = createExpressionText("");
-
-  private static final Object IS_DEBUGGER_EDITOR = "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR";
 
   public TextWithImportsImpl (CodeFragmentFactory factory, String text, String imports) {
     LOG.assertTrue(factory != null);
@@ -71,14 +43,6 @@ public class TextWithImportsImpl implements TextWithImports{
     LOG.assertTrue(myImports != null);
   }
 
-  public String toString() {
-    return myText;
-  }
-
-  public String saveToString() {
-    return myImports.equals("") ? myText : myText + DebuggerEditorImpl.SEPARATOR + myImports;
-  }
-
   public String getText() {
     return myText;
   }
@@ -101,38 +65,15 @@ public class TextWithImportsImpl implements TextWithImports{
     return myText.hashCode();
   }
 
-  public static TextWithImportsImpl createExpressionText(PsiExpression expression) {
-    PsiFile containingFile = expression.getContainingFile();
-    if(containingFile instanceof PsiExpressionCodeFragment) {
-      return new TextWithImportsImpl(EXPRESSION_FACTORY, expression.getText(), ((PsiCodeFragment)containingFile).importsToString());
-    }
-    return createExpressionText(expression.getText());
-  }
-  public static TextWithImportsImpl createExpressionText(String expression) {
-    return new TextWithImportsImpl(EXPRESSION_FACTORY, expression);
-  }
-
-  public static TextWithImportsImpl createCodeBlockText(String expression) {
-    return new TextWithImportsImpl(CODE_BLOCK_FACTORY, expression);
-  }
-
-  private static void initCodeFragment(TextWithImportsImpl item, PsiCodeFragment codeFragment) {
-    if(item.getImports() != null) {
-      codeFragment.addImportsFromString(item.getImports());
-    }
-    codeFragment.setEverythingAcessible(true);
-    codeFragment.putUserData(DebuggerExpressionComboBox.KEY, IS_DEBUGGER_EDITOR);
-  }
-
   public boolean isEmpty() {
     return "".equals(getText().trim());
   }
 
-  public TextWithImportsImpl createText(String newText) {
-    return new TextWithImportsImpl(EXPRESSION_FACTORY, newText, getImports());
+  public void setText(String newText) {
+    myText = newText;
   }
 
-  public CodeFragmentFactory getFactory() {
-    return myCodeFragmentFactory;
+  public boolean isExpressionText() {
+    return myCodeFragmentFactory == EvaluationManagerImpl.EXPRESSION_FACTORY;
   }
 }

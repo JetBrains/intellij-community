@@ -1,16 +1,16 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.ui.impl.WatchPanel;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.ui.impl.WatchPanel;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
@@ -49,7 +49,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
   }
 
-  public EvaluationDialog(Project project, TextWithImportsImpl text) {
+  public EvaluationDialog(Project project, TextWithImports text) {
     super(project, true);
     myProject = project;
     setModal(false);
@@ -101,7 +101,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
 
     myEvaluationPanel.clear();
-    TextWithImportsImpl codeToEvaluate = getCodeToEvaluate();
+    TextWithImports codeToEvaluate = getCodeToEvaluate();
     if (codeToEvaluate == null) {
       return;
     }
@@ -173,7 +173,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     return myEditor.getContext();
   }
 
-  protected void initDialogData(TextWithImportsImpl text) {
+  protected void initDialogData(TextWithImports text) {
     getEditor().setText(text);
     myEvaluationPanel.clear();
   }

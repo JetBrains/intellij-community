@@ -5,15 +5,16 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.ui.*;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +63,8 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   }
 
   public void newWatch() {
-    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(TextWithImportsImpl.EMPTY);
+    final TextWithImports empty = EvaluationManager.getInstance().getEmptyExpressionFragment();
+    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(empty);
 
     editNode(node);
   }

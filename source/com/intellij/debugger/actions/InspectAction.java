@@ -5,7 +5,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -35,7 +35,7 @@ public class InspectAction extends DebuggerAction {
 
     context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
       public void threadAction() {
-        final TextWithImportsImpl evaluationText = DebuggerTreeNodeExpression.createEvaluationText(node, context);
+        final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(node, context);
 
         final NodeDescriptorImpl inspectDescriptor;
 

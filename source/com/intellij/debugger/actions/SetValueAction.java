@@ -2,10 +2,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
@@ -19,19 +16,16 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.sun.jdi.*;
 
 import javax.swing.*;
@@ -282,9 +276,10 @@ public class SetValueAction extends DebuggerAction {
           }
 
           final String initialString1 = initialString;
-          DebuggerInvocationUtil.invokeLater(debuggerContext.getProject(), new Runnable() {
+          final Project project = debuggerContext.getProject();
+          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
             public void run() {
-              showEditor(TextWithImportsImpl.createExpressionText(initialString1), node, debuggerContext, setValueRunnable);
+              showEditor(EvaluationManager.getInstance().createExpressionFragment(initialString1), node, debuggerContext, setValueRunnable);
             }
           });
         }
@@ -295,7 +290,7 @@ public class SetValueAction extends DebuggerAction {
     debuggerContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
-  private void showEditor(final TextWithImportsImpl initialString,
+  private void showEditor(final TextWithImports initialString,
                           final DebuggerTreeNodeImpl node,
                           final DebuggerContextImpl debuggerContext,
                           final SetValueRunnable setValueRunnable) {

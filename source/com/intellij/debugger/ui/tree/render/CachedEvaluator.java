@@ -27,7 +27,7 @@ public abstract class CachedEvaluator {
     protected PsiExpression       myPsiChildrenExpression;
   };
   SoftReference<Cache> myCache = new SoftReference<Cache>(null);
-  private TextWithImports myReferenceExpression = TextWithImportsImpl.EMPTY;
+  private TextWithImports myReferenceExpression;
 
   protected abstract String getClassName();
 

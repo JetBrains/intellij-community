@@ -1,6 +1,6 @@
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -45,7 +45,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   public DebuggerTreeNodeImpl addWatch(WatchItemDescriptor descriptor) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-    WatchItemDescriptor watchDescriptor = new WatchItemDescriptor(getProject(), (TextWithImportsImpl)descriptor.getEvaluationText(), myAllowBreakpoints);
+    WatchItemDescriptor watchDescriptor = new WatchItemDescriptor(getProject(), descriptor.getEvaluationText(), myAllowBreakpoints);
     watchDescriptor.displayAs(descriptor);
 
     final DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, watchDescriptor);
@@ -59,7 +59,7 @@ public class WatchDebuggerTree extends DebuggerTree {
     return node;
   }
 
-  public DebuggerTreeNodeImpl addWatch(TextWithImportsImpl text) {
+  public DebuggerTreeNodeImpl addWatch(TextWithImports text) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
     DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, new WatchItemDescriptor(getProject(), text, myAllowBreakpoints));
@@ -101,7 +101,7 @@ public class WatchDebuggerTree extends DebuggerTree {
     }
   }
 
-  public static void setWatchNodeText(final DebuggerTreeNodeImpl node, TextWithImportsImpl text) {
+  public static void setWatchNodeText(final DebuggerTreeNodeImpl node, TextWithImports text) {
     ((WatchItemDescriptor)node.getDescriptor()).setEvaluationText(text);
     node.calcValue();
   }

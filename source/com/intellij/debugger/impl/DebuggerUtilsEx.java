@@ -10,12 +10,9 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -316,7 +313,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public static TextWithImportsImpl getEditorText(final Editor editor) {
+  public static TextWithImports getEditorText(final Editor editor) {
     if(editor == null) return null;
     final Project         project = editor.getProject();
 
@@ -336,7 +333,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
 
     if(defaultExpression != null) {
-      return TextWithImportsImpl.createExpressionText(defaultExpression);
+      return EvaluationManager.getInstance().createExpressionFragment(defaultExpression);
     } else {
       return null;
     }

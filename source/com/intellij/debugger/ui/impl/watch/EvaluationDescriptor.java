@@ -1,6 +1,8 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -12,9 +14,6 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
-import com.intellij.debugger.EvaluatingComputable;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.EvaluatingComputable;
 import com.sun.jdi.Value;
 
 /**
@@ -26,14 +25,14 @@ import com.sun.jdi.Value;
  */
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   private Modifier myModifier;
-  protected TextWithImportsImpl myText;
+  protected TextWithImports myText;
 
-  protected EvaluationDescriptor(TextWithImportsImpl text, Project project, Value value) {
+  protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
     myText = text;
   }
 
-  protected EvaluationDescriptor(TextWithImportsImpl text, Project project) {
+  protected EvaluationDescriptor(TextWithImports text, Project project) {
     super(project);
     setLvalue(false);
     myText = text;

@@ -3,6 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -384,7 +385,7 @@ public class DebuggerSessionTab {
     return myStateManager;
   }
   
-  public TextWithImportsImpl getSelectedExpression() {
+  public TextWithImports getSelectedExpression() {
     if (myDebuggerSession.getState() != DebuggerSession.STATE_PAUSED) {
       return null;
     }

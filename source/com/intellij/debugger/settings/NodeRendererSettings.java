@@ -1,9 +1,6 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
@@ -293,9 +290,9 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
 
   private ExpressionChildrenRenderer createExpressionChildrenRenderer(String expressionText, String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
-    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expressionText));
+    childrenRenderer.setChildrenExpression(EvaluationManager.getInstance().createExpressionFragment(expressionText));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, childrenExpandableText));
+      childrenRenderer.setChildrenExpandable(EvaluationManager.getInstance().createExpressionFragment(childrenExpandableText));
     }
     return childrenRenderer;
   }
@@ -306,7 +303,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
       for (int idx = 0; idx < expressions.length; idx++) {
         final String[] expression = expressions[idx];
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expression[1])));
+        childrenList.add(new Pair<String, TextWithImports>(expression[0], EvaluationManager.getInstance().createExpressionFragment(expression[1])));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -329,7 +326,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
         return evaluated + postfix;
       }
     };
-    labelRenderer.setLabelExpression(new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, expressionText));
+    labelRenderer.setLabelExpression(EvaluationManager.getInstance().createExpressionFragment(expressionText));
     return labelRenderer;
   }
 

@@ -6,15 +6,13 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.InstanceFilter;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.sun.jdi.BooleanValue;
@@ -32,7 +30,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   public int COUNT_FILTER = 0;
 
   public boolean CONDITION_ENABLED        = false;
-  private TextWithImportsImpl myCondition       = TextWithImportsImpl.EMPTY;
+  private TextWithImports myCondition;
 
   public boolean CLASS_FILTERS_ENABLED    = false;
   private ClassFilter[] myClassFilters          = ClassFilter.EMPTY_ARRAY;
@@ -45,8 +43,11 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
   private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
   private static final String CONDITION_OPTION_NAME = "CONDITION";
+  protected final Project myProject;
 
-  public FilteredRequestor() {
+  public FilteredRequestor(Project project) {
+    myProject = project;
+    myCondition = EvaluationManager.getInstance().getEmptyExpressionFragment();
   }
 
   public InstanceFilter[] getInstanceFilters() {
@@ -97,7 +98,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     String condition = JDOMExternalizerUtil.readField(parentNode, CONDITION_OPTION_NAME);
     if (condition != null) {
-      setCondition(TextWithImportsImpl.createExpressionText(condition));
+      setCondition(EvaluationManager.getInstance().createExpressionFragment(condition));
     }
 
     myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
@@ -118,7 +119,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, CONDITION_OPTION_NAME, getCondition().saveToString());
+    JDOMExternalizerUtil.writeField(parentNode, CONDITION_OPTION_NAME, getCondition().toString());
     DebuggerUtilsEx.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
     DebuggerUtilsEx.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
     DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
@@ -168,11 +169,15 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public abstract PsiElement getEvaluationElement();
 
-  public TextWithImportsImpl getCondition() {
+  public TextWithImports getCondition() {
     return myCondition;
   }
 
-  public void setCondition(TextWithImportsImpl condition) {
+  public void setCondition(TextWithImports condition) {
     myCondition = condition;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

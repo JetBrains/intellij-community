@@ -2,6 +2,8 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationManagerImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -26,7 +28,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
     myMainPanel.add(myEditor, EDITOR);
     add(myMainPanel, BorderLayout.CENTER);
     ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, isEnabled()? EDITOR : STUB);
-    setText(TextWithImportsImpl.EMPTY);
+    setText(EvaluationManager.getInstance().getEmptyExpressionFragment());
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -42,7 +44,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   }
 
   public TextWithImportsImpl createText(String text, String importsString) {
-    return new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, text, importsString);
+    return new TextWithImportsImpl(EvaluationManagerImpl.EXPRESSION_FACTORY, text, importsString);
   }
 
   public void setEnabled(boolean enabled) {

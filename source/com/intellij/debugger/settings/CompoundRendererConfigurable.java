@@ -5,11 +5,11 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -299,6 +299,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void reset() {
+    final TextWithImports emptyExpressionFragment = EvaluationManager.getInstance().getEmptyExpressionFragment();
     ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null? EMPTY_PANEL_ID : DATA_PANEL_ID);
     if (myRenderer == null) {
       return;
@@ -311,7 +312,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     if (rendererSettings.isBase(labelRenderer)) {
       myRbDefaultLabel.setSelected(true);
-      myLabelEditor.setText(TextWithImportsImpl.EMPTY);
+      myLabelEditor.setText(emptyExpressionFragment);
     }
     else {
       myRbExpressionLabel.setSelected(true);
@@ -320,8 +321,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     if (rendererSettings.isBase(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
-      myChildrenEditor.setText(TextWithImportsImpl.EMPTY);
-      myChildrenExpandedEditor.setText(TextWithImportsImpl.EMPTY);
+      myChildrenEditor.setText(emptyExpressionFragment);
+      myChildrenExpandedEditor.setText(emptyExpressionFragment);
       getTableModel().clear();
     }
     else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
@@ -333,8 +334,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     }
     else {
       myRbListChildrenRenderer.setSelected(true);
-      myChildrenEditor.setText(TextWithImportsImpl.EMPTY);
-      myChildrenExpandedEditor.setText(TextWithImportsImpl.EMPTY);
+      myChildrenEditor.setText(emptyExpressionFragment);
+      myChildrenExpandedEditor.setText(emptyExpressionFragment);
       if (childrenRenderer instanceof EnumerationChildrenRenderer) {
         getTableModel().init(((EnumerationChildrenRenderer)childrenRenderer).getChildren());
       }
@@ -354,7 +355,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     return (MyTableModel)myTable.getModel();
   }
 
-  private final static class MyTableModel extends AbstractTableModel {
+  private final class MyTableModel extends AbstractTableModel {
     private final java.util.List<Row> myData = new ArrayList<Row>();
 
     public MyTableModel(java.util.List<Pair<String, TextWithImports>> data) {
@@ -462,7 +463,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       return pairs;
     }
 
-    private static final class Row {
+    private final class Row {
       public String name;
       public TextWithImports value;
 
@@ -472,7 +473,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
 
       public Row() {
-        this("", TextWithImportsImpl.EMPTY);
+        this("", EvaluationManager.getInstance().getEmptyExpressionFragment());
       }
     }
   }

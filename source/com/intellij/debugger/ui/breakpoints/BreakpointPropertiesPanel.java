@@ -6,14 +6,11 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.InstanceFilter;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.UIUtil;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -220,9 +217,10 @@ public abstract class BreakpointPropertiesPanel {
     myLogExpressionCheckBox.setSelected(breakpoint.LOG_EXPRESSION_ENABLED);
 
     myConditionCombo.setContext(context);
-    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : TextWithImportsImpl.EMPTY);
+    final TextWithImports empty = EvaluationManager.getInstance().getEmptyExpressionFragment();
+    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : empty);
     myLogExpressionCombo.setContext(context);
-    myLogExpressionCombo.setText(breakpoint.getLogMessage() != null? breakpoint.getLogMessage() : TextWithImportsImpl.EMPTY);
+    myLogExpressionCombo.setText(breakpoint.getLogMessage() != null? breakpoint.getLogMessage() : empty);
 
     myLogExpressionCombo.setEnabled(breakpoint.LOG_EXPRESSION_ENABLED);
 

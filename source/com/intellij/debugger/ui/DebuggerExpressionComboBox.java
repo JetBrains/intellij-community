@@ -2,6 +2,8 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationManagerImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -52,7 +54,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public void setText(TextWithImports item) {
-    item = item.createText(((TextWithImportsImpl) item).getText().replace('\n', ' '));
+    item.setText(item.getText().replace('\n', ' '));
     if(myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
       myComboBox.insertItemAt(item, 0);
     }
@@ -134,7 +136,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
   public TextWithImportsImpl createText(String text, String importsString) {
-    return new TextWithImportsImpl(TextWithImportsImpl.EXPRESSION_FACTORY, text, importsString);
+    return new TextWithImportsImpl(EvaluationManagerImpl.EXPRESSION_FACTORY, text, importsString);
   }
 
   private void addRecents(List<TextWithImportsImpl> expressions) {
@@ -157,7 +159,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     setLayout(new BorderLayout());
     add(myComboBox);
 
-    setText(TextWithImportsImpl.createExpressionText(""));
+    setText(EvaluationManager.getInstance().createExpressionFragment(""));
     myItem =  createText("");
     setEnabled(true);
   }

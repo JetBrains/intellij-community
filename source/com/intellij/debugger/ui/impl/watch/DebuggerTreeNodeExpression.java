@@ -1,8 +1,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -251,9 +250,10 @@ public class DebuggerTreeNodeExpression {
     }
   }
 
-  public static TextWithImportsImpl createEvaluationText(final DebuggerTreeNodeImpl node, final DebuggerContextImpl context) {
-    return PsiDocumentManager.getInstance(context.getProject()).commitAndRunReadAction(new Computable<TextWithImportsImpl>() {
-      public TextWithImportsImpl compute() {
+  public static TextWithImports createEvaluationText(final DebuggerTreeNodeImpl node, final DebuggerContextImpl context) {
+    final Project project = context.getProject();
+    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<TextWithImports>() {
+      public TextWithImports compute() {
         PsiExpression expressionText = null;
         try {
           expressionText = getEvaluationExpression(node, context);
@@ -264,7 +264,7 @@ public class DebuggerTreeNodeExpression {
 
         if (expressionText == null) return null;
 
-        return TextWithImportsImpl.createExpressionText(expressionText);
+        return EvaluationManager.getInstance().createExpressionFragment(expressionText);
       }
     });
   }

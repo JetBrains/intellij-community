@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project;
  */
 
 public interface TextWithImports {
-  public String toString();
+  public String getText();
   public PsiCodeFragment createCodeFragment(PsiElement context, Project project);
+  public boolean isEmpty();
 
-  public TextWithImports createText(String newText);
+  void setText(String newText);
+  boolean isExpressionText();
 }

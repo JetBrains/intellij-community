@@ -6,25 +6,22 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.sun.jdi.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +46,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     PsiCodeFragment codeFragment = text.createCodeFragment(contextElement, project);
     DebuggerUtils.checkSyntax(codeFragment);
 
-    if(codeFragment == null) throw EvaluateExceptionUtil.INVALID_EXPRESSION(((TextWithImportsImpl)text).getText());
+    if(codeFragment == null) throw EvaluateExceptionUtil.INVALID_EXPRESSION(text.getText());
 
     return build(codeFragment);
   }

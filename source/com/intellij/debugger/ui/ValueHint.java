@@ -4,19 +4,14 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.diagnostic.Logger;
@@ -150,7 +145,7 @@ public class ValueHint {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
             final Value value = evaluator.evaluate(evaluationContext);
 
-            TextWithImportsImpl text = TextWithImportsImpl.createExpressionText(myCurrentExpression.getText());
+            TextWithImports text = EvaluationManager.getInstance().createExpressionFragment(myCurrentExpression.getText());
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
             descriptor.setContext(evaluationContext);
             if (myType == MOUSE_OVER_HINT) {

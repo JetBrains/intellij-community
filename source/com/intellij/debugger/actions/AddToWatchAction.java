@@ -4,6 +4,8 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -12,12 +14,9 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.debugger.DebuggerInvocationUtil;
 
 public class AddToWatchAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
@@ -39,7 +38,7 @@ public class AddToWatchAction extends DebuggerAction {
           for (int idx = 0; idx < selectedNodes.length; idx++) {
             DebuggerTreeNodeImpl node = selectedNodes[idx];
             final NodeDescriptorImpl descriptor = node.getDescriptor();
-            final TextWithImportsImpl expression = DebuggerTreeNodeExpression.createEvaluationText(node, debuggerContext);
+            final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, debuggerContext);
             if (expression != null) {
               DebuggerInvocationUtil.invokeLater(session.getProject(), new Runnable() {
                 public void run() {
@@ -74,7 +73,7 @@ public class AddToWatchAction extends DebuggerAction {
     } else {
       final Editor          editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
 
-      TextWithImportsImpl editorText = DebuggerUtilsEx.getEditorText(editor);
+      TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
 
       if(editorText != null) {
         watchPanel.getWatchTree().addWatch(editorText);

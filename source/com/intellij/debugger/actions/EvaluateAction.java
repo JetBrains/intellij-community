@@ -4,27 +4,25 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.*;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.ExpressionEvaluationDialog;
+import com.intellij.debugger.ui.StatementEvaluationDialog;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
-import com.intellij.debugger.DebuggerInvocationUtil;
 
 public class EvaluateAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
@@ -39,14 +37,14 @@ public class EvaluateAction extends DebuggerAction {
 
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
 
-    TextWithImportsImpl editorText = DebuggerUtilsEx.getEditorText(editor);
+    TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
     if (editorText == null) {
       final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
 
       if (selectedNode != null && selectedNode.getDescriptor() instanceof ValueDescriptorImpl) {
         context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
           public void threadAction() {
-            final TextWithImportsImpl evaluationText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
+            final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
             DebuggerInvocationUtil.invokeLater(project, new Runnable() {
               public void run() {
                 showEvaluationDialog(project, evaluationText);
@@ -58,7 +56,7 @@ public class EvaluateAction extends DebuggerAction {
             DebuggerInvocationUtil.invokeLater(project, new Runnable() {
               public void run() {
                 if(selectedNode.getDescriptor() instanceof WatchItemDescriptor) {
-                  TextWithImportsImpl editorText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
+                  TextWithImports editorText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
                   showEvaluationDialog(project, editorText);
                 }
               }
@@ -72,9 +70,9 @@ public class EvaluateAction extends DebuggerAction {
     showEvaluationDialog(project, editorText);
   }
 
-  public static void showEvaluationDialog(Project project, TextWithImportsImpl defaultExpression, String dialogType) {
+  public static void showEvaluationDialog(Project project, TextWithImports defaultExpression, String dialogType) {
     if(defaultExpression == null) {
-      defaultExpression = TextWithImportsImpl.EMPTY;
+      defaultExpression = EvaluationManager.getInstance().getEmptyExpressionFragment();
     }
 
     final DialogWrapper dialog;
@@ -89,7 +87,7 @@ public class EvaluateAction extends DebuggerAction {
     dialog.show();
   }
 
-  public static void showEvaluationDialog(Project project, TextWithImportsImpl text) {
+  public static void showEvaluationDialog(Project project, TextWithImports text) {
     showEvaluationDialog(project, text, DebuggerSettings.getInstance().EVALUATION_DIALOG_TYPE);
   }
 

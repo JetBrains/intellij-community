@@ -1,15 +1,14 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
-import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -24,7 +23,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
 
   private final SwitchAction mySwitchAction = new SwitchAction();
 
-  public ExpressionEvaluationDialog(Project project, TextWithImportsImpl defaultExpression) {
+  public ExpressionEvaluationDialog(Project project, TextWithImports defaultExpression) {
     super(project, makeOnLine(defaultExpression));
     setTitle("Expression Evaluation");
 
@@ -60,7 +59,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     return myPanel;
   }
 
-  private static TextWithImportsImpl makeOnLine(TextWithImportsImpl text) {
+  private static TextWithImports makeOnLine(TextWithImports text) {
     String initialExpression = text.getText();
     if (initialExpression != null) {
       int size = initialExpression.length();
@@ -71,7 +70,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
           buf.append(ch);
         }
       }
-      text = text.createText(initialExpression);
+      text.setText(initialExpression);
     }
     return text;
   }
