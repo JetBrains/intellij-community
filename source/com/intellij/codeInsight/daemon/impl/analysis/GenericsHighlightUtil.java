@@ -56,10 +56,7 @@ public abstract class GenericsHighlightUtil {
               HighlightUtil.formatType(extendsType),
               HighlightUtil.formatType(substituted)
             });
-          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                                call,
-                                                                                description);
-          return highlightInfo;
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, call, description);
         }
       }
     }
@@ -223,10 +220,7 @@ public abstract class GenericsHighlightUtil {
             String description = MessageFormat.format("''{0}'' cannot be inherited with different type arguments: ''{1}'' and ''{2}''",
                                                       new Object[]{HighlightUtil.formatClass(superClass), HighlightUtil.formatType(type1),
                                                                    HighlightUtil.formatType(type2)});
-            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            textRange,
-                                                                            description);
-            return highlightInfo;
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
           }
         }
       }
@@ -297,10 +291,7 @@ public abstract class GenericsHighlightUtil {
             String description = MessageFormat.format("{0}; both methods have same erasure, yet neither overrides the other",
                                                       new Object[]{HighlightMethodUtil.createClashMethodMessage(method1, method2, true)});
             TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
-            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            textRange, 
-                                                                            description);
-            return highlightInfo;
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
           }
         }
       }
@@ -320,10 +311,7 @@ public abstract class GenericsHighlightUtil {
       final PsiTypeParameter typeParameter = (PsiTypeParameter)result.getElement();
       String description = MessageFormat.format("Type parameter ''{0}'' cannot be instantiated directly",
                                                 new Object[]{HighlightUtil.formatClass(typeParameter)});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      classReference,
-                                                                      description);
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classReference, description);
     }
     return null;
   }
@@ -344,10 +332,7 @@ public abstract class GenericsHighlightUtil {
           PsiNewExpression newExpression = (PsiNewExpression)refParent;
           if (!(newExpression.getType() instanceof PsiArrayType)) {
             String description = MessageFormat.format("Wildcard type ''{0}'' cannot be instantiated directly", new Object[]{HighlightUtil.formatType(type)});
-            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            typeElement,
-                                                                            description);
-            return highlightInfo;
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
           }
         }
         else if (refParent instanceof PsiReferenceList) {
@@ -381,10 +366,7 @@ public abstract class GenericsHighlightUtil {
 
       String description = MessageFormat.format("Type argument cannot be of primitive type",
                                                 ArrayUtil.EMPTY_OBJECT_ARRAY);
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      typeElement,
-                                                                      description);
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
     }
 
     return null;
@@ -399,7 +381,7 @@ public abstract class GenericsHighlightUtil {
     String description = MessageFormat.format("Unchecked assignment: ''{0}'' to ''{1}''",
                                               new Object[]{HighlightUtil.formatType(rType), HighlightUtil.formatType(lType)});
     if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
-      final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
+      final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject());
       if (iManager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       elementToHighlight,
@@ -417,8 +399,7 @@ public abstract class GenericsHighlightUtil {
     if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
     if (!((PsiClassType)rType).isRaw()) return false;
     final PsiClassType lClassType = (PsiClassType)lType;
-    if (!lClassType.hasNonTrivialParameters()) return false;
-    return true;
+    return lClassType.hasNonTrivialParameters();
   }
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
@@ -434,7 +415,7 @@ public abstract class GenericsHighlightUtil {
       String description = MessageFormat.format("Unchecked cast: ''{0}'' to ''{1}''",
                                                 new Object[]{HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType)});
      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
-        final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(expression.getProject()));
+        final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(expression.getProject());
         if (iManager.inspectionResultSuppressed(expression, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
 
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
@@ -550,7 +531,7 @@ public abstract class GenericsHighlightUtil {
                                                   new Object[]{HighlightUtil.formatMethod(method), HighlightUtil.formatType(type)});
         PsiElement element = call instanceof PsiMethodCallExpression ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression() : call;
         if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)){
-          final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(call.getProject()));
+          final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(call.getProject());
           if (iManager.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
           HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
           QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
@@ -632,10 +613,7 @@ public abstract class GenericsHighlightUtil {
       new Object[]{
         HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor())
       });
-    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                          expr,
-                                                                          description);
-    return highlightInfo;
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expr, description);
   }
 
   public static HighlightInfo checkEnumInstantiation(PsiNewExpression expression) {
@@ -644,10 +622,7 @@ public abstract class GenericsHighlightUtil {
       final PsiClass aClass = ((PsiClassType)type).resolve();
       if (aClass != null && aClass.isEnum()) {
         String description = "Enum types cannot be instantiated";
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                              expression,
-                                                                              description);
-        return highlightInfo;
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, description);
       }
     }
     return null;
@@ -780,14 +755,15 @@ public abstract class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant,
-                                                               DaemonCodeAnalyzerSettings settings) {
+  static HighlightInfo checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, DaemonCodeAnalyzerSettings settings) {
     PsiClass containingClass = enumConstant.getContainingClass();
-    PsiClassType type = enumConstant.getManager().getElementFactory().createType(containingClass);
     if (enumConstant.getInitializingClass() == null) {
       HighlightInfo highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
       if (highlightInfo != null) return highlightInfo;
+      highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant.getNameIdentifier());
+      if (highlightInfo != null) return highlightInfo;
     }
+    PsiClassType type = enumConstant.getManager().getElementFactory().createType(containingClass);
     return HighlightMethodUtil.checkConstructorCall(containingClass, enumConstant, type, settings, null);
   }
 

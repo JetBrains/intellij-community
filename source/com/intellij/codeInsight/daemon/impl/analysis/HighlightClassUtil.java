@@ -36,7 +36,7 @@ public class HighlightClassUtil {
   public static final String CLASS_EXPECTED = "No interface expected here";
   public static final String NO_IMPLEMENTS_ALLOWED = "No implements clause allowed for interface";
   private static final String STATIC_DECLARATION_IN_INNER_CLASS = "Inner classes cannot have static declarations";
-  public static final String CLASS_MUST_BE_ABSTRACT = "Class ''{0}'' is not abstract and does not implement abstract method ''{1}'' in ''{2}''";
+  private static final String CLASS_MUST_BE_ABSTRACT = "Class ''{0}'' is not abstract and does not implement abstract method ''{1}'' in ''{2}''";
   public static final String DUPLICATE_CLASS = "Duplicate class: ''{0}''";
   private static final String REFERENCED_FROM_STATIC_CONTEXT = "''{0}'' cannot be referenced from a static context";
 
@@ -58,27 +58,31 @@ public class HighlightClassUtil {
              && parent.getParent() instanceof PsiNewExpression
              && !PsiUtil.hasErrorElementChild(parent.getParent())) {
       PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
-      final MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
-      final PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
-
-      if (abstractMethod != null && abstractMethod.getContainingClass() != null) {
-        String baseClassName = HighlightUtil.formatClass((PsiClass)parent, false);
-        String methodName = HighlightUtil.formatMethod(abstractMethod);
-        String message = MessageFormat.format(CLASS_MUST_BE_ABSTRACT,
-                                              new Object[]{
-                                                baseClassName,
-                                                methodName,
-                                                HighlightUtil.formatClass(abstractMethod.getContainingClass(), false)
-                                              });
-        highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                          ref,
-                                                          message);
-        if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new ImplementMethodsFix(aClass));
-        }
-      }
+      highlightInfo = checkClassWithAbstractMethods(aClass, ref);
     }
     return highlightInfo;
+  }
+
+  public static HighlightInfo checkClassWithAbstractMethods(final PsiClass aClass, final PsiElement highlightElement) {
+    final MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    final PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
+
+    if (abstractMethod != null && abstractMethod.getContainingClass() != null) {
+      String baseClassName = HighlightUtil.formatClass(aClass, false);
+      String methodName = HighlightUtil.formatMethod(abstractMethod);
+      String message = MessageFormat.format(CLASS_MUST_BE_ABSTRACT,
+                                            new Object[]{
+                                              baseClassName,
+                                              methodName,
+                                              HighlightUtil.formatClass(abstractMethod.getContainingClass(), false)
+                                            });
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
+      if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ImplementMethodsFix(aClass));
+      }
+      return highlightInfo;
+    }
+    return null;
   }
 
   //@top
@@ -98,8 +102,9 @@ public class HighlightClassUtil {
 
   //@top
   static HighlightInfo checkClassMustBeAbstract(PsiClass aClass) {
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null ||
-        (aClass.isEnum() && hasEnumConstants(aClass))) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null
+        || (aClass.isEnum() && hasEnumConstants(aClass))
+    ) {
       return null;
     }
     HighlightInfo errorResult = null;
