@@ -53,15 +53,29 @@ public final class RadTabbedPane extends RadContainer{
 
   protected void addToDelegee(final RadComponent component){
     final JTabbedPane tabbedPane = getTabbedPane();
-    final String tabName;
+    final StringDescriptor titleDescriptor;
     if (component.getCustomLayoutConstraints() instanceof LwTabbedPane.Constraints) {
-      tabName = ((LwTabbedPane.Constraints)component.getCustomLayoutConstraints()).myTitle;
+      titleDescriptor = ((LwTabbedPane.Constraints)component.getCustomLayoutConstraints()).myTitle;
     }
     else {
-      tabName = "Untitled";
+      titleDescriptor = null;
     }
     component.setCustomLayoutConstraints(null);
-    tabbedPane.addTab(tabName, component.getDelegee());
+    tabbedPane.addTab(calcTabName(titleDescriptor), component.getDelegee());
+    if (titleDescriptor != null) {
+      getIndex2Descriptor(this).put(new Integer(tabbedPane.getTabCount() - 1), titleDescriptor);
+    }
+  }
+
+  private String calcTabName(final StringDescriptor titleDescriptor) {
+    if (titleDescriptor == null) {
+      return "Untitled";
+    }
+    final String value = titleDescriptor.getValue();
+    if (value == null) { // from res bundle
+      return ResourceBundleLoader.resolve(getModule(), titleDescriptor);
+    }
+    return value;
   }
 
   protected void removeFromDelegee(final RadComponent component){
@@ -72,7 +86,11 @@ public final class RadTabbedPane extends RadContainer{
     if (i == -1) {
       throw new IllegalArgumentException("cannot find tab for " + component);
     }
-    component.setCustomLayoutConstraints(new LwTabbedPane.Constraints(tabbedPane.getTitleAt(i)));
+    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(new Integer(i));
+    if (titleDescriptor == null) {
+      titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
+    }
+    component.setCustomLayoutConstraints(new LwTabbedPane.Constraints(titleDescriptor));
     tabbedPane.removeTabAt(i);
   }
 
@@ -93,8 +111,7 @@ public final class RadTabbedPane extends RadContainer{
     LOG.assertTrue(ui != null);
     final int index = ui.tabForCoordinate(tabbedPane, x, y);
     LOG.assertTrue(index != -1);
-    final Rectangle tabBounds = ui.getTabBounds(tabbedPane, index);
-    return tabBounds;
+    return ui.getTabBounds(tabbedPane, index);
   }
 
   /**
@@ -131,9 +148,19 @@ public final class RadTabbedPane extends RadContainer{
         throw new IllegalArgumentException("cannot find tab for " + child);
       }
 
-      final String title = tabbedPane.getTitleAt(i);
-      writer.addAttribute("title", title != null ? title : "");
-    }finally{
+      final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(this);
+      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(new Integer(i));
+      final String title = tabTitleDescriptor != null? tabTitleDescriptor.getValue() : tabbedPane.getTitleAt(i);
+      if (tabTitleDescriptor != null && title == null) {
+        // is from resource bundle
+        writer.addAttribute("title-resource-bundle", tabTitleDescriptor.getBundleName());
+        writer.addAttribute("title-key", tabTitleDescriptor.getKey());
+      }
+      else {
+        writer.addAttribute("title", title != null ? title : "");
+      }
+    }
+    finally{
       writer.endElement(); 
     }
   }

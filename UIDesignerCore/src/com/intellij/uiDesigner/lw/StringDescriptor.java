@@ -38,7 +38,7 @@ public final class StringDescriptor {
     if (key == null) {
       throw new IllegalArgumentException("key cannot be null");
     }
-    myBundleName = bundleName;
+    myBundleName = bundleName.replace('.', '/');
     myKey = key;
     myValue = null;
   }

@@ -35,17 +35,27 @@ public final class LwTabbedPane extends LwContainer{
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
     final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
     final Element tabbedPaneChild = LwXmlReader.getRequiredChild(constraintsElement, "tabbedpane");
-    final String tabName = LwXmlReader.getRequiredString(tabbedPaneChild, "title");
-    component.setCustomLayoutConstraints(new Constraints(tabName));
+    final String tabName = LwXmlReader.getString(tabbedPaneChild, "title");
+    if (tabName == null) {
+      final String resBundle = LwXmlReader.getString(tabbedPaneChild, "title-resource-bundle");
+      final String key = LwXmlReader.getString(tabbedPaneChild, "title-key");
+      if (resBundle == null || key == null) {
+        throw new IllegalArgumentException("either attribute 'title' or 'title-resource-bundle' and 'title-key' are required: "+tabbedPaneChild);
+      }
+      component.setCustomLayoutConstraints(new Constraints(new StringDescriptor(resBundle, key)));
+    }
+    else {
+      component.setCustomLayoutConstraints(new Constraints(StringDescriptor.create(tabName)));
+    }
   }
-  
+
   public static final class Constraints {
     /**
      * never null
      */ 
-    public final String myTitle;
+    public final StringDescriptor myTitle;
 
-    public Constraints(final String title){
+    public Constraints(final StringDescriptor title){
       if (title == null){
         throw new IllegalArgumentException("title cannot be null");
       }
