@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -150,7 +151,8 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
 
   public void setText(CharSequence text) {
     int startOffset = 0;
-    myLexer.start(text.toString().toCharArray(), startOffset, text.length());
+    char[] chars = CharArrayUtil.fromSequence(text);
+    myLexer.start(chars, startOffset, text.length());
     int i = 0;
     mySegments.removeAll();
     while(myLexer.getTokenType() != null) {
