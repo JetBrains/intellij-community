@@ -203,6 +203,8 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     PsiElement element = myUsageInfo.getElement();
     PsiFile psiFile = element.getContainingFile();
     VirtualFile virtualFile = getFile();
+    if (virtualFile == null) return null;
+
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
