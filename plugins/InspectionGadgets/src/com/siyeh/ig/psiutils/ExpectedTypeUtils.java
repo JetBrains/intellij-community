@@ -2,12 +2,12 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 
 public class ExpectedTypeUtils {
 
     private ExpectedTypeUtils() {
-        super();
     }
 
     public static PsiType findExpectedType(PsiExpression exp) {
@@ -49,7 +49,13 @@ public class ExpectedTypeUtils {
             if (rExpression != null) {
                 if (rExpression.equals(wrappedExp)) {
                     final PsiExpression lExpression = assignment.getLExpression();
-                    return lExpression.getType();
+                  PsiType lType = lExpression.getType();
+                  if (lType == null) return null;
+                  // e.g. String += any type
+                  if (TypeUtils.isJavaLangString(lType) && JavaTokenType.PLUSEQ.equals(assignment.getOperationSign().getTokenType())) {
+                    return rExpression.getType();
+                  }
+                  return lType;
                 }
             }
         } else if (context instanceof PsiBinaryExpression) {
@@ -79,15 +85,15 @@ public class ExpectedTypeUtils {
             return conditional.getType();
         } else if (context instanceof PsiExpressionList) {
             final PsiExpressionList expList = (PsiExpressionList) context;
-            final PsiMethod method = ExpectedTypeUtils.findCalledMethod(expList);
+            final PsiMethod method = findCalledMethod(expList);
             if (method == null) {
                 return null;
             }
-            final int parameterPosition = ExpectedTypeUtils.getParameterPosition(expList, wrappedExp);
-            return ExpectedTypeUtils.getTypeOfParemeter(method, parameterPosition);
+            final int parameterPosition = getParameterPosition(expList, wrappedExp);
+            return getTypeOfParemeter(method, parameterPosition);
         } else if (context instanceof PsiReturnStatement) {
             final PsiReturnStatement psiReturnStatement = (PsiReturnStatement) context;
-            final PsiMethod method = ExpectedTypeUtils.findEnclosingPsiMethod(psiReturnStatement);
+            final PsiMethod method = findEnclosingPsiMethod(psiReturnStatement);
             if (method == null) {
                 return null;
             }
@@ -108,12 +114,13 @@ public class ExpectedTypeUtils {
         return null;
     }
 
-    private static boolean isArithmeticOperation(PsiJavaToken sign) {
-        return sign.equals(JavaTokenType.PLUS)
-                || sign.equals(JavaTokenType.MINUS)
-                || sign.equals(JavaTokenType.ASTERISK)
-                || sign.equals(JavaTokenType.DIV) ||
-                sign.equals(JavaTokenType.PERC);
+    private static boolean isArithmeticOperation(PsiJavaToken javaToken) {
+      IElementType sign = javaToken.getTokenType();
+      return JavaTokenType.PLUS.equals(sign)
+                || JavaTokenType.MINUS.equals(sign)
+                || JavaTokenType.ASTERISK.equals(sign)
+                || JavaTokenType.DIV.equals(sign) ||
+             JavaTokenType.PERC.equals(sign);
     }
 
     private static int getParameterPosition(PsiExpressionList expressionList, PsiExpression exp) {
