@@ -803,7 +803,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (isStrictSignatureSearch && (parentClass == null
                                     || parentClass instanceof PsiAnonymousClass
                                     || parentClass.hasModifierProperty(PsiModifier.FINAL)
-                                    || method instanceof PsiAnnotationMethod
                                     || method.hasModifierProperty(PsiModifier.STATIC)
                                     || method.hasModifierProperty(PsiModifier.FINAL)
                                     || method.hasModifierProperty(PsiModifier.PRIVATE))

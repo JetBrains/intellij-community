@@ -31,7 +31,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeDecl;
@@ -384,11 +383,6 @@ public class FindUsagesManager {
             secondaryElementsToSearch = elements.toArray(new PsiElement[elements.size()]);
           }
         }
-      }
-    }
-    else if (psiElement instanceof PsiMethod) {
-      if (scopeFile == null && findUsagesOptions.isIncludeOverloadUsages) {
-        elementsToSearch = MethodSignatureUtil.getOverloads((PsiMethod)psiElement);
       }
     }
 

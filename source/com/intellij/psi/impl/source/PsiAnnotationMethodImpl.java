@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.PsiAnnotationMethod;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -18,6 +15,11 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
 
   public PsiAnnotationMethodImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
+  }
+
+  public boolean hasModifierProperty(String name) {
+    if (PsiModifier.FINAL.equals(name)) return true;
+    return super.hasModifierProperty(name);
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
