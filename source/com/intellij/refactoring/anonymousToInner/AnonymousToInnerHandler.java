@@ -43,6 +43,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private boolean myMakeStatic;
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
+    if (elements != null && elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
+      invoke(project, (PsiAnonymousClass)elements[0]);
+    }
   }
 
   public void invoke(final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
