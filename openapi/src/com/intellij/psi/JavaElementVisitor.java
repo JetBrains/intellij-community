@@ -251,6 +251,8 @@ public abstract class JavaElementVisitor {
   }
 
   public void visitReferenceExpression(PsiReferenceExpression expression) {
+    // See PsiRecursiveElementVisitor for exponential traversal workaround.
+    visitExpression(expression);
     visitReferenceElement(expression);
   }
 
