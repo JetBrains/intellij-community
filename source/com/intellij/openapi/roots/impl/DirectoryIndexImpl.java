@@ -254,7 +254,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       for (int j = 0; j < contentRoots.length; j++) {
         final VirtualFile contentRoot = contentRoots[j];
         Set<VirtualFile> excludeRootsSet = excludeRootsMap.get(contentRoot);
-        fillMapWithModuleContent(contentRoot, module, contentRoot, excludeRootsSet, forDir);
+        if (forDir == null || VfsUtil.isAncestor(contentRoot, forDir, false)) {
+          fillMapWithModuleContent(contentRoot, module, contentRoot, excludeRootsSet, forDir);
+        }
       }
     }
 
@@ -281,7 +283,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           SourceFolder sourceFolder = sourceFolders[k];
           VirtualFile dir = sourceFolder.getFile();
           if (dir != null) {
-            fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource(), forDir);
+            if (forDir == null || VfsUtil.isAncestor(dir, forDir, false)) {
+              fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource(), forDir);
+            }
           }
         }
       }
@@ -304,7 +308,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (int k = 0; k < sourceRoots.length; k++) {
             final VirtualFile sourceRoot = sourceRoots[k];
-            fillMapWithLibrarySources(sourceRoot, "", sourceRoot, forDir);
+            if (forDir == null || VfsUtil.isAncestor(sourceRoot, forDir, false)) {
+              fillMapWithLibrarySources(sourceRoot, "", sourceRoot, forDir);
+            }
           }
         }
       }
@@ -327,7 +333,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (int k = 0; k < classRoots.length; k++) {
             final VirtualFile classRoot = classRoots[k];
-            fillMapWithLibraryClasses(classRoot, "", classRoot, forDir);
+            if (forDir == null || VfsUtil.isAncestor(classRoot, forDir, false)) {
+              fillMapWithLibraryClasses(classRoot, "", classRoot, forDir);
+            }
           }
         }
       }
@@ -354,12 +362,18 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] importedClassRoots = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
           for (int k = 0; k < importedClassRoots.length; k++) {
-            fillMapWithOrderEntries(importedClassRoots[k], oneEntryList, entryModule, null, null, forDir);
+            final VirtualFile importedClassRoot = importedClassRoots[k];
+            if (forDir == null || VfsUtil.isAncestor(importedClassRoot, forDir, false)) {
+              fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir);
+            }
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (int k = 0; k < sourceRoots.length; k++) {
-            fillMapWithOrderEntries(sourceRoots[k], oneEntryList, entryModule, null, null, forDir);
+            final VirtualFile sourceRoot = sourceRoots[k];
+            if (forDir == null || VfsUtil.isAncestor(sourceRoot, forDir, false)) {
+              fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir);
+            }
           }
         }
         else if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -367,20 +381,27 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (int k = 0; k < sourceRoots.length; k++) {
-            fillMapWithOrderEntries(sourceRoots[k], oneEntryList, entryModule, null, null, forDir);
+            final VirtualFile sourceRoot = sourceRoots[k];
+            if (forDir == null || VfsUtil.isAncestor(sourceRoot, forDir, false)) {
+              fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir);
+            }
           }
         }
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry){
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (int k = 0; k < classRoots.length; k++) {
             VirtualFile classRoot = classRoots[k];
-            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir);
+            if (forDir == null || VfsUtil.isAncestor(classRoot, forDir, false)) {
+              fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir);
+            }
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (int k = 0; k < sourceRoots.length; k++) {
             VirtualFile sourceRoot = sourceRoots[k];
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir);
+            if (forDir == null || VfsUtil.isAncestor(sourceRoot, forDir, false)) {
+              fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir);
+            }
           }
         }
       }
@@ -558,10 +579,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (excludeRoots != null && excludeRoots.contains(dir)) return;
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
-
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
     if (info.module != null) { // module contents overlap
@@ -592,10 +609,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (info == null) return;
     if (!module.equals(info.module)) return;
 
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
-
     if (info.isInModuleSource) { // module sources overlap
       if (info.packageName != null && info.packageName.length() == 0) return; // another source root starts here
     }
@@ -620,10 +633,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                          VirtualFile classRoot,
                                          VirtualFile forDir) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
@@ -653,10 +662,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                          VirtualFile forDir) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
-
     DirectoryInfo info = getOrCreateDirInfo(dir);
 
     if (info.isInLibrarySource) { // library sources overlap
@@ -685,10 +690,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                        VirtualFile librarySourceRoot,
                                        VirtualFile forDir) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
-
-    if (forDir != null) {
-      if (!VfsUtil.isAncestor(dir, forDir, false)) return;
-    }
 
     DirectoryInfo info = myDirToInfoMap.get(dir); // do not create it here!
     if (info == null) return;
