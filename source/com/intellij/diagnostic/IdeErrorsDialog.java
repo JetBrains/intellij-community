@@ -5,48 +5,46 @@
 package com.intellij.diagnostic;
 
 /**
- * @author kir
+ * @author kir, max
  */
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.text.DateFormatUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener {
   private JTextPane myDetailsPane;
   private List myFatalErrors;
-  private JList myHeadersList;
-  private DefaultListModel myHeadersModel = new DefaultListModel();
+  private List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
   private final MessagePool myMessagePool;
-  private IdeErrorsDialog.SubmitBugAction mySubmitBugAction;
+  private JLabel myCountLabel;
+  private JLabel myBlameLabel;
+  private JLabel myInfoLabel;
+
+  private int myIndex = 0;
 
   public IdeErrorsDialog(MessagePool messagePool) {
     super(JOptionPane.getRootFrame(), false);
 
     myMessagePool = messagePool;
-    mySubmitBugAction = new SubmitBugAction();
-    myHeadersList = new JList(myHeadersModel);
 
     init();
   }
@@ -68,90 +66,207 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   protected Action[] createActions() {
-    return new Action[]{mySubmitBugAction, new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
+    return new Action[]{new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return myHeadersList;
+  private ActionToolbar createNavigationToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    BackAction back = new BackAction();
+    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), getRootPane());
+    group.add(back);
+
+    ForwardAction forward = new ForwardAction();
+    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), getRootPane());
+    group.add(forward);
+
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+  }
+
+  private void goBack() {
+    myIndex--;
+    updateControls();
+  }
+
+  private void goForward() {
+    myIndex++;
+    updateControls();
+  }
+
+  private void updateControls() {
+    updateCountLabel();
+    updateBlameLabel();
+    updateInfoLabel();
+    updateDetailsPane();
+  }
+
+  private void updateInfoLabel() {
+    final AbstractMessage message = getMessageAt(myIndex);
+    if (message != null) {
+      StringBuffer txt = new StringBuffer();
+      txt.append(DateFormatUtil.formatDate(new Date(), message.getDate()));
+      txt.append(". Occured ");
+      int occ = myModel.get(myIndex).size();
+      txt.append(occ == 1 ? "once" : Integer.toString(occ) + " times");
+      txt.append(" since last reset. ");
+      if (message.isSumbitted()) {
+        final SubmittedReportInfo info = message.getSubmissionInfo();
+        if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
+          txt.append("Submission failed");
+        }
+        else {
+          txt.append("Submitted");
+          if (info.getLinkText() != null) {
+            txt.append(" as " + info.getLinkText());
+            if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
+              txt.append(" [Duplicate]");
+            }
+          }
+        }
+        txt.append(". ");
+      }
+      else if (!message.isRead()) {
+        txt.append("Unread. ");
+      }
+      myInfoLabel.setText(txt.toString());
+    }
+    else {
+      myInfoLabel.setText("");
+    }
+  }
+
+  private void updateBlameLabel() {
+    final AbstractMessage message = getMessageAt(myIndex);
+    if (message != null) {
+      final String pluginName = findPluginName(message.getThrowable());
+      myBlameLabel.setText("Blame " + (pluginName == null ? "IDEA core" : pluginName));
+    }
+    else {
+      myBlameLabel.setText("");
+    }
+  }
+
+  private void updateDetailsPane() {
+    final AbstractMessage message = getMessageAt(myIndex);
+    if (message != null) {
+      showMessageDetails(message);
+    }
+    else {
+      hideMessageDetails();
+    }
+  }
+
+  private void updateCountLabel() {
+    myCountLabel.setText(Integer.toString(myIndex + 1) + " of " + myModel.size());
+  }
+
+  private class BackAction extends AnAction {
+    public BackAction() {
+      super("Back", null, IconLoader.getIcon("/actions/back.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      goBack();
+    }
+
+
+    public void update(AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabled(myIndex > 0);
+    }
+  }
+
+  private class ForwardAction extends AnAction {
+    public ForwardAction() {
+      super("Forward", null, IconLoader.getIcon("/actions/forward.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      goForward();
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabled(myIndex < myModel.size() - 1);
+    }
   }
 
   protected JComponent createCenterPanel() {
     setTitle("IDE Fatal Errors");
 
-    rebuildHeaders();
     JPanel root = new JPanel(new BorderLayout());
+    JPanel top = new JPanel(new BorderLayout());
+    JPanel toolbar = new JPanel(new FlowLayout());
 
-    JPanel headersPanel = new JPanel(new BorderLayout());
-    headersPanel.add(new JLabel("Messages:"), BorderLayout.NORTH);
-    myHeadersList.setCellRenderer(new CellRenderer());
-    headersPanel.add(new JScrollPane(myHeadersList), BorderLayout.CENTER);
+    myCountLabel = new JLabel();
+    myBlameLabel = new JLabel();
+    myInfoLabel = new JLabel();
+    ActionToolbar navToolbar = createNavigationToolbar();
+    toolbar.add(navToolbar.getComponent());
+    toolbar.add(myCountLabel);
+    top.add(toolbar, BorderLayout.WEST);
 
-    JPanel detailsPanel = new JPanel(new BorderLayout());
-    detailsPanel.add(new JLabel("Details:"), BorderLayout.NORTH);
+    JPanel blamePanel = new JPanel(new FlowLayout());
+    blamePanel.add(myBlameLabel);
+    final ActionToolbar blameToolbar = createBlameToolbar();
+    blamePanel.add(blameToolbar.getComponent());
+    top.add(blamePanel, BorderLayout.EAST);
+
+    root.add(top, BorderLayout.NORTH);
+
     myDetailsPane = new JTextPane();
     myDetailsPane.setEditable(false);
-    detailsPanel.add(new JScrollPane(myDetailsPane), BorderLayout.CENTER);
-
-    Splitter splitter = new Splitter(true, .5f);
-    splitter.setFirstComponent(headersPanel);
-    splitter.setSecondComponent(detailsPanel);
-
-    root.add(splitter, BorderLayout.CENTER);
+    JPanel infoPanel = new JPanel(new BorderLayout());
+    JPanel gapPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
+    gapPanel.add(myInfoLabel);
+    infoPanel.add(gapPanel, BorderLayout.NORTH);
+    infoPanel.add(new JScrollPane(myDetailsPane), BorderLayout.CENTER);
+    root.add(infoPanel, BorderLayout.CENTER);
 
     root.setPreferredSize(new Dimension(600, 550));
 
-    myHeadersList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (myHeadersList.isSelectionEmpty() || myHeadersList.getModel().getSize() == 0) {
-          hideMessageDetails();
-          return;
-        }
-        mySubmitBugAction.update();
-        showMessageDetails(getMessageAt(myHeadersList.getSelectedIndex()));
-      }
-    });
-
-    myHeadersList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() % 2 == 0) {
-          final AbstractMessage logMessage = getMessageAt(myHeadersList.getSelectedIndex());
-          if (logMessage.isSumbitted()) {
-            String url = logMessage.getSubmissionInfo().getURL();
-            if (url != null) {
-              BrowserUtil.launchBrowser(url);
-            }
-          }
-        }
-      }
-    });
-
+    rebuildHeaders();
     moveSelectionToEarliestMessage();
+    updateControls();
     return root;
   }
 
-  private AbstractMessage getMessageAt(int aIndex) {
-    return (AbstractMessage)((ArrayList)myHeadersList.getModel().getElementAt(aIndex)).get(0);
+  private ActionToolbar createBlameToolbar() {
+    DefaultActionGroup blameGroup = new DefaultActionGroup();
+    final BlameAction blameAction = new BlameAction();
+    blameGroup.add(blameAction);
+    blameAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
+
+    final ViewRequestAction viewRequestAction = new ViewRequestAction();
+    blameGroup.add(viewRequestAction);
+    // These two cannot be enabled simultaneously this we can assign same shortcut.
+    viewRequestAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
+
+    final ActionToolbar blameToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, blameGroup, true);
+    return blameToolbar;
+  }
+
+  private AbstractMessage getMessageAt(int idx) {
+    if (idx < 0 || idx >= myModel.size()) return null;
+    return myModel.get(idx).get(0);
   }
 
   private void moveSelectionToEarliestMessage() {
-    for (int i = myHeadersList.getModel().getSize() - 1; i > 0; i--) {
+    myIndex = 0;
+    for (int i = myModel.size() - 1; i > 0; i--) {
       final AbstractMessage each = getMessageAt(i);
       if (!each.isRead()) {
-        myHeadersList.setSelectedIndex(i);
+        myIndex = i;
         break;
       }
     }
 
-    if (myHeadersList.isSelectionEmpty() && myHeadersList.getModel().getSize() > 0) {
-      myHeadersList.setSelectedIndex(0);
-    }
+    updateControls();
   }
 
   private void rebuildHeaders() {
-
-    final int selectedIndex = myHeadersList.getSelectedIndex();
-
-    myHeadersModel.removeAllElements();
+    myModel.clear();
     myFatalErrors = myMessagePool.getFatalErrors(true, true);
     Collections.reverse(myFatalErrors);
 
@@ -159,12 +274,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     final Iterator<ArrayList<AbstractMessage>> messageLists = hash2Messages.values().iterator();
     while (messageLists.hasNext()) {
-      myHeadersModel.addElement(messageLists.next());
+      myModel.add(messageLists.next());
     }
 
-    if (selectedIndex < myHeadersModel.getSize()) {
-      myHeadersList.setSelectedIndex(selectedIndex);
-    }
+    updateControls();
   }
 
   private Map<String, ArrayList<AbstractMessage>> buildHashcode2MessageListMap(List aErrors) {
@@ -186,7 +299,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void showMessageDetails(AbstractMessage aMessage) {
-    myDetailsPane.setText(aMessage.getThrowableText());
+    myDetailsPane.setText(new StringBuffer().append(aMessage.getMessage()).append("\n").append(aMessage.getThrowableText()).toString());
     myDetailsPane.setCaretPosition(0);
   }
 
@@ -238,40 +351,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return null;
   }
 
-  private static class CellRenderer extends DefaultListCellRenderer {
-    private SimpleColoredComponent myComponent = new SimpleColoredComponent();
-
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      ArrayList<AbstractMessage> messageList = (ArrayList<AbstractMessage>)value;
-      AbstractMessage message = messageList.get(0);
-      String prefix = messageList.size() > 1 ? "(" + messageList.size() + ") " : "";
-
-      myComponent.clear();
-      final Color unimportantColor = new Color(102, 102, 102);
-      final String text = message.getMessage();
-
-      final SimpleTextAttributes grayed = new SimpleTextAttributes(Font.PLAIN, unimportantColor);
-      final SimpleTextAttributes blue = new SimpleTextAttributes(Font.PLAIN, Color.blue);
-
-      if (!message.isRead() && !message.isSumbitted()) {
-        myComponent.append(prefix + text, new SimpleTextAttributes(Font.BOLD, Color.black));
-      }
-      else if (message.isSumbitted()) {
-        myComponent.append(prefix, grayed);
-
-        myComponent.append("Submitted: #" + message.getSubmissionInfo().getLinkText(), blue);
-        myComponent.append(":" + text, blue);
-        myComponent.append(" (double-click to open in browser)", grayed);
-      }
-      else if (message.isRead()) {
-        myComponent.append(prefix + text, grayed);
-      }
-
-      myComponent.setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
-      return myComponent;
-    }
-  }
-
   private class ShutdownAction extends AbstractAction {
     public ShutdownAction() {
       super("Shut_down");
@@ -294,60 +373,33 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class SubmitBugAction extends AbstractAction {
-    public SubmitBugAction() {
-      super("_Report To JetBrains");
-      putValue(DEFAULT, Boolean.TRUE);
+  private class BlameAction extends AnAction {
+    public BlameAction() {
+      super("Submit", "Report to JetBrains", IconLoader.getIcon("/actions/startDebugger.png"));
     }
 
-    public void update() {
-      if (myHeadersList.isSelectionEmpty()) {
-        setEnabled(false);
-        return;
-      }
-
-      final int selectedIndex = myHeadersList.getSelectedIndex();
-      final AbstractMessage logMessage = getMessageAt(selectedIndex);
-
-      if (logMessage.isSumbitted()) {
-        setEnabled(false);
+    public void update(AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      final AbstractMessage logMessage = getMessageAt(myIndex);
+      if (logMessage == null) {
+        presentation.setEnabled(false);
         return;
       }
 
       final ErrorReportSubmitter submitter = getSubmitter(logMessage);
-      if (submitter == null) {
-        setEnabled(false);
+      if (logMessage.isSumbitted() || submitter == null) {
+        presentation.setEnabled(false);
         return;
       }
-
-      setEnabled(true);
+      presentation.setEnabled(true);
+      presentation.setDescription(submitter.getReportActionText());
     }
 
-    public void actionPerformed(ActionEvent e) {
-      if (myHeadersList.isSelectionEmpty()) {
-        Messages.showMessageDialog("Please first select error to report", "Cannot Report", Messages.getInformationIcon());
-        myHeadersList.requestFocus();
-        return;
-      }
-
-      final int selectedIndex = myHeadersList.getSelectedIndex();
-      final AbstractMessage logMessage = getMessageAt(selectedIndex);
-
-      if (logMessage.isSumbitted()) {
-        //        Messages.showMessageDialog("This error was already submitted: #" + logMessage.getScrID(), "Already Submitted", Messages.getInformationIcon());
-        Messages.showMessageDialog("This error was already submitted", "Already Submitted", Messages.getInformationIcon());
-        return;
-      }
-
+    public void actionPerformed(AnActionEvent e) {
+      final AbstractMessage logMessage = getMessageAt(myIndex);
       reportMessage(logMessage);
       rebuildHeaders();
-      myHeadersList.setSelectedIndex(selectedIndex);
-
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myHeadersList.requestFocus();
-        }
-      });
+      updateControls();
     }
 
     private void reportMessage(final AbstractMessage logMessage) {
@@ -356,21 +408,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (submitter != null) {
         logMessage.setSubmitted(submitter.submit(getEvents(logMessage), getContentPane()));
       }
-    }
-
-    private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
-      final String pluginName = findPluginName(logMessage.getThrowable());
-      final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT)
-          .getExtensions();
-      ErrorReportSubmitter submitter = null;
-      for (int i = 0; i < reporters.length; i++) {
-        ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporters[i];
-        final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (pluginName == null && descriptor == null || descriptor != null && Comparing.equal(pluginName, descriptor.getPluginName())) {
-          submitter = reporter;
-        }
-      }
-      return submitter;
     }
 
     private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {
@@ -388,6 +425,53 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     private IdeaLoggingEvent getEvent(final AbstractMessage logMessage) {
       return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable());
     }
+  }
+
+  private class ViewRequestAction extends AnAction {
+    public ViewRequestAction() {
+      super("Open in Browser", "Open related request page in browser", IconLoader.getIcon("/debugger/watches.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      final AbstractMessage logMessage = getMessageAt(myIndex);
+      if (logMessage == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      if (!logMessage.isSumbitted()) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      final SubmittedReportInfo info = logMessage.getSubmissionInfo();
+      presentation.setEnabled(info.getURL() != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final AbstractMessage logMessage = getMessageAt(myIndex);
+      final SubmittedReportInfo info = logMessage.getSubmissionInfo();
+      final String url = info.getURL();
+      if (url != null) {
+        BrowserUtil.launchBrowser(url);
+      }
+    }
+  }
+
+  private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
+    final String pluginName = findPluginName(logMessage.getThrowable());
+    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ErrorReportSubmitter.ERROR_HANDLER_EXTENSION_POINT)
+        .getExtensions();
+    ErrorReportSubmitter submitter = null;
+    for (int i = 0; i < reporters.length; i++) {
+      ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporters[i];
+      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      if (pluginName == null && descriptor == null || descriptor != null && Comparing.equal(pluginName, descriptor.getPluginName())) {
+        submitter = reporter;
+      }
+    }
+    return submitter;
   }
 
   protected void doOKAction() {
