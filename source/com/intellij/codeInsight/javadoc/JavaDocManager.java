@@ -525,7 +525,7 @@ public class JavaDocManager implements ProjectComponent {
     return null;
   }
 
-  public void fetchDocInfo(final JavaDocProvider jdp, final JavaDocInfoComponent component) {
+  public void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
     component.startWait();
 
     new Alarm().addRequest(new Runnable() {
@@ -545,7 +545,7 @@ public class JavaDocManager implements ProjectComponent {
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final String text = jdp.getJavaDoc();
+            final String text = provider.getJavaDoc();
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 if (text == null) {
@@ -555,7 +555,7 @@ public class JavaDocManager implements ProjectComponent {
                   component.setText(component.getText(), true);
                 }
                 else {
-                  component.setData(jdp.getElement(), text);
+                  component.setData(provider.getElement(), text);
                 }
               }
             });
@@ -729,7 +729,7 @@ public class JavaDocManager implements ProjectComponent {
 
   public void requestFocus() {
     if (myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).requestFocus();
+      myPreviouslyFocused.getParent().requestFocus();
     }
   }
 
