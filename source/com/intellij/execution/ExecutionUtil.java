@@ -23,7 +23,6 @@ import com.intellij.util.containers.HashSet;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -82,7 +81,7 @@ public class ExecutionUtil {
     for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
       final Module module = iterator.next();
       result.add(module);
-      result.addAll(Arrays.asList(moduleManager.getModuleDependentModules(module)));
+      result.addAll(moduleManager.getModuleDependentModules(module));
     }
     return result;
   }

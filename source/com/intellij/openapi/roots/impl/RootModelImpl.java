@@ -587,6 +587,19 @@ class RootModelImpl implements ModifiableRootModel {
     LOG.assertTrue(myWritable);
   }
 
+  public boolean isDependsOn(final Module module) {
+    for (int i = 0; i < myOrder.size(); i++) {
+      OrderEntry entry = myOrder.get(i);
+      if (entry instanceof ModuleOrderEntry) {
+        final Module module1 = ((ModuleOrderEntry)entry).getModule();
+        if (module1 == module) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static class ContentComparator implements Comparator<ContentEntry> {
     public static final ContentComparator INSTANCE = new ContentComparator();
 

@@ -3,8 +3,14 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.PropertiesProvider;
 import org.jdom.input.SAXBuilder;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
@@ -17,8 +23,17 @@ import java.lang.reflect.Member;
  *
  */
 public final class Utils {
-
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
+  private static final SAXParser SAX_PARSER = createParser();
+
+  private static SAXParser createParser() {
+    try {
+      return SAXParserFactory.newInstance().newSAXParser();
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
 
   /**
    * @param provider if null, no classes loaded and no properties read
@@ -34,6 +49,33 @@ public final class Utils {
     root.read(document.getRootElement(), provider);
 
     return root;
+  }
+
+  public synchronized static String getBoundClassName(final String formFileContent) throws Exception {
+    if (formFileContent.indexOf(FORM_NAMESPACE) == -1) {
+      throw new AlienFormFileException();
+    }
+
+    final String[] className = new String[] {null};
+    try {
+      SAX_PARSER.parse(new InputSource(new StringReader(formFileContent)), new DefaultHandler() {
+        public void startElement(String uri,
+                                 String localName,
+                                 String qName,
+                                 Attributes attributes)
+          throws SAXException {
+          if ("form".equals(qName)) {
+            className[0] = attributes.getValue("", "bind-to-class");
+            throw new SAXException("stop parsing");
+          }
+        }
+      });
+    }
+    catch (Exception e) {
+      // Do nothing.
+    }
+
+    return className[0];
   }
 
   /**

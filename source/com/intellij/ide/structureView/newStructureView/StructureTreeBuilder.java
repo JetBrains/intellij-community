@@ -1,5 +1,6 @@
 package com.intellij.ide.structureView.newStructureView;
 
+import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.*;
@@ -15,6 +16,7 @@ import com.intellij.util.Alarm;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.datatransfer.Transferable;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
@@ -155,8 +157,16 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
 
   private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged() {
-      addRootToUpdate();
+    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
+      updateByTransferable(oldTransferable);
+      updateByTransferable(newTransferable);
+    }
+
+    private void updateByTransferable(final Transferable t) {
+      final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
+      for (int i = 0; i < psiElements.length; i++) {
+        myUpdater.addSubtreeToUpdateByElement(psiElements[i]);
+      }
     }
   }
 }

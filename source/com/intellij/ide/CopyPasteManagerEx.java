@@ -87,6 +87,20 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
+  PsiElement[] getElements(final Transferable content) {
+    if (content == null) return null;
+    Object transferData;
+    try {
+      transferData = content.getTransferData(ourDataFlavor);
+    } catch (UnsupportedFlavorException e) {
+      return null;
+    } catch (IOException e) {
+      return null;
+    }
+
+    return transferData instanceof MyData ? ((MyData)transferData).getElements() : null;
+  }
+
 //  private long getUsedMemory() {
 //    Runtime runtime = Runtime.getRuntime();
 //    long usedMemory = runtime.totalMemory() - runtime.freeMemory();
@@ -94,15 +108,17 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 //  }
 //
   public void clear() {
+    Transferable old = getContents();
     myRecentData = null;
     setTransferable(new StringSelection(""));
-    fireContentChanged();
+    fireContentChanged(old);
   }
 
   private void setElements(PsiElement[] elements, boolean copied) {
+    Transferable old = getContents();
     myRecentData = new MyData(elements, copied);
     setTransferable(new MyTransferable(myRecentData));
-    fireContentChanged();
+    fireContentChanged(old);
   }
 
   private void setTransferable(Transferable transferable) {
@@ -252,7 +268,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         if (target == null) {
           return false;
         }
-        PsiElement[] elements = ((CopyPasteManagerEx)CopyPasteManager.getInstance()).getElements(null);
+        PsiElement[] elements = ((CopyPasteManagerEx)CopyPasteManager.getInstance()).getElements(new boolean[]{false});
         if (elements == null) {
           return false;
         }
@@ -291,7 +307,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
 
     public PsiElement[] getElements() {
-      if (myElements == null) return null;
+      if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
       int validElementsCount = 0;
 
@@ -347,16 +363,19 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       return flavor.equals(ourDataFlavor);
     }
 
+    public PsiElement[] getElements() {
+      return myDataProxy.getElements();
+    }
   }
 
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
-    fireContentChanged();
+    fireContentChanged(null);
   }
 
-  private void fireContentChanged() {
+  private void fireContentChanged(final Transferable oldTransferable) {
     for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
       ContentChangedListener listener = (ContentChangedListener)iterator.next();
-      listener.contentChanged();
+      listener.contentChanged(oldTransferable, getContents());
     }
   }
 
@@ -373,11 +392,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void setContents(Transferable content) {
+    Transferable old = getContents();
     addNewContentToStack(content);
 
     setSystemClipboardContent(content);
 
-    fireContentChanged();
+    fireContentChanged(old);
   }
 
   private void setSystemClipboardContent(Transferable content) {
@@ -476,6 +496,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void removeContent(Transferable t) {
+    Transferable old = getContents();
     boolean isCurrentClipboardContent = myDatas.indexOf(t) == 0;
     myDatas.remove(t);
     if (isCurrentClipboardContent) {
@@ -486,7 +507,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         setSystemClipboardContent(new StringSelection(""));
       }
     }
-    fireContentChanged();
+    fireContentChanged(old);
   }
 
   public void moveContentTopStackTop(Transferable t) {

@@ -344,7 +344,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myModuleModel.moduleGraph();
   }
 
-  public Module[] getModuleDependentModules(Module module) {
+  public List<Module> getModuleDependentModules(Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModuleDependentModules(module);
   }
@@ -579,7 +579,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return graph;
     }
 
-    private Module[] getModuleDependentModules(Module module) {
+    private List<Module> getModuleDependentModules(Module module) {
       List<Module> result = new ArrayList<Module>();
       Module[] modules = getModules();
       for (int i = 0; i < modules.length; i++) {
@@ -588,20 +588,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           result.add(aModule);
         }
       }
-      return result.toArray(new Module[result.size()]);
+      return result;
     }
 
     private boolean isModuleDependent(Module module, Module onModule) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (int j = 0; j < orderEntries.length; j++) {
-        OrderEntry entry = orderEntries[j];
-        if (entry instanceof ModuleOrderEntry) {
-          if (((ModuleOrderEntry)entry).getModule() == onModule) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return ModuleRootManager.getInstance(module).isDependsOn(onModule);
     }
 
     public void commitAssertingNoCircularDependency() {

@@ -47,4 +47,9 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    * @return
    */
   public abstract Module[] getDependencies();
+
+  /**
+   * @return true if this module contains passed in its dependencies
+   */
+  public abstract boolean isDependsOn(Module module);
 }

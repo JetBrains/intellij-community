@@ -29,6 +29,6 @@ public abstract class CopyPasteManager {
   public abstract boolean isCutElement(Object element);
 
   public interface ContentChangedListener {
-    void contentChanged();
+    void contentChanged(final Transferable oldTransferable, final Transferable newTransferable);
   }
 }

@@ -4,16 +4,17 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.List;
 
 public abstract class ModuleManager {
   public static ModuleManager getInstance(Project project) {
@@ -37,11 +38,11 @@ public abstract class ModuleManager {
   public abstract Comparator<Module> moduleDependencyComparator();
 
   /**
-   * Returns array of <i>modules that depend on</i> given module.
+   * Returns list of <i>modules that depend on</i> given module.
    * @param module
    * @return
    */
-  public abstract Module[] getModuleDependentModules(Module module);
+  public abstract List<Module> getModuleDependentModules(Module module);
 
   public abstract boolean isModuleDependent(Module module, Module onModule);
 

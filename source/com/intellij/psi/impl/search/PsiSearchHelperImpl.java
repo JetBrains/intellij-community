@@ -43,7 +43,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -1539,8 +1538,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       String text = psiFile.getText();
       try {
-        LwRootContainer container = Utils.getRootContainer(text, null);
-        if (className.equals(container.getClassToBind())) boundForms.add(psiFile);
+        String boundClass = Utils.getBoundClassName(text);
+        if (className.equals(boundClass)) boundForms.add(psiFile);
       }
       catch (Exception e) {
         LOG.debug(e);

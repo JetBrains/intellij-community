@@ -12,16 +12,16 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
 import java.util.*;
@@ -269,6 +269,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public Module[] getDependencies() {
     return myRootModel.getModuleDependencies();
+  }
+
+  public boolean isDependsOn(Module module) {
+    return myRootModel.isDependsOn(module);
   }
 
   public String[] getDependencyModuleNames() {

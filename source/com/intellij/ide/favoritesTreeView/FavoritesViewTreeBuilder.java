@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.datatransfer.Transferable;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
@@ -186,7 +187,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged() {
+    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
   }

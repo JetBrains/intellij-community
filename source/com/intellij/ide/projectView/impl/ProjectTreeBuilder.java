@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.datatransfer.Transferable;
 import java.util.Comparator;
 
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
@@ -89,8 +91,16 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
+      updateByTransferable(oldTransferable);
+      updateByTransferable(newTransferable);
+    }
+
+    private void updateByTransferable(final Transferable t) {
+      final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
+      for (int i = 0; i < psiElements.length; i++) {
+        myUpdater.addSubtreeToUpdateByElement(psiElements[i]);
+      }
     }
   }
 }

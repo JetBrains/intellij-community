@@ -9,18 +9,18 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiDirectory;
 
 import java.util.*;
 
@@ -84,10 +84,10 @@ public class ModuleUtil {
   }
 
   public static List<Module> getParentModulesOfType(ModuleType expectedModuleType, Module module) {
-    final Module[] parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
+    final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
     ArrayList<Module> modules = new ArrayList<Module>();
-    for (int i = 0; i < parents.length; i++) {
-      Module parent = parents[i];
+    for (int i = 0; i < parents.size(); i++) {
+      Module parent = parents.get(i);
       if (expectedModuleType.equals(parent.getModuleType())) {
         modules.add(parent);
       }
