@@ -84,25 +84,26 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (!(file instanceof PsiJavaFile)) {
       return editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
     }
+
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
-      while (element != null) {
-        if ((element instanceof PsiStatement || element instanceof PsiComment)
-            && element.getParent() instanceof PsiCodeBlock
-            && !element.getTextRange().contains(offset)
-        ) {
-          return offset;
-        }
-        if (element instanceof PsiJavaToken
-        && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
-        && element.getParent() instanceof PsiCodeBlock) {
-          return offset;
+      while (element != null && element != file) {
+        if (!element.getTextRange().contains(offset)) {
+          if ((element instanceof PsiStatement || element instanceof PsiComment)
+              && element.getParent() instanceof PsiCodeBlock) {
+            return offset;
+          }
+          if (element instanceof PsiJavaToken
+              && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
+              && element.getParent() instanceof PsiCodeBlock) {
+            return offset;
+          }
+          if (element instanceof PsiMember) {
+            return offset;
+          }
         }
         element = element.getParent();
-        final TextRange range = element.getTextRange();
-        if (!isDown && range.getStartOffset() < offset) break;
-        if (isDown && range.getEndOffset() >= editor.logicalPositionToOffset(new LogicalPosition(line+1, 0))) break;
       }
       line += isDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
@@ -224,18 +225,24 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     return element;
   }
 
-  private static class LineRange {
-    private final int startLine;
-    private final int endLine;
-
-    public LineRange(final int startLine, final int endLine) {
-      this.startLine = startLine;
-      this.endLine = endLine;
-    }
-  }
 }
 //todo
    // + no move inside/outside class(except nested)/method/initializer/comment
 // moving declarations
 // create codeblock when moving inside statement
 
+class LineRange {
+  final int startLine;
+  final int endLine;
+
+  public LineRange(final int startLine, final int endLine) {
+    this.startLine = startLine;
+    this.endLine = endLine;
+  }
+}
+
+interface Mover {
+  boolean isItMe();
+  LineRange getRangeToMove();
+  int getOffsetToMoveTo();
+}
