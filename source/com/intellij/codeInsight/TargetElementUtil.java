@@ -81,6 +81,7 @@ public class TargetElementUtil {
     */
 
     PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
       PsiElement parent = element.getParent();
