@@ -265,14 +265,6 @@ public class PathManager {
         System.out.println("Problem reading from property file: " + propFilePath);
       }
     }
-
-    final Properties props = System.getProperties();
-    final Set keys = props.keySet();
-    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-      String key = (String)iterator.next();
-      String value = props.getProperty(key);
-      System.out.println(key + "="+value);
-    }
   }
 
   private static String substitueVars(String s) {
