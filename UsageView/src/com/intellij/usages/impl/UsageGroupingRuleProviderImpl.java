@@ -7,6 +7,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.usages.UsageView;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -48,12 +49,13 @@ public class UsageGroupingRuleProviderImpl extends UsageGroupingRuleProvider imp
     return rules.toArray(new UsageGroupingRule[rules.size()]);
   }
 
-  public AnAction[] createGroupingActions(UsageViewImpl view) {
+  public AnAction[] createGroupingActions(UsageView view) {
+    final UsageViewImpl impl = (UsageViewImpl)view;
     return new AnAction[] {
-      new GroupByUsageTypeAction(view),
-      new GroupByModuleTypeAction(view),
-      new GroupByPackageAction(view),
-      new GroupByFileStructureAction(view)
+      new GroupByUsageTypeAction(impl),
+      new GroupByModuleTypeAction(impl),
+      new GroupByPackageAction(impl),
+      new GroupByFileStructureAction(impl)
     };
   }
 

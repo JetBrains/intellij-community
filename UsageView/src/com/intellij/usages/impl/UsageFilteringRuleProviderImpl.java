@@ -12,6 +12,7 @@ import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.usages.UsageView;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -45,16 +46,17 @@ public class UsageFilteringRuleProviderImpl extends UsageFilteringRuleProvider i
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
 
-  public AnAction[] createFilteringActions(UsageViewImpl view) {
-    final ShowImportsAction showImportsAction = new ShowImportsAction(view);
+  public AnAction[] createFilteringActions(UsageView view) {
+    final UsageViewImpl impl = (UsageViewImpl)view;
+    final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
     showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
     final ReadWriteState readWriteSharedState = new ReadWriteState();
 
-    final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(view, readWriteSharedState);
+    final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl, readWriteSharedState);
     showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
-    final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(view, readWriteSharedState);
+    final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl, readWriteSharedState);
     showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
 
     return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
