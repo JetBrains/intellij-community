@@ -11,10 +11,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.idea.devkit.sandbox.Sandbox;
 import org.jetbrains.idea.devkit.sandbox.SandboxManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import   private Sandbox mySandbox;
-com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.options.Co  }
+
+public class PluginModuleBuilder extends JavaModuleBuilder{
+  private Sandbox mySandbox;
+
+  public ModuleType getModuleType() {
+    return PluginModuleType.getInstance();
+  }
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
@@ -27,4 +30,5 @@ import com.intellij.openapi.options.Co  }
 
   public Sandbox getSandbox() {
     return mySandbox;
-nfigurat
+  }
+}

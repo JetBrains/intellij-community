@@ -66,11 +66,27 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
       stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null),
       new PluginModuleTypeStep(wizardContext, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null),
       stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
-reateOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
-reateOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
-reateOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
-reateOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null)      
     };
   }
 
-  public PluginModuleBuilder crea
+  public PluginModuleBuilder createModuleBuilder() {
+    return new PluginModuleBuilder();
+  }
+
+  public String getName() {
+    return "Plugin Module";
+  }
+
+  public String getDescription() {
+    //TODO: better description
+    return "Useful for IDEA plugin development";
+  }
+
+  public Icon getBigIcon() {
+    return PLUGIN_MODULE_ICON;
+  }
+
+  public Icon getNodeIcon(boolean isOpened) {
+    return PLUGIN_MODULE_NODE_ICON;
+  }
+}
