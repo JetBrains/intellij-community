@@ -8,6 +8,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * @author Eugene Zhuravlev
@@ -50,6 +51,15 @@ public class UsageInfoToUsageConverter {
   }
 
   public static Usage convert(TargetElementsDescriptor descriptor, UsageInfo usageInfo) {
+    Usage usage = _convert(descriptor, usageInfo);
+    final UsageConvertor[] convertors = ApplicationManager.getApplication().getComponents(UsageConvertor.class);
+    for (int i = 0; i < convertors.length; i++) {
+      usage = convertors[i].convert(usage);
+    }
+    return usage;
+  }
+
+  private static Usage _convert(final TargetElementsDescriptor descriptor, final UsageInfo usageInfo) {
     final PsiElement[] primaryElements = descriptor.getPrimaryElements();
     if (isReadWriteAccessibleElements(primaryElements)) {
       final PsiElement usageElement = usageInfo.getElement();
