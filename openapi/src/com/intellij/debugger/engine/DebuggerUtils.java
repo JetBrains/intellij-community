@@ -5,8 +5,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.ui.CompletitionEditor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -309,8 +307,6 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public abstract PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context) throws EvaluateException;
 
-  public abstract EvaluatorBuilder  getEvaluatorBuilder();
-
   public abstract DebuggerContext   getDebuggerContext (DataContext context);
 
   public abstract Element         writeTextWithImports(TextWithImports text);
@@ -321,7 +317,6 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public abstract TextWithImports    createExpressionText          (PsiExpression expression);
   public abstract TextWithImports    createExpressionWithImports   (String          expression);
-  public abstract CompletitionEditor createEditor(Project project, PsiElement context, String recentsId);
 
   public abstract PsiElement getContextElement(final StackFrameContext context);
 

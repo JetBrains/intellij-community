@@ -4,7 +4,6 @@
  */
 package com.intellij.debugger.requests;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.sun.jdi.request.ClassPrepareRequest;

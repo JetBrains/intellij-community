@@ -4,6 +4,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.ui.CompletitionEditor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,8 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     getModel().addColumn("Expression", (Object[])null);
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
-    final CompletitionEditor editor = DebuggerUtils.getInstance().createEditor(myProject, psiClass, "NamedChildrenConfigurable");
+    final CompletitionEditor editor =
+      ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));

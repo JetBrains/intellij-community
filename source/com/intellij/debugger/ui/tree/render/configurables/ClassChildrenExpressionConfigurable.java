@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.tree.render.configurables;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.ui.CompletitionEditor;
 import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -33,8 +34,8 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
     myRenderer = renderer;
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
-    myChildrenEditor   = DebuggerUtils.getInstance().createEditor(project, psiClass, "ClassChildrenExpression");
-    myExpandableEditor = DebuggerUtils.getInstance().createEditor(project, psiClass, "ClassChildrenExpression");
+    myChildrenEditor   = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
+    myExpandableEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
 
     myChildrenPanel.getComponent().setLayout(new BorderLayout());
     myChildrenPanel.getComponent().add(myChildrenEditor);
