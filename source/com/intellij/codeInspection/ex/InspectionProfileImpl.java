@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -568,7 +569,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
       if (!profile.myTools.isEmpty()) {
-        final Project project = profile.myTools.values().iterator().next().getManager().getProject();
+        final Project project = DummyProject.getInstance();     // TODO[ann]: review.
         final InspectionTool[] inspectionTools = getInspectionTools(project);
         for (int i = 0; i < inspectionTools.length; i++) {
           readAndWriteToolsConfigs(inspectionTools[i], profile);
