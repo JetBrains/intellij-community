@@ -232,7 +232,7 @@ public class PsiBuilderImpl implements PsiBuilder {
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = myProduction.get(i - 1).myLexemIndex;
-        while (item.myLexemIndex > prevProductionLexIndex &&
+        while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex < myLexems.size() &&
                myWhitespaces.isInSet(myLexems.get(item.myLexemIndex - 1).getTokenType())) {
           item.myLexemIndex--;
         }
@@ -276,7 +276,8 @@ public class PsiBuilderImpl implements PsiBuilder {
     return rootNode;
   }
 
-  private int insertLeafs(int curToken, final int lastIdx, final ASTNode curNode) {
+  private int insertLeafs(int curToken, int lastIdx, final ASTNode curNode) {
+    lastIdx = Math.min(lastIdx, myLexems.size());
     while (curToken < lastIdx) {
       Token lexem = myLexems.get(curToken++);
       final IElementType type = lexem.getTokenType();
