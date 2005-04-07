@@ -412,18 +412,21 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     else {
       project = null;
     }
+    
     final IdeFrame frame = getFrame(project);
-    LOG.assertTrue(frame != null);
-    final Rectangle rectangle = frame.getBounds();
-    frameElement.setAttribute("x", Integer.toString(rectangle.x));
-    frameElement.setAttribute("y", Integer.toString(rectangle.y));
-    frameElement.setAttribute("width", Integer.toString(rectangle.width));
-    frameElement.setAttribute("height", Integer.toString(rectangle.height));
-    frameElement.setAttribute("extended-state", Integer.toString(frame.getExtendedState()));
-    // Save default layout
-    final Element layoutElement = new Element(DesktopLayout.TAG);
-    element.addContent(layoutElement);
-    myLayout.writeExternal(layoutElement);
+    if (frame != null) {
+      final Rectangle rectangle = frame.getBounds();
+      frameElement.setAttribute("x", Integer.toString(rectangle.x));
+      frameElement.setAttribute("y", Integer.toString(rectangle.y));
+      frameElement.setAttribute("width", Integer.toString(rectangle.width));
+      frameElement.setAttribute("height", Integer.toString(rectangle.height));
+      frameElement.setAttribute("extended-state", Integer.toString(frame.getExtendedState()));
+
+      // Save default layout
+      final Element layoutElement = new Element(DesktopLayout.TAG);
+      element.addContent(layoutElement);
+      myLayout.writeExternal(layoutElement);
+    }
   }
 
   public final DesktopLayout getLayout() {
