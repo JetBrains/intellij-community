@@ -72,7 +72,7 @@ public final class IconLoader {
 
     final Image image = ImageLoader.loadFromResource(path, aClass);
     if(image == null || image.getHeight(ourFakeComponent) < 1 || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
-      LOG.error("Icon cannot be found at '"+path+"'");
+      LOG.error("Icon cannot be found in '"+path+"', aClass='"+(aClass == null ? null : aClass.getName())+"'");
       return null;
     }
 
