@@ -226,7 +226,7 @@ public class FindInProjectUtil {
 
         final GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
                                         GlobalSearchScope.projectScope(project) :
-                                        GlobalSearchScope.packageScope(psiDirectory.getPackage(), findModel.isWithSubdirectories());
+                                        GlobalSearchScope.directoryScope(psiDirectory, true);
         final List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
         // search for longer strings first
         Collections.sort(words, new Comparator<String>() {

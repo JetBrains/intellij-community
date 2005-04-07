@@ -12,10 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -102,6 +99,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public static GlobalSearchScope packageScope(PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, true);
+  }
+
+  public static GlobalSearchScope directoryScope(PsiDirectory directory, final boolean withSubdirectories) {
+    return new DirectoryScope(directory, withSubdirectories);
   }
 
   public static GlobalSearchScope packageScopeWithoutLibraries(PsiPackage aPackage, boolean includeSubpackages) {
@@ -301,6 +302,40 @@ public abstract class GlobalSearchScope extends SearchScope {
     public String toString() {
       return "package scope: " + myPackage +
              ", includeSubpackages = " + myIncludeSubpackages;
+    }
+  }
+  private static class DirectoryScope extends GlobalSearchScope {
+    private final VirtualFile myDirectory;
+    private final boolean myWithSubdirectories;
+
+    public DirectoryScope(PsiDirectory directory, final boolean withSubdirectories) {
+      myWithSubdirectories = withSubdirectories;
+      myDirectory = directory.getVirtualFile();
+    }
+
+    public boolean contains(VirtualFile file) {
+      if (myWithSubdirectories) {
+        return VfsUtil.isAncestor(myDirectory, file, false);
+      }
+      else {
+        return myDirectory.equals(file.getParent());
+      }
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    public boolean isSearchInModuleContent(Module aModule) {
+      return true;
+    }
+
+    public boolean isSearchInLibraries() {
+      return false;
+    }
+
+    public String toString() {
+      return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
     }
   }
 
