@@ -569,7 +569,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       for (Iterator<String> iterator = myTools.keySet().iterator(); iterator.hasNext();) {
         final String key = iterator.next();
         final InspectionTool tool = myTools.get(key);
-        tool.initialize(managerEx);
+        if (tool.getManager() == null){ //todo
+          tool.initialize(managerEx);
+        }
         tool.cleanup();
       }
     }
