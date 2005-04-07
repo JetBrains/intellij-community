@@ -33,6 +33,9 @@ import java.util.Set;
  */
 public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection");
+
+  public static final String SHORT_NAME = "FieldCanBeLocal";
+
   public String getGroupDisplayName() {
     return GROUP_LOCAL_CODE_ANALYSIS;
   }
@@ -42,7 +45,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   public String getShortName() {
-    return "FieldCanBeLocal";
+    return SHORT_NAME;
   }
 
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
