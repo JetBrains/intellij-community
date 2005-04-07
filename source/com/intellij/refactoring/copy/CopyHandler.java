@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -62,7 +63,7 @@ public class CopyHandler {
   private static boolean canCopyFiles(PsiElement[] elements) {
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile)) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile &&!(element instanceof JspFile))) {
         return false;
       }
     }

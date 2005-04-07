@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
@@ -170,7 +171,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile)) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile &&!(element instanceof JspFile))) {
         return false;
       }
     }
