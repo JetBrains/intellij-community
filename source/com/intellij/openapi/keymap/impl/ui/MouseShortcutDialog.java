@@ -24,7 +24,7 @@ class MouseShortcutDialog extends DialogWrapper{
 
   private final Keymap myKeymap;
   private final String myActionId;
-  private final ActionsTreeUtil.Group myMainGroup;
+  private final Group myMainGroup;
 
   private final JRadioButton myRbSingleClick;
   private final JRadioButton myRbDoubleClick;
@@ -44,7 +44,7 @@ class MouseShortcutDialog extends DialogWrapper{
     MouseShortcut shortcut,
     Keymap keymap,
     String actiondId,
-    ActionsTreeUtil.Group mainGroup
+    Group mainGroup
   ){
     super(parentComponent,true);
     setTitle("Enter Mouse Shortcut");

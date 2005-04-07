@@ -36,7 +36,7 @@ public class QuickListPanel {
   private JButton myAddSeparatorButton;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
-    ActionsTreeUtil.Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
+    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
     DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
@@ -141,9 +141,9 @@ public class QuickListPanel {
   }
 
   private void excludeSelectionAction() {
-    Object[] ids = myActionsList.getSelectedValues();
+    int[] ids = myActionsList.getSelectedIndices();
     for (int i = 0; i < ids.length; i++) {
-      ((DefaultListModel)myActionsList.getModel()).removeElement(ids[i]);
+      ((DefaultListModel)myActionsList.getModel()).remove(ids[i]);
     }
     update();
   }
@@ -237,9 +237,10 @@ public class QuickListPanel {
       if (value instanceof DefaultMutableTreeNode) {
         boolean used = false;
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof ActionsTreeUtil.Group) {
-          ActionsTreeUtil.Group group = (ActionsTreeUtil.Group)userObject;
-          setText(group.getName());
+        if (userObject instanceof Group) {
+          Group group = (Group)userObject;
+          final String name = group.getName();
+          setText(name != null ? name : group.getId());
           Icon icon = expanded ? group.getOpenIcon() : group.getIcon();
 
           if (icon == null) {

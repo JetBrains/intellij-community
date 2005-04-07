@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import java.util.ArrayList;
 
-class SimpleActionGroup extends ActionGroup {
+public class SimpleActionGroup extends ActionGroup {
   private final ArrayList myChildren = new ArrayList();
 
   public SimpleActionGroup() {

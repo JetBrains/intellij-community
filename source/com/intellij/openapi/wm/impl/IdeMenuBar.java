@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
@@ -27,7 +28,6 @@ import java.util.ArrayList;
 public class IdeMenuBar extends JMenuBar{
   private final MyTimerListener myTimerListener;
   private final MyKeymapManagerListener myKeymapManagerListener;
-  private final DefaultActionGroup myActionGroup;
   private ArrayList myVisibleActions;
   private ArrayList myNewVisibleActions;
   private final PresentationFactory myPresentationFactory;
@@ -39,7 +39,7 @@ public class IdeMenuBar extends JMenuBar{
     myActionManager = actionManager;
     myTimerListener=new MyTimerListener();
     myKeymapManagerListener=new MyKeymapManagerListener();
-    myActionGroup = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
+    //(DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
     myVisibleActions = new ArrayList();
     myNewVisibleActions = new ArrayList();
     myPresentationFactory = new PresentationFactory();
@@ -52,7 +52,7 @@ public class IdeMenuBar extends JMenuBar{
    */
   public void addNotify(){
     super.addNotify();
-    updateActions();
+    updateMenuActions();
     // Add updater for menus
     final ActionManagerEx actionManager=(ActionManagerEx)myActionManager;
     actionManager.addTimerListener(1000,new WeakTimerListener(actionManager,myTimerListener));
@@ -67,7 +67,7 @@ public class IdeMenuBar extends JMenuBar{
     super.removeNotify();
   }
 
-  private void updateActions() {
+  void updateMenuActions() {
     myNewVisibleActions.clear();
     final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
 
@@ -101,9 +101,12 @@ public class IdeMenuBar extends JMenuBar{
     }
   }
 
-  private void expandActionGroup(final DataContext context, final ArrayList newVisibleActions, ActionManager actionManager) {
-    if (myActionGroup == null) return;
-    final AnAction[] children = myActionGroup.getChildren(null);
+  private void expandActionGroup(final DataContext context,
+                                 final ArrayList newVisibleActions,
+                                 ActionManager actionManager) {
+    final ActionGroup mainActionGroup = CustomizableActionsSchemas.getInstance().getMainMenuActionGroup();
+    if (mainActionGroup == null) return;
+    final AnAction[] children = mainActionGroup.getChildren(null);
     for (int i = 0; i < children.length; i++) {
       final AnAction action = children[i];
       if (!(action instanceof ActionGroup)) {
@@ -155,7 +158,7 @@ public class IdeMenuBar extends JMenuBar{
         }
       }
 
-      updateActions();
+      updateMenuActions();
     }
   }
 

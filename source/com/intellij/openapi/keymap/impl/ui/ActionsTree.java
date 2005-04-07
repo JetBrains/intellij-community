@@ -30,7 +30,7 @@ public class ActionsTree {
   private DefaultMutableTreeNode myRoot;
   private JScrollPane myComponent;
   private Keymap myKeymap;
-  private ActionsTreeUtil.Group myMainGroup = new ActionsTreeUtil.Group("", null, null);
+  private Group myMainGroup = new Group("", null, null);
   private ShortcutColumnCellRenderer myShortcutColumnCellRenderer;
 
   public ActionsTree() {
@@ -59,8 +59,8 @@ public class ActionsTree {
         if (value instanceof DefaultMutableTreeNode) {
           Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
           boolean changed;
-          if (userObject instanceof ActionsTreeUtil.Group) {
-            ActionsTreeUtil.Group group = (ActionsTreeUtil.Group)userObject;
+          if (userObject instanceof Group) {
+            Group group = (Group)userObject;
             setText(group.getName());
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
@@ -169,7 +169,7 @@ public class ActionsTree {
     myRoot.removeAllChildren();
 
     Project project = (Project)DataManager.getInstance().getDataContext(getComponent()).getData(DataConstants.PROJECT);
-    ActionsTreeUtil.Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists);
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists);
 
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
@@ -180,7 +180,7 @@ public class ActionsTree {
     pathsKeeper.restorePaths();
   }
 
-  public ActionsTreeUtil.Group getMainGroup() {
+  public Group getMainGroup() {
     return myMainGroup;
   }
 
@@ -260,12 +260,12 @@ public class ActionsTree {
     return !Comparing.equal(oldShortcuts, newShortcuts);
   }
 
-  private boolean isGroupChanged(ActionsTreeUtil.Group group, Keymap oldKeymap, Keymap newKeymap) {
+  private boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
     ArrayList children = group.getChildren();
     for (int i = 0; i < children.size(); i++) {
       Object child = children.get(i);
-      if (child instanceof ActionsTreeUtil.Group) {
-        if (isGroupChanged((ActionsTreeUtil.Group)child, oldKeymap, newKeymap)) {
+      if (child instanceof Group) {
+        if (isGroupChanged((Group)child, oldKeymap, newKeymap)) {
           return true;
         }
       }
@@ -323,8 +323,8 @@ public class ActionsTree {
       String actionId = (String)userObject;
       return myMainGroup.getActionQualifiedPath(actionId);
     }
-    if (userObject instanceof ActionsTreeUtil.Group) {
-      return ((ActionsTreeUtil.Group)userObject).getQualifiedPath();
+    if (userObject instanceof Group) {
+      return ((Group)userObject).getQualifiedPath();
     }
     return null;
   }

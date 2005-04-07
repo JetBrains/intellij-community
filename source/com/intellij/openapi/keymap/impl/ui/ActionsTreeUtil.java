@@ -5,6 +5,8 @@ import com.intellij.ant.BuildFile;
 import com.intellij.ant.actions.TargetAction;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.actions.ToolWindowsGroup;
+import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -12,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.tools.SimpleActionGroup;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
 
@@ -21,6 +24,10 @@ import java.util.*;
 
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
+
+  public static final String MAIN_MENU_TITLE = "Main menu";
+  public static final String MAIN_TOOLBAR = "Main Toolbar";
+  public static final String EDITOR_POPUP = "Editor popup";
 
   private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
   private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");
@@ -36,7 +43,7 @@ public class ActionsTreeUtil {
   public static Group createMainGroup(final Project project, final Keymap keymap, final QuickList[] quickLists) {
     Group mainGroup = new Group("All Actions", null, null);
     mainGroup.addGroup(createEditorActionsGroup());
-    mainGroup.addGroup(createMainMenuGroup());
+    mainGroup.addGroup(createMainMenuGroup(false));
     mainGroup.addGroup(createVcsGroup());
     mainGroup.addGroup(createAntGroup(project));
     mainGroup.addGroup(createDebuggerActionsGroup());
@@ -48,15 +55,37 @@ public class ActionsTreeUtil {
 
     Group otherGroup = createOtherGroup(mainGroup, keymap);
     mainGroup.addGroup(otherGroup);
+
+    mainGroup.addGroup(createPluginsActionsGroup());
     return mainGroup;
   }
 
+  private static Group createPluginsActionsGroup() {
+    Group pluginsGroup = new Group("Plug-ins", null, null);
+    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    final PluginDescriptor[] plugins = PluginManager.getPlugins();
+    for (int i = 0; i < plugins.length; i++) {
+      PluginDescriptor plugin = plugins[i];
+      Group pluginGroup = new Group(plugin.getName(), null, null);
+      final String[] pluginActions = managerEx.getPluginActions(plugin.getId());
+      if (pluginActions == null || pluginActions.length == 0){
+        continue;
+      }
+      for (int j = 0; j < pluginActions.length; j++) {
+        String pluginAction = pluginActions[j];
+        pluginGroup.addActionId(pluginAction);
+      }
+      pluginsGroup.addGroup(pluginGroup);
+    }
+    return pluginsGroup;
+  }
+
   private static Group createBookmarksActionsGroup() {
-    return createGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_BOOKMARKS));
+    return createGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_BOOKMARKS), true);
   }
 
   private static Group createGuiDesignerActionsGroup(Group mainGroup) {
-    Group group = new Group("GUI Designer", null, null);
+    Group group = new Group("GUI Designer", IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup uiGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP);
     AnAction[] actions = uiGroup.getChildren(null);
@@ -70,25 +99,37 @@ public class ActionsTreeUtil {
   }
 
   private static Group createVcsGroup() {
-    Group group = new Group("Version Control Systems", null, null);
+    Group group = new Group("Version Control Systems", "VcsGroup", null, null);
     ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getAction("VcsGroup");
-    fillGroupIgnorePopupFlag(versionControls, group);
+    fillGroupIgnorePopupFlag(versionControls, group, false);
     return group;
   }
 
-  private static Group createMainMenuGroup() {
-    Group group = new Group("Main menu", MAIN_MENU_ICON, MAIN_MENU_ICON);
+  public static Group createMainMenuGroup(boolean ignore) {
+    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, MAIN_MENU_ICON, MAIN_MENU_ICON);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU);
-    fillGroupIgnorePopupFlag(mainMenuGroup, group);
+    fillGroupIgnorePopupFlag(mainMenuGroup, group, ignore);
     return group;
   }
 
-  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group) {
+
+
+  public static Group createMainToolbarGroup() {
+    final ActionGroup mainToolbarGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_TOOLBAR);
+    return createGroup(mainToolbarGroup, MAIN_TOOLBAR, null, null, true);
+  }
+
+  public static Group createEditorPopupGroup() {
+    ActionGroup editorPopupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP);
+    return createGroup(editorPopupGroup, EDITOR_POPUP, EDITOR_ICON, EDITOR_OPEN_ICON, true);
+  }
+
+  public static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, boolean ignore) {
     AnAction[] mainMenuTopGroups = actionGroup.getChildren(null);
     for (int i = 0; i < mainMenuTopGroups.length; i++) {
       AnAction action = mainMenuTopGroups[i];
       if (action instanceof DefaultActionGroup) {
-        Group subGroup = createGroup((ActionGroup)action);
+        Group subGroup = createGroup((ActionGroup)action, ignore);
         if (subGroup.getSize() > 0) {
           group.addGroup(subGroup);
         }
@@ -96,23 +137,31 @@ public class ActionsTreeUtil {
     }
   }
 
-  private static Group createGroup(ActionGroup actionGroup) {
+  private static Group createGroup(ActionGroup actionGroup, boolean ignore) {
+    final String name = actionGroup.getTemplatePresentation().getText();
+    return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore);
+  }
+
+  private static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore) {
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(actionGroup.getTemplatePresentation().getText(), null, null);
+    Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
     AnAction[] children = actionGroup.getChildren(null);
     for (int i = 0; i < children.length; i++) {
       AnAction action = children[i];
 
       if (action instanceof ActionGroup) {
-        if (action instanceof DefaultActionGroup || action instanceof ToolWindowsGroup) {
-          Group subGroup = createGroup((ActionGroup)action);
+        if (action instanceof DefaultActionGroup || action instanceof ToolWindowsGroup || action instanceof SimpleActionGroup) {
+          Group subGroup = createGroup((ActionGroup)action, ignore);
           if (subGroup.getSize() > 0) {
-            if (!((ActionGroup)action).isPopup()) {
+            if (!ignore && !((ActionGroup)action).isPopup()) {
               group.addAll(subGroup);
             }
             else {
               group.addGroup(subGroup);
             }
+          }
+          else {
+            group.addGroup(subGroup);
           }
         }
       }
@@ -147,7 +196,7 @@ public class ActionsTreeUtil {
     }
 
     Collections.sort(ids);
-    Group group = new Group("Debugger Actions", null, null);
+    Group group = new Group("Debugger Actions", IdeActions.GROUP_DEBUGGER, null, null);
     for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
       String id = iterator.next();
       group.addActionId(id);
@@ -174,7 +223,7 @@ public class ActionsTreeUtil {
     }
 
     Collections.sort(ids);
-    Group group = new Group("Editor Actions", EDITOR_ICON, EDITOR_OPEN_ICON);
+    Group group = new Group("Editor Actions", IdeActions.GROUP_EDITOR, EDITOR_ICON, EDITOR_OPEN_ICON);
     for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
       String id = iterator.next();
       group.addActionId(id);
@@ -382,157 +431,4 @@ public class ActionsTreeUtil {
     return node;
   }
 
-  public static class Group {
-    private Group myParent;
-    private String myName;
-    private Icon myIcon;
-    private Icon myOpenIcon;
-    /**
-     * Group or action id (String) or Separator or QuickList
-     */
-    private ArrayList myChildren;
-
-    public Group(String name, Icon icon, Icon openIcon) {
-      myName = name;
-      myIcon = icon;
-      myOpenIcon = openIcon;
-      myChildren = new ArrayList();
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    public Icon getOpenIcon() {
-      return myOpenIcon;
-    }
-
-    public void addActionId(String id) {
-      myChildren.add(id);
-    }
-
-    public void addQuickList(QuickList list) {
-      myChildren.add(list);
-    }
-
-    public void addGroup(Group group) {
-      myChildren.add(group);
-      group.myParent = this;
-    }
-
-    public void addSeparator() {
-      myChildren.add(Separator.getInstance());
-    }
-
-    public boolean containsId(String id) {
-      for (int i=0; i < myChildren.size(); i++) {
-        Object child = myChildren.get(i);
-        if (child instanceof String) {
-          if (id.equals(child)) {
-            return true;
-          }
-        }
-        else if (child instanceof QuickList) {
-          if (((QuickList)child).getActionId().equals(id)) return true;
-        }
-        else if (child instanceof Group) {
-          if (((Group)child).containsId(id)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    public ArrayList getChildren() {
-      return myChildren;
-    }
-
-    public int getSize() {
-      return myChildren.size();
-    }
-
-    public void normalizeSeparators() {
-      while (myChildren.size() > 0 && myChildren.get(0) instanceof Separator) {
-        myChildren.remove(0);
-      }
-
-      while (myChildren.size() > 0 && myChildren.get(myChildren.size() - 1) instanceof Separator) {
-        myChildren.remove(myChildren.size() - 1);
-      }
-
-      for (int i=1; i < myChildren.size() - 1; i++) {
-        if (myChildren.get(i) instanceof Separator && myChildren.get(i + 1) instanceof Separator) {
-          myChildren.remove(i);
-          i--;
-        }
-      }
-    }
-
-    public String getActionQualifiedPath(String id) {
-      for (int i=0; i < myChildren.size(); i++) {
-        Object child = myChildren.get(i);
-        if (child instanceof QuickList) {
-          child = ((QuickList)child).getActionId();
-        }
-        if (child instanceof String) {
-          if (id.equals(child)) {
-            AnAction action = ActionManager.getInstance().getAction(id);
-            String path;
-            if (action != null) {
-              path = action.getTemplatePresentation().getText();
-            }
-            else {
-              path = id;
-            }
-            return !isRoot() ? getName() + " | " + path : path;
-          }
-        }
-        else if (child instanceof Group) {
-          String path = ((Group)child).getActionQualifiedPath(id);
-          if (path != null) {
-            return !isRoot() ? getName() + " | " + path : path;
-          }
-        }
-      }
-      return null;
-    }
-
-    public boolean isRoot() {
-      return myParent == null;
-    }
-
-    public String getQualifiedPath() {
-      StringBuffer path = new StringBuffer(64);
-      Group group = this;
-      while (group != null && !group.isRoot()) {
-        path.insert(0, group.getName() + " | ");
-        group = group.myParent;
-      }
-      return path.toString();
-    }
-
-    public void addAll(Group group) {
-      Iterator iterator = group.getChildren().iterator();
-      while (iterator.hasNext()) {
-        Object o = iterator.next();
-        if (o instanceof String) {
-          addActionId((String)o);
-        }
-        else if (o instanceof QuickList) {
-          addQuickList((QuickList)o);
-        }
-        else if (o instanceof Group) {
-          addGroup((Group)o);
-        }
-        else if (o instanceof Separator) {
-          addSeparator();
-        }
-      }
-    }
-  }
 }

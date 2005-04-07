@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.ui.customization.CustomizableActionsPanel">
+  <grid id="63fa4" binding="myPanel" row-count="8" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="43" y="59" width="556" height="366"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <scrollpane id="1fca1">
+        <constraints>
+          <xy x="31" y="50" width="411" height="316"/>
+          <grid row="2" column="1" row-span="6" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="85cb" class="javax.swing.JTree" binding="myActionsTree">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="edf19" class="javax.swing.JButton" binding="myAddActionButton">
+        <constraints>
+          <xy x="452" y="50" width="104" height="24"/>
+          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text value="Add"/>
+        </properties>
+      </component>
+      <component id="2a153" class="javax.swing.JButton" binding="myRemoveActionButton">
+        <constraints>
+          <xy x="452" y="108" width="104" height="24"/>
+          <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text value="Remove"/>
+        </properties>
+      </component>
+      <component id="b9ee1" class="javax.swing.JButton" binding="myMoveActionDownButton">
+        <constraints>
+          <xy x="452" y="166" width="104" height="24"/>
+          <grid row="6" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text value="Move Down"/>
+        </properties>
+      </component>
+      <component id="ab0b0" class="javax.swing.JButton" binding="myMoveActionUpButton">
+        <constraints>
+          <xy x="452" y="137" width="104" height="24"/>
+          <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text value="Move Up"/>
+        </properties>
+      </component>
+      <component id="efd3f" class="javax.swing.JButton" binding="myAddSeparatorButton">
+        <constraints>
+          <xy x="452" y="79" width="104" height="24"/>
+          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text value="Add Separator"/>
+        </properties>
+      </component>
+      <vspacer id="bd8d3">
+        <constraints>
+          <xy x="498" y="190" width="11" height="176"/>
+          <grid row="7" column="3" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+      <component id="ab838" class="javax.swing.JTextField" binding="myDescription">
+        <constraints>
+          <xy x="112" y="25" width="444" height="20"/>
+          <grid row="1" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="default"/>
+        </properties>
+      </component>
+      <component id="4d17e" class="javax.swing.JLabel">
+        <constraints>
+          <xy x="45" y="28" width="57" height="14"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+        </constraints>
+        <properties>
+          <text value="Description:"/>
+        </properties>
+      </component>
+      <component id="64ad9" class="javax.swing.JLabel">
+        <constraints>
+          <xy x="31" y="3" width="71" height="14"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+        </constraints>
+        <properties>
+          <text value="Schema Name:"/>
+        </properties>
+      </component>
+      <component id="3c6a0" class="javax.swing.JTextField" binding="myName">
+        <constraints>
+          <xy x="112" y="0" width="444" height="20"/>
+          <grid row="0" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <grid id="d608d" binding="myListPane" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="0" width="21" height="366"/>
+          <grid row="0" column="0" row-span="8" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

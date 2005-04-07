@@ -1,19 +1,19 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
-import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -120,8 +120,18 @@ public class IdeRootPane extends JRootPane{
     myContentPane.revalidate();
   }
 
+  void updateMainMenuActions(){
+    final JMenuBar menuBar = getJMenuBar();
+    if (menuBar != null){
+      myContentPane.remove(menuBar);
+    }
+    ((IdeMenuBar)menuBar).updateMenuActions();
+    setJMenuBar(menuBar);
+    myContentPane.revalidate();
+  }
+
   private JComponent createToolbar() {
-    ActionGroup group = (ActionGroup)myActionManager.getAction(IdeActions.GROUP_MAIN_TOOLBAR);
+    ActionGroup group = CustomizableActionsSchemas.getInstance().getActiveSchema().getMainToolbarActionsGroup();
     final ActionToolbarEx toolBar=(ActionToolbarEx)myActionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,

@@ -27,9 +27,9 @@ public class KeyboardShortcutDialog extends DialogWrapper {
   private JScrollPane myConflictInfoScroll;
   private Keymap myKeymap;
   private String myActionId;
-  private ActionsTreeUtil.Group myMainGroup;
+  private Group myMainGroup;
 
-  public KeyboardShortcutDialog(Component component, String actionId, ActionsTreeUtil.Group mainGroup) {
+  public KeyboardShortcutDialog(Component component, String actionId, Group mainGroup) {
     super(component, true);
     setTitle("Enter Keyboard Shortcut");
     myActionId = actionId;

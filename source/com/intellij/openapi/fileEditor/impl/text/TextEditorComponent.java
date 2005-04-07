@@ -2,6 +2,8 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -316,7 +318,8 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private static final class MyEditorMouseListener extends EditorPopupHandler {
     public void invokePopup(final EditorMouseEvent event) {
       if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-        ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP);
+        final CustomActionsSchema customizationSchema = CustomizableActionsSchemas.getInstance().getActiveSchema();
+        ActionGroup group = customizationSchema.getEditorPopupGroup();
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
         MouseEvent e = event.getMouseEvent();
         popupMenu.getComponent().show(e.getComponent(), e.getX(), e.getY());

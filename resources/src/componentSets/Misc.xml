@@ -51,6 +51,9 @@
       <interface-class>com.intellij.usages.rules.UsageFilteringRuleProvider</interface-class>
       <implementation-class>com.intellij.usages.impl.UsageFilteringRuleProviderImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.ui.customization.CustomizableActionsSchemas</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

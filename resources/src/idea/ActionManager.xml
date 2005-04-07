@@ -16,7 +16,8 @@
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction" text="_Show History" description="Show history of file"/>
 
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction" text="Add To Favorites" description="Add selected node to favorites"/>
-    <group id="AddToFavorites" class = "com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true" text="_Add To Favorites"/>
+    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true" text="Add To _Favorites"/>
+    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true" text="Add _All To Favorites"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List"/>
     <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.RemoveFavoritesListAction" text="Remove Favorites List" description="REmove Favorites List"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send To Favorites"/>
@@ -749,6 +750,10 @@
     </group>
 
     <group id="EditorTabPopupMenu">
+      <reference ref="AddToFavorites"/>
+      <separator />
+      <reference ref="AddAllToFavorites"/>
+      <separator />
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="ValidateXml"/>
@@ -921,7 +926,6 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <separator/>
         <reference ref="AddToFavorites"/>
       <separator />
       <reference ref="RunContextPopupGroup"/>
@@ -950,6 +954,8 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
+        <reference ref="AddToFavorites"/>
+      <separator />
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -970,6 +976,8 @@
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
+      <separator/>
+        <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1001,6 +1009,9 @@
       <reference ref="InspectCode"/>
       <reference ref="ShowPackageDeps"/>
       <reference ref="RefactoringMenu"/>
+      <separator/>
+        <reference ref="AddToFavorites"/>
+      <separator />
       <reference ref="ValidateXml"/>
       <reference ref="AddAntBuildFile"/>
       <separator/>

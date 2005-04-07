@@ -109,6 +109,10 @@ public class IdeFrame extends JFrame implements DataProvider {
     ((IdeRootPane)getRootPane()).updateToolbar();
   }
 
+  public void updateMenuBar(){
+    ((IdeRootPane)getRootPane()).updateMainMenuActions();
+  }
+
   public void setTitle(final String title) {
     myTitle = title;
     updateTitle();

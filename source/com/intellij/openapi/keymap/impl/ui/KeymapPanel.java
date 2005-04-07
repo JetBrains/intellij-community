@@ -16,11 +16,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -481,7 +481,7 @@ public class KeymapPanel extends JPanel {
       return;
     }
 
-    ActionsTreeUtil.Group group = myActionsTree.getMainGroup();
+    Group group = myActionsTree.getMainGroup();
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, group);
 
     Shortcut selected = (Shortcut)myShortcutsList.getSelectedValue();
