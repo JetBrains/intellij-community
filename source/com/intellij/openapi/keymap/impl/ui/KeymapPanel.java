@@ -274,7 +274,9 @@ public class KeymapPanel extends JPanel {
 
   private void deleteSelectedQuickList() {
     int idx = myQuickListsList.getSelectedIndex();
-    if (idx < 0) return;
+    if (idx < 0) {
+      return;
+    }
 
     QuickList list = (QuickList)myQuickListsModel.remove(idx);
     list.unregisterAllShortcuts(getAllKeymaps());
@@ -304,7 +306,9 @@ public class KeymapPanel extends JPanel {
 
   private void editSelectedQuickList() {
     QuickList list = (QuickList)myQuickListsList.getSelectedValue();
-    if (list == null) return;
+    if (list == null) {
+      return;
+    }
 
     QuickList newList = editList(list);
     if (newList != null) {
@@ -491,7 +495,9 @@ public class KeymapPanel extends JPanel {
 
     KeyboardShortcut keyboardShortcut = dialog.getKeyboardShortcut();
 
-    if (keyboardShortcut == null) return;
+    if (keyboardShortcut == null) {
+      return;
+    }
 
     HashMap<String, ArrayList<KeyboardShortcut>> conflicts = mySelectedKeymap.getConflicts(actionId, keyboardShortcut);
     if(conflicts.size() > 0) {
@@ -844,25 +850,22 @@ public class KeymapPanel extends JPanel {
   }
 
   public void apply() throws ConfigurationException{
-    HashSet keymapNames = new HashSet();
-    for(int i = 0; i < myKeymapListModel.getSize(); i++){
-      Keymap keymap = (Keymap)myKeymapListModel.elementAt(i);
-      String name = keymap.getName();
-      if (keymapNames.contains(name)) {
-        throw new ConfigurationException("All keymaps should have unique names");
-      }
-      keymapNames.add(name);
-    }
+    ensureUniqueKeymapNames();
 
-    KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
+    final KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
     keymapManager.removeAllKeymapsExceptUnmodifiable();
+    Keymap activeKeyMapToSet = myActiveKeymap;
     for(int i = 0; i < myKeymapListModel.getSize(); i++){
-      Keymap keymap = (Keymap)myKeymapListModel.elementAt(i);
-      if(keymap.canModify()) {
-        keymapManager.addKeymap(keymap);
+      final Keymap modelKeymap = (Keymap)myKeymapListModel.elementAt(i);
+      if(modelKeymap.canModify()) {
+        final KeymapImpl keymapToAdd = ((KeymapImpl)modelKeymap).copy();
+        if (modelKeymap == myActiveKeymap) {
+          activeKeyMapToSet = keymapToAdd;
+        }
+        keymapManager.addKeymap(keymapToAdd);
       }
     }
-    keymapManager.setActiveKeymap(myActiveKeymap);
+    keymapManager.setActiveKeymap(activeKeyMapToSet);
     try {
       keymapManager.save();
     }
@@ -880,6 +883,18 @@ public class KeymapPanel extends JPanel {
     QuickListsManager.getInstance().registerActions();
   }
 
+  private void ensureUniqueKeymapNames() throws ConfigurationException {
+    final Set<String> keymapNames = new HashSet<String>();
+    for(int i = 0; i < myKeymapListModel.getSize(); i++){
+      final Keymap modelKeymap = (Keymap)myKeymapListModel.elementAt(i);
+      String name = modelKeymap.getName();
+      if (keymapNames.contains(name)) {
+        throw new ConfigurationException("All keymaps should have unique names");
+      }
+      keymapNames.add(name);
+    }
+  }
+
   boolean isModified() {
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     if (!Comparing.equal(myActiveKeymap, keymapManager.getActiveKeymap())) {
@@ -891,7 +906,9 @@ public class KeymapPanel extends JPanel {
       panelKeymaps[i] = (Keymap)myKeymapListModel.elementAt(i);
     }
 
-    if (!Comparing.equal(managerKeymaps, panelKeymaps)) return true;
+    if (!Comparing.equal(managerKeymaps, panelKeymaps)) {
+      return true;
+    }
     QuickList[] storedLists = QuickListsManager.getInstance().getAllQuickLists();
 
     QuickList[] modelLists = new QuickList[myQuickListsModel.getSize()];
