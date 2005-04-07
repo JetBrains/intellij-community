@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
@@ -30,7 +31,7 @@ public class FileReferenceSet {
   private static final String SEPARATOR_STRING = "/";
 
   private Reference[] myReferences;
-  private final PsiElement myElement;
+  private PsiElement myElement;
   private final int myStartInElement;
   private final ReferenceType myType;
   private final PsiReferenceProvider myProvider;
@@ -191,7 +192,18 @@ public class FileReferenceSet {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-      throw new IncorrectOperationException("NYI");
+      final ElementManipulator manipulator = getManipulator(getElement());
+      if (manipulator != null) {
+        myElement = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
+        //Correct ranges
+        int delta = newElementName.length() - myRange.getLength();
+        myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+        for (int idx  = myIndex + 1; idx < myReferences.length; idx++) {
+          myReferences[idx].myRange = myReferences[idx].myRange.shiftRight(delta);
+        }
+        return myElement;
+      }
+      throw new IncorrectOperationException("Manipulator for this element is not defined");
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{

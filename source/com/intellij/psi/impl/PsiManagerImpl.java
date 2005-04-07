@@ -392,9 +392,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     if (element1 == null || element2 == null) {
       return false;
     }
-    if (element1 instanceof PsiPackage || element2 instanceof PsiPackage) {
-      return element1.equals(element2);
-    }
+    if (element1.equals(element2)) return true;
     if (element1 instanceof PsiDirectory || element2 instanceof PsiDirectory) {
       return false;
     }

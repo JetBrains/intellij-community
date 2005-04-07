@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -297,6 +298,9 @@ public class UsageViewUtil {
   public static String getType(PsiElement psiElement) {
     if (psiElement instanceof PsiDirectory) {
       return "directory";
+    }
+    if (psiElement instanceof WebDirectoryElement) {
+      return "web directory";
     }
     if (psiElement instanceof PsiFile) {
       return "file";

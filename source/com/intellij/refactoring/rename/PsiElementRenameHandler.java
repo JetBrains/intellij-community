@@ -47,17 +47,13 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
-    if (element instanceof PsiFile) {
-      renameFileOrDirectory(element, project);
-    }
-    else if (element instanceof PsiDirectory) {
+    if (element instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)element;
       PsiPackage aPackage = psiDirectory.getPackage();
       final String qualifiedName = aPackage != null ? aPackage.getQualifiedName() : "";
       if (aPackage == null || qualifiedName.length() == 0/*default package*/) {
-        renameFileOrDirectory(element, project);
-      }
-      else {
+        rename(element, project, nameSuggestionContext);
+      } else {
         PsiDirectory[] directories = aPackage.getDirectories();
         final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
         if (virtualFiles.length == 0 && directories.length == 1) {
@@ -161,20 +157,6 @@ public class PsiElementRenameHandler implements RenameHandler {
         new RenameDialog(project, elementToRename, nameSuggestionContext, helpID);
 
       dialog.show();
-  }
-
-
-  /**
-   * renames an arbitrary file or a directory that has no packages associated with
-   */
-  private void renameFileOrDirectory(final PsiElement element, final Project project) {
-    if (element instanceof PsiFile || element instanceof PsiDirectory) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            FileRenameUtil.rename(project, element);
-          }
-        });
-    }
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {

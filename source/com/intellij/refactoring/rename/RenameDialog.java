@@ -38,6 +38,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.io.File;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -92,7 +93,9 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private String getFullName() {
-    return (UsageViewUtil.getType(myPsiElement) + " " + UsageViewUtil.getDescriptiveName(myPsiElement)).trim();
+    final String name = myPsiElement instanceof PsiFileSystemItem ? UsageViewUtil.getShortName(myPsiElement) :
+      UsageViewUtil.getDescriptiveName(myPsiElement);
+    return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 
   private boolean showSearchCheckboxes(PsiElement e) {
@@ -489,6 +492,10 @@ public class RenameDialog extends RefactoringDialog {
     else {
       if (myPsiElement instanceof PsiAntElement) {
         return newName.trim().matches("[\\d\\w\\_\\.\\-]*");
+      }
+      if (myPsiElement instanceof PsiFile) {
+        //Wild guess
+        return newName.indexOf(File.separatorChar) < 0;
       }
       else {
         return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName.trim());
