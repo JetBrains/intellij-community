@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
@@ -40,10 +40,9 @@ final class ToolWindowsPane extends JPanel{
   /*
    * Splitters.
    */
-  private final Splitter myLeftSplitter;
-  private final Splitter myRightSplitter;
-  private final Splitter myTopSplitter;
-  private final Splitter myBottomSplitter;
+  private final ThreeComponentsSplitter myVerticalSplitter;
+  private final ThreeComponentsSplitter myHorizontalSplitter;
+
   /*
    * Tool stripes.
    */
@@ -67,24 +66,12 @@ final class ToolWindowsPane extends JPanel{
 
     // Splitters
 
-    myLeftSplitter = new Splitter();
-    myLeftSplitter.setBackground(Color.gray);
-    myLeftSplitter.setProportion(0.33f);
+    myVerticalSplitter = new ThreeComponentsSplitter(true);
+    myVerticalSplitter.setBackground(Color.gray);
+    myHorizontalSplitter = new ThreeComponentsSplitter(false);
+    myHorizontalSplitter.setBackground(Color.gray);
 
-    myRightSplitter = new Splitter();
-    myRightSplitter.setBackground(Color.gray);
-    myRightSplitter.setProportion(0.66f);
-    myRightSplitter.setFirstComponent(myLeftSplitter);
-
-    myTopSplitter=new Splitter(true);
-    myTopSplitter.setBackground(Color.gray);
-    myTopSplitter.setProportion(0.66f);
-    myTopSplitter.setSecondComponent(myRightSplitter);
-
-    myBottomSplitter = new Splitter(true);
-    myBottomSplitter.setBackground(Color.gray);
-    myBottomSplitter.setFirstComponent(myTopSplitter);
-    myBottomSplitter.setProportion(0.66f);
+    myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
 
     // Tool stripes
 
@@ -96,7 +83,7 @@ final class ToolWindowsPane extends JPanel{
 
     // Layered pane
 
-    myLayeredPane=new MyLayeredPane(myBottomSplitter);
+    myLayeredPane=new MyLayeredPane(myVerticalSplitter);
 
     // Compose layout
 
@@ -238,22 +225,26 @@ final class ToolWindowsPane extends JPanel{
   /**
    * Sets (docks) specified component to the specified anchor.
    */
-  private void setComponent(final JComponent component,final ToolWindowAnchor anchor){
+  private void setComponent(final JComponent component, final ToolWindowAnchor anchor, final float weight) {
     if(ToolWindowAnchor.TOP==anchor){
-      myTopSplitter.setFirstComponent(component);
+      myVerticalSplitter.setFirstComponent(component);
+      myVerticalSplitter.setFirstSize((int)(myLayeredPane.getHeight() * weight));
     }else if(ToolWindowAnchor.LEFT==anchor){
-      myLeftSplitter.setFirstComponent(component);
+      myHorizontalSplitter.setFirstComponent(component);
+      myHorizontalSplitter.setFirstSize((int)(myLayeredPane.getWidth() * weight));
     }else if(ToolWindowAnchor.BOTTOM==anchor){
-      myBottomSplitter.setSecondComponent(component);
+      myVerticalSplitter.setLastComponent(component);
+      myVerticalSplitter.setLastSize((int)(myLayeredPane.getHeight() * weight));
     }else if(ToolWindowAnchor.RIGHT==anchor){
-      myRightSplitter.setSecondComponent(component);
+      myHorizontalSplitter.setLastComponent(component);
+      myHorizontalSplitter.setLastSize((int)(myLayeredPane.getWidth() * weight));
     }else{
       LOG.error("unknown anchor: "+anchor);
     }
   }
 
   private void setDocumentComponent(final JComponent component){
-    myLeftSplitter.setSecondComponent(component);
+    myHorizontalSplitter.setInnerComponent(component);
   }
 
   private void updateToolStripesVisibility(){
@@ -280,46 +271,11 @@ final class ToolWindowsPane extends JPanel{
       try{
         final float weight=myInfo.getWeight()<=.0f?WindowInfo.DEFAULT_WEIGHT:myInfo.getWeight();
         float newWeight=weight;
-        final ToolWindowAnchor anchor=myInfo.getAnchor();
-        if(ToolWindowAnchor.TOP==anchor){
-          if(myTopSplitter.getHeight()>0){
-            newWeight=(myLayeredPane.getHeight()*weight+myTopSplitter.getDividerWidth()/2)/(float)myTopSplitter.getHeight();
-          }
-          if(newWeight>=1.0f){
-            newWeight=1-WindowInfo.DEFAULT_WEIGHT;
-          }
-          myTopSplitter.setProportion(newWeight);
-          setComponent(myComponent,ToolWindowAnchor.TOP);
-        }else if(ToolWindowAnchor.LEFT==anchor){
-          if(myLeftSplitter.getWidth()>0){
-            newWeight=(myLayeredPane.getWidth()*weight+myLeftSplitter.getDividerWidth()/2)/(float)myLeftSplitter.getWidth();
-          }
-          if(newWeight>=1.0f){
-            newWeight=1-WindowInfo.DEFAULT_WEIGHT;
-          }
-          myLeftSplitter.setProportion(newWeight);
-          setComponent(myComponent,ToolWindowAnchor.LEFT);
-        }else if(ToolWindowAnchor.BOTTOM==anchor){
-          if(myBottomSplitter.getHeight()>0){
-            newWeight=(myLayeredPane.getHeight()*weight+myBottomSplitter.getDividerWidth()/2+.5f)/(float)myBottomSplitter.getHeight();
-          }
-          if(newWeight>=1.0f){
-            newWeight=1-WindowInfo.DEFAULT_WEIGHT;
-          }
-          myBottomSplitter.setProportion(1-newWeight);
-          setComponent(myComponent,ToolWindowAnchor.BOTTOM);
-        }else if(ToolWindowAnchor.RIGHT==anchor){
-          if(myRightSplitter.getWidth()>0){
-            newWeight=(myLayeredPane.getWidth()*weight+myRightSplitter.getDividerWidth()/2+.5f)/(float)myRightSplitter.getWidth();
-          }
-          if(newWeight>=1.0f){
-            newWeight=1-WindowInfo.DEFAULT_WEIGHT;
-          }
-          myRightSplitter.setProportion(1-newWeight);
-          setComponent(myComponent,ToolWindowAnchor.RIGHT);
-        }else{
-          LOG.error("unknown anchor: "+anchor);
+        if(newWeight>=1.0f){
+          newWeight=1-WindowInfo.DEFAULT_WEIGHT;
         }
+        final ToolWindowAnchor anchor=myInfo.getAnchor();
+        setComponent(myComponent, anchor, newWeight);
         if(!myDirtyMode){
           myLayeredPane.validate();
           myLayeredPane.repaint();
@@ -475,7 +431,7 @@ final class ToolWindowsPane extends JPanel{
 
     public final void run(){
       try{
-        setComponent(null,myInfo.getAnchor());
+        setComponent(null,myInfo.getAnchor(), 0);
         if(!myDirtyMode){
           myLayeredPane.validate();
           myLayeredPane.repaint();
@@ -584,7 +540,7 @@ final class ToolWindowsPane extends JPanel{
     private SoftReference myBottomImageRef;
     private SoftReference myTopImageRef;
 
-    public MyLayeredPane(final Splitter splitter) {
+    public MyLayeredPane(final JComponent splitter) {
       myBottomImageRef=new SoftReference(null);
       myTopImageRef=new SoftReference(null);
       setOpaque(true);

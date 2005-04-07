@@ -1,0 +1,549 @@
+/*
+* Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+* Use is subject to license terms.
+*/
+package com.intellij.openapi.ui;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+/**
+ * @author Vladimir Kondratyev
+ */
+public class ThreeComponentsSplitter extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.ThreeComponentsSplitter");
+
+  private int myDividerWidth;
+  /**
+   *                        /------/
+   *                        |  1   |
+   * This is vertical split |------|
+   *                        |  2   |
+   *                        /------/
+   *
+   *                          /-------/
+   *                          |   |   |
+   * This is horihontal split | 1 | 2 |
+   *                          |   |   |
+   *                          /-------/
+   */
+  private boolean myVerticalSplit;
+  private boolean myHonorMinimumSize = false;
+
+  private final Divider myFirstDivider;
+  private final Divider myLastDivider;
+
+  private JComponent myFirstComponent;
+  private JComponent myInnerComponent;
+  private JComponent myLastComponent;
+
+  private int myFirstSize = 10;
+  private int myLastSize = 10;
+
+  private boolean myShowDividerControls;
+
+
+  /**
+   * Creates horizontal split with proportion equals to .5f
+   */
+  public ThreeComponentsSplitter() {
+    this(false);
+  }
+
+
+  public ThreeComponentsSplitter(boolean vertical) {
+    myVerticalSplit = vertical;
+    myShowDividerControls = false;
+    myFirstDivider = new Divider(true);
+    myLastDivider = new Divider(false);
+
+    myDividerWidth = 7;
+    setOpaque(false);
+    super.add(myFirstDivider);
+    super.add(myLastDivider);
+  }
+
+  public void setShowDividerControls(boolean showDividerControls) {
+    myShowDividerControls = showDividerControls;
+    setOrientation(myVerticalSplit);
+  }
+
+  public boolean isHonorMinimumSize() {
+    return myHonorMinimumSize;
+  }
+
+  public void setHonorComponentsMinimumSize(boolean honorMinimumSize) {
+    myHonorMinimumSize = honorMinimumSize;
+  }
+
+  public boolean isVisible() {
+    return super.isVisible() && (firstVisible() || innerVisible() || lastVisible());
+  }
+
+  private boolean lastVisible() {
+    return myLastComponent != null && myLastComponent.isVisible();
+  }
+
+  private boolean innerVisible() {
+    return myInnerComponent != null && myInnerComponent.isVisible();
+  }
+
+  private boolean firstVisible() {
+    return myFirstComponent != null && myFirstComponent.isVisible();
+  }
+
+  private int visibleDividersCount() {
+    int count = 0;
+    if (firstDividerVisible()) count++;
+    if (lastDividerVisible()) count++;
+    return count;
+  }
+
+  private boolean firstDividerVisible() {
+    return firstVisible() && innerVisible() || firstVisible() && lastVisible() && !innerVisible();
+  }
+
+  private boolean lastDividerVisible() {
+    return innerVisible() && lastVisible();
+  }
+
+  public Dimension getMinimumSize() {
+    if (isHonorMinimumSize()) {
+      final int dividerWidth = getDividerWidth();
+      final Dimension firstSize = myFirstComponent != null ? myFirstComponent.getMinimumSize() : new Dimension(0, 0);
+      final Dimension lastSize = myLastComponent != null ? myLastComponent.getMinimumSize() : new Dimension(0, 0);
+      final Dimension innerSize = myInnerComponent != null ? myInnerComponent.getMinimumSize() : new Dimension(0, 0);
+      if (getOrientation()) {
+        int width = Math.max(firstSize.width, Math.max(lastSize.width, innerSize.width));
+        int height = visibleDividersCount() * dividerWidth;
+        height += firstSize.height;
+        height += lastSize.height;
+        height += innerSize.height;
+        return new Dimension(width, height);
+      }
+      else {
+        int heigth = Math.max(firstSize.height, Math.max(lastSize.height, innerSize.height));
+        int width = visibleDividersCount() * dividerWidth;
+        width += firstSize.width;
+        width += lastSize.width;
+        width += innerSize.width;
+        return new Dimension(width, heigth);
+      }
+    }
+    return super.getMinimumSize();
+  }
+
+  public void doLayout() {
+    final int width = getWidth();
+    final int height = getHeight();
+
+    Rectangle firstRect = new Rectangle();
+    Rectangle firstDividerRect = new Rectangle();
+    Rectangle lastDividerRect = new Rectangle();
+    Rectangle lastRect = new Rectangle();
+    Rectangle innerRect = new Rectangle();
+    final int componentSize = getOrientation() ? height : width;
+    int dividerWidth = getDividerWidth();
+    int dividersCount = visibleDividersCount();
+
+    int firstCompontSize;
+    int lastComponentSize;
+    int innerComponentSize;
+    if(componentSize <= dividersCount * dividerWidth) {
+      firstCompontSize = 0;
+      lastComponentSize = 0;
+      innerComponentSize = 0;
+      dividerWidth = componentSize;
+    }
+    else {
+      firstCompontSize = getFirstSize();
+      lastComponentSize = getLastSize();
+      int sizeLack = (firstCompontSize + lastComponentSize) - (componentSize - dividersCount * dividerWidth);
+      if (sizeLack > 0) {
+        // Lacking size. Reduce first component's size, inner -> empty
+        firstCompontSize -= sizeLack;
+        innerComponentSize = 0;
+      }
+      else {
+        innerComponentSize = componentSize - dividersCount * dividerWidth - getFirstSize() - getLastSize();
+      }
+
+      if (!innerVisible()) {
+        lastComponentSize += innerComponentSize;
+        innerComponentSize = 0;
+      }
+    }
+
+    if (getOrientation()) {
+      int space = firstCompontSize;
+      firstRect.setBounds(0, 0, width, firstCompontSize);
+      if (firstDividerVisible()) {
+        firstDividerRect.setBounds(0, space, width, dividerWidth);
+        space += dividerWidth;
+      }
+
+      innerRect.setBounds(0, space, width, innerComponentSize);
+      space += innerComponentSize;
+
+      if (lastDividerVisible()) {
+        lastDividerRect.setBounds(0, space, width, dividerWidth);
+        space += dividerWidth;
+      }
+
+      lastRect.setBounds(0, space, width, lastComponentSize);
+    }
+    else {
+      int space = firstCompontSize;
+      firstRect.setBounds(0, 0, firstCompontSize, height);
+
+      if (firstDividerVisible()) {
+        firstDividerRect.setBounds(space, 0, dividerWidth, height);
+        space += dividerWidth;
+      }
+
+      innerRect.setBounds(space, 0, innerComponentSize, height);
+      space += innerComponentSize;
+
+      if (lastDividerVisible()) {
+        lastDividerRect.setBounds(space, 0, dividerWidth, height);
+        space += dividerWidth;
+      }
+
+      lastRect.setBounds(space, 0, lastComponentSize, height);
+    }
+
+    myFirstDivider.setVisible(firstDividerVisible());
+    myFirstDivider.setBounds(firstDividerRect);
+    myFirstDivider.doLayout();
+
+    myLastDivider.setVisible(lastDividerVisible());
+    myLastDivider.setBounds(lastDividerRect);
+    myLastDivider.doLayout();
+
+    if (myFirstComponent != null) {
+      myFirstComponent.setBounds(firstRect);
+      myFirstComponent.validate();
+    }
+
+    if (myInnerComponent != null) {
+      myInnerComponent.setBounds(innerRect);
+      myInnerComponent.validate();
+    }
+
+    if (myLastComponent != null) {
+      myLastComponent.setBounds(lastRect);
+      myLastComponent.validate();
+    }
+  }
+
+  public int getDividerWidth() {
+    return myDividerWidth;
+  }
+
+  public void setDividerWidth(int width) {
+    if (width <= 0) {
+      throw new IllegalArgumentException("Wrong divider width: " + width);
+    }
+    if (myDividerWidth != width) {
+      myDividerWidth = width;
+      doLayout();
+      repaint();
+    }
+  }
+
+  /**
+   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   */
+  public boolean getOrientation() {
+    return myVerticalSplit;
+  }
+
+  /**
+   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   */
+  public void setOrientation(boolean verticalSplit) {
+    myVerticalSplit = verticalSplit;
+    myFirstDivider.setOrientation(verticalSplit);
+    myLastDivider.setOrientation(verticalSplit);
+    doLayout();
+    repaint();
+  }
+
+  public JComponent getFirstComponent() {
+    return myFirstComponent;
+  }
+
+  /**
+   * Sets component which is located as the "first" splitted area. The method doesn't validate and
+   * repaint the splitter. If there is already
+   *
+   * @param component
+   */
+  public void setFirstComponent(JComponent component) {
+    if (myFirstComponent != component) {
+      if (myFirstComponent != null) {
+        remove(myFirstComponent);
+      }
+      myFirstComponent = component;
+      if (myFirstComponent != null) {
+        super.add(myFirstComponent);
+        myFirstComponent.invalidate();
+      }
+    }
+  }
+
+  public JComponent getLastComponent() {
+    return myLastComponent;
+  }
+
+
+  /**
+   * Sets component which is located as the "secont" splitted area. The method doesn't validate and
+   * repaint the splitter.
+   *
+   * @param component
+   */
+  public void setLastComponent(JComponent component) {
+    if (myLastComponent != component) {
+      if (myLastComponent != null) {
+        remove(myLastComponent);
+      }
+      myLastComponent = component;
+      if (myLastComponent != null) {
+        super.add(myLastComponent);
+        myLastComponent.invalidate();
+      }
+    }
+  }
+
+
+  public JComponent getInnerComponent() {
+    return myInnerComponent;
+  }
+
+
+  /**
+   * Sets component which is located as the "inner" splitted area. The method doesn't validate and
+   * repaint the splitter.
+   *
+   * @param component
+   */
+  public void setInnerComponent(JComponent component) {
+    if (myInnerComponent != component) {
+      if (myInnerComponent != null) {
+        remove(myInnerComponent);
+      }
+      myInnerComponent = component;
+      if (myInnerComponent != null) {
+        super.add(myInnerComponent);
+        myInnerComponent.invalidate();
+      }
+    }
+  }
+
+  public void setFirstSize(final int size) {
+    myFirstSize = size;
+    doLayout();
+    repaint();
+  }
+
+  public void setLastSize(final int size) {
+    myLastSize = size;
+    doLayout();
+    repaint();
+  }
+
+  public int getFirstSize() {
+    return firstVisible() ? myFirstSize : 0;
+  }
+
+  public int getLastSize() {
+    return lastVisible() ? myLastSize : 0;
+  }
+
+  protected class Divider extends JPanel {
+    protected boolean myDragging;
+    protected Point myPoint;
+    private boolean myIsFirst;
+
+    public Divider(boolean isFirst) {
+      super(new GridBagLayout());
+      setFocusable(false);
+      enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+      myIsFirst = isFirst;
+      setOrientation(myVerticalSplit);
+    }
+
+    private void setOrientation(boolean isVerticalSplit) {
+      removeAll();
+
+      if (!myShowDividerControls) {
+        return;
+      }
+
+      int xMask = isVerticalSplit ? 1 : 0;
+      int yMask = isVerticalSplit ? 0 : 1;
+
+      Icon glueIcon = IconLoader.getIcon(isVerticalSplit ? "/general/splitGlueV.png" : "/general/splitGlueH.png");
+      int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
+      add(new JLabel(glueIcon),
+          new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+      JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
+      splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      splitDownlabel.setToolTipText(isVerticalSplit ? "Down" : "Right");
+      splitDownlabel.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (myInnerComponent != null) {
+            final int income = myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth();
+            if (myIsFirst) {
+              setFirstSize(myFirstSize + income);
+            }
+            else {
+              setLastSize(myLastSize + income);
+            }
+          }
+        }
+      });
+      add(splitDownlabel,
+          new GridBagConstraints(isVerticalSplit ? 1 : 0,
+                                 isVerticalSplit ? 0 : 5,
+                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      //
+      add(new JLabel(glueIcon),
+          new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+      JLabel splitCenterlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitCenterV.png" : "/general/splitCenterH.png"));
+      splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      splitCenterlabel.setToolTipText("Center");
+      splitCenterlabel.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          center();
+        }
+      });
+      add(splitCenterlabel,
+          new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(new JLabel(glueIcon),
+          new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+      //
+      JLabel splitUpLabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitUp.png" : "/general/splitLeft.png"));
+      splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      splitUpLabel.setToolTipText(isVerticalSplit ? "Up" : "Left");
+      splitUpLabel.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (myInnerComponent != null) {
+            if (myIsFirst) {
+              setFirstSize(getMinSize(myFirstComponent));
+            }
+            else {
+              setLastSize(getMinSize(myLastComponent));
+            }
+          }
+        }
+      });
+      add(splitUpLabel,
+          new GridBagConstraints(isVerticalSplit ? 5 : 0,
+                                 isVerticalSplit ? 0 : 1,
+                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(new JLabel(glueIcon),
+          new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
+                                 isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+    }
+
+    private void center() {
+      if (myInnerComponent != null) {
+        final int total = myFirstSize + (myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth());
+        if (myIsFirst) {
+          setFirstSize(total / 2);
+        }
+        else {
+          setLastSize(total / 2);
+        }
+      }
+    }
+
+    protected void processMouseMotionEvent(MouseEvent e) {
+      super.processMouseMotionEvent(e);
+      if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
+        myDragging = true;
+        setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
+        float proportion;
+        if (getOrientation()) {
+          if (getHeight() > 0) {
+            if (myIsFirst) {
+              setFirstSize(Math.max(getMinSize(myFirstComponent), myPoint.y));
+            }
+            else {
+              setLastSize(Math.max(getMinSize(myLastComponent), ThreeComponentsSplitter.this.getHeight() - myPoint.y - getDividerWidth()));
+            }
+          }
+        }
+        else {
+          if (getWidth() > 0) {
+            if (myIsFirst) {
+              setFirstSize(Math.max(getMinSize(myFirstComponent), myPoint.x));
+            }
+            else {
+              setLastSize(Math.max(getMinSize(myLastComponent), ThreeComponentsSplitter.this.getWidth() - myPoint.x - getDividerWidth()));
+            }
+          }
+        }
+        ThreeComponentsSplitter.this.doLayout();
+      }
+    }
+
+    private int getMinSize(JComponent component) {
+      if (isHonorMinimumSize()) {
+        if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && myLastComponent != null && myLastComponent.isVisible()) {
+          if (getOrientation()) {
+            return component.getMinimumSize().height;
+          }
+          else {
+            return component.getMinimumSize().width;
+          }
+        }
+      }
+      return 0;
+    }
+
+    protected void processMouseEvent(MouseEvent e) {
+      super.processMouseEvent(e);
+      switch (e.getID()) {
+        case MouseEvent.MOUSE_ENTERED:
+          {
+            setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+            break;
+          }
+        case MouseEvent.MOUSE_EXITED:
+          {
+            if (!myDragging) {
+              setCursor(Cursor.getPredefinedCursor(0));
+            }
+            break;
+          }
+        case MouseEvent.MOUSE_PRESSED:
+          {
+            setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+            break;
+          }
+        case MouseEvent.MOUSE_RELEASED:
+          {
+            myDragging = false;
+            myPoint = null;
+            break;
+          }
+        case MouseEvent.MOUSE_CLICKED:
+          {
+            if (e.getClickCount() == 2) {
+              center();
+            }
+            break;
+          }
+      }
+    }
+  }
+}
