@@ -75,7 +75,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="To (fully qualified name):"/>
+          <text value="Introduce to class (fully qualified name):"/>
         </properties>
       </component>
       <xy id="31fde" binding="myTargetClassNamePanel" hgap="-1" vgap="-1">
