@@ -27,6 +27,10 @@ public abstract class ColumnInfo <Item, Aspect> {
 
   public abstract Aspect valueOf(Item object);
 
+  public final boolean isSortable() {
+    return getComparator() != null;
+  }
+
   public Comparator<Item> getComparator(){
     return null;
   }
@@ -38,7 +42,9 @@ public abstract class ColumnInfo <Item, Aspect> {
   public void sort(List<Item> list) {
     LOG.assertTrue(list != null);
     Comparator<Item> comparator = getComparator();
-    if (comparator != null) Collections.sort(list, comparator);
+    if (comparator != null) {
+      Collections.sort(list, comparator);
+    }
   }
 
   public Class getColumnClass() {

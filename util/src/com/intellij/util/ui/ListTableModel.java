@@ -91,9 +91,14 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
 
   private void resort() {
     if (myIsSortable) {
-      myColumnInfos[mySortByColumn].sort(myItems);
-      if (mySortingType == SortableColumnModel.SORT_DESCENDING) Collections.reverse(myItems);
-      fireTableDataChanged();
+      final ColumnInfo columnInfo = myColumnInfos[mySortByColumn];
+      if (columnInfo.isSortable()) {
+        columnInfo.sort(myItems);
+        if (mySortingType == SortableColumnModel.SORT_DESCENDING) {
+          Collections.reverse(myItems);
+        }
+        fireTableDataChanged();
+      }
     }
 
   }

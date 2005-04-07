@@ -2,6 +2,7 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,9 +53,9 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
       setText("");
       return this;
     }
-    String name = myModel.getColumnInfos()[logicalIndex].getName();
-    String labelString = name;
-    if (myModel.isSortable() && myModel.getSortedColumnIndex() == logicalIndex) {
+    final ColumnInfo columnInfo = myModel.getColumnInfos()[logicalIndex];
+    String labelString = columnInfo.getName();
+    if (myModel.isSortable() && columnInfo.isSortable() && myModel.getSortedColumnIndex() == logicalIndex) {
       labelString = "<html><b>" + labelString + "</b></html>";
       if (myModel.getSortingType() == SortableColumnModel.SORT_ASCENDING) {
         icon = IconLoader.getIcon("/actions/sortAsc.png");
