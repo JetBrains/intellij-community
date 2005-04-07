@@ -2,6 +2,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 
 
 /**
@@ -13,8 +14,8 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new LocalCanBeFinal();
-    myWrapper = new LocalInspectionToolWrapper(myTool);
+    myWrapper = (LocalInspectionToolWrapper)getManager().getCurrentProfile().getInspectionTool(LocalCanBeFinal.SHORT_NAME);
+    myTool = (LocalCanBeFinal)myWrapper.getTool();
   }
 
   private void doTest() throws Exception {
