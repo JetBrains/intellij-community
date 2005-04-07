@@ -23,14 +23,26 @@ public class GetFromVcsAction extends QuickSwitchSchemeAction{
   protected void fillActions(Project project, DefaultActionGroup group) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction cvs = actionManager.getAction("Cvs.CheckoutProject");
+    if (cvs != null) {
+      group.add(cvs);
+    }
     final AnAction svn = actionManager.getAction("Svn.CheckoutProject");
-    group.add(cvs);
-    group.add(svn);
+    if (svn != null) {
+      group.add(svn);
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DefaultActionGroup group = new DefaultActionGroup();
+    final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(null, group);
+
+    if (group.getChildrenCount() == 0) {
+      group.add(new AnAction("No VCS plugins with Check-out action installed.") {
+        public void actionPerformed(AnActionEvent e) {
+          group.setPopup(false);
+        }
+      } );
+    }
 
     final ListPopup popup = ActionListPopup.createListPopup(e.getPresentation().getText(), group, e.getDataContext(), true, true);
 
