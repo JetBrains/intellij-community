@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -493,9 +494,11 @@ public class RenameDialog extends RefactoringDialog {
       if (myPsiElement instanceof PsiAntElement) {
         return newName.trim().matches("[\\d\\w\\_\\.\\-]*");
       }
-      if (myPsiElement instanceof PsiFile) {
-        //Wild guess
+      if (myPsiElement instanceof PsiFile || myPsiElement instanceof PsiDirectory) {
         return newName.indexOf(File.separatorChar) < 0;
+      }
+      if (myPsiElement instanceof WebDirectoryElement) {
+        return newName.indexOf('/') < 0;
       }
       else {
         return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName.trim());
