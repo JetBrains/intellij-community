@@ -457,9 +457,9 @@ public class StringUtil {
 
   public static int stringHashCodeInsensitive(CharSequence chars) {
     int h = 0;
-    int to = chars.length();
-    for( int off = 0; off < to; ) {
-      h = 31*h + Character.toLowerCase(chars.charAt(off++));
+    final int len = chars.length();
+    for( int i = 0; i < len; i++) {
+      h = 31*h + Character.toLowerCase(chars.charAt(i));
     }
     return h;
   }

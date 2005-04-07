@@ -301,7 +301,7 @@ public class FindInProjectUtil {
   }  
 
   private static boolean canBeOptimizedForWordSearching(final FindModel findModel) {
-    return findModel.isWholeWordsOnly() && findModel.isCaseSensitive() && !findModel.isRegularExpressions();
+    return findModel.isWholeWordsOnly() && !findModel.isRegularExpressions();
   }
 
   private static void addToUsages(Project project,

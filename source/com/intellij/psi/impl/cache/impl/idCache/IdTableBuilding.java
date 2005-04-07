@@ -17,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
-import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.TodoPattern;
@@ -64,7 +63,7 @@ public class IdTableBuilding {
 
   static class TextIdCacheBuilder implements IdCacheBuilder {
     public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
-      scanWords(wordsTable, chars, 0, length, UsageSearchContext.IN_PLAIN_TEXT, false);
+      scanWords(wordsTable, chars, 0, length, UsageSearchContext.IN_PLAIN_TEXT);
 
       if (todoCounts != null) {
         for (int index = 0; index < todoPatterns.length; index++) {
@@ -243,7 +242,7 @@ public class IdTableBuilding {
     public void build(char[] chars, int length, final TIntIntHashMap wordsTable, final TodoPattern[] todoPatterns, final int[] todoCounts) {
       myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurence>() {
         public boolean process(final WordOccurence t) {
-          IdCacheUtil.addOccurrence(wordsTable, StringUtil.stringHashCode(t.getText()), convertToMask(t.getKind()));
+          IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
 
           if (t.getKind() == WordOccurence.Kind.COMMENTS) {
             if (todoCounts != null) {
@@ -318,11 +317,11 @@ public class IdTableBuilding {
   }
 
   private static void addClassAndPackagesNames(String qName, final TIntIntHashMap wordsTable) {
-    IdCacheUtil.addOccurrence(wordsTable, qName.hashCode(), UsageSearchContext.IN_ALIEN_LANGUAGES);
+    IdCacheUtil.addOccurrence(wordsTable,qName, UsageSearchContext.IN_ALIEN_LANGUAGES);
     int idx = qName.lastIndexOf('.');
     while (idx > 0) {
       qName = qName.substring(0, idx);
-      IdCacheUtil.addOccurrence(wordsTable, qName.hashCode(), UsageSearchContext.IN_ALIEN_LANGUAGES);
+      IdCacheUtil.addOccurrence(wordsTable, qName, UsageSearchContext.IN_ALIEN_LANGUAGES);
       idx = qName.lastIndexOf('.');
     }
   }
@@ -361,24 +360,19 @@ public class IdTableBuilding {
                                final char[] chars,
                                final int start,
                                final int end,
-                               final int occurrenceMask,
-                               final boolean caseInsensitive) {
+                               final int occurrenceMask) {
     scanWords(new ScanWordProcessor(){
       public void run(final char[] chars, final int start, final int end) {
-        registerOccurence(chars, start, end, table, occurrenceMask, caseInsensitive);
+        registerOccurence(chars, start, end, table, occurrenceMask);
       }
     }, chars, start, end);
   }
 
-  public static void registerOccurence(final char[] chars,
-                                       final int start,
-                                       final int end,
-                                       final TIntIntHashMap table,
-                                       final int occurrenceMask,
-                                       final boolean caseInsensitive) {
-    final int hashCode = (caseInsensitive)?
-                           StringUtil.stringHashCodeInsensitive(chars, start, end-start):
-                           StringUtil.stringHashCode(chars, start, end-start);
-    IdCacheUtil.addOccurrence(table, hashCode, occurrenceMask);
+  private static void registerOccurence(final char[] chars,
+                                        final int start,
+                                        final int end,
+                                        final TIntIntHashMap table,
+                                        final int occurrenceMask) {
+    IdCacheUtil.addOccurrence(table, chars, start, end, occurrenceMask);
   }
 }
