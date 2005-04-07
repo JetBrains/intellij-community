@@ -171,20 +171,22 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (imports.length == 0) return;
 
     final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
-    file.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        if (!reference.isQualified()) {
-          final ResolveResult resolveResult = reference.advancedResolve(false);
-          final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
-          if (resolveScope instanceof PsiImportStatementBase)
-          {
-            //noinspection SuspiciousMethodCalls
-            redundants.remove(resolveScope);
+    final PsiFile[] roots = file.getPsiRoots();
+    for (int i = 0; i < roots.length; i++) {
+      roots[i].accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          if (!reference.isQualified()) {
+            final ResolveResult resolveResult = reference.advancedResolve(false);
+            final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+            if (resolveScope instanceof PsiImportStatementBase) {
+              //noinspection SuspiciousMethodCalls
+              redundants.remove(resolveScope);
+            }
           }
+          super.visitReferenceElement(reference);
         }
-        super.visitReferenceElement(reference);
-      }
-    });
+      });
+    }
 
     for (Iterator<PsiImportStatementBase> iterator = redundants.iterator(); iterator.hasNext();) {
       final PsiImportStatementBase importStatement = iterator.next();
