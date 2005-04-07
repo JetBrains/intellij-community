@@ -6,7 +6,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.HelpID;
@@ -165,6 +165,6 @@ public class PsiElementRenameHandler implements RenameHandler {
       return false;
     }
 
-    return !(elementArray[0] instanceof PsiJavaFile);
+    return !(elementArray[0] instanceof PsiJavaFile) || elementArray[0] instanceof JspFile;
   }
 }
