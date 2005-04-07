@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.Language;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private CharTable myTable = null;
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
   private Boolean myExplicitlyValid = null;
+  private Language myLanguage;
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
@@ -40,6 +42,9 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     super((PsiManagerImpl)manager, DUMMY_HOLDER);
     LOG.assertTrue(manager != null);
     myContext = context;
+    if (context != null) {
+      myLanguage = context.getLanguage();
+    }
     getTreeElement();
   }
 
@@ -162,5 +167,13 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     final FileElement holderElement = super.getTreeElement();
     if (myTable != null) holderElement.setCharTable(myTable);
     return holderElement;
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
+  public void setLanguage(final Language language) {
+    myLanguage = language;
   }
 }

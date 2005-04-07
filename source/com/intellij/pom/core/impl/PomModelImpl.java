@@ -31,13 +31,13 @@
  */
 package com.intellij.pom.core.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomProject;
@@ -45,15 +45,15 @@ import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -175,7 +175,17 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         }
         {
           final PomModelListener[] listeners = getListeners();
-          for (int i = 0; i < listeners.length; i++) listeners[i].modelChanged(event);
+          for (int i = 0; i < listeners.length; i++) {
+            final PomModelListener listener = listeners[i];
+            final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+            for (Iterator<PomModelAspect> j = changedAspects.iterator(); j.hasNext();) {
+              PomModelAspect modelAspect = j.next();
+              if (listener.isAspectChangeInteresting(modelAspect)) {
+                listener.modelChanged(event);
+                break;
+              }
+            }
+          }
         }
       }
       finally{

@@ -439,6 +439,7 @@ public class ChangeUtil implements Constants {
 
   public static TreeElement copyToElement(PsiElement original) {
     final DummyHolder holder = new DummyHolder(original.getManager(), null);
+    holder.setLanguage(original.getLanguage());
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = _copyToElement(original, holderElement.getCharTable());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
