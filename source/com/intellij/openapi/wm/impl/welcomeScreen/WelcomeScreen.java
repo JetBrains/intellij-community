@@ -512,11 +512,11 @@ public class WelcomeScreen {
    * This method checks the width of the given string with given font applied, breaks the string into the specified number of lines if necessary,
    * and/or cuts it, so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
    * Returns the resulting or original string surrounded by html tags.
-   * @param string not <code>null</code> {@link String String} value
-   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags
-   * @param font not <code>null</code> {@link Font Font} object
-   * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not
-   * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels
+   * @param string not <code>null</code> {@link String String} value, otherwise the "Not specified." string is returned.
+   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags.
+   * @param font not <code>null</code> {@link Font Font} object.
+   * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not.
+   * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels.
    * @param maxRows <code>int</code> value spesifying the number of rows. If the value is positive, the string is modified to not exceed
    * the specified number, and method adds an ellipsis instead of the exceeding part. If the value is zero or negative, the entire string is broken
    * into lines until its end.
@@ -528,6 +528,9 @@ public class WelcomeScreen {
                                            final int maxRows) {
 
     String modifiedString = string.trim();
+    if (StringUtil.isEmpty(modifiedString)) {
+      return "<html>Not specified.</html>";
+    }
     Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
 
     if (r.getWidth() > maxWidth) {
@@ -538,7 +541,7 @@ public class WelcomeScreen {
       int lengthLeft = string.length();
       int rows = maxRows;
       if (rows <= 0) {
-        rows = string.length() / maxIdxPerLine + 2;
+        rows = string.length() / maxIdxPerLine + 1;
       }
 
       while (lengthLeft > maxIdxPerLine && rows > 1) {
@@ -548,12 +551,17 @@ public class WelcomeScreen {
             prefix += suffix.substring(0, i) + "<br>";
             suffix = suffix.substring(i + 1, suffix.length());
             lengthLeft = suffix.length();
-            rows--;
+            if (maxRows > 0) {
+              rows--;
+            }
+            else {
+              rows = lengthLeft / maxIdxPerLine + 1;
+            }
             break;
           }
         }
         if (i == 0) {
-          if (rows > 2) {
+          if (rows > 1 && maxRows <= 0) {
             prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
             suffix = suffix.substring(maxIdxPerLine, suffix.length());
             lengthLeft = suffix.length();
@@ -564,7 +572,6 @@ public class WelcomeScreen {
           }
         }
       }
-      
       if (suffix.length() > maxIdxPerLine) {
         suffix = suffix.substring(0, maxIdxPerLine - 3) + "...";
       }
