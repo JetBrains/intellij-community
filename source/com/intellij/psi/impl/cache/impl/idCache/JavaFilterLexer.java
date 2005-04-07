@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -20,7 +19,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
     if (tokenType == JavaTokenType.IDENTIFIER) {
       int start = getTokenStart();
       int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end - start, UsageSearchContext.IN_CODE);
+      IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
       IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS);
