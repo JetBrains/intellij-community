@@ -156,10 +156,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;
   public static final int CLASS_KIND_CLASS         = 30;
-  private static final int CLASS_KIND_ENUM          = 40;
-  private static final int CLASS_KIND_ASPECT        = 50;
-  private static final int CLASS_KIND_JSP           = 60;
-  private static final int CLASS_KIND_ANONYMOUS     = 70;
+  private static final int CLASS_KIND_ANONYMOUS     = 40;
+  private static final int CLASS_KIND_ENUM          = 50;
+  private static final int CLASS_KIND_ASPECT        = 60;
+  private static final int CLASS_KIND_JSP           = 70;
   private static final int CLASS_KIND_EXCEPTION = 80;
   private static final int CLASS_KIND_JUNIT_TEST = 90;
 
