@@ -1,16 +1,16 @@
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 
 import java.io.File;
@@ -37,12 +37,6 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     myActionManager = actionManagerEx;
     myDataManager = dataManager;
 
-    String[] groups = actionManagerEx.getConfigurableGroups();
-    for (int i = 0; i < groups.length; i++) {
-      String groupId = groups[i];
-      ActionGroup group = (ActionGroup)actionManagerEx.getAction(groupId);
-      registerQuickList(group);
-    }
     registerActions();
   }
 

@@ -25,7 +25,7 @@ public abstract class ActionManagerEx extends ActionManager{
    * @param element XML element for <code>actions</code> tag.
    * @param loader
    */
-  public abstract void processActionsElement(Element element, ClassLoader loader);
+  public abstract void processActionsElement(Element element, ClassLoader loader, String pluginName);
 
   public abstract void addAnActionListener(AnActionListener listener);
   public abstract void removeAnActionListener(AnActionListener listener);
@@ -44,8 +44,7 @@ public abstract class ActionManagerEx extends ActionManager{
    */
   public abstract Comparator getRegistrationOrderComparator();
 
-  public abstract String[] getConfigurableGroups();
-
+ 
   /**
    * Similar to {@link javax.swing.KeyStroke#getKeyStroke(String)} but allows keys in lower case.
    * I.e. "control x" is accepted and interpreted as "control X".
@@ -68,4 +67,6 @@ public abstract class ActionManagerEx extends ActionManager{
 
     return result;
   }
+
+  public abstract String [] getPluginActions(String pluginName);
 }

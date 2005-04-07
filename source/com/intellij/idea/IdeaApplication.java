@@ -3,14 +3,12 @@ package com.intellij.idea;
 import com.incors.plaf.alloy.AlloyLookAndFeel;
 import com.incors.plaf.alloy.IdeaAlloyLAF;
 import com.intellij.ExtensionPoints;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ModalityState;
@@ -136,7 +134,7 @@ public class IdeaApplication {
 
       final Element e = plugin.getActionsDescriptionElement();
       if (e != null) {
-        ActionManagerEx.getInstanceEx().processActionsElement(e, plugin.getLoader());
+        ActionManagerEx.getInstanceEx().processActionsElement(e, plugin.getLoader(), plugin.getId());
       }
     }
   }

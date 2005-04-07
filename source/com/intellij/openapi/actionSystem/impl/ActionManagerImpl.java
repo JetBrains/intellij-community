@@ -19,6 +19,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
@@ -32,6 +33,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private final Object myLock = new Object();
   private THashMap<String,Object> myId2Action;
+  private THashMap<String, THashSet<String>> myPlugin2Id;
   private THashMap<String,Integer> myId2Index;
   private THashMap<Object,String> myAction2Id;
   private ArrayList<String> myNotRegisteredInternalActionIds;
@@ -48,6 +50,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     myId2Action = new THashMap<String, Object>();
     myId2Index = new THashMap<String, Integer>();
     myAction2Id = new THashMap<Object, String>();
+    myPlugin2Id = new THashMap<String, THashSet<String>>();
     myNotRegisteredInternalActionIds = new ArrayList<String>();
     myActionListeners = new ArrayList<AnActionListener>();
     myCachedActionListeners = null;
@@ -104,7 +107,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element children = (Element)i.next();
       if ("actions".equals(children.getName())) {
-        processActionsElement(children, classLoader);
+        processActionsElement(children, classLoader, null);
       }
     }
   }
@@ -209,7 +212,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses
    *         of <code>AnAction</code>.
    */
-  private AnAction processActionElement(Element element, final ClassLoader loader) {
+  private AnAction processActionElement(Element element, final ClassLoader loader, String pluginName) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionElement(" + element.getName() + ")");
     }
@@ -273,11 +276,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
     }
     // register action
-    registerAction(id, stub);
+    registerAction(id, stub, pluginName);
     return stub;
   }
 
-  private AnAction processGroupElement(Element element, final ClassLoader loader) {
+  private AnAction processGroupElement(Element element, final ClassLoader loader, String pluginName) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processGroupElement(" + element.getName() + ")");
     }
@@ -341,7 +344,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         Element child = (Element)i.next();
         String name = child.getName();
         if ("action".equals(name)) {
-          AnAction action = processActionElement(child, loader);
+          AnAction action = processActionElement(child, loader, pluginName);
           if (action != null) {
             assertActionIsGroupOrStub(action);
             ((DefaultActionGroup)group).add(action);
@@ -351,7 +354,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           processSeparatorNode((DefaultActionGroup)group, child);
         }
         else if ("group".equals(name)) {
-          AnAction action = processGroupElement(child, loader);
+          AnAction action = processGroupElement(child, loader, pluginName);
           if (action != null) {
             ((DefaultActionGroup)group).add(action);
           }
@@ -574,7 +577,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return action;
   }
 
-  public void processActionsElement(Element element, ClassLoader loader) {
+  public void processActionsElement(Element element, ClassLoader loader, String pluginName) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionsNode(" + element.getName() + ")");
     }
@@ -587,13 +590,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         Element child = (Element)i.next();
         String name = child.getName();
         if ("action".equals(name)) {
-          AnAction action = processActionElement(child, loader);
+          AnAction action = processActionElement(child, loader, pluginName);
           if (action != null) {
             assertActionIsGroupOrStub(action);
           }
         }
         else if ("group".equals(name)) {
-          processGroupElement(child, loader);
+          processGroupElement(child, loader, pluginName);
         }
         else if ("separator".equals(name)) {
           processSeparatorNode(null, child);
@@ -609,7 +612,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     LOG.assertTrue(action instanceof ActionGroup || action instanceof ActionStub, "Action : "+action + "; class: "+action.getClass());
   }
 
-  public void registerAction(String actionId, AnAction action) {
+  public void registerAction(String actionId, AnAction action, String pluginName) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: registerAction(" + action + ")");
     }
@@ -633,9 +636,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       myId2Action.put(actionId, action);
       myId2Index.put(actionId, new Integer(myRegisteredActionsCount++));
       myAction2Id.put(action, actionId);
-
+      if (pluginName != null && !(action instanceof ActionGroup)){
+        THashSet<String> pluginActionIds = myPlugin2Id.get(pluginName);
+        if (pluginActionIds == null){
+          pluginActionIds = new THashSet<String>();
+          myPlugin2Id.put(pluginName, pluginActionIds);
+        }
+        pluginActionIds.add(actionId);
+      }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }
+  }
+
+  public void registerAction(String actionId, AnAction action) {
+    registerAction(actionId, action, null);
   }
 
   public void unregisterAction(String actionId) {
@@ -656,6 +670,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       AnAction oldValue = (AnAction)myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
+      for (Iterator<String> iterator = myPlugin2Id.keySet().iterator(); iterator.hasNext();) {
+        String pluginName = iterator.next();
+        final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
+        if (pluginActions != null){
+          pluginActions.remove(actionId);
+        }
+      }
     }
   }
 
@@ -680,8 +701,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     };
   }
 
-  public String[] getConfigurableGroups() {
-    return new String[]{IdeActions.GROUP_MAIN_TOOLBAR, IdeActions.GROUP_EDITOR_POPUP};
+  public String[] getPluginActions(String pluginName) {
+    if (myPlugin2Id.containsKey(pluginName)){
+      final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
+      return pluginActions.toArray(new String[pluginActions.size()]);
+    }
+    return new String[0];
   }
 
   private AnActionListener[] getActionListeners() {
