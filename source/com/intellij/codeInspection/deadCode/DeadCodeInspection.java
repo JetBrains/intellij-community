@@ -48,7 +48,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
 
-  private final Project myProject;
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
   private QuickFixAction[] myQuickFixActions;
@@ -57,8 +56,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private DeadHTMLComposer myComposer;
   public static final String SHORT_NAME = "UnusedDeclaration";
 
-  public DeadCodeInspection(Project project) {
-    myProject = project;
+  public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
   }
 
@@ -308,7 +306,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                                                        return false;
                                                      }
                                                    },
-                                                   GlobalSearchScope.projectScope(myProject));
+                                                   GlobalSearchScope.projectScope(getManager().getProject()));
               }
             }
           });
@@ -516,7 +514,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes() {
+  public QuickFixAction[] getQuickFixes(final Project project) {
+    if (myQuickFixActions == null){
+
+    }
     return myQuickFixActions;
   }
 
@@ -528,7 +529,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     PsiFile psiFile = psiElement.getContainingFile();
 
     if (psiFile != null) {
-      Document doc = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+      Document doc = PsiDocumentManager.getInstance(getManager().getProject()).getDocument(psiFile);
       TextRange textRange = psiElement.getTextRange();
       SimpleDateFormat format = new SimpleDateFormat();
       String date = format.format(new Date());
@@ -586,7 +587,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          new SafeDeleteHandler().invoke(myProject, psiElements.toArray(new PsiElement[psiElements.size()]), false);
+          new SafeDeleteHandler().invoke(getManager().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
         }
       });
 
@@ -611,7 +612,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         RefUtil.removeRefElement(refElement, deletedRefs);
       }
 
-      EntryPointsManager entryPointsManager = getEntryPointsManager(myProject);
+      EntryPointsManager entryPointsManager = getEntryPointsManager(getManager().getProject());
       for (int i = 0; i < deletedRefs.size(); i++) {
         RefElement refElement = deletedRefs.get(i);
         entryPointsManager.removeEntryPoint(refElement);
@@ -806,7 +807,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private EntryPointsManager getEntryPointsManager() {
-    return EntryPointsManager.getInstance(myProject);
+    return EntryPointsManager.getInstance(getManager().getProject());
   }
 
   public void updateContent() {

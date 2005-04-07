@@ -89,7 +89,7 @@ public class InspectionApplication {
       im.setProfile(profile);
 
       if (mySourceDirectory == null) {
-        scope = new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES);
+        scope = new AnalysisScope(myProject);
         runStartupActivity();
       }
       else {
@@ -103,7 +103,7 @@ public class InspectionApplication {
 
         runStartupActivity();
         PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vfsDir);
-        scope = new AnalysisScope(psiDirectory, AnalysisScope.SOURCE_JAVA_FILES);
+        scope = new AnalysisScope(psiDirectory);
       }
 
       logMessageLn(1, "done.");

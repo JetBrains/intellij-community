@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.project.Project;
 
 import java.io.File;
 
@@ -19,7 +18,7 @@ public interface InspectionProfile {
 
   InspectionTool getInspectionTool(String shortName);
 
-  InspectionTool[] getInspectionTools(Project project);
+  InspectionTool[] getInspectionTools();
 
   LocalInspectionTool[] getHighlightingLocalInspectionTools();
 
@@ -27,7 +26,7 @@ public interface InspectionProfile {
 
   InspectionProfileManager getManager();
 
-  void cleanup();
+  void cleanup(final InspectionManagerEx managerEx);
 
   boolean wasInitialized();
 
@@ -73,9 +72,7 @@ public interface InspectionProfile {
 
     void resetToBase();
 
-    LocalInspectionToolWrapper[] getLocalInspectionToolWrappers();
-
-    InspectionTool[] getInspectionTools(Project project);
+    InspectionTool[] getInspectionTools();
 
     String getAdditionalJavadocTags();
 

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -72,12 +71,12 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     myInspectionTools.add(toolClass);
   }
 
-  public InspectionTool[] createTools(Project project) {
+  public InspectionTool[] createTools() {
     int ordinaryToolsSize = myInspectionTools.size();
     InspectionTool[] tools = new InspectionTool[ordinaryToolsSize + myLocalInspectionTools.size()];
     for (int i = 0; i < tools.length; i++) {
       tools[i] = i < ordinaryToolsSize
-                 ? instantiateTool(myInspectionTools.get(i), project)
+                 ? instantiateTool(myInspectionTools.get(i))
                  : new LocalInspectionToolWrapper(instantiateLocalTool(myLocalInspectionTools.get(i - ordinaryToolsSize)));
     }
 
@@ -107,19 +106,12 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     return null;
   }
 
-  private InspectionTool instantiateTool(Class toolClass, Project project) {
+  private InspectionTool instantiateTool(Class toolClass) {
     try {
       Constructor constructor;
       Object[] args;
-      try {
-        constructor = toolClass.getDeclaredConstructor(new Class[]{Project.class});
-        args = new Object[]{project};
-      }
-      catch (NoSuchMethodException e) {
-        constructor = toolClass.getDeclaredConstructor(new Class[0]);
-        args = ArrayUtil.EMPTY_OBJECT_ARRAY;
-      }
-
+      constructor = toolClass.getDeclaredConstructor(new Class[0]);
+      args = ArrayUtil.EMPTY_OBJECT_ARRAY;
       constructor.setAccessible(true);
       return (InspectionTool) constructor.newInstance(args);
     } catch (SecurityException e) {

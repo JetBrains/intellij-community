@@ -20,9 +20,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.*;
@@ -243,8 +243,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).close();
-      myInspectionProfile.cleanup();
+      final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
+      managerEx.close();
+      //may differ from CurrentProfile in case of editor set up
+      myInspectionProfile.cleanup(managerEx);
     }
   }
 
@@ -455,7 +457,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   public boolean update() {
-    InspectionTool[] tools = myInspectionProfile.getInspectionTools(myProject);
+    InspectionTool[] tools = myInspectionProfile.getInspectionTools();
     clearTree();
     boolean resultsFound = false;
     final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));

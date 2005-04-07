@@ -279,7 +279,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private void collectDependencyProblems(final List<HighlightInfo> list) {
     if (myUpdateAll && myFile instanceof PsiJavaFile && myFile.isPhysical() && myFile.getVirtualFile() != null &&
         mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.ILLEGAL_DEPENDENCY)) {
-      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile, AnalysisScope.SOURCE_JAVA_FILES));
+      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile));
       final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {

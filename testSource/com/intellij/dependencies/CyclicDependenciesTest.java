@@ -36,7 +36,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
   public void testT1() {
     // com.a<->com.b
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -48,7 +48,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
   public void testPackageScope1(){
     // com.a<->com.b
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myPsiManager.findPackage("com"), AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myPsiManager.findPackage("com")));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -61,7 +61,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.b<->com.a
     //com.c<->com.d
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -76,7 +76,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.b<->com.a  - find
     //com.c<->com.d  - not in scope
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myPsiManager.findPackage("com.subscope1"), AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myPsiManager.findPackage("com.subscope1")));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -89,7 +89,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.b<->com.d
     //com.b->com.a->com.c->com.b
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -104,7 +104,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.a<->com.b
     //com.a->com.c->com.d->com.a
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -119,7 +119,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.b<->com.d
     //com.b->com.a->com.c->com.b
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -135,7 +135,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //B2->C
     //C->A
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -148,7 +148,7 @@ public class CyclicDependenciesTest extends PsiTestCase {
   public void testNoCycle(){
     //B->A
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+                                                                            new AnalysisScope(myProject));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();

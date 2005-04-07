@@ -33,41 +33,23 @@ public class AnalysisScope {
   public static final int MODULES = 7;
 
   private final Project myProject;
-  private PsiFileFilter myFilter;
   private final List<Module> myModules;
   private final Module myModule;
   private final PsiElement myElement;
   private final int myType;
   private HashSet<VirtualFile> myFilesSet;
 
+  private boolean myIncludeTestSource = false;
 
-  public interface PsiFileFilter {
-    boolean accept(PsiFile file);
-  }
-
-  public static final PsiFileFilter SOURCE_JAVA_FILES = new PsiFileFilter() {
-    public boolean accept(PsiFile file) {
-      return file instanceof PsiJavaFile && !(file instanceof PsiCompiledElement);
-    }
-  };
-
-  public static final PsiFileFilter CONTENT_FILES = new PsiFileFilter() {
-    public boolean accept(PsiFile file) {
-      return !(file instanceof PsiCompiledElement);
-    }
-  };
-
-  public AnalysisScope(Project project, PsiFileFilter filter) {
+  public AnalysisScope(Project project) {
     myProject = project;
-    myFilter = filter;
     myElement = null;
     myModules = null;
     myModule = null;
     myType = PROJECT;
   }
 
-  public AnalysisScope(Module module, PsiFileFilter filter) {
-    myFilter = filter;
+  public AnalysisScope(Module module) {
     myProject = null;
     myElement = null;
     myModules = null;
@@ -75,18 +57,15 @@ public class AnalysisScope {
     myType = MODULE;
   }
 
-  public AnalysisScope(final Module[] modules, final PsiFileFilter filter) {
-    myFilter = filter;
+  public AnalysisScope(final Module[] modules) {
     myModules = Arrays.asList(modules);
     myModule = null;
-    myFilter = filter;
     myProject = null;
     myElement = null;
     myType = MODULES;
   }
 
-  public AnalysisScope(PsiDirectory psiDirectory, PsiFileFilter filter) {
-    myFilter = filter;
+  public AnalysisScope(PsiDirectory psiDirectory) {
     myProject = null;
     myModules = null;
     myModule = null;
@@ -99,8 +78,7 @@ public class AnalysisScope {
     }
   }
 
-  public AnalysisScope(PsiPackage psiPackage, PsiFileFilter filter) {
-    myFilter = filter;
+  public AnalysisScope(PsiPackage psiPackage) {
     myProject = null;
     myModule = null;
     myModules = null;
@@ -108,8 +86,7 @@ public class AnalysisScope {
     myType = PACKAGE;
   }
 
-  public AnalysisScope(PsiFile psiFile, PsiFileFilter filter) {
-    myFilter = filter;
+  public AnalysisScope(PsiFile psiFile) {
     myProject = null;
     myElement = psiFile;
     myModule = null;
@@ -117,11 +94,34 @@ public class AnalysisScope {
     myType = FILE;
   }
 
+  public void setIncludeTestSource(final boolean includeTestSource) {
+    myIncludeTestSource = includeTestSource;
+  }
+
   private PsiElementVisitor createFileSearcher() {
+    final FileIndex fileIndex;
+    if (myProject != null){
+      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    } else if (myModule != null){
+      fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
+    } else if (myModules != null && myModules.size() > 0){
+      fileIndex = ModuleRootManager.getInstance(myModules.get(0)).getFileIndex();
+    } else if (myElement != null){
+      fileIndex = ProjectRootManager.getInstance(myElement.getProject()).getFileIndex();
+    } else {
+      //can't be
+      fileIndex = null;
+    }
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        if (myFilter.accept(file)) {
-          myFilesSet.add(file.getVirtualFile());
+        if (file instanceof PsiJavaFile && !(file instanceof PsiCompiledElement)) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (!myIncludeTestSource){
+            if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)){
+              return;
+            }
+          }
+          myFilesSet.add(virtualFile);
         }
       }
     };
@@ -158,7 +158,7 @@ public class AnalysisScope {
 
   public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
     if (myType == PROJECT) {
-      return new AnalysisScope[]{new AnalysisScope(defaultProject, SOURCE_JAVA_FILES)};
+      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
     }
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
@@ -174,7 +174,7 @@ public class AnalysisScope {
           }
         }
         if (onlyPackLocalClasses) {
-          return new AnalysisScope[]{new AnalysisScope(psiJavaFile.getContainingDirectory().getPackage(), SOURCE_JAVA_FILES)};
+          return new AnalysisScope[]{new AnalysisScope(psiJavaFile.getContainingDirectory().getPackage())};
         }
       }
       final VirtualFile vFile = ((PsiFile)myElement).getVirtualFile();
@@ -197,7 +197,7 @@ public class AnalysisScope {
     }
 
     if (modules.isEmpty()) {
-      return new AnalysisScope[]{new AnalysisScope(defaultProject, SOURCE_JAVA_FILES)};
+      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
     }
     HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
     final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
@@ -206,7 +206,7 @@ public class AnalysisScope {
       Set<Module> modulesToAnalyze = getDirectBackwardDependencies(module, allModules);
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
       modulesToAnalyze.add(module);
-      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()]), SOURCE_JAVA_FILES));
+      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()])));
     }
     return result.toArray(new AnalysisScope[result.size()]);
   }
@@ -259,7 +259,7 @@ public class AnalysisScope {
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (projectFileIndex.isContentJavaSourceFile(fileOrDir)) {
+          if (projectFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
             LOG.assertTrue(psiFile != null);
             psiFile.accept(visitor);
@@ -272,7 +272,7 @@ public class AnalysisScope {
       final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
       moduleFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (moduleFileIndex.isContentJavaSourceFile(fileOrDir)) {
+          if (moduleFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : moduleFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myModule.getProject()).findFile(fileOrDir);
             LOG.assertTrue(psiFile != null);
             psiFile.accept(visitor);
@@ -287,7 +287,7 @@ public class AnalysisScope {
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         moduleFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
-            if (moduleFileIndex.isContentJavaSourceFile(fileOrDir)) {
+            if (moduleFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : moduleFileIndex.isInTestSourceContent(fileOrDir))) {
               PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
               LOG.assertTrue(psiFile != null);
               psiFile.accept(visitor);

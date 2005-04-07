@@ -1055,7 +1055,7 @@ public class CompileDriver {
                                  final TranslatingCompilerStateCache cache,
                                  VfsSnapshot snapshot,
                                  Set<String> sourcesWithOutputRemoved) {
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile, AnalysisScope.SOURCE_JAVA_FILES));
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile));
     builder.analyze();
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     final Set<PsiFile> dependentFiles = dependencies.get(psiFile);

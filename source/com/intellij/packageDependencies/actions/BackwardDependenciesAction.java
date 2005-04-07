@@ -1,7 +1,7 @@
 package com.intellij.packageDependencies.actions;
 
-import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
  */
 public class BackwardDependenciesAction extends BaseAnalysisAction{
   public BackwardDependenciesAction() {
-    super(AnalysisScope.SOURCE_JAVA_FILES, "Backward Dependency Analysis", "Analyze", "Analysis");
+    super("Backward Dependency Analysis", "Analyze", "Analysis");
   }
 
   protected void analyze(Project project, AnalysisScope scope) {

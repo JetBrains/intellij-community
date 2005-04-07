@@ -20,7 +20,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     }
     PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (psiFile != null){
-      analyze(project, new AnalysisScope(psiFile, AnalysisScope.SOURCE_JAVA_FILES));
+      analyze(project, new AnalysisScope(psiFile));
     }
   }
 
@@ -29,8 +29,6 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     inspectionManagerEx.setCurrentScope(scope);
     final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
-    //side effect to init non local tools
-    inspectionProfile.getInspectionTools(project);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope, false);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileManager;
+import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -83,7 +85,7 @@ public class InspectionProfileConvertor {
   }
 
   public static void convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
-    final InspectionTool[] tools = profile.getInspectionTools(ProjectManager.getInstance().getDefaultProject());
+    final InspectionTool[] tools = profile.getInspectionTools();
     final Document document = JDOMUtil.loadDocument(profileFile);
     for (Iterator i = document.getRootElement().getChildren("inspection_tool").iterator(); i.hasNext();) {
       Element toolElement = (Element)i.next();
@@ -127,7 +129,7 @@ public class InspectionProfileConvertor {
   }
 
   private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) {
-    LocalInspectionToolWrapper[] tools = profile.getLocalInspectionToolWrappers();
+    InspectionTool[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
     for (Iterator<String> iterator = myDisplayLevelMap.keySet().iterator(); iterator.hasNext();) {

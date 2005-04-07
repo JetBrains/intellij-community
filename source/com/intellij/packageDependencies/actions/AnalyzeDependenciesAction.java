@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   public AnalyzeDependenciesAction() {
-    super(AnalysisScope.SOURCE_JAVA_FILES, "Dependency Analysis", "Analyze", "Analysis");
+    super("Dependency Analysis", "Analyze", "Analysis");
   }
 
   protected void analyze(final Project project, AnalysisScope scope) {

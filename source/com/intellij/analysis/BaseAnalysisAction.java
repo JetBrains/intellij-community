@@ -13,16 +13,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public abstract class BaseAnalysisAction extends AnAction {
-  protected final AnalysisScope.PsiFileFilter myFileFilter;
   protected final String myTitle;
   protected final String myAnalysisVerb;
   protected final String myAnalysisNoon;
 
-  protected BaseAnalysisAction(AnalysisScope.PsiFileFilter fileFilter, String title, String analysisVerb, String analysisNoon) {
-    myFileFilter = fileFilter;
+  protected BaseAnalysisAction(String title, String analysisVerb, String analysisNoon) {
     myTitle = title;
     myAnalysisVerb = analysisVerb;
     myAnalysisNoon = analysisNoon;
@@ -43,30 +42,26 @@ public abstract class BaseAnalysisAction extends AnAction {
       boolean calledFromNonJavaFile = false;
       PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
       if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
-        scope = new AnalysisScope(psiFile, myFileFilter);
+        scope = new AnalysisScope(psiFile);
         calledFromNonJavaFile = true;
       }
       else {
         scope = getInspectionScope(dataContext);
       }
-      if (calledFromNonJavaFile ||
-          scope.getScopeType() == AnalysisScope.FILE &&
-          (ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.EDITOR_POPUP.equals(e.getPlace()))) {
-        FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(scope.getDisplayName(),
-                                                          module != null ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                          calledFromNonJavaFile);
-        dlg.show();
-        if (!dlg.isOK()) return;
-        if (dlg.isProjectScopeSelected()) {
-          scope = getProjectScope(dataContext);
-        }
-        else {
-          if (dlg.isModuleScopeSelected()) {
-            scope = getModuleScope(dataContext);
-          }
+      FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(scope.getDisplayName(),
+                                                                    module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
+                                                                    calledFromNonJavaFile);
+      dlg.show();
+      if (!dlg.isOK()) return;
+      if (dlg.isProjectScopeSelected()) {
+        scope = getProjectScope(dataContext);
+      }
+      else {
+        if (dlg.isModuleScopeSelected()) {
+          scope = getModuleScope(dataContext);
         }
       }
-
+      scope.setIncludeTestSource(dlg.isInspectTestSources());
       FileDocumentManager.getInstance().saveAllDocuments();
 
       analyze(project, scope);
@@ -87,34 +82,34 @@ public abstract class BaseAnalysisAction extends AnAction {
     //Possible scopes: file, directory, package, project, module.
     Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
     if (projectContext != null) {
-      return new AnalysisScope(projectContext, myFileFilter);
+      return new AnalysisScope(projectContext);
     }
 
     Module moduleContext = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
     if (moduleContext != null) {
-      return new AnalysisScope(moduleContext, myFileFilter);
+      return new AnalysisScope(moduleContext);
     }
 
     Module [] modulesArray = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
     if (modulesArray != null) {
-      return new AnalysisScope(modulesArray, myFileFilter);
+      return new AnalysisScope(modulesArray);
     }
     PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (psiFile != null) {
-      return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile, myFileFilter) : null;
+      return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile) : null;
     }
 
     PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
-      return new AnalysisScope(psiDirectory, myFileFilter);
+      return new AnalysisScope(psiDirectory);
     }
     else if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs == null || dirs.length == 0) return null;
-      return new AnalysisScope(pack, myFileFilter);
+      return new AnalysisScope(pack);
     }
     else if (psiTarget != null) {
       return null;
@@ -124,11 +119,11 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   private AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT), myFileFilter);
+    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
   }
 
   private AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE), myFileFilter);
+    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
   }
 
   private class FileProjectOrModuleDialog extends DialogWrapper {
@@ -137,6 +132,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     private JRadioButton myFileButton;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
+    private JCheckBox myInspectTestSource;
 
     public FileProjectOrModuleDialog(String fileName, String moduleName, boolean nonJavaFile) {
       super(true);
@@ -154,13 +150,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
 
     protected JComponent createCenterPanel() {
+      JPanel wholePanel = new JPanel(new BorderLayout());
       JPanel panel = new JPanel();
       panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       myFileButton = new JRadioButton(myAnalysisVerb + " " + StringUtil.decapitalize(myFileName));
-      myFileButton.setMnemonic(KeyEvent.VK_F);
+      myFileButton.setMnemonic(KeyEvent.VK_P);
       myProjectButton = new JRadioButton(myAnalysisVerb + " the whole project");
-      myProjectButton.setMnemonic(KeyEvent.VK_P);
+      myProjectButton.setMnemonic(KeyEvent.VK_W);
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
       group.add(myFileButton);
@@ -172,7 +169,10 @@ public abstract class BaseAnalysisAction extends AnAction {
         panel.add(myModuleButton);
       }
       panel.add(myFileButton);
-      return panel;
+      wholePanel.add(panel, BorderLayout.CENTER);
+      myInspectTestSource = new JCheckBox("Include Test Sources", true);
+      wholePanel.add(myInspectTestSource, BorderLayout.SOUTH);
+      return wholePanel;
     }
 
     public boolean isProjectScopeSelected() {
@@ -181,6 +181,10 @@ public abstract class BaseAnalysisAction extends AnAction {
 
     public boolean isModuleScopeSelected() {
       return myModuleButton != null ? myModuleButton.isSelected() : false;
+    }
+
+    public boolean isInspectTestSources(){
+      return myInspectTestSource.isSelected();
     }
   }
 }

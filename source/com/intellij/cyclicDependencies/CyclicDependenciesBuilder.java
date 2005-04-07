@@ -81,8 +81,7 @@ public class CyclicDependenciesBuilder{
           }
           final Set<PsiPackage> packs = getPackageHierarhy(psiJavaFile.getPackageName());
           final ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(),
-                                                                                    new AnalysisScope(psiJavaFile,
-                                                                                                      AnalysisScope.SOURCE_JAVA_FILES));
+                                                                                    new AnalysisScope(psiJavaFile));
           builder.setTotalFileCount(getScope().getFileCount());
           builder.setInitialFileCount(++myFileCount);
           builder.analyze();

@@ -5,11 +5,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -36,7 +34,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   //fiff from base
   // private HashMap<String, Boolean> myEnabledTools;
   private HashMap<String, InspectionTool> myTools = new HashMap<String, InspectionTool>();
-  private HashMap<String, LocalInspectionToolWrapper> myLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
   private InspectionProfileManager myManager;
 
   //diff map with base profile
@@ -88,7 +85,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myFile = inspectionProfile.getFile();
     myManager = inspectionProfile.getManager();
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
-    myLocalTools = new HashMap<String, LocalInspectionToolWrapper>(inspectionProfile.myLocalTools);
     myTools = new HashMap<String, InspectionTool>(inspectionProfile.myTools);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
@@ -215,14 +211,13 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
     else {
       boolean toolsWereNotInstantiated = false;
-      if (myTools.isEmpty() || myLocalTools.isEmpty()) {
-        getInspectionTools(null);
+      if (myTools.isEmpty()) {
+        getInspectionTools();
         toolsWereNotInstantiated = true;
       }
       myDisplayLevelMap.clear();
       setDefaultErrorLevels();
       final ArrayList<String> toolNames = new ArrayList<String>(myTools.keySet());
-      toolNames.addAll(myLocalTools.keySet());
       for (Iterator<String> iterator = toolNames.iterator(); iterator.hasNext();) {
         final InspectionTool tool = getInspectionTool(iterator.next());
         final HighlightDisplayLevel defaultLevel = tool.getDefaultLevel();
@@ -283,7 +278,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return state;
   }
 
-  private void readExternal(Element element, boolean readLocalTools) throws InvalidDataException {
+  private void readExternal(Element element) throws InvalidDataException {
     myDisplayLevelMap.clear();
     final String version = element.getAttributeValue("version");
     if (version == null || !version.equals(VALID_VERSION)) {
@@ -319,9 +314,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
       InspectionTool tool = getInspectionTool(toolClassName);
       if (tool != null) {
-        if (!(tool instanceof LocalInspectionToolWrapper) || readLocalTools) {
-          tool.readExternal(toolElement);
-        }
+        tool.readExternal(toolElement);
       }
     }
     myVisibleTreeState.readExternal(element);
@@ -336,7 +329,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
         myBaseProfile.resetToBase();
       }
       if (!myBaseProfile.wasInitialized()) {
-        myBaseProfile.load(readLocalTools);
+        myBaseProfile.load();
       }
     }
   }
@@ -370,13 +363,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   public InspectionTool getInspectionTool(String shortName) {
-    if (myTools.get(shortName) != null) {
-      return myTools.get(shortName);
-    }
-    if (myLocalTools.get(shortName) != null) {
-      return myLocalTools.get(shortName);
-    }
-    return null;
+    return myTools.get(shortName);
   }
 
   public InspectionProfileManager getManager() {
@@ -422,7 +409,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
   }
 
-  public void load(boolean readLocalTools) {
+  public void load() {
     try {
       if (myName.equals("Default")) {
         resetToBase();
@@ -436,7 +423,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       }
 
       Document document = JDOMUtil.loadDocument(myFile);
-      readExternal(document.getRootElement(), readLocalTools);
+      readExternal(document.getRootElement());
       myInitialized = true;
     }
     catch (JDOMException e) {
@@ -454,7 +441,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     if (myBaseProfile == null) return;
     try {
       final ArrayList<String> toolNames = new ArrayList<String>(myTools.keySet());
-      toolNames.addAll(myLocalTools.keySet());
       for (Iterator<String> iterator = toolNames.iterator(); iterator.hasNext();) {
         final String key = iterator.next();
         if (myDisplayLevelMap.containsKey(HighlightDisplayKey.find(key))) {
@@ -481,59 +467,36 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return myFile;
   }
 
-  public InspectionTool[] getInspectionTools(Project project) {
+  public InspectionTool[] getInspectionTools() {
     if (myBaseProfile != null && myBaseProfile.myTools.isEmpty()) {
-      myBaseProfile.getInspectionTools(project);
+      myBaseProfile.getInspectionTools();
     }
     if (myTools.isEmpty()) {
-      boolean localToolsWereInitialized = true;
-      final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools(project);
+      final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
       for (int i = 0; i < tools.length; i++) {
-        if (!(tools[i] instanceof LocalInspectionToolWrapper)) {
-          myTools.put(tools[i].getShortName(), tools[i]);
-        }
-        else {
-          if (!myLocalTools.containsKey(tools[i].getShortName())) {//do not touch exist local tools
-            localToolsWereInitialized = false;
-            myLocalTools.put(tools[i].getShortName(), (LocalInspectionToolWrapper)tools[i]);
-          }
-        }
+        myTools.put(tools[i].getShortName(), tools[i]);
       }
-      load(!localToolsWereInitialized);
+      load();
       loadAdditionalSettingsFromBaseProfile();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
-    result.addAll(myLocalTools.values());
     result.addAll(myTools.values());
     return result.toArray(new InspectionTool[result.size()]);
   }
 
-  public LocalInspectionToolWrapper[] getLocalInspectionToolWrappers() {
-    if (myBaseProfile != null && myBaseProfile.myLocalTools.isEmpty()) {
-      myBaseProfile.getLocalInspectionToolWrappers();
-    }
-    if (myLocalTools.isEmpty()) {
-      final LocalInspectionTool[] localTools = InspectionToolRegistrar.getInstance().createLocalTools();
-      for (int i = 0; i < localTools.length; i++) {
-        myLocalTools.put(localTools[i].getShortName(), new LocalInspectionToolWrapper(localTools[i]));
-      }
-      load(true);
-      loadAdditionalSettingsFromBaseProfile();
-    }
-    return myLocalTools.values().toArray(new LocalInspectionToolWrapper[myLocalTools.values().size()]);
-  }
-
   public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
     ArrayList<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
-    final LocalInspectionToolWrapper[] tools = myLocalTools.isEmpty()
-                                               ? getLocalInspectionToolWrappers()
-                                               : myLocalTools.values().toArray(
-                                                   new LocalInspectionToolWrapper[myLocalTools.values().size()]);
+    final InspectionTool[] tools = myTools.isEmpty()
+                                               ? getInspectionTools()
+                                               : myTools.values().toArray(
+                                                   new InspectionTool[myTools.values().size()]);
     for (int i = 0; i < tools.length; i++) {
-      LocalInspectionToolWrapper tool = tools[i];
-      final ToolState state = getToolState(HighlightDisplayKey.find(tool.getShortName()));
-      if (state.isEnabled()) {
-        enabled.add(tool.getTool());
+      InspectionTool tool = tools[i];
+      if (tool instanceof LocalInspectionToolWrapper){
+        final ToolState state = getToolState(HighlightDisplayKey.find(tool.getShortName()));
+        if (state.isEnabled()) {
+          enabled.add(((LocalInspectionToolWrapper)tool).getTool());
+        }
       }
     }
     return enabled.toArray(new LocalInspectionTool[enabled.size()]);
@@ -569,17 +532,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
       if (!profile.myTools.isEmpty()) {
-        final Project project = DummyProject.getInstance();
-        final InspectionTool[] inspectionTools = getInspectionTools(project);
+        final InspectionTool[] inspectionTools = getInspectionTools();
         for (int i = 0; i < inspectionTools.length; i++) {
           readAndWriteToolsConfigs(inspectionTools[i], profile);
         }
         return;
-      }
-      //only local tools were initialized
-      final LocalInspectionToolWrapper[] localInspectionToolWrappers = getLocalInspectionToolWrappers();
-      for (int i = 0; i < localInspectionToolWrappers.length; i++) {
-        readAndWriteToolsConfigs(localInspectionToolWrappers[i], profile);
       }
     }
     catch (WriteExternalException e) {
@@ -603,23 +560,17 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   private void addInspectionTool(InspectionTool inspectionTool){
-    if (inspectionTool instanceof LocalInspectionToolWrapper){
-      myLocalTools.put(inspectionTool.getShortName(), (LocalInspectionToolWrapper)inspectionTool);
-    } else {
-      myTools.put(inspectionTool.getShortName(), inspectionTool);
-    }
+    myTools.put(inspectionTool.getShortName(), inspectionTool);
   }
 
-  public void cleanup() {
+  public void cleanup(final InspectionManagerEx managerEx) {
     if (myTools.isEmpty()) return;
     if (!myTools.isEmpty()) {
       for (Iterator<String> iterator = myTools.keySet().iterator(); iterator.hasNext();) {
-        myTools.get(iterator.next()).cleanup();
-      }
-    }
-    if (!myLocalTools.isEmpty()) {
-      for (Iterator<String> iterator = myLocalTools.keySet().iterator(); iterator.hasNext();) {
-        myLocalTools.get(iterator.next()).cleanup();
+        final String key = iterator.next();
+        final InspectionTool tool = myTools.get(key);
+        tool.initialize(managerEx);
+        tool.cleanup();
       }
     }
     myTools.clear();
@@ -678,7 +629,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
-    myLocalTools = inspectionProfile.myLocalTools;
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
     save(new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
   }

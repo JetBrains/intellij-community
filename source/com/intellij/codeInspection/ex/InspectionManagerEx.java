@@ -7,7 +7,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -317,7 +316,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myFieldUsagesRequests = null;
     myClassUsagesRequests = null;
 
-    getCurrentProfile().cleanup();
+    getCurrentProfile().cleanup(this);
 
     EntryPointsManager.getInstance(getProject()).cleanup();
 
@@ -383,7 +382,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       public void run() {
         performInspectionsWithProgress(scope);
 
-        InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
+        InspectionTool[] tools = getCurrentProfile().getInspectionTools();
         for (int i = 0; i < tools.length; i++) {
           InspectionTool tool = tools[i];
           if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
@@ -636,7 +635,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             getRefManager().inspectionReadActionStarted();
             EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
 
-            InspectionTool[] tools = getCurrentProfile().getInspectionTools(myProject);
+            InspectionTool[] tools = getCurrentProfile().getInspectionTools();
             ArrayList<LocalInspectionToolWrapper> localTools = initJobDescriptors(tools, scope);
 
             List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
@@ -800,7 +799,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   private class GroupBySeverityAction extends ToggleAction {
     public GroupBySeverityAction() {
-      super("Group by Severity", "Group Inspections By Severity", HighlightDisplayLevel.WARNING.getIcon());
+      super("Group by Severity", "Group Inspections By Severity", IconLoader.getIcon("/nodes/sortBySeverity.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {

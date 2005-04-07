@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   public CodeInspectionAction() {
-    super(AnalysisScope.SOURCE_JAVA_FILES, "Inspection", "Inspect", "Inspection");
+    super("Inspection", "Inspect", "Inspection");
   }
 
   protected void analyze(Project project, AnalysisScope scope) {

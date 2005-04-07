@@ -51,7 +51,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
 
   public void testForwardPackageScope(){
     final PsiPackage bPackage = myPsiManager.findPackage("com.b");
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(bPackage, AnalysisScope.SOURCE_JAVA_FILES));
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
     searchFor.add(myPsiManager.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
@@ -74,7 +74,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
 
    public void testBackwardPackageScope(){
     final PsiPackage bPackage = myPsiManager.findPackage("com.a");
-    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new AnalysisScope(bPackage, AnalysisScope.SOURCE_JAVA_FILES));
+    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
     searchFor.add(myPsiManager.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
@@ -95,7 +95,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
   }
 
   public void testForwardSimple(){
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myProject, AnalysisScope.SOURCE_JAVA_FILES));
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myProject));
     builder.analyze();
 
     final Set<PsiFile> searchIn = new HashSet<PsiFile>();

@@ -22,13 +22,11 @@ import java.awt.event.KeyEvent;
 public class CyclicDependenciesAction extends AnAction{
   private final String myAnalysisVerb;
   private final String myAnalysisNoon;
-  private final AnalysisScope.PsiFileFilter myFileFilter;
   private final String myTitle;
 
   public CyclicDependenciesAction() {
     myAnalysisVerb = "Analyze";
     myAnalysisNoon = "Analysis";
-    myFileFilter = AnalysisScope.SOURCE_JAVA_FILES;
     myTitle = "Cyclic Dependency Analysis";
   }
 
@@ -82,30 +80,30 @@ public class CyclicDependenciesAction extends AnAction{
     //Possible scopes: package, project, module.
     Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
     if (projectContext != null) {
-      return new AnalysisScope(projectContext, myFileFilter);
+      return new AnalysisScope(projectContext);
     }
 
     Module moduleContext = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
     if (moduleContext != null) {
-      return new AnalysisScope(moduleContext, myFileFilter);
+      return new AnalysisScope(moduleContext);
     }
 
     Module [] modulesArray = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
     if (modulesArray != null) {
-      return new AnalysisScope(modulesArray, myFileFilter);
+      return new AnalysisScope(modulesArray);
     }
 
     PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
-      return new AnalysisScope(psiDirectory, myFileFilter);
+      return new AnalysisScope(psiDirectory);
     }
     else if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs == null || dirs.length == 0) return null;
-      return new AnalysisScope(pack, myFileFilter);
+      return new AnalysisScope(pack);
     } else if (psiTarget != null){
       return null;
     }
@@ -115,11 +113,11 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   private AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT), myFileFilter);
+    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
   }
 
   private AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE), myFileFilter);
+    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
   }
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {

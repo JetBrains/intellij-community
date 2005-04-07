@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,10 +27,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     add(getAutoreparsePanel(), BorderLayout.NORTH);
   }
 
-  protected InspectionTool[] getTools() {
-    return mySelectedProfile.getLocalInspectionToolWrappers();
-  }
-
+ 
   protected void initDescriptors() {
     super.initDescriptors();
     addGeneralDescriptors();

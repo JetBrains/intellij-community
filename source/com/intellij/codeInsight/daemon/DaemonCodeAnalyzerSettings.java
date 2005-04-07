@@ -44,7 +44,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
       myInspectionProfile.resetToBase();
     }
     if (!myInspectionProfile.wasInitialized()) {
-      myInspectionProfile.load(true);
+      myInspectionProfile.load();
     }
     return myInspectionProfile;
   }

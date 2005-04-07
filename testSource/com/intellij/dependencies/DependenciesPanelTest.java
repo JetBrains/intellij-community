@@ -31,27 +31,22 @@
  */
 package com.intellij.dependencies;
 
-import com.intellij.testFramework.TestSourceBasedTestCase;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.idea.IdeaTestUtil;
+import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.ui.DependenciesPanel;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.TestSourceBasedTestCase;
 
 import javax.swing.*;
-import java.util.Calendar;
 
 public class DependenciesPanelTest extends TestSourceBasedTestCase{
   public void testDependencies(){
     final PsiClass[] classes = getPackageDirectory("com/package1").getPackage().getClasses();
     final PsiFile file = classes[0].getContainingFile();
-    final AnalysisScope scope = new AnalysisScope(file, new AnalysisScope.PsiFileFilter() {
-                                                    public boolean accept(PsiFile another) {
-                                                      return true;
-                                                    }
-                                                  });
+    final AnalysisScope scope = new AnalysisScope(file);
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
     builder.analyze();
     final DependenciesPanel dependenciesPanel =
