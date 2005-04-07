@@ -73,16 +73,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       final PsiMethod method = (PsiMethod)element;
       final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
       Icon methodIcon = role == null ? Icons.METHOD_ICON : role.getIcon();
-      baseIcon = createLayeredIcon(methodIcon, getFlags(method, isLocked));
+      baseIcon = createLayeredIcon(methodIcon, getFlags(method, false));
     }
     else if (element instanceof PsiField) {
-      baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, isLocked));
+      baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
     }
     else if (element instanceof PsiParameter) {
       baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     }
     else if (element instanceof PsiVariable) {
-      baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, isLocked));
+      baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
     }
     else if (element instanceof PsiPointcutDef) {
       baseIcon = createLayeredIcon(Icons.POINTCUT_ICON, 0);
@@ -127,11 +127,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
     return false;
   }
-  private static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
+  public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
     final PsiFile containingFile = element.getContainingFile();
     final VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
-    int flags = (element.hasModifierProperty(PsiModifier.FINAL) ? FLAGS_FINAL : 0)
-                      | (element.hasModifierProperty(PsiModifier.STATIC) ? FLAGS_STATIC : 0)
+    final boolean isEnum = element instanceof PsiClass && ((PsiClass)element).isEnum();
+    int flags = (element.hasModifierProperty(PsiModifier.FINAL) && !isEnum ? FLAGS_FINAL : 0)
+                      | (element.hasModifierProperty(PsiModifier.STATIC) && !isEnum ? FLAGS_STATIC : 0)
                       | (isLocked ? FLAGS_LOCKED : 0)
                       | (isExcluded(vFile, element.getProject()) ? FLAGS_EXCLUDED : 0);
     if (element instanceof PsiClass) {
@@ -152,17 +153,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/abstractException.png");
   private static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
 
-  private static final int CLASS_KIND_CLASS = 1;
-  private static final int CLASS_KIND_INTERFACE = 2;
-  private static final int CLASS_KIND_ENUM = 4;
-  private static final int CLASS_KIND_ANNOTATION = 5;
-  private static final int CLASS_KIND_ASPECT = 6;
-  private static final int CLASS_KIND_JSP = 7;
-  private static final int CLASS_KIND_ANONYMOUS = 8;
-  private static final int CLASS_KIND_EXCEPTION = 9;
-  private static final int CLASS_KIND_JUNIT_TEST = 10;
+  private static final int CLASS_KIND_INTERFACE     = 10;
+  private static final int CLASS_KIND_ANNOTATION    = 20;
+  public static final int CLASS_KIND_CLASS         = 30;
+  private static final int CLASS_KIND_ENUM          = 40;
+  private static final int CLASS_KIND_ASPECT        = 50;
+  private static final int CLASS_KIND_JSP           = 60;
+  private static final int CLASS_KIND_ANONYMOUS     = 70;
+  private static final int CLASS_KIND_EXCEPTION = 80;
+  private static final int CLASS_KIND_JUNIT_TEST = 90;
 
-  private static final int FLAGS_ABSTRACT = 0x100;
+  public static final int FLAGS_ABSTRACT = 0x100;
   private static final int FLAGS_STATIC = 0x200;
   private static final int FLAGS_FINAL = 0x400;
   private static final int FLAGS_LOCKED = 0x800;

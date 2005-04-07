@@ -1274,12 +1274,18 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private abstract static class MyTypeComparator implements Comparator<NodeDescriptor> {
     public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
+      if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
+        return o1 instanceof PsiDirectoryNode ? -1 : 1;
+      }
+      if (isSortByType() && o1 instanceof ClassTreeNode != o2 instanceof ClassTreeNode) {
+        return o1 instanceof ClassTreeNode ? -1 : 1;
+      }
       if (isSortByType() && o1 instanceof ClassTreeNode && o2 instanceof ClassTreeNode) {
         final PsiClass aClass1 = ((ClassTreeNode)o1).getValue();
         final PsiClass aClass2 = ((ClassTreeNode)o2).getValue();
-        int type1 = getClassKind(aClass1);
-        int type2 = getClassKind(aClass2);
-        final int result = type1 - type2;
+        int pos1 = getClassPosition(aClass1);
+        int pos2 = getClassPosition(aClass2);
+        final int result = pos1 - pos2;
         if (result != 0) return result;
       }
       else if (isSortByType() && o1 instanceof PsiFileNode && o2 instanceof PsiFileNode) {
@@ -1296,8 +1302,16 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     protected abstract boolean isSortByType();
 
-    private static int getClassKind(final PsiClass aClass) {
-      return aClass == null ? 0 : ElementBase.getClassKind(aClass);
+    private static int getClassPosition(final PsiClass aClass) {
+      if (aClass == null) {
+        return 0;
+      }
+      int pos = ElementBase.getClassKind(aClass);
+      //abstract class before concrete
+      if (pos == ElementBase.CLASS_KIND_CLASS && (ElementBase.getFlags(aClass, false) & ElementBase.FLAGS_ABSTRACT) != 0) {
+        pos --;
+      }
+      return pos;
     }
     private static String extension(final PsiFile file) {
       return file == null || file.getVirtualFile() == null ? null : file.getVirtualFile().getFileType().getDefaultExtension();
