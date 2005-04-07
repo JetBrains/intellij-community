@@ -31,6 +31,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   public boolean REPORT_PARAMETERS = true;
 
   private LocalQuickFix myQuickFix;
+  public static final String SHORT_NAME = "LocalCanBeFinal";
 
   public LocalCanBeFinal() {
     myQuickFix = new AcceptSuggested();
@@ -196,7 +197,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   }
 
   public String getShortName() {
-    return "LocalCanBeFinal";
+    return SHORT_NAME;
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
