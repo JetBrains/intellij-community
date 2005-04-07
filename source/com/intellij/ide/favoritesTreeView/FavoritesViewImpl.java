@@ -3,6 +3,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -78,8 +79,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFavorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
-        final DefaultActionGroup favoritesActionsGroup = ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
-        favoritesActionsGroup.removeAll();        
+        final ActionGroup favoritesActionsGroup = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
         if (myName2FavoritesListSet.isEmpty()){
           final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myCurrentProject, null, myCurrentProject.getName());
           final Content favoritesContent = contentFactory.createContent(panel, myCurrentProject.getName(), false);
@@ -90,13 +90,11 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
           panel.getFavoritesTreeStructure().initFavoritesList();
           final AddToFavoritesAction addAction = new AddToFavoritesAction(key);
           myActions.put(key, addAction);
-          favoritesActionsGroup.add(addAction);
         } else {
           for (Iterator<String> iterator = myName2FavoritesListSet.keySet().iterator(); iterator.hasNext();) {
             final String key = iterator.next();
             final AddToFavoritesAction addAction = new AddToFavoritesAction(key);
             myActions.put(key, addAction);
-            favoritesActionsGroup.add(addAction);
             final Content content = myName2FavoritesListSet.get(key);
             addContent(content);
             ((FavoritesTreeViewPanel)content.getComponent()).getFavoritesTreeStructure().initFavoritesList();
@@ -105,8 +103,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
             }
           }
         }
-        favoritesActionsGroup.addSeparator();
-        favoritesActionsGroup.add(new AddToNewFavoritesListAction());
       }
     });
   }

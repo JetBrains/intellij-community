@@ -20,8 +20,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.LwRootContainer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -84,7 +84,7 @@ public class AddToFavoritesAction extends AnAction {
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
-    
+
     //on psi element
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
     if (psiElement == null && dataContext.getData(DataConstants.PSI_FILE) != null){
@@ -106,7 +106,7 @@ public class AddToFavoritesAction extends AnAction {
       addPsiElementNode(psiElement, project, result, favoritesConfig, containingModule);
       return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
-    
+
     //on psi elements
     final PsiElement[] psiElements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
@@ -167,15 +167,26 @@ public class AddToFavoritesAction extends AnAction {
       if (StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)) {
         final PsiFile formFile = psiManager.findFile(vFile);
         String text = formFile.getText();
-        LwRootContainer container;
+        String className;
         try {
-          container = Utils.getRootContainer(text, null);
+          className = Utils.getBoundClassName(text);
         }
         catch (Exception e) {
           return null;
         }
-        final PsiClass classToBind = psiManager.findClass(container.getClassToBind(), GlobalSearchScope.allScope(project));
-        result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
+        final PsiClass classToBind = psiManager.findClass(className, GlobalSearchScope.allScope(project));
+        if (classToBind != null) {
+          result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
+        } else {
+          addPsiElementNode(formFile, project, result, favoritesConfig, module);
+        }
+      } else {
+        final PsiFile psiFile = psiManager.findFile(vFile);
+        addPsiElementNode(psiFile,
+                          project,
+                          result,
+                          favoritesConfig,
+                          (Module)dataContext.getData(DataConstants.MODULE_CONTEXT));
       }
       return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
@@ -187,9 +198,13 @@ public class AddToFavoritesAction extends AnAction {
       for (int i = 0; i < forms.length; i++) {
         Form form = forms[i];
         final PsiClass classToBind = form.getClassToBind();
-        if (bindClasses.contains(classToBind)) continue;
-        bindClasses.add(classToBind);
-        result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
+        if (classToBind != null){
+          if (bindClasses.contains(classToBind)) continue;
+          bindClasses.add(classToBind);
+          result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
+        } else {
+          //can't be on FormNodes
+        }
       }
       return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
     }
@@ -216,12 +231,18 @@ public class AddToFavoritesAction extends AnAction {
     return null;
   }
 
-  private void addPsiElementNode(final PsiElement psiElement,
-                                 final Project project,
-                                 final ArrayList<AbstractTreeNode> result,
-                                 final FavoritesTreeViewConfiguration favoritesConfig,
-                                 Module module) {
-    final Class <? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
+  public static void addPsiElementNode(PsiElement psiElement,
+                                       final Project project,
+                                       final ArrayList<AbstractTreeNode> result,
+                                       final FavoritesTreeViewConfiguration favoritesConfig,
+                                       Module module) {
+    Class <? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
+    if (klass == null){
+      psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiFile.class);
+      if (psiElement != null){
+        klass = PsiFileNode.class;
+      }
+    }
     final Object value = getPsiElementNodeValue(psiElement, project, module);
     try {
       if (klass != null && value != null) {

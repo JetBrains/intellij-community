@@ -368,6 +368,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private <T>List<T> getSelectedElements(Class<T> klass) {
     final Object[] elements = getSelectedNodeElements();
     ArrayList<T> result = new ArrayList<T>();
+    if (elements == null){
+      return result;
+    }
     for (int i = 0; i < elements.length; i++) {
       Object element = elements[i];
       if (klass.isAssignableFrom(element.getClass())) {

@@ -20,10 +20,12 @@ public class AddNewFavoritesListAction extends AnAction{
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null){
       final FavoritesTreeViewPanel favoritesTreeViewPanel = doAddNewFavoritesList(project);
-      final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-      windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW).activate(null);
-      final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
-      favoritesView.setSelectedContent(favoritesView.getContent(favoritesTreeViewPanel));
+      if (favoritesTreeViewPanel != null) {
+        final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
+        windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW).activate(null);
+        final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
+        favoritesView.setSelectedContent(favoritesView.getContent(favoritesTreeViewPanel));
+      }
     }
   }
 
@@ -40,6 +42,7 @@ public class AddNewFavoritesListAction extends AnAction{
                                        return inputString.trim().length() > 0 && alreadyContains;
                       }
                     });
+    if (s == null || s.length() == 0) return null;
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     return favoritesView.addNewFavoritesList(s);
   }

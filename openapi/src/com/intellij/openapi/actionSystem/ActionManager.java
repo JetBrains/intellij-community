@@ -77,6 +77,17 @@ public abstract class ActionManager {
   public abstract void registerAction(String actionId, AnAction action);
 
   /**
+     * Registers the specified action with the specified id.
+     *
+     * @param actionId Id to associate with the action
+     * @param action Action to register
+     * @param pluginName to provide parent's plugin name
+   */
+
+  public abstract void registerAction(String actionId, AnAction action, String pluginName);
+
+
+  /**
    * Unregisters the action with the specified actionId.
    *
    * @param actionId Id of the action to be unregistered

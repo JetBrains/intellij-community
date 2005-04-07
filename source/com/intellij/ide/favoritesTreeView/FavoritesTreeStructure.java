@@ -235,7 +235,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     for (Iterator<AbstractUrl> iterator = myAbstractUrls.keySet().iterator(); iterator.hasNext();) {
       AbstractUrl abstractUrl = iterator.next();
       final Object[] path = abstractUrl.createPath(myProject);
-      if (path == null || path.length < 1){
+      if (path == null || path.length < 1 || path[0] == null ){
         continue;
       }
       try {

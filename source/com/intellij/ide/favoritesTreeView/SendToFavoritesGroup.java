@@ -35,7 +35,9 @@ public class SendToFavoritesGroup extends DefaultActionGroup{
       final DataContext dataContext = e.getDataContext();
       final AddNewFavoritesListAction action = (AddNewFavoritesListAction)ActionManager.getInstance().getAction(IdeActions.ADD_NEW_FAVORITES_LIST);
       final FavoritesTreeViewPanel favoritesTreeViewPanel = action.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
-      new SendToFavoritesAction(favoritesTreeViewPanel.getName()).actionPerformed(e);
+      if (favoritesTreeViewPanel != null) {
+        new SendToFavoritesAction(favoritesTreeViewPanel.getName()).actionPerformed(e);
+      }
     }
   }
 }

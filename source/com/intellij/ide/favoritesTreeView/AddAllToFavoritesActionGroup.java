@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
  * User: anna
  * Date: Mar 3, 2005
  */
-public class AddToFavoritesActionGroup extends DefaultActionGroup{
+public class AddAllToFavoritesActionGroup extends DefaultActionGroup{
   public void update(AnActionEvent e) {
     removeAll();
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
@@ -19,10 +19,9 @@ public class AddToFavoritesActionGroup extends DefaultActionGroup{
     final String[] availableFavoritesLists = FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists();
     for (int i = 0; i < availableFavoritesLists.length; i++) {
       String favoritesList = availableFavoritesLists[i];
-      add(new AddToFavoritesAction(favoritesList));
+      add(new AddAllOpenFilesToFavorites(favoritesList));
     }
     addSeparator();
-    add(new AddToNewFavoritesListAction());
-    e.getPresentation().setEnabled(true);
+    add(new AddAllOpenFilesToNewFavoritesListAction());
   }
 }
