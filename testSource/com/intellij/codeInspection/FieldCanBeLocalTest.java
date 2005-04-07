@@ -12,8 +12,8 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new FieldCanBeLocalInspection();
-    myWrapper = new LocalInspectionToolWrapper(myTool);
+    myWrapper = (LocalInspectionToolWrapper)getManager().getCurrentProfile().getInspectionTool(FieldCanBeLocalInspection.SHORT_NAME);
+    myTool = myWrapper.getTool();
   }
 
   private void doTest() throws Exception {
