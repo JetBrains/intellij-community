@@ -27,7 +27,7 @@ public class ActionsTreeUtil {
 
   public static final String MAIN_MENU_TITLE = "Main menu";
   public static final String MAIN_TOOLBAR = "Main Toolbar";
-  public static final String EDITOR_POPUP = "Editor popup";
+  public static final String EDITOR_POPUP = "Editor Popup Menu";
 
   private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
   private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");

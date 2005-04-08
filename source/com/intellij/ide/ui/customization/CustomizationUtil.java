@@ -1,9 +1,6 @@
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.util.diff.Diff;
@@ -25,6 +22,9 @@ import java.util.List;
  */
 public class CustomizationUtil {
   public static ActionGroup correctActionGroup(final ActionGroup group, final CustomActionsSchema schema, final String defaultGroupName) {
+    if (!schema.isCorrectActionGroup(group)){
+       return group;
+     }
     String text = group.getTemplatePresentation().getText();
     final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
@@ -36,24 +36,11 @@ public class CustomizationUtil {
       }
     }
 
-    return new ActionGroup(text, group.isPopup()) {
-      public boolean displayTextInToolbar() {
-        return group.displayTextInToolbar();
-      }
-
-      public AnAction[] getChildren(final AnActionEvent e) {
-        return getReordableChildren(group, schema, defaultGroupName, e);
-      }
-
-      public void update(AnActionEvent e) {
-        group.update(e);
-      }
-
-    };
+    return new CashedAction(text, group.isPopup(), group, schema, defaultGroupName);
   }
 
 
-  private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
+  private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e, boolean forceUpdate) {
      String text = group.getTemplatePresentation().getText();
      ActionManager actionManager = ActionManager.getInstance();
      final ArrayList<AnAction> reordableChildren = new ArrayList<AnAction>();
@@ -68,7 +55,6 @@ public class CustomizationUtil {
          AnAction componentAction = actionUrl.getComponentAction();
          if (componentAction != null) {
            if (actionUrl.getActionType() == ActionUrl.ADDED) {
-
              reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
            }
            else if (actionUrl.getActionType() == ActionUrl.DELETED) {
@@ -101,6 +87,33 @@ public class CustomizationUtil {
      return reordableChildren.toArray(new AnAction[reordableChildren.size()]);
    }
 
+  private static class CashedAction extends ActionGroup {
+    private boolean myForceUpdate;
+    private ActionGroup myGroup;
+    private AnAction[] myChildren;
+    private CustomActionsSchema mySchema;
+    private String myDefaultGroupName;
+    public CashedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
+      super(shortName, popup);
+      myGroup = group;
+      mySchema = schema;
+      myDefaultGroupName = defaultGroupName;
+      myForceUpdate = true;
+    }
+
+    public AnAction[] getChildren(final AnActionEvent e) {
+      if (myForceUpdate){
+        myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e, myForceUpdate);
+        myForceUpdate = false;
+        return myChildren;
+      } else {
+        if (!(myGroup instanceof DefaultActionGroup) || myChildren == null){
+          myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e, false);
+        }
+        return myChildren;
+      }
+    }
+  }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
     Group rootGroup = new Group("root", null, null);
