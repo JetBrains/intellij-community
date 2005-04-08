@@ -94,6 +94,7 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public boolean isToSearchInCommentsForRename(PsiElement element) {
     if (element instanceof PsiDirectory) {
       element = ((PsiDirectory)element).getPackage();
+      if (element == null) return false;
     }
     if (element instanceof PsiPackage){
       return RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
@@ -117,6 +118,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
       return false;
     }
     else if (element instanceof PsiNamedElement) {
+      return false;
+    }
+    else if (element instanceof PsiFileSystemItem) {
       return false;
     }
     else{

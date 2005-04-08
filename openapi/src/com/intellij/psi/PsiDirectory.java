@@ -18,7 +18,6 @@ public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationI
 
   String getName();
   PsiElement setName(String name) throws IncorrectOperationException;
-  void checkSetName(String name) throws IncorrectOperationException;
 
   PsiPackage getPackage();
 

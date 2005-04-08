@@ -13,8 +13,6 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
 
   VirtualFile getVirtualFile();
 
-  void checkSetName(String name) throws IncorrectOperationException;
-
   PsiDirectory getContainingDirectory();
 
   long getModificationStamp();

@@ -465,8 +465,8 @@ public class RenameUtil {
   }
 
   public static void checkRename(PsiElement element, String newName) throws IncorrectOperationException {
-    if (element instanceof PsiDirectory) {
-      ((PsiDirectory)element).checkSetName(newName);
+    if (element instanceof PsiFileSystemItem) {
+      ((PsiFileSystemItem)element).checkSetName(newName);
     }
     if (element instanceof PsiPackage) {
       ((PsiPackage)element).checkSetName(newName);
