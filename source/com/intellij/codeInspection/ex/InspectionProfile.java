@@ -26,7 +26,7 @@ public interface InspectionProfile {
 
   InspectionProfileManager getManager();
 
-  void cleanup(final InspectionManagerEx managerEx);
+  void cleanup();
 
   boolean wasInitialized();
 

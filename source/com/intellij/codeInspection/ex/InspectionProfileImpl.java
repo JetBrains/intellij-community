@@ -24,15 +24,13 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class InspectionProfileImpl implements InspectionProfile.ModifiableModel, InspectionProfile {
-  public static final InspectionProfileImpl EMPTY_PROFILE = new InspectionProfileImpl("empty");
+  public static final InspectionProfileImpl EMPTY_PROFILE = new InspectionProfileImpl("Default");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   private static String VALID_VERSION = "1.0";
   private String myName;
   private File myFile;
 
-  //fiff from base
-  // private HashMap<String, Boolean> myEnabledTools;
   private HashMap<String, InspectionTool> myTools = new HashMap<String, InspectionTool>();
   private InspectionProfileManager myManager;
 
@@ -92,7 +90,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     mySource = inspectionProfile;
   }
 
-  //for tests only
+  //creates empty profile
   public InspectionProfileImpl(final String inspectionProfile) {
     myName = inspectionProfile;
     myInitialized = true;
@@ -563,16 +561,15 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myTools.put(inspectionTool.getShortName(), inspectionTool);
   }
 
-  public void cleanup(final InspectionManagerEx managerEx) {
+  public void cleanup() {
     if (myTools.isEmpty()) return;
     if (!myTools.isEmpty()) {
       for (Iterator<String> iterator = myTools.keySet().iterator(); iterator.hasNext();) {
         final String key = iterator.next();
         final InspectionTool tool = myTools.get(key);
-        if (tool.getManager() == null){ //todo
-          tool.initialize(managerEx);
+        if (tool.getManager() != null){
+          tool.cleanup();
         }
-        tool.cleanup();
       }
     }
     myTools.clear();

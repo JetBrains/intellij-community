@@ -246,7 +246,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
       managerEx.close();
       //may differ from CurrentProfile in case of editor set up
-      myInspectionProfile.cleanup(managerEx);
+      myInspectionProfile.cleanup();
     }
   }
 

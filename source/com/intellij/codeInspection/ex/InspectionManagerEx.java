@@ -316,7 +316,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myFieldUsagesRequests = null;
     myClassUsagesRequests = null;
 
-    getCurrentProfile().cleanup(this);
+    getCurrentProfile().cleanup();
 
     EntryPointsManager.getInstance(getProject()).cleanup();
 
@@ -526,7 +526,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       }
     }, progress);
   }
-  
+
   private static class ProgressWrapper extends ProgressIndicatorBase {
     private ProgressIndicator myOriginal;
 
