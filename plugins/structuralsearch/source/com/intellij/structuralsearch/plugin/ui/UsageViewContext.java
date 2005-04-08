@@ -103,7 +103,7 @@ public class UsageViewContext {
       }
 
       public VirtualFile[] getFiles() {
-        return VirtualFile.EMPTY_ARRAY;
+        return null;
       }
 
       public String getName() {
