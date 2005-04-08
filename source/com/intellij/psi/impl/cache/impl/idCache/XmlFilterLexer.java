@@ -7,28 +7,29 @@ import com.intellij.psi.search.UsageSearchContext;
 import gnu.trove.TIntIntHashMap;
 
 public class XmlFilterLexer extends BaseFilterLexer {
-  private boolean caseInsensitive;
 
   public XmlFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
-    this(originalLexer, table, todoCounts,false);
-  }
-
-  public XmlFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts, boolean _caseInsensitive) {
     super(originalLexer, table, todoCounts);
-    caseInsensitive = _caseInsensitive;
   }
 
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
+    final char[] buffer = getBuffer();
+    final int tokenStart = getTokenStart();
+    final int tokenEnd = getTokenEnd();
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {
-      advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
+      advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
     }
 
-    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN | tokenType == ElementType.XML_NAME) {
-      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(),
+    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_ALIEN_LANGUAGES);
-    } else {
-      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_PLAIN_TEXT);
+      IdCacheUtil.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
+    } else if (tokenType == ElementType.XML_NAME) {
+      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
+                                UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_ALIEN_LANGUAGES);
+    }else {
+      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd, UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

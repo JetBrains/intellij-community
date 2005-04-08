@@ -11,7 +11,6 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -129,13 +128,13 @@ public class IdTableBuilding {
 
   static class HtmlIdCacheBuilder extends XmlIdCacheBuilder {
     protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XmlFilterLexer(new HtmlLexer(), wordsTable, todoCounts, true);
+      return new XmlFilterLexer(new HtmlLexer(), wordsTable, todoCounts);
     }
   }
 
   static class XHtmlIdCacheBuilder extends XmlIdCacheBuilder {
     protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts, false);
+      return new XmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts);
     }
   }
 
