@@ -28,7 +28,10 @@ fi
 IDEA_POPUP_WEIGHT=heavy
 export IDEA_POPUP_WEIGHT
 
-MAIN_CLASS_NAME="com.intellij.idea.Main"
+if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
+  IDEA_MAIN_CLASS_NAME="com.intellij.idea.Main"
+fi
+
 JVM_ARGS="-ea -Xms32m -Xmx200m -Xrunyjpagent:port=10100 -Xbootclasspath/p:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY -Dsun.java2d.noddraw=true -Didea.popup.weight=$IDEA_POPUP_WEIGHT -Djavasvn.delta.disabled=true"
 
 while [ $# -gt 0 ]; do
@@ -57,4 +60,4 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
 cd $IDEA_BIN_HOME
-exec $IDEA_JRE/java $JVM_ARGS $MAIN_CLASS_NAME $args
+exec $IDEA_JRE/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $args

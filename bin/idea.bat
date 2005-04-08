@@ -18,7 +18,7 @@ SET JAVA_EXE=%IDEA_HOME%\jre\bin\java.exe
 
 IF NOT EXIST "%JAVA_EXE%" goto error
 
-SET MAIN_CLASS_NAME=com.intellij.idea.Main
+IF "%IDEA_MAIN_CLASS_NAME%" == "" SET IDEA_MAIN_CLASS_NAME=com.intellij.idea.Main
 
 :: ---------------------------------------------------------------------
 :: There are two possible values of IDEA_POPUP_WEIGHT property: "heavy" and "medium".
@@ -52,7 +52,7 @@ SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\extensions.jar
 :: ---------------------------------------------------------------------
 IF NOT "%IDEA_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%IDEA_CLASS_PATH%
 
-"%JAVA_EXE%" %JVM_ARGS% -cp "%CLASS_PATH%" %MAIN_CLASS_NAME% %*
+"%JAVA_EXE%" %JVM_ARGS% -cp "%CLASS_PATH%" %IDEA_MAIN_CLASS_NAME% %*
 
 SET PATH=%OLD_PATH%
 goto end
