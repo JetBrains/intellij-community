@@ -447,7 +447,7 @@ public class FindInProjectUtil {
     }
 
     public VirtualFile[] getFiles() {
-      throw new UnsupportedOperationException();
+      return null;
     }
 
     public String getName() {
