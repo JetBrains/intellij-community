@@ -137,7 +137,7 @@ public class ActionsTreeUtil {
     }
   }
 
-  private static Group createGroup(ActionGroup actionGroup, boolean ignore) {
+  public static Group createGroup(ActionGroup actionGroup, boolean ignore) {
     final String name = actionGroup.getTemplatePresentation().getText();
     return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore);
   }

@@ -394,6 +394,9 @@ public class CustomizableActionsPanel {
     allSchemasComponent.clear();
     for (int i = 0; i < myCustomizationSchemas.getSize(); i++){
       final CustomActionsSchema schema = (CustomActionsSchema)myCustomizationSchemas.getElementAt(i);
+      if (schema.isModified()){
+        schema.resetMainActionGroups();
+      }
       allSchemasComponent.addCustomActionsSchema(schema);
     }
     allSchemasComponent.setActiveSchema(mySelectedSchema);

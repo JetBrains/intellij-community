@@ -125,7 +125,7 @@ public class ActionUrl implements JDOMExternalizable {
     }
     else if (element.getAttributeValue(IS_GROUP) != null) {
       final AnAction action = ActionManager.getInstance().getAction(attributeValue);
-      myComponent = new Group(action != null ? action.getTemplatePresentation().getText() : attributeValue, attributeValue, null, null);
+      myComponent = action != null ? ActionsTreeUtil.createGroup((ActionGroup)action, true) : new Group(attributeValue, attributeValue, null, null);
     }
     myActionType = Integer.parseInt(element.getAttributeValue(ACTION_TYPE));
     myAbsolutePosition = Integer.parseInt(element.getAttributeValue(POSITION));

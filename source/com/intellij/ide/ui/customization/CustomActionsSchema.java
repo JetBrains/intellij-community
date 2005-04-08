@@ -25,6 +25,10 @@ public class CustomActionsSchema implements JDOMExternalizable{
   private boolean myModified = false;
 
 
+  private ActionGroup myMainMenuActionGroup;
+  private ActionGroup myMainToolabarActionGroup;
+  private ActionGroup myEditorPopupActionGroup;
+
   private static final String GROUP = "group";
 
   public CustomActionsSchema() {
@@ -78,7 +82,10 @@ public class CustomActionsSchema implements JDOMExternalizable{
   }
 
   public ActionGroup getMainMenuActionGroup(){
-    return CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU), this, ActionsTreeUtil.MAIN_MENU_TITLE);
+    if (myMainMenuActionGroup == null){
+      myMainMenuActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU), this, ActionsTreeUtil.MAIN_MENU_TITLE);
+    }
+    return myMainMenuActionGroup;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -106,11 +113,23 @@ public class CustomActionsSchema implements JDOMExternalizable{
   }
 
   public ActionGroup getMainToolbarActionsGroup(){
-    return CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_TOOLBAR), this, ActionsTreeUtil.MAIN_TOOLBAR);
+    if (myMainToolabarActionGroup == null){
+      myMainToolabarActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_TOOLBAR), this, ActionsTreeUtil.MAIN_TOOLBAR);
+    }
+    return myMainToolabarActionGroup;
   }
 
   public ActionGroup getEditorPopupGroup() {
-    return CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP), this, ActionsTreeUtil.EDITOR_POPUP);
+    if (myEditorPopupActionGroup == null){
+       myEditorPopupActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP), this, ActionsTreeUtil.EDITOR_POPUP);
+    }
+    return myEditorPopupActionGroup;
+  }
+
+  public void resetMainActionGroups(){
+    myMainMenuActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU), this, ActionsTreeUtil.MAIN_MENU_TITLE);
+    myMainToolabarActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_TOOLBAR), this, ActionsTreeUtil.MAIN_TOOLBAR);
+    myEditorPopupActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP), this, ActionsTreeUtil.EDITOR_POPUP);
   }
 
   public boolean isModified() {

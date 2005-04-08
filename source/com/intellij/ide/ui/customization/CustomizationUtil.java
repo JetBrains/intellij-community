@@ -75,8 +75,7 @@ public class CustomizationUtil {
              final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
              //for unnamed groups
              if (anAction.getTemplatePresentation().getText() == null && anAction instanceof ActionGroup) {
-               final Group eqGroup = new Group(null, null, null);
-               ActionsTreeUtil.fillGroupIgnorePopupFlag((ActionGroup)anAction, eqGroup, true);
+               final Group eqGroup = ActionsTreeUtil.createGroup((ActionGroup)anAction, true);
                if (!actionUrl.getComponent().equals(eqGroup)) {
                  continue;
                }
