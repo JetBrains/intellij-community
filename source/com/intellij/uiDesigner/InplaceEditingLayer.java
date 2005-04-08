@@ -121,6 +121,11 @@ public final class InplaceEditingLayer extends JComponent{
       return;
     }
 
+    if (!myEditor.ensureEditable()) {
+      myInplaceProperty = null;
+      return;
+    }
+
     // Now we have to cancel previous inplace editing (if any)
 
     // Start new inplace editing

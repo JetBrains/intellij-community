@@ -56,7 +56,13 @@ final class GlassLayer extends JComponent implements DataProvider{
   }
 
   protected void processMouseEvent(final MouseEvent e){
-    if(e.getID() == MouseEvent.MOUSE_PRESSED){
+    final int id = e.getID();
+    if (id == MouseEvent.MOUSE_PRESSED || id == MouseEvent.MOUSE_RELEASED || id == MouseEvent.MOUSE_DRAGGED) {
+      if (!myEditor.ensureEditable()) {
+        return;
+      }
+    }
+    if(id == MouseEvent.MOUSE_PRESSED){
       requestFocusInWindow();
     }
     myEditor.myProcessor.processMouseEvent(e);

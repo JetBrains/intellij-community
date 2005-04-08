@@ -154,128 +154,143 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   protected void processMouseEvent(final MouseEvent e){
-    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      final ComponentItem item = myPalette.getActiveItem();
-      final String id = myEditor.generateId();
-      if (JScrollPane.class.getName().equals(item.getClassName())) {
-        myInsertedComponent = new RadScrollPane(myEditor.getModule(), id);
+    final int id = e.getID();
+   switch (id) {
+        case  MouseEvent.MOUSE_PRESSED:
+          processMousePressed(e);
+          break;
+        case  MouseEvent.MOUSE_RELEASED:
+          processMouseReleased();
+          break;
+        case  MouseEvent.MOUSE_DRAGGED:
+          processMouseDragged(e);
+          break;
+    }
+  }
+
+  private void processMouseDragged(final MouseEvent e) {
+    if (myDropInfo != null && myDropInfo.myTargetContainer.isXY()) {
+      final int width = e.getX() - myInitialPoint.x;
+      final int height = e.getY() - myInitialPoint.y;
+
+      final Dimension newSize = myInsertedComponent.getSize();
+
+      if (width >= myInitialSize.width) {
+        newSize.width = width;
       }
-      else if (item == Palette.getInstance(myEditor.getProject()).getPanelItem()) {
-        myInsertedComponent = new RadContainer(myEditor.getModule(), id);
+      if (height >= myInitialSize.height) {
+        newSize.height = height;
+      }
+      myInsertedComponent.setSize(newSize);
+      myEditor.refresh();
+    }
+  }
+
+  private void processMouseReleased() {
+    if (!mySticky) {
+      myPalette.clearActiveItem();
+    }
+
+    if (myDropInfo != null) {
+      if (myDropInfo.myTargetContainer.isXY()) {
+        Dimension newSize = myInsertedComponent.getSize();
+        if (newSize.equals(myInitialSize) && myShouldSetPreferredSizeIfNotResized) {
+          // if component dropped into XY and was not resized, make it preferred size
+          newSize = myInsertedComponent.getPreferredSize();
+        }
+        Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
+        myInsertedComponent.setSize(newSize);
+      }
+
+      myEditor.refreshAndSave(true);
+    }
+  }
+
+  private void processMousePressed(final MouseEvent e) {
+    final ComponentItem item = myPalette.getActiveItem();
+    final String id = myEditor.generateId();
+    if (JScrollPane.class.getName().equals(item.getClassName())) {
+      myInsertedComponent = new RadScrollPane(myEditor.getModule(), id);
+    }
+    else if (item == Palette.getInstance(myEditor.getProject()).getPanelItem()) {
+      myInsertedComponent = new RadContainer(myEditor.getModule(), id);
+    }
+    else {
+      if (VSpacer.class.getName().equals(item.getClassName())) {
+        myInsertedComponent = new RadVSpacer(myEditor.getModule(), id);
+      }
+      else if (HSpacer.class.getName().equals(item.getClassName())) {
+        myInsertedComponent = new RadHSpacer(myEditor.getModule(), id);
+      }
+      else if (JTabbedPane.class.getName().equals(item.getClassName())) {
+        myInsertedComponent = new RadTabbedPane(myEditor.getModule(), id);
+      }
+      else if (JSplitPane.class.getName().equals(item.getClassName())) {
+        myInsertedComponent = new RadSplitPane(myEditor.getModule(), id);
       }
       else {
-        if (VSpacer.class.getName().equals(item.getClassName())) {
-          myInsertedComponent = new RadVSpacer(myEditor.getModule(), id);
+        final ClassLoader loader = LoaderFactory.getInstance(myEditor.getProject()).getLoader(myEditor.getFile());
+        try {
+          final Class aClass = Class.forName(item.getClassName(), true, loader);
+          myInsertedComponent = new RadAtomicComponent(myEditor.getModule(), aClass, id);
         }
-        else if (HSpacer.class.getName().equals(item.getClassName())) {
-          myInsertedComponent = new RadHSpacer(myEditor.getModule(), id);
-        }
-        else if (JTabbedPane.class.getName().equals(item.getClassName())) {
-          myInsertedComponent = new RadTabbedPane(myEditor.getModule(), id);
-        }
-        else if (JSplitPane.class.getName().equals(item.getClassName())) {
-          myInsertedComponent = new RadSplitPane(myEditor.getModule(), id);
-        }
-        else {
-          final ClassLoader loader = LoaderFactory.getInstance(myEditor.getProject()).getLoader(myEditor.getFile());
-          try {
-            final Class aClass = Class.forName(item.getClassName(), true, loader);
-            myInsertedComponent = new RadAtomicComponent(myEditor.getModule(), aClass, id);
-          }
-          catch (final Exception exc) {
-            String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
-            if (errorDescription == null) {
-              errorDescription = "Class \"" + item.getClassName() + "\" cannot be instantiated";
-              final String message = FormEditingUtil.getExceptionMessage(exc);
-              if (message != null) {
-                errorDescription += ": " + message;
-              }
+        catch (final Exception exc) {
+          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
+          if (errorDescription == null) {
+            errorDescription = "Class \"" + item.getClassName() + "\" cannot be instantiated";
+            final String message = FormEditingUtil.getExceptionMessage(exc);
+            if (message != null) {
+              errorDescription += ": " + message;
             }
-            myInsertedComponent = RadErrorComponent.create(
-              myEditor.getModule(),
-              id,
-              item.getClassName(),
-              null,
-              errorDescription
-            );
           }
+          myInsertedComponent = RadErrorComponent.create(
+            myEditor.getModule(),
+            id,
+            item.getClassName(),
+            null,
+            errorDescription
+          );
         }
-      }
-      myInsertedComponent.init(item);
-
-      if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1)) {
-        CommandProcessor.getInstance().executeCommand(
-          myEditor.getProject(),
-          new Runnable(){
-            public void run(){
-              createBindingWhenDrop();
-
-              myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
-
-              FormEditingUtil.clearSelection(myEditor.getRootContainer());
-              myInsertedComponent.setSelected(true);
-
-              myInitialSize = null;
-              myShouldSetPreferredSizeIfNotResized = true;
-              if (myDropInfo.myTargetContainer.isXY()) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-                myInitialSize = myInsertedComponent.getSize();
-                if (myInitialSize.width > 0 && myInitialSize.height > 0) {
-                  myShouldSetPreferredSizeIfNotResized = false;
-                }
-                else {
-                  // size was not specified as initial value
-                  myInitialSize = new Dimension(7, 7);
-                }
-                Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
-                myInsertedComponent.setSize(myInitialSize);
-              }
-
-              myEditor.refresh();
-
-              myInitialPoint = e.getPoint();
-            }
-          },
-          null,
-          null
-        );
       }
     }
-    else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-      if (!mySticky) {
-        myPalette.clearActiveItem();
-      }
+    myInsertedComponent.init(item);
 
-      if (myDropInfo != null) {
-        if (myDropInfo.myTargetContainer.isXY()) {
-          Dimension newSize = myInsertedComponent.getSize();
-          if (newSize.equals(myInitialSize) && myShouldSetPreferredSizeIfNotResized) {
-            // if component dropped into XY and was not resized, make it preferred size
-            newSize = myInsertedComponent.getPreferredSize();
+    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1)) {
+      CommandProcessor.getInstance().executeCommand(
+        myEditor.getProject(),
+        new Runnable(){
+          public void run(){
+            createBindingWhenDrop();
+
+            myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
+
+            FormEditingUtil.clearSelection(myEditor.getRootContainer());
+            myInsertedComponent.setSelected(true);
+
+            myInitialSize = null;
+            myShouldSetPreferredSizeIfNotResized = true;
+            if (myDropInfo.myTargetContainer.isXY()) {
+              setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+              myInitialSize = myInsertedComponent.getSize();
+              if (myInitialSize.width > 0 && myInitialSize.height > 0) {
+                myShouldSetPreferredSizeIfNotResized = false;
+              }
+              else {
+                // size was not specified as initial value
+                myInitialSize = new Dimension(7, 7);
+              }
+              Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
+              myInsertedComponent.setSize(myInitialSize);
+            }
+
+            myEditor.refresh();
+
+            myInitialPoint = e.getPoint();
           }
-          Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
-          myInsertedComponent.setSize(newSize);
-        }
-
-        myEditor.refreshAndSave(true);
-      }
-    }
-    else if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
-      if (myDropInfo != null && myDropInfo.myTargetContainer.isXY()) {
-        final int width = e.getX() - myInitialPoint.x;
-        final int height = e.getY() - myInitialPoint.y;
-
-        final Dimension newSize = myInsertedComponent.getSize();
-
-        if (width >= myInitialSize.width) {
-          newSize.width = width;
-        }
-        if (height >= myInitialSize.height) {
-          newSize.height = height;
-        }
-        myInsertedComponent.setSize(newSize);
-        myEditor.refresh();
-      }
+        },
+        null,
+        null
+      );
     }
   }
 

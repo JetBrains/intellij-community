@@ -346,9 +346,6 @@ public final class FormEditingUtil {
   }
 
   public static boolean canDeleteSelection(final GuiEditor editor){
-    if (!editor.isEditable()) {
-      return false;
-    }
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
     return !selection.isEmpty();
   }
@@ -450,10 +447,6 @@ public final class FormEditingUtil {
    * @param y in editor pane coordinates
    */
   public static boolean canDrop(final GuiEditor editor, final int x, final int y, final int componentCount){
-    if (!editor.isEditable()) {
-      return false;
-    }
-
     if (componentCount == 0) {
       return false;
     }

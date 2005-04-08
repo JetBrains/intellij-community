@@ -38,14 +38,12 @@ public final class ResizeProcessor extends EventProcessor{
   protected void processKeyEvent(final KeyEvent e){}
 
   protected void processMouseEvent(final MouseEvent e){
-
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myLastPoint = e.getPoint();
       myBounds = myComponent.getBounds();
       myOriginalBounds = new Rectangle(myBounds);
     }
     else if(e.getID()==MouseEvent.MOUSE_DRAGGED){
-
       final int dx = e.getX() - myLastPoint.x;
       final int dy = e.getY() - myLastPoint.y;
 

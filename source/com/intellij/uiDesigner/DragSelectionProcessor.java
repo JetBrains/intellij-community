@@ -120,7 +120,6 @@ public final class DragSelectionProcessor extends EventProcessor{
   private boolean dropSelection(final Point point){
     LOG.assertTrue(point!=null);
 
-
     if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size())) {
       return false;
     }
@@ -193,7 +192,10 @@ public final class DragSelectionProcessor extends EventProcessor{
       final RadComponent c = mySelection.get(i);
       c.getConstraints().restore(myOriginalConstraints[i]);
       c.setBounds(myOriginalBounds[i]);
-      myOriginalParents[i].addComponent(c);
+      final RadContainer originalParent = myOriginalParents[i];
+      if (c.getParent() == originalParent) {
+        originalParent.addComponent(c);
+      }
     }
     myEditor.refresh();
   }
@@ -282,7 +284,7 @@ public final class DragSelectionProcessor extends EventProcessor{
 
       // Try to drop selection
 
-      myPreview=dropSelection(myLastPoint);
+      myPreview = dropSelection(myLastPoint);
       myDropPoint = myPreview ? myLastPoint : null;
       myEditor.refresh();
     }

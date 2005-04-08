@@ -40,13 +40,10 @@ public final class GroupSelectionProcessor extends EventProcessor{
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       final Rectangle rectangle = getRectangle(e);
-
       markRectangle(myEditor.getRootContainer(), rectangle, e.getComponent());
-
       final JComponent dragLayer = myEditor.getDragLayer();
       dragLayer.remove(myRectangePainter);
       dragLayer.repaint();
-
       myStartPoint = null;
     }
   }

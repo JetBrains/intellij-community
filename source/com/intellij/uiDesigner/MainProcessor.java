@@ -32,10 +32,6 @@ public final class MainProcessor extends EventProcessor{
   }
 
   protected void processKeyEvent(final KeyEvent e){
-    if (!myEditor.isEditable()) {
-      return;
-    }
-
     if (myCurrentProcessor != null) {
       myCurrentProcessor.processKeyEvent(e);
     }
@@ -196,9 +192,11 @@ public final class MainProcessor extends EventProcessor{
       return;
     }
 
-    if (!myEditor.isEditable()) {
+    /*
+    if (!myEditor.ensureEditable()) {
       return;
     }
+    */
 
     final ComponentItem selectedItem = myEditor.getPalettePanel().getActiveItem();
     if (selectedItem != null) {
@@ -244,10 +242,6 @@ public final class MainProcessor extends EventProcessor{
   }
 
   private void processMouseClicked(final MouseEvent e){
-    if (!myEditor.isEditable()) {
-      return;
-    }
-
     if(e.getClickCount() != 2){ // inplace editing starts with double click
       return;
     }

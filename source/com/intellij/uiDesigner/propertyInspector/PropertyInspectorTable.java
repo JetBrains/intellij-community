@@ -633,7 +633,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     public boolean isCellEditable(final int row, final int column){
-      return myEditor.isEditable() && column==1 && myProperties.get(row).getEditor() != null;
+      return  column==1 && myProperties.get(row).getEditor() != null;
     }
 
     public Object getValueAt(final int row, final int column){
@@ -651,7 +651,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(Comparing.equal(oldValue,newValue)){
         return;
       }
-
+      if (!myEditor.ensureEditable()) {
+        return;
+      }
       try {
         property.setValue(myComponent, newValue);
       }

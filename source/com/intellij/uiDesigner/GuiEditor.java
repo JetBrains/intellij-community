@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -295,6 +296,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
   public boolean isEditable() {
     final Document document = FileDocumentManager.getInstance().getDocument(myFile);
     return document != null && document.isWritable();
+  }
+
+  public boolean ensureEditable() {
+    if (isEditable()) {
+      return true;
+    }
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(new VirtualFile[]{myFile});
+    return !status.hasReadonlyFiles();
   }
 
   public void refresh() {
@@ -734,12 +743,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   private final class MyDeleteProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
+      if (!GuiEditor.this.ensureEditable()) {
+        return;
+      }
       FormEditingUtil.deleteSelection(GuiEditor.this);
     }
 
     public boolean canDeleteElement(final DataContext dataContext) {
       return
-        isEditable() &&
         !myPropertyInspector.isEditing() &&
         !myInplaceEditingLayer.isEditing() &&
         FormEditingUtil.canDeleteSelection(GuiEditor.this);
