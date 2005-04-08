@@ -48,7 +48,7 @@ public class PatternCompiler {
       context.project = project;
 
       Template template = TemplateManager.getInstance(project).createTemplate("","",options.getSearchPattern());
-      context.findMatchingFiles = options.getScope() instanceof GlobalSearchScope  && options.isCaseSensitiveMatch();
+      context.findMatchingFiles = options.getScope() instanceof GlobalSearchScope;
 
       if (context.findMatchingFiles) {
         context.helper = PsiManager.getInstance(project).getSearchHelper();
