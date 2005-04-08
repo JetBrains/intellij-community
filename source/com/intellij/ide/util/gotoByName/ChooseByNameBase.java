@@ -877,7 +877,7 @@ public abstract class ChooseByNameBase{
       lastIsUppercase = false;
       if (Character.isLetterOrDigit(c)) {
         // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-        if (Character.isUpperCase(c)) {
+        if (Character.isUpperCase(c) || Character.isDigit(c)) {
           if (!uppercaseOnly) {
             buffer.append('(');
           }
