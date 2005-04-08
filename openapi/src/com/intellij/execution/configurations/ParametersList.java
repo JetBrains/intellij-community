@@ -127,10 +127,16 @@ public class ParametersList implements Cloneable{
     myParameters.addAll(parameters);
   }
 
-  public ParametersList clone() throws CloneNotSupportedException {
-    final ParametersList clone = (ParametersList)super.clone();
-    clone.myParameters = new ArrayList<String>(myParameters);
-    return clone;
+  public ParametersList clone() {
+    try {
+      final ParametersList clone = (ParametersList)super.clone();
+      clone.myParameters = new ArrayList<String>(myParameters);
+      return clone;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static String[] parse(final String string){
