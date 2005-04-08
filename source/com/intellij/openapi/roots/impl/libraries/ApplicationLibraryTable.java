@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,9 +17,9 @@ import java.io.File;
  *  @author dsl
  */
 public class ApplicationLibraryTable extends LibraryTableBase implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private PathMacros myPathMacros;
+  private PathMacrosImpl myPathMacros;
 
-  public ApplicationLibraryTable(PathMacros pathMacros) {
+  public ApplicationLibraryTable(PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
   }
 
@@ -58,7 +58,7 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
-    PathMacros.getInstance().addMacroReplacements(macroReplacements);
+    PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 }

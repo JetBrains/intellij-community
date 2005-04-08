@@ -2,7 +2,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacroMap;
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -81,7 +81,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
                         String filePath,
                         boolean isDefault,
                         boolean isOptimiseTestLoadSpeed,
-                        PathMacros pathMacros, VirtualFilePointerManager filePointerManager) {
+                        PathMacrosImpl pathMacros, VirtualFilePointerManager filePointerManager) {
     super(isDefault, pathMacros);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
@@ -286,7 +286,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
     File f = new File(projectDir.replace('/', File.separatorChar));
 
-    getExpandProjectHomeReplacements(result, f, "$" + PathMacros.PROJECT_DIR_MACRO_NAME + "$");
+    getExpandProjectHomeReplacements(result, f, "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$");
   }
 
   private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
@@ -308,7 +308,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     File f = new File(projectDir.replace('/', File.separatorChar));
     //LOG.assertTrue(f.exists());
 
-    String macro = "$" + PathMacros.PROJECT_DIR_MACRO_NAME + "$";
+    String macro = "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$";
 
     while (f != null) {
       String path = PathMacroMap.quotePath(f.getAbsolutePath());

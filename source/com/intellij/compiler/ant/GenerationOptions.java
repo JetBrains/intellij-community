@@ -1,6 +1,6 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -58,7 +57,7 @@ public class GenerationOptions {
   }
 
   private static ReplacePathToMacroMap createReplacementMap() {
-    final PathMacros pathMacros = PathMacros.getInstance();
+    final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
     final Set<String> macroNames = pathMacros.getUserMacroNames();
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
     for (Iterator it = macroNames.iterator(); it.hasNext();) {

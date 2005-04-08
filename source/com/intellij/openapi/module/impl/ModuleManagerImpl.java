@@ -1,6 +1,6 @@
 package com.intellij.openapi.module.impl;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.components.ProjectComponent;
@@ -459,7 +459,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacros.getInstance());
+        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacrosImpl.getInstanceEx());
         module.setModuleType(moduleType);
         module.loadModuleComponents();
         initModule(module, false);
@@ -518,7 +518,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacros.getInstance());
+        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacrosImpl.getInstanceEx());
         module.loadSavedConfiguration();
         module.loadModuleComponents();
         initModule(module, true);

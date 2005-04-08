@@ -1,6 +1,6 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,7 +62,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
-  private PathMacros myPathMacros;
+  private PathMacrosImpl myPathMacros;
   private VirtualFilePointerManager myFilePointerManager;
 
   private static ProjectManagerListener[] getListeners(Project project) {
@@ -74,7 +74,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   /* @fabrique used by fabrique! */
   public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx,
-                            PathMacros pathMacros,
+                            PathMacrosImpl pathMacros,
                             VirtualFilePointerManager filePointerManager) {
     addProjectManagerListener(
       new ProjectManagerListener() {

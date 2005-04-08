@@ -1,6 +1,6 @@
 package com.intellij.j2ee.openapi.impl;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
@@ -30,9 +30,9 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private Map<String, String> myStdResources = new com.intellij.util.containers.HashMap<String, String>();
   private List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
-  private PathMacros myPathMacros;
+  private PathMacrosImpl myPathMacros;
 
-  public ExternalResourceManagerImpl(PathMacros pathMacros) {
+  public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(J2EE_1_3 + "connector_1_0.dtd", "connector_1_0.dtd");
     addInternalResource(J2EE_1_3 + "jspxml.xsd", "jspxml.xsd");
     addInternalResource(J2EE_1_3 + "jspxml.dtd", "jspxml.dtd");
@@ -229,7 +229,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
 
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
-    PathMacros.getInstance().addMacroReplacements(macroReplacements);
+    PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 

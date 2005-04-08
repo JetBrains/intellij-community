@@ -90,7 +90,7 @@ public class ReplacePathToMacroMap extends PathMacroMap{
   }
 
   public Set<String> getUsedMacroNames() {
-    final Set<String> userMacroNames = PathMacros.getInstance().getUserMacroNames();
+    final Set<String> userMacroNames = PathMacrosImpl.getInstanceEx().getUserMacroNames();
     final Set<String> used = new HashSet<String>(myUsedMacros);
     used.retainAll(userMacroNames);
     return used;

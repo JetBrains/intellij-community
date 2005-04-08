@@ -1,6 +1,5 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.application.options.PathMacros;
 import com.intellij.compiler.JavacSettings;
 import com.intellij.compiler.ant.taskdefs.FileSet;
 import com.intellij.compiler.ant.taskdefs.Include;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 

@@ -4,7 +4,7 @@
  */
 package com.intellij.compiler.ant;
 
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.util.Pair;
@@ -24,7 +24,7 @@ public class PropertyFileGenerator extends Generator{
 
   public PropertyFileGenerator(Project project) {
     // path variables
-    final PathMacros pathMacros = PathMacros.getInstance();
+    final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
     final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
     if (macroNamesSet.size() > 0) {
       final String[] macroNames = macroNamesSet.toArray(new String[macroNamesSet.size()]);

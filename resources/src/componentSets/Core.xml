@@ -113,8 +113,8 @@
       <implementation-class>com.intellij.codeFormatting.general.PseudoTextElementFactoryImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.application.options.PathMacros</interface-class>
-      <implementation-class>com.intellij.application.options.PathMacros</implementation-class>
+      <interface-class>com.intellij.openapi.application.PathMacros</interface-class>
+      <implementation-class>com.intellij.application.options.PathMacrosImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>

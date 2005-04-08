@@ -6,14 +6,18 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.util.EnvironmentUtil;
 
 import java.util.*;
 
 public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
   private List<String> myParameters = new ArrayList<String>();
+  private Map<String, String> myMacroMap = null;
 
   public ParametersList() {
+
   }
 
   public boolean hasParameter(final String param) {
@@ -68,12 +72,12 @@ public class ParametersList implements Cloneable{
   }
 
   public void add(final String parameter) {
-    myParameters.add(parameter);
+    myParameters.add(expandMacros(parameter));
   }
 
   public void addAt(final int index, final String parameter) {
     LOG.assertTrue(parameter != null);
-    myParameters.add(index, parameter);
+    myParameters.add(index, expandMacros(parameter));
   }
 
   public void defineProperty(final String propertyName, final String propertyValue) {
@@ -141,6 +145,43 @@ public class ParametersList implements Cloneable{
 
   public static String[] parse(final String string){
     return new ParametersTokenizer(string).execute();
+  }
+
+
+  public String expandMacros(String text) {
+    final Map<String, String> macroMap = getMacroMap();
+    final Set set = macroMap.keySet();
+    for (Iterator i = set.iterator(); i.hasNext();) {
+      final String from = (String)i.next();
+      final String to = macroMap.get(from);
+      text = StringUtil.replace(text, from, to, true);
+    }
+    return text;
+  }
+
+  private Map<String, String> getMacroMap() {
+    if (myMacroMap == null) {
+      // the insertion order is important for later iterations, so LinkedHashMap is used
+      myMacroMap = new LinkedHashMap<String, String>();
+
+      final PathMacros pathMacros = PathMacros.getInstance();
+      final Set<String> names = pathMacros.getAllMacroNames();
+      for (Iterator it = names.iterator(); it.hasNext();) {
+        final String name = (String)it.next();
+        myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+      }
+
+      final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
+      for (Iterator it = env.keySet().iterator(); it.hasNext();) {
+        final String name = (String)it.next();
+        final String key = "${" + name + "}";
+        if (!myMacroMap.containsKey(key)) {
+          myMacroMap.put(key, env.get(name));
+        }
+      }
+
+    }
+    return myMacroMap;
   }
 
   private static class ParametersTokenizer {

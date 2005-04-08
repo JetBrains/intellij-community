@@ -1,6 +1,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -12,8 +13,8 @@ import java.util.*;
 /**
  *  @author dsl
  */
-public class PathMacros implements ApplicationComponent, NamedJDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacros");
+public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
   public static final String MACRO_ELEMENT = "macro";
   public static final String NAME_ATTR = "name";
@@ -30,12 +31,12 @@ public class PathMacros implements ApplicationComponent, NamedJDOMExternalizable
     ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
   }
 
-  public static PathMacros getInstance() {
-    return ApplicationManager.getApplication().getComponent(PathMacros.class);
+  public static PathMacrosImpl getInstanceEx() {
+    return (PathMacrosImpl)ApplicationManager.getApplication().getComponent(PathMacros.class);
   }
 
   public String getComponentName() {
-    return "PathMacros";
+    return "PathMacrosImpl";
   }
 
   public void initComponent() { }
@@ -55,6 +56,15 @@ public class PathMacros implements ApplicationComponent, NamedJDOMExternalizable
   public Set<String> getSystemMacroNames() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return ourSystemMacroNames;
+  }
+
+  public Set<String> getAllMacroNames() {
+    final Set<String> userMacroNames = getUserMacroNames();
+    final Set<String> systemMacroNames = getSystemMacroNames();
+    final Set<String> allNames = new HashSet<String>(userMacroNames.size() + systemMacroNames.size());
+    allNames.addAll(systemMacroNames);
+    allNames.addAll(userMacroNames);
+    return allNames;
   }
 
   public String getValue(String name) {

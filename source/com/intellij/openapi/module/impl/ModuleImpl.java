@@ -2,7 +2,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacroMap;
-import com.intellij.application.options.PathMacros;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -56,7 +56,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private PomModule myPomModule;
   private PomModel myPomModel;
 
-  public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacros pathMacros) {
+  public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
     super(false, pathMacros);
     myProject = project;
     myPomModel =  pomModel;
@@ -224,7 +224,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     File f = new File(moduleDir.replace('/', File.separatorChar));
     LOG.assertTrue(f.exists());
 
-    getExpandModuleHomeReplacements(result, f, "$" + PathMacros.MODULE_DIR_MACRO_NAME + "$");
+    getExpandModuleHomeReplacements(result, f, "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
   }
 
   private void getExpandModuleHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
@@ -247,7 +247,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     // [dsl]: Q?
     //if(!f.exists()) return;
 
-    String macro = "$" + PathMacros.MODULE_DIR_MACRO_NAME + "$";
+    String macro = "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$";
 
     while (f != null) {
       String path = PathMacroMap.quotePath(f.getAbsolutePath());
