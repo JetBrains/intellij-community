@@ -128,6 +128,7 @@ public class HtmlUtil {
 
   public static class HtmlReferenceProvider implements PsiReferenceProvider {
     private static final Key<PsiReference[]> cachedReferencesKey = Key.create("html.cachedReferences");
+    private static final Key<String>         cachedRefsTextKey = Key.create("html.cachedReferences.text");
 
     public ElementFilter getFilter() {
       return new ElementFilter() {
@@ -170,29 +171,34 @@ public class HtmlUtil {
 
     public PsiReference[] getReferencesByElement(PsiElement element) {
       PsiReference[] refs = element.getUserData(cachedReferencesKey);
+      String originalText = element.getText();
 
-      if (refs == null) {
-        String text = element.getText();
-        int offset = 0;
-        if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
-
-        text = text.substring(offset,text.length() - offset);
-        int ind = text.lastIndexOf('#');
-        if (ind != -1) text = text.substring(0,ind);
-
-        ind = text.lastIndexOf('?');
-        if (ind!=-1) text = text.substring(0,ind);
-
-        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
-            !text.startsWith("javascript:")
-           ) {
-          refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
-        } else {
-          refs = PsiReference.EMPTY_ARRAY;
-        }
-
-        element.putUserData(cachedReferencesKey,refs);
+      if (refs != null) {
+        String text = element.getUserData(cachedRefsTextKey);
+        if (text.equals(originalText)) return refs;
       }
+
+      String text = originalText;
+      int offset = 0;
+      if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
+
+      text = text.substring(offset,text.length() - offset);
+      int ind = text.lastIndexOf('#');
+      if (ind != -1) text = text.substring(0,ind);
+
+      ind = text.lastIndexOf('?');
+      if (ind!=-1) text = text.substring(0,ind);
+
+      if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
+          !text.startsWith("javascript:")
+         ) {
+        refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
+      } else {
+        refs = PsiReference.EMPTY_ARRAY;
+      }
+
+      element.putUserData(cachedReferencesKey,refs);
+      element.putUserData(cachedRefsTextKey,originalText);
 
       return refs;
     }
