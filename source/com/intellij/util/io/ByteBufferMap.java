@@ -9,57 +9,57 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ByteBufferMap {
+public class ByteBufferMap<K,V> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ByteBufferMap");
 
   private final RandomAccessDataInput myBuffer;
   private final int myStartOffset;
-  private final KeyProvider myKeyProvider;
-  private final ValueProvider myValueProvider;
+  private final KeyProvider<K> myKeyProvider;
+  private final ValueProvider<V> myValueProvider;
   private int myMod;
   private final int myEndOffset;
 
-  public static interface KeyProvider {
-    int hashCode(Object key);
+  public static interface KeyProvider<K> {
+    int hashCode(K key);
 
-    void write(DataOutput out, Object key) throws IOException;
+    void write(DataOutput out, K key) throws IOException;
 
-    int length(Object key);
+    int length(K key);
 
-    Object get(DataInput in) throws IOException;
+    K get(DataInput in) throws IOException;
 
     /**
      * Should move the buffer pointer to the key end.
      */
-    boolean equals(DataInput in, Object key) throws IOException;
+    boolean equals(DataInput in, K key) throws IOException;
   }
 
-  public static interface ValueProvider {
-    void write(DataOutput out, Object value) throws IOException;
+  public static interface ValueProvider<V> {
+    void write(DataOutput out, V value) throws IOException;
 
-    int length(Object value);
+    int length(V value);
 
-    Object get(DataInput in) throws IOException;
+    V get(DataInput in) throws IOException;
   }
 
-  public static void writeMap(DataOutput stream,
-                              ValueProvider valueProvider,
-                              WriteableMap map,
+  public static <K,V> void writeMap(DataOutput stream,
+                              ValueProvider<V> valueProvider,
+                              WriteableMap<K,V> map,
                               double searchFactor) throws IOException {
-    new ByteBufferMapWriteHandler(stream, valueProvider, map, searchFactor).execute();
+    new ByteBufferMapWriteHandler<K,V>(stream, valueProvider, map, searchFactor).execute();
   }
 
-  public static int calcMapLength(ValueProvider valueProvider,
-                                  WriteableMap map,
+  public static <K,V> int calcMapLength(ValueProvider<V> valueProvider,
+                                  WriteableMap<K,V> map,
                                   double searchFactor) throws IOException {
-    return new ByteBufferMapWriteHandler(null, valueProvider, map, searchFactor).calcLength();
+    return new ByteBufferMapWriteHandler<K,V>(null, valueProvider, map, searchFactor).calcLength();
   }
 
   public ByteBufferMap(RandomAccessDataInput buffer,
                        int startOffset,
                        int endOffset,
-                       KeyProvider keyProvider,
-                       ValueProvider valueProvider) {
+                       KeyProvider<K> keyProvider,
+                       ValueProvider<V> valueProvider) {
     LOG.assertTrue(keyProvider != null);
     LOG.assertTrue(valueProvider != null);
     LOG.assertTrue(startOffset < endOffset);
@@ -79,7 +79,7 @@ public class ByteBufferMap {
     }
   }
 
-  public Object get(Object key) {
+  public V get(K key) {
     int hash = hash(myKeyProvider.hashCode(key));
     int keyGroupOffset = readKeyGroupOffset(hash);
     if (keyGroupOffset == -1) return null;
@@ -111,13 +111,13 @@ public class ByteBufferMap {
     return null;
   }
 
-  public Object[] getKeys(Class keyClass) {
-    ArrayList result = new ArrayList();
+  public K[] getKeys(Class<K> keyClass) {
+    ArrayList<K> result = new ArrayList<K>();
     getKeys(keyClass, result);
-    return result.toArray((Object[])Array.newInstance(keyClass, result.size()));
+    return result.toArray((K[])Array.newInstance(keyClass, result.size()));
   }
 
-  public void getKeys(Class keyClass, Collection dst) {
+  public void getKeys(Class<K> keyClass, Collection<K> dst) {
     try {
       myBuffer.setPosition(myStartOffset + 4 /* mod */);
 

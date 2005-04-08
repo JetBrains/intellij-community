@@ -6,19 +6,19 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 
-class ByteBufferMapWriteHandler {
+class ByteBufferMapWriteHandler<K,V> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ByteBufferMapWriteHandler");
 
 //  private final ByteBufferMap.KeyProvider myKeyProvider;
-  private final ByteBufferMap.ValueProvider myValueProvider;
-  private final WriteableMap myMap;
+  private final ByteBufferMap.ValueProvider<V> myValueProvider;
+  private final WriteableMap<K,V> myMap;
 
   private final int[] myKeyHashes;
   private final int myMod;
   private DataOutput myOut;
 //  private ProgressIndicator myProgress;
 
-  public ByteBufferMapWriteHandler(DataOutput stream, /*ByteBufferMap.KeyProvider keyProvider, */ByteBufferMap.ValueProvider valueProvider, WriteableMap map, double searchFactor) {
+  public ByteBufferMapWriteHandler(DataOutput stream, /*ByteBufferMap.KeyProvider keyProvider, */ByteBufferMap.ValueProvider<V> valueProvider, WriteableMap<K,V> map, double searchFactor) {
     myValueProvider = valueProvider;
     myMap = map;
 
@@ -78,7 +78,7 @@ class ByteBufferMapWriteHandler {
           myMap.writeKey( myOut, j );
           myOut.writeInt( offset );
         }
-        Object value = myMap.getValue(j);
+        V value = myMap.getValue(j);
         offset += myValueProvider.length(value);
       }
     }
@@ -86,7 +86,7 @@ class ByteBufferMapWriteHandler {
     // writing value table
     for( int i = 0; i < myMod; i++ ) {
       for( int j = firstOverflowElem[i]; j != -1; j = overflowList[j] ) {
-        Object value = myMap.getValue(j);
+        V value = myMap.getValue(j);
         if( write ) myValueProvider.write( myOut, value );
       }
     }

@@ -12,11 +12,11 @@ import java.io.IOException;
  * Time: 4:36:27 PM
  * To change this template use File | Settings | File Templates.
  */
-public class WriteableTIntObjectMapAdapter implements WriteableMap<Integer,Object> {
-  private TIntObjectHashMap hashmap;
+public class WriteableTIntObjectMapAdapter <V> implements WriteableMap<Integer, V> {
+  private TIntObjectHashMap<V> hashmap;
   private int[] hashkeys;
 
-  public WriteableTIntObjectMapAdapter(TIntObjectHashMap map) {
+  public WriteableTIntObjectMapAdapter(TIntObjectHashMap<V> map) {
     hashmap = map;
   }
 
@@ -24,15 +24,15 @@ public class WriteableTIntObjectMapAdapter implements WriteableMap<Integer,Objec
     return hashkeys = hashmap.keys();
   }
 
-  public Object getValue( int pos ) {
-    return hashmap.get( hashkeys[pos] );
+  public V getValue(int pos) {
+    return hashmap.get(hashkeys[pos]);
   }
 
-  public int getKeyLength( int pos ) {
+  public int getKeyLength(int pos) {
     return 4;
   }
 
-  public void writeKey( DataOutput out, int pos ) throws IOException {
-    out.writeInt( hashkeys[pos] );
+  public void writeKey(DataOutput out, int pos) throws IOException {
+    out.writeInt(hashkeys[pos]);
   }
 }

@@ -20,7 +20,7 @@ import java.util.Map;
  * @author mike
  */
 public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
-  private static final Key XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
+  private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
 
   public XmlEntityRefImpl() {
     super(XML_ENTITY_REF);
@@ -32,7 +32,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     final String entityName = text.substring(1, text.length() - 1);
 
     final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : this;
-    Map<String, CachedValue<XmlEntityDecl>> map = (Map<String,CachedValue<XmlEntityDecl>>)targetElement.getUserData(XML_ENTITY_DECL_MAP);
+    Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
     if (map == null){
       map = new HashMap<String,CachedValue<XmlEntityDecl>>();
       targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
@@ -56,7 +56,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   private CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
-    final List deps = new ArrayList();
+    final List<PsiElement> deps = new ArrayList<PsiElement>();
     final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
 
     PsiElementProcessor processor = new PsiBaseElementProcessor() {

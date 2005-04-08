@@ -7,7 +7,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-public class StringKeyProvider implements ByteBufferMap.KeyProvider{
+public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.StringKeyProvider");
 
   public static final StringKeyProvider INSTANCE = new StringKeyProvider();
@@ -15,18 +15,18 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider{
   private StringKeyProvider() {
   }
 
-  public int hashCode(Object key) {
+  public int hashCode(String key) {
     return key.hashCode();
   }
 
-  public void write(DataOutput out, Object key) throws IOException {
+  public void write(DataOutput out, String key) throws IOException {
     String keyString = (String)key;
     byte[] keyBytes = keyString.getBytes("UTF-8");
     out.writeInt(keyBytes.length);
     out.write(keyBytes);
   }
 
-  public int length(Object key) {
+  public int length(String key) {
     try{
       String keyString = (String)key;
       byte[] keyBytes = keyString.getBytes("UTF-8");
@@ -38,7 +38,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider{
     }
   }
 
-  public Object get(DataInput in) throws IOException {
+  public String get(DataInput in) throws IOException {
     int length = in.readInt();
     byte[] bytes = new byte[length];
     in.readFully(bytes);
@@ -51,7 +51,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider{
     }
   }
 
-  public boolean equals(DataInput in, Object key) throws IOException {
+  public boolean equals(DataInput in, String key) throws IOException {
     try {
       String keyString = (String)key;
       byte[] keyBytes = keyString.getBytes("UTF-8");
