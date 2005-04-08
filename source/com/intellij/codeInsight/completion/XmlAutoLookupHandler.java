@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.lang.xml.XMLLanguage;
 
 /**
  *
@@ -27,7 +28,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler{
     PsiElement lastElement = file.findElementAt(offset - 1);
     if (lastElement == null) return LookupData.EMPTY;
 
-    if (lastElement.getText().equals("<")) {
+    if (lastElement.getText().equals("<") && lastElement.getLanguage() instanceof XMLLanguage) {
       return super.getLookupData(context);
     }
     //if (lastElement instanceof PsiWhiteSpace && lastElement.getPrevSibling() instanceof XmlTag) {
