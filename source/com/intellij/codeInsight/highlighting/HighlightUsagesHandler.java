@@ -554,7 +554,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return ((PsiPointcutDef)element).getNameIdentifier();
     }
 
-    if (element instanceof PsiNamedElement) {
+    if (element.isPhysical() && element instanceof PsiNamedElement && element.getContainingFile() != null) {
       // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
       final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
       if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
