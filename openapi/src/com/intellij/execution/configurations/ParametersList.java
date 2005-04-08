@@ -9,9 +9,12 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.*;
 
-public class ParametersList {
+public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
   private List<String> myParameters = new ArrayList<String>();
+
+  public ParametersList() {
+  }
 
   public boolean hasParameter(final String param) {
     return myParameters.contains(param);
@@ -124,8 +127,8 @@ public class ParametersList {
     myParameters.addAll(parameters);
   }
 
-  public ParametersList clone() {
-    final ParametersList clone = new ParametersList();
+  public ParametersList clone() throws CloneNotSupportedException {
+    final ParametersList clone = (ParametersList)super.clone();
     clone.myParameters = new ArrayList<String>(myParameters);
     return clone;
   }
