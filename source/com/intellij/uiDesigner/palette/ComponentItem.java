@@ -132,7 +132,7 @@ public final class ComponentItem implements Cloneable{
 
     // Create new icon
     if(myIconPath != null){
-      myIcon = IconLoader.getIcon(myIconPath);
+      myIcon = IconLoader.findIcon(myIconPath);
     }
     if(myIcon == null){
       myIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
