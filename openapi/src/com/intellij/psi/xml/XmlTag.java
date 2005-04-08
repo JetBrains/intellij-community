@@ -40,7 +40,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   String getNamespacePrefix();
   String getNamespaceByPrefix(String prefix);
-  String getPrefixByNamespace(String prefix);
+  String getPrefixByNamespace(String namespace);
   String[] knownNamespaces();
 
   XmlTagValue getValue();

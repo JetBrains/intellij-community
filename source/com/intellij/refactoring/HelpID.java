@@ -23,6 +23,7 @@ public class HelpID {
   public static final String INTRODUCE_FIELD = "refactoring.introduceField";
   public static final String INTRODUCE_CONSTANT = "refactoring.introduceConstant";
   public static final String EXTRACT_METHOD     = "refactoring.extractMethod";
+  public static final String EXTRACT_INCLUDE    = "refactoring.extractInclude";
 
   public static final String ANONYMOUS_TO_INNER = "refactoring.convertAnonymous";
   public static final String LOCAL_TO_FIELD     = "refactoring.convertLocal";
@@ -37,7 +38,7 @@ public class HelpID {
   public static final String INLINE_VARIABLE    = "refactoring.inlineVariable";
   public static final String INLINE_POINTCUT    = "refactoring.inlinePointcut";
   public static final String INLINE_FIELD       = "refactoring.inlineField";
-  public static final String INLINE_INCLUDE      = "refactoring.inlineInclude";
+  public static final String INLINE_INCLUDE     = "refactoring.inlineInclude";
 
   public static final String MIGRATION          = "refactoring.migration";
 

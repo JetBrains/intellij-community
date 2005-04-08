@@ -16,10 +16,6 @@ public class TypeCookAction extends BaseRefactoringAction {
     return false; 
   }
 
-  public boolean isAvailableInEditorOnlyTyp() {
-    return false;
-  }
-
   public boolean isAvaiableForFile(PsiFile file) {
     return isEnabledOnElements(new PsiElement[]{file});
   }
