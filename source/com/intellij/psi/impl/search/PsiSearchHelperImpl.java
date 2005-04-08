@@ -14,7 +14,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -41,7 +40,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -193,53 +191,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  public interface CustomSearchHelper {
-    boolean caseInsensitive();
-  }
-
-  public static class XmlCustomSearchHelper implements CustomSearchHelper {
-    private TokenSet myTokenSet = TokenSet.create(new IElementType[] { XmlTokenType.XML_NAME});
-
-    public boolean caseInsensitive() {
-      return false;
-    }
-  }
-
-  public static class HtmlCustomSearchHelper implements CustomSearchHelper {
-    public boolean caseInsensitive() {
-      return true;
-    }
-  }
-
-  static class XHtmlCustomSearchHelper extends HtmlCustomSearchHelper {
-    public boolean caseInsensitive() {
-      return false;
-    }
-  }
-
-  static class JspxCustomSearchHelper extends XHtmlCustomSearchHelper {
-  }
-
-  private static final HashMap<FileType,CustomSearchHelper> CUSTOM_SEARCH_HELPERS = new HashMap<FileType, CustomSearchHelper>();
-
-  static {
-    registerCustomSearchHelper(StdFileTypes.HTML,new HtmlCustomSearchHelper());
-    registerCustomSearchHelper(StdFileTypes.XHTML,new XHtmlCustomSearchHelper());
-    registerCustomSearchHelper(StdFileTypes.JSPX,new JspxCustomSearchHelper());
-
-    XmlCustomSearchHelper searchHelper = new XmlCustomSearchHelper();
-    registerCustomSearchHelper(StdFileTypes.XML,searchHelper);
-    registerCustomSearchHelper(StdFileTypes.DTD,searchHelper);
-  }
-
-  public static void registerCustomSearchHelper(FileType fileType,CustomSearchHelper searchHelper) {
-    CUSTOM_SEARCH_HELPERS.put(fileType, searchHelper);
-  }
-
-  public static final CustomSearchHelper getCustomSearchHelper(FileType fileType) {
-    return CUSTOM_SEARCH_HELPERS.get(fileType);
-  }
-
   public PsiSearchHelperImpl(PsiManagerImpl manager) {
     myManager = manager;
     myJoinPointSearchHelper = new JoinPointSearchHelper(manager, this);
@@ -347,13 +298,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     };
 
-    final CustomSearchHelper customSearchHelper = getCustomSearchHelper(refElement);
 
     short searchContext;
-
-    if (customSearchHelper!=null) {
-      if (customSearchHelper.caseInsensitive()) text = text.toLowerCase();
-    }
 
     if (refElement instanceof XmlAttributeValue) {
       searchContext = UsageSearchContext.IN_PLAIN_TEXT;
@@ -369,7 +315,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           searchScope,
           text,
           searchContext,
-          customSearchHelper!=null && customSearchHelper.caseInsensitive()
+          false
        )) {
       return false;
     }
@@ -431,13 +377,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
-  private static CustomSearchHelper getCustomSearchHelper(final PsiElement refElement) {
-    PsiFile containingFile = refElement.getContainingFile();
-    final CustomSearchHelper customSearchHelper = containingFile != null ? CUSTOM_SEARCH_HELPERS.get(containingFile.getFileType()) : null;
-    return customSearchHelper;
-  }
-
-  private boolean processAntElementScopeRoot(final PsiElement scope,
+  private static boolean processAntElementScopeRoot(final PsiElement scope,
                                              final PsiElement refElement,
                                              final PsiAntElement antElement,
                                              final PsiReferenceProcessor processor) {
@@ -779,7 +719,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     boolean toContinue = processElementsWithWord(processor1,
                                                  searchScope,
                                                  text,
-                                                 searchContext, false);
+                                                 searchContext, true);
     if (!toContinue) return false;
 
     if (PropertyUtil.isSimplePropertyAccessor(method)) {
@@ -788,7 +728,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         toContinue = processElementsWithWord(processor1,
                                              searchScope,
                                              propertyName,
-                                             UsageSearchContext.IN_ALIEN_LANGUAGES, false);
+                                             UsageSearchContext.IN_ALIEN_LANGUAGES, true);
         if (!toContinue) return false;
       }
     }
@@ -973,7 +913,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processElementsWithWord(processor,
                             searchScope,
                             name,
-                            UsageSearchContext.IN_ALIEN_LANGUAGES, false);
+                            UsageSearchContext.IN_ALIEN_LANGUAGES, true);
     return directives.toArray(new JspDirective[directives.size()]);
   }
 
@@ -1128,11 +1068,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return true;
       }
     };
-    return processElementsWithWord(processor1, searchScope, identifier, searchContext, false);
+    return processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
 
-  public PsiElement[] findThrowUsages(final PsiThrowStatement aThrow, final SearchScope searchScope) {
+  public static PsiElement[] findThrowUsages(final PsiThrowStatement aThrow, final SearchScope searchScope) {
     return new PsiElement[]{aThrow};
   }
 
@@ -1151,7 +1091,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return true;
       }
     };
-    processElementsWithWord(processor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, false);
+    processElementsWithWord(processor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
     return results.toArray(new PsiElement[results.size()]);
   }
 
@@ -1171,7 +1111,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                             searchScope,
                             identifier,
                             UsageSearchContext.IN_STRINGS,
-                            false);
+                            true);
     return results.toArray(new PsiLiteralExpression[results.size()]);
   }
 
@@ -1352,12 +1292,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                           SearchScope searchScope,
                                           String word,
                                           short searchContext,
-                                          boolean caseInsensitive) {
+                                          boolean caseSensitive) {
     LOG.assertTrue(searchScope != null);
 
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(word);
-      searcher.setCaseSensitive(!caseInsensitive);
+      searcher.setCaseSensitive(caseSensitive);
 
       return processElementsWithWordInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
@@ -1370,7 +1310,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       for (int i = 0; i < scopeElements.length; i++) {
         final PsiElement scopeElement = scopeElements[i];
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, word, caseInsensitive, searchContext)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, word, caseSensitive, searchContext)) return false;
       }
       return true;
     }
@@ -1379,11 +1319,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processElementsWithWordInScopeElement(PsiElement scopeElement,
                                                                PsiElementProcessorEx processor,
                                                                String word,
-                                                               boolean caseInsensitive,
+                                                               boolean caseSensitive,
                                                                final short searchContext) {
     if (SourceTreeToPsiMap.hasTreeElement(scopeElement)) {
       StringSearcher searcher = new StringSearcher(word);
-      searcher.setCaseSensitive(!caseInsensitive);
+      searcher.setCaseSensitive(caseSensitive);
 
       return LowLevelSearchUtil.processElementsContainingWordInElement(processor,
                                                                        scopeElement,
