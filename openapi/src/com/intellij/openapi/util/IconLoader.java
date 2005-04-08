@@ -64,7 +64,28 @@ public final class IconLoader {
     return getIcon(path, callerClass);
   }
 
+
+  public static Icon findIcon(final String path) {
+    int stackFrameCount = 2;
+    Class callerClass = Reflection.getCallerClass(stackFrameCount);
+    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
+      callerClass = Reflection.getCallerClass(++stackFrameCount);
+    }
+    if (callerClass == null) {
+      callerClass = Reflection.getCallerClass(1);
+    }
+    return findIcon(path, callerClass);
+  }
+
   public static Icon getIcon(final String path, final Class aClass) {
+    final Icon icon = findIcon(path, aClass);
+    if (icon == null) {
+      LOG.error("Icon cannot be found in '"+path+"', aClass='"+(aClass == null ? null : aClass.getName())+"'");
+    }
+    return icon;
+  }
+
+  public static Icon findIcon(final String path, final Class aClass) {
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
       return EMPTY_ICON;
@@ -72,7 +93,6 @@ public final class IconLoader {
 
     final Image image = ImageLoader.loadFromResource(path, aClass);
     if(image == null || image.getHeight(ourFakeComponent) < 1 || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
-      LOG.error("Icon cannot be found in '"+path+"', aClass='"+(aClass == null ? null : aClass.getName())+"'");
       return null;
     }
 
