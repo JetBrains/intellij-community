@@ -18,6 +18,7 @@ class CompositeAttributeTagDescriptor extends HtmlAttributeDescriptor {
   List<HtmlAttributeDescriptor> attributes = new LinkedList<HtmlAttributeDescriptor>();
 
   HtmlAttributeDescriptor findHtmlAttributeInContext(XmlTag tag) {
+    if (tag == null) return null;
     String contextName = tag.getName();
 
     for (Iterator<HtmlAttributeDescriptor> iterator = attributes.iterator(); iterator.hasNext();) {
