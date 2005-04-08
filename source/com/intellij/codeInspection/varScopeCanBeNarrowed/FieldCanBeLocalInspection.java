@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -88,7 +89,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
             for (Iterator<PsiReferenceExpression> iterator = readBeforeWrite.iterator(); iterator.hasNext();) {
               final PsiElement resolved = iterator.next().resolve();
               if (resolved instanceof PsiField) {
-                candidates.remove(resolved);
+                final PsiField field = (PsiField)resolved;
+                candidates.remove(field);
               }
             }
           }
@@ -174,6 +176,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           if (file == psiFile) {
             editor.getCaretModel().moveToOffset(newCaretPosition.getTextOffset());
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           }
         }
       }
@@ -187,7 +190,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
-    private PsiElement getAnchorElement(final PsiCodeBlock anchorBlock) {
+    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock) {
       PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
       LOG.assertTrue(firstBodyElement != null);
       firstBodyElement = PsiTreeUtil.skipSiblingsForward(firstBodyElement, new Class[]{PsiWhiteSpace.class, PsiComment.class});
