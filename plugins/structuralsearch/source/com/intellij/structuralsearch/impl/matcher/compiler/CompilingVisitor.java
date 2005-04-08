@@ -432,9 +432,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,boolean code, boolean comments, boolean literals) {
     boolean addedSomething = false;
 
-    // requesting super in processAllFilesWithWord will result in zero entries
-    // @todo this may affect other keywords
-    if(refname.equals("super")) return;
     if (code && context.scanned.get(refname)==null) {
       context.helper.processAllFilesWithWord(refname,
                                              (GlobalSearchScope)context.options.getScope(),
