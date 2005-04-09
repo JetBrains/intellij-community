@@ -12,6 +12,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 
@@ -28,20 +31,29 @@ import java.awt.event.KeyEvent;
  * To change this template use File | Settings | File Templates.
  */
 public class StatementEvaluationDialog extends EvaluationDialog{
-  private JPanel myWatchViewPlace;
-  private JPanel myStatementEditorPlace;
   private JPanel myPanel;
   private final Action mySwitchAction = new SwitchAction();
+  private static final String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
+  private static final String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
 
   public StatementEvaluationDialog(final Project project, TextWithImports text) {
     super(project, text);
     setTitle("Code Fragment Evaluation");
-    myWatchViewPlace.setLayout(new BorderLayout());
-    myWatchViewPlace.add(getEvaluationPanel());
-    myStatementEditorPlace.setLayout(new BorderLayout());
-    myStatementEditorPlace.add(getStatementEditor());
+    myPanel = new JPanel(new BorderLayout());
 
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+    final Splitter splitter = new Splitter(true);
+    splitter.setHonorComponentsMinimumSize(true);
+    final DebuggerStatementEditor statementEditor = getStatementEditor();
+    splitter.setFirstComponent(statementEditor);
+    final EvaluationDialog.MyEvaluationPanel evaluationPanel = getEvaluationPanel();
+    splitter.setSecondComponent(evaluationPanel);
+    final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY);
+    final Dimension evaluationSize = DimensionService.getInstance().getSize(EVALUATION_PANEL_DIMENSION_KEY);
+    if (statementSize != null && evaluationSize != null) {
+      final float proportion = (float)statementSize.height / (float) evaluationSize.height;
+      splitter.setProportion(proportion);
+    }
+    myPanel.add(splitter, BorderLayout.CENTER);
 
     setDebuggerContext(getDebuggerContext());
 
@@ -105,6 +117,18 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
   protected DebuggerEditorImpl createEditor() {
     return new DebuggerStatementEditor(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation");
+  }
+
+  protected void dispose() {
+    try {
+      final DebuggerEditorImpl editor = getEditor();
+      final DimensionService dimensionService = DimensionService.getInstance();
+      dimensionService.setSize(STATEMENT_EDITOR_DIMENSION_KEY, editor.getSize(null));
+      dimensionService.setSize(EVALUATION_PANEL_DIMENSION_KEY, getEvaluationPanel().getSize());
+    }
+    finally {
+      super.dispose();
+    }
   }
 
   protected JComponent createCenterPanel() {

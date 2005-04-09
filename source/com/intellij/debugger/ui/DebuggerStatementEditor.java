@@ -37,6 +37,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.setOneLineMode(false);
+        editor.setVerticalScrollbarVisible(true);
         return editor;
       }
     };

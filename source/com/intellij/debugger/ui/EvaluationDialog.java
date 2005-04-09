@@ -153,13 +153,17 @@ public abstract class EvaluationDialog extends DialogWrapper {
 
     protected ActionPopupMenu createPopupMenu() {
       ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.EVALUATION_DIALOG_POPUP);
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.EVALUATION_DIALOG_POPUP, group);
-      return popupMenu;
+      return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.EVALUATION_DIALOG_POPUP, group);
     }
 
     protected void changeEvent(DebuggerContextImpl newContext, int event) {
-      if(event == DebuggerSession.EVENT_REFRESH) return;
-      if(newContext.getDebuggerSession() != null && newContext.getDebuggerSession().getState() == DebuggerSession.STATE_WAIT_EVALUATION) return;
+      if(event == DebuggerSession.EVENT_REFRESH) {
+        return;
+      }
+      final DebuggerSession debuggerSession = newContext.getDebuggerSession();
+      if(debuggerSession != null && debuggerSession.getState() == DebuggerSession.STATE_WAIT_EVALUATION) {
+        return;
+      }
       
       super.changeEvent(newContext, event);
     }
