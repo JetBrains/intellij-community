@@ -502,6 +502,46 @@ public class StructuralSearchTest extends IdeaTestCase {
       1,
       findMatchesCount(s5,s6)
     );
+
+    String s7 = "import java.math.BigDecimal;\n" +
+                "\n" +
+                "public class Prorator {\n" +
+                "        public void prorate(BigDecimal[] array) {\n" +
+                "                // do nothing\n" +
+                "        }\n" +
+                "        public void prorate2(java.math.BigDecimal[] array) {\n" +
+                "                // do nothing\n" +
+                "        }\n" +
+                "        public void prorate(BigDecimal bd) {\n" +
+                "                // do nothing\n" +
+                "        }\n" +
+                "\n" +
+                "        public static void main(String[] args) {\n" +
+                "                BigDecimal[] something = new BigDecimal[2];\n" +
+                "                java.math.BigDecimal[] something2 = new BigDecimal[2];\n" +
+                "                something[0] = new BigDecimal(1.0);\n" +
+                "                something[1] = new BigDecimal(1.0);\n" +
+                "\n" +
+                "                Prorator prorator = new Prorator();\n" +
+                "\n" +
+                "// ---------------------------------------------------\n" +
+                "// the line below should've been found, in my opinion.\n" +
+                "// --------------------------------------------------\n" +
+                "                prorator.prorate(something);\n" +
+                "                prorator.prorate(something2);\n" +
+
+                "                prorator.prorate(something[0]);\n" +
+                "                prorator.prorate(something[1]);\n" +
+                "                prorator.prorate(something[0]);\n" +
+                "        }\n" +
+                "}";
+    String s8 = "'_Instance.'_MethodCall:[regex( prorate )]('_Param:[exprtype( BigDecimal\\[\\] )]) ";
+
+    assertEquals(
+      "Find method call with array for parameter expr type",
+      2,
+      findMatchesCount(s7,s8,true)
+    );
   }
 
   private int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {

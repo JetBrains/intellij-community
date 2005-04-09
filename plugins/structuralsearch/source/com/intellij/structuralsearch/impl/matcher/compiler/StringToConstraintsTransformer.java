@@ -213,7 +213,7 @@ class StringToConstraintsTransformer {
         // eat complete condition
 
         miscBuffer.setLength(0);
-        for(++index;pattern.charAt(index)!=']';++index) {
+        for(++index;pattern.charAt(index)!=']' || pattern.charAt(index-1)=='\\';++index) {
           miscBuffer.append(pattern.charAt(index));
         }
         ++index;

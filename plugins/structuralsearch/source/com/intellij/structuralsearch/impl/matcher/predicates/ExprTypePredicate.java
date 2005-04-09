@@ -56,13 +56,23 @@ public class ExprTypePredicate extends Handler {
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType)type).resolve();
 
-      return checkClass(clazz, context);
-    } else {
-      if (type!=null) {
-        return delegate.doMatch(type.getPresentableText(),context);
-      } else {
-        return false;
+      if (clazz!=null) return checkClass(clazz, context);
+    }
+
+    if (type!=null) {
+      final String presentableText = type.getPresentableText();
+      boolean result = delegate.doMatch(presentableText,context);
+
+      if (!result && type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiClassType) {
+        PsiClass clazz = ((PsiClassType)((PsiArrayType)type).getComponentType()).resolve();
+
+        if (clazz!=null) { // presentable text for array is not qualified!
+          result = delegate.doMatch(clazz.getQualifiedName()+"[]",context);
+        }
       }
+      return result;
+    } else {
+      return false;
     }
   }
 
