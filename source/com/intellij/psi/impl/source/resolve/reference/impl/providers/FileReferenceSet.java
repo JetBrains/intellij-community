@@ -210,7 +210,7 @@ public class FileReferenceSet {
       if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
 
       final String newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
-      final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+      final TextRange range = new TextRange(myStartInElement, getRangeInElement().getEndOffset());
       final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
       return finalElement;
     }
