@@ -189,8 +189,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     AnAction[] actions = createActions();
     for (int i = 0; i < actions.length; i++) {
-      AnAction action = actions[i];
-      if (action != null) group.add(action);
+      final AnAction action = actions[i];
+      if (action != null) {
+        group.add(action);
+      }
     }
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR,
                                                                                   group, false);
@@ -239,11 +241,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
 
     myTextFileExporter = new ExporterToTextFile(this);
+    final AnAction collapseAllAction = actionsManager.createCollapseAllAction(myTreeExpander);
+    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), getComponent());
+    final AnAction expandAllAction = actionsManager.createExpandAllAction(myTreeExpander);
+    expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), getComponent());
     return new AnAction[]{
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
-      actionsManager.createCollapseAllAction(myTreeExpander),
-      actionsManager.createExpandAllAction(myTreeExpander),
+      collapseAllAction,
+      expandAllAction,
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
