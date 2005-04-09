@@ -1,15 +1,14 @@
 package com.intellij.refactoring.changeSignature.inCallers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -81,10 +80,7 @@ public class MethodNode extends CheckedTreeNode {
               !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
             final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
             if (enclosingContext instanceof PsiMethod) {
-              PsiMethod caller = (PsiMethod)enclosingContext;
-              final PsiMethod superMethod = PsiSuperMethodUtil.findDeepestSuperMethod(caller);
-              if (superMethod != null) caller = superMethod;
-              callers.add(caller);
+              callers.add((PsiMethod)enclosingContext);
             }
           }
         }

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -236,7 +237,10 @@ public abstract class CallerChooser extends DialogWrapper {
 
   private void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
     if (node.isChecked()) {
-      allMethods.add(node.getMethod());
+      PsiMethod method = node.getMethod();
+      final PsiMethod superMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+      if (superMethod != null) method = superMethod;
+      allMethods.add(method);
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         getSelectedMethodsInner((MethodNode)children.nextElement(), allMethods);
