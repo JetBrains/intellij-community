@@ -6,16 +6,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.PatchedSoftReference;
 
 public class PsiParameterImpl extends IndexedRepositoryPsiElement implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
 
   private String myCachedName = null;
-  private String myCachedTypeText = null;
+  private PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiParameterImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -28,12 +31,12 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   public void subtreeChanged() {
     super.subtreeChanged();
     myCachedName = null;
-    myCachedTypeText = null;
+    myCachedType = null;
   }
 
   protected Object clone() {
     PsiParameterImpl clone = (PsiParameterImpl)super.clone();
-    clone.myCachedTypeText = null;
+    clone.myCachedType = null;
     clone.myCachedName = null;
     return clone;
   }
@@ -60,15 +63,23 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public PsiType getType() {
-    if (getTreeElement() != null){
+    if (getTreeElement() != null) {
+      myCachedType = null;
       return SharedImplUtil.getType(this);
     }
-    else{
-      myCachedTypeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
-      try{
-        return getManager().getElementFactory().createTypeFromText(myCachedTypeText, this);
+    else {
+      if (myCachedType != null) {
+        PsiType type = myCachedType.get();
+        if (type != null) return type;
       }
-      catch(IncorrectOperationException e){
+
+      String typeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
+      try {
+        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
+        myCachedType = new PatchedSoftReference<PsiType>(type);
+        return type;
+      }
+      catch (IncorrectOperationException e) {
         LOG.error(e);
         return null;
       }

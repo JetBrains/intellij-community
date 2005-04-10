@@ -28,6 +28,10 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   private Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
   private WindowManagerEx myWindowManager;
 
+  // Creating this set every time we call getDataFromProvider loads GC. Using static set instead is safe since getData() only
+  // could be queried in swing thread.
+  private static final HashSet<String> ALREADY_COMPUTED_IDS = new HashSet<String>();
+
   public DataManagerImpl() {
     registerRules();
   }
@@ -41,7 +45,8 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       final DataProvider dataProvider = getDataProvider(c);
       if (dataProvider == null) continue;
 
-      Object data = getDataFromProvider(dataProvider, dataId, new HashSet<String>());
+      ALREADY_COMPUTED_IDS.clear();
+      Object data = getDataFromProvider(dataProvider, dataId, ALREADY_COMPUTED_IDS);
       if (data != null) return data;
     }
 

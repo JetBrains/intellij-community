@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author max
@@ -23,15 +23,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public boolean equalsToText(String text) {
-    PsiElementFactory factory = myReference.getManager().getElementFactory();
-    PsiType patternType;
-    try {
-      patternType = factory.createTypeFromText(text, null);
-    }
-    catch (IncorrectOperationException e) {
-      return false;
-    }
-    return equals(patternType);
+    return Comparing.equal(text, getCanonicalText());
   }
 
   public GlobalSearchScope getResolveScope() {

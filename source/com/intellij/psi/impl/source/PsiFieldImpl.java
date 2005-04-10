@@ -1,12 +1,13 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.cache.FieldView;
+import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -16,7 +17,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.PatchedSoftReference;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   private PsiModifierListImpl myRepositoryModifierList = null;
 
   private String myCachedName = null;
-  private String myCachedTypeText = null;
+  private PatchedSoftReference<PsiType> myCachedType = null;
   private long myCachedFirstFieldInDeclId = -1;
   private Boolean myCachedIsDeprecated = null;
   private String myCachedInitializerText = null;
@@ -52,7 +53,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   protected Object clone() {
     PsiFieldImpl clone = (PsiFieldImpl)super.clone();
     clone.myRepositoryModifierList = null;
-    clone.myCachedTypeText = null;
+    clone.myCachedType = null;
     return clone;
   }
 
@@ -69,7 +70,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
     }
 
-    myCachedTypeText = null;
+    myCachedType = null;
     myCachedFirstFieldInDeclId = -1;
   }
 
@@ -100,15 +101,23 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   public PsiType getType(){
-    if (getTreeElement() != null){
+    if (getTreeElement() != null) {
+      myCachedType = null;
       return SharedImplUtil.getType(this);
     }
-    else{
-      myCachedTypeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
-      try{
-        return myManager.getElementFactory().createTypeFromText(myCachedTypeText, this);
+    else {
+      if (myCachedType != null) {
+        PsiType type = myCachedType.get();
+        if (type != null) return type;
       }
-      catch(IncorrectOperationException e){
+
+      String typeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
+      try {
+        final PsiType type = myManager.getElementFactory().createTypeFromText(typeText, this);
+        myCachedType = new PatchedSoftReference<PsiType>(type);
+        return type;
+      }
+      catch (IncorrectOperationException e) {
         LOG.error(e);
         return null;
       }

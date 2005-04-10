@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
@@ -18,7 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.PatchedSoftReference;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   private Boolean myCachedIsDeprecated = null;
   private Boolean myCachedIsConstructor = null;
   private Boolean myCachedIsVarargs = null;
-  private String myCachedTypeText = null;
+  private PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiMethodImpl(PsiManagerImpl manager, long repositoryId) {
     super(manager, repositoryId);
@@ -46,7 +47,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    myCachedTypeText = null;
+    myCachedType = null;
     myCachedName = null;
     myCachedIsDeprecated = null;
     myCachedIsConstructor = null;
@@ -170,24 +171,27 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   public PsiType getReturnType() {
     if (myCachedIsConstructor == Boolean.TRUE) return null;
 
-    if (getTreeElement() != null){
+    if (getTreeElement() != null) {
+      myCachedType = null;
+
       PsiTypeElement typeElement = getReturnTypeElement();
       if (typeElement == null) return null;
 
       int arrayCount = 0;
       ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
       Loop:
-        for(ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()){
-          IElementType i = child.getElementType();
-          if (i == LBRACKET) {
-            arrayCount++;
-          }
-          else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT || i == END_OF_LINE_COMMENT) {
-          }
-          else {
-            break Loop;
-          }
+      for (ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()) {
+        IElementType i = child.getElementType();
+        if (i == LBRACKET) {
+          arrayCount++;
         }
+        else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT ||
+                 i == END_OF_LINE_COMMENT) {
+        }
+        else {
+          break Loop;
+        }
+      }
 
       PsiType type;
       if (!(typeElement instanceof PsiTypeElementImpl)) {
@@ -204,10 +208,18 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       return type;
     }
     else{
-      myCachedTypeText = getRepositoryManager().getMethodView().getReturnTypeText(getRepositoryId());
-      if (myCachedTypeText == null) return null;
+      if (myCachedType != null) {
+        PsiType type = myCachedType.get();
+        if (type != null) return type;
+      }
+
+      String typeText = getRepositoryManager().getMethodView().getReturnTypeText(getRepositoryId());
+      if (typeText == null) return null;
+
       try{
-        return getManager().getElementFactory().createTypeFromText(myCachedTypeText, this);
+        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
+        myCachedType = new PatchedSoftReference<PsiType>(type);
+        return type;
       }
       catch(IncorrectOperationException e){
         LOG.error(e);
@@ -341,7 +353,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public void treeElementSubTreeChanged() {
-    myCachedTypeText = null;
+    myCachedType = null;
     myCachedName = null;
     myCachedIsDeprecated = null;
     myCachedIsConstructor = null;

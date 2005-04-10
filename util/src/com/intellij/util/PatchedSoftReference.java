@@ -13,15 +13,15 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 
-public class PatchedSoftReference extends SoftReference{
+public class PatchedSoftReference<T> extends SoftReference<T>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedSoftReference");
 
   private static ArrayList ourRefsList = new ArrayList();
   private static ReferenceQueue ourQueue = new ReferenceQueue();
   private static Timer ourTimer = null;
 
-  public PatchedSoftReference(Object referent) {
-    super(referent, ourQueue);
+  public PatchedSoftReference(T referent) {
+    super(referent, (ReferenceQueue<? super T>)ourQueue);
     synchronized(ourRefsList){
       ourRefsList.add(this);
     }
