@@ -17,6 +17,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.util.containers.GenericHashMap;
+import com.intellij.util.Processor;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -50,9 +51,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     };
 
     for(int i=0;i<classes.length;++i) {
@@ -435,7 +433,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     if (code && context.scanned.get(refname)==null) {
       context.helper.processAllFilesWithWord(refname,
                                              (GlobalSearchScope)context.options.getScope(),
-                                             new MyFileSink()
+                                             new MyFileProcessor()
       );
 
       context.scanned.put( refname, refname );
@@ -443,7 +441,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     } else if (comments && context.scannedComments.get(refname)==null) {
       context.helper.processAllFilesWithWordInComments(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
-                                                       new MyFileSink()
+                                                       new MyFileProcessor()
       );
 
       context.scannedComments.put( refname, refname );
@@ -451,7 +449,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     } else if (literals && context.scannedLiterals.get(refname)==null) {
       context.helper.processAllFilesWithWordInLiterals(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
-                                                       new MyFileSink());
+                                                       new MyFileProcessor());
 
       context.scannedLiterals.put( refname, refname );
       addedSomething  = true;
@@ -750,12 +748,13 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
   private static CompilingVisitor instance;
 
-  private class MyFileSink extends PsiSearchHelper.FileSink {
-    public void foundFile(PsiFile file) {
+  private class MyFileProcessor implements Processor<PsiFile> {
+    public boolean process(PsiFile file) {
       if (context.scanRequest == 0 ||
           context.filesToScan.get(file)!=null) {
         context.filesToScan2.put(file,file);
       }
+      return true;
     }
   }
 }
