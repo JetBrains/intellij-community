@@ -121,13 +121,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   void updateMainMenuActions(){
-    final JMenuBar menuBar = getJMenuBar();
-    if (menuBar != null){
-      myContentPane.remove(menuBar);
-    }
     ((IdeMenuBar)menuBar).updateMenuActions();
-    setJMenuBar(menuBar);
-    myContentPane.revalidate();
   }
 
   private JComponent createToolbar() {
