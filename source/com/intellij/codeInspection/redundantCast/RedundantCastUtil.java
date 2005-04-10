@@ -9,6 +9,8 @@
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
@@ -68,23 +70,21 @@ public class RedundantCastUtil {
       PsiExpression lExpr = deParenthesize(expression.getROperand());
 
       if (rExpr != null && lExpr != null) {
-        processBinaryExpressionOperand(lExpr, expression, rExpr);
-        processBinaryExpressionOperand(rExpr, expression, lExpr);
+        final IElementType binaryToken = expression.getOperationSign().getTokenType();
+        processBinaryExpressionOperand(lExpr, rExpr, binaryToken);
+        processBinaryExpressionOperand(rExpr, lExpr, binaryToken);
       }
       super.visitBinaryExpression(expression);
     }
 
-    private void processBinaryExpressionOperand(final PsiExpression expressionOperand,
-                                                final PsiBinaryExpression binExpression,
-                                                PsiExpression otherOperand) {
-      if (expressionOperand instanceof PsiTypeCastExpression) {
-        PsiTypeCastExpression typeCast = (PsiTypeCastExpression)expressionOperand;
+    private void processBinaryExpressionOperand(final PsiExpression operand,
+                                                final PsiExpression otherOperand,
+                                                final IElementType binaryToken) {
+      if (operand instanceof PsiTypeCastExpression) {
+        PsiTypeCastExpression typeCast = (PsiTypeCastExpression)operand;
         PsiExpression castOperand = typeCast.getOperand();
-        if (castOperand != null && castOperand.getType() != null) {
-          if (binExpression.getOperationSign().getTokenType() != JavaTokenType.PLUS ||
-              !typeCast.getCastType().getType().equalsToText("java.lang.String") ||
-              castOperand.getType().equalsToText("java.lang.String") ||
-              otherOperand.getType().equalsToText("java.lang.String")) {
+        if (castOperand != null) {
+          if (TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, castOperand, otherOperand, false)) {
             addToResults(typeCast);
           }
         }
