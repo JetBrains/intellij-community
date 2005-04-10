@@ -15,6 +15,7 @@ import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceFilter;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.codeInsight.CodeInsightUtil;
 import gnu.trove.THashSet;
 
@@ -79,9 +80,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
       final Set<PsiFile> files = new THashSet<PsiFile>();
-      searchHelper.processAllFilesWithWordInLiterals(word, scope, new PsiSearchHelper.FileSink() {
-        public void foundFile(PsiFile file) {
+      searchHelper.processAllFilesWithWordInLiterals(word, scope, new Processor<PsiFile>() {
+        public boolean process(PsiFile file) {
           files.add(file);
+          return true;
         }
       });
       final boolean firstTime = i == 0;

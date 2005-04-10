@@ -341,10 +341,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           return true;
         }
 
-        public Object getHint(Class hintClass) {
-          return null;
-        }
-        },
+      },
         true
       );
     }

@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -163,8 +162,5 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       return true;
     }
 
-    public Object getHint(Class hintClass) {
-      return null;
-    }
   }
 }

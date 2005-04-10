@@ -12,10 +12,8 @@ import java.util.Collection;
 
 public interface PsiElementProcessor<T extends PsiElement> {
   boolean execute(T element);
-  Object getHint(Class hintClass);
 
-
-  class CollectElements<T extends PsiElement> extends PsiBaseElementProcessor<T> {
+  class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
     private final Collection<T> myCollection;
 
     public CollectElements(Collection<T> collection) {
@@ -86,7 +84,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
     }
   }
 
-  class FindElement<T extends PsiElement> extends PsiBaseElementProcessor<T> {
+  class FindElement<T extends PsiElement> implements PsiElementProcessor<T> {
     private T myFoundElement = null;
 
     public boolean isFound() {

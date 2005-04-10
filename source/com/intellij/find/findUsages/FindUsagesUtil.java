@@ -143,9 +143,6 @@ public class FindUsagesUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     }, psiMethod, options.searchScope, options.isCheckDeepInheritance);
   }
 
@@ -290,9 +287,6 @@ public class FindUsagesUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     }, parentClass, searchScope, false);
   }
 
@@ -490,9 +484,6 @@ public class FindUsagesUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     }, aClass, options.searchScope, options.isCheckDeepInheritance);
   }
 
@@ -504,9 +495,6 @@ public class FindUsagesUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     }, anInterface, options.searchScope, options.isCheckDeepInheritance);
   }
 
@@ -518,9 +506,6 @@ public class FindUsagesUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     }, anInterface, options.searchScope, options.isCheckDeepInheritance);
   }
 

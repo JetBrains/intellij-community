@@ -216,9 +216,6 @@ public class RefactoringHierarchyUtil {
         return true;
       }
 
-      public Object getHint(Class hintClass) {
-        return null;
-      }
     },
                                    anInterface,
                                    GlobalSearchScope.projectScope(manager.getProject()),

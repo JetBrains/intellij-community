@@ -331,9 +331,6 @@ public class XmlCompletionData extends CompletionData {
               return true;
             }
 
-            public Object getHint(final Class hintClass) {
-              return null;
-            }
           },
           true);
 

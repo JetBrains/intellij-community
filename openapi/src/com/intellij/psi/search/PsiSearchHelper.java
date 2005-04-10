@@ -9,7 +9,7 @@ import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspDirective;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.Processor;
 
 public interface PsiSearchHelper {
   PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
@@ -61,13 +61,9 @@ public interface PsiSearchHelper {
                                                        boolean isStrictSignatureSearch);
 
 
-  abstract class FileSink {
-    public abstract void foundFile(PsiFile file);
-  }
-
   boolean isFieldBoundToForm(PsiField field);
 
-  void processAllFilesWithWord(String word, GlobalSearchScope scope, FileSink sink);
-  void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, FileSink sink);
-  void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, FileSink sink);
+  void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
+  void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
+  void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
 }

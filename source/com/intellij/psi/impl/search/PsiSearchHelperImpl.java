@@ -43,6 +43,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.util.Processor;
 import gnu.trove.TIntArrayList;
 
 import java.util.*;
@@ -1072,11 +1073,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
 
-  public static PsiElement[] findThrowUsages(final PsiThrowStatement aThrow, final SearchScope searchScope) {
-    return new PsiElement[]{aThrow};
-  }
-
-
   private static final TokenSet IDENTIFIER_BIT_SET = TokenSet.create(new IElementType[]{ElementType.IDENTIFIER});
 
   public PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope) {
@@ -1506,27 +1502,27 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return false;
   }
 
-  public void processAllFilesWithWord(String word, GlobalSearchScope scope, FileSink sink) {
+  public void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_CODE, scope);
 
     for (int i = 0; i < files.length; i++) {
-      sink.foundFile(files[i]);
+      if (!processor.process(files[i])) return;
     }
   }
 
-  public void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, FileSink sink) {
+  public void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_COMMENTS, scope);
 
     for (int i = 0; i < files.length; i++) {
-      sink.foundFile(files[i]);
+      if (!processor.process(files[i])) return;
     }
   }
 
-  public void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, FileSink sink) {
+  public void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_STRINGS, scope);
 
     for (int i = 0; i < files.length; i++) {
-      sink.foundFile(files[i]);
+      if (!processor.process(files[i])) return;
     }
   }
 
