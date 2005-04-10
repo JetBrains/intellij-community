@@ -8,19 +8,18 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.search.PsiBaseElementProcessor;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.xml.util.XmlUtil;
 
 public abstract class XmlElementImpl extends CompositePsiElement implements XmlElement {
   public XmlElementImpl(IElementType type) {
@@ -35,7 +34,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     final XmlElement[] result = new XmlElement[1];
     result[0] = null;
 
-    processElements(new PsiBaseElementProcessor(){
+    processElements(new PsiElementProcessor(){
       public boolean execute(PsiElement element){
         if(element instanceof TreeElement && ((ASTNode)element).getElementType() == type){
           result[0] = (XmlElement)element;

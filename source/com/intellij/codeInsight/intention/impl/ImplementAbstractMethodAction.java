@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiBaseElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -36,7 +36,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (containingClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       PsiSearchHelper helper = file.getManager().getSearchHelper();
 
-      class MyElementProcessor extends PsiBaseElementProcessor {
+      class MyElementProcessor implements PsiElementProcessor {
         private boolean myIsFound;
 
         public boolean isFound() {

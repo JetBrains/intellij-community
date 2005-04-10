@@ -8,13 +8,12 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.search.PsiBaseElementProcessor;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +24,7 @@ public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
   public static List<PsiTypeCastExpression> getRedundantCasts(PsiElement where) {
     final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
-    PsiElementProcessor<PsiTypeCastExpression> processor = new PsiBaseElementProcessor<PsiTypeCastExpression>() {
+    PsiElementProcessor<PsiTypeCastExpression> processor = new PsiElementProcessor<PsiTypeCastExpression>() {
       public boolean execute(PsiTypeCastExpression element) {
         result.add(element);
         return true;

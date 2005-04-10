@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiBaseElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListPopup;
@@ -162,7 +162,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
     PsiSearchHelper helper = psiClass.getManager().getSearchHelper();
     GlobalSearchScope searchScope = GlobalSearchScope.allScope(psiClass.getProject());
-    helper.processInheritors(new PsiBaseElementProcessor<PsiClass>() {
+    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         if (!element.isInterface()) {
           list.add(element);

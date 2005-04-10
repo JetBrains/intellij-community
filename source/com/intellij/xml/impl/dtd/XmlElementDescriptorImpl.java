@@ -9,7 +9,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
-import com.intellij.psi.search.PsiBaseElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -108,7 +108,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor NSDescriptor = getNSDescriptor();
     if(!(NSDescriptor instanceof XmlNSDescriptorImpl)) return XmlElementDescriptor.EMPTY_ARRAY;
-    contentSpecElement.processElements(new PsiBaseElementProcessor(){
+    contentSpecElement.processElements(new PsiElementProcessor(){
       public boolean execute(PsiElement child){
         if (child instanceof XmlToken) {
           final XmlToken token = (XmlToken)child;

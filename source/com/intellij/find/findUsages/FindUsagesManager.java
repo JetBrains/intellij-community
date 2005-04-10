@@ -440,7 +440,7 @@ public class FindUsagesManager {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiSearchHelper psiSearchHelper = psiManager.getSearchHelper();
 
-    psiSearchHelper.processJoinPointsByPointcut(new PsiBaseElementProcessor() {
+    psiSearchHelper.processJoinPointsByPointcut(new PsiElementProcessor() {
                                                       public boolean execute(PsiElement element) {
                                                         usages.add(new UsageInfo(element));
                                                         return true;

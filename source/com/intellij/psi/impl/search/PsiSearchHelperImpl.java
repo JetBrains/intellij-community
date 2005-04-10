@@ -352,7 +352,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         canBeAccessedByIncludes = false;
       }
       if (canBeAccessedByIncludes) {
-        PsiElementProcessor processor2 = new PsiBaseElementProcessor() {
+        PsiElementProcessor processor2 = new PsiElementProcessor() {
           public boolean execute(PsiElement element) {
             return processor1.execute(element, 0);
           }
@@ -481,7 +481,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     // search usages like "super(..)"
-    PsiElementProcessor<PsiClass> processor2 = new PsiBaseElementProcessor<PsiClass>() {
+    PsiElementProcessor<PsiClass> processor2 = new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         PsiClass inheritor = element;
         PsiMethod[] methods = inheritor.getMethods();
@@ -554,7 +554,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return true;
     }
 
-    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiBaseElementProcessor<PsiClass>() {
+    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         PsiClass inheritor = element;
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
@@ -606,7 +606,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return true;
     }
 
-    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiBaseElementProcessor<PsiClass>() {
+    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         if (!(element instanceof PsiAspect)) return true;
         PsiAspect inheritor = (PsiAspect)element;
@@ -1249,7 +1249,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (scopeElement == null) return true;
     if (!bundleSearchDescriptor.myFiles.contains(scopeElement.getContainingFile())) return true;
 
-    final PsiElementProcessor processor1 = new PsiBaseElementProcessor() {
+    final PsiElementProcessor processor1 = new PsiElementProcessor() {
       public boolean execute(PsiElement element) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiJavaCodeReferenceElement) {

@@ -27,7 +27,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.search.PsiBaseElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -384,7 +384,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processElements(
-      new PsiBaseElementProcessor() {
+      new PsiElementProcessor() {
         public boolean execute(PsiElement element) {
           if (element instanceof XmlAttribute){
             XmlAttribute attribute = (XmlAttribute)element;
@@ -430,7 +430,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final List<XmlTag> result = new ArrayList<XmlTag>();
 
     processElements(
-      new PsiBaseElementProcessor() {
+      new PsiElementProcessor() {
         public boolean execute(PsiElement element) {
           if (element instanceof XmlTag) result.add((XmlTag)element);
           return true;
@@ -689,7 +689,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private PsiElement[] getElements() {
     final List<PsiElement> elements = new ArrayList<PsiElement>();
-    processElements(new PsiBaseElementProcessor() {
+    processElements(new PsiElementProcessor() {
       public boolean execute(PsiElement psiElement) {
         elements.add(psiElement);
         return true;

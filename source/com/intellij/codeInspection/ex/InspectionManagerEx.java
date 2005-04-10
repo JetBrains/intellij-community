@@ -434,7 +434,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
             final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
-            helper.processInheritors(new PsiBaseElementProcessor<PsiClass>() {
+            helper.processInheritors(new PsiElementProcessor<PsiClass>() {
               public boolean execute(PsiClass element) {
                 PsiClass inheritor = element;
                 if (scope.contains(inheritor)) return true;
@@ -462,7 +462,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refMethod));
 
             final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
-            helper.processOverridingMethods(new PsiBaseElementProcessor<PsiMethod>() {
+            helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
               public boolean execute(PsiMethod element) {
                 PsiMethod derivedMethod = element;
                 if (scope.contains(derivedMethod)) return true;

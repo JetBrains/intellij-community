@@ -2,7 +2,6 @@ package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 
 import java.util.ArrayList;
@@ -15,7 +14,7 @@ import java.util.List;
  * Time: 14:33:56
  * To change this template use Options | File Templates.
  */
-public class FilterElementProcessor extends PsiBaseElementProcessor{
+public class FilterElementProcessor implements PsiElementProcessor{
   private final List myResults;
   private final ElementFilter myFilter;
   private final PsiElementProcessor myProcessor;

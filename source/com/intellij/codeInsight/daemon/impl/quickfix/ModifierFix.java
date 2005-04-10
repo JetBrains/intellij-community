@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiBaseElementProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -113,7 +113,7 @@ public class ModifierFix implements IntentionAction {
       changeModifierList(copy);
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
-      helper.processOverridingMethods(new PsiBaseElementProcessor<PsiMethod>() {
+      helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
         public boolean execute(PsiMethod element) {
           PsiMethod inheritor = element;
           PsiModifierList list = inheritor.getModifierList();

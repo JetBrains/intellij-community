@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiBaseElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -59,7 +58,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     final List<PsiElement> deps = new ArrayList<PsiElement>();
     final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
 
-    PsiElementProcessor processor = new PsiBaseElementProcessor() {
+    PsiElementProcessor processor = new PsiElementProcessor() {
       public boolean execute(PsiElement element) {
         if (element instanceof XmlDoctype) {
           XmlDoctype xmlDoctype = (XmlDoctype)element;
