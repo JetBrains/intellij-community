@@ -225,6 +225,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     RefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 
+  protected boolean areButtonsValid() {
+    return getTargetClassName().length() > 0;
+  }
+
   private String validateInputData() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
