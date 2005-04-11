@@ -36,7 +36,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   public DummyHolder(PsiManager manager, CharTable table, boolean validity) {
     this(manager, null, null, table);
-    myExplicitlyValid = new Boolean(validity);
+    myExplicitlyValid = Boolean.valueOf(validity);
   }
 
   public DummyHolder(PsiManager manager, PsiElement context) {
