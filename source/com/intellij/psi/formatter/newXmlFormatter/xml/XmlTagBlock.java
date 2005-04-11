@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter;
+package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -10,11 +10,10 @@ import java.util.List;
 
 public class XmlTagBlock extends AbstractXmlBlock{
   public XmlTagBlock(final ASTNode node,
-                          final Wrap wrap,
-                          final Alignment alignment,
-                          AbstractXmlBlock parent,
-                          final XmlFormattingPolicy policy) {
-    super(node, wrap, alignment, parent, policy);
+                     final Wrap wrap,
+                     final Alignment alignment,
+                     final XmlFormattingPolicy policy) {
+    super(node, wrap, alignment, policy);
   }
 
   protected List<Block> buildChildren() {
@@ -46,7 +45,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
           localResult.add(createChildBlock(child, wrap, alignment));
           result.add(createTagDescriptionNode(localResult));
-        } else {
+        } else if (child.getElementType() == ElementType.XML_TEXT) {
+          createXmlTextBlocks(localResult, child, wrap, alignment);
+        }
+        else {
           localResult.add(createChildBlock(child, wrap, alignment));
         }
       }
@@ -56,9 +58,20 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   }
 
+  private void createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+    ChameleonTransforming.transformChildren(myNode);
+    ASTNode child = textNode.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+        list.add(createChildBlock(child,  wrap, alignment));
+      }
+      child = child.getTreeNext();
+    }
+  }
+
   private Block createTagContentNode(final ArrayList<Block> localResult) {
     return AbstractSynteticBlock.createSynteticBlock(localResult, this, myXmlFormattingPolicy.indentChildrenOf(getTag()) ?
-           getFormatter().getNormalIndent(1) : getFormatter().getNoneIndent(), myXmlFormattingPolicy);
+           getFormatter().createNormalIndent() : getFormatter().getNoneIndent(), myXmlFormattingPolicy);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
@@ -76,18 +89,18 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
 
     if (synteticBlock1.endsWithTextElement() && synteticBlock2.startsWithTextElement()) {
-      return getFormatter().createSafeSpace();
+      return getFormatter().createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (synteticBlock1.endsWithText()) { //text</tag
-      return getFormatter().createSpaceProperty(0, 0, 0, getMaxLine(0));
+      return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (synteticBlock1.isTagDescription() && synteticBlock2.isTagDescription()) { //></
-      return getFormatter().createSpaceProperty(0, 0, 0, getMaxLine(1));
+      return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (synteticBlock2.startsWithText()) { //>text
-      return getFormatter().createSpaceProperty(0, 0, 0, getMaxLine(1));
+      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
-      return createDefaultSpace(1);
+      return createDefaultSpace(true);
     }
 
   }

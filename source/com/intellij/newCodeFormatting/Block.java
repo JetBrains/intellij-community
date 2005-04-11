@@ -16,6 +16,4 @@ public interface Block {
   Alignment getAlignment();
 
   SpaceProperty getSpaceProperty(Block child1, Block child2);
-
-  Block getParent();
 }

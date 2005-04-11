@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter;
+package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Indent;

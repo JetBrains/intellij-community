@@ -3,18 +3,30 @@ package com.intellij.newCodeFormatting.impl;
 import com.intellij.newCodeFormatting.Indent;
 
 class IndentImpl implements Indent {
+  private final boolean myIsAbsolute;
+
+  public boolean isContinuation() {
+    return myType == Type.CONTINUATION_WITHOUT_FIRST;
+  }
+
+  public boolean isNone() {
+    return getType() == Type.NONE;
+  }
 
   static class Type{
     private final String myName;
+
 
     public Type(final String name) {
       myName = name;
     }
 
+    public static final Type SPACES = new Type("SPACES");
     public static final Type NONE = new Type("NONE");
     public static final Type LABEL = new Type("LABEL");
     public static final Type NORMAL = new Type("NORMAL");
-    public static final Type START_OF_LINE = new Type("START");
+    public static final Type CONTINUATION = new Type("CONTINUATION");
+    public static final Type CONTINUATION_WITHOUT_FIRST = new Type("CONTINUATION_WITHOUT_FIRST");
 
     public String toString() {
       return myName;
@@ -22,24 +34,27 @@ class IndentImpl implements Indent {
   }
 
   private final Type myType;
-  private final int myCount;
   private final int mySpaces;
 
-  public IndentImpl(final Type type, final int count, final int spaces) {
+  public IndentImpl(final Type type, boolean absolute, final int spaces) {
     myType = type;
-    myCount = count;
+    myIsAbsolute = absolute;
     mySpaces = spaces;
+  }
+
+  public IndentImpl(final Type type, boolean absolute) {
+    this(type, absolute, 0);
   }
 
   Type getType() {
     return myType;
   }
 
-  int getCount() {
-    return myCount;
+  public int getSpaces() {
+    return mySpaces;
   }
 
-  int getSpaces() {
-    return mySpaces;
+  boolean isAbsolute(){
+    return myIsAbsolute;
   }
 }

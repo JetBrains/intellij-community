@@ -1,35 +1,29 @@
-package com.intellij.psi.formatter.newXmlFormatter;
+package com.intellij.psi.formatter.newXmlFormatter.xml;
 
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.newCodeFormatting.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.newCodeFormatting.*;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 
-import java.util.Iterator;
 import java.util.List;
 
 
 public abstract class AbstractSynteticBlock implements Block{
-  protected final Block myParent;
   protected final Indent myIndent;
   protected final XmlFormattingPolicy myXmlFormattingPolicy;
   protected final ASTNode myEndTreeNode;
   protected final ASTNode myStartTreeNode;
+  private final XmlTag myTag;
 
   public AbstractSynteticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
     myEndTreeNode = ((AbstractXmlBlock)subBlocks.get(subBlocks.size() - 1)).getTreeNode();
     myStartTreeNode = ((AbstractXmlBlock)subBlocks.get(0)).getTreeNode();
-    myParent = parent;
     myIndent = indent;
     myXmlFormattingPolicy = policy;
-    for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
-      AbstractXmlBlock abstractXmlBlock = (AbstractXmlBlock)iterator.next();
-      abstractXmlBlock.setParent(this);
-    }
-
+    myTag = ((AbstractXmlBlock)parent).getTag();
   }
 
   private boolean isEndOfTag() {
@@ -71,10 +65,6 @@ public abstract class AbstractSynteticBlock implements Block{
     return false;
   }
 
-  public Block getParent() {
-    return myParent;
-  }
-
   public boolean endsWithText() {
     return myEndTreeNode.getElementType() == ElementType.XML_TEXT || myEndTreeNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
   }
@@ -100,7 +90,7 @@ public abstract class AbstractSynteticBlock implements Block{
   }
 
   protected XmlTag getTag() {
-    return ((AbstractXmlBlock)myParent).getTag();
+    return myTag;
   }
 
   public boolean startsWithTextElement() {
@@ -127,7 +117,7 @@ public abstract class AbstractSynteticBlock implements Block{
                                                   final Block parent,
                                                   final Indent indent,
                                                   XmlFormattingPolicy policy) {
-    if (!isTagDescription(((AbstractXmlBlock)subBlocks.get(0)).myNode)
+    if (!isTagDescription(((AbstractBlock)subBlocks.get(0)).myNode)
         && (policy.getShouldKeepWhiteSpaces()
         || policy.keepWhiteSpacesInsideTag(((XmlTagBlock)parent).getTag()))) {
       return new ReadOnlySynteticBlock(subBlocks, parent, policy, indent);

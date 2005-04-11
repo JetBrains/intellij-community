@@ -1,8 +1,14 @@
-package com.intellij.psi.formatter.newXmlFormatter;
+package com.intellij.psi.formatter.newXmlFormatter.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Wrap;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 
@@ -37,7 +43,28 @@ public class HtmlPolicy implements XmlFormattingPolicy{
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {
+    PsiElement prev = xmlTag.getPrevSibling();
+    if (prev == null) return false;
+    ASTNode prevNode = SourceTreeToPsiMap.psiElementToTree(prev);
+    while (containsWhiteSpacesOnly(prevNode)) {
+      prevNode = prevNode.getTreePrev();
+    }
+    if (prevNode == null) return false;
+    if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode) instanceof XmlTag)) return false;
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
+  }
+
+  private boolean containsWhiteSpacesOnly(final ASTNode node) {
+    if (node == null) return false;
+    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
+    if (node instanceof LeafElement) return false;
+    ChameleonTransforming.transformChildren(node);
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child)) return false;
+      child = child.getTreeNext();
+    }
+    return true;
   }
 
   public boolean removeLineBreakBeforeTag(final XmlTag xmlTag) {
@@ -104,6 +131,10 @@ public class HtmlPolicy implements XmlFormattingPolicy{
 
   public boolean getShouldKeepLineBreaks() {
     return mySettings.HTML_KEEP_LINE_BREAKS;
+  }
+
+  public CodeStyleSettings getSettings() {
+    return mySettings;
   }
 
 }

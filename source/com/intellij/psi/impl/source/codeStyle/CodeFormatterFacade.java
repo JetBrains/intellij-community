@@ -70,17 +70,11 @@ public class CodeFormatterFacade implements Constants {
     final FileType fileType = myHelper.getFileType();
     if (useBlockFormatter(fileType)) {
       TextRange range = element.getTextRange();
-      final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile);
-      try {
-        Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
 
+      processRange(element, startOffset, endOffset);
       return element;
-
     }
 
     if (useNewFormatter(myHelper.getFileType())) {
@@ -129,12 +123,17 @@ public class CodeFormatterFacade implements Constants {
   }
 
   private boolean useBlockFormatter(final FileType fileType) {
-   // if (!"lesya".equals(System.getProperty("user.name"))) return false;
-    return ApplicationManager.getApplication().isUnitTestMode() && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML);
+    //if (!"lesya".equals(System.getProperty("user.name"))) return false;
+    return ApplicationManager.getApplication().isUnitTestMode()
+           && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
   }
 
   private Block createBlock(final PsiFile element) {
-    return AbstractXmlBlock.creareRoot(element, mySettings);
+    if (element.getFileType() == StdFileTypes.XML || element.getFileType()== StdFileTypes.HTML) {
+      return AbstractXmlBlock.creareRoot(element, mySettings);
+    } else {
+      return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), mySettings);
+    }
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
@@ -143,14 +142,15 @@ public class CodeFormatterFacade implements Constants {
     if (useBlockFormatter(fileType)) {
       TextRange range = new TextRange(startOffset, endOffset);
       final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile);
-      try {
-        Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
+      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);
+      if (containingFile.getTextLength() > 0) {
+        try {
+          Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);                   
+        }
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
       return element;
 
     }

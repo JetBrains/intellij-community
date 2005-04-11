@@ -11,6 +11,10 @@ class AlignmentImpl implements Alignment {
     return String.valueOf(myId);
   }
 
+  public void reset() {
+    myCurrentOffset = -1;
+  }
+
   static class Type{
     public static final Type FULL = new Type();
     public static final Type NORMAL = new Type();

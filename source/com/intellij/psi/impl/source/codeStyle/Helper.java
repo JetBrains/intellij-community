@@ -473,7 +473,7 @@ public class Helper {
       }
     }
     if (indentMultiline) {
-      child2 = shiftIndentInside((TreeElement)child2, indentShift);
+      child2 = shiftIndentInside(child2, indentShift);
     }
     return child2;
   }
@@ -663,10 +663,6 @@ public class Helper {
       return true;
     }
     return false;
-  }
-
-  private int getIndentOffset( int indent ) {
-    return indent % INDENT_FACTOR + (indent / INDENT_FACTOR) * mySettings.getIndentSize(getFileType());
   }
 
   public String indentWhitespace( String whitespace, int indentLevelsDiff, int indentSpacesDiff ) {
