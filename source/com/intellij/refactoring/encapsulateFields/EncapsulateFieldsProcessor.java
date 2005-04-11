@@ -67,7 +67,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
     myClass = myFields[0].getContainingClass();
 
-    super.run();
+    super.doRun();
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {

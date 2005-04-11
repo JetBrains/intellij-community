@@ -271,7 +271,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       return;
     }
     if (canRefactor()) {
-      super.run();
+      super.doRun();
     }
   }
 

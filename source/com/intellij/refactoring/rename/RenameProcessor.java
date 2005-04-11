@@ -114,7 +114,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    super.run();
+    super.doRun();
   }
 
   public void prepareRenaming() {
