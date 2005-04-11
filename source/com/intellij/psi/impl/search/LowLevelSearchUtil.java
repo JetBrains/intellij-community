@@ -32,7 +32,7 @@ public class LowLevelSearchUtil {
                                                                 final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
-    if (scopePsi.getLanguage() == null || scopePsi.getLanguage().mayHaveReferences(scope.getElementType(), searchContext)) {
+    if (scopePsi.getLanguage().mayHaveReferences(scope.getElementType(), searchContext)) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {
