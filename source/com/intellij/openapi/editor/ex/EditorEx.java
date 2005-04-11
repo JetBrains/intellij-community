@@ -96,4 +96,7 @@ public interface EditorEx extends Editor {
   void resetBackgourndColor();
 
   Dimension getContentSize();
+  
+  boolean isEmbeddedIntoDialogWrapper();
+  void setEmbeddedIntoDialogWrapper(boolean b);
 }

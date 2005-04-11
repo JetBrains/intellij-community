@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,7 +34,7 @@ public class UnindentSelectionAction extends EditorAction {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return !editor.isOneLineMode();
+      return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
   }
 

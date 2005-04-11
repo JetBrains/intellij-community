@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -37,7 +38,7 @@ public class TabAction extends EditorAction {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return !editor.isOneLineMode();
+      return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -20,7 +21,8 @@ public class SplitLineAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return getEnterHandler().isEnabled(editor, dataContext);
+      return getEnterHandler().isEnabled(editor, dataContext) &&
+             !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {

@@ -162,6 +162,7 @@ public final class EditorImpl implements EditorEx {
   private Dimension myPreferredSize;
   private Runnable myGutterSizeUpdater = null;
   private Alarm myAppleRepaintAlarm;
+  private boolean myEmbeddedIntoDialogWrapper;
 
   static {
     ourCaretThread = new RepaintCursorThread();
@@ -2579,6 +2580,21 @@ public final class EditorImpl implements EditorEx {
 
   public boolean isOneLineMode() {
     return myIsOneLineMode;
+  }
+
+  public boolean isEmbeddedIntoDialogWrapper() {
+    return myEmbeddedIntoDialogWrapper;
+  }
+
+  public void setEmbeddedIntoDialogWrapper(boolean b) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    myEmbeddedIntoDialogWrapper = b;
+    myScrollPane.setFocusable(!b);
+    myEditorComponent.setFocusCycleRoot(!b);
+    myHorizontalScrollBar.setFocusable(!b);
+    myVerticalScrollBar.setFocusable(!b);
+    myEditorComponent.setFocusable(b);
   }
 
   public void setOneLineMode(boolean isOneLineMode) {
