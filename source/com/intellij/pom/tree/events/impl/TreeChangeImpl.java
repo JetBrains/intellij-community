@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.util.CharTable;
 
 import java.util.*;
 
@@ -160,14 +159,6 @@ public class TreeChangeImpl implements TreeChange {
     return myParent.getStartOffset() + getNewOffset(child);
   }
 
-  private int getChildOffsetInOldTree(ASTNode child) {
-    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
-    while (iterator.hasNext()) {
-      Pair<ASTNode, Integer> pair = iterator.next();
-      if(child == pair.getFirst()) return pair.getSecond().intValue();
-    }
-    return -1;
-  }
 
   public void composite(TreeChange treeChange) {
     final TreeChangeImpl change = (TreeChangeImpl)treeChange;
@@ -221,7 +212,6 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   public int getOldLength() {
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(myParent);
     int oldLength = TreeUtil.getNotCachedLength(myParent);
     final Iterator<Map.Entry<ASTNode, ChangeInfo>> iterator = myChanges.entrySet().iterator();
     while (iterator.hasNext()) {
@@ -247,7 +237,6 @@ public class TreeChangeImpl implements TreeChange {
 
   private int getNodeOffset(ASTNode child){
     LOG.assertTrue(child.getTreeParent() == myParent);
-    final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
     ASTNode current = myParent.getFirstChildNode();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
@@ -267,7 +256,7 @@ public class TreeChangeImpl implements TreeChange {
       if(current == child) break;
       if(current == null) break;
       if(!counted){
-        currentOffset += ((TreeElement)current).getTextLength(table);
+        currentOffset += current.getTextLength();
         current = current.getTreeNext();
       }
     }
@@ -276,7 +265,6 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   private int getOldOffset(int offset){
-    final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
     ASTNode current = myParent.getFirstChildNode();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
@@ -286,7 +274,7 @@ public class TreeChangeImpl implements TreeChange {
       boolean counted = false;
       while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
         if(current == currentChange.getFirst()){
-          final int textLength = ((TreeElement)current).getTextLength(table);
+          final int textLength = current.getTextLength();
           counted = true;
           current = current.getTreeNext();
           currentOffset += textLength;
@@ -297,7 +285,7 @@ public class TreeChangeImpl implements TreeChange {
       }
       if(current == null) break;
       if(!counted){
-        final int textLength = ((TreeElement)current).getTextLength(table);
+        final int textLength = current.getTextLength();
         currentOldOffset += textLength;
         current = current.getTreeNext();
         currentOffset += textLength;
@@ -308,7 +296,6 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   private int getNewOffset(ASTNode node){
-    final CharTable table = SharedImplUtil.findCharTableByTree(myParent);
     ASTNode current = myParent.getFirstChildNode();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
@@ -319,7 +306,7 @@ public class TreeChangeImpl implements TreeChange {
       while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
         if(currentChange.getFirst() == node) return currentOffsetInNewTree;
         if(current == currentChange.getFirst()){
-          final int textLength = ((TreeElement)current).getTextLength(table);
+          final int textLength = current.getTextLength();
           counted = true;
           current = current.getTreeNext();
           currentOffsetInNewTree += textLength;
@@ -330,7 +317,7 @@ public class TreeChangeImpl implements TreeChange {
       }
       if(current == null) break;
       if(!counted){
-        final int textLength = ((TreeElement)current).getTextLength(table);
+        final int textLength = current.getTextLength();
         currentOldOffset += textLength;
         current = current.getTreeNext();
         currentOffsetInNewTree += textLength;
