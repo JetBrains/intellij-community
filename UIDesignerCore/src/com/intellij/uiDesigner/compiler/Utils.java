@@ -108,6 +108,9 @@ public final class Utils {
     catch (final ClassNotFoundException exc) {
       return "Class \"" + className + "\"not found";
     }
+    catch (NoClassDefFoundError exc) {
+      return "Cannot load class " + className + ": " + exc.getMessage();
+    }
 
     try {
       final Constructor constructor = aClass.getConstructor(new Class[0]);
