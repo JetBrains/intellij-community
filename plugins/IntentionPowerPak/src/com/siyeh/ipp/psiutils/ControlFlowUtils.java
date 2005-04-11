@@ -37,7 +37,8 @@ public class ControlFlowUtils{
             final PsiDoWhileStatement loopStatement =
                     (PsiDoWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
-            return statementMayCompleteNormally(loopStatement.getBody()) &&
+            final PsiStatement body = loopStatement.getBody();
+            return statementMayCompleteNormally(body) &&
                            !isBooleanConstant(test, true)
                            || statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiSynchronizedStatement){
@@ -62,11 +63,8 @@ public class ControlFlowUtils{
                 return true;
             }
             final PsiStatement elseBranch = ifStatement.getElseBranch();
-            if(elseBranch == null ||
-                       statementMayCompleteNormally(elseBranch)){
-                return true;
-            }
-            return false;
+            return elseBranch == null ||
+                           statementMayCompleteNormally(elseBranch);
         } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement) statement;
 

@@ -514,8 +514,7 @@ public class EquivalenceChecker{
         final PsiExpression[] args1 = argumentList1.getExpressions();
         final PsiExpressionList argumentList2 = methodExp2.getArgumentList();
         final PsiExpression[] args2 = argumentList2.getExpressions();
-        return expressionListsAreEquivalent(args1,
-                                            args2);
+        return expressionListsAreEquivalent(args1, args2);
     }
 
     private static boolean newExpressionsAreEquivalent(PsiNewExpression newExp1,

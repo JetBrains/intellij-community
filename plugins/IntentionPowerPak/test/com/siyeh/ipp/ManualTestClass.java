@@ -1230,11 +1230,7 @@ public class ManualTestClass
         boolean foo = true;
         boolean bar  = false;
         bar = foo;
-        if (bar) {
-            return true;
-        } else {
-            return  false;
-        }
+        return bar;
     }
 
     public void testSplitElseIf()
@@ -1286,6 +1282,49 @@ public class ManualTestClass
         bar.append("c");
         bar.append("\'");
         bar.append("\"");
+    }
+
+    public void testMergeParallelIfs()
+    {
+        boolean b = bar();
+        if(b)
+            System.out.println("1");
+        if(b)
+            System.out.println("2");
+        else
+            System.out.println("3");
+    }
+
+    public void testMergeParallelIfsCascaded()
+    {
+        boolean b = bar();
+        boolean c = bar();
+        if(b)
+            System.out.println("1");
+        else if(c)
+            System.out.println("4");
+        if(b)
+            System.out.println("2");
+        else if(c)
+            System.out.println("5");
+        else
+            System.out.println("3");
+    }
+
+    public void testMergeParallelIfsWitDecls()
+    {
+        boolean b = bar();
+        if(b)
+        {
+            int i;
+            System.out.println("1");
+        }
+        if(b)
+        {
+            int j;
+            System.out.println("2");
+        }else
+            System.out.println("3");
     }
 
     private void assertNull(Object s, String value)

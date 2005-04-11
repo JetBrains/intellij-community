@@ -8,11 +8,7 @@ import com.siyeh.ipp.psiutils.EquivalenceChecker;
 
 class MergeIfOrPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
-        if(isMergableExplicitIf(element)){
-            return true;
-        } else{
-            return isMergableImplicitIf(element);
-        }
+        return isMergableExplicitIf(element) || isMergableImplicitIf(element);
     }
 
     public static boolean isMergableExplicitIf(PsiElement element){

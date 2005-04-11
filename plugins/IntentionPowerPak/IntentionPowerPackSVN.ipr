@@ -21,6 +21,7 @@
     <excludeFromCompile>
       <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/ManualTestClass.java" />
       <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/RenameReference.java" />
+      <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/JUnitTest.java" />
     </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
@@ -194,7 +195,7 @@
       <module fileurl="file://$PROJECT_DIR$/IntentionPowerPackSVN.iml" filepath="$PROJECT_DIR$/IntentionPowerPackSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="false" jdk-15="false" project-jdk-name="IDEA 3273" />
+  <component name="ProjectRootManager" version="2" assert-keyword="false" jdk-15="false" project-jdk-name="IDEA 3281" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
