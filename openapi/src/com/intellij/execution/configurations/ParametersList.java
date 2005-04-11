@@ -7,6 +7,7 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.EnvironmentUtil;
 
 import java.util.*;
@@ -164,19 +165,22 @@ public class ParametersList implements Cloneable{
       // the insertion order is important for later iterations, so LinkedHashMap is used
       myMacroMap = new LinkedHashMap<String, String>();
 
-      final PathMacros pathMacros = PathMacros.getInstance();
-      final Set<String> names = pathMacros.getAllMacroNames();
-      for (Iterator it = names.iterator(); it.hasNext();) {
-        final String name = (String)it.next();
-        myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
-      }
+      // ApplicationManager.getApplication() will return null if executed in ParameterListTest
+      if (ApplicationManager.getApplication() != null) {
+        final PathMacros pathMacros = PathMacros.getInstance();
+        final Set<String> names = pathMacros.getAllMacroNames();
+        for (Iterator it = names.iterator(); it.hasNext();) {
+          final String name = (String)it.next();
+          myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+        }
 
-      final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
-      for (Iterator it = env.keySet().iterator(); it.hasNext();) {
-        final String name = (String)it.next();
-        final String key = "${" + name + "}";
-        if (!myMacroMap.containsKey(key)) {
-          myMacroMap.put(key, env.get(name));
+        final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
+        for (Iterator it = env.keySet().iterator(); it.hasNext();) {
+          final String name = (String)it.next();
+          final String key = "${" + name + "}";
+          if (!myMacroMap.containsKey(key)) {
+            myMacroMap.put(key, env.get(name));
+          }
         }
       }
 
