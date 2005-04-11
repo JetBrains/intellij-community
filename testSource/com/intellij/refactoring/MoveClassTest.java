@@ -84,7 +84,7 @@ public class MoveClassTest extends CodeInsightTestCase {
 
     new MoveClassesOrPackagesProcessor(myProject, classes,
                                        new SingleSourceRootMoveDestination(PackageWrapper.create(dirs[0].getPackage()), dirs[0]),
-                                       true, true, null).testRun();
+                                       true, true, null).run();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }

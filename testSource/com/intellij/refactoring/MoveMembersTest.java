@@ -81,7 +81,7 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
-    new MoveMembersProcessor(myProject, null, options).testRun();
+    new MoveMembersProcessor(myProject, null, options).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

@@ -39,7 +39,7 @@ public class MigrationTest extends MultiFileTestCase {
   private MultiFileTestCase.PerformAction createAction(final MigrationMap migrationMap) {
     return new MultiFileTestCase.PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        new MigrationProcessor(myProject, migrationMap).testRun();
+        new MigrationProcessor(myProject, migrationMap).run();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };

@@ -264,7 +264,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usages);
   }
 
-  public void run() {
+  public void doRun() {
     if (myMembersToMove.size() == 0){
       String message = "No members selected";
       RefactoringMessageUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);

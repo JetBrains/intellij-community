@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -77,7 +76,7 @@ public class MethodParameterFix implements IntentionAction {
                                                                         getNewParametersInfo());
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        processor.testRun();
+        processor.run();
       }
       else {
         processor.run();

@@ -87,6 +87,6 @@ public class InlineMethodTest extends CodeInsightTestCase {
     InlineOptions options = new MockInlineMethodOptions();
     final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, null, myEditor, options.isInlineThisOnly());
     //new InlineMethodDialog(myProject, method, false, processor);
-    processor.testRun();
+    processor.run();
   }
 }

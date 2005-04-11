@@ -9,11 +9,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.idea.IdeaTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Calendar;
 
 /**
  * @author dsl
@@ -128,7 +126,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         new InheritanceToDelegationProcessor(
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
-          generateGetter).testRun();
+          generateGetter).run();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };
@@ -166,7 +164,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         new InheritanceToDelegationProcessor(
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
-          generateGetter).testRun();
+          generateGetter).run();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     };

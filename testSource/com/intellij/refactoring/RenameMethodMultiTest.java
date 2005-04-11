@@ -44,7 +44,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
                   methodSignature + "{}", null), false);
         assertNotNull(methodBySignature);
         final RenameProcessor renameProcessor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
-        renameProcessor.testRun();
+        renameProcessor.run();
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });

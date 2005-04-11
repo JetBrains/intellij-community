@@ -51,7 +51,7 @@ public class MoveInnerTest extends MultiFileTestCase {
         final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(myProject, null);
         moveInnerProcessor.setup(aClass, newClassName, passOuterClass, parameterName,
                                  searchInComments, searchInNonJava);
-        moveInnerProcessor.testRun();
+        moveInnerProcessor.run();
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         FileDocumentManager.getInstance().saveAllDocuments();
       }

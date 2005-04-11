@@ -119,7 +119,7 @@ public abstract class BaseRefactoringProcessor {
 
   protected abstract String getCommandName();
 
-  public void run() {
+  protected void doRun() {
 
     final UsageInfo[][] usages = new UsageInfo[1][];
 
@@ -418,7 +418,16 @@ public abstract class BaseRefactoringProcessor {
 
   }
 
-  public final void  testRun() {
+  public final void  run() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      testRun();
+    }
+    else {
+      doRun();
+    }
+  }
+
+  private final void  testRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     prepareTestRun();
     UsageInfo[] usages = findUsages();

@@ -75,6 +75,6 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
       replaceConstructorWithFactoryProcessor = new ReplaceConstructorWithFactoryProcessor(
         myProject, null, aClass, targetClass, "new" + aClass.getName());
     }
-    replaceConstructorWithFactoryProcessor.testRun();
+    replaceConstructorWithFactoryProcessor.run();
   }
 }

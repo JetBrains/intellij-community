@@ -26,7 +26,7 @@ public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
     new ConvertToInstanceMethodProcessor(getProject(),
-                                         method, method.getParameterList().getParameters()[targetParameter], null).testRun();
+                                         method, method.getParameterList().getParameters()[targetParameter], null).run();
     checkResultByFile(filePath + ".after");
 
   }

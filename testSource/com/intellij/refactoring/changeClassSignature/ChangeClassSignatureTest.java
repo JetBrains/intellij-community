@@ -56,7 +56,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on class name", targetElement instanceof PsiClass);
     PsiClass aClass = (PsiClass)targetElement;
-    new ChangeClassSignatureProcessor(getProject(), aClass, gen.gen(aClass)).testRun();
+    new ChangeClassSignatureProcessor(getProject(), aClass, gen.gen(aClass)).run();
     checkResultByFile(filePath + ".after");
   }
 

@@ -124,7 +124,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             method.getReturnType(),
                             myNewParametersInfo);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        processor.testRun();
+        processor.run();
       }
       else {
         processor.run();

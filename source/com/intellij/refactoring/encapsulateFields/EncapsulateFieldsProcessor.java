@@ -58,7 +58,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return "Encapsulating fields in " + UsageViewUtil.getDescriptiveName(myClass);
   }
 
-  public void run() {
+  public void doRun() {
     myFields = myDialog.getSelectedFields();
     if (myFields.length == 0){
       String message = "No fields selected";

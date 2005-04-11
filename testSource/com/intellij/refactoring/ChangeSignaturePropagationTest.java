@@ -65,7 +65,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
                                  generateParameterInfos(primaryMethod, newParameters),
                                  generateExceptionInfos(primaryMethod, newExceptions),
                                  methodsToPropagateParameterChanges,
-                                 methodsToPropagateExceptionChanges).testRun();
+                                 methodsToPropagateExceptionChanges).run();
     checkResultByFile(filePath + ".after");
   }
 

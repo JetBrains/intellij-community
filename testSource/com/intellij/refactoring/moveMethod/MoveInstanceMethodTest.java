@@ -38,7 +38,7 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
     final PsiVariable targetVariable = isTargetParameter ? ((PsiVariable)method.getParameterList().getParameters()[targetIndex]) :
                                        method.getContainingClass().getFields()[targetIndex];
     new MoveInstanceMethodProcessor(getProject(),
-                                    method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method)).testRun();
+                                    method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method)).run();
     checkResultByFile(filePath + ".after");
 
   }

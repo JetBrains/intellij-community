@@ -210,7 +210,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
     new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
                                  newName != null ? newName : method.getName(),
-                                 newType, genParams.genParams(method), genExceptions.genExceptions(method)).testRun();
+                                 newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
     checkResultByFile(filePath + ".after");
   }
 

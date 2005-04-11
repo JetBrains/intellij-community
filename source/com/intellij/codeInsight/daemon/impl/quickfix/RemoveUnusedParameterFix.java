@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 
@@ -56,7 +55,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
         getNewParametersInfo(method, parameter));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.testRun();
+      processor.run();
     }
     else {
       processor.run();

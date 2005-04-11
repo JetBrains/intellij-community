@@ -11,7 +11,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 
 import java.text.MessageFormat;
@@ -62,7 +61,7 @@ public class MethodReturnFix implements IntentionAction {
         myReturnType,
         RemoveUnusedParameterFix.getNewParametersInfo(method, null));
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.testRun();
+      processor.run();
     }
     else {
       processor.run();
