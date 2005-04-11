@@ -321,11 +321,9 @@ class FormatProcessor {
   private void adjustLineIndent() {
     int alignOffset = getAlignOffset();
     if (alignOffset == -1) {
-      //myCurrentBlock.arrangeBlockOffset(myIndentOption);
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-      whiteSpace.setSpaces(0, myCurrentBlock.calculateOffset(myIndentOption));
-      //myCurrentBlock.fixOffset(whiteSpace.getTotalSpaces());
-
+      final IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
+      whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
     } else {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       BlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
@@ -382,7 +380,7 @@ class FormatProcessor {
 
   private boolean lineOver() {
     if (myCurrentBlock.containsLineFeeds()) return false;
-    return getOffsetBefore(myCurrentBlock) + myCurrentBlock.getTextRange().getLength() > mySettings.RIGHT_MARGIN;
+    return getOffsetBefore(myCurrentBlock.getBlock()) + myCurrentBlock.getTextRange().getLength() > mySettings.RIGHT_MARGIN;
   }
 
   private int getOffsetBefore(final Block block) {
@@ -428,15 +426,6 @@ class FormatProcessor {
         if (current == null) return -1;
         if (current.getStartOffset() != myCurrentBlock.getStartOffset()) return -1;
       }
-    }
-  }
-
-  private int getOffsetBefore(final BlockWrapper info) {
-    final List<Block> subBlocks = info.getSubBlocks();
-    if (subBlocks.isEmpty()) {
-      return getOffsetBefore(info.getBlock());
-    } else {
-      return getOffsetBefore(getBlockInfo(subBlocks.get(0)));
     }
   }
 
