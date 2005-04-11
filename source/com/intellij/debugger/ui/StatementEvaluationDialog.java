@@ -50,7 +50,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY);
     final Dimension evaluationSize = DimensionService.getInstance().getSize(EVALUATION_PANEL_DIMENSION_KEY);
     if (statementSize != null && evaluationSize != null) {
-      final float proportion = (float)statementSize.height / (float) evaluationSize.height;
+      final float proportion = (float)statementSize.height / (float)(statementSize.height + evaluationSize.height);
       splitter.setProportion(proportion);
     }
     myPanel.add(splitter, BorderLayout.CENTER);
