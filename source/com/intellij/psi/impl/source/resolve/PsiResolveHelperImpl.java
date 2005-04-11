@@ -101,8 +101,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         PsiExpression argument = arguments[j];
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
         if (j >= parameters.length && !parameter.isVarArgs()) break;
-        final PsiType currentSubstitution = getSubstitutionForTypeParameter(typeParameter, parameter.getType(),
-                                                                                         argument.getType(), true);
+        PsiType parameterType = parameter.getType();
+        PsiType argumentType = argument.getType();
+
+        if (parameterType instanceof PsiEllipsisType) {
+          parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+          if (arguments.length == parameters.length && argumentType instanceof PsiArrayType && !(((PsiArrayType)argumentType).getComponentType() instanceof PsiPrimitiveType)) {
+            argumentType = ((PsiArrayType)argumentType).getComponentType();
+          }
+        }
+        final PsiType currentSubstitution = getSubstitutionForTypeParameter(typeParameter, parameterType,
+                                                                            argumentType, true);
         if (currentSubstitution == null) {
           substitution = null;
           break;
@@ -158,10 +167,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                         PsiType param,
                                                         PsiType arg,
                                                         boolean isContraVariantPosition) {
-    if (param instanceof PsiEllipsisType) {
-      if (arg instanceof PsiArrayType) arg = ((PsiArrayType)arg).getComponentType();
-      return getSubstitutionForTypeParameter(typeParam, ((PsiEllipsisType)param).getComponentType(), arg, isContraVariantPosition);
-    }
+    //Ellipsis types are analyzed somewhere else
+    LOG.assertTrue(!(param instanceof PsiEllipsisType));
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
