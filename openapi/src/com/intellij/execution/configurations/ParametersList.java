@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.util.EnvironmentUtil;
 
 import java.util.*;
@@ -166,14 +167,18 @@ public class ParametersList implements Cloneable{
       myMacroMap = new LinkedHashMap<String, String>();
 
       // ApplicationManager.getApplication() will return null if executed in ParameterListTest
-      if (ApplicationManager.getApplication() != null) {
-        final PathMacros pathMacros = PathMacros.getInstance();
-        final Set<String> names = pathMacros.getAllMacroNames();
-        for (Iterator it = names.iterator(); it.hasNext();) {
-          final String name = (String)it.next();
-          myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
-        }
-
+      final Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        application.runReadAction(new Runnable() {
+          public void run() {
+            final PathMacros pathMacros = PathMacros.getInstance();
+            final Set<String> names = pathMacros.getAllMacroNames();
+            for (Iterator it = names.iterator(); it.hasNext();) {
+              final String name = (String)it.next();
+              myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+            }
+          }
+        });
         final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
         for (Iterator it = env.keySet().iterator(); it.hasNext();) {
           final String name = (String)it.next();
@@ -183,7 +188,6 @@ public class ParametersList implements Cloneable{
           }
         }
       }
-
     }
     return myMacroMap;
   }
