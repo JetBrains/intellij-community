@@ -290,7 +290,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     }
 
     final String moduleTypeId = getOptionValue("type");
-    setModuleType((moduleTypeId != null)? ModuleTypeManager.getInstance().findByID(moduleTypeId) : ModuleType.JAVA);
+    final ModuleType moduleType = (moduleTypeId != null) ? ModuleTypeManager.getInstance().findByID(moduleTypeId) : ModuleType.JAVA;
+    setModuleType(moduleType);
     super.loadFromXml(root, filePath);
   }
 

@@ -133,10 +133,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     if (myModulePaths != null && myModulePaths.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
+          final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
           for (int idx = 0; idx < myModulePaths.length; idx++) {
             final ModulePath modulePath = myModulePaths[idx];
             try {
               final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
+              if (module.getModuleType() instanceof UnknownModuleType) {
+                modulesWithUnknownTypes.add(module);
+              }
               final String groupPathString = modulePath.getModuleGroup();
               if (groupPathString != null) {
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
@@ -190,6 +194,31 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           }
+          if (modulesWithUnknownTypes.size() > 0) {
+            final StringBuffer message = new StringBuffer("Cannot determine module type for the following ");
+            if (modulesWithUnknownTypes.size() == 1) {
+              message.append("module:");
+            }
+            else {
+              message.append("modules:");
+            }
+            for (Iterator it = modulesWithUnknownTypes.iterator(); it.hasNext();) {
+              final Module module = (Module)it.next();
+              message.append("\n\"");
+              message.append(module.getName());
+              message.append("\"");
+              //message.append(", Module Type: \"");
+              //message.append(module.getModuleType().getId());
+              //message.append("\"");
+            }
+            if (modulesWithUnknownTypes.size() > 1) {
+              message.append(".\nAll mentioned modules will be treated as JAVA modules.");
+            }
+            else {
+              message.append(".\nThe module will be treated as a JAVA module.");
+            }
+            Messages.showWarningDialog(myProject, message.toString(), "Unknon Module Type");
+          }
         }
       });
     }
@@ -212,7 +241,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     });
     for (Iterator iterator = sorted.iterator(); iterator.hasNext();) {
       ModuleImpl module = (ModuleImpl)iterator.next();
-      if (module.isDefault()) continue;
+      if (module.isDefault()) {
+        continue;
+      }
       Element moduleElement = new Element("module");
       final String moduleFilePath = module.getModuleFilePath().replace(File.separatorChar, '/');
       final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, moduleFilePath);
@@ -432,7 +463,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public Module getModuleByNewName(String newName) {
       final Module moduleToBeRenamed = getModuleToBeRenamed(newName);
-      if (moduleToBeRenamed != null) return moduleToBeRenamed;
+      if (moduleToBeRenamed != null) {
+        return moduleToBeRenamed;
+      }
       final Module moduleWithOldName = findModuleByName(newName);
       if (myModulesToNewNamesMap.get(moduleWithOldName) == null) {
         return moduleWithOldName;
@@ -641,7 +674,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public boolean isChanged() {
-      if (!myIsWritable) return false;
+      if (!myIsWritable) {
+        return false;
+      }
       Set<Module> thisModules = new HashSet<Module>(myPath2ModelMap.values());
       Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPath2ModelMap.values());
       return !thisModules.equals(thatModules);
