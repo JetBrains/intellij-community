@@ -322,7 +322,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     myRenamers.clear();
     if (myElement instanceof PsiDirectory) {
-      final UsageInfo[] usages = RenameUtil.findUsages(((PsiDirectory) myElement).getPackage(), myNewName, mySearchInComments, mySearchInNonJavaFiles);
+      final PsiPackage aPackage = ((PsiDirectory)myElement).getPackage();
+      final UsageInfo[] usages;
+      if (aPackage != null) {
+        usages = RenameUtil.findUsages(aPackage, myNewName, mySearchInComments, mySearchInNonJavaFiles);
+      }
+      else {
+        usages = RenameUtil.findUsages(myElement, myNewName, mySearchInComments, mySearchInNonJavaFiles);
+      }
       return UsageViewUtil.removeDuplicatedUsages(usages);
     }
 
@@ -331,7 +338,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (int i = 0; i < myElements.size(); i++) {
       PsiElement element = myElements.get(i);
       final String newName = myNames.get(i);
-      if (element instanceof PsiDirectory) continue;
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchInNonJavaFiles);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
@@ -470,8 +476,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
     if (element instanceof PsiDirectory) {
-      element = ((PsiDirectory) element).getPackage();
-      LOG.assertTrue(element != null);
+      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      if (aPackage != null) {
+        element = aPackage;
+      }
     }
 
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);

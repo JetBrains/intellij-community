@@ -160,7 +160,10 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
 
   public void setToSearchInCommentsForRename(PsiElement element, boolean value) {
     if (element instanceof PsiDirectory) {
-      element = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      if (aPackage != null) {
+        element = aPackage;
+      }
     }
     if (element instanceof PsiPackage){
       RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = value;
@@ -190,7 +193,10 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
 
   public void setToSearchInNonJavaFilesForRename(PsiElement element, boolean value) {
     if (element instanceof PsiDirectory) {
-      element = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      if (aPackage != null) {
+        element = aPackage;
+      }
     }
     if (element instanceof PsiPackage){
       RENAME_SEARCH_IN_NONJAVA_FOR_PACKAGE = value;
@@ -208,6 +214,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
       //RENAME_SEARCH_IN_NONJAVA_FOR_VARIABLE = value;
     }
     else if (element instanceof XmlAttributeValue) {
+
+    }
+    else if (element instanceof PsiNamedElement) {
 
     }
     else{
