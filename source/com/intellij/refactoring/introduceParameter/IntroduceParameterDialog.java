@@ -228,7 +228,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.gridy++;
     myCbDeclareFinal = new NonFocusableCheckBox("Declare final");
     myCbDeclareFinal.setMnemonic('n');
-    myCbDeclareFinal.setSelected(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
+    final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
+    myCbDeclareFinal.setSelected(settingsFinals == null ?
+                                 CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS :
+                                 settingsFinals.booleanValue());
     panel.add(myCbDeclareFinal, gbConstraints);
 
 
@@ -347,6 +350,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     final RefactoringSettings settings = RefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             getReplaceFieldsWithGetters();
+    if (myCbDeclareFinal != null) settings.INTRODUCE_PARAMETER_CREATE_FINALS = new Boolean(myCbDeclareFinal.isSelected());
 
     if(myCbDeleteLocalVariable != null) {
       settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE =

@@ -81,6 +81,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public String INTRODUCE_CONSTANT_VISIBILITY;
   public boolean CONVERT_TO_INSTANCE_METHOD_PREVIEW_USAGES = true;
 
+  public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
+  public Boolean INTRODUCE_PARAMETER_CREATE_FINALS = null;
+
   public static RefactoringSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(RefactoringSettings.class);
   }
