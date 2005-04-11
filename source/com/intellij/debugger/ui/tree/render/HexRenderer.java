@@ -51,7 +51,7 @@ public class HexRenderer extends NodeRendererImpl{
     }
     else if (value instanceof CharValue) {
       buf.append("'");
-      buf.append(DebuggerUtils.translateStringValue(value.toString()));
+      buf.append(value.toString());
       buf.append("' ");
       long longValue = ((PrimitiveValue)value).longValue();
       buf.append("0x" + Long.toHexString(longValue).toUpperCase());

@@ -57,7 +57,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       StringBuffer buf = new StringBuffer(16);
       if (value instanceof CharValue) {
         buf.append("'");
-        buf.append(DebuggerUtilsEx.translateStringValue(value.toString()));
+        buf.append(value.toString());
         buf.append("' ");
         long longValue = ((PrimitiveValue)value).longValue();
         buf.append(Long.toString(longValue));
@@ -75,7 +75,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
         buf.append(value.toString());
       }
       else {
-        buf.append(DebuggerUtilsEx.translateStringValue(value.toString()));
+        buf.append(value.toString());
       }
       return buf.toString();
     }
