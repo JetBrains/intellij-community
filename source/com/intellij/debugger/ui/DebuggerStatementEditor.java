@@ -47,13 +47,15 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.add(new ItemAction(IdeActions.ACTION_PREVIOUS_OCCURENCE, this){
       public void actionPerformed(AnActionEvent e) {
-        LOG.assertTrue(myRecentIdx > 0);
-        myRecentIdx --;
+        LOG.assertTrue(myRecentIdx >= 0);
+        // since recents are stored in a stack, previous item is at currentIndex + 1
+        myRecentIdx += 1;
         updateTextFromRecents();
       }
 
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myRecentIdx > 0);
+        LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+        e.getPresentation().setEnabled(myRecentIdx < recents.size());
       }
     });
     actionGroup.add(new ItemAction(IdeActions.ACTION_NEXT_OCCURENCE, this){
@@ -62,13 +64,13 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
           LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
           LOG.assertTrue(myRecentIdx < recents.size());
         }
-        myRecentIdx ++;
+        // since recents are stored in a stack, next item is at currentIndex - 1
+        myRecentIdx -= 1;
         updateTextFromRecents();
       }
 
       public void update(AnActionEvent e) {
-        LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
-        e.getPresentation().setEnabled(myRecentIdx < recents.size());
+        e.getPresentation().setEnabled(myRecentIdx > 0);
       }
     });
 

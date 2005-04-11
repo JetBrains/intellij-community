@@ -302,11 +302,6 @@ public class CompileDriver {
       if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return;
       }
-      if (!isRebuild) {
-        compileContext.getProgressIndicator().setText("Scanning output directories...");
-        myOutputFilesOnDisk = CompilerPathsEx.getOutputFiles(myProject);
-      }
-
       status = doCompile(compileContext, isRebuild, forceCompile);
     }
     catch (Throwable ex) {
@@ -406,6 +401,12 @@ public class CompileDriver {
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return ExitStatus.ERRORS;
+      }
+
+      if (!isRebuild) {
+        // compile tasks may change the contents of the output dirs so it is more safe to gather output files here
+        context.getProgressIndicator().setText("Scanning output directories...");
+        myOutputFilesOnDisk = CompilerPathsEx.getOutputFiles(myProject);
       }
 
       boolean didSomething = false;
