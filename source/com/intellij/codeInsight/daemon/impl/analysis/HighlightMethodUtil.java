@@ -147,15 +147,16 @@ public class HighlightMethodUtil {
       substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
     }
 
-    if (!returnType.equals(superReturnType) &&
-        (!(returnType.getDeepComponentType() instanceof PsiClassType) ||
-         !(substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) ||
-         LanguageLevel.JDK_1_5.compareTo(method.getManager().getEffectiveLanguageLevel()) > 0 ||
-         !TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
-      return createIncompatibleReturnTypeMessage(methodToHighlight, method, superMethod, includeRealPositionInfo,
-                                                 substitutedSuperReturnType, returnType, detailMessage);
+    if (returnType.equals(superReturnType)) return null;
+    if (returnType.getDeepComponentType() instanceof PsiClassType &&
+            substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
+      if (returnType.equals(TypeConversionUtil.erasure(superReturnType))) return null;
+      if (LanguageLevel.JDK_1_5.compareTo(method.getManager().getEffectiveLanguageLevel()) <= 0 &&
+          TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) return null;
     }
-    return null;
+
+    return createIncompatibleReturnTypeMessage(methodToHighlight, method, superMethod, includeRealPositionInfo,
+                                               substitutedSuperReturnType, returnType, detailMessage);
   }
 
   private static HighlightInfo createIncompatibleReturnTypeMessage(final PsiMethod methodToHighlight,
