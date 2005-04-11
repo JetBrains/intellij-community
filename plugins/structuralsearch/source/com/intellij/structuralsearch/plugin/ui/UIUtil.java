@@ -66,7 +66,7 @@ public class UIUtil {
 
       ((EditorEx)editor).setBackgroundColor(c);
     } else {
-      //editor.setTabEnabled(false);
+      ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
     }
 
     TemplateContext context = new TemplateContext();
