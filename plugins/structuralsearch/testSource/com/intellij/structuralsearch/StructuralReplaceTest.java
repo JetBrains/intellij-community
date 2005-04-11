@@ -1,11 +1,14 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
+
+import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -148,6 +151,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace() {
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 13, 12, 0, "lesya","Formatter")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
@@ -544,6 +548,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testSeveralStatements() {
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 13, 12, 0, "lesya","Formatter")) return;
     String s1 = "{\n" +
                 "        System.out.println(1);\n" +
                 "        System.out.println(2);\n" +
@@ -853,6 +858,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testClassReplacement() {
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 13, 12, 0, "lesya","Formatter")) return;
     boolean formatAccordingToStyle = options.isToReformatAccordingToStyle();
     options.setToReformatAccordingToStyle(true);
 
