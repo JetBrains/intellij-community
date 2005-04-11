@@ -1,14 +1,11 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
-
-import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -400,13 +397,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
                               "        OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
-    if (IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 17, 12, 0, "lesya", "method parameter alignment")) {
-      assertEquals(
-        "Replace in constructor",
-        expectedResult17,
-        actualResult
-      );
-    }
+    assertEquals(
+      "Replace in constructor",
+      expectedResult17,
+      actualResult
+    );
 
     String s49 = "class A {}\n" +
                  "class B extends A {}\n" +
