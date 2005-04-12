@@ -83,7 +83,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   protected void resetImpl() {
     myKeepBlankLines.setText(String.valueOf(mySettings.XML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(mySettings.HTML_TEXT_WRAP));
+    myWrapAttributes.setSelectedIndex(getIndexForWrapping(mySettings.XML_TEXT_WRAP));
     myAlignAttributes.setSelected(mySettings.XML_ALIGN_ATTRIBUTES);
     myKeepWhiteSpaces.setSelected(mySettings.XML_KEEP_WHITESPACES);
     mySpacesAroundTagName.setSelected(mySettings.XML_SPACE_AROUND_TAG_NAME);
