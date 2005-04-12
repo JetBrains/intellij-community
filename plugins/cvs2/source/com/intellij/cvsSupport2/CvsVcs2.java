@@ -1,8 +1,6 @@
 package com.intellij.cvsSupport2;
 
 
-import com.intellij.cvsSupport2.actions.EditAction;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -14,26 +12,29 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.cvsIntegration.CvsResult;
 
 import java.io.File;
 
@@ -186,15 +187,16 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public void editFiles(final VirtualFile[] files) {
-    new EditAction().actionPerformed(new CvsContextAdapter() {
-      public Project getProject() {
-        return myProject;
-      }
+    CvsConfiguration configuration = CvsConfiguration.getInstance(myProject);
+    if (configuration.SHOW_EDIT_DIALOG) {
+      EditOptionsDialog editOptionsDialog = new EditOptionsDialog(myProject);
+      editOptionsDialog.show();
+      if (!editOptionsDialog.isOK()) return;
+    }
 
-      public VirtualFile[] getSelectedFiles() {
-        return files;
-      }
-    });
+    final CvsHandler editHandler = CommandCvsHandler.createEditHandler(files, configuration.RESERVED_EDIT);
+    new CvsOperationExecutor(true, myProject, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
+
   }
 
   public String getRequestText() {
