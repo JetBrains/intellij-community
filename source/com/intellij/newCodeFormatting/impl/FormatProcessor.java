@@ -37,7 +37,7 @@ class FormatProcessor {
     myModel = model;
     myIndentOption = indentOptions;
     mySettings = settings;
-    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model, affectedRange);
+    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model, affectedRange, indentOptions);
     myInfos = builder.getBlockToInfoMap();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
