@@ -305,6 +305,10 @@ class PluginManagerColumnInfo extends ColumnInfo {
     if (existing == null)
       return PluginNode.STATUS_MISSING;
 
+    if (existing.getVendor() == null ? true : !existing.getVendor().equals(node.getVendor())){
+      return PluginNode.STATUS_MISSING;
+    }
+    
     int state = compareVersion(node.getVersion(), existing.getVersion());
 
     if (state == 0)
