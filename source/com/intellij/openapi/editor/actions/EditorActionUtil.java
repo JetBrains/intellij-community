@@ -134,7 +134,7 @@ public class EditorActionUtil {
       if (firstIsIdentifierPart && secondIsIdentifierPart &&
           (Character.isLowerCase(first) && Character.isUpperCase(second) ||
            first == '_' && second != '_' ||
-           offset + 1 < text.length() && Character.isUpperCase(first) && Character.isUpperCase(second)) && Character.isLowerCase(text.charAt(offset + 1))) {
+           offset + 1 < text.length() && Character.isUpperCase(first) && Character.isUpperCase(second) && Character.isLowerCase(text.charAt(offset + 1)))) {
         return true;
       }
     }
@@ -156,7 +156,7 @@ public class EditorActionUtil {
       if (firstIsIdentifiePart && secondIsIdentifierPart &&
           (Character.isLowerCase(first) && Character.isUpperCase(second) || first != '_' && second == '_' ||
           offset + 1 < text.length() && Character.isUpperCase(first) &&
-          Character.isUpperCase(second)) && Character.isLowerCase(text.charAt(offset + 1))) {
+          Character.isUpperCase(second) && Character.isLowerCase(text.charAt(offset + 1)))) {
         return true;
       }
     }
