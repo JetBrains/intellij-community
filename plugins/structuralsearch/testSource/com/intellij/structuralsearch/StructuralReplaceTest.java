@@ -858,7 +858,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testClassReplacement() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 13, 12, 0, "lesya","Formatter")) return;
     boolean formatAccordingToStyle = options.isToReformatAccordingToStyle();
     options.setToReformatAccordingToStyle(true);
 
