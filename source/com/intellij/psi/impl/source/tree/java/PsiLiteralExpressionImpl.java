@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
 
@@ -379,6 +380,10 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   public String toString() {
     return "PsiLiteralExpression:" + getText();
+  }
+
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this);
   }
 }
 
