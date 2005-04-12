@@ -5,7 +5,6 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -125,14 +124,17 @@ public class CodeFormatterFacade implements Constants {
 
   private boolean useBlockFormatter(final FileType fileType) {
     //if (!"lesya".equals(System.getProperty("user.name"))) return false;
-    return ApplicationManager.getApplication().isUnitTestMode()
-           && (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
+    return
+    //ApplicationManager.getApplication().isUnitTestMode()
+    //       &&
+    (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
   }
 
   private Block createBlock(final PsiFile element) {
-    if (element.getFileType() == StdFileTypes.XML || element.getFileType()== StdFileTypes.HTML) {
+    if (element.getFileType() == StdFileTypes.XML || element.getFileType() == StdFileTypes.HTML) {
       return AbstractXmlBlock.creareRoot(element, mySettings);
-    } else {
+    }
+    else {
       return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), mySettings);
     }
   }
@@ -149,7 +151,7 @@ public class CodeFormatterFacade implements Constants {
           Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {
-          LOG.error(e);                   
+          LOG.error(e);
         }
       }
       return element;
@@ -163,7 +165,8 @@ public class CodeFormatterFacade implements Constants {
       }
       else {
         try {
-          final PseudoText pseudoText = pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
+          final PseudoText pseudoText =
+            pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
           GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, null).format();
         }
         catch (ProcessCanceledException processCanceledException) {
