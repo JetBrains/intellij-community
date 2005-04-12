@@ -63,8 +63,9 @@ class ChangeInfo {
     wasVararg = method.isVarArgs();
 
     this.oldName = method.getName();
+    final PsiManager manager = method.getManager();
     if (!method.isConstructor()){
-      this.oldType = method.getManager().getElementFactory().createTypeElement(method.getReturnType()).getText();
+      this.oldType = manager.getElementFactory().createTypeElement(method.getReturnType()).getText();
     }
     else{
       this.oldType = null;
@@ -83,7 +84,7 @@ class ChangeInfo {
     this.isNameChanged = !newName.equals(oldName);
     if (!method.isConstructor()){
       try {
-        this.isReturnTypeChanged = !newReturnType.getType(this.method).equals(this.method.getReturnType());
+        this.isReturnTypeChanged = !newReturnType.getType(this.method, manager).equals(this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         this.isReturnTypeChanged = true;
@@ -104,7 +105,7 @@ class ChangeInfo {
           this.isParameterNamesChanged = true;
         }
         try {
-          if (!parmInfo.createType(method).equals(parameter.getType())){
+          if (!parmInfo.createType(method, manager).equals(parameter.getType())){
             this.isParameterTypesChanged = true;
           }
         }
@@ -126,7 +127,7 @@ class ChangeInfo {
       this.toRemoveParm[info.oldParameterIndex] = false;
     }
 
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = manager.getElementFactory();
     this.defaultValues = new PsiExpression[newParms.length];
     for(int i = 0; i < newParms.length; i++){
       ParameterInfo info = newParms[i];
@@ -163,7 +164,7 @@ class ChangeInfo {
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method))) {
+          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }

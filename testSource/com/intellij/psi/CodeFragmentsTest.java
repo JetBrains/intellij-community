@@ -8,7 +8,7 @@ public class CodeFragmentsTest extends PsiTestCase{
   }
 
   public void testAddImport() throws Exception {
-    PsiCodeFragment fragment = myPsiManager.getElementFactory().createExpressionCodeFragment("AAA.foo()", null, false);
+    PsiCodeFragment fragment = myPsiManager.getElementFactory().createExpressionCodeFragment("AAA.foo()", null, null, false);
     PsiClass arrayListClass = myPsiManager.findClass("java.util.ArrayList");
     PsiReference ref = fragment.findReferenceAt(0);
     ref.bindToElement(arrayListClass);

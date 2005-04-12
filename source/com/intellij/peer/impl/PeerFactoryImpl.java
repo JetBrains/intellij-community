@@ -32,6 +32,8 @@ import com.intellij.openapi.vcs.ui.impl.CheckinPanelRootNode;
 import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.Document;
 import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -192,6 +194,12 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
                                                                           new AnAction[0], new AnAction[0]);
       TreeUtil.expandAll(result.getTree());
       return result;
+    }
+
+    public JComponent createTypedTextField(PsiType type, PsiElement context, final Project project) {
+      final PsiExpressionCodeFragment fragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment("", context, type, true);
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
+      return new EditorTextField(document, project, StdFileTypes.JAVA);
     }
 
     private static String getPsiElementText(PsiElement psiElement) {

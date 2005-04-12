@@ -147,7 +147,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
         newValues.add(oldValues[oldIndex]);
       }
       else {
-        PsiType type = info.getDefaultValue().getType(myClass.getLBrace());
+        PsiType type = info.getDefaultValue().getType(myClass.getLBrace(), PsiManager.getInstance(myProject));
 
         PsiTypeElement newValue = factory.createTypeElement(usageSubstitutor.substitute(type));
         newValues.add(newValue);

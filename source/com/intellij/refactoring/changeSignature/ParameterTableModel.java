@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.refactoring.ui.RowEditableTableModel;
 import com.intellij.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
@@ -48,7 +49,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     ParameterInfo info = new ParameterInfo(-1);
     myParameterInfos.add(info);
     myTypeCodeFraments.add(createParameterTypeCodeFragment("", myContext));
-    myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment(""));
+    myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment("", null));
     fireTableRowsInserted(myParameterInfos.size() - 1, myParameterInfos.size() - 1);
   }
 
@@ -167,8 +168,8 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     }
   }
 
-  private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText) {
-    PsiExpressionCodeFragment codeFragment = myContext.getManager().getElementFactory().createExpressionCodeFragment(expressionText, null, true);
+  private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
+    PsiExpressionCodeFragment codeFragment = myContext.getManager().getElementFactory().createExpressionCodeFragment(expressionText, null, expectedType, true);
     codeFragment.setEverythingAcessible(true);
     return codeFragment;
   }
@@ -196,7 +197,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     for (int i = 0; i < parameterInfos.size(); i++) {
       ParameterInfo parameterInfo = parameterInfos.get(i);
       myTypeCodeFraments.add(createParameterTypeCodeFragment(parameterInfo.getTypeText(), context));
-      myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment(parameterInfo.defaultValue));
+      myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment(parameterInfo.defaultValue, null));
     }
   }
 

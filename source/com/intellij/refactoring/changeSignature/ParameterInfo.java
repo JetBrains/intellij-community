@@ -5,10 +5,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 
@@ -87,9 +84,9 @@ public class ParameterInfo {
     }
   }
 
-  PsiType createType(PsiElement context) throws IncorrectOperationException {
+  PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
     if (getTypeWrapper() != null) {
-      return getTypeWrapper().getType(context);
+      return getTypeWrapper().getType(context, manager);
     } else {
       return null;
     }

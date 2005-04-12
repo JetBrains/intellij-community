@@ -764,9 +764,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return pointcut.getTypePattern();
   }
 
-  public PsiExpressionCodeFragment createExpressionCodeFragment(String text, PsiElement context, boolean isPhysical) {
+  public PsiExpressionCodeFragment createExpressionCodeFragment(String text,
+                                                                PsiElement context,
+                                                                final PsiType expectedType,
+                                                                boolean isPhysical) {
     final PsiExpressionCodeFragmentImpl result = new PsiExpressionCodeFragmentImpl(
-      myManager.getProject(), isPhysical, "fragment.java", text);
+    myManager.getProject(), isPhysical, "fragment.java", text, expectedType);
     result.setContext(context);
     return result;
   }

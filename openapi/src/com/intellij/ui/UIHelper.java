@@ -32,9 +32,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.checkin.Revisions;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -74,4 +74,11 @@ public interface UIHelper {
   void installSelectionSaver(JTree tree);
 
   TreeTable createDirectoryDiffTree(Project project, AbstractRevisions[] roots);
+
+  /**
+   * @param type expected type that the expression to be input in this field should have, subtypes accepted
+   * @param context where the expression is to be virtually inserted (for smart completing variables from the context)
+   * @param project
+   */
+  JComponent createTypedTextField(PsiType type, PsiElement context, final Project project);
 }

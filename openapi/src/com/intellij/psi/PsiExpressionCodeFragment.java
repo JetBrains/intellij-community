@@ -6,4 +6,6 @@ package com.intellij.psi;
 
 public interface PsiExpressionCodeFragment extends PsiCodeFragment {
   PsiExpression getExpression();
+  public PsiType getExpectedType();
+  public void setExpectedType(PsiType type);
 }

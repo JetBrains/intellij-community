@@ -334,7 +334,26 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
     myParametersTable.getColumnModel().getColumn(0).setCellEditor(new CodeFragmentTableCellEditor(myProject));
     myParametersTable.getColumnModel().getColumn(1).setCellEditor(new MyNameTableCellEditor(myProject));
-    myParametersTable.getColumnModel().getColumn(2).setCellEditor(new CodeFragmentTableCellEditor(myProject));
+
+    myParametersTable.getColumnModel().getColumn(2).setCellEditor(new CodeFragmentTableCellEditor(myProject) {
+      public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
+
+        if (myCodeFragment instanceof PsiExpressionCodeFragment) {
+          final Object valueAt = table.getValueAt(row, 0);
+          if (valueAt != null) {
+            try {
+              final PsiType type = ((PsiTypeCodeFragment)valueAt).getType();
+              ((PsiExpressionCodeFragment)myCodeFragment).setExpectedType(type);
+            }
+            catch (PsiTypeCodeFragment.TypeSyntaxException e) {}
+            catch (PsiTypeCodeFragment.NoTypeException e) {}
+          }
+
+        }
+        return editor;
+      }
+    });
   }
 
   private void configureExceptionTableEditors () {
@@ -634,7 +653,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       PsiElementFactory factory = manager.getElementFactory();
       final CanonicalTypes.Type returnType = getReturnType();
       if (returnType != null) {
-        prototype = factory.createMethod(newMethodName, returnType.getType(myMethod));
+        prototype = factory.createMethod(newMethodName, returnType.getType(myMethod, manager));
       }
       else {
         prototype = null;
@@ -643,7 +662,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
       for (int idx = 0; idx < parameters.length; idx++) {
         ParameterInfo info = parameters[idx];
-        final PsiType parameterType = info.createType(myMethod);
+        final PsiType parameterType = info.createType(myMethod, manager);
 
         if (!RefactoringUtil.isResolvableType(parameterType)) {
           final int ret = Messages.showOkCancelDialog(myProject,

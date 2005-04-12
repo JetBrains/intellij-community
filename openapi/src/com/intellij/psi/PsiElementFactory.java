@@ -94,7 +94,7 @@ public interface PsiElementFactory {
 
   PsiTypePattern createTypePattern(String pattern) throws IncorrectOperationException;
 
-  PsiExpressionCodeFragment createExpressionCodeFragment(String text, PsiElement context, boolean isPhysical);
+  PsiExpressionCodeFragment createExpressionCodeFragment(String text, PsiElement context, final PsiType expectedType, boolean isPhysical);
   PsiCodeFragment createCodeBlockCodeFragment(String text, PsiElement context, boolean isPhysical);
   PsiTypeCodeFragment createTypeCodeFragment(String text, PsiElement context, boolean isPhysical);
   PsiTypeCodeFragment createTypeCodeFragment(String text, PsiElement context, boolean isVoidValid, boolean isPhysical);

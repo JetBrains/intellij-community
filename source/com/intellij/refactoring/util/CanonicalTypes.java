@@ -15,7 +15,7 @@ import java.util.Map;
 public class CanonicalTypes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.CanonicalTypes");
   public static abstract class Type {
-    public abstract PsiType getType(PsiElement context) throws IncorrectOperationException;
+    public abstract PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
     public abstract String getTypeText();
   }
 
@@ -25,7 +25,7 @@ public class CanonicalTypes {
       myType = type;
     }
 
-    public PsiType getType(PsiElement context) {
+    public PsiType getType(PsiElement context, final PsiManager manager) {
       return myType;
     }
 
@@ -41,8 +41,8 @@ public class CanonicalTypes {
       myComponentType = componentType;
     }
 
-    public PsiType getType(PsiElement context) throws IncorrectOperationException {
-      return myComponentType.getType(context).createArrayType();
+    public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+      return myComponentType.getType(context, manager).createArrayType();
     }
 
     public String getTypeText() {
@@ -57,8 +57,8 @@ public class CanonicalTypes {
       myComponentType = componentType;
     }
 
-    public PsiType getType(PsiElement context) throws IncorrectOperationException {
-      return new PsiEllipsisType(myComponentType.getType(context));
+    public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+      return new PsiEllipsisType(myComponentType.getType(context, manager));
     }
 
     public String getTypeText() {
@@ -75,13 +75,13 @@ public class CanonicalTypes {
       myBound = bound;
     }
 
-    public PsiType getType(PsiElement context) throws IncorrectOperationException {
+    public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
       if(myBound == null) return PsiWildcardType.createUnbounded(context.getManager());
       if (myIsExtending) {
-        return PsiWildcardType.createExtends(context.getManager(), myBound.getType(context));
+        return PsiWildcardType.createExtends(context.getManager(), myBound.getType(context, manager));
       }
       else {
-        return PsiWildcardType.createSuper(context.getManager(), myBound.getType(context));
+        return PsiWildcardType.createSuper(context.getManager(), myBound.getType(context, manager));
       }
     }
 
@@ -98,7 +98,7 @@ public class CanonicalTypes {
       myText = text;
     }
 
-    public PsiType getType(PsiElement context) throws IncorrectOperationException {
+    public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
       return context.getManager().getElementFactory().createTypeFromText(myText, context);
     }
 
@@ -119,8 +119,7 @@ public class CanonicalTypes {
       mySubstitutor = substitutor;
     }
 
-    public PsiType getType(PsiElement context) throws IncorrectOperationException {
-      final PsiManager manager = context.getManager();
+    public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
       final PsiElementFactory factory = manager.getElementFactory();
       final PsiResolveHelper resolveHelper = manager.getResolveHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(myClassQName, context);
@@ -134,7 +133,7 @@ public class CanonicalTypes {
         final String name = typeParameter.getName();
         final Type type = mySubstitutor.get(name);
         if (type != null) {
-          substMap.put(typeParameter, type.getType(context));
+          substMap.put(typeParameter, type.getType(context, manager));
         } else {
           substMap.put(typeParameter, null);
         }

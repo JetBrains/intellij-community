@@ -28,9 +28,9 @@ public class ThrownExceptionInfo {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
-  public PsiType createType(PsiElement context) throws IncorrectOperationException {
+  public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
     if (myType != null) {
-      return myType.getType(context);
+      return myType.getType(context, manager);
     } else {
       return null;
     }

@@ -16,7 +16,7 @@ import java.awt.*;
  */
 public class CodeFragmentTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
-  private PsiCodeFragment myCodeFragment;
+  protected PsiCodeFragment myCodeFragment;
   private Project myProject;
 
   public CodeFragmentTableCellEditor(final Project project) {

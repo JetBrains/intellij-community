@@ -93,6 +93,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
     super(project);
+    myManager = PsiManager.getInstance(project);
+    myFactory = myManager.getElementFactory();
     myGenerateDelegate = generateDelegate;
 
     myPropagateParametersMethods = propagateParametersMethods != null ? propagateParametersMethods : new HashSet<PsiMethod>();
@@ -115,9 +117,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageInfo[] findUsages() {
-    myManager = PsiManager.getInstance(myProject);
-    myFactory = myManager.getElementFactory();
-
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     final PsiMethod method = myChangeInfo.getMethod();
 
@@ -383,7 +382,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           PsiSubstitutor substitutor = calculateSubstitutor(overrider, baseMethod);
           PsiType type;
           try {
-            type = substitutor.substitute(myChangeInfo.newReturnType.getType(myChangeInfo.getMethod()));
+            type = substitutor.substitute(myChangeInfo.newReturnType.getType(myChangeInfo.getMethod(), myManager));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -419,7 +418,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
 
       if (myChangeInfo.isReturnTypeChanged) {
-        myChangeInfo.newTypeElement = myChangeInfo.newReturnType.getType(myChangeInfo.getMethod());
+        myChangeInfo.newTypeElement = myChangeInfo.newReturnType.getType(myChangeInfo.getMethod(), myManager);
       }
 
       if (myGenerateDelegate) {
@@ -593,7 +592,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private PsiParameter createNewParameter(ParameterInfo newParm,
                                           PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList()));
+    final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList(), myManager));
     return factory.createParameter(newParm.getName(), type);
   }
 
@@ -648,7 +647,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private PsiClassType[] getPrimaryChangedExceptionInfo(ChangeInfo changeInfo) throws IncorrectOperationException {
     PsiClassType[] newExceptions = new PsiClassType[changeInfo.newExceptions.length];
     for (int i = 0; i < newExceptions.length; i++) {
-      newExceptions[i] = (PsiClassType)changeInfo.newExceptions[i].myType.getType(myChangeInfo.getMethod()); //context really does not matter here
+      newExceptions[i] = (PsiClassType)changeInfo.newExceptions[i].myType.getType(myChangeInfo.getMethod(), myManager); //context really does not matter here
     }
     return newExceptions;
   }
@@ -841,7 +840,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     throws IncorrectOperationException {
     if (info.useAnySingleVariable) {
       final PsiResolveHelper resolveHelper = list.getManager().getResolveHelper();
-      final PsiType type = info.getTypeWrapper().getType(myChangeInfo.getMethod());
+      final PsiType type = info.getTypeWrapper().getType(myChangeInfo.getMethod(), myManager);
       final VariablesProcessor processor = new VariablesProcessor(false) {
               protected boolean check(PsiVariable var, PsiSubstitutor substitutor) {
                 if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
@@ -903,7 +902,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final ThrownExceptionInfo[] primaryNewExns = myChangeInfo.newExceptions;
       for (int i = 0; i < primaryNewExns.length; i++) {
         if (primaryNewExns[i].oldIndex < 0) {
-          final PsiClassType type = (PsiClassType)primaryNewExns[i].createType(caller);
+          final PsiClassType type = (PsiClassType)primaryNewExns[i].createType(caller, myManager);
           final PsiJavaCodeReferenceElement ref = caller.getManager().getElementFactory().createReferenceElementByType(type);
           newThrowns.add(ref);
         }
@@ -980,7 +979,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         String oldType = myChangeInfo.oldParameterTypes[index];
         if (!oldType.equals(info.getTypeText())) {
           parameter.normalizeDeclaration();
-          PsiType newType = substitutor.substitute(info.createType(myChangeInfo.getMethod().getParameterList()));
+          PsiType newType = substitutor.substitute(info.createType(myChangeInfo.getMethod().getParameterList(), myManager));
 
           parameter.getTypeElement().replace(factory.createTypeElement(newType));
         }
