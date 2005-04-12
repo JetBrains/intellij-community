@@ -78,6 +78,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.DO_WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (child.getElementType() == ElementType.SWITCH_STATEMENT) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();

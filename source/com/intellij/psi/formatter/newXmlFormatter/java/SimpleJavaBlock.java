@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.newXmlFormatter.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.*;
+import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -363,10 +364,21 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   }
 
   private Block createCaseBlock(final List<Block> statementsUnderCase, final AbstractJavaBlock caseBlock) {
+    Indent indentUnderCase = Formatter.getInstance().createNormalIndent();
+    if (statementsUnderCase.size() == 1 && isCodeBlock(statementsUnderCase.get(0))) {
+      if (mySettings.BRACE_STYLE == CodeStyleSettings.END_OF_LINE || mySettings.BRACE_STYLE == CodeStyleSettings.NEXT_LINE){
+        indentUnderCase = Formatter.getInstance().getNoneIndent();
+      }
+    }
     final SynteticCodeBlock blockUnderCase = statementsUnderCase.isEmpty() ? null :
-      new SynteticCodeBlock(statementsUnderCase, null, mySettings, Formatter.getInstance().createNormalIndent(), null);
+      new SynteticCodeBlock(statementsUnderCase, null, mySettings, indentUnderCase, null);
     Block[] caseBlocks = blockUnderCase == null ? new Block[] {caseBlock}: new Block[]{caseBlock, blockUnderCase};
     return new SynteticCodeBlock(Arrays.asList(caseBlocks), null, mySettings, Formatter.getInstance().getNoneIndent(), null);
+  }
+
+  private boolean isCodeBlock(final Block block) {
+    if (!(block instanceof AbstractBlock)) return false;
+    return ((AbstractBlock)block).getTreeNode().getElementType() == ElementType.BLOCK_STATEMENT;
   }
 
   private boolean shouldShift(final ASTNode child) {
