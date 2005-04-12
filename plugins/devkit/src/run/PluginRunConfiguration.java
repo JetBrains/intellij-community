@@ -106,7 +106,9 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
         final String[] userVMOptions = VM_PARAMETERS != null ? VM_PARAMETERS.split(" ") : null;
         for (int i = 0; userVMOptions != null && i < userVMOptions.length; i++) {
-          vm.add(userVMOptions[i]);
+          if (userVMOptions[i] != null && userVMOptions[i].length() > 0){
+            vm.add(userVMOptions[i]);
+          }
         }
 
         String libPath = jdk.getHomePath() + File.separator + "lib";
