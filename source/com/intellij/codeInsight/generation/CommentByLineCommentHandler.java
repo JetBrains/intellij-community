@@ -152,7 +152,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
           myDocument.deleteString(offset2 - commenter.getBlockCommentSuffix().length(), offset2);
         }
         if (offset1 >= 0) {
-          myDocument.deleteString(offset1, offset1 + commenter.getBlockCommentPrefix().length());
+          String prefix = commenter.getBlockCommentPrefix();
+          if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
+            prefix = commenter.getLineCommentPrefix();
+          }
+          myDocument.deleteString(offset1, offset1 + prefix.length());
         }
       }
     }
