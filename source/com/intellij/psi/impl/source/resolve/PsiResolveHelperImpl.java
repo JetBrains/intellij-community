@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
+import java.util.Iterator;
+
 public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private final PsiManager myManager;
 
@@ -143,7 +145,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       return captureWildcard ? arg : PsiType.NULL;
     } else {
       if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
-          PsiUtil.resolveClassInType(arg) != null) return arg;
+          PsiUtil.resolveClassInType(arg) != null) {
+        return arg;
+      }
     }
 
     return PsiType.NULL;
@@ -220,20 +224,57 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                               PsiType arg,
                                                               PsiType patternType,
                                                               boolean captureWildcard) {
+    if (patternType.equals(param)) {
+      return processArgType(arg, captureWildcard);
+    }
+
     if (param instanceof PsiWildcardType) {
-      if (arg instanceof PsiWildcardType && ((PsiWildcardType)arg).isExtends() == ((PsiWildcardType)param).isExtends()) {
-        PsiType res = getSubstitutionForTypeParameterInner(((PsiWildcardType)param).getBound(), ((PsiWildcardType)arg).getBound(),
+      final PsiWildcardType wildcardParam = (PsiWildcardType)param;
+      final PsiType paramBound = wildcardParam.getBound();
+      if (arg instanceof PsiWildcardType && ((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
+        PsiType res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
                                                            patternType, captureWildcard);
         if (res != PsiType.NULL) return res;
       }
-      else if (patternType.equals(((PsiWildcardType)param).getBound())) {
-        if (((PsiWildcardType)param).isExtends()) {
-          return processArgType(arg, captureWildcard);
+      else if (patternType.equals(paramBound)) {
+        return processArgType(arg, captureWildcard);
+      }
+      else if (paramBound instanceof PsiClassType && arg instanceof PsiClassType) {
+        final PsiClassType.ClassResolveResult boundResult = ((PsiClassType)paramBound).resolveGenerics();
+        final PsiClass boundClass = boundResult.getElement();
+        if (boundClass != null) {
+          final PsiClassType.ClassResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
+          final PsiClass argClass = argResult.getElement();
+          if (argClass != null) {
+            if (wildcardParam.isExtends()) {
+              PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(boundClass, argClass, argResult.getSubstitutor());
+              if (superSubstitutor != null) {
+                final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(boundClass);
+                while (iterator.hasNext()) {
+                  final PsiTypeParameter typeParameter = iterator.next();
+                  final PsiType guess = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
+                                                                             superSubstitutor.substitute(typeParameter),
+                                                                             patternType, captureWildcard);
+                  if (guess != PsiType.NULL) return guess;
+                }
+              }
+            }
+            else {
+              PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(argClass, boundClass, boundResult.getSubstitutor());
+              if (superSubstitutor != null) {
+                final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(argClass);
+                while (iterator.hasNext()) {
+                  final PsiTypeParameter typeParameter = iterator.next();
+                  final PsiType guess = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
+                                                                             argResult.getSubstitutor().substitute(typeParameter),
+                                                                             patternType, captureWildcard);
+                  if (guess != PsiType.NULL) return guess;
+                }
+              }
+            }
+          }
         }
       }
-    }
-    else if (patternType.equals(param)) {
-      return processArgType(arg, captureWildcard);
     }
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
