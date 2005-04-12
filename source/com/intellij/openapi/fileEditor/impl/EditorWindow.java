@@ -48,8 +48,9 @@ public class EditorWindow {
     //}
     //else {
     //}
-    if (tabPlacement != UISettings.TABS_NONE)
+    if (tabPlacement != UISettings.TABS_NONE) {
       createTabs(tabPlacement);
+    }
 
     // Tab layout policy
     if (UISettings.getInstance().SCROLL_TAB_LAYOUT_IN_EDITOR) {
@@ -106,8 +107,9 @@ public class EditorWindow {
     if (myTabbedPane != null) {
       final int componentIndex = findComponentIndex(editor.getComponent());
       if (componentIndex >= 0) { // editor could close itself on decomposition
-        if (componentIndex > 0) {
-          myTabbedPane.setSelectedIndex(componentIndex - 1);
+        final int indexToSelect = calcIndexToSelect(file, componentIndex);
+        if (indexToSelect >= 0) {
+          myTabbedPane.setSelectedIndex(indexToSelect);
         }
         myTabbedPane.removeTabAt(componentIndex);
       }
@@ -124,6 +126,35 @@ public class EditorWindow {
     }
   }
 
+  private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
+    if (myTabbedPane.getSelectedIndex() != fileIndex) {
+      // if the file being closed is not currently selected, keep the currently selected file open
+      return -1;
+    }
+    // try to open last visited file
+    final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
+    for (int idx = 0; idx < histFiles.length; idx++) {
+      final VirtualFile histFile = histFiles[idx];
+      if (histFile.equals(fileBeingClosed)) {
+        continue;
+      }
+      final EditorWithProviderComposite editor = findFileComposite(histFile);
+      if (editor == null) {
+        continue; // ????
+      }
+      final int histFileIndex = findComponentIndex(editor.getComponent());
+      if (histFileIndex >= 0) {
+        return histFileIndex;
+      }
+    }
+    // by default select previous neighbour
+    if (fileIndex > 0) {
+      return fileIndex - 1;
+    }
+    // do nothing
+    return -1;
+  }
+
   public void removeEditor(final EditorWithProviderComposite editor) {
     getManager().disposeComposite(editor);
     if (myTabbedPane != null) {
@@ -137,8 +168,9 @@ public class EditorWindow {
   public FileEditorManagerImpl getManager() { return myOwner.getManager(); }
 
   public int getTabCount() {
-    if (myTabbedPane != null)
-      return myTabbedPane.getTabCount ();
+    if (myTabbedPane != null) {
+      return myTabbedPane.getTabCount();
+    }
     return myPanel.getComponentCount();
   }
 
@@ -258,11 +290,12 @@ public class EditorWindow {
     if (myTabbedPane != null) {
       comp = (TComp)myTabbedPane.getSelectedComponent();
     }
-    else if (myPanel.getComponentCount () != 0) {
+    else if (myPanel.getComponentCount() != 0) {
       comp = (TComp)myPanel.getComponent(0);
     }
-    else
+    else {
       return null;
+    }
 
     if (comp != null) {
       return comp.myEditor;
@@ -289,7 +322,9 @@ public class EditorWindow {
   }
 
   public void setSelectedEditor(final EditorComposite editor) {
-    if (myTabbedPane == null) return;
+    if (myTabbedPane == null) {
+      return;
+    }
     try {
       ++myInsideTabChange;
       if (editor != null) {
@@ -577,10 +612,11 @@ public class EditorWindow {
 
   private EditorWithProviderComposite getEditorAt(final int i) {
     final TComp comp;
-    if (myTabbedPane != null)
+    if (myTabbedPane != null) {
       comp = (TComp)myTabbedPane.getComponentAt(i);
+    }
     else {
-      LOG.assertTrue (i <= 1);
+      LOG.assertTrue(i <= 1);
       comp = (TComp)myPanel.getComponent(i);
     }
     return comp.myEditor;
@@ -610,8 +646,9 @@ public class EditorWindow {
   }
 
   void trimToSize(final int limit, final VirtualFile fileToIgnore) {
-    if (myTabbedPane == null)
+    if (myTabbedPane == null) {
       return;
+    }
     final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
     final EditorComposite selectedComposite = getSelectedEditor();
     try {
@@ -642,11 +679,12 @@ public class EditorWindow {
             final VirtualFile file = allFiles[i];
             if (fileCanBeClosed(file, fileToIgnore)) {
               boolean found = false;
-              for (int j = 0; j != histFiles.length; j++)
+              for (int j = 0; j != histFiles.length; j++) {
                 if (histFiles[j] == file) {
                   found = true;
                   break;
                 }
+              }
               if (!found) {
                 closeFile(file);
                 continue while_label;
@@ -698,11 +736,12 @@ public class EditorWindow {
             final VirtualFile file = allFiles[i];
             if (fileCanBeClosed(file, fileToIgnore)) {
               boolean found = false;
-              for (int j = 0; j != histFiles.length; j++)
+              for (int j = 0; j != histFiles.length; j++) {
                 if (histFiles[j] == file) {
                   found = true;
                   break;
                 }
+              }
               if (!found) {
                 closeFile(file);
                 continue while_label;
