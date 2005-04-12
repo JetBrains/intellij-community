@@ -41,6 +41,10 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
           public void visitField(PsiField field) {
             treeNodes.add(new PsiFieldNode(getProject(), field, getSettings()));
           }
+
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            visitExpression(expression);
+          }
         });
       }
     }

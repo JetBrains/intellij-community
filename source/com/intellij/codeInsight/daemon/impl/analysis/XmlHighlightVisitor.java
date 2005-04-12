@@ -9,28 +9,28 @@ import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.template.*;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
-import com.intellij.util.SmartList;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -565,6 +565,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
       QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
     }
+  }
+
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    visitExpression(expression);
   }
 
   private void checkNamespaceAttribute(XmlAttribute attribute) {

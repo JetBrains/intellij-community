@@ -4,9 +4,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -60,15 +60,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     trueExpression = expression.getManager().getElementFactory().createExpressionFromText(Boolean.toString(true), null);
     falseExpression = expression.getManager().getElementFactory().createExpressionFromText(Boolean.toString(false), null);
     final PsiExpression[] copy = new PsiExpression[]{(PsiExpression)expression.copy()};
-    copy[0].accept(new PsiElementVisitor() {
-      public void visitElement(PsiElement element) {
-        final PsiElement[] children = element.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
-          child.accept(this);
-        }
-      }
-
+    copy[0].accept(new PsiRecursiveElementVisitor() {
       public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         final ExpressionVisitor expressionVisitor = new ExpressionVisitor();
@@ -174,6 +166,10 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       final Boolean constBoolean = getConstBoolean(subexpr);
       if (constBoolean == null) return;
       resultExpression = constBoolean.booleanValue() ? trueExpression : falseExpression;
+    }
+
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
     }
   }
 

@@ -617,4 +617,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(false);
     }
   }
+
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    visitReferenceElement(expression);
+  }
 }

@@ -25,7 +25,8 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     myRefExprsInVisit.push(expression);
     try {
-      super.visitReferenceExpression(expression);
+      visitExpression(expression);
+      visitReferenceElement(expression);
     }
     finally {
       myRefExprsInVisit.pop();

@@ -41,19 +41,11 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
   public void runInspection(AnalysisScope scope) {
     JOB_DESCRIPTOR.setTotalAmount(scope.getFileCount());
 
-    scope.accept(new PsiElementVisitor() {
+    scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (file instanceof PsiJavaFile) {
           getManager().incrementJobDoneAmount(JOB_DESCRIPTOR, file.getVirtualFile().getPresentableUrl());
           super.visitFile(file);
-        }
-      }
-
-      public void visitElement(PsiElement element) {
-        PsiElement[] children = element.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
-          child.accept(this);
         }
       }
 

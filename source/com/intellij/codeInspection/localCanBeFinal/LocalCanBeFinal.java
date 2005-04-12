@@ -121,6 +121,10 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         for (int i = 0; i < children.length; i++) {
           PsiElement child = children[i];
           child.accept(new PsiElementVisitor() {
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              visitReferenceElement(expression);
+            }
+
             public void visitDeclarationStatement(PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (int i = 0; i < declaredElements.length; i++) {
