@@ -4,16 +4,13 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.properties.parsing.PropertiesParser;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.lang.properties.parsing.PropertiesParser;
-import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
-import com.intellij.lang.properties.psi.impl.PropertyImpl;
-import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
-import com.intellij.lang.properties.psi.impl.PropertyKeyValueSeparatorImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -61,15 +58,6 @@ public class PropertiesParserDefinition implements ParserDefinition {
     final IElementType type = node.getElementType();
     if (type == PropertiesElementTypes.PROPERTY) {
       return new PropertyImpl(node);
-    }
-    else if (type == PropertiesElementTypes.KEY) {
-      return new PropertyKeyImpl(node);
-    }
-    else if (type == PropertiesElementTypes.VALUE) {
-      return new PropertyValueImpl(node);
-    }
-    else if (type == PropertiesElementTypes.KEY_VALUE_SEPARATOR) {
-      return new PropertyKeyValueSeparatorImpl(node);
     }
 
     LOG.error("Alien element type [" + type + "]. Can't create JavaScript PsiElement for that.");

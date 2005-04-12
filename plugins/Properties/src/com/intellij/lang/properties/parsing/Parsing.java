@@ -30,23 +30,23 @@ public class Parsing {
 
   private static void parseKeyValueSeparator(final PsiBuilder builder) {
     LOG.assertTrue(builder.getTokenType() == PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
-    final PsiBuilder.Marker separator = builder.mark();
+    //final PsiBuilder.Marker separator = builder.mark();
     builder.advanceLexer();
-    separator.done(PropertiesElementTypes.KEY_VALUE_SEPARATOR);
+    //separator.done(PropertiesElementTypes.KEY_VALUE_SEPARATOR);
   }
 
   private static void parseValue(final PsiBuilder builder) {
-    final PsiBuilder.Marker value = builder.mark();
+    //final PsiBuilder.Marker value = builder.mark();
     if (builder.getTokenType() == PropertiesTokenTypes.VALUE_CHARACTERS) {
       builder.advanceLexer();
     }
-    value.done(PropertiesElementTypes.VALUE);
+    //value.done(PropertiesElementTypes.VALUE);
   }
 
   private static void parseKey(final PsiBuilder builder) {
     LOG.assertTrue(builder.getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS);
-    final PsiBuilder.Marker key = builder.mark();
+    //final PsiBuilder.Marker key = builder.mark();
     builder.advanceLexer();
-    key.done(PropertiesElementTypes.KEY);
+    //key.done(PropertiesElementTypes.KEY);
   }
 }

@@ -161,7 +161,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     PsiElement[] elementArray = BaseRefactoringAction.getPsiElementArray(dataContext);
-    if ((elementArray == null || elementArray.length != 1 || elementArray[0] == null)) {
+    if (elementArray == null || elementArray.length != 1 || elementArray[0] == null) {
       return false;
     }
 

@@ -1,11 +1,9 @@
 package com.intellij.lang.properties.findUsages;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertyKey;
-import com.intellij.lang.properties.psi.PropertyValue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,8 +23,6 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
 
   public String getType(PsiElement element) {
     if (element instanceof Property) return "property";
-    if (element instanceof PropertyKey) return "property key";
-    if (element instanceof PropertyValue) return "property value";
     return "";
   }
 

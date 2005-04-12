@@ -6,12 +6,11 @@
  */
 package com.intellij.lang.properties.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 
 public interface Property extends PsiNamedElement {
-  PropertyKey getKey();
-  PropertyValue getValue();
-  PsiElement getKeyValueSeparator();
+  String getKey();
+  String getValue();
+  String getKeyValueSeparator();
 
 }

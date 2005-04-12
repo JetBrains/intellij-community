@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +25,7 @@ import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
  */
 public class PropertiesLanguage extends Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.javascript.JavascriptLanguage");
-  //private static final JSAnnotatingVisitor ANNOTATOR = new JSAnnotatingVisitor();
+  private static final Annotator ANNOTATOR = new PropertiesAnnotator();
 
   public PropertiesLanguage() {
     super("Properties");
@@ -62,10 +63,10 @@ public class PropertiesLanguage extends Language {
   //  return new JSBraceMatcher();
   //}
 
-  //public Annotator getAnnotator() {
-  //  return ANNOTATOR;
-  //}
-  //
+  public Annotator getAnnotator() {
+    return ANNOTATOR;
+  }
+
   public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
     return new TreeBasedStructureViewBuilder() {
       public StructureViewModel createStructureViewModel() {
@@ -81,4 +82,5 @@ public class PropertiesLanguage extends Language {
   public Commenter getCommenter() {
     return new PropertiesCommenter();
   }
+
 }

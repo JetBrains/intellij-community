@@ -13,9 +13,6 @@ import com.intellij.psi.tree.TokenSet;
 public interface PropertiesElementTypes {
   IElementType FILE = new PropertiesElementType("FILE");
   IElementType PROPERTY = new PropertiesElementType("PROPERTY");
-  IElementType KEY = new PropertiesElementType("PROPERTY_KEY");
-  IElementType VALUE = new PropertiesElementType("PROPERTY_VALUE");
-  IElementType KEY_VALUE_SEPARATOR = new PropertiesElementType("PROPERTY_KEY_VALUE_SEPARATOR");
 
   TokenSet PROPERTIES = TokenSet.create(new IElementType[]{PROPERTY});
 }

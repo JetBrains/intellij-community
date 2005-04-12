@@ -1,12 +1,9 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.properties.PropertiesElementTypes;
-import com.intellij.lang.properties.psi.PropertyKey;
+import com.intellij.lang.properties.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -21,8 +18,6 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertyImpl extends PropertiesElementImpl implements Property {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
-
   public PropertyImpl(final ASTNode node) {
     super(node);
   }
@@ -32,44 +27,47 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    PropertyKey propertyKey = getKey();
-    if (propertyKey == null) {
-      propertyKey = PropertiesElementFactory.createKey(getProject(), name);
-      getNode().addChild(propertyKey.getNode());
+    ASTNode keyNode = getKeyNode();
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name,"xxx");
+    if (keyNode == null) {
+      getNode().addChild(property.getKeyNode());
     }
     else {
-      propertyKey.setName(name);
+      getNode().replaceChild(keyNode, property.getKeyNode());
     }
     return this;
   }
 
   public String getName() {
-    PropertyKey propertyKey = getKey();
-    return propertyKey == null ? null : propertyKey.getName();
+    return getKey();
   }
 
-  public PropertyKey getKey() {
-    final ASTNode node = getNode().findChildByType(PropertiesElementTypes.KEY);
+  public String getKey() {
+    final ASTNode node = getKeyNode();
     if (node == null) {
       return null;
     }
-    return (PropertyKey)node.getPsi();
+    return node.getText();
   }
 
-  public PropertyValue getValue() {
-    final ASTNode node = getNode().findChildByType(PropertiesElementTypes.VALUE);
+  public ASTNode getKeyNode() {
+    return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
+  }
+
+  public String getValue() {
+    final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
     if (node == null) {
       return null;
     }
-    return (PropertyValue)node.getPsi();
+    return node.getText();
   }
 
-  public PsiElement getKeyValueSeparator() {
-    final ASTNode node = getNode().findChildByType(PropertiesElementTypes.KEY_VALUE_SEPARATOR);
+  public String getKeyValueSeparator() {
+    final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     if (node == null) {
       return null;
     }
-    return node.getPsi();
+    return node.getText();
   }
 
   public Icon getIcon(int flags) {
