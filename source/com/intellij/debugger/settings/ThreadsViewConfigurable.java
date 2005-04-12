@@ -22,13 +22,21 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   private JCheckBox mySourceCheckBox;
   private JCheckBox myShowSyntheticsCheckBox;
   private JCheckBox myShowCurrentThreadChechBox;
+  private CompositeDataBinding myDataBinding = new CompositeDataBinding();
 
   public ThreadsViewConfigurable(ThreadsViewSettings settings) {
     mySettings = settings;
+
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_CLASS_NAME", myClassNameCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_LINE_NUMBER", myLineNumberCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_SOURCE_NAME", mySourceCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_THREAD_GROUPS", myShowGroupsCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_SYNTHETIC_FRAMES", myShowSyntheticsCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_CURRENT_THREAD", myShowCurrentThreadChechBox));
   }
 
   public String getDisplayName() {
-    return "Customize Threads View";//"Threads View Properties";
+    return "Customize Threads View";
   }
 
   public JComponent createComponent() {
@@ -40,13 +48,8 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   }
 
   public void apply() {
-    mySettings.SHOW_CLASS_NAME = myClassNameCheckBox.isSelected();
-    mySettings.SHOW_LINE_NUMBER = myLineNumberCheckBox.isSelected();
-    mySettings.SHOW_SOURCE_NAME = mySourceCheckBox.isSelected();
-    mySettings.SHOW_THREAD_GROUPS = myShowGroupsCheckBox.isSelected();
-    mySettings.SHOW_SYNTHETIC_FRAMES = myShowSyntheticsCheckBox.isSelected();
-    mySettings.SHOW_CURRENT_THREAD = myShowCurrentThreadChechBox.isSelected();
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    myDataBinding.saveData(mySettings);
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < openProjects.length; i++) {
       Project project = openProjects[i];
       for (Iterator iterator = (DebuggerManagerEx.getInstanceEx(project)).getSessions().iterator(); iterator.hasNext();) {
@@ -56,12 +59,11 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    myClassNameCheckBox.setSelected(mySettings.SHOW_CLASS_NAME);
-    myLineNumberCheckBox.setSelected(mySettings.SHOW_LINE_NUMBER);
-    mySourceCheckBox.setSelected(mySettings.SHOW_SOURCE_NAME);
-    myShowGroupsCheckBox.setSelected(mySettings.SHOW_THREAD_GROUPS);
-    myShowSyntheticsCheckBox.setSelected(mySettings.SHOW_SYNTHETIC_FRAMES);
-    myShowCurrentThreadChechBox.setSelected(mySettings.SHOW_CURRENT_THREAD);
+    myDataBinding.loadData(mySettings);
+  }
+
+  public boolean isModified() {
+    return myDataBinding.isModified(mySettings);
   }
 
   public String getHelpTopic() {

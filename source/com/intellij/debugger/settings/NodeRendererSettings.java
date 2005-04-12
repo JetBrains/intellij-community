@@ -111,6 +111,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
     element.addContent(writeRenderer(myArrayRenderer));
     element.addContent(writeRenderer(myToStringRenderer));
+    element.addContent(writeRenderer(myClassRenderer));
     if (myCustomRenderers.getRendererCount() > 0) {
       final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
       element.addContent(custom);
@@ -141,6 +142,9 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       }
       else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
         myToStringRenderer.readExternal(elem);
+      }
+      else if (ClassRenderer.UNIQUE_ID.equals(id)) {
+        myClassRenderer.readExternal(elem);
       }
     }
     final Element custom = root.getChild(CUSTOM_RENDERERS_TAG_NAME);

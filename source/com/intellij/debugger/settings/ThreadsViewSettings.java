@@ -16,14 +16,6 @@ public class ThreadsViewSettings implements NamedJDOMExternalizable, Application
   public boolean SHOW_SOURCE_NAME = false;
   public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;
-  private Configurable myConfigurable;
-
-  public Configurable getConfigurable() {
-    if (myConfigurable == null) {
-      myConfigurable = new ThreadsViewConfigurable(this);
-    }
-    return myConfigurable;
-  }
 
   public void disposeComponent() {
   }
