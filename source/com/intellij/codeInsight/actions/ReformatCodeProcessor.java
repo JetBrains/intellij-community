@@ -1,10 +1,12 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -41,13 +43,16 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return new Runnable() {
       public void run() {
         try {
+          PsiFile copy = (PsiFile)file.copy();
+          Document doc = PsiDocumentManager.getInstance(myProject).getDocument(file);
           if (myRange == null) {
-            CodeStyleManager.getInstance(myProject).reformat(file);
+            CodeStyleManager.getInstance(myProject).reformat(copy);
           }
           else {
-            CodeStyleManager.getInstance(myProject).reformatRange(file, myRange.getStartOffset(),
+            CodeStyleManager.getInstance(myProject).reformatRange(copy, myRange.getStartOffset(),
                                                                   myRange.getEndOffset());
           }
+          doc.replaceString(0, doc.getTextLength(), copy.getText());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
