@@ -45,7 +45,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil implements Applicatio
   }
 
   public boolean editConfigurable(Project project, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable);
+    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
     configurableEditor.show();
     return configurableEditor.isOK();
   }
@@ -57,9 +57,15 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil implements Applicatio
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {
-    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable);
+    final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
     configurableEditor.show();
     return configurableEditor.isOK();
+  }
+
+  private static String createDimensionKey(Configurable configurable) {
+    String displayName = configurable.getDisplayName();
+    displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
+    return "#" + displayName;
   }
 
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
@@ -69,7 +75,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil implements Applicatio
   }
 
   public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
     advancedInitialization.run();
     editor.show();
     return editor.isOK();

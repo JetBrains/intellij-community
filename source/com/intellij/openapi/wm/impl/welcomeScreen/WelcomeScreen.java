@@ -1,28 +1,28 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.help.impl.HelpManagerImpl;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.font.FontRenderContext;
-import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -142,7 +142,7 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
     MyActionButton openPluginManager = new PluginsActionButton(null, OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
-        new SingleConfigurableEditor(myPluginsPanel, PluginManagerConfigurable.getInstance(), null).show();
+        ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, PluginManagerConfigurable.getInstance());
       }
 
       public Dimension getMaximumSize() {
