@@ -852,6 +852,7 @@ public class XmlUtil {
   }
 
   public static String decode(String text){
+    if (text.length() == 0) return text;
     if(text.charAt(0) != '&' || text.length() > 6 || text.length() < 3){
       if(text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
       return text.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
