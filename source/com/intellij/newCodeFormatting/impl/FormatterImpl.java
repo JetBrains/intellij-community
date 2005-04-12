@@ -66,6 +66,15 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     return new SpacePropertyImpl(0,0,0,false,true, shouldKeepLineBreaks, keepBlankLines);
   }
 
+  public SpaceProperty createKeepingFirstLineSpaceProperty(final int minSpace,
+                                                           final int maxSpace,
+                                                           final boolean keepLineBreaks,
+                                                           final int keepBlankLines) {
+    final SpacePropertyImpl result = new SpacePropertyImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines);
+    result.setKeepFirstColumn(true);
+    return result;
+  }
+
   public String getComponentName() {
     return "Formatter";
   }

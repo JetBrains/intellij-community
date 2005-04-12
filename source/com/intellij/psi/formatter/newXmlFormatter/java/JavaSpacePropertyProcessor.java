@@ -34,10 +34,22 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     mySettings = settings;
     myHelper = new Helper(StdFileTypes.JAVA, myParent.getProject());
     myImportHelper = new ImportHelper(mySettings);
-    if (myParent != null) {
-      myParent.accept(this);
+
+    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && ElementType.COMMENT_BIT_SET.isInSet(myChild2.getElementType())) {
+      myResult = Formatter.getInstance().createKeepingFirstLineSpaceProperty(0, Integer.MAX_VALUE, mySettings.KEEP_LINE_BREAKS, getKeepBlankLines());
+    } else {
+
+      if (myParent != null) {
+        myParent.accept(this);
+      }
     }
 
+  }
+
+  private int getKeepBlankLines() {
+    if (myChild2.getElementType() == ElementType.RBRACE) return mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
+    if (SourceTreeToPsiMap.psiElementToTree(myParent).getElementType() == ElementType.CLASS) return mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS;
+    return mySettings.KEEP_BLANK_LINES_IN_CODE;
   }
 
   private void init(final ASTNode child) {
