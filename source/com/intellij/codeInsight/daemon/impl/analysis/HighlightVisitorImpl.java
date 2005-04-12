@@ -353,10 +353,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, mySettings));
-    PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
-    if (initializingClass != null) {
-      initializingClass.accept(this);
-    }
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
   }
 
@@ -537,8 +533,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitMethodCallExpression(PsiMethodCallExpression expr) {
-    final PsiReferenceExpression methodExpression = expr.getMethodExpression();
-    methodExpression.accept(this);
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expr));
     if (!myHolder.hasErrorResults()) visitExpression(expr);
   }
