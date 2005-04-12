@@ -2,14 +2,13 @@ package com.intellij.execution.impl;
 
 import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.impl.MapDataContext;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.RunManagerConfig;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -124,6 +123,46 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
     else {
       antAwareRunnable.run();
+    }
+  }
+
+  public void execute(JavaParameters cmdLine,
+                            String contentName,
+                            final DataContext dataContext) throws ExecutionException {
+    JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
+    RunStrategy.getInstance().execute(new DefaultRunProfile(cmdLine, contentName), dataContext, defaultRunner, null, null);
+  }
+
+  private final class DefaultRunProfile implements RunProfile {
+    private JavaParameters myParameters;
+    private String myContentName;
+
+    public DefaultRunProfile(final JavaParameters parameters, String contentName) {
+      myParameters = parameters;
+      myContentName = contentName;
+    }
+
+    public RunProfileState getState(DataContext context,
+                                    RunnerInfo runnerInfo,
+                                    RunnerSettings runnerSettings,
+                                    ConfigurationPerRunnerSettings configurationSettings) {
+      final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+        protected JavaParameters createJavaParameters() {
+          return myParameters;
+        }
+      };
+      state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(myProject));
+      return state;
+    }
+
+    public String getName() {
+      return myContentName;
+    }
+
+    public void checkConfiguration() {}
+
+    public Module[] getModules() {
+      return new Module[0];
     }
   }
 
