@@ -194,7 +194,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           }
-          if (modulesWithUnknownTypes.size() > 0) {
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && modulesWithUnknownTypes.size() > 0) {
             final StringBuffer message = new StringBuffer("Cannot determine module type for the following ");
             if (modulesWithUnknownTypes.size() == 1) {
               message.append("module:");

@@ -62,9 +62,14 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public ModuleType findByID(String moduleTypeID) {
+    if ("JAVA".equals(moduleTypeID)) {
+      return ModuleType.JAVA; // for compatibility with the previous ID that Java modules had
+    }
     for (int i = 0; i < myModuleTypes.size(); i++) {
       ModuleType type = myModuleTypes.get(i);
-      if (type.getId().equals(moduleTypeID)) return type;
+      if (type.getId().equals(moduleTypeID)) {
+        return type;
+      }
     }
 
     return new UnknownModuleType(moduleTypeID);

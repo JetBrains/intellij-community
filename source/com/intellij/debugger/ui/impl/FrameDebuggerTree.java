@@ -80,21 +80,24 @@ public class FrameDebuggerTree extends DebuggerTree {
         if (frame != null) {
           NodeManagerImpl nodeManager = getNodeFactory();
           rootNode = nodeManager.createNode(nodeManager.getStackFrameDescriptor(null, frame), getDebuggerContext().createEvaluationContext());
-        } else {
+        }
+        else {
           rootNode = getNodeFactory().getDefaultNode();
           SuspendManager suspendManager = getSuspendContext().getDebugProcess().getSuspendManager();
           if(suspendManager.isSuspended(currentThread)) {
             try {
               if(currentThread.frameCount() == 0) {
                 rootNode.add(MessageDescriptor.THREAD_IS_EMPTY);
-              } else {
+              }
+              else {
                 rootNode.add(MessageDescriptor.DEBUG_INFO_UNAVAILABLE);
               }
             }
             catch (EvaluateException e) {
               rootNode.add(new MessageDescriptor(e.getMessage()));
             }
-          } else {
+          }
+          else {
             rootNode.add(MessageDescriptor.THREAD_IS_RUNNING);
           }
         }
