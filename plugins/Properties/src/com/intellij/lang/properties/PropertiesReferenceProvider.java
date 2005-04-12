@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
@@ -19,22 +20,17 @@ import java.util.List;
 class PropertiesReferenceProvider implements PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(PsiElement element) {
     PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-    final Object value = literalExpression.getValue();
-    if (value instanceof String) {
-      String text = (String)value;
-      //PsiClass aClass = element.getManager().findClass(text, GlobalSearchScope.allScope(element.getProject()));
-      //return new PsiReference[]{new LightClassReference(element.getManager(), element.getText(), aClass)};
-      List<Property> properties = PropertiesUtil.findPropertiesByKey(element.getProject(), text);
-      List<PsiReference> references = new ArrayList<PsiReference>(properties.size());
-      for (int i = 0; i < properties.size(); i++) {
-        Property property = properties.get(i);
-        PsiReference reference = new PropertyReference(property, literalExpression);
-        references.add(reference);
-      }
-      return references.toArray(new PsiReference[references.size()]);
+    String text = (String)literalExpression.getValue();
+    //PsiClass aClass = element.getManager().findClass(text, GlobalSearchScope.allScope(element.getProject()));
+    //return new PsiReference[]{new LightClassReference(element.getManager(), element.getText(), aClass)};
+    List<Property> properties = PropertiesUtil.findPropertiesByKey(element.getProject(), text);
+    List<PsiReference> references = new ArrayList<PsiReference>(properties.size());
+    for (int i = 0; i < properties.size(); i++) {
+      Property property = properties.get(i);
+      PsiReference reference = new PropertyReference(property, literalExpression);
+      references.add(reference);
     }
-    
-    return PsiReference.EMPTY_ARRAY;
+    return references.toArray(new PsiReference[references.size()]);
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
@@ -82,7 +78,7 @@ class PropertiesReferenceProvider implements PsiReferenceProvider {
     }
 
     public boolean isReferenceTo(PsiElement element) {
-      return element == myProperty;
+      return element instanceof Property && Comparing.strEqual(((Property)element).getKey(), myProperty.getKey());
     }
 
     public Object[] getVariants() {

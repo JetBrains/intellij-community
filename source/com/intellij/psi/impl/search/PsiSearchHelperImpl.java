@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -41,9 +40,9 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.util.Processor;
 import gnu.trove.TIntArrayList;
 
 import java.util.*;
@@ -1097,7 +1096,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
     PsiElementProcessorEx processor = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element instanceof PsiLiteralExpression && StringUtil.startsWithChar(element.getText(), '\"')) {
+        if (element instanceof PsiLiteralExpression && element.findReferenceAt(offsetInElement) == null) {
           results.add((PsiLiteralExpression)element);
         }
         return true;

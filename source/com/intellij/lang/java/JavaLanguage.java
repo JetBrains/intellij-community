@@ -63,6 +63,8 @@ public class JavaLanguage extends Language {
     if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.isInSet(token)) return true;
     if ((searchContext & UsageSearchContext.IN_CODE) != 0 &&
         (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) return true;
+    // Java string literal to property file
+    if ((searchContext & UsageSearchContext.IN_ALIEN_LANGUAGES) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
     return false;
   }
 }

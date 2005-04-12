@@ -22,7 +22,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
       IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS);
+      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_ALIEN_LANGUAGES);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
