@@ -13,7 +13,7 @@ public class RefactoringManager implements ProjectComponent {
     return project.getComponent(RefactoringManager.class);
   }
 
-  private RefactoringManager(Project project) {
+  public RefactoringManager(Project project) {
     myMigrateManager = new MigrationManager(project);
     myMigrationDialog = null;
   }
