@@ -6,7 +6,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiFile;
 
 import java.util.List;
 
@@ -79,7 +81,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (child.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
+    if (child.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
+    if (SourceTreeToPsiMap.treeElementToPsi(child) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
     return null;
   }
 
