@@ -52,17 +52,21 @@ public class CodeFormatterFacade implements Constants {
     myCommentFormatter = new CommentFormatter(helper.getProject());
   }
 
-  private void formatComments(ASTNode element, int startOffset, int endOffset) {
+  private TextRange formatComments(ASTNode element, int startOffset, int endOffset) {
     TextRange range = element.getTextRange();
+    TextRange result = new TextRange(startOffset, endOffset);
     if (range.getStartOffset() >= startOffset && range.getEndOffset() <= endOffset) {
       myCommentFormatter.process(element);
+      final TextRange newRange = element.getTextRange();
+      result = new TextRange(startOffset, endOffset + newRange.getLength() - range.getLength());
     }
 
     if (element instanceof CompositeElement) {
       for (ASTNode elem = element.getFirstChildNode(); elem != null; elem = elem.getTreeNext()) {
-        formatComments(elem, startOffset, endOffset);
+        result = formatComments(elem, result.getStartOffset(), result.getEndOffset());
       }
     }
+    return result;
   }
 
   public ASTNode process(ASTNode element, int parent_indent) {
@@ -143,7 +147,7 @@ public class CodeFormatterFacade implements Constants {
     final FileType fileType = myHelper.getFileType();
 
     if (useBlockFormatter(fileType)) {
-      TextRange range = new TextRange(startOffset, endOffset);
+      TextRange range = formatComments(element, startOffset, endOffset);
       final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
       final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
@@ -154,6 +158,8 @@ public class CodeFormatterFacade implements Constants {
           LOG.error(e);
         }
       }
+
+
       return element;
 
     }

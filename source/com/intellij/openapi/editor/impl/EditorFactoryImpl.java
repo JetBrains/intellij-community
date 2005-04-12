@@ -31,7 +31,7 @@ public class EditorFactoryImpl extends EditorFactory {
   private EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
 
   private ArrayList<Editor> myEditors = new ArrayList<Editor>();
-  private static final Key<Exception> EDITOR_CREATOR = new Key<Exception>("Editor creator");
+  private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     LaterInvocatorEx.addModalityStateListener(
@@ -66,13 +66,11 @@ public class EditorFactoryImpl extends EditorFactory {
     for (int i = 0; i < myEditors.size(); i++) {
       Editor editor = myEditors.get(i);
       if (editor.getProject() == project) {
-        final Exception creator = editor.getUserData(EDITOR_CREATOR);
+        final String creator = editor.getUserData(EDITOR_CREATOR);
         if (creator == null) {
           LOG.error("Editor for the document with class:" + editor.getClass().getName() +" and the following text hasn't been released:\n" + editor.getDocument().getText());
         } else {
-          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-          creator.printStackTrace(new PrintWriter(buffer));
-          LOG.error("Editor with class:" + editor.getClass().getName() + "hasn't been released:\n" + new String(buffer.toByteArray()));
+          LOG.error("Editor with class:" + editor.getClass().getName() + " hasn't been released:\n" + creator);
         }
       }
     }
@@ -130,7 +128,9 @@ public class EditorFactoryImpl extends EditorFactory {
       throw new RuntimeException("Editor created");
     }
     catch (RuntimeException e) {
-      editor.putUserData(EDITOR_CREATOR, e);
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      e.printStackTrace(new PrintWriter(buffer));
+      editor.putUserData(EDITOR_CREATOR, buffer.toString());
     }
 
 
