@@ -4,8 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 
@@ -34,7 +34,7 @@ public class StaticInheritanceInspection extends ClassInspection{
         public void applyFix(Project project, ProblemDescriptor descriptor){
             final PsiJavaCodeReferenceElement referenceElement =
                     (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
-            final String text = referenceElement.getText();
+            final String referencedClassName = referenceElement.getText();
             final PsiClass iface = (PsiClass) referenceElement.resolve();
             final PsiField[] allFields = iface.getAllFields();
 
@@ -43,8 +43,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                                                            PsiClass.class);
             final PsiManager manager = referenceElement.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final LocalSearchScope searchScope =
-                    new LocalSearchScope(implementingClass);
+            final SearchScope searchScope = implementingClass.getUseScope();
             for(int i = 0; i < allFields.length; i++){
                 final PsiField field = allFields[i];
                 final PsiReference[] references =
@@ -53,12 +52,30 @@ public class StaticInheritanceInspection extends ClassInspection{
                 for(int j = 0; j < references.length; j++){
                     final PsiReferenceExpression reference =
                             (PsiReferenceExpression) references[j];
-                    if(reference.isQualified()){
-                        continue;
+                    if(!reference.isQualified()){
+                        final String referenceText = reference.getText();
+                        replaceExpression(project, reference,
+                                          referencedClassName + '.' +
+                                referenceText);
+                    } else{
+                        final PsiExpression qualifier =
+                                reference.getQualifierExpression();
+                        final String referenceName =
+                                reference.getReferenceName();
+                        if(qualifier instanceof PsiReferenceExpression){
+                            final PsiElement referent =
+                                    ((PsiReference) qualifier).resolve();
+                            if(!referent.equals(iface)){
+                                replaceExpression(project, reference,
+                                                  referencedClassName + '.' +
+                                        referenceName);
+                            }
+                        } else{
+                            replaceExpression(project, reference,
+                                              referencedClassName + '.' +
+                                    referenceName);
+                        }
                     }
-                    final String referenceText = reference.getText();
-                    replaceExpression(project, reference,
-                                      text + '.' + referenceText);
                 }
             }
             deleteElement(referenceElement);
