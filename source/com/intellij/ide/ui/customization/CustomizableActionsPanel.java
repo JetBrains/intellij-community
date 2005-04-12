@@ -2,6 +2,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -538,7 +539,7 @@ public class CustomizableActionsPanel {
     FindAvailableActionsDialog() {
       super(true);
       setTitle("Choose Actions To Add");
-      Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().getAllQuickLists());
+      Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, new QuickList[0]);
       DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
       DefaultTreeModel model = new DefaultTreeModel(root);
       myTree = new JTree();
