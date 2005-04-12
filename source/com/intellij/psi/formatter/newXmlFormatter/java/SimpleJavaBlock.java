@@ -460,13 +460,18 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Formatter.getInstance().getNoneIndent();
     }
-    final int braceStyle = getBraceStyle();
-    Indent indent = braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ? Formatter.getInstance().getNoneIndent() : Formatter.getInstance().createNormalIndent();
+
+    if (myNode.getTreeParent().getElementType() == ElementType.SWITCH_STATEMENT && !mySettings.INDENT_CASE_FROM_SWITCH) {
+      return Formatter.getInstance().getNoneIndent();
+    }
 
     if (child.getElementType() == ElementType.IF_STATEMENT && myNode.getElementType() == ElementType.IF_STATEMENT && mySettings.SPECIAL_ELSE_IF_TREATMENT){
-      indent = Formatter.getInstance().getNoneIndent();
+      return Formatter.getInstance().getNoneIndent();
     }
-    return indent;
+
+    final int braceStyle = getBraceStyle();
+    return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ? Formatter.getInstance().getNoneIndent()
+           : Formatter.getInstance().createNormalIndent();
   }
 
   private boolean isTopLevelClass() {
