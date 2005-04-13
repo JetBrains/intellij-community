@@ -264,7 +264,7 @@ public class PackageUtil {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
 
     if (isPackage(psiDirectory) && !isSourceRoot(psiDirectory) && !settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
-      if (TreeViewUtil.isEmptyMiddlePackage(psiDirectory, true)) {
+      if (!(node.getParent() instanceof LibraryGroupNode) && TreeViewUtil.isEmptyMiddlePackage(psiDirectory, true)) {
         node.setValue(null);
         return;
       }
