@@ -16,10 +16,13 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
     lexer.start(text.toCharArray());
     int idx = 0;
     while (lexer.getTokenType() != null) {
-      if (idx > expectedTokens.length) fail("Too many tokens");
+      if (idx >= expectedTokens.length) fail("Too many tokens");
       String tokenName = lexer.getTokenType().toString();
-      assertEquals(expectedTokens[idx], tokenName);
-      idx++;
+      String expectedTokenType = expectedTokens[idx++];
+      String expectedTokenText = expectedTokens[idx++];
+      assertEquals(expectedTokenType, tokenName);
+      String tokenText = new String(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd()-lexer.getTokenStart());
+      assertEquals(expectedTokenText, tokenText);
       lexer.advance();
     }
 
@@ -28,33 +31,40 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
 
   public void testSimple() throws Exception {
     doTest("xxx=yyy", new String[] {
-               "Properties:KEY_CHARACTERS",
-               "Properties:KEY_VALUE_SEPARATOR",
-               "Properties:VALUE_CHARACTERS",
+               "Properties:KEY_CHARACTERS", "xxx",
+               "Properties:KEY_VALUE_SEPARATOR", "=",
+               "Properties:VALUE_CHARACTERS", "yyy",
              });
   }
 
   public void testMulti() throws Exception {
-    doTest("a=b\nx=y", new String[]{
-               "Properties:KEY_CHARACTERS",
-               "Properties:KEY_VALUE_SEPARATOR",
-               "Properties:VALUE_CHARACTERS",
-               "WHITE_SPACE",
-               "Properties:KEY_CHARACTERS",
-               "Properties:KEY_VALUE_SEPARATOR",
-               "Properties:VALUE_CHARACTERS"
+    doTest("a  b\n \nx\ty", new String[]{
+               "Properties:KEY_CHARACTERS", "a",
+               "Properties:KEY_VALUE_SEPARATOR", "  ",
+               "Properties:VALUE_CHARACTERS",    "b",
+               "WHITE_SPACE",                    "\n \n",
+               "Properties:KEY_CHARACTERS",      "x",
+               "Properties:KEY_VALUE_SEPARATOR", "\t",
+               "Properties:VALUE_CHARACTERS",    "y"
              });
   }
 
   public void testIncompleteProperty() throws Exception {
     doTest("a", new String[] {
-      "Properties:KEY_CHARACTERS",
+      "Properties:KEY_CHARACTERS", "a"
     });
   }
   public void testIncompleteProperty2() throws Exception {
     doTest("a.2=", new String[] {
-      "Properties:KEY_CHARACTERS",
-      "Properties:KEY_VALUE_SEPARATOR",
+      "Properties:KEY_CHARACTERS", "a.2",
+      "Properties:KEY_VALUE_SEPARATOR", "="
     });
+  }
+  public void testEscaping() throws Exception {
+    doTest("sdlfkjsd\\l\\\\\\:\\=gk   =   s\\nsssd", new String[] {
+               "Properties:KEY_CHARACTERS", "sdlfkjsd\\l\\\\\\:\\=gk",
+               "Properties:KEY_VALUE_SEPARATOR", "   =   ",
+               "Properties:VALUE_CHARACTERS", "s\\nsssd"
+             });
   }
 }
