@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -48,10 +49,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     PsiReference[] refs = helper.findReferences(myField, GlobalSearchScope.projectScope(myProject), false);
     UsageInfo[] infos = new UsageInfo[refs.length];
     for (int i = 0; i < refs.length; i++) {
-      PsiElement element = refs[i].getElement();
-      if (element instanceof PsiReferenceExpression) {
-        infos[i] = new UsageInfo(element);
-      }
+      infos[i] = new UsageInfo(refs[i].getElement());
     }
     return infos;
   }
@@ -69,30 +67,15 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     initializer = normalize ((PsiExpression)initializer.copy());
     for (int i = 0; i < usages.length; i++) {
       PsiExpression initializer1 = initializer;
-      PsiExpression expr = (PsiExpression)usages[i].getElement();
-      while (expr.getParent() instanceof PsiArrayAccessExpression) {
-        PsiArrayAccessExpression arrayAccess = ((PsiArrayAccessExpression)expr.getParent());
-        Object value = evalHelper.computeConstantExpression(arrayAccess.getIndexExpression());
-        if (value instanceof Integer) {
-          int intValue = ((Integer)value).intValue();
-          if (initializer1 instanceof PsiNewExpression) {
-            PsiExpression[] arrayInitializers = ((PsiNewExpression)initializer1).getArrayInitializer().getInitializers();
-            if (0 <= intValue && intValue < arrayInitializers.length) {
-              expr = (PsiExpression)expr.getParent();
-              initializer1 = normalize(arrayInitializers[intValue]);
-              continue;
-            }
-          }
-        }
-
-        break;
-      }
-
+      final PsiElement element = usages[i].getElement();
       try {
-        myField.normalizeDeclaration();
-        ChangeContextUtil.encodeContextInfo(initializer1, true);
-        PsiElement element = expr.replace(initializer1);
-        ChangeContextUtil.decodeContextInfo(element, null, null);
+        if (element instanceof PsiExpression) {
+          inlineExpressionUsage(((PsiExpression)element), evalHelper, initializer1);
+        } else {
+          PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
+          LOG.assertTrue(importStaticStatement != null);
+          importStaticStatement.delete();
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -107,6 +90,33 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
+  }
+
+  private void inlineExpressionUsage(PsiExpression expr,
+                                     final PsiConstantEvaluationHelper evalHelper,
+                                     PsiExpression initializer1) throws IncorrectOperationException {
+    while (expr.getParent() instanceof PsiArrayAccessExpression) {
+      PsiArrayAccessExpression arrayAccess = ((PsiArrayAccessExpression)expr.getParent());
+      Object value = evalHelper.computeConstantExpression(arrayAccess.getIndexExpression());
+      if (value instanceof Integer) {
+        int intValue = ((Integer)value).intValue();
+        if (initializer1 instanceof PsiNewExpression) {
+          PsiExpression[] arrayInitializers = ((PsiNewExpression)initializer1).getArrayInitializer().getInitializers();
+          if (0 <= intValue && intValue < arrayInitializers.length) {
+            expr = (PsiExpression)expr.getParent();
+            initializer1 = normalize(arrayInitializers[intValue]);
+            continue;
+          }
+        }
+      }
+
+      break;
+    }
+
+    myField.normalizeDeclaration();
+    ChangeContextUtil.encodeContextInfo(initializer1, true);
+    PsiElement element = expr.replace(initializer1);
+    ChangeContextUtil.decodeContextInfo(element, null, null);
   }
 
   private PsiExpression normalize(PsiExpression expression) {
@@ -145,8 +155,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     for (int i = 0; i < plainUsages.length; i++) {
       UsageInfo info = plainUsages[i];
       PsiElement element = info.getElement();
-      LOG.assertTrue(element instanceof PsiReferenceExpression);
-      if (isAccessedForWriting((PsiExpression)element)) {
+      if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
         String message = ConflictsUtil.getDescription(myField, true) + " is used for writing in " +
                          ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
         conflicts.add(message);
