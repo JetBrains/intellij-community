@@ -180,7 +180,11 @@ public class HtmlUtil {
 
       String text = originalText;
       int offset = 0;
-      if (text.charAt(0) == '"' || text.charAt(0) == '\'') ++offset;
+      if (text.length() > 0 &&
+          (text.charAt(0) == '"' || text.charAt(0) == '\'')
+         ) {
+        ++offset;
+      }
 
       text = text.substring(offset,text.length() - offset);
       int ind = text.lastIndexOf('#');
