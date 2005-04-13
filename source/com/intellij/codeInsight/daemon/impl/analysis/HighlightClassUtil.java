@@ -36,7 +36,7 @@ public class HighlightClassUtil {
   public static final String CLASS_EXPECTED = "No interface expected here";
   public static final String NO_IMPLEMENTS_ALLOWED = "No implements clause allowed for interface";
   private static final String STATIC_DECLARATION_IN_INNER_CLASS = "Inner classes cannot have static declarations";
-  private static final String CLASS_MUST_BE_ABSTRACT = "Class ''{0}'' is not abstract and does not implement abstract method ''{1}'' in ''{2}''";
+  private static final String CLASS_MUST_BE_ABSTRACT = "Class ''{0}'' is neither abstract nor does it implement abstract method ''{1}'' in ''{2}''";
   public static final String DUPLICATE_CLASS = "Duplicate class: ''{0}''";
   private static final String REFERENCED_FROM_STATIC_CONTEXT = "''{0}'' cannot be referenced from a static context";
 
