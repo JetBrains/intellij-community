@@ -1272,7 +1272,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     setComparator(getProjectViewPaneById(paneId));
   }
 
-  private abstract static class MyTypeComparator implements Comparator<NodeDescriptor> {
+  private abstract static class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
       if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
         return o1 instanceof PsiDirectoryNode ? -1 : 1;
@@ -1294,7 +1294,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         String type1 = extension(file1);
         String type2 = extension(file2);
         if (type1 != null && type2 != null) {
-          return type1.compareTo(type2);
+          int result = type1.compareTo(type2);
+          if (result != 0) return result;
         }
       }
       return AlphaComparator.INSTANCE.compare(o1, o2);
@@ -1308,8 +1309,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       int pos = ElementBase.getClassKind(aClass);
       //abstract class before concrete
-      if (pos == ElementBase.CLASS_KIND_CLASS && (ElementBase.getFlags(aClass, false) & ElementBase.FLAGS_ABSTRACT) != 0) {
-        pos --;
+      if (pos == ElementBase.CLASS_KIND_CLASS || pos == ElementBase.CLASS_KIND_EXCEPTION) {
+        boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();
+        if (isAbstract) {
+          pos --;
+        }
       }
       return pos;
     }
@@ -1319,7 +1323,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   void setComparator(final AbstractProjectViewPane pane) {
-    pane.getTreeBuilder().setNodeDescriptorComparator(new MyTypeComparator() {
+    pane.getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator() {
       protected boolean isSortByType() {
         return ProjectViewImpl.this.isSortByType(pane.getId());
       }
