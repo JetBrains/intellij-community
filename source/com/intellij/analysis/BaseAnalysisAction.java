@@ -1,5 +1,6 @@
 package com.intellij.analysis;
 
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -48,9 +49,11 @@ public abstract class BaseAnalysisAction extends AnAction {
       else {
         scope = getInspectionScope(dataContext);
       }
-      FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(scope.getDisplayName(),
+      FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(project,
+                                                                    scope.getDisplayName(),
                                                                     module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                                    calledFromNonJavaFile);
+                                                                    calledFromNonJavaFile,
+                                                                    scope.getScopeType() == AnalysisScope.PROJECT);
       dlg.show();
       if (!dlg.isOK()) return;
       if (dlg.isProjectScopeSelected()) {
@@ -61,6 +64,7 @@ public abstract class BaseAnalysisAction extends AnAction {
           scope = getModuleScope(dataContext);
         }
       }
+      ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions().ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
       scope.setIncludeTestSource(dlg.isInspectTestSources());
       FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -133,9 +137,10 @@ public abstract class BaseAnalysisAction extends AnAction {
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
     private JCheckBox myInspectTestSource;
-
-    public FileProjectOrModuleDialog(String fileName, String moduleName, boolean nonJavaFile) {
+    private Project myProject;
+    public FileProjectOrModuleDialog(Project project, String fileName, String moduleName, boolean nonJavaFile, boolean isProjectScope) {
       super(true);
+      myProject = project;
       myFileName = fileName;
       myModuleName = moduleName;
       init();
@@ -146,6 +151,10 @@ public abstract class BaseAnalysisAction extends AnAction {
       }
       else {
         myFileButton.setSelected(true);
+      }
+      if (isProjectScope){
+        myFileButton.setVisible(false);
+        myProjectButton.setSelected(true);
       }
     }
 
@@ -170,7 +179,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       }
       panel.add(myFileButton);
       wholePanel.add(panel, BorderLayout.CENTER);
-      myInspectTestSource = new JCheckBox("Include Test Sources", true);
+      myInspectTestSource = new JCheckBox("Include Test Sources", ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions().ANALYZE_TEST_SOURCES);
       wholePanel.add(myInspectTestSource, BorderLayout.SOUTH);
       return wholePanel;
     }
