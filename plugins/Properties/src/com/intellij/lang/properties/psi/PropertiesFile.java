@@ -10,4 +10,5 @@ import com.intellij.psi.PsiFile;
 
 public interface PropertiesFile extends PsiFile {
   Property[] getProperties();
+  Property findPropertyByKey(String key);
 }

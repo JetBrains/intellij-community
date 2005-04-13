@@ -47,4 +47,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
     return list.toArray(new Property[list.size()]);
   }
+
+  public Property findPropertyByKey(String key) {
+    Property[] properties = getProperties();
+    for (int i = 0; i < properties.length; i++) {
+      Property property = properties[i];
+      if (key.equals(property.getKey())) return property;
+    }
+    return null;
+  }
 }

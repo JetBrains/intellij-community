@@ -166,7 +166,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
             if (statement.getParent() instanceof PsiLabeledStatement) {
               statement = (PsiStatement) statement.getParent();
             }
-            return statement.getNextSibling(); //?
+            PsiElement nextSibling = statement.getNextSibling();
+            return nextSibling instanceof PsiWhiteSpace ? nextSibling.getNextSibling() : nextSibling;
           }
         }
       } else if (elementAt instanceof PsiIdentifier) {

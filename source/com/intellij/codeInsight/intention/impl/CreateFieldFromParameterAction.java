@@ -50,6 +50,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     myParameter = forcedParameter ? myParameter : findParameterAtCursor(file, editor);
     final PsiType type = getType();
+    PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     return
       myParameter != null
       && myParameter.isValid()
@@ -58,6 +59,8 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       && type != null
       && type.isValid()
       && !isParameterAssignedToField(myParameter)
+      && targetClass != null
+      && !targetClass.isInterface()
       ;
   }
 
