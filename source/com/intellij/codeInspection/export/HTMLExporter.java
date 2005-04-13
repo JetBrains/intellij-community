@@ -27,7 +27,6 @@ public class HTMLExporter {
   private final String myRootFolder;
   private Project myProject;
   private int myFileCounter;
-  private String myCurrentFileName;
   private final com.intellij.util.containers.HashMap myElementToFilenameMap;
   private final HTMLComposer myComposer;
   private final HashSet myGeneratedReferences;
@@ -44,11 +43,11 @@ public class HTMLExporter {
   }
 
   public void createPage(RefElement element) {
-    myCurrentFileName = fileNameForElement(element);
+    final String currentFileName = fileNameForElement(element);
     StringBuffer buf = new StringBuffer();
     appendNavBar(buf, element);
     myComposer.composeWithExporter(buf, element, this);
-    writeFile(myRootFolder, myCurrentFileName, buf, myProject);
+    writeFile(myRootFolder, currentFileName, buf, myProject);
     myGeneratedPages.add(element);
   }
 
