@@ -38,7 +38,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
     setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
 
-    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", myConstructor.getManager(), true);
+    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(project), true);
 
     init();
   }
