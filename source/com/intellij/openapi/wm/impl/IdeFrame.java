@@ -38,7 +38,6 @@ public class IdeFrame extends JFrame implements DataProvider {
   private String myFileTitle;
   private Project myProject;
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
-  private ActionManager myActionManager;
 
   public IdeFrame(ApplicationInfoEx applicationInfoEx,
                   ActionManager actionManager,
@@ -58,7 +57,6 @@ public class IdeFrame extends JFrame implements DataProvider {
     setFocusTraversalPolicy(myLayoutFocusTraversalPolicy);
 
     setupCloseAction();
-    myActionManager = actionManager;
   }
 
   /**
