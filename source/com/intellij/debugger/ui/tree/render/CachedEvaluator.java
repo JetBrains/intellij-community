@@ -48,13 +48,18 @@ public abstract class CachedEvaluator {
     final Cache cache = new Cache();
     try {
       final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project);
-      if(contextClass == null) throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
+      if(contextClass == null) {
+        throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
+      }
+      final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
       PsiCodeFragment codeFragment = myReferenceExpression.createCodeFragment(contextClass, project);
+      codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
       cache.myEvaluator = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getEvaluatorBuilder().build(cache.myPsiChildrenExpression);
-    } catch (EvaluateException e) {
+    }
+    catch (EvaluateException e) {
       cache.myException = e;
     }
 

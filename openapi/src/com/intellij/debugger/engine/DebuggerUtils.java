@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
 import org.jdom.Element;
 
@@ -275,20 +276,35 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public static PsiClass findClass(String className, Project project) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    
-    ArrayClass arrayClass = getArrayClass(className);
-    PsiManager psiManager = PsiManager.getInstance(project);
-    if (arrayClass != null) {
+
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    if (getArrayClass(className) != null) {
       return psiManager.getElementFactory().getArrayClass();
-    } else {
+    }
+    if(project.isDefault()) {
+      return null;
+    }
+    return psiManager.findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+  }
+
+  public static PsiType getType(String className, Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    try {
+      if (getArrayClass(className) != null) {
+        return psiManager.getElementFactory().createTypeFromText(className, null);
+      }
       if(project.isDefault()) {
         return null;
       }
-      else {
-        PsiClass psiClass = psiManager.findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
-        return psiClass;
-      }
+      final PsiClass aClass = psiManager.findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+      return psiManager.getElementFactory().createType(aClass);
     }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   public static void checkSyntax(PsiCodeFragment codeFragment) throws EvaluateException {
