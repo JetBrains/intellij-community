@@ -34,6 +34,7 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
@@ -46,6 +47,17 @@ public class PluginConfigurationType implements ConfigurationType {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new PluginRunConfiguration(project, this, "");
+      }
+
+      public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+        final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
+        if (pluginRunConfiguration.getModule() == null) {
+          final Module[] modules = pluginRunConfiguration.getModules();
+          if (modules != null && modules.length > 0){
+            pluginRunConfiguration.setModule(modules[0]);
+          }
+        }
+        return super.createConfiguration(name, pluginRunConfiguration);
       }
     };
   }

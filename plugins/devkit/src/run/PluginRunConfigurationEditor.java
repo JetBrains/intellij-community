@@ -63,9 +63,6 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
 
   public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
-    if (myModules.getSelectedItem() == null){
-      throw new ConfigurationException("No module selected.");
-    }
     prc.setModule(((Module)myModules.getSelectedItem()));
     prc.VM_PARAMETERS = getVMParameters().getText();
   }

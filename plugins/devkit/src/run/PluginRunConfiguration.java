@@ -152,6 +152,9 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         return getModule().getName();
       }
     });
+    if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null){
+      throw new RuntimeConfigurationException("Plugin module not specified.");
+    }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
     final ProjectJdk jdk = rootManager.getJdk();
     if (jdk == null) {
