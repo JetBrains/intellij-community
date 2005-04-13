@@ -759,7 +759,7 @@ public abstract class GenericsHighlightUtil {
         PsiMethod[] superMethods = method.findSuperMethods();
         for (int i = 0; i < superMethods.length; i++) {
           PsiMethod superMethod = superMethods[i];
-          if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
+          if (InheritanceUtil.isInheritorOrSelf(superClass, superMethod.getContainingClass(), true)) return null;
         }
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
                                                  "Method does not override method from its superclass");
