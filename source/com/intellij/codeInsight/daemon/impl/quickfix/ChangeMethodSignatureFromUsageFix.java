@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -159,7 +160,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         final PsiParameter parameter = parameters[pi];
         final PsiType paramType = substitutor.substitute(parameter.getType());
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
-          result.add(new ParameterInfo(pi, parameter.getName(), paramType));
+          result.add(new ParameterInfo(pi, parameter.getName(), PsiUtil.convertAnonymousToBaseType(paramType)));
           pi++;
           ei++;
         }
