@@ -97,11 +97,11 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   private void addChangeInternal(ASTNode child, ChangeInfo info){
-    myChanges.put(child, info);
     if(!myChanges.containsKey(child)){
       final int nodeOffset = getNodeOffset(child);
       addChangeAtOffset(child, nodeOffset);
     }
+    myChanges.put(child, info);
   }
 
   private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
