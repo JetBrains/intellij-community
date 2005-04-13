@@ -367,7 +367,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
-  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, PsiElement[] occurrences, boolean anyAssignmentLHS, boolean declareFinalIfAll, PsiType type, TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
+  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, PsiElement[] occurrences, boolean anyAssignmentLHS, boolean declareFinalIfAll, PsiType type, TypeSelectorManagerImpl typeSelectorManager, IntroduceVariableBase.InputValidator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
@@ -403,7 +403,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     boolean isOK(IntroduceVariableSettings dialog);
   }
 
-  protected class InputValidator implements Validator {
+  public class InputValidator implements Validator {
     private final Project myProject;
     private final PsiElement myAnchorStatementIfAll;
     private final PsiElement myAnchorStatement;
