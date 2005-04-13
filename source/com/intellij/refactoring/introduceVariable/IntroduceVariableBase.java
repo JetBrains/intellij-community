@@ -393,6 +393,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return null;
   }
 
+
   private static boolean isLoopOrIf(PsiElement element) {
     return PsiUtil.isLoopStatement(element)
            || element instanceof PsiIfStatement;
