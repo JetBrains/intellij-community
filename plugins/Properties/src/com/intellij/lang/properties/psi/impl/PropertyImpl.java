@@ -57,7 +57,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   public String getValue() {
     final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
     if (node == null) {
-      return null;
+      return "";
     }
     return node.getText();
   }
@@ -72,5 +72,9 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
 
   public Icon getIcon(int flags) {
     return Icons.PROPERTY_ICON;
+  }
+
+  public void delete() throws IncorrectOperationException {
+    getParent().getNode().removeChild(getNode());
   }
 }

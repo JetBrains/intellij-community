@@ -30,9 +30,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.Iterator;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Mike
@@ -44,7 +43,7 @@ public class IntentionHintComponent extends JPanel {
     "#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
-  private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");;
+  private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
   private static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/intentionOffBulb.png");
   private static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   private static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
@@ -69,9 +68,9 @@ public class IntentionHintComponent extends JPanel {
   private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 0);
   private ListPopup myListPopup;
   private boolean myPopupShown = false;
-  private ArrayList myQuickFixes;
+  private List<IntentionAction> myQuickFixes;
 
-  private class IntentionActionWithTextCaching {
+  private static class IntentionActionWithTextCaching {
     private IntentionAction myAction;
     private String myText = null;
 
@@ -89,7 +88,7 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private IntentionActionWithTextCaching[] wrapActions(IntentionAction[] actions) {
+  private static IntentionActionWithTextCaching[] wrapActions(IntentionAction[] actions) {
     IntentionActionWithTextCaching[] wrapped = new IntentionActionWithTextCaching[actions.length];
     for (int i = 0; i < actions.length; i++) {
       wrapped[i] = new IntentionActionWithTextCaching(actions[i]);
@@ -100,8 +99,8 @@ public class IntentionHintComponent extends JPanel {
 
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
-                                                         ArrayList intentions,
-                                                         ArrayList quickFixes,
+                                                         List<IntentionAction> intentions,
+                                                         List<IntentionAction> quickFixes,
                                                          boolean showExpanded) {
     final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
@@ -120,7 +119,7 @@ public class IntentionHintComponent extends JPanel {
     return component;
   }
 
-  public void updateIfNotShowingPopup(ArrayList quickfixes, ArrayList intentions) {
+  public void updateIfNotShowingPopup(List<IntentionAction> quickfixes, List<IntentionAction> intentions) {
     if (myListPopup == null) {
       initList(quickfixes, intentions);
     }
@@ -164,7 +163,7 @@ public class IntentionHintComponent extends JPanel {
     return new Point(location.x, location.y);
   }
 
-  public IntentionHintComponent(Project project, Editor editor, ArrayList intentions, ArrayList quickFixes) {
+  public IntentionHintComponent(Project project, Editor editor, List<IntentionAction> intentions, List<IntentionAction> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myEditor = editor;
@@ -217,10 +216,10 @@ public class IntentionHintComponent extends JPanel {
     myComponentHint = new MyComponentHint(this);
   }
 
-  private void initList(ArrayList quickFixes, ArrayList intentions) {
-    ArrayList actions = (ArrayList)quickFixes.clone();
+  private void initList(List<IntentionAction> quickFixes, List<IntentionAction> intentions) {
+    List<IntentionAction> actions = new ArrayList<IntentionAction>(quickFixes);
     actions.addAll(intentions);
-    myList = new MyList(wrapActions((IntentionAction[])actions.toArray(new IntentionAction[actions.size()])));
+    myList = new MyList(wrapActions(actions.toArray(new IntentionAction[actions.size()])));
     myList.setCellRenderer(new PopupCellRenderer(myList));
     myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 

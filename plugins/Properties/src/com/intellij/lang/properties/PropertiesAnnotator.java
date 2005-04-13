@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
@@ -14,7 +15,7 @@ import com.intellij.openapi.util.Comparing;
 class PropertiesAnnotator implements Annotator {
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
-    Property origProperty = (Property)element;
+    final Property origProperty = (Property)element;
     PropertiesFile propertiesFile = (PropertiesFile)element.getContainingFile();
     final Property[] allProperties = propertiesFile.getProperties();
     int dupProperties = 0;
@@ -27,7 +28,9 @@ class PropertiesAnnotator implements Annotator {
       }
     }
     if (dupProperties > 0) {
-      holder.createErrorAnnotation(((PropertyImpl)origProperty).getKeyNode(), "Duplicate property key");
+      Annotation annotation = holder.createErrorAnnotation(((PropertyImpl)origProperty).getKeyNode(), "Duplicate property key");
+      annotation.registerFix(new RemovePropertyFix(origProperty));
     }
   }
+
 }
