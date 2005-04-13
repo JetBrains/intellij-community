@@ -131,6 +131,10 @@
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTablesRegistrar</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.newCodeFormatting.Formatter</interface-class>
+      <implementation-class>com.intellij.newCodeFormatting.impl.FormatterImpl</implementation-class>
+    </component>    
   </application-components>
 
 
