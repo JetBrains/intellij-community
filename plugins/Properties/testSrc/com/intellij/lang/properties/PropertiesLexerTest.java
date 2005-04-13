@@ -36,6 +36,13 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
                "Properties:VALUE_CHARACTERS", "yyy",
              });
   }
+  public void testTwoWords() throws Exception {
+    doTest("xxx=yyy zzz", new String[] {
+               "Properties:KEY_CHARACTERS", "xxx",
+               "Properties:KEY_VALUE_SEPARATOR", "=",
+               "Properties:VALUE_CHARACTERS", "yyy zzz",
+             });
+  }
 
   public void testMulti() throws Exception {
     doTest("a  b\n \nx\ty", new String[]{
