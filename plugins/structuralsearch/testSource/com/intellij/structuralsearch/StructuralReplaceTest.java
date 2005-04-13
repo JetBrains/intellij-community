@@ -151,7 +151,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 13, 12, 0, "lesya","Formatter")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 15, 12, 0, "lesya","Formatter")) return;
     String str = "// searching for several constructions\n" +
                  "      lastTest = \"several constructions match\";\n" +
                  "      matches = testMatcher.findMatches(s5,s4, options);\n" +
