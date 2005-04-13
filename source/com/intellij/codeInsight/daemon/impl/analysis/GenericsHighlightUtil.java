@@ -753,7 +753,8 @@ public abstract class GenericsHighlightUtil {
   }
   public static HighlightInfo checkOverrideAnnotation(PsiMethod method) {
     PsiModifierList list = method.getModifierList();
-    if (list.findAnnotation("java.lang.Override") != null) {
+    final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
+    if (overrideAnnotation != null) {
       PsiClass superClass = method.getContainingClass().getSuperClass();
       if (superClass != null) {
         PsiMethod[] superMethods = method.findSuperMethods();
@@ -761,7 +762,7 @@ public abstract class GenericsHighlightUtil {
           PsiMethod superMethod = superMethods[i];
           if (InheritanceUtil.isInheritorOrSelf(superClass, superMethod.getContainingClass(), true)) return null;
         }
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
                                                  "Method does not override method from its superclass");
       }
     }
