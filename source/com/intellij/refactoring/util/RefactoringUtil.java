@@ -679,7 +679,8 @@ public class RefactoringUtil {
       }
       else {
         PsiElement commonParent = PsiTreeUtil.findCommonParent(anchor, anchor1);
-        PsiElement firstAnchor = anchor.getTextOffset() < anchor1.getTextOffset() ? anchor : anchor1;
+        PsiElement firstAnchor = anchor.getTextRange().getStartOffset() < anchor1.getTextRange().getStartOffset() ?
+                                 anchor : anchor1;
         if (commonParent.equals(firstAnchor)) {
           anchor = firstAnchor;
         }
