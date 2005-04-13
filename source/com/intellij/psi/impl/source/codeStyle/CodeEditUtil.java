@@ -10,7 +10,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -18,6 +20,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
+import com.intellij.newCodeFormatting.Formatter;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
@@ -423,12 +426,17 @@ public class CodeEditUtil {
       }
     }
     else {
-      return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace();
+      final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(second);
+      LOG.assertTrue(secondAsPsiElement != null);
+      final PsiFile file = secondAsPsiElement.getContainingFile();
+      final Project project = secondAsPsiElement.getProject();
+      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+      return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
     }
 
   }
 
-  public static Whitespace getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
+  public static IndentInfo getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
                                                           final Language language) {
     return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language), false);
   }
@@ -452,31 +460,51 @@ public class CodeEditUtil {
 
   }
 
-  public static Whitespace getWhiteSpaceBeforeToken(final ASTNode tokenNode,
+  public static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode,
                                                     final Language language,
                                                     final boolean mayChangeLineFeeds) {
     LOG.assertTrue(tokenNode != null);
     final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
     LOG.assertTrue(secondAsPsiElement != null);
     final PsiFile file = secondAsPsiElement.getContainingFile();
-    final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
-    LOG.assertTrue(pseudoTextBuilder != null);
     final Project project = secondAsPsiElement.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int endOffset = tokenNode.getStartOffset();
+    final int tokenStartOffset = tokenNode.getStartOffset();
 
     final boolean oldValue = settings.XML_KEEP_LINE_BREAKS;
-    settings.XML_KEEP_LINE_BREAKS = false;
-
+    //settings.XML_KEEP_LINE_BREAKS = false;
+    final int oldKeepBlankLines = settings.XML_KEEP_BLANK_LINES;
+    settings.XML_KEEP_BLANK_LINES = 0;
     try {
-      final PseudoText pseudoText = pseudoTextBuilder.build(project,
-                                                            settings,
-                                                            file);
+      return getWhiteSpaceBeforeImpl(file, tokenStartOffset, language, project, settings, mayChangeLineFeeds);
 
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), endOffset, mayChangeLineFeeds);
     }
     finally {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
+      settings.XML_KEEP_BLANK_LINES = oldKeepBlankLines;
+    }
+  }
+
+  private static IndentInfo getWhiteSpaceBeforeImpl(final PsiFile file,
+                                                    final int tokenStartOffset,
+                                                    final Language language,
+                                                    final Project project,
+                                                    final CodeStyleSettings settings,
+                                                    final boolean mayChangeLineFeeds) {
+    if (CodeFormatterFacade.useBlockFormatter(file.getFileType())) {
+      final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
+      return Formatter.getInstance().getWhiteSpaceBefore(new PsiBasedFormattingModel(file, settings),
+                                            CodeFormatterFacade.createBlock(file, settings),
+                                            settings, settings.getIndentOptions(file.getFileType()), textRange,
+                                            mayChangeLineFeeds);
+    } else {
+      final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
+      LOG.assertTrue(pseudoTextBuilder != null);
+
+      final PseudoText pseudoText = pseudoTextBuilder.build(project,
+                                                            settings,
+                                                            file);
+      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), tokenStartOffset, mayChangeLineFeeds);
     }
   }
 

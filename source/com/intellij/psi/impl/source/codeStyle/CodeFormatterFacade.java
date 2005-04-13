@@ -126,20 +126,16 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  private boolean useBlockFormatter(final FileType fileType) {
-    //if (!"lesya".equals(System.getProperty("user.name"))) return false;
-    return
-    //ApplicationManager.getApplication().isUnitTestMode()
-    //       &&
-    (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
+  public static boolean useBlockFormatter(final FileType fileType) {
+    return (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
   }
 
-  private Block createBlock(final PsiFile element) {
+  public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
     if (element.getFileType() == StdFileTypes.XML || element.getFileType() == StdFileTypes.HTML) {
-      return AbstractXmlBlock.creareRoot(element, mySettings);
+      return AbstractXmlBlock.creareRoot(element, settings);
     }
     else {
-      return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), mySettings);
+      return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
     }
   }
 
@@ -152,7 +148,7 @@ public class CodeFormatterFacade implements Constants {
       final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
-          Formatter.getInstance().format(model, createBlock(containingFile), mySettings, mySettings.getIndentOptions(fileType), range);
+          Formatter.getInstance().format(model, createBlock(containingFile, mySettings), mySettings, mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

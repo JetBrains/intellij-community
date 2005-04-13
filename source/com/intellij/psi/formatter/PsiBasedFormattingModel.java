@@ -3,6 +3,7 @@ package com.intellij.psi.formatter;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,7 +13,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -32,19 +32,27 @@ public class PsiBasedFormattingModel implements FormattingModel{
   private final Project myProject;
   private final CodeStyleSettings mySettings;
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
+
   public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings) {
     mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
+    myDocument = new DocumentImpl(file.getText());
+    /*
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     if (document != null) {
       myDocument = document;
     } else {
-      myDocument = new DocumentImpl(file.getText());
+
     }
+    */
   }
 
   public int getLineNumber(int offset) {
+    if (offset > myDocument.getTextLength()) {
+      LOG.assertTrue(false);
+    }
     return myDocument.getLineNumber(offset);
   }
 

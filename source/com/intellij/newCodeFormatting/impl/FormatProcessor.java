@@ -440,4 +440,8 @@ class FormatProcessor {
     }
     return false;
   }
+
+  public WhiteSpace getWhiteSpaceBefore(final int startOffset) {
+    return myTextRangeToWrapper.get(startOffset).getWhiteSpace();
+  }
 }

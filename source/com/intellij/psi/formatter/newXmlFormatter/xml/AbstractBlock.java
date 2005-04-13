@@ -51,6 +51,7 @@ public abstract class AbstractBlock implements Block {
 
   protected boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node.getElementType() == ElementType.WHITE_SPACE) return true;
+    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.getText().trim().length() == 0) return true;
     if (node instanceof LeafElement) return false;
     ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();

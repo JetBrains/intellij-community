@@ -2,6 +2,8 @@ package com.intellij.newCodeFormatting.impl;
 
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.IndentInfo;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.util.IncorrectOperationException;
@@ -52,6 +54,21 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
                      CodeStyleSettings.IndentOptions indentOptions,
                      TextRange affectedRange) throws IncorrectOperationException {
     new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).format();
+  }
+
+  public IndentInfo getWhiteSpaceBefore(final PsiBasedFormattingModel model,
+                                        final Block block,
+                                        final CodeStyleSettings settings,
+                                        final CodeStyleSettings.IndentOptions indentOptions,
+                                        final TextRange affectedRange, final boolean mayChangeLineFeeds) {
+    final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
+    WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(affectedRange.getStartOffset());
+    if (!mayChangeLineFeeds) {
+      whiteSpace.setLineFeedsAreReadOnly();
+    }
+    whiteSpace.setReadOnly(false);
+    processor.formatWithoutRealModifications();
+    return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
   }
 
   public Indent createSpaceIndent(final int spaces) {

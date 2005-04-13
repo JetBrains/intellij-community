@@ -1,0 +1,65 @@
+package com.intellij.psi.impl.source.codeStyle;
+
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+
+public class IndentInfo {
+  private final int mySpaces;
+  private final int myIndentSpaces;
+  private final int myLineFeeds;
+
+  public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
+    mySpaces = spaces;
+    myIndentSpaces = indentSpaces;
+    myLineFeeds = lineFeeds;
+  }
+
+  public int getSpaces() {
+    return mySpaces;
+  }
+
+  public int getIndentSpaces() {
+    return myIndentSpaces;
+  }
+
+  public int getLineFeeds() {
+    return myLineFeeds;
+  }
+
+  public String generateNewWhiteSpace(CodeStyleSettings.IndentOptions options) {
+    StringBuffer buffer = new StringBuffer();
+    StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
+
+    if (options.USE_TAB_CHARACTER) {
+      if (options.SMART_TABS) {
+        int tabCount = myIndentSpaces / options.TAB_SIZE;
+        int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
+        StringUtil.repeatSymbol(buffer, '\t', tabCount);
+        StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
+      }
+      else {
+        int size = getTotalSpaces();
+        while (size > 0) {
+          if (size >= options.TAB_SIZE) {
+            buffer.append('\t');
+            size -= options.TAB_SIZE;
+          }
+          else {
+            buffer.append(' ');
+            size--;
+          }
+        }
+      }
+    }
+    else {
+      StringUtil.repeatSymbol(buffer, ' ', getTotalSpaces());
+    }
+
+    return buffer.toString();
+
+  }
+
+  public int getTotalSpaces() {
+    return myIndentSpaces + mySpaces;
+  }
+}
