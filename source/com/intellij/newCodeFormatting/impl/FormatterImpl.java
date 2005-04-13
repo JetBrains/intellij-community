@@ -66,6 +66,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     if (!mayChangeLineFeeds) {
       whiteSpace.setLineFeedsAreReadOnly();
     }
+    processor.setAllWhiteSpacesAreReadOnly();
     whiteSpace.setReadOnly(false);
     processor.formatWithoutRealModifications();
     return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());

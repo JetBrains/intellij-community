@@ -444,4 +444,12 @@ class FormatProcessor {
   public WhiteSpace getWhiteSpaceBefore(final int startOffset) {
     return myTextRangeToWrapper.get(startOffset).getWhiteSpace();
   }
+
+  public void setAllWhiteSpacesAreReadOnly() {
+    BlockWrapper current = myFirstTokenBlock;
+    while (current != null) {
+      current.getWhiteSpace().setReadOnly(true);
+      current = current.getNextBlock();
+    }
+  }
 }
