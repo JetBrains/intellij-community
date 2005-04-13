@@ -37,7 +37,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s2 = "String 'name = \"'string\";";
     String s2_2 = "String 'name = \"'string:[regex( .* )]\";";
     String s3 = "VSegAttribute $name$ = new VSegAttribute(\"$string$\");";
-    String expectedResult = "VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
+    String expectedResult = "    VSegAttribute ID_SPEED = new VSegAttribute(\"Speed\");";
 
     String actualResult = replacer.testReplace(s1,s2,s3,options);
     assertEquals(
@@ -153,35 +153,35 @@ public class StructuralReplaceTest extends IdeaTestCase {
   public void testReplace() {
     if (!IdeaTestUtil.bombExplodes(2005, Calendar.APRIL, 15, 12, 0, "lesya","Formatter")) return;
     String str = "// searching for several constructions\n" +
-                 "      lastTest = \"several constructions match\";\n" +
-                 "      matches = testMatcher.findMatches(s5,s4, options);\n" +
-                 "      if (matches==null || matches.size()!=3) return false;\n" +
+                 "    lastTest = \"several constructions match\";\n" +
+                 "    matches = testMatcher.findMatches(s5,s4, options);\n" +
+                 "    if (matches==null || matches.size()!=3) return false;\n" +
                  "\n" +
-                 "      // searching for several constructions\n" +
-                 "      lastTest = \"several constructions 2\";\n" +
-                 "      matches = testMatcher.findMatches(s5,s6, options);\n" +
-                 "      if (matches.size()!=0) return false;\n" +
+                 "    // searching for several constructions\n" +
+                 "    lastTest = \"several constructions 2\";\n" +
+                 "    matches = testMatcher.findMatches(s5,s6, options);\n" +
+                 "    if (matches.size()!=0) return false;\n" +
                  "\n" +
-                 "      //options.setLooseMatching(true);\n" +
-                 "      // searching for several constructions\n" +
-                 "      lastTest = \"several constructions 3\";\n" +
-                 "      matches = testMatcher.findMatches(s7,s8, options);\n" +
-                 "      if (matches.size()!=2) return false;";
+                 "    //options.setLooseMatching(true);\n" +
+                 "    // searching for several constructions\n" +
+                 "    lastTest = \"several constructions 3\";\n" +
+                 "    matches = testMatcher.findMatches(s7,s8, options);\n" +
+                 "    if (matches.size()!=2) return false;";
 
     String str2="      lastTest = 'Descr;\n" +
                  "      matches = testMatcher.findMatches('In,'Pattern, options);\n" +
                  "      if (matches.size()!='Number) return false;";
     String str3 = "assertEquals($Descr$,testMatcher.findMatches($In$,$Pattern$, options).size(),$Number$);";
     String expectedResult1 = "// searching for several constructions\n" +
-                            "      lastTest = \"several constructions match\";\n" +
-                            "      matches = testMatcher.findMatches(s5,s4, options);\n" +
-                            "      if (matches==null || matches.size()!=3) return false;\n" +
+                            "    lastTest = \"several constructions match\";\n" +
+                            "    matches = testMatcher.findMatches(s5,s4, options);\n" +
+                            "    if (matches==null || matches.size()!=3) return false;\n" +
                             "\n" +
-                            "      // searching for several constructions\n" +
+                            "    // searching for several constructions\n" +
                             "    assertEquals(\"several constructions 2\",testMatcher.findMatches(s5,s6, options).size(),0);\n" +
                             "\n" +
                             "    //options.setLooseMatching(true);\n" +
-                            "      // searching for several constructions\n" +
+                            "    // searching for several constructions\n" +
                             "    assertEquals(\"several constructions 3\",testMatcher.findMatches(s7,s8, options).size(),2);";
 
     String str4 = "";
@@ -190,29 +190,29 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     actualResult = replacer.testReplace(str,str2,str4,options);
     String expectedResult2 = "// searching for several constructions\n" +
-                             "      lastTest = \"several constructions match\";\n" +
-                             "      matches = testMatcher.findMatches(s5,s4, options);\n" +
-                             "      if (matches==null || matches.size()!=3) return false;\n" +
+                             "    lastTest = \"several constructions match\";\n" +
+                             "    matches = testMatcher.findMatches(s5,s4, options);\n" +
+                             "    if (matches==null || matches.size()!=3) return false;\n" +
                              "\n" +
-                             "      // searching for several constructions\n" +
+                             "    // searching for several constructions\n" +
                              "\n" +
-                             "      //options.setLooseMatching(true);\n" +
-                             "      // searching for several constructions";
+                             "    //options.setLooseMatching(true);\n" +
+                             "    // searching for several constructions";
 
     assertEquals("Empty replacement",expectedResult2,actualResult);
 
     String str5 = "testMatcher.findMatches('In,'Pattern, options).size()";
     String str6 = "findMatchesCount($In$,$Pattern$)";
     String expectedResult3="// searching for several constructions\n" +
-                           "      lastTest = \"several constructions match\";\n" +
-                           "      matches = testMatcher.findMatches(s5,s4, options);\n" +
-                           "      if (matches==null || matches.size()!=3) return false;\n" +
+                           "    lastTest = \"several constructions match\";\n" +
+                           "    matches = testMatcher.findMatches(s5,s4, options);\n" +
+                           "    if (matches==null || matches.size()!=3) return false;\n" +
                            "\n" +
-                           "      // searching for several constructions\n" +
+                           "    // searching for several constructions\n" +
                            "    assertEquals(\"several constructions 2\", findMatchesCount(s5,s6), 0);\n" +
                            "\n" +
                            "    //options.setLooseMatching(true);\n" +
-                           "      // searching for several constructions\n" +
+                           "    // searching for several constructions\n" +
                            "    assertEquals(\"several constructions 3\", findMatchesCount(s7,s8), 2);";
     actualResult = replacer.testReplace(expectedResult1,str5,str6,options);
 
@@ -414,7 +414,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s51 = "A $b$ = new $B$(\"$b$\");";
     String expectedResult18 = "class A {}\n" +
                               "class B extends A {}\n" +
-                              "A a = new B(\"a\");";
+                              "    A a = new B(\"a\");";
 
     actualResult = replacer.testReplace(s49,s50,s51,options);
 
@@ -1015,8 +1015,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s26 = "short a;";
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
-                              "// comment before\n" +
-                              "        protected Object a;//  comment after\n" +
+                              "    // comment before\n" +
+                              "            protected Object a;//  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
@@ -1096,7 +1096,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                               " * This interface stores XXX\n" +
                               " * <p/>\n" +
                               " */\n" +
-                              "    public interface X {\n" +
+                              "public interface X {\n" +
                               "    public static final String HEADER = Headers.HEADER;\n" +
                               "    \n" +
                               "}";
