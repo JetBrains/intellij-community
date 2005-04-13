@@ -42,10 +42,12 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public void readExternal(final Element element) throws InvalidDataException {
     final List<Element> modules = (List<Element>)element.getChildren(ELEMENT);
     LOG.assertTrue(modules.size() <= 1);
-    myModuleName = "";
     if (modules.size() == 1) {
       final Element module = modules.get(0);
-      myModuleName = module.getAttributeValue(ATTRIBUTE);
+      final String moduleName = module.getAttributeValue(ATTRIBUTE);  //we are unable to set 'null' module from 'not null' one
+      if (moduleName != null && moduleName.length() > 0){
+        myModuleName = moduleName;
+      }
     }
   }
 

@@ -66,6 +66,7 @@ public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
     try {
       writeExternal(element);
       final ModuleBasedConfiguration configuration = createInstance();
+      configuration.init();
       configuration.readExternal(element);
       return configuration;
     } catch (InvalidDataException e) {
