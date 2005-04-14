@@ -367,7 +367,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
-  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, PsiElement[] occurrences, boolean anyAssignmentLHS, boolean declareFinalIfAll, PsiType type, TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
+  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
+                                                           boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
+                                                           TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
