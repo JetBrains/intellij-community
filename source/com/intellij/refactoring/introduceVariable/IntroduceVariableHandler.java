@@ -9,22 +9,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import java.util.ArrayList;
 
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
-  protected void getSettings(final Project project, Editor editor, PsiExpression expr,
-                                                  PsiElement[] occurrences, boolean anyAssignmentLHS,
-                                                  boolean declareFinalIfAll, PsiType type,
-                                                  TypeSelectorManagerImpl typeSelectorManager,
-                                                  IntroduceVariableBase.InputValidator validator) {
+  protected void getSettings(IntroduceVariableBase.InputValidator validator) {
     ArrayList highlighters = new ArrayList();
     HighlightManager highlightManager = null;
     if (editor != null) {

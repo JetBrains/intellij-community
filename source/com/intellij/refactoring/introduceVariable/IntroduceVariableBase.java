@@ -173,7 +173,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
 
-    IntroduceVariableSettings settings = null; 
+    IntroduceVariableSettings settings = null;
       /*
       getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
             originalType,
@@ -370,9 +370,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
-  protected abstract void getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
-                                                           boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
-                                                           TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
+  protected abstract void getSettings(InputValidator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
