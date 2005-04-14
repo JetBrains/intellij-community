@@ -198,7 +198,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     if (myInitialClass != null) {
       name = myInitialClass.getName();
     }
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoClassModel(myProject), name) {
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoClassModel(myProject), name, myScope.isSearchInLibraries()) {
       protected void close(boolean isOk) {
         super.close(isOk);
 
@@ -281,8 +281,9 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
 
   private void selectElementInTree(final PsiElement element) {
-    if (element == null)
+    if (element == null) {
       throw new IllegalArgumentException("aClass cannot be null");
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;

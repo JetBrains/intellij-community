@@ -185,14 +185,23 @@ public abstract class ChooseByNameBase{
     myCardContainer = new JPanel(myCard);
 
     final JPanel checkBoxPanel = new JPanel();
-    checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-
-    checkBoxPanel.add (new JLabel ("  ("));
+    checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     myCheckBox = new JCheckBox(myModel.getCheckBoxName());
     myCheckBox.setMnemonic(myModel.getCheckBoxMnemonic());
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
-    checkBoxPanel.add (myCheckBox);
-    checkBoxPanel.add (new JLabel (")"));
+
+    if (myModel.getPromptText() != null){
+      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
+      checkBoxPanel.add (new JLabel ("  ("));
+      checkBoxPanel.add (myCheckBox);
+      checkBoxPanel.add (new JLabel (")"));
+    } else {
+      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
+      checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+      checkBoxPanel.add (new JLabel (")"));
+      checkBoxPanel.add (myCheckBox);
+      checkBoxPanel.add (new JLabel ("  ("));
+    }
 
     myCardContainer.add(checkBoxPanel, CHECK_BOX_CARD);
     myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_MESSAGE_CARD);

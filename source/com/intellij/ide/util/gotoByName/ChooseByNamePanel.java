@@ -8,9 +8,11 @@ import java.awt.*;
 
 public class ChooseByNamePanel extends ChooseByNameBase {
   private JPanel myPanel;
+  private boolean myCheckBoxVisible = false;
 
-  public ChooseByNamePanel(Project project, ChooseByNameModel model, String initialText){
+  public ChooseByNamePanel(Project project, ChooseByNameModel model, String initialText, boolean isCheckboxVisible){
     super(project, model, initialText);
+    myCheckBoxVisible = isCheckboxVisible;
   }
 
   protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
@@ -47,7 +49,7 @@ public class ChooseByNamePanel extends ChooseByNameBase {
   }
 
   protected boolean isCheckboxVisible(){
-    return false;
+    return myCheckBoxVisible;
   }
 
   public JPanel getPanel(){

@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -113,7 +112,7 @@ public final class ClassToBindProperty extends Property {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createNoInnerClassesScopeChooser(
           "Choose Class To Bind",
-          GlobalSearchScope.allScope(project),
+          GlobalSearchScope.projectScope(project),
           new TreeClassChooser.ClassFilter() { // we need show classes from the sources roots only
             public boolean isAccepted(final PsiClass aClass) {
               final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
