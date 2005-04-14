@@ -3,10 +3,8 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -16,6 +14,7 @@ import javax.swing.*;
 public class InstanceVariableInitializationInspection extends FieldInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
+    private final MakeInitializerExplicitFix fix = new MakeInitializerExplicitFix();
 
     public String getID(){
         return "InstanceVariableMayNotBeInitialized";
@@ -35,6 +34,10 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel("Ignore primitive fields",
                 this, "m_ignorePrimitives");
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
