@@ -49,7 +49,7 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    return new JavaSpacePropertyProcessor(((JavaBlock)child2).getFirstTreeNode(), mySettings).getResult();
+    return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
   }
 
   public String toString() {
@@ -63,6 +63,6 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   }
 
   public ASTNode getFirstTreeNode() {
-    return ((JavaBlock)mySubBlocks.get(0)).getFirstTreeNode();
+    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 }

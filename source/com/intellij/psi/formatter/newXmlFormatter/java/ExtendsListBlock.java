@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import java.util.List;
 import java.util.ArrayList;
 
-public class ExtendsListBlock extends SimpleJavaBlock{
+public class ExtendsListBlock extends AbstractJavaBlock{
   public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
@@ -67,4 +67,12 @@ public class ExtendsListBlock extends SimpleJavaBlock{
     }
     return false;
   }
+
+  protected Wrap getReservedWrap() {
+    return null;
+  }
+
+  protected void setReservedWrap(final Wrap reservedWrap) {
+  }
+  
 }

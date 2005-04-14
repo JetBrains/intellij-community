@@ -56,6 +56,14 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).format();
   }
 
+  public void formatWithoutModifications(FormattingModel model,
+                     Block rootBlock,
+                     CodeStyleSettings settings,
+                     CodeStyleSettings.IndentOptions indentOptions,
+                     TextRange affectedRange) throws IncorrectOperationException {
+    new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).formatWithoutRealModifications();
+  }
+
   public IndentInfo getWhiteSpaceBefore(final PsiBasedFormattingModel model,
                                         final Block block,
                                         final CodeStyleSettings settings,

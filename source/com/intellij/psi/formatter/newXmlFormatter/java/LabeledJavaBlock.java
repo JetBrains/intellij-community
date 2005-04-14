@@ -43,15 +43,6 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   }
 
-  private int getWrapType(final int wrap) {
-    switch(wrap) {
-      case CodeStyleSettings.DO_NOT_WRAP: return Wrap.NONE;
-      case CodeStyleSettings.WRAP_ALWAYS: return Wrap.ALWAYS;
-      case CodeStyleSettings.WRAP_AS_NEEDED: return Wrap.NORMAL;
-      default: return Wrap.CHOP_DOWN_IF_LONG;
-    }
-  }
-
   public Indent getIndent() {
     return Formatter.getInstance().getNoneIndent();
   }
@@ -63,4 +54,12 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
       return Formatter.getInstance().createLabelIndent();
     }
   }
+
+  protected Wrap getReservedWrap() {
+    return null;
+  }
+
+  protected void setReservedWrap(final Wrap reservedWrap) {
+  }
+  
 }

@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockContainingJavaBlock extends SimpleJavaBlock{
+public class BlockContainingJavaBlock extends AbstractJavaBlock{
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
@@ -63,4 +63,10 @@ public class BlockContainingJavaBlock extends SimpleJavaBlock{
     return false;
   }
 
+  protected Wrap getReservedWrap() {
+    return null;
+  }
+
+  protected void setReservedWrap(final Wrap reservedWrap) {
+  }
 }

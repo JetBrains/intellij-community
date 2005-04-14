@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DocCommentBlock extends SimpleJavaBlock{
+public class DocCommentBlock extends AbstractJavaBlock{
   public DocCommentBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
@@ -44,4 +44,12 @@ public class DocCommentBlock extends SimpleJavaBlock{
   public Indent getIndent() {
     return Formatter.getInstance().getNoneIndent();
   }
+
+  protected Wrap getReservedWrap() {
+    return null;
+  }
+
+  protected void setReservedWrap(final Wrap reservedWrap) {
+  }
+  
 }
