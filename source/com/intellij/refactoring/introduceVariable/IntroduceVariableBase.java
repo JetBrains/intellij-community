@@ -370,7 +370,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
-  protected abstract void getSettings(InputValidator validator);
+  protected abstract void getSettings();
 
   protected abstract void showErrorMessage(String message, Project project);
 
