@@ -18,6 +18,7 @@ import java.util.ArrayList;
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
   protected void getSettings() {
+    /*
     ArrayList highlighters = new ArrayList();
     HighlightManager highlightManager = null;
     if (editor != null) {
@@ -46,6 +47,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
         }
       }
     }
+    */
 
     //return dialog;
   }
