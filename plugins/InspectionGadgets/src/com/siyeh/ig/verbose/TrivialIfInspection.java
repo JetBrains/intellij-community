@@ -259,6 +259,10 @@ public class TrivialIfInspection extends StatementInspection{
 
         public void visitIfStatement(PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
+            if(ifStatement.getCondition()==null)
+            {
+                return;
+            }
             if(isSimplifiableAssignment(ifStatement)){
                 registerStatementError(ifStatement);
                 return;
