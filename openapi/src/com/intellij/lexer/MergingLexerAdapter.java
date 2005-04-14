@@ -4,11 +4,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class MergingLexerAdapter extends LexerBase {
-  private Lexer myOriginal;
+  protected Lexer myOriginal;
   private TokenSet myTokensToMerge;
-  private IElementType myTokenType;
-  private int myState;
-  private int myTokenStart;
+  protected IElementType myTokenType;
+  protected int myState;
+  protected int myTokenStart;
 
   public MergingLexerAdapter(Lexer original, TokenSet tokensToMerge){
     myOriginal = original;
@@ -62,7 +62,7 @@ public class MergingLexerAdapter extends LexerBase {
     return myOriginal.getBufferEnd();
   }
 
-  private void locateToken(){                    
+  protected void locateToken(){
     if (myTokenType == null){
       myTokenType = myOriginal.getTokenType();
       myTokenStart = myOriginal.getTokenStart();
@@ -78,5 +78,4 @@ public class MergingLexerAdapter extends LexerBase {
       }
     }
   }
-
 }

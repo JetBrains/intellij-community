@@ -17,6 +17,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   private final String myDataPath;
   protected String myFileExt;
   private final String myFullDataPath;
+  protected PsiFile myFile;
 
   public ParsingTestCase(String dataPath, String fileExt) {
     myDataPath = dataPath;
@@ -31,14 +32,14 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   protected void doTest(boolean checkResult) throws Exception{
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
-    PsiFile file = createFile(name + "." + myFileExt, text);
+    myFile = createFile(name + "." + myFileExt, text);
     if (checkResult){
-      checkResult(name + ".txt", file);
+      checkResult(name + ".txt", myFile);
     }
     else{
-      toParseTreeText(file);
+      toParseTreeText(myFile);
     }
-    if(file instanceof JspxFileImpl) ((JspxFileImpl)file).checkAllTreesEqual();
+    if(myFile instanceof JspxFileImpl) ((JspxFileImpl)myFile).checkAllTreesEqual();
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
@@ -46,15 +47,15 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
         final PsiFile psiRoot = psiRoots[i];
-        checkResult(targetDataName + "." + i, (PsiElement)psiRoot);
+        checkResult(targetDataName + "." + i, toParseTreeText((PsiElement)psiRoot).trim());
       }
     }
     else{
-      checkResult(targetDataName, (PsiElement)file);
+      checkResult(targetDataName, toParseTreeText(file).trim());
     }
   }
-  protected void checkResult(String targetDataName, final PsiElement file) throws Exception {
-    String treeText = toParseTreeText(file).trim();
+
+  protected void checkResult(String targetDataName, final String text) throws Exception {
     try{
       String expectedText = loadFile(targetDataName);
       /*
@@ -71,14 +72,14 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
         }
       }
       */
-      assertEquals(expectedText, treeText);
+      assertEquals(expectedText, text);
     }
     catch(FileNotFoundException e){
       String fullName = myFullDataPath + File.separatorChar + targetDataName;
       FileWriter writer = new FileWriter(fullName);
-      writer.write(treeText);
+      writer.write(text);
       writer.close();
-      assertTrue("No output file found. Created.", false);
+      assertTrue("No output text found. Created.", false);
     }
   }
 

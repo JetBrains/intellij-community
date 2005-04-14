@@ -51,7 +51,7 @@ public class ExpressionParsing extends Parsing {
       TreeUtil.addChildren(dummyRoot, expression);
 
     while(lexer.getTokenType() != null){
-      TreeUtil.addChildren(dummyRoot, Factory.createLeafElement(lexer.getTokenType(), lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table));
+      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, table));
       lexer.advance();
     }
 
