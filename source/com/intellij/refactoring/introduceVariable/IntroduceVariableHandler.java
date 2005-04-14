@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
-  protected IntroduceVariableSettings getSettings(final Project project, Editor editor, PsiExpression expr,
+  protected void getSettings(final Project project, Editor editor, PsiExpression expr,
                                                   PsiElement[] occurrences, boolean anyAssignmentLHS,
                                                   boolean declareFinalIfAll, PsiType type,
                                                   TypeSelectorManagerImpl typeSelectorManager,
@@ -54,7 +54,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
       }
     }
 
-    return dialog;
+    //return dialog;
   }
 
   protected void showErrorMessage(String message, final Project project) {
