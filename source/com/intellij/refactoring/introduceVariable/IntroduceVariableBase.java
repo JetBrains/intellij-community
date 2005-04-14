@@ -173,13 +173,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
 
-    IntroduceVariableSettings settings = null;
-      /*
-      getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
+    IntroduceVariableSettings settings = getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
             originalType,
             new TypeSelectorManagerImpl(project, originalType, expr, occurrences),
             new InputValidator(project, anchorStatementIfAll, anchorStatement, occurenceManager));
-      */
 
     if (!settings.isOK()) {
       return false;
@@ -370,15 +367,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
->>>> ORIGINAL IntroduceVariableBase.java#7
-  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, PsiElement[] occurrences, boolean anyAssignmentLHS, boolean declareFinalIfAll, PsiType type, TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
-==== THEIRS IntroduceVariableBase.java#9
-  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
+  protected abstract void getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
                                                            boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
                                                            TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
-==== YOURS IntroduceVariableBase.java
-  protected abstract void getSettings(Project project, Editor editor, PsiExpression expr, PsiElement[] occurrences, boolean anyAssignmentLHS, boolean declareFinalIfAll, PsiType type, TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
-<<<<
 
   protected abstract void showErrorMessage(String message, Project project);
 
