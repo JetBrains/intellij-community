@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -33,7 +32,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -173,13 +171,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
 
-    IntroduceVariableSettings settings = null;
-      /*
-      getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
+    IntroduceVariableSettings settings = getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
             originalType,
             new TypeSelectorManagerImpl(project, originalType, expr, occurrences),
-            new InputValidator(project, anchorStatementIfAll, anchorStatement, occurenceManager));
-      */
+            new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager));
 
     if (!settings.isOK()) {
       return false;
@@ -370,7 +365,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences);
 
-  protected abstract void getSettings();
+  protected abstract IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
+                                                           boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
+                                                           TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
@@ -404,63 +401,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   public interface Validator {
     boolean isOK(IntroduceVariableSettings dialog);
-  }
-
-  public class InputValidator implements Validator {
-    private final Project myProject;
-    private final PsiElement myAnchorStatementIfAll;
-    private final PsiElement myAnchorStatement;
-    private final ExpressionOccurenceManager myOccurenceManager;
-
-    public boolean isOK(IntroduceVariableSettings settings) {
-      String name = settings.getEnteredName();
-      final PsiElement anchor;
-      final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
-      if (replaceAllOccurrences) {
-        anchor = myAnchorStatementIfAll;
-      } else {
-        anchor = myAnchorStatement;
-      }
-      final PsiElement scope = anchor.getParent();
-      if(scope == null) return true;
-      final ArrayList<String> conflicts = new ArrayList<String>();
-      final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
-      RenameUtil.CollidingVariableVisitor visitor = new RenameUtil.CollidingVariableVisitor() {
-        public void visitCollidingElement(PsiVariable collidingVariable) {
-          if (collidingVariable instanceof PsiField) return;
-          if (!reportedVariables.contains(collidingVariable)) {
-            reportedVariables.add(collidingVariable);
-            String message = "Introduced variable will conflict with " + ConflictsUtil.getDescription(collidingVariable, true);
-            conflicts.add(message);
-          }
-        }
-      };
-      RenameUtil.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
-      if (replaceAllOccurrences) {
-        final PsiExpression[] occurences = myOccurenceManager.getOccurences();
-        for (int i = 0; i < occurences.length; i++) {
-          PsiExpression occurence = occurences[i];
-          checkInLoopCondition(occurence, conflicts);
-        }
-      } else {
-        checkInLoopCondition(myOccurenceManager.getMainOccurence(), conflicts);
-      }
-
-      if (conflicts.size() > 0) {
-        return reportConflicts(conflicts, myProject);
-      } else {
-        return true;
-      }
-    }
-
-
-    public InputValidator(Project project, PsiElement anchorStatementIfAll, PsiElement anchorStatement,
-                          ExpressionOccurenceManager occurenceManager) {
-      myProject = project;
-      myAnchorStatementIfAll = anchorStatementIfAll;
-      myAnchorStatement = anchorStatement;
-      myOccurenceManager = occurenceManager;
-    }
   }
 
   protected abstract boolean reportConflicts(ArrayList<String> conflicts, final Project project);
