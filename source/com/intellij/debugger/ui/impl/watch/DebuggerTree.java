@@ -52,7 +52,7 @@ import java.util.List;
 
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTree");
-  private final Key VISIBLE_RECT = new Key("VISIBLE_RECT");
+  protected static final Key VISIBLE_RECT = new Key("VISIBLE_RECT");
 
   private final Project myProject;
   private final NodeManagerImpl myDescriptorManager;
@@ -93,7 +93,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private void installSettingsListener() {
-    if (mySettingsListener != null) return;
+    if (mySettingsListener != null) {
+      return;
+    }
     mySettingsListener = new NodeRendererSettingsListener() {
       private void rendererSettingsChanged(DebuggerTreeNodeImpl node) {
         if (node.getDescriptor() instanceof ValueDescriptorImpl) {
@@ -122,7 +124,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private void uninstallSettingsListener() {
-    if (mySettingsListener == null) return;
+    if (mySettingsListener == null) {
+      return;
+    }
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
     mySettingsListener = null;
   }
@@ -143,7 +147,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   public Object getData(String dataId) {
-    if (DebuggerActions.DEBUGGER_TREE.equals(dataId)) return this;
+    if (DebuggerActions.DEBUGGER_TREE.equals(dataId)) {
+      return this;
+    }
     return null;
   }
 
@@ -186,9 +192,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       Rectangle rowBounds = getRowBounds(getRowForPath(path));
       if(rowBounds != null && getVisibleRect().contains(rowBounds)) {
         node.getDescriptor().putUserData(VISIBLE_RECT, getVisibleRect());
+        node.getDescriptor().myIsVisible = true;
       }
       else {
         node.getDescriptor().putUserData(VISIBLE_RECT, null);
+        node.getDescriptor().myIsVisible = false;
       }
     }
 
@@ -199,16 +207,43 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   public void restoreState(DebuggerTreeNodeImpl node) {
-    if(!node.myIsStateRestored) {
-      restoreNodeState(node);
+    restoreStateImpl(node);
+    scrollToVisible(node);
+  }
+
+  protected final void scrollToVisible(DebuggerTreeNodeImpl scopeNode) {
+    final TreePath rootPath = new TreePath(scopeNode.getPath());
+    final int rowCount = getRowCount();
+    for (int idx = rowCount - 1; idx >=0; idx--) {
+      final TreePath treePath = getPathForRow(idx);
+      if (treePath != null) {
+        if (!rootPath.isDescendant(treePath)) {
+          continue;
+        }
+        final DebuggerTreeNodeImpl pathNode = (DebuggerTreeNodeImpl)treePath.getLastPathComponent();
+        final NodeDescriptorImpl descriptor = pathNode.getDescriptor();
+
+        if (descriptor != null && descriptor.myIsVisible) {
+          final Rectangle visibleRect = (Rectangle) descriptor.getUserData(VISIBLE_RECT);
+          if(visibleRect != null) {
+            // prefer visible rect
+            scrollRectToVisible(visibleRect);
+          }
+          else {
+            scrollPathToVisible(treePath);
+          }
+          break;
+        }
+      }
     }
-    else {
-      node.myIsStateRestored = true;      
-    }
+  }
+
+  private void restoreStateImpl(DebuggerTreeNodeImpl node) {
+    restoreNodeState(node);
     if (node.getDescriptor().myIsExpanded) {
       for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
         DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
-        restoreState(child);
+        restoreStateImpl(child);
       }
     }
   }
@@ -222,23 +257,19 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   protected void restoreNodeState(DebuggerTreeNodeImpl node) {
-    Rectangle visibleRect = (Rectangle) node.getDescriptor().getUserData(VISIBLE_RECT);
-    if(visibleRect != null) {
-      scrollRectToVisible(visibleRect);
-    }
-    if (node.getDescriptor() != null) {
-      if (node.getParent() == null) node.getDescriptor().myIsExpanded = true;
+    final NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (descriptor != null) {
+      if (node.getParent() == null) {
+        descriptor.myIsExpanded = true;
+      }
 
       TreePath path = new TreePath(node.getPath());
-      if (node.getDescriptor().myIsExpanded) {
+      if (descriptor.myIsExpanded) {
         expandPath(path);
       }
-      if (node.getDescriptor().myIsSelected) {
+      if (descriptor.myIsSelected) {
         addSelectionPath(path);
       }
-//      if(node.getDescriptor().myIsVisible) {
-//        scrollPathToVisible(path);
-//      }
     }
   }
 
@@ -268,7 +299,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     showMessage(new MessageDescriptor(messageText));
   }
 
-  public void treeChanged() {
+  public final void treeChanged() {
     DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl)getModel().getRoot();
     if (node != null) {
       getMutableModel().nodeStructureChanged(node);
@@ -288,7 +319,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   protected abstract void build(DebuggerContextImpl context);
 
-  public final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
+  protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
     DebuggerSession debuggerSession = context.getDebuggerSession();
 
     if(ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
@@ -319,15 +350,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   protected abstract class RefreshDebuggerTreeCommand extends DebuggerContextCommandImpl {
-    private final DebuggerContextImpl myDebuggerContext;
-
     public RefreshDebuggerTreeCommand(DebuggerContextImpl context) {
       super(context);
-      myDebuggerContext = context;
     }
-
     public void threadAction() {
-
     }
   }
 
@@ -336,15 +362,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     final DebuggerTreeNodeImpl myNode;
     JComponent myEditorComponent;
 
-    private ContentManagerAdapter mySelectionListener = new ContentManagerAdapter() {
-      public void selectionChanged(ContentManagerEvent event) {
-        doFocusLostAction();
-      }
-    };;
-
     private KeyAdapter myKeyListener = new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if(!isShowed()) return;
+        if (!isShowed()) {
+          return;
+        }
         if(e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
         } else if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -354,9 +376,15 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     };
     private FocusAdapter myFocusListener = new FocusAdapter() {
       public void focusLost(FocusEvent e) {
-        if(!isShowed()) return;
-        if(e.isTemporary()) return;
-        if(myEditorComponent.getParent() == null) return;
+        if (!isShowed()) {
+          return;
+        }
+        if (e.isTemporary()) {
+          return;
+        }
+        if (myEditorComponent.getParent() == null) {
+          return;
+        }
         doFocusLostAction();
       }
     };
@@ -364,7 +392,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             public void componentResized(ComponentEvent e) {
               DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
                           public void run() {
-                            if(!isShowed()) return;
+                            if (!isShowed()) {
+                              return;
+                            }
                             JTree tree = myNode.getTree();
                             JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
                             Rectangle bounds = getEditorBounds();
@@ -406,7 +436,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     private void remove() {
-      if(!isShowed()) return;
+      if (!isShowed()) {
+        return;
+      }
       DebuggerTree tree = myNode.getTree();
       JRootPane rootPane = tree.getRootPane();
       if (rootPane != null) {
@@ -519,7 +551,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
               DebuggerTreeNodeImpl debuggerTreeNode = iterator.next();
               myNode.add(debuggerTreeNode);
             }
-            myNode.childrenChanged();
+            myNode.childrenChanged(true);
           }
         });
     }
@@ -694,7 +726,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
                   DebuggerTreeNode debuggerTreeNode = iterator.next();
                   getNode().add(debuggerTreeNode);
                 }
-                getNode().childrenChanged();
+                getNode().childrenChanged(false);
               }
             });
           }
@@ -703,7 +735,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       catch (ObjectCollectedException e) {
         getNode().removeAllChildren();
         getNode().add(getNodeFactory().createMessageNode(new MessageDescriptor("Cannot evaluate descendants, object was collected. " + e.getMessage())));
-        getNode().childrenChanged();
+        getNode().childrenChanged(false);
       }
     }
   }

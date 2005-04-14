@@ -4,7 +4,6 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -15,7 +14,6 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
@@ -30,7 +28,6 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   private SimpleColoredText myText;
   private DebuggerTree myTree;
   private Map myProperties = new HashMap();
-  protected boolean myIsStateRestored = false;
 
   private DebuggerTreeNodeImpl(DebuggerTree tree, NodeDescriptor descriptor) {
     super(descriptor);
@@ -107,14 +104,14 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
           updateCaches();
 
           labelChanged();
-          childrenChanged();
+          childrenChanged(true);
         }
       });
     }
 
     labelChanged();
     if(!labelOnly) {
-      childrenChanged();
+      childrenChanged(true);
     }
   }
 
@@ -160,7 +157,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
               DebuggerTreeNodeImpl.this.labelChanged();
             }
           });
-          DebuggerTreeNodeImpl.this.childrenChanged();
+          DebuggerTreeNodeImpl.this.childrenChanged(true);
         }
       }, false);
   }
@@ -183,7 +180,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     });
   }
 
-  public void childrenChanged() {
+  public void childrenChanged(final boolean scrollToVisible) {
     invoke(new Runnable() {
       public void run() {
         getTree().getMutableModel().nodeStructureChanged(DebuggerTreeNodeImpl.this);

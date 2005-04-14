@@ -7,21 +7,15 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeModelAdapter;
-import com.intellij.debugger.DebuggerInvocationUtil;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
@@ -43,22 +37,19 @@ public class FrameDebuggerTree extends DebuggerTree {
 
   public void restoreNodeState(DebuggerTreeNodeImpl node) {
     if(myAnyNewLocals) {
-      node.getDescriptor().myIsSelected = node.getDescriptor().myIsSelected && node.getDescriptor() instanceof LocalVariableDescriptorImpl;
+      final NodeDescriptorImpl descriptor = node.getDescriptor();
+      final boolean isLocalVar = descriptor instanceof LocalVariableDescriptorImpl;
+      descriptor.myIsSelected &= isLocalVar;
+      // override this setting so that tree will scroll to new locals
+      descriptor.myIsVisible = isLocalVar && descriptor.myIsSelected;
+      if (!descriptor.myIsVisible) {
+        descriptor.putUserData(VISIBLE_RECT, null);
+      }
     }
     super.restoreNodeState(node);
     if(myAnyNewLocals && node.getDescriptor().myIsExpanded) {
       DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getMutableModel().getRoot();
-      DebuggerTreeNodeImpl lastSelected = null;
-      for(Enumeration<DebuggerTreeNodeImpl> children = root.children(); children.hasMoreElements();) {
-        DebuggerTreeNodeImpl child = children.nextElement();
-        if(child.getDescriptor().myIsSelected) {
-          lastSelected = child;
-        }
-      }
-
-      if(lastSelected != null) {
-        scrollPathToVisible(new TreePath(lastSelected.getPath()));
-      }
+      scrollToVisible(root);
     }
   }
 
@@ -72,7 +63,9 @@ public class FrameDebuggerTree extends DebuggerTree {
       DebuggerTreeNodeImpl rootNode;
 
       final ThreadReferenceProxyImpl currentThread = getDebuggerContext().getThreadProxy();
-      if(currentThread == null) return;
+      if(currentThread == null) {
+        return;
+      }
 
       try {
         StackFrameProxyImpl frame = getDebuggerContext().getFrameProxy();
@@ -116,19 +109,30 @@ public class FrameDebuggerTree extends DebuggerTree {
           getMutableModel().setRoot(rootNode1);
           treeChanged();
 
-          if (ViewsGeneralSettings.getInstance().AUTOSCROLL_TO_NEW_LOCALS) {
-            final TreeModel model = getModel();
-            model.addTreeModelListener(new TreeModelAdapter() {
-              public void treeStructureChanged(TreeModelEvent e) {
-                final Object[] path = e.getPath();
-                if(path.length > 0 && path[path.length - 1] == rootNode1) {
-                  // wait until rootNode1 (the root just set) becomes the root 
-                  model.removeTreeModelListener(this);
+          final TreeModel model = getModel();
+          model.addTreeModelListener(new TreeModelAdapter() {
+            public void treeStructureChanged(TreeModelEvent e) {
+              final Object[] path = e.getPath();
+              if(path.length > 0 && path[path.length - 1] == rootNode1) {
+                // wait until rootNode1 (the root just set) becomes the root
+                model.removeTreeModelListener(this);
+                if (ViewsGeneralSettings.getInstance().AUTOSCROLL_TO_NEW_LOCALS) {
                   autoscrollToNewLocals(rootNode1);
                 }
+                else {
+                  // should clear this flag, otherwise, if AUTOSCROLL_TO_NEW_LOCALS option turned
+                  // to true during the debug process, all these variables will be considered 'new'
+                  for (Enumeration children  = rootNode1.rawChildren(); children.hasMoreElements();) {
+                    final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)children.nextElement();
+                    final NodeDescriptorImpl descriptor = child.getDescriptor();
+                    if(descriptor instanceof LocalVariableDescriptorImpl) {
+                      ((LocalVariableDescriptorImpl)descriptor).setNewLocal(false);
+                    }
+                  }
+                }
               }
-            });
-          }
+            }
+          });
         }
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
           final DebuggerSession debuggerSession = getDebuggerContext().getDebuggerSession();
@@ -143,7 +147,6 @@ public class FrameDebuggerTree extends DebuggerTree {
             if (isSteppingThrough && localVariableDescriptor.isNewLocal()) {
               TreePath treePath = new TreePath(child.getPath());
               addSelectionPath(treePath);
-              scrollPathToVisible(treePath);
               myAnyNewLocals = true;
               descriptor.myIsSelected = true;
             }
