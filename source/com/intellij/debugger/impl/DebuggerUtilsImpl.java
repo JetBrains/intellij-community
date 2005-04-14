@@ -105,7 +105,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public PsiClass chooseClassDialog(String title, Project project) {
-    TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser(title);
+    TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createAllProjectScopeChooser(title);
     dialog.showDialog();
     return dialog.getSelectedClass();
   }
