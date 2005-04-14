@@ -173,10 +173,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
 
-    IntroduceVariableSettings settings = getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
+    IntroduceVariableSettings settings = null; 
+      /*
+      getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
             originalType,
             new TypeSelectorManagerImpl(project, originalType, expr, occurrences),
             new InputValidator(project, anchorStatementIfAll, anchorStatement, occurenceManager));
+      */
 
     if (!settings.isOK()) {
       return false;
