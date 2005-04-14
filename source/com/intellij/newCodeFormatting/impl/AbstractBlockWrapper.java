@@ -53,7 +53,12 @@ public class AbstractBlockWrapper {
   }
 
   protected void arrangeStartOffset(final int startOffset) {
+    if (getStartOffset() == startOffset) return;
+    boolean isFirst = getParent() != null && getStartOffset() == getParent().getStartOffset();
     myTextRange = new TextRange(startOffset, myTextRange.getEndOffset());
+    if (isFirst) {
+      getParent().arrangeStartOffset(startOffset);
+    }
   }
 
   public int getStartOffset() {
