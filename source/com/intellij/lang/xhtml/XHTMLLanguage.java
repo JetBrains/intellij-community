@@ -27,7 +27,8 @@ public class XHTMLLanguage extends XMLLanguage {
   }
 
   public PseudoTextBuilder getFormatter() {
-    return new HtmlPseudoTextBuilder(ElementType.XML_TAG);
+    //return new HtmlPseudoTextBuilder(ElementType.XML_TAG);
+    return null;  
   }
 
   public XmlPsiPolicy getPsiPolicy() {
