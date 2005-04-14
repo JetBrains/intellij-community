@@ -26,6 +26,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private PsiElement myContext;
   private boolean myPhysical;
   private PsiType myThisType;
+  private PsiType mySuperType;
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
@@ -84,6 +85,14 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
   public void setThisType(PsiType psiType) {
     myThisType = psiType;
+  }
+
+  public PsiType getSuperType() {
+    return mySuperType;
+  }
+
+  public void setSuperType(final PsiType superType) {
+    mySuperType = superType;
   }
 
   public String importsToString() {

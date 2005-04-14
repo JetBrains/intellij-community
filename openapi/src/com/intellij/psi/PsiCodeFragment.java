@@ -19,6 +19,9 @@ public interface PsiCodeFragment extends PsiFile {
   void setExceptionHandler(ExceptionHandler checker);
   ExceptionHandler getExceptionHandler();
 
+  PsiType getSuperType();
+  void setSuperType(PsiType superType);
+
   interface VisibilityChecker {
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 

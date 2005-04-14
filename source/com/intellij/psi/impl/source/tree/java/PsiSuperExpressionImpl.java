@@ -6,7 +6,6 @@ import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
@@ -39,6 +38,10 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
       }
       if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
         scope = scope.getParent();
+      }
+      else if (scope instanceof PsiCodeFragment) {
+        PsiType fragmentSuperType = ((PsiCodeFragment)scope).getSuperType();
+        if (fragmentSuperType != null) return fragmentSuperType;
       }
     }
     return null;
