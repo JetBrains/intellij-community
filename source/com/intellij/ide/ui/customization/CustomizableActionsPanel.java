@@ -183,6 +183,10 @@ public class CustomizableActionsPanel {
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
         }
         TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
+        for (int i = 0; i < selectionPath.length; i++) {
+          TreePath path = selectionPath[i];
+          myActionsTree.addSelectionPath(path);
+        }
       }
     });
 
@@ -203,6 +207,10 @@ public class CustomizableActionsPanel {
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
         }
         TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
+        for (int i = 0; i < selectionPath.length; i++) {
+          TreePath path = selectionPath[i];
+          myActionsTree.addSelectionPath(path);
+        }
       }
     });
 
