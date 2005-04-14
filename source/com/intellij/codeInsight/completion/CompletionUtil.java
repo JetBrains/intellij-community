@@ -136,6 +136,9 @@ public class CompletionUtil {
         return ourWordCompletionData;
     }
 
+    final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
+    if (completionDataByFileType != null) return completionDataByFileType;
+
     if(file instanceof PsiAspectFile){
       return ourGenericCompletionData;
     }
@@ -156,9 +159,6 @@ public class CompletionUtil {
     }
     else if(file instanceof XmlFile && file.getFileType()==StdFileTypes.XML) {
       return ourXmlCompletionData;
-    } else {
-      final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
-      if (completionDataByFileType!=null) return completionDataByFileType;
     }
     return ourGenericCompletionData;
   }
