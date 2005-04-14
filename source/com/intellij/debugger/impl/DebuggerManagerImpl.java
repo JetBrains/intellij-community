@@ -127,22 +127,27 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     synchronized (mySessions) {
       mySessions.put(processHandler, session);
     }
-    /*
-    processHandler.addProcessListener(new ProcessAdapter() {
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
-        if (debugProcess != null) {
-          // if current thread is a "debugger manager thread", stop will execute synchronously
-          debugProcess.stop(willBeDestroyed);
+    if (!(processHandler instanceof RemoteDebugProcessHandler)) {
+      // add listener only to non-remote process handler:
+      // on Unix systems destroying process does not cause VMDeathEvent to be generated,
+      // so we need to call debugProcess.stop() explicitly for graceful termination.
+      // RemoteProcessHandler on the other hand will call debugProcess.stop() as a part of destroyProcess() and detachProcess() implementation,
+      // so we shouldn't add the listener to avoid calling stop() twice
+      processHandler.addProcessListener(new ProcessAdapter() {
+        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+          final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+          if (debugProcess != null) {
+            // if current thread is a "debugger manager thread", stop will execute synchronously
+            debugProcess.stop(willBeDestroyed);
 
-          if (!DebuggerManagerThreadImpl.isManagerThread()) {
-            debugProcess.waitFor();
+            if (!DebuggerManagerThreadImpl.isManagerThread()) {
+              debugProcess.waitFor();
+            }
           }
         }
-      }
 
-    });
-    */
+      });
+    }
     myDispatcher.getMulticaster().sessionCreated(session);
     return session;
   }
