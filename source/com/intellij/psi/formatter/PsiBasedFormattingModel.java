@@ -14,6 +14,7 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -38,15 +39,13 @@ public class PsiBasedFormattingModel implements FormattingModel{
     mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
-    myDocument = new DocumentImpl(file.getText());
-    /*
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    if (document != null) {
+    if (document != null && document.getText().equals(file.getText())) {
       myDocument = document;
     } else {
+      myDocument = new DocumentImpl(file.getText());
 
     }
-    */
   }
 
   public int getLineNumber(int offset) {
