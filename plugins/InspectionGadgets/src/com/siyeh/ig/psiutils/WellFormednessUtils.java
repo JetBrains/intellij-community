@@ -13,12 +13,12 @@ public class WellFormednessUtils{
     public static boolean isWellFormed(PsiBinaryExpression expression)
     {
         final PsiExpression lhs = expression.getLOperand();
-        if(lhs == null)
+        if(lhs == null || !lhs.isValid())
         {
             return false;
         }
         final PsiExpression rhs = expression.getROperand();
-        if(rhs == null)
+        if(rhs == null || !rhs.isValid())
         {
             return false;
         }
@@ -28,11 +28,11 @@ public class WellFormednessUtils{
 
     public static boolean isWellFormed(PsiAssignmentExpression expression){
         final PsiExpression lhs = expression.getLExpression();
-        if(lhs == null){
+        if(lhs == null || !lhs.isValid()){
             return false;
         }
         final PsiExpression rhs = expression.getRExpression();
-        if(rhs == null){
+        if(rhs == null || !rhs.isValid()){
             return false;
         }
         final PsiJavaToken operationSign = expression.getOperationSign();
