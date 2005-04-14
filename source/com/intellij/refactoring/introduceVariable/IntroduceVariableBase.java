@@ -403,7 +403,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     boolean isOK(IntroduceVariableSettings dialog);
   }
 
-  protected class InputValidator implements Validator {
+  public class InputValidator implements Validator {
     private final Project myProject;
     private final PsiElement myAnchorStatementIfAll;
     private final PsiElement myAnchorStatement;
