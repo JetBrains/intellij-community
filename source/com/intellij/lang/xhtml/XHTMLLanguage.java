@@ -1,12 +1,14 @@
 package com.intellij.lang.xhtml;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
+import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.impl.source.tree.ElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +27,7 @@ public class XHTMLLanguage extends XMLLanguage {
   }
 
   public PseudoTextBuilder getFormatter() {
-    return null;
+    return new HtmlPseudoTextBuilder(ElementType.XML_TAG);
   }
 
   public XmlPsiPolicy getPsiPolicy() {
