@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -34,7 +34,8 @@ public class RenameUtil {
   public static UsageInfo[] findUsages(final PsiElement element,
                                        String newName,
                                        boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles) {
+                                       boolean searchInNonJavaFiles,
+                                       Map<? extends PsiElement, String> allRenames) {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     PsiManager manager = element.getManager();
@@ -72,7 +73,7 @@ public class RenameUtil {
                                   ref.getRangeInElement().getEndOffset(), element,
                                   referenceElement instanceof XmlElement));
         if (classCollisionsDetector == null) {
-          addLocalsCollisions(element, referenceElement, newName, result);
+          addLocalsCollisions(element, referenceElement, newName, result, allRenames);
         }
         else {
           classCollisionsDetector.addClassCollisions(referenceElement, newName, result);
@@ -195,77 +196,77 @@ public class RenameUtil {
   }
 
   public static void findUnresolvableMemberCollisions(final PsiElement element, final String newName, List<UsageInfo> result) {
-    try {
-      PsiManager manager = element.getManager();
-      final PsiElementFactory factory = manager.getElementFactory();
-      final PsiSearchHelper helper = manager.getSearchHelper();
-      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+    PsiManager manager = element.getManager();
+    final PsiSearchHelper helper = manager.getSearchHelper();
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
 
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) return;
-        if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-        PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return;
+      if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
+      PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
 
-        PsiMethod prototype = (PsiMethod)element.copy();
-        prototype.getNameIdentifier().replace(factory.createIdentifier(newName));
+      MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
+      MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
+                                                                               oldSignature.getTypeParameters(),
+                                                                               oldSignature.getSubstitutor());
 
-        final PsiMethod existingMethod = containingClass.findMethodBySignature(prototype, true);
-        if (existingMethod != null && manager.getResolveHelper().isAccessible(existingMethod, containingClass, null)) {
-          result.add(new MemberExistsUsageInfo(existingMethod, method));
-        }
+      final PsiMethod existingMethod = MethodSignatureUtil.findMethodBySignature(containingClass, newSignature, true);
+      if (existingMethod != null && manager.getResolveHelper().isAccessible(existingMethod, containingClass, null)) {
+        result.add(new MemberExistsUsageInfo(existingMethod, method));
+      }
 
-        for (int i = 0; i < inheritors.length; i++) {
-          PsiClass inheritor = inheritors[i];
-
-          PsiMethod conflictingMethod = inheritor.findMethodBySignature(prototype, false);
-          if (conflictingMethod != null) {
+      for (int i = 0; i < inheritors.length; i++) {
+        PsiClass inheritor = inheritors[i];
+        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
+        final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
+        for (int j = 0; j < methodsByName.length; j++) {
+          PsiMethod conflictingMethod = methodsByName[j];
+          if (newSignature.equals(conflictingMethod.getSignature(superSubstitutor))) {
             result.add(new SubmemberHidesMemberUsageInfo(conflictingMethod, method));
+            break;
           }
         }
-
       }
-      else if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        if (field.getContainingClass() == null) return;
-        if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
-        final PsiClass containingClass = field.getContainingClass();
-        final PsiField existingField = containingClass.findFieldByName(newName, true);
-        if (existingField != null && manager.getResolveHelper().isAccessible(existingField, containingClass, null)) {
-          result.add(new MemberExistsUsageInfo(existingField, field));
+
+    }
+    else if (element instanceof PsiField) {
+      final PsiField field = (PsiField)element;
+      if (field.getContainingClass() == null) return;
+      if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
+      final PsiClass containingClass = field.getContainingClass();
+      final PsiField existingField = containingClass.findFieldByName(newName, true);
+      if (existingField != null && manager.getResolveHelper().isAccessible(existingField, containingClass, null)) {
+        result.add(new MemberExistsUsageInfo(existingField, field));
+      }
+      PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
+      for (int i = 0; i < inheritors.length; i++) {
+        PsiClass inheritor = inheritors[i];
+
+        PsiField conflictingField = inheritor.findFieldByName(newName, false);
+        if (conflictingField != null) {
+          result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
         }
-        PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
+      }
+    }
+    else if (element instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)element;
+      if (aClass.getParent() instanceof PsiClass) {
+        PsiClass[] inheritors = helper.findInheritors((PsiClass)aClass.getParent(), projectScope, true);
         for (int i = 0; i < inheritors.length; i++) {
           PsiClass inheritor = inheritors[i];
 
-          PsiField conflictingField = inheritor.findFieldByName(newName, false);
-          if (conflictingField != null) {
-            result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
-          }
-        }
-      }
-      else if (element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element;
-        if (aClass.getParent() instanceof PsiClass) {
-          PsiClass[] inheritors = helper.findInheritors((PsiClass)aClass.getParent(), projectScope, true);
-          for (int i = 0; i < inheritors.length; i++) {
-            PsiClass inheritor = inheritors[i];
+          PsiClass[] inners = inheritor.getInnerClasses();
+          for (int j = 0; j < inners.length; j++) {
+            PsiClass inner = inners[j];
 
-            PsiClass[] inners = inheritor.getInnerClasses();
-            for (int j = 0; j < inners.length; j++) {
-              PsiClass inner = inners[j];
-
-              if (inner.getName().equals(newName)) {
-                result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
-              }
+            if (inner.getName().equals(newName)) {
+              result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
             }
           }
         }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
   }
 
@@ -389,7 +390,7 @@ public class RenameUtil {
 
 
   private static void addLocalsCollisions(PsiElement element, PsiElement ref,
-                                          String newName, List<UsageInfo> results) {
+                                          String newName, List<UsageInfo> results, final Map<? extends PsiElement, String> allRenames) {
     if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
 
     PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
@@ -406,7 +407,7 @@ public class RenameUtil {
 
     LOG.assertTrue(scopeElement != null);
 
-    PsiField field = containingClass.findFieldByName(newName, true);
+    PsiField field = findFieldByName(containingClass, newName, allRenames);
     if (field == null) return;
 
     PsiSearchHelper helper = ref.getManager().getSearchHelper();
@@ -419,6 +420,22 @@ public class RenameUtil {
         results.add(new LocalHidesFieldUsageInfo(collidingRef, element));
       }
     }
+  }
+
+  private static PsiField findFieldByName(final PsiClass containingClass,
+                                          final String newName,
+                                          final Map<? extends PsiElement, String> allRenames) {
+    final PsiField field = containingClass.findFieldByName(newName, true);
+    if (field != null && !allRenames.containsKey(field)) return field;
+    final Set<? extends PsiElement> renamedElements = allRenames.keySet();
+    for (Iterator<? extends PsiElement> iterator = renamedElements.iterator(); iterator.hasNext();) {
+      PsiElement element = iterator.next();
+      if (element instanceof PsiField) {
+        final String fieldNewName = allRenames.get(element);
+        if (newName.equals(fieldNewName)) return (PsiField)element;
+      }
+    }
+    return null;
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava) {
@@ -487,9 +504,6 @@ public class RenameUtil {
       }
       else if (element instanceof PsiVariable) {
         doRenameVariable((PsiVariable)element, newName, usages, listener);
-      }
-      else if (element instanceof XmlTag) {
-        doRenameXmlTag((XmlTag)element, newName, listener);
       }
       else if (element instanceof XmlAttribute) {
         doRenameXmlAttribute((XmlAttribute)element, newName, listener);
@@ -616,18 +630,6 @@ public class RenameUtil {
           queue.addLast(psiReference);
         }
       }
-    }
-  }
-
-  private static void doRenameXmlTag(XmlTag xmlTag, String newName, RefactoringElementListener listener) {
-    try {
-      XmlTag newTag = xmlTag.getManager().getElementFactory().createTagFromText(
-        "<" + xmlTag.getName() + ">" + newName + "</" + xmlTag.getName() + ">");
-      final PsiElement element = xmlTag.replace(newTag);
-      listener.elementRenamed(element);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
   }
 

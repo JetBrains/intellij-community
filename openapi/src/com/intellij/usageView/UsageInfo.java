@@ -83,7 +83,7 @@ public class UsageInfo {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof UsageInfo)) return false;
+    if (!getClass().equals(o.getClass())) return false;
 
     final UsageInfo usageInfo = (UsageInfo)o;
 

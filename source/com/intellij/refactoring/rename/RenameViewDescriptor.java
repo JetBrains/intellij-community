@@ -9,7 +9,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 class RenameViewDescriptor implements UsageViewDescriptor{
   private final boolean mySearchInComments;
@@ -19,18 +19,17 @@ class RenameViewDescriptor implements UsageViewDescriptor{
   private String myCodeReferencesText;
   private final String myHelpID;
   private FindUsagesCommand myRefreshCommand;
-  private ArrayList myElements;
+  private PsiElement[] myElements;
 
   public RenameViewDescriptor(
-      PsiElement primaryElement,
-      ArrayList elements,
-      ArrayList names,
-      boolean isSearchInComments,
-      boolean isSearchInNonJavaFiles,
-      UsageInfo[] usages,
-      FindUsagesCommand refreshCommand) {
+    PsiElement primaryElement,
+    LinkedHashMap<PsiElement, String> renamesMap,
+    boolean isSearchInComments,
+    boolean isSearchInNonJavaFiles,
+    UsageInfo[] usages,
+    FindUsagesCommand refreshCommand) {
 
-    myElements = elements;
+    myElements = renamesMap.keySet().toArray(new PsiElement[0]);
 
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = isSearchInNonJavaFiles;
@@ -41,9 +40,9 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     StringBuffer codeReferencesText = new StringBuffer();
     codeReferencesText.append("References in code to ");
 
-    for (int i = 0; i < elements.size(); i++) {
-      final PsiElement element = (PsiElement)elements.get(i);
-      String newName = (String)names.get(i);
+    for (int i = 0; i < myElements.length; i++) {
+      final PsiElement element = myElements[i];
+      String newName = renamesMap.get(element);
 
       String prefix = "";
       if (element instanceof PsiDirectory/* || element instanceof PsiClass*/){
@@ -58,7 +57,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
           UsageViewUtil.getType(element) + " to be renamed to " + prefix + newName));
       codeReferencesText.append(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
 
-      if (i < elements.size() - 1) {
+      if (i < myElements.length - 1) {
         processedElementsHeader.append(", ");
         codeReferencesText.append(", ");
       }
@@ -71,7 +70,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
   }
 
   public PsiElement[] getElements() {
-    return (PsiElement[])myElements.toArray(new PsiElement[myElements.size()]);
+    return myElements;
   }
 
   public UsageInfo[] getUsages() {
@@ -79,10 +78,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
   }
 
   public void refresh(PsiElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      myElements.set(i, element);
-    }
+    myElements = elements;
 
     if (myRefreshCommand != null) {
       myUsages = myRefreshCommand.execute(elements);

@@ -7,6 +7,8 @@ package com.intellij.refactoring;
 import com.intellij.psi.PsiElement;
 
 import java.util.List;
+import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author dsl
@@ -14,8 +16,8 @@ import java.util.List;
 public interface RenameRefactoring extends Refactoring {
   void addElement(PsiElement element, String newName);
 
-  List<PsiElement> getElements();
-  List<String> getNewNames();
+  Set<PsiElement> getElements();
+  Collection<String> getNewNames();
 
   void setShouldRenameVariables(boolean value);
 

@@ -1,6 +1,5 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.ant.PsiAntElement;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -11,14 +10,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -27,7 +23,10 @@ import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
 import com.intellij.refactoring.rename.naming.FormsRenamer;
 import com.intellij.refactoring.rename.naming.InheritorRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -40,10 +39,9 @@ import java.util.*;
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
-  protected ArrayList<PsiElement> myElements = new ArrayList<PsiElement>();
-  protected ArrayList<String> myNames = new ArrayList<String>();
+  LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
-  private PsiElement myElement;
+  private PsiElement myPrimaryElement;
   private String myNewName = null;
 
   boolean mySearchInComments;
@@ -54,7 +52,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private boolean myShouldRenameForms;
   private UsageInfo[] myUsagesForNonCodeRenaming;
-  private List<AutomaticRenamer<? extends PsiNamedElement>> myRenamers = new ArrayList<AutomaticRenamer<? extends PsiNamedElement>>();
+  private List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
 
   public RenameProcessor(Project project,
                          PsiElement element,
@@ -62,7 +60,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
                          boolean isSearchInComments,
                          boolean toSearchInNonJavaFiles) {
     super(project);
-    myElement = element;
+    myPrimaryElement = element;
 
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = toSearchInNonJavaFiles;
@@ -70,8 +68,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     setNewName(newName);
   }
 
-  public List<PsiElement> getElements() {
-    return Collections.unmodifiableList(myElements);
+  public Set<PsiElement> getElements() {
+    return Collections.unmodifiableSet(myAllRenames.keySet());
   }
 
 
@@ -89,21 +87,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public RenameProcessor(Project project, PsiElement element) {
     super(project);
-    myElement = element;
+    myPrimaryElement = element;
   }
 
   public boolean isVariable() {
-    return myElement instanceof PsiVariable;
+    return myPrimaryElement instanceof PsiVariable;
   }
 
   public void doRun() {
     String message = null;
     prepareRenaming();
     try {
-      for (int i = 0; i < myElements.size(); i++) {
-        PsiElement element = myElements.get(i);
-        String name = myNames.get(i);
-        RenameUtil.checkRename(element, name);
+      final Set entries = myAllRenames.entrySet();
+      for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
+        Map.Entry<PsiElement, String> entry = (Map.Entry<PsiElement, String>)iterator.next();
+        RenameUtil.checkRename(entry.getKey(), entry.getValue());
       }
     } catch (IncorrectOperationException e) {
       message = e.getMessage();
@@ -118,12 +116,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void prepareRenaming() {
-    if (myElement instanceof PsiField) {
-      prepareFieldRenaming((PsiField) myElement, myNewName);
-    } else if (myElement instanceof PsiMethod) {
-      prepareMethodRenaming((PsiMethod) myElement, myNewName);
-    } else if (myElement instanceof PsiPackage) {
-      preparePackageRenaming((PsiPackage) myElement, myNewName);
+    if (myPrimaryElement instanceof PsiField) {
+      prepareFieldRenaming((PsiField) myPrimaryElement, myNewName);
+    } else if (myPrimaryElement instanceof PsiMethod) {
+      prepareMethodRenaming((PsiMethod) myPrimaryElement, myNewName);
+    } else if (myPrimaryElement instanceof PsiPackage) {
+      preparePackageRenaming((PsiPackage) myPrimaryElement, myNewName);
     }
   }
 
@@ -132,14 +130,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (int i = 0; i < directories.length; i++) {
       PsiDirectory directory = directories[i];
       if (!directory.isSourceRoot()) {
-        myElements.add(directory);
-        myNames.add(newName);
+        myAllRenames.put(directory, newName);
       }
     }
   }
 
   protected String getHelpID() {
-    return HelpID.getRenameHelpID(myElement);
+    return HelpID.getRenameHelpID(myPrimaryElement);
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {
@@ -169,16 +166,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
-    for (Iterator<AutomaticRenamer<? extends PsiNamedElement>> iterator = myRenamers.iterator(); iterator.hasNext();) {
-      final AutomaticRenamer<? extends PsiNamedElement> automaticVariableRenamer = iterator.next();
+    for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext();) {
+      final AutomaticRenamer automaticVariableRenamer = iterator.next();
       if (!automaticVariableRenamer.hasAnythingToRename()) continue;
       final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, automaticVariableRenamer);
       dialog.show();
       if (!dialog.isOK()) return false;
     }
 
-    for (Iterator<AutomaticRenamer<? extends PsiNamedElement>> iterator = myRenamers.iterator(); iterator.hasNext();) {
-      final AutomaticRenamer<? extends PsiNamedElement> renamer = iterator.next();
+    for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext();) {
+      final AutomaticRenamer renamer = iterator.next();
       final List<? extends PsiNamedElement> variables = renamer.getElements();
       for (Iterator<? extends PsiNamedElement> iterator1 = variables.iterator(); iterator1.hasNext();) {
         final PsiNamedElement variable = iterator1.next();
@@ -188,8 +185,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     Runnable runnable = new Runnable() {
       public void run() {
-        for (Iterator<AutomaticRenamer<? extends PsiNamedElement>> iterator = myRenamers.iterator(); iterator.hasNext();) {
-          final AutomaticRenamer<? extends PsiNamedElement> renamer = iterator.next();
+        for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext();) {
+          final AutomaticRenamer renamer = iterator.next();
           renamer.findUsages(variableUsages, mySearchInComments, mySearchInNonJavaFiles);
         }
       }
@@ -202,25 +199,18 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void addElement(PsiElement element, String newName) {
-    myElements.add(element);
-    myNames.add(newName);
+    myAllRenames.put(element, newName);
   }
 
   private void setNewName(String newName) {
-    if (myElement == null) {
+    if (myPrimaryElement == null) {
       myCommandName = "Renaming something";
       return;
     }
-    int oldIndex = myElements.indexOf(myElement);
-    if (oldIndex >= 0) {
-      myElements.remove(oldIndex);
-      myNames.remove(oldIndex);
-    }
 
     myNewName = newName;
-    myElements.add(myElement);
-    myNames.add(newName);
-    myCommandName = "Renaming " + UsageViewUtil.getType(myElement) + " " + UsageViewUtil.getDescriptiveName(myElement) + " to " + newName;
+    myAllRenames.put(myPrimaryElement, newName);
+    myCommandName = "Renaming " + UsageViewUtil.getType(myPrimaryElement) + " " + UsageViewUtil.getDescriptiveName(myPrimaryElement) + " to " + newName;
   }
 
   protected void prepareFieldRenaming(PsiField field, String newName) {
@@ -287,12 +277,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     if (shouldRenameSetterParameter) {
       PsiParameter parameter = setter.getParameterList().getParameters()[0];
-      myElements.add(parameter);
-      myNames.add(manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER));
+      myAllRenames.put(parameter, manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER));
     }
   }
 
   protected boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, "Rename", getter, setter);
     return Messages.showYesNoDialog(myProject, text, "Rename", Messages.getQuestionIcon()) != 0;
   }
@@ -308,37 +298,38 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       PsiMethod method = superClass.findMethodBySignature(methodPrototype, false);
 
       if (method != null) {
-        myElements.add(method);
-        myNames.add(newName);
+        myAllRenames.put(method, newName);
       }
     }
   }
 
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new RenameViewDescriptor(myElement, myElements, myNames, mySearchInComments, mySearchInNonJavaFiles, usages, refreshCommand);
+    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchInNonJavaFiles, usages, refreshCommand);
   }
 
   protected UsageInfo[] findUsages() {
     myRenamers.clear();
-    if (myElement instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)myElement).getPackage();
+    if (myPrimaryElement instanceof PsiDirectory) {
+      final PsiPackage aPackage = ((PsiDirectory)myPrimaryElement).getPackage();
       final UsageInfo[] usages;
       if (aPackage != null) {
-        usages = RenameUtil.findUsages(aPackage, myNewName, mySearchInComments, mySearchInNonJavaFiles);
+        usages = RenameUtil.findUsages(aPackage, myNewName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
       }
       else {
-        usages = RenameUtil.findUsages(myElement, myNewName, mySearchInComments, mySearchInNonJavaFiles);
+        usages = RenameUtil.findUsages(myPrimaryElement, myNewName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
       }
       return UsageViewUtil.removeDuplicatedUsages(usages);
     }
 
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    for (int i = 0; i < myElements.size(); i++) {
-      PsiElement element = myElements.get(i);
-      final String newName = myNames.get(i);
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchInNonJavaFiles);
+    final Set entries = myAllRenames.entrySet();
+    for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
+      Map.Entry<PsiElement,String> entry = (Map.Entry<PsiElement,String>)iterator.next();
+      PsiElement element = entry.getKey();
+      final String newName = entry.getValue();
+      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
         myRenamers.add(new AutomaticVariableRenamer((PsiClass) element, newName, Arrays.asList(usages)));
@@ -355,12 +346,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
     // add usages in ejb-jar.xml regardless of mySearchInNonJavaFiles setting
     // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
-    EjbUsagesUtil.adjustEjbUsages(myElements, myNames, result);
+    EjbUsagesUtil.adjustEjbUsages(myAllRenames, result);
 
-    if (myElement != null) {
+    if (myPrimaryElement != null) {
       // add usages in ejb-jar.xml regardless of mySearchInNonJavaFiles setting
       // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
-      EjbUsagesUtil.adjustEjbUsages(myElement, myNewName, result);
+      EjbUsagesUtil.adjustEjbUsages(myPrimaryElement, myNewName, result);
     }
 
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
@@ -370,18 +361,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length > 0);
-    if (myElement != null) {
-      myElement = elements[0];
+    if (myPrimaryElement != null) {
+      myPrimaryElement = elements[0];
     }
+
+    final Iterator<String> newNames = myAllRenames.values().iterator();
+    LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<PsiElement, String>();
     for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      myElements.set(i, element);
+      newAllRenames.put(elements[i], newNames.next());
     }
+    myAllRenames = newAllRenames;
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
-    if (!isNonCodeElements() && UsageViewUtil.hasNonCodeUsages(usages)) {
+    if (UsageViewUtil.hasNonCodeUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in comments, strings and non-java files");
       return true;
     } else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
@@ -391,24 +385,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private boolean isNonCodeElements() {
-    for (Iterator<PsiElement> iterator = myElements.iterator(); iterator.hasNext();) {
-      PsiElement element = iterator.next();
-      if (!(element instanceof PsiAntElement) && //TODO:find a better way
-          !(element instanceof XmlElement)) return false;
-    }
-    return true;
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
-    HashSet<XmlTag> xmlTagsSet = new HashSet<XmlTag>();
-    ArrayList<UsageInfo> specialRenaming = findXmlTags(usages, xmlTagsSet);
-
     List<Pair<String, RefactoringElementListener>> listenersForPackages = new ArrayList<Pair<String,RefactoringElementListener>>();
-    for (int i = 0; i < myElements.size(); i++) {
-      PsiElement element = myElements.get(i);
-      if (element instanceof XmlTag && xmlTagsSet.contains(element)) continue;
-      String newName = myNames.get(i);
+
+    final Set entries = myAllRenames.entrySet();
+    for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
+      Map.Entry<PsiElement, String> entry = (Map.Entry<PsiElement, String>)iterator.next();
+      PsiElement element = entry.getKey();
+      String newName = entry.getValue();
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
@@ -428,47 +412,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final UsageInfo[] usagesForNonCodeRenaming;
-    if (specialRenaming.isEmpty()) {
-      usagesForNonCodeRenaming = usages;
-    } else {
-      specialRenaming.addAll(Arrays.asList(usages));
-      usagesForNonCodeRenaming = specialRenaming.toArray(new UsageInfo[specialRenaming.size()]);
-    }
+    usagesForNonCodeRenaming = usages;
     myUsagesForNonCodeRenaming = usagesForNonCodeRenaming;
   }
 
   protected void performPsiSpoilingRefactoring() {
     RefactoringUtil.renameNonCodeUsages(myProject, myUsagesForNonCodeRenaming);
   }
-
-  private ArrayList<UsageInfo> findXmlTags(UsageInfo[] usages, HashSet<XmlTag> xmlTagsSet) {
-    ArrayList<UsageInfo> specialRenaming = new ArrayList<UsageInfo>();
-    for (int i = 0; i < myElements.size(); i++) {
-      PsiElement element = myElements.get(i);
-      if (element instanceof XmlTag) {
-        final PsiFile containingFile = element.getContainingFile();
-        usagesLoop:
-        for (int j = 0; j < usages.length; j++) {
-          UsageInfo usage = usages[j];
-          if (usage.isNonCodeUsage) {
-            final PsiFile usageFile = usage.getElement().getContainingFile();
-            if (usageFile.getManager().areElementsEquivalent(usageFile, containingFile)) {
-              xmlTagsSet.add((XmlTag)element);
-              final XmlTag xmlTag = (XmlTag) element;
-              final String newName = myNames.get(i);
-              String newText =
-                  "<" + xmlTag.getName() + ">" + newName + "</" + xmlTag.getName() + ">";
-              TextRange range = xmlTag.getTextRange();
-              specialRenaming.add(NonCodeUsageInfo.create(xmlTag.getContainingFile(), range.getStartOffset(), range.getEndOffset(), xmlTag, newText));
-              break usagesLoop;
-            }
-          }
-        }
-      }
-    }
-    return specialRenaming;
-  }
-
 
   protected String getCommandName() {
     return myCommandName;
@@ -507,8 +457,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final String[] names = EjbDeclMethodRole.suggestImplNames(newName, role.getType(), role.getEjb());
       for (int i = 0; i < implementations.length; i++) {
         if (i < names.length && names[i] != null) {
-          myElements.add(implementations[i]);
-          myNames.add(names[i]);
+          myAllRenames.put(implementations[i], names[i]);
         }
       }
     }
@@ -518,8 +467,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     prepareRenaming();
   }
 
-  public List<String> getNewNames() {
-    return Collections.unmodifiableList(myNames);
+  public Collection<String> getNewNames() {
+    return myAllRenames.values();
   }
 
   public void setSearchInComments(boolean value) {

@@ -10,7 +10,8 @@ import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
 
-import java.util.List;
+import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author dsl
@@ -29,11 +30,11 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
     myProcessor.addElement(element, newName);
   }
 
-  public List<PsiElement> getElements() {
+  public Set<PsiElement> getElements() {
     return myProcessor.getElements();
   }
 
-  public List<String> getNewNames() {
+  public Collection<String> getNewNames() {
     return myProcessor.getNewNames();
   }
 

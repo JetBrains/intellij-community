@@ -1,10 +1,6 @@
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.usageView.UsageInfo;
 
@@ -14,9 +10,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class AutomaticVariableRenamer extends AutomaticRenamer<PsiVariable> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticVariableRenamer");
-
+public class AutomaticVariableRenamer extends AutomaticRenamer {
   public AutomaticVariableRenamer(PsiClass aClass, String newClassName, List<UsageInfo> usages) {
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       final UsageInfo info = iterator.next();
@@ -42,14 +36,14 @@ public class AutomaticVariableRenamer extends AutomaticRenamer<PsiVariable> {
     return "Variable";
   }
 
-  public String nameToCanonicalName(String name, PsiVariable psiVariable) {
+  public String nameToCanonicalName(String name, PsiNamedElement psiVariable) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiVariable.getManager());
-    return codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind(psiVariable));
+    return codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
   }
 
-  public String canonicalNameToName(String canonicalName, PsiVariable psiVariable) {
+  public String canonicalNameToName(String canonicalName, PsiNamedElement psiVariable) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiVariable.getManager());
-    return codeStyleManager.propertyNameToVariableName(canonicalName, codeStyleManager.getVariableKind(psiVariable));
+    return codeStyleManager.propertyNameToVariableName(canonicalName, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
   }
 
 }

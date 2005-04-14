@@ -32,6 +32,12 @@ public class RenameFieldsTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/renameField/after03.java");
   }
 
+  public void testCollisionsRenamingFieldWithSetter() throws Exception {
+    configureByFile("/refactoring/renameField/before05.java");
+    perform("utm");
+    checkResultByFile("/refactoring/renameField/after05.java");
+  }
+
   protected void perform(String newName) {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
                                                              TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);

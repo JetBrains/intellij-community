@@ -1,9 +1,10 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
 import com.intellij.refactoring.ui.StringTableCellEditor;
@@ -29,16 +30,16 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private static final int CHECK_COLUMN = 0;
   private static final int OLD_NAME_COLUMN = 1;
   private static final int NEW_NAME_COLUMN = 2;
-  private final AutomaticRenamer<?> myRenamer;
+  private final AutomaticRenamer myRenamer;
   private boolean[] myShouldRename;
-  private String[] myOldNames;
   private String[] myNewNames;
+  PsiNamedElement myRenames[];
   private MyTableModel myTableModel;
   private Table myTable;
   private final Project myProject;
 
 
-  public AutomaticRenamingDialog(Project project, AutomaticRenamer<?> renamer) {
+  public AutomaticRenamingDialog(Project project, AutomaticRenamer renamer) {
     super(project, true);
     myProject = project;
     myRenamer = renamer;
@@ -48,23 +49,28 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   private void populateData() {
-    List<String> oldNames = new ArrayList<String>();
-    final Map<String,String> renames = myRenamer.getRenames();
-    for (Iterator<String> iterator = renames.keySet().iterator(); iterator.hasNext();) {
-      final String oldName = iterator.next();
-      if (renames.get(oldName) != null) {
-       oldNames.add(oldName);
+    final Map<PsiNamedElement, String> renames = myRenamer.getRenames();
+
+    List<PsiNamedElement> temp = new ArrayList<PsiNamedElement>();
+    for (Iterator<PsiNamedElement> iterator = renames.keySet().iterator(); iterator.hasNext();) {
+      final PsiNamedElement namedElement = iterator.next();
+      final String newName = renames.get(namedElement);
+      if (newName != null) temp.add(namedElement);
+    }
+
+    myRenames = temp.toArray(new PsiNamedElement[temp.size()]);
+    Arrays.sort(myRenames, new Comparator<PsiNamedElement>() {
+      public int compare(final PsiNamedElement e1, final PsiNamedElement e2) {
+        return e1.getName().compareTo(e2.getName());
       }
+    });
+
+    myNewNames = new String[myRenames.length];
+    for (int i = 0; i < myNewNames.length; i++) {
+      myNewNames[i] = renames.get(myRenames[i]);
     }
-    myOldNames = oldNames.toArray(new String[oldNames.size()]);
-    myShouldRename = new boolean[myOldNames.length];
-    myNewNames = new String[myOldNames.length];
-    Arrays.sort(myOldNames);
-    for (int i = 0; i < myOldNames.length; i++) {
-      final String oldName = myOldNames[i];
-      myShouldRename[i] = true;
-      myNewNames[i] = renames.get(oldName);
-    }
+
+    myShouldRename = new boolean[myRenames.length];
   }
 
   protected JComponent createNorthPanel() {
@@ -142,13 +148,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   protected void updateRenamer() {
-    for (int i = 0; i < myOldNames.length; i++) {
-      String oldName = myOldNames[i];
+    for (int i = 0; i < myRenames.length; i++) {
+      PsiNamedElement element = myRenames[i];
       if (myShouldRename[i]) {
-        myRenamer.setRename(oldName, myNewNames[i]);
+        myRenamer.setRename(element, myNewNames[i]);
       }
       else {
-        myRenamer.doNotRename(oldName);
+        myRenamer.doNotRename(element);
       }
     }
   }
@@ -159,10 +165,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   protected String[] getNewNames() {
     return myNewNames;
-  }
-
-  protected String[] getOldNames() {
-    return myOldNames;
   }
 
   private class MyTableModel extends AbstractTableModel {
@@ -179,7 +181,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         case CHECK_COLUMN:
           return Boolean.valueOf(myShouldRename[rowIndex]);
         case OLD_NAME_COLUMN:
-          return myOldNames[rowIndex];
+          return myRenames[rowIndex].getName();
         case NEW_NAME_COLUMN:
           return myNewNames[rowIndex];
         default:

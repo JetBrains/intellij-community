@@ -63,9 +63,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       dialog.show();
       if (!dialog.isOK()) return false;
 
-      final List<? extends PsiVariable> variables = myVariableRenamer.getElements();
-      for (Iterator<? extends PsiVariable> iterator1 = variables.iterator(); iterator1.hasNext();) {
-        final PsiVariable variable = iterator1.next();
+      final List<PsiNamedElement> variables = myVariableRenamer.getElements();
+      for (Iterator<PsiNamedElement> iterator1 = variables.iterator(); iterator1.hasNext();) {
+        final PsiVariable variable = (PsiVariable)iterator1.next();
         myVariablesRenames.put(variable, myVariableRenamer.getNewName(variable));
       }
 

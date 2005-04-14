@@ -2,17 +2,18 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 
 /**
  * @author ven
  */
-public class FormsRenamer extends AutomaticRenamer<PsiFile> {
-  public String nameToCanonicalName(String name, PsiFile psiFile) {
+public class FormsRenamer extends AutomaticRenamer {
+  public String nameToCanonicalName(String name, PsiNamedElement psiFile) {
     if (name.endsWith(".form")) return name.substring(0, name.length() - ".form".length());
     return name;
   }
 
-  public String canonicalNameToName(String canonicalName, PsiFile psiFile) {
+  public String canonicalNameToName(String canonicalName, PsiNamedElement psiFile) {
     return canonicalName.indexOf(".") < 0 ? canonicalName + ".form" : canonicalName;
   }
 
