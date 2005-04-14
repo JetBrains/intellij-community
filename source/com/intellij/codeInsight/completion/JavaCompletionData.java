@@ -12,7 +12,7 @@ import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 
-class JavaCompletionData extends CompletionData{
+public class JavaCompletionData extends CompletionData{
 
   protected static final String[] MODIFIERS_LIST = {
     "public", "protected", "private",
