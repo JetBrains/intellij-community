@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.structureView;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -50,8 +49,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final Editor myEditor;
   private final CaretListener myCaretListener;
   private final List<FileEditorPositionListener> myListeners = new ArrayList<FileEditorPositionListener>();
-
-  private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.TextEditorBasedStructureViewModel");
 
   protected TextEditorBasedStructureViewModel(PsiFile psiFile) {
     this(getEditorForFile(psiFile));

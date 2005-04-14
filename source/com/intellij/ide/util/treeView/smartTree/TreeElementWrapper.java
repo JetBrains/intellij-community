@@ -3,7 +3,6 @@ package com.intellij.ide.util.treeView.smartTree;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
   public TreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
@@ -20,10 +19,6 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
       TreeElementWrapper childNode = new TreeElementWrapper(getProject(), children[i], myTreeModel);
       addSubElement(childNode);
     }
-  }
-
-  public boolean contains(VirtualFile file) {
-    return false;
   }
 
   public void update(PresentationData presentation) {

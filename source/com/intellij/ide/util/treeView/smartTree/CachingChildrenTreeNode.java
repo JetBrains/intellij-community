@@ -23,14 +23,14 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       return new ArrayList<AbstractTreeNode>(myChildren);
   }
 
-    private void ensureChildrenAreInitialized() {
-        if (myChildren == null) {
-          myChildren = new ArrayList<CachingChildrenTreeNode>();
-          rebuildSubtree();
-        }
+  private void ensureChildrenAreInitialized() {
+    if (myChildren == null) {
+      myChildren = new ArrayList<CachingChildrenTreeNode>();
+      rebuildSubtree();
     }
+  }
 
-    public void addSubElement(CachingChildrenTreeNode node) {
+  public void addSubElement(CachingChildrenTreeNode node) {
     ensureChildrenAreInitialized();
     myChildren.add(node);
     node.setParent(this);
@@ -97,8 +97,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  public void groupElements(Grouper grouper) {
-
+  private void groupElements(Grouper grouper) {
     ArrayList<AbstractTreeNode> ungrouped = new ArrayList<AbstractTreeNode>();
     Collection<AbstractTreeNode> children = getChildren();
     for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
@@ -110,8 +109,9 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       }
     }
 
-    processUngrouped(ungrouped, grouper);
-
+    if (ungrouped.size() != 0) {
+      processUngrouped(ungrouped, grouper);
+    }
 
     Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
@@ -126,8 +126,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(result);
   }
 
-  private void processUngrouped(ArrayList<AbstractTreeNode> ungrouped,
-                                                                   Grouper grouper) {
+  private void processUngrouped(ArrayList<AbstractTreeNode> ungrouped, Grouper grouper) {
     Collection<TreeElement> ungroupedObjects = collectValues(ungrouped);
     Collection<Group> groups = grouper.group(ungroupedObjects);
 

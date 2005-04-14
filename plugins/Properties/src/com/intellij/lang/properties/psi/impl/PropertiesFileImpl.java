@@ -2,16 +2,16 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.lang.properties.PropertiesElementTypes;
 import com.intellij.lang.properties.PropertiesSupportLoader;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,6 +21,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
+  private Map<String,Property> myProperties;
+
   public PropertiesFileImpl(Project project, VirtualFile file) {
     super(project, file, PropertiesSupportLoader.FILE_TYPE.getLanguage());
   }
@@ -38,22 +40,31 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   public Property[] getProperties() {
+    if (myProperties == null) {
+      readProperties();
+    }
+    return myProperties.values().toArray(new Property[myProperties.size()]);
+  }
+
+  private void readProperties() {
     final ASTNode[] props = getNode().findChildrenByFilter(PropertiesElementTypes.PROPERTIES);
-    List<Property> list = new SmartList<Property>();
+    myProperties = new LinkedHashMap<String, Property>();
     for (int i = 0; i < props.length; i++) {
       final ASTNode prop = props[i];
       final Property property = (Property)prop.getPsi();
-      list.add(property);
+      myProperties.put(property.getKey(), property);
     }
-    return list.toArray(new Property[list.size()]);
   }
 
   public Property findPropertyByKey(String key) {
-    Property[] properties = getProperties();
-    for (int i = 0; i < properties.length; i++) {
-      Property property = properties[i];
-      if (key.equals(property.getKey())) return property;
+    if (myProperties == null) {
+      readProperties();
     }
-    return null;
+    return myProperties.get(key);
+  }
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myProperties = null;
   }
 }

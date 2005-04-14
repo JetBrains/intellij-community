@@ -15,6 +15,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.properties.structureView.PropertiesStructureViewModel;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
+import com.intellij.lang.properties.psi.PropertiesFile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -70,7 +71,7 @@ public class PropertiesLanguage extends Language {
   public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
     return new TreeBasedStructureViewBuilder() {
       public StructureViewModel createStructureViewModel() {
-        return new PropertiesStructureViewModel(psiElement);
+        return new PropertiesStructureViewModel((PropertiesFile)psiElement);
       }
     };
   }

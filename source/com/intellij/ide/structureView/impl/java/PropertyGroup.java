@@ -40,7 +40,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public static final PropertyGroup createOn(PsiElement object) {
     if (object instanceof PsiField) {
-      PsiField field = ((PsiField)object);
+      PsiField field = (PsiField)object;
       PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field.getProject(), field), field.getType(),
                                               field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
       group.setField(field);
@@ -129,7 +129,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public int hashCode() {
     int result;
-    result = (myPropertyName != null ? myPropertyName.hashCode() : 0);
+    result = myPropertyName != null?myPropertyName.hashCode():0;
     result = 29 * result + (myPropertyType != null ? myPropertyType.hashCode() : 0);
     return result;
   }
@@ -162,23 +162,19 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     return 0;
   }
 
-  public PsiClass getParentClass() {
-    return null;
-  }
-
   public void setField(PsiField field) {
     myFieldPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(field);
-    myIsStatic = myIsStatic && field.hasModifierProperty(PsiModifier.STATIC);
+    myIsStatic &= field.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public void setGetter(PsiMethod getter) {
     myGetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(getter);
-    myIsStatic = myIsStatic && getter.hasModifierProperty(PsiModifier.STATIC);
+    myIsStatic &= getter.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public void setSetter(PsiMethod setter) {
     mySetterPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(setter);
-    myIsStatic = myIsStatic && setter.hasModifierProperty(PsiModifier.STATIC);
+    myIsStatic &= setter.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public PsiField getField() {
@@ -200,9 +196,9 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   }
 
   private static Icon loadIcon(String resourceName) {
-    Icon icon = IconLoader.getIcon(resourceName);
+    Icon icon = IconLoader.findIcon(resourceName);
     Application application = ApplicationManager.getApplication();
-    if (icon == null && (application != null && application.isUnitTestMode())) {
+    if (icon == null && application != null && application.isUnitTestMode()) {
       return new ImageIcon();
     }
     return icon;
@@ -216,7 +212,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     return isDeprecated(getField()) && isDeprecated(getGetter()) && isDeprecated(getSetter());
   }
 
-  private boolean isDeprecated(final PsiElement element) {
+  private static boolean isDeprecated(final PsiElement element) {
     if (element == null) return false;
     if (!element.isValid()) return false;
     if (!(element instanceof PsiDocCommentOwner)) return false;

@@ -5,9 +5,8 @@ import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 /**
@@ -18,19 +17,19 @@ import com.intellij.psi.PsiFile;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesStructureViewModel extends TextEditorBasedStructureViewModel {
-  private PsiElement myRoot;
+  private PropertiesFile myPropertiesFile;
 
-  public PropertiesStructureViewModel(final PsiElement root) {
-    super(root.getContainingFile());
-    myRoot = root;
+  public PropertiesStructureViewModel(final PropertiesFile root) {
+    super(root);
+    myPropertiesFile = root;
   }
 
   public StructureViewTreeElement getRoot() {
-    return new PropertiesStructureViewElement(myRoot);
+    return new PropertiesFileStructureViewElement(myPropertiesFile);
   }
 
   public Grouper[] getGroupers() {
-    return new Grouper[0];
+    return new Grouper[]{new GroupByWordPrefixes()};
   }
 
   public Sorter[] getSorters() {
@@ -42,7 +41,7 @@ public class PropertiesStructureViewModel extends TextEditorBasedStructureViewMo
   }
 
   protected PsiFile getPsiFile() {
-    return myRoot.getContainingFile();
+    return myPropertiesFile;
   }
 
   protected Class[] getSuitableClasses() {

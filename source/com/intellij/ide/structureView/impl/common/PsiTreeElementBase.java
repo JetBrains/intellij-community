@@ -37,10 +37,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.codeInsight.CodeInsightColors;
 
@@ -50,7 +47,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation {
+public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement<Value>, ItemPresentation {
   private final SmartPsiElementPointer mySmartPsiElementPointer;
 
   protected PsiTreeElementBase(PsiElement psiElement) {
@@ -75,7 +72,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     }
   }
 
-  public Object getValue() {
+  public Value getValue() {
     return getElement();
   }
 
@@ -106,7 +103,8 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     StructureViewTreeElement[] baseChildren = getChildrenBase();
     result.addAll(Arrays.asList(baseChildren));
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(getElement().getProject());
-    List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(getElement().getClass());
+    Class<? extends PsiElement> aClass = getElement().getClass();
+    List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(aClass);
     for (Iterator<StructureViewExtension> iterator = allExtensions.iterator(); iterator.hasNext();) {
       StructureViewExtension extension = iterator.next();
       StructureViewTreeElement[] children = extension.getChildren(getElement());
