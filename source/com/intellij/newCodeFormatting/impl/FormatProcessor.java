@@ -14,19 +14,19 @@ import gnu.trove.TIntObjectHashMap;
 
 class FormatProcessor {
   private FormattingModel myModel;
-  private BlockWrapper myCurrentBlock;
+  private LeafBlockWrapper myCurrentBlock;
 
-  private final Map<Block, BlockWrapper> myInfos;
-  private final TIntObjectHashMap<BlockWrapper> myTextRangeToWrapper;
+  private final Map<Block, AbstractBlockWrapper> myInfos;
+  private final TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private CodeStyleSettings mySettings;
 
   private final Collection<AlignmentImpl> myAlignedAlignments = new HashSet<AlignmentImpl>();
-  BlockWrapper myWrapCandidate = null;
-  private final BlockWrapper myFirstTokenBlock;
+  LeafBlockWrapper myWrapCandidate = null;
+  private final LeafBlockWrapper myFirstTokenBlock;
 
-  private Map<TextRange, Pair<BlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<BlockWrapper, Boolean>>();
+  private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
   private boolean myAlignAgain = false;
 
   public FormatProcessor(FormattingModel model,
@@ -51,9 +51,9 @@ class FormatProcessor {
     //}
   }
 
-  private TIntObjectHashMap<BlockWrapper> buildTextRangeToInfoMap(final BlockWrapper first) {
-    final TIntObjectHashMap<BlockWrapper> result = new TIntObjectHashMap<BlockWrapper>();
-    BlockWrapper current = first;
+  private TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
+    final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<LeafBlockWrapper>();
+    LeafBlockWrapper current = first;
     while (current != null) {
       result.put(current.getTextRange().getStartOffset(), current);
       current = current.getNextBlock();
@@ -147,8 +147,8 @@ class FormatProcessor {
     myAlignedAlignments.clear();
     myPreviousDependancies.clear();
     myWrapCandidate = null;
-    for (Iterator<BlockWrapper> iterator = myInfos.values().iterator(); iterator.hasNext();) {
-      BlockWrapper blockWrapper = iterator.next();
+    for (Iterator<AbstractBlockWrapper> iterator = myInfos.values().iterator(); iterator.hasNext();) {
+      AbstractBlockWrapper blockWrapper = iterator.next();
       blockWrapper.reset();
     }
   }
@@ -156,7 +156,7 @@ class FormatProcessor {
   public void performModifications() throws IncorrectOperationException {
     int shift = 0;
     WhiteSpace prev = null;
-    for (BlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
+    for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
         final int oldTextRangeLength = block.getTextRange().getLength();
@@ -172,7 +172,7 @@ class FormatProcessor {
     }
   }
 
-  private BlockWrapper getBlockInfo(final Block rootBlock) {
+  private AbstractBlockWrapper getBlockInfo(final Block rootBlock) {
     if (rootBlock == null) return null;
     return myInfos.get(rootBlock);
   }
@@ -222,7 +222,7 @@ class FormatProcessor {
   private boolean shouldReformatBecauseOfBackwardDependance(TextRange changed) {
     for (Iterator<TextRange> iterator = myPreviousDependancies.keySet().iterator(); iterator.hasNext();) {
       TextRange textRange = iterator.next();
-      final Pair<BlockWrapper, Boolean> pair = myPreviousDependancies.get(textRange);
+      final Pair<AbstractBlockWrapper, Boolean> pair = myPreviousDependancies.get(textRange);
       final boolean containedLineFeeds = pair.getSecond().booleanValue();
       if (textRange.getStartOffset() <= changed.getStartOffset() && textRange.getEndOffset() >= changed.getEndOffset()) {
         boolean containsLineFeeds = containsLineFeeds(textRange);
@@ -236,7 +236,7 @@ class FormatProcessor {
 
   private void saveDependancy(final SpacePropertyImpl spaceProperty) {
     final TextRange dependancy = ((DependantSpacePropertyImpl)spaceProperty).getDependancy();
-    myPreviousDependancies.put(dependancy, new Pair<BlockWrapper, Boolean>(myCurrentBlock, new Boolean(containsLineFeeds(dependancy))));
+    myPreviousDependancies.put(dependancy, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(containsLineFeeds(dependancy))));
   }
 
   private boolean shouldSaveDependancy(final SpacePropertyImpl spaceProperty, WhiteSpace whiteSpace) {
@@ -326,7 +326,7 @@ class FormatProcessor {
       whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
     } else {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-      BlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
+      AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
       if (previousIndentedBlock == null) {
         whiteSpace.setSpaces(alignOffset, 0);
       } else {
@@ -341,8 +341,8 @@ class FormatProcessor {
     }
   }
 
-  private BlockWrapper getPreviousIndentedBlock() {
-    BlockWrapper current = myCurrentBlock.getParent();
+  private AbstractBlockWrapper getPreviousIndentedBlock() {
+    AbstractBlockWrapper current = myCurrentBlock.getParent();
     while (current != null) {
       if (current.getStartOffset() != myCurrentBlock.getStartOffset() && current.getWhiteSpace().containsLineFeeds()) return current;
       current = current.getParent();
@@ -385,7 +385,7 @@ class FormatProcessor {
 
   private int getOffsetBefore(final Block block) {
     int result = 0;
-    BlockWrapper info = getBlockInfo(block);
+    LeafBlockWrapper info = (LeafBlockWrapper)getBlockInfo(block);
     while (true) {
       final WhiteSpace whiteSpace = info.getWhiteSpace();
       result += whiteSpace.getTotalSpaces();
@@ -400,7 +400,7 @@ class FormatProcessor {
   }
 
   private void setAlignOffset(final int currentIndent) {
-    BlockWrapper current = myCurrentBlock;
+    AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
       if (alignment != null && !myAlignedAlignments.contains(alignment)) {
@@ -415,7 +415,7 @@ class FormatProcessor {
   }
 
   private int getAlignOffset() {
-    BlockWrapper current = myCurrentBlock;
+    AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
       if (alignment != null && alignment.getCurrentOffset() >= 0){
@@ -430,7 +430,7 @@ class FormatProcessor {
   }
 
   public boolean containsLineFeeds(final TextRange dependance) {
-    BlockWrapper child = myTextRangeToWrapper.get(dependance.getStartOffset());
+    LeafBlockWrapper child = myTextRangeToWrapper.get(dependance.getStartOffset());
     if (child.containsLineFeeds()) return true;
     final int endOffset = dependance.getEndOffset();
     while (child.getTextRange().getEndOffset() < endOffset) {
@@ -446,7 +446,7 @@ class FormatProcessor {
   }
 
   public void setAllWhiteSpacesAreReadOnly() {
-    BlockWrapper current = myFirstTokenBlock;
+    LeafBlockWrapper current = myFirstTokenBlock;
     while (current != null) {
       current.getWhiteSpace().setReadOnly(true);
       current = current.getNextBlock();
