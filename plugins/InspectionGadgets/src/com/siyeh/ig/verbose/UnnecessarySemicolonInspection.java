@@ -4,7 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 
 public class UnnecessarySemicolonInspection extends ClassInspection {
@@ -47,54 +47,47 @@ public class UnnecessarySemicolonInspection extends ClassInspection {
     }
 
     private static class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
-        private boolean m_inClass = false;
-
         private UnnecessarySemicolonVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
         public void visitClass(PsiClass aClass) {
-            final boolean wasInClass = m_inClass;
-            if (!m_inClass) {
-                m_inClass = true;
-                super.visitClass(aClass);
-            }
-            m_inClass = wasInClass;
-            PsiElement sibling = aClass.getNextSibling();
+            PsiElement sibling = skipForwardWhiteSpacesAndComments(aClass);
             while (sibling != null) {
                 if (sibling instanceof PsiJavaToken &&
                         ((PsiJavaToken) sibling).getTokenType().equals(JavaTokenType.SEMICOLON)) {
                     registerError(sibling);
+                } else {
+                    break;
                 }
-                sibling = sibling.getNextSibling();
+                sibling = skipForwardWhiteSpacesAndComments(sibling);
+            }
+
+            //TODO: Dave, correct me if I'm wrong but I think that only semicolon after last member in enum is unneccessary
+            //Also your indentation level differs from ours:)
+            if (aClass.isEnum()) {
+              final PsiField[] fields = aClass.getFields();
+              if (fields.length > 0) {
+                final PsiField last = fields[fields.length - 1];
+                if (last instanceof PsiEnumConstant) {
+                  PsiElement element = skipForwardWhiteSpacesAndComments(last);
+                  if (element instanceof PsiJavaToken &&
+                      ((PsiJavaToken)element).getTokenType().equals(JavaTokenType.SEMICOLON)) {
+                    final PsiElement next = skipForwardWhiteSpacesAndComments(element);
+                    if (next == null || next == aClass.getRBrace()) {
+                      registerError(element);
+                    }
+                  }
+                }
+              }
             }
         }
 
-        public void visitJavaToken(PsiJavaToken token) {
-            super.visitJavaToken(token);
-            final IElementType tokenType = token.getTokenType();
-            if (!tokenType.equals(JavaTokenType.SEMICOLON)) {
-                return;
-            }
-            final PsiElement parent = token.getParent();
-            if (!(parent instanceof PsiClass) && !(parent instanceof PsiJavaFile)) {
-                return;
-            }
-            if (parent instanceof PsiClass && ((PsiClass) parent).isEnum()) {
-                //A very hacky way of saying that semicolons after
-                //enum constants are not unnecessary.
-                PsiElement prevSibling = token.getPrevSibling();
-                while (prevSibling != null && prevSibling instanceof PsiWhiteSpace) {
-                    prevSibling = prevSibling.getPrevSibling();
-                }
-                if (prevSibling instanceof PsiEnumConstant) {
-                    return;
-                }
-            }
-            registerError(token);
-        }
+      private PsiElement skipForwardWhiteSpacesAndComments(final PsiElement element) {
+        return PsiTreeUtil.skipSiblingsForward(element, new Class[]{PsiWhiteSpace.class, PsiComment.class});
+      }
 
-        public void visitEmptyStatement(PsiEmptyStatement statement) {
+      public void visitEmptyStatement(PsiEmptyStatement statement) {
             super.visitEmptyStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiCodeBlock) {
