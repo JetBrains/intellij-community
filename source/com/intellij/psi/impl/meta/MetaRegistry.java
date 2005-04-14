@@ -9,9 +9,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.RootTagFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
-import com.intellij.psi.impl.source.jsp.tagLibrary.JspTagAttributeInfoImpl;
-import com.intellij.psi.impl.source.jsp.tagLibrary.JspTagInfoImpl;
-import com.intellij.psi.impl.source.jsp.tagLibrary.JspTagLibraryInfoImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -20,8 +17,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlMarkupDecl;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.TldDescriptor;
-import com.intellij.jsp.impl.JspNsDescriptor;
+import com.intellij.jsp.impl.*;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -55,7 +51,7 @@ public class MetaRegistry {
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("taglib")
           ),
-          JspTagLibraryInfoImpl.class);
+          TldDescriptor.class);
     }
 
     {
@@ -73,7 +69,25 @@ public class MetaRegistry {
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("tag")
           ),
-          JspTagInfoImpl.class);
+          TldTagDescriptor.class);
+    }
+
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(TAGLIB_URIS),
+              new TextFilter("tag-file")
+          ),
+          TldTagFileDescriptor.class);
+    }
+
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(TAGLIB_URIS),
+              new TextFilter("function")
+          ),
+          FunctionDescriptor.class);
     }
 
     {
@@ -82,7 +96,7 @@ public class MetaRegistry {
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("attribute")
           ),
-          JspTagAttributeInfoImpl.class
+          TldAttributeDescriptor.class
       );
     }
 

@@ -24,6 +24,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
@@ -39,6 +41,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -264,6 +267,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
+
+      if (refElement instanceof PsiMetaOwner) {
+        final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
+        if (metaData!=null) text = metaData.getName();
+      }
     }
     else {
       return true;
@@ -301,7 +309,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     short searchContext;
 
-    if (refElement instanceof XmlAttributeValue) {
+    if (refElement instanceof XmlAttributeValue || refElement instanceof XmlTag) {
       searchContext = UsageSearchContext.IN_PLAIN_TEXT;
     }
     else {

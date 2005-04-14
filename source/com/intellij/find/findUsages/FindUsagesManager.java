@@ -86,7 +86,9 @@ public class FindUsagesManager {
     }
 
     public boolean canFindUsagesFor(PsiElement element) {
-      boolean result = element instanceof XmlElementDecl || element instanceof XmlAttributeDecl;
+      boolean result = element instanceof XmlElementDecl ||
+                       element instanceof XmlAttributeDecl ||
+                       element instanceof XmlTag;
 
       if (!result && styleHandler != null) {
         result = styleHandler.canFindUsagesFor(element);

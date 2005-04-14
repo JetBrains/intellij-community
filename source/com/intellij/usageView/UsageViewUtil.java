@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -134,7 +135,13 @@ public class UsageViewUtil {
     }
     else if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
-      return "<" + xmlTag.getName() + "> of file " + xmlTag.getContainingFile().getName();
+      String name = xmlTag.getName();
+      final PsiMetaData metaData = xmlTag.getMetaData();
+
+      if (metaData!=null) name = metaData.getName();
+      else name = xmlTag.getName();
+
+      return ((metaData == null)?"<" + name + ">":name) + " of file " + xmlTag.getContainingFile().getName();
     }
     else if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();
@@ -216,6 +223,10 @@ public class UsageViewUtil {
     LOG.assertTrue(psiElement.isValid());
     String ret = "";
     if (psiElement instanceof PsiNamedElement) {
+      if (psiElement instanceof XmlTag) {
+        PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
+        if (metaData!=null) return metaData.getName();
+      }
       ret = ((PsiNamedElement)psiElement).getName();
     }
     else if (psiElement instanceof PsiThrowStatement) {
@@ -330,6 +341,10 @@ public class UsageViewUtil {
       return "variable";
     }
     if (psiElement instanceof XmlTag) {
+      final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
+      if (metaData!=null && metaData.getDeclaration() instanceof XmlTag) {
+        return ((XmlTag)metaData.getDeclaration()).getName();
+      }
       return "XML tag";
     }
     if (psiElement instanceof PsiMethod) {
@@ -471,6 +486,8 @@ public class UsageViewUtil {
       }
     }
     else if (psiElement instanceof XmlTag) {
+      final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
+      if (metaData!=null) return metaData.getName();
       ret = ((XmlTag)psiElement).getName();
     }
     else if (psiElement instanceof XmlAttributeValue) {

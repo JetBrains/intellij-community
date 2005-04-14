@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
+import com.intellij.psi.jsp.tagLibrary.JspTagAttributeInfo;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TeiClassLoader;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
@@ -33,10 +35,11 @@ import java.util.ArrayList;
  * Time: 8:55:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TldTagDescriptor implements JspElementDescriptor,Validator {
+public class TldTagDescriptor implements JspElementDescriptor,Validator,JspTagInfo {
   private XmlTag myTag;
   private String myName;
   private XmlAttributeDescriptor[] myAttributeDescriptors;
+  private JspTagAttributeInfo[] myJspAttributeDescriptors;
   private TldDescriptor myNsDescriptor;
   private boolean myEmpty;
   private boolean myDynamicAttributes;
@@ -138,8 +141,9 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
 
       if(tag != null){
         final String namespacePrefix = tag.getPrefixByNamespace( ((TldDescriptor)getNSDescriptor()).getUri() );
-        if(namespacePrefix != null && namespacePrefix.length() > 0)
+        if (namespacePrefix != null && namespacePrefix.length() > 0) {
           value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
+        }
       }
     }
 
@@ -215,6 +219,17 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
     }
   }
 
+  public JspTagAttributeInfo[] getAttributes() {
+    if (myJspAttributeDescriptors == null) {
+      myJspAttributeDescriptors = CustomTagSupportUtil.getAttributeDescriptors(getAttributesDescriptors());
+    }
+    return myJspAttributeDescriptors;
+  }
+
+  public int getBodyContent() {
+    return myEmpty ? BODY_CONTENT_EMPTY : BODY_CONTENT_OTHER;
+  }
+
   public TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties) {
     Object tei;
     TagExtraInfo castedTei = null;
@@ -244,8 +259,9 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator {
       }
     }
 
-    if(castedTei != null)
+    if (castedTei != null) {
       return castedTei;
+    }
 
     return new MyTEI(myTLDVars);
   }
