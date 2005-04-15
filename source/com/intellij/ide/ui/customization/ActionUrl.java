@@ -234,7 +234,7 @@ public class ActionUrl implements JDOMExternalizable {
       return false;
     }
     ActionUrl url = (ActionUrl)object;
-    return Comparing.equal(myComponent, url.myComponent) && myGroupPath.equals(url.myGroupPath);
+    return Comparing.equal(myComponent, url.myComponent) && myGroupPath.equals(url.myGroupPath) && myAbsolutePosition == url.getAbsolutePosition();
   }
 
   public int hashCode() {
