@@ -12,7 +12,6 @@ import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -27,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -76,8 +76,7 @@ public class CodeFormatterFacade implements Constants {
 
   public ASTNode process(ASTNode element, int parent_indent) {
 
-    final FileType fileType = myHelper.getFileType();
-    if (useBlockFormatter(fileType)) {
+    if (useBlockFormatter(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile())) {
       TextRange range = element.getTextRange();
       int startOffset = range.getStartOffset();
       int endOffset = range.getEndOffset();
@@ -131,8 +130,10 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  public static boolean useBlockFormatter(final FileType fileType) {
-    return (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JAVA);
+  public static boolean useBlockFormatter(final PsiFile file) {
+    return
+      file instanceof XmlFile
+    || file instanceof PsiJavaFile;
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
@@ -146,7 +147,7 @@ public class CodeFormatterFacade implements Constants {
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
 
-    if (useBlockFormatter(fileType)) {
+    if (useBlockFormatter(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile())) {
       TextRange range = formatComments(element, startOffset, endOffset);
       final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
       final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);

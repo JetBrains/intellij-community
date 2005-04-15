@@ -69,7 +69,7 @@ public class IndentInfo {
 
   public int getSpacesCount(final CodeStyleSettings.IndentOptions indentOptions) {
     final int indentSpaces = getIndentCount(indentOptions);
-    return indentSpaces - (indentSpaces/indentOptions.INDENT_SIZE) * indentOptions.INDENT_SIZE + mySpaces;
+    return myIndentSpaces - indentSpaces * indentOptions.INDENT_SIZE + mySpaces;
 
   }
 }

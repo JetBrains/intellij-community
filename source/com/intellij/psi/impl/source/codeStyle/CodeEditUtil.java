@@ -492,7 +492,7 @@ public class CodeEditUtil {
                                                     final CodeStyleSettings settings,
                                                     final boolean mayChangeLineFeeds) {
     Language elementLanguage = file.findElementAt(tokenStartOffset).getLanguage();
-    if (CodeFormatterFacade.useBlockFormatter(elementLanguage) && CodeFormatterFacade.useBlockFormatter(file.getFileType())) {
+    if (CodeFormatterFacade.useBlockFormatter(elementLanguage) && CodeFormatterFacade.useBlockFormatter(file)) {
       final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
       return Formatter.getInstance().getWhiteSpaceBefore(new PsiBasedFormattingModel(file, settings),
                                             CodeFormatterFacade.createBlock(file, settings),
