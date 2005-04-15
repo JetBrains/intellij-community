@@ -58,27 +58,40 @@ class AnchorReference implements PsiReference {
     return resolveInner();
   }
 
+  static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
+    if (!processor.execute(element)) return false;
+    final XmlTag[] subTags = element.getSubTags();
+
+    for (int i = 0; i < subTags.length; i++) {
+      if(!processXmlElements(subTags[i],processor)) return false;
+    }
+
+    return true;
+  }
+
   private PsiElement resolveInner() {
     final PsiElement[] result = new PsiElement[1];
 
-    XmlUtil.processXmlElements(
-      getFile(),
-      new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
-          final String anchorValue = getAnchorValue(element);
+    final XmlFile file = getFile();
+    if (file != null) {
+      processXmlElements(
+        file.getDocument().getRootTag(),
+        new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            final String anchorValue = getAnchorValue(element);
 
-          if (anchorValue!=null && anchorValue.equals(myAnchor)) {
-            final XmlTag xmlTag = (XmlTag)element;
-            XmlAttribute attribute = xmlTag.getAttribute("id", null);
-            if (attribute==null) attribute = xmlTag.getAttribute("name",null);
-            result[0] = attribute.getValueElement();
-            return false;
+            if (anchorValue!=null && anchorValue.equals(myAnchor)) {
+              final XmlTag xmlTag = (XmlTag)element;
+              XmlAttribute attribute = xmlTag.getAttribute("id", null);
+              if (attribute==null) attribute = xmlTag.getAttribute("name",null);
+              result[0] = attribute.getValueElement();
+              return false;
+            }
+            return true;
           }
-          return true;
         }
-      },
-      true
-    );
+      );
+    }
 
     return result[0];
   }
@@ -126,20 +139,22 @@ class AnchorReference implements PsiReference {
   public Object[] getVariants() {
     final List<String> variants = new ArrayList<String>(3);
 
-    XmlUtil.processXmlElements(
-      getFile(),
-      new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
-          final String anchorValue = getAnchorValue(element);
+    final XmlFile file = getFile();
+    if (file!=null) {
+      processXmlElements(
+        file.getDocument().getRootTag(),
+        new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            final String anchorValue = getAnchorValue(element);
 
-          if (anchorValue!=null) {
-            variants.add(anchorValue);
+            if (anchorValue!=null) {
+              variants.add(anchorValue);
+            }
+            return true;
           }
-          return true;
         }
-      },
-      true
-    );
+      );
+    }
 
     return variants.toArray(new String[variants.size()]);
   }
