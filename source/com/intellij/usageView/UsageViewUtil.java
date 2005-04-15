@@ -5,7 +5,6 @@ import com.intellij.aspects.psi.PsiAdvice;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.gen.PsiErrorIntroduction;
 import com.intellij.aspects.psi.gen.PsiVerificationIntroduction;
-import com.intellij.aspects.psi.gen.PsiWarningIntroduction;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.jsp.WebDirectoryElement;
-import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -34,112 +31,17 @@ public class UsageViewUtil {
   private UsageViewUtil() { }
 
   public static String createNodeText(PsiElement element, boolean useFullName) {
-    if (element instanceof PsiDirectory) {
-      return getPackageName((PsiDirectory)element, false);
-    }
-    if (element instanceof PsiPackage) {
-      return getPackageName((PsiPackage)element);
-    }
-    if (element instanceof PsiFile) {
-      return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
-    }
-    if (ThrowSearchUtil.isSearchable(element)) {
-      return ThrowSearchUtil.getSearchableTypeName(element);
-    }
-
-    if (element instanceof PsiClass) {
-      String name = ((PsiClass)element).getQualifiedName();
-      if (name == null || !useFullName) {
-        name = ((PsiClass)element).getName();
-      }
-      return name;
-    }
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
-      if (useFullName) {
-        String s = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                              PsiSubstitutor.EMPTY, PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE |
-                                                                    PsiFormatUtil.SHOW_NAME |
-                                                                    PsiFormatUtil.SHOW_PARAMETERS,
-                                              PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME);
-        final PsiClass psiClass = psiMethod.getContainingClass();
-        if (psiClass != null) {
-          final String qName = psiClass.getQualifiedName();
-          if (qName != null) {
-            s = s + " of " + (psiClass.isInterface() ? "interface " : "class ") + qName;
-          }
-        }
-        return s;
-      }
-      else {
-        return PsiFormatUtil.formatMethod(psiMethod,
-                                          PsiSubstitutor.EMPTY,
-                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                          PsiFormatUtil.SHOW_TYPE);
-      }
-    }
-    else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
-      String s = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                              PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME,
-                                              PsiSubstitutor.EMPTY) + " of " +
-                 PsiFormatUtil.formatMethod(method,
-                                            PsiSubstitutor.EMPTY,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_TYPE);
-
-      final PsiClass psiClass = method.getContainingClass();
-      if (psiClass != null && psiClass.getQualifiedName() != null) {
-        s += " of " + (psiClass.isInterface() ? "interface " : "class ") + psiClass.getQualifiedName();
-      }
-      return s;
-    }
-    else if (element instanceof PsiPointcutDef) {
-      final PsiPointcutDef psiPointcutDef = (PsiPointcutDef)element;
-      String s;
-      if (useFullName) {
-        s = PsiFormatUtil.formatPointcut(psiPointcutDef,
-                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                         PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME);
-        PsiClass psiAspect = psiPointcutDef.getContainingClass();
-        if (psiAspect != null) {
-          String qName = psiAspect.getQualifiedName();
-          if (qName != null) {
-            s = s + " of aspect " + qName;
-          }
-        }
-      }
-      else {
-        s = PsiFormatUtil.formatPointcut(psiPointcutDef, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
-      }
-      return s;
-    }
-    else if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
-      String s = PsiFormatUtil.formatVariable(psiField,
-                                              PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME,
-                                              PsiSubstitutor.EMPTY);
-      PsiClass psiClass = psiField.getContainingClass();
-      if (psiClass != null) {
-        String qName = psiClass.getQualifiedName();
-        if (qName != null) {
-          s = s + " of " + (psiClass.isInterface() ? "interface " : "class ") + qName;
-        }
-      }
-      return s;
-    }
-    else if (element instanceof PsiVariable) {
-      return PsiFormatUtil.formatVariable((PsiVariable)element,
-                                          PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME,
-                                          PsiSubstitutor.EMPTY);
-    }
-    else if (element instanceof XmlTag) {
+    if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
       String name = xmlTag.getName();
       final PsiMetaData metaData = xmlTag.getMetaData();
 
-      if (metaData!=null) name = metaData.getName();
-      else name = xmlTag.getName();
+      if (metaData != null) {
+        name = metaData.getName();
+      }
+      else {
+        name = xmlTag.getName();
+      }
 
       return ((metaData == null)?"<" + name + ">":name) + " of file " + xmlTag.getContainingFile().getName();
     }
@@ -147,12 +49,9 @@ public class UsageViewUtil {
       return ((XmlAttributeValue)element).getValue();
     }
     else if (element != null) {
-      final Language lang = element.getLanguage();
-      if (lang != null) {
-        FindUsagesProvider provider = lang.getFindUsagesProvider();
-        if (provider != null) {
-          return provider.getNodeText(element, useFullName);
-        }
+      FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
+      if (provider != null) {
+        return provider.getNodeText(element, useFullName);
       }
     }
 
@@ -193,7 +92,7 @@ public class UsageViewUtil {
     }
   }
 
-  private static String getPackageName(PsiPackage psiPackage) {
+  public static String getPackageName(PsiPackage psiPackage) {
     if (psiPackage == null) {
       return null;
     }
@@ -307,39 +206,6 @@ public class UsageViewUtil {
   }
 
   public static String getType(PsiElement psiElement) {
-    if (psiElement instanceof PsiDirectory) {
-      return "directory";
-    }
-    if (psiElement instanceof WebDirectoryElement) {
-      return "web directory";
-    }
-    if (psiElement instanceof PsiFile) {
-      return "file";
-    }
-    if (ThrowSearchUtil.isSearchable(psiElement)) {
-      return "exception";
-    }
-    if (psiElement instanceof PsiPackage) {
-      return "package";
-    }
-    if (psiElement instanceof PsiClass) {
-      if (((PsiClass)psiElement).isAnnotationType()) {
-        return "@interface";
-      }
-      else if (((PsiClass)psiElement).isInterface()) {
-        return "interface";
-      }
-      return "class";
-    }
-    if (psiElement instanceof PsiField) {
-      return "field";
-    }
-    if (psiElement instanceof PsiParameter) {
-      return "parameter";
-    }
-    if (psiElement instanceof PsiLocalVariable) {
-      return "variable";
-    }
     if (psiElement instanceof XmlTag) {
       final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
       if (metaData!=null && metaData.getDeclaration() instanceof XmlTag) {
@@ -347,31 +213,7 @@ public class UsageViewUtil {
       }
       return "XML tag";
     }
-    if (psiElement instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)psiElement;
-      final boolean isConstructor = psiMethod.isConstructor();
-      if (isConstructor) {
-        return "constructor";
-      }
-      else {
-        return "method";
-      }
-    }
-    if (psiElement instanceof PsiPointcutDef) {
-      return "pointcut";
-    }
-    if (psiElement instanceof PsiErrorIntroduction) {
-      return "error declaration";
-    }
-    if (psiElement instanceof PsiWarningIntroduction) {
-      return "warning declaration";
-    }
-    if (psiElement instanceof PsiAdvice) {
-      return "advice";
-    }
-    if (psiElement instanceof PsiLabeledStatement) {
-      return "label";
-    }
+
     if (psiElement instanceof PsiAntElement) {
       return ((PsiAntElement)psiElement).getRole().getName();
     }
@@ -390,111 +232,14 @@ public class UsageViewUtil {
   public static String getDescriptiveName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
     String ret = "";
-    if (ThrowSearchUtil.isSearchable(psiElement)) {
-      ret = ThrowSearchUtil.getSearchableTypeName(psiElement);
-    }
-    if (psiElement instanceof PsiDirectory) {
-      ret = getPackageName((PsiDirectory)psiElement, false);
-    }
-    else if (psiElement instanceof PsiPackage) {
-      ret = getPackageName((PsiPackage)psiElement);
-    }
-    else if (psiElement instanceof PsiFile) {
-      ret = ((PsiFile)psiElement).getVirtualFile().getPresentableUrl();
-    }
-    else if (psiElement instanceof PsiClass) {
-      if (psiElement instanceof PsiAnonymousClass) {
-        ret = "anonymous class";
-      }
-      else {
-        ret = ((PsiClass)psiElement).getQualifiedName();
-        if (ret == null) {
-          ret = ((PsiClass)psiElement).getName();
-        }
-      }
-    }
-    else if (psiElement instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)psiElement;
-      ret = PsiFormatUtil.formatMethod(psiMethod,
-                                       PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                       PsiFormatUtil.SHOW_TYPE);
-      PsiClass psiClass = psiMethod.getContainingClass();
-      if (psiClass != null) {
-        if (psiClass instanceof PsiAnonymousClass) {
-          ret = ret + " of anonymous class";
-        }
-        else {
-          String className = psiClass.getName();
-          if (!psiClass.isInterface()) {
-            ret = ret + " of class " + className;
-          }
-          else if (psiClass.isInterface()) {
-            ret = ret + " of interface " + className;
-          }
-        }
-      }
-    }
-    else if (psiElement instanceof PsiField) {
-      PsiField psiField = (PsiField)psiElement;
-      ret = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
-      PsiClass psiClass = psiField.getContainingClass();
-      if (psiClass != null) {
-        if (psiClass instanceof PsiAnonymousClass) {
-          ret = ret + " of anonymous class";
-        }
-        else {
-          String className = psiClass.getName();
-          if (!psiClass.isInterface()) {
-            ret = ret + " of class " + className;
-          }
-          else if (psiClass.isInterface()) {
-            ret = ret + " of interface " + className;
-          }
-        }
-      }
-    }
-    else if (psiElement instanceof PsiVariable) {
-      PsiVariable psiVariable = (PsiVariable)psiElement;
-      ret = PsiFormatUtil.formatVariable(psiVariable, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
-    }
-    else if (psiElement instanceof PsiPointcutDef) {
-      PsiPointcutDef psiPointcut = (PsiPointcutDef)psiElement;
-      ret = PsiFormatUtil.formatPointcut(psiPointcut,
-                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                         PsiFormatUtil.SHOW_TYPE);
-      PsiClass psiClass = psiPointcut.getContainingClass();
-      if (psiClass != null) {
-        ret = ret + " of aspect " + psiClass.getName();
-      }
-    }
-    else if (psiElement instanceof PsiErrorIntroduction) {
-      PsiErrorIntroduction introduction = (PsiErrorIntroduction)psiElement;
-      PsiLiteralExpression message = introduction.getMessage();
-      ret = "error \"" + (message == null ? "<no message>" : message.getValue()) + "\"";
-      PsiFile psiFile = introduction.getContainingFile();
-      if (psiFile != null) {
-        ret = ret + " in file " + psiFile.getName();
-      }
-    }
-    else if (psiElement instanceof PsiWarningIntroduction) {
-      PsiWarningIntroduction introduction = (PsiWarningIntroduction)psiElement;
-      PsiLiteralExpression message = introduction.getMessage();
-      ret = "warning \"" + (message == null ? "<no message>" : message.getValue()) + "\"";
-      PsiFile psiFile = introduction.getContainingFile();
-      if (psiFile != null) {
-        ret = ret + " in file " + psiFile.getName();
-      }
-    }
-    else if (psiElement instanceof XmlTag) {
+
+    if (psiElement instanceof XmlTag) {
       final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
       if (metaData!=null) return metaData.getName();
       ret = ((XmlTag)psiElement).getName();
     }
     else if (psiElement instanceof XmlAttributeValue) {
       ret = ((XmlAttributeValue)psiElement).getValue();
-    }
-    else if (psiElement instanceof PsiLabeledStatement) {
-      ret = ((PsiLabeledStatement)psiElement).getName();
     }
     else {
       final Language lang = psiElement.getLanguage();

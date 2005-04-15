@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -48,6 +49,10 @@ public class JavaLanguage extends Language {
 
   public Commenter getCommenter() {
     return new JavaCommenter();
+  }
+
+  public FindUsagesProvider getFindUsagesProvider() {
+    return new JavaFindUsagesProvider();
   }
 
   private static class Inner {

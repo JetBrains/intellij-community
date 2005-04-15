@@ -12,6 +12,11 @@ public interface HelpID {
   String FIND_VARIABLE_USAGES = "find.findVariableUsages";
   String FIND_PARAMETER_USAGES = "find.findParameterUsages";
   String FIND_THROW_USAGES = "find.findThrowUsages";
+  String FIND_POINTCUT_USAGES = "find.findPointcut";
+  String FIND_ERROR_INTRODUCTION_USAGES = "find.errorIntroduction";
+  String FIND_WARNING_INTRODUCTION_USAGES = "find.warningIntroduction";
+  String FIND_ADVICE_USAGES = "find.findAdvice";
+
 
   String FIND_IN_PROJECT = "find.findInProject";
   String REPLACE_IN_PROJECT = "find.findInProject";

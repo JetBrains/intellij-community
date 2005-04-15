@@ -4,7 +4,6 @@ import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.impl.HelpID;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -164,31 +163,10 @@ public class FindUsagesManager {
   }
 
   public boolean canFindUsages(final PsiElement element) {
-    if (element == null) {
-      return false;
-    }
+    if (element == null) return false;
 
-    if (!((element instanceof PsiDirectory) ||
-           (element instanceof PsiClass) ||
-           (element instanceof PsiVariable) ||
-           (element instanceof PsiPointcutDef) ||
-           (element instanceof PsiPackage) ||
-           (ThrowSearchUtil.isSearchable(element)) ||
-           (element instanceof PsiMethod))) {
-      FindUsagesProvider provider = getFindHandler(element);
-      if (provider != null && provider.canFindUsagesFor(element)) return true;
-      return false;
-    }
-
-    if (element instanceof PsiDirectory) {
-      PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
-      if (psiPackage == null) {
-        return false;
-      }
-      return psiPackage.getQualifiedName().length() != 0;
-    }
-
-    return true;
+    final FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
+    return provider != null && provider.canFindUsagesFor(element);
   }
 
   public void clearFindingNextUsageInFile() {
@@ -767,35 +745,11 @@ public class FindUsagesManager {
   }
 
   public static String getHelpID(PsiElement element) {
-    String helpID = null;
-    if (element instanceof PsiPackage) {
-      helpID = HelpID.FIND_PACKAGE_USAGES;
+    final FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
+    if (provider != null) {
+      return provider.getHelpId(element);
     }
-    else if (element instanceof PsiClass) {
-      helpID = HelpID.FIND_CLASS_USAGES;
-    }
-    else if (element instanceof PsiMethod) {
-      helpID = HelpID.FIND_METHOD_USAGES;
-    }
-    else if (ThrowSearchUtil.isSearchable(element)) {
-      helpID = HelpID.FIND_THROW_USAGES;
-    }
-    else if (element instanceof PsiField) {
-      helpID = HelpID.FIND_FIELD_USAGES;
-    }
-    else if (element instanceof PsiLocalVariable) {
-      helpID = HelpID.FIND_VARIABLE_USAGES;
-    }
-    else if (element instanceof PsiParameter) {
-      helpID = HelpID.FIND_PARAMETER_USAGES;
-    }
-    else {
-      final FindUsagesProvider findHandler = getFindHandler(element);
-      if (findHandler != null) {
-        helpID = findHandler.getHelpId(element);
-      }
-    }
-    return helpID;
+    return null;
   }
 
   private FindUsagesDialog getFindUsagesDialog(PsiElement element,
