@@ -4,8 +4,9 @@ import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jsp.JSPLanguage;
+import com.intellij.lang.jspx.JSPXLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
@@ -24,6 +25,8 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
+import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlFile;
@@ -132,8 +135,9 @@ public class CodeFormatterFacade implements Constants {
 
   public static boolean useBlockFormatter(final PsiFile file) {
     return
-      file instanceof XmlFile
-    || file instanceof PsiJavaFile;
+      (file instanceof XmlFile
+    || file instanceof PsiJavaFile) &&
+      !(file instanceof JspxFileImpl || file instanceof JspFileImpl);
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
@@ -299,7 +303,9 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public static boolean useBlockFormatter(final Language elementLanguage) {
-    return elementLanguage instanceof JavaLanguage || elementLanguage instanceof XMLLanguage || elementLanguage instanceof HTMLLanguage;
+    return (elementLanguage instanceof JavaLanguage
+    || elementLanguage instanceof XMLLanguage)
+           && ! ((elementLanguage instanceof JSPXLanguage) || (elementLanguage instanceof JSPLanguage));
   }
 }
 
