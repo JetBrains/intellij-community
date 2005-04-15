@@ -203,7 +203,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
-    return adjustLineIndent(file, offset, true);
+    final PsiElement element = file.findElementAt(offset);
+    if (CodeFormatterFacade.useBlockFormatter(file) && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
+      return adjustLineIndent(file, offset, true);
+    } else {
+      return adjustLineIndent(file, offset, true);
+    }
   }
 
   private int adjustLineIndent(PsiFile file, int offset, boolean canTryXXX) throws IncorrectOperationException {

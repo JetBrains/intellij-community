@@ -212,7 +212,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   Formatter.getInstance().getNoneIndent(),
                                   Formatter.getInstance().createContinuationIndent(),
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS, null));
+                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS, null))
+                                  );
     }
 
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARAMETER_LIST){
@@ -221,14 +222,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   Formatter.getInstance().getNoneIndent(),
                                   Formatter.getInstance().createContinuationIndent(),
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null));
+                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null)));
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION){
       child = createSynteticBlock(result, child, ElementType.LPARENTH, ElementType.RPARENTH,
                                   Formatter.getInstance().getNoneIndent(),
                                   Formatter.getInstance().createContinuationIndent(),
                                   WrappingStrategy.DO_NOT_WRAP,
-                                  createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null));
+                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null)));
     }
 
     else {
@@ -394,7 +395,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                       Indent externalIndent,
                                       Indent internalIndent,
                                       WrappingStrategy wrappingStrategy,
-                                      Alignment alignment) {
+                                      AlignmentStrategy alignmentStrategy) {
     ASTNode prev = child;
     List<Block> resultList = new ArrayList<Block>();
     List<Block> codeBlock = new ArrayList<Block>();
@@ -413,7 +414,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           result.add(new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null));
           return child;
         } else {
-          codeBlock.add(createJavaBlock(child, mySettings, null, wrappingStrategy.getWrap(child.getElementType()), alignment));
+          final IElementType elementType = child.getElementType();
+          codeBlock.add(createJavaBlock(child, mySettings, null,
+                                        wrappingStrategy.getWrap(elementType),
+                                        alignmentStrategy.getAlignment(elementType)));
           if (to == null) {
             resultList.add(new SynteticCodeBlock(codeBlock, null, mySettings, internalIndent, null));
             result.add(new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null));
@@ -452,7 +456,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return true;
       }
     },
-                               null);
+                               AlignmentStrategy.DO_NOT_ALIGN);
   }
 
   private Alignment createAlignmentOrDefault(final Alignment defaultAlignment) {
