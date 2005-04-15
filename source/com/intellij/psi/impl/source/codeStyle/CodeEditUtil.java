@@ -4,23 +4,23 @@ import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
-import com.intellij.newCodeFormatting.Formatter;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
@@ -492,7 +492,7 @@ public class CodeEditUtil {
                                                     final CodeStyleSettings settings,
                                                     final boolean mayChangeLineFeeds) {
     Language elementLanguage = file.findElementAt(tokenStartOffset).getLanguage();
-    if (CodeFormatterFacade.useBlockFormatter(elementLanguage)) {
+    if (CodeFormatterFacade.useBlockFormatter(elementLanguage) && CodeFormatterFacade.useBlockFormatter(file.getFileType())) {
       final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
       return Formatter.getInstance().getWhiteSpaceBefore(new PsiBasedFormattingModel(file, settings),
                                             CodeFormatterFacade.createBlock(file, settings),

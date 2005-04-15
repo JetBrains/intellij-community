@@ -62,4 +62,14 @@ public class IndentInfo {
   public int getTotalSpaces() {
     return myIndentSpaces + mySpaces;
   }
+
+  public int getIndentCount(final CodeStyleSettings.IndentOptions indentOptions) {
+    return myIndentSpaces/indentOptions.INDENT_SIZE;
+  }
+
+  public int getSpacesCount(final CodeStyleSettings.IndentOptions indentOptions) {
+    final int indentSpaces = getIndentCount(indentOptions);
+    return indentSpaces - (indentSpaces/indentOptions.INDENT_SIZE) * indentOptions.INDENT_SIZE + mySpaces;
+
+  }
 }

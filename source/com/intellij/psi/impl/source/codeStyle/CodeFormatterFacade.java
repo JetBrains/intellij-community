@@ -5,8 +5,8 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
@@ -135,11 +136,10 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
-    if (element.getFileType() == StdFileTypes.XML || element.getFileType() == StdFileTypes.HTML) {
-      return AbstractXmlBlock.creareRoot(element, settings);
-    }
-    else {
+    if (element instanceof PsiJavaFile) {
       return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
+    } else {
+      return AbstractXmlBlock.creareRoot(element, settings);
     }
   }
 
