@@ -22,11 +22,12 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractXmlBlock;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlFile;
@@ -136,12 +137,13 @@ public class CodeFormatterFacade implements Constants {
   public static boolean useBlockFormatter(final PsiFile file) {
     return
       (file instanceof XmlFile
-    || file instanceof PsiJavaFile) &&
+    || file instanceof PsiJavaFile
+    || file instanceof DummyHolder) &&
       !(file instanceof JspxFileImpl || file instanceof JspFileImpl);
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
-    if (element instanceof PsiJavaFile) {
+    if (element instanceof PsiJavaFile || element.getLanguage() instanceof JavaLanguage) {
       return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
     } else {
       return AbstractXmlBlock.creareRoot(element, settings);
