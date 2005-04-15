@@ -130,8 +130,8 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               }
             }
+            return;
           }
-          return;
         }
       }
 
