@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -24,58 +25,25 @@ public class AddToWatchAction extends DebuggerAction {
     if(debuggerContext == null) return;
 
     final DebuggerSession session = debuggerContext.getDebuggerSession();
-    if(session == null) return;
+    if(session == null) {
+      return;
+    }
     final MainWatchPanel watchPanel = DebuggerPanelsManager.getInstance(debuggerContext.getProject()).getWatchPanel();
 
-    if(watchPanel == null) return;
+    if(watchPanel == null) {
+      return;
+    }
 
     final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     if(selectedNodes != null && selectedNodes.length > 0) {
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
-          for (int idx = 0; idx < selectedNodes.length; idx++) {
-            DebuggerTreeNodeImpl node = selectedNodes[idx];
-            final NodeDescriptorImpl descriptor = node.getDescriptor();
-            final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, debuggerContext);
-            if (expression != null) {
-              DebuggerInvocationUtil.invokeLater(session.getProject(), new Runnable() {
-                public void run() {
-                  NodeDescriptorImpl watchDescriptor = watchPanel.getWatchTree().addWatch(expression).getDescriptor();
-                  watchDescriptor.displayAs(descriptor);
-                }
-              });
-            }
-          }
-        }
-
-        protected void commandCancelled() {
-          DebuggerInvocationUtil.invokeLater(debuggerContext.getProject(), new Runnable() {
-            public void run() {
-              for (int idx = 0; idx < selectedNodes.length; idx++) {
-                DebuggerTreeNodeImpl node = selectedNodes[idx];
-                final NodeDescriptorImpl descriptor = node.getDescriptor();
-
-                if(descriptor instanceof WatchItemDescriptor) {
-
-                  final TextWithImports expression = ((WatchItemDescriptor) descriptor).getEvaluationText();
-                  if(expression != null) {
-                    NodeDescriptorImpl watchDescriptor = watchPanel.getWatchTree().addWatch(expression).getDescriptor();
-                    watchDescriptor.displayAs(descriptor);
-                  }
-                }
-              }
-            }
-          });
-        }
-      });
-    } else {
-      final Editor          editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
-
-      TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
-
+      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
+    }
+    else {
+      final Editor editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
+      final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
       if(editorText != null) {
-        watchPanel.getWatchTree().addWatch(editorText);
+        doAddWatch(watchPanel, editorText, null);
       }
     }
   }
@@ -95,11 +63,67 @@ public class AddToWatchAction extends DebuggerAction {
           }
         }
       }
-    } else {
-      final Editor          editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
-
+    }
+    else {
+      final Editor editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null ;
     }
     e.getPresentation().setVisible(enabled);
+  }
+
+  private static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
+    final WatchDebuggerTree watchTree = watchPanel.getWatchTree();
+    final DebuggerTreeNodeImpl node = watchTree.addWatch(expression);
+    if (descriptor != null) {
+      node.getDescriptor().displayAs(descriptor);
+    }
+    node.calcValue();
+  }
+
+  private static class AddToWatchesCommand extends DebuggerContextCommandImpl {
+
+    private final DebuggerContextImpl myDebuggerContext;
+    private final DebuggerTreeNodeImpl[] mySelectedNodes;
+    private final MainWatchPanel myWatchPanel;
+
+    public AddToWatchesCommand(DebuggerContextImpl debuggerContext, DebuggerTreeNodeImpl[] selectedNodes, MainWatchPanel watchPanel) {
+      super(debuggerContext);
+      myDebuggerContext = debuggerContext;
+      mySelectedNodes = selectedNodes;
+      myWatchPanel = watchPanel;
+    }
+
+    public void threadAction() {
+      for (int idx = 0; idx < mySelectedNodes.length; idx++) {
+        DebuggerTreeNodeImpl node = mySelectedNodes[idx];
+        final NodeDescriptorImpl descriptor = node.getDescriptor();
+        final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
+        if (expression != null) {
+          DebuggerInvocationUtil.invokeLater(myDebuggerContext.getDebuggerSession().getProject(), new Runnable() {
+            public void run() {
+              doAddWatch(myWatchPanel, expression, descriptor);
+            }
+          });
+        }
+      }
+    }
+
+    protected void commandCancelled() {
+      DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
+        public void run() {
+          for (int idx = 0; idx < mySelectedNodes.length; idx++) {
+            DebuggerTreeNodeImpl node = mySelectedNodes[idx];
+            final NodeDescriptorImpl descriptor = node.getDescriptor();
+            if(descriptor instanceof WatchItemDescriptor) {
+              final TextWithImports expression = ((WatchItemDescriptor) descriptor).getEvaluationText();
+              if(expression != null) {
+                doAddWatch(myWatchPanel, expression, descriptor);
+              }
+            }
+          }
+        }
+      });
+    }
+
   }
 }

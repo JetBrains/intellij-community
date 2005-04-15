@@ -54,7 +54,7 @@ public class WatchDebuggerTree extends DebuggerTree {
     treeChanged();
     getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
 
-    node.calcValue();
+    //node.calcValue();
 
     return node;
   }
@@ -67,8 +67,6 @@ public class WatchDebuggerTree extends DebuggerTree {
 
     treeChanged();
     getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
-
-    node.calcValue();
 
     return node;
   }

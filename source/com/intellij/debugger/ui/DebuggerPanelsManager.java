@@ -71,14 +71,23 @@ public class DebuggerPanelsManager implements ProjectComponent{
                                                    boolean pollConnection) throws ExecutionException {
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
 
-    DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
+    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
     RunContentDescriptor runContentDescriptor = sessionTab.attachToSession(
         debuggerSession,
         runner,
         runProfile,
         state.getRunnerSettings(),
-        state.getConfigurationSettings());
-
+        state.getConfigurationSettings()
+      );
+    if (reuseContent != null) {
+      final ProcessHandler prevHandler = reuseContent.getProcessHandler();
+      if (prevHandler != null) {
+        final DebuggerSessionTab prevSession = mySessionTabs.get(prevHandler);
+        if (prevSession != null) {
+          sessionTab.reuse(prevSession);
+        }
+      }
+    }
     mySessionTabs.put(runContentDescriptor.getProcessHandler(), sessionTab);
     return runContentDescriptor;
   }
