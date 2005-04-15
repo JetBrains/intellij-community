@@ -50,22 +50,15 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return result.toArray(new XmlTag[result.size()]);
   }
 
-  public XmlAttribute findAttribute(String name, String namespace) {
+  public XmlAttribute getAttribute(String name, String namespace) {
+    final String prefix = getPrefixByNamespace(namespace);
+    String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
     final XmlAttribute[] attributes = getAttributes();
 
     for (int i = 0; i < attributes.length; i++) {
       final XmlAttribute attribute = attributes[i];
 
-      if(namespace == null){
-        final String attrName = attribute.getName().toLowerCase();
-
-        if(name == null || name.equals(attrName)){
-          return attribute;
-        }
-      }
-      else if (namespace.equals(attribute.getNamespace()) &&
-               (name == null || name.equals(attribute.getLocalName()))
-              ) {
+      if(name.equals(qname)) {
         return attribute;
       }
     }
