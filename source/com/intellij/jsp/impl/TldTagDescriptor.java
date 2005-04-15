@@ -7,26 +7,31 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspImplicitVariable;
+import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
 import com.intellij.psi.jsp.tagLibrary.JspTagAttributeInfo;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TeiClassLoader;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
+import com.intellij.j2ee.jsp.UseBeanTEI;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.vfs.VirtualFile;
 import javax.servlet.jsp.tagext.*;
 import java.net.URL;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,42 +40,14 @@ import java.util.ArrayList;
  * Time: 8:55:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TldTagDescriptor implements JspElementDescriptor,Validator,JspTagInfo {
-  private XmlTag myTag;
-  private String myName;
-  private XmlAttributeDescriptor[] myAttributeDescriptors;
-  private JspTagAttributeInfo[] myJspAttributeDescriptors;
-  private TldDescriptor myNsDescriptor;
-  private boolean myEmpty;
-  private boolean myDynamicAttributes;
-
+public class TldTagDescriptor extends CustomTagDescriptorBase implements Validator {
   private String myTagClass;
   private String myTeiClass;
-  private List<TagVariableInfo> myTLDVars = new ArrayList<TagVariableInfo>();
-  private List<TagAttributeInfo> myTLDAttributes = new ArrayList<TagAttributeInfo>();
 
   public TldTagDescriptor() {}
 
   public TldTagDescriptor(XmlTag tag) {
     init(tag);
-  }
-
-  public String getQualifiedName() {
-    return getName();
-  }
-
-  public String getDefaultName() {
-    return getName();
-  }
-
-  //todo: refactor to support full DTD spec
-  public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    return EMPTY_ARRAY;
-  }
-
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
-    if (myEmpty) return null;
-    return new AnyXmlElementDescriptor(this,getNSDescriptor());
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
@@ -83,71 +60,6 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator,JspTagIn
       }
     }
     return myAttributeDescriptors;
-  }
-
-  public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
-    final XmlAttributeDescriptor[] attributesDescriptors = getAttributesDescriptors();
-
-    for (int i = 0; i < attributesDescriptors.length; i++) {
-      final XmlAttributeDescriptor attributesDescriptor = attributesDescriptors[i];
-
-      if (attributesDescriptor.getName().equals(attributeName)) {
-        return attributesDescriptor;
-      }
-    }
-
-    if (myDynamicAttributes) return new AnyXmlAttributeDescriptor(attributeName);
-
-    return null;
-  }
-
-  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
-    return getAttributeDescriptor(attribute.getName());
-  }
-
-  public XmlNSDescriptor getNSDescriptor() {
-    if (myNsDescriptor==null) {
-      final PsiFile file = myTag.getContainingFile();
-      if(!(file instanceof XmlFile)) return null;
-      final XmlDocument document = ((XmlFile)file).getDocument();
-      myNsDescriptor = (TldDescriptor) document.getMetaData();
-    }
-
-    return myNsDescriptor;
-  }
-
-  public int getContentType() {
-    if (myEmpty) return CONTENT_TYPE_EMPTY;;
-    return CONTENT_TYPE_MIXED;
-  }
-
-  public PsiElement getDeclaration() {
-    return myTag;
-  }
-
-  public boolean processDeclarations(PsiElement context,
-                                     PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
-                                     PsiElement lastElement,
-                                     PsiElement place) {
-    return true;
-  }
-
-  public String getName(PsiElement context) {
-    String value = getName();
-
-    if(context instanceof XmlElement){
-      final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
-
-      if(tag != null){
-        final String namespacePrefix = tag.getPrefixByNamespace( ((TldDescriptor)getNSDescriptor()).getUri() );
-        if (namespacePrefix != null && namespacePrefix.length() > 0) {
-          value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
-        }
-      }
-    }
-
-    return value;
   }
 
   public String getName() {
@@ -219,18 +131,14 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator,JspTagIn
     }
   }
 
-  public JspTagAttributeInfo[] getAttributes() {
-    if (myJspAttributeDescriptors == null) {
-      myJspAttributeDescriptors = CustomTagSupportUtil.getAttributeDescriptors(getAttributesDescriptors());
-    }
-    return myJspAttributeDescriptors;
-  }
-
-  public int getBodyContent() {
-    return myEmpty ? BODY_CONTENT_EMPTY : BODY_CONTENT_OTHER;
-  }
-
   public TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties) {
+    if (getName().equals("useBean") &&
+        getNSDescriptor() instanceof TldDescriptor &&
+        getNSDescriptor().getDescriptorFile().getVirtualFile().getName().equals("jsp12.tld")
+       ) {
+      return new UseBeanTEI(); // HACK for old JSP to work
+    }
+
     Object tei;
     TagExtraInfo castedTei = null;
 
@@ -264,5 +172,9 @@ public class TldTagDescriptor implements JspElementDescriptor,Validator,JspTagIn
     }
 
     return new MyTEI(myTLDVars);
+  }
+
+  public PsiElement getDeclaration() {
+    return myTag;
   }
 }
