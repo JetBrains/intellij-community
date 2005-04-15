@@ -41,7 +41,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -309,12 +308,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     short searchContext;
 
-    if (refElement instanceof XmlAttributeValue || refElement instanceof XmlTag) {
+    if (refElement instanceof XmlAttributeValue) {
       searchContext = UsageSearchContext.IN_PLAIN_TEXT;
     }
     else {
       searchContext = UsageSearchContext.IN_CODE |
-                      UsageSearchContext.IN_ALIEN_LANGUAGES |
+                      UsageSearchContext.IN_FOREIGN_LANGUAGES |
                       UsageSearchContext.IN_COMMENTS;
     }
 
@@ -336,7 +335,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           if (!processElementsWithWord(processor1,
                                        searchScope,
                                        propertyName,
-                                       UsageSearchContext.IN_ALIEN_LANGUAGES,
+                                       UsageSearchContext.IN_FOREIGN_LANGUAGES,
                                        false)) {
             return false;
           }
@@ -736,7 +735,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         toContinue = processElementsWithWord(processor1,
                                              searchScope,
                                              propertyName,
-                                             UsageSearchContext.IN_ALIEN_LANGUAGES, true);
+                                             UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
         if (!toContinue) return false;
       }
     }
@@ -921,7 +920,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processElementsWithWord(processor,
                             searchScope,
                             name,
-                            UsageSearchContext.IN_ALIEN_LANGUAGES, true);
+                            UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
     return directives.toArray(new JspDirective[directives.size()]);
   }
 
@@ -1472,7 +1471,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   public PsiFile[] findFormsBoundToClass(String className) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myManager.getProject());
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_ALIEN_LANGUAGES,
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES,
                                                                    projectScope);
     List<PsiFile> boundForms = new ArrayList<PsiFile>(files.length);
     for (int i = 0; i < files.length; i++) {

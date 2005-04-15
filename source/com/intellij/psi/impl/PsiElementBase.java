@@ -2,7 +2,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
@@ -131,9 +130,5 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
   public Project getProject() {
     final PsiManager manager = getManager();
     return manager != null ? manager.getProject() : null;
-  }
-
-  public Language getLanguage() {
-    return null;
   }
 }

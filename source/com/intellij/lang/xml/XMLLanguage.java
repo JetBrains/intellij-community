@@ -2,7 +2,6 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.xml.xml.XmlPseudoTextBuilder;
-import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
@@ -61,7 +60,7 @@ public class XMLLanguage extends Language {
   }
 
   public boolean mayHaveReferences(IElementType token, short searchContext) {
-    if((searchContext & UsageSearchContext.IN_ALIEN_LANGUAGES) != 0 &&
+    if((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 &&
        (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME)) return true;
     if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
     return false;

@@ -316,11 +316,11 @@ public class IdTableBuilding {
   }
 
   private static void addClassAndPackagesNames(String qName, final TIntIntHashMap wordsTable) {
-    IdCacheUtil.addOccurrence(wordsTable,qName, UsageSearchContext.IN_ALIEN_LANGUAGES);
+    IdCacheUtil.addOccurrence(wordsTable,qName, UsageSearchContext.IN_FOREIGN_LANGUAGES);
     int idx = qName.lastIndexOf('.');
     while (idx > 0) {
       qName = qName.substring(0, idx);
-      IdCacheUtil.addOccurrence(wordsTable, qName, UsageSearchContext.IN_ALIEN_LANGUAGES);
+      IdCacheUtil.addOccurrence(wordsTable, qName, UsageSearchContext.IN_FOREIGN_LANGUAGES);
       idx = qName.lastIndexOf('.');
     }
   }

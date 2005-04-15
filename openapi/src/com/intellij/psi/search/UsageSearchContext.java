@@ -24,7 +24,7 @@ public interface UsageSearchContext {
    * Element's usages in other languages are requested,
    * e.g. usages of java class in jsp attribute value
    */
-  public static final short IN_ALIEN_LANGUAGES = 0x8;
+  public static final short IN_FOREIGN_LANGUAGES = 0x8;
 
   /**
    * Plain text occurences are requested

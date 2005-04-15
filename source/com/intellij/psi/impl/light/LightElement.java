@@ -1,7 +1,9 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -16,6 +18,10 @@ public abstract class LightElement extends PsiElementBase {
 
   protected LightElement(PsiManager manager) {
     myManager = manager;
+  }
+
+  public Language getLanguage() {
+    return StdFileTypes.JAVA.getLanguage();
   }
 
   public PsiManager getManager(){

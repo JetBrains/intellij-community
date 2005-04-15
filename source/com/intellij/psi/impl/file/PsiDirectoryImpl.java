@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -58,6 +59,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public boolean isValid() {
     return myFile.isValid();
+  }
+
+  public Language getLanguage() {
+    return Language.ANY;
   }
 
   public PsiManager getManager() {

@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -201,6 +203,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     else {
       return new PsiPackageImpl(myManager, myQualifiedName.substring(0, lastDot));
     }
+  }
+
+  public Language getLanguage() {
+    return StdFileTypes.JAVA.getLanguage();
   }
 
   public PsiManager getManager() {

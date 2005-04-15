@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -105,6 +106,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     return null;
+  }
+
+  public Language getLanguage() {
+    return Language.ANY;
   }
 
   public PsiManager getManager() {
