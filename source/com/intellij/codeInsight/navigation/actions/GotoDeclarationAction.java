@@ -150,39 +150,43 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (element != null) return element;
 
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null) {
-      PsiElement elementAt = file.findElementAt(offset);
-      if (elementAt instanceof PsiKeyword) {
-        IElementType type = ((PsiKeyword) elementAt).getTokenType();
-        if (type == JavaTokenType.CONTINUE_KEYWORD) {
-          if (elementAt.getParent() instanceof PsiContinueStatement) {
-            PsiStatement statement = ((PsiContinueStatement) elementAt.getParent()).findContinuedStatement();
-            return statement;
-          }
-        } else if (type == JavaTokenType.BREAK_KEYWORD) {
-          if (elementAt.getParent() instanceof PsiBreakStatement) {
-            PsiStatement statement = ((PsiBreakStatement) elementAt.getParent()).findExitedStatement();
-            if (statement == null) return null;
-            if (statement.getParent() instanceof PsiLabeledStatement) {
-              statement = (PsiStatement) statement.getParent();
-            }
-            PsiElement nextSibling = statement.getNextSibling();
-            return nextSibling instanceof PsiWhiteSpace ? nextSibling.getNextSibling() : nextSibling;
-          }
+    if (file == null) {
+      return null;
+    }
+    PsiElement elementAt = file.findElementAt(offset);
+    if (elementAt instanceof PsiKeyword) {
+      IElementType type = ((PsiKeyword)elementAt).getTokenType();
+      if (type == JavaTokenType.CONTINUE_KEYWORD) {
+        if (elementAt.getParent() instanceof PsiContinueStatement) {
+          PsiStatement statement = ((PsiContinueStatement)elementAt.getParent()).findContinuedStatement();
+          return statement;
         }
-      } else if (elementAt instanceof PsiIdentifier) {
-        PsiElement parent = elementAt.getParent();
-        PsiStatement statement = null;
-        if (parent instanceof PsiContinueStatement) {
-          statement = ((PsiContinueStatement) parent).findContinuedStatement();
-        } else if (parent instanceof PsiBreakStatement) {
-          statement = ((PsiBreakStatement) parent).findExitedStatement();
-        }
-        if (statement == null) return null;
-
-        LOG.assertTrue(statement.getParent() instanceof PsiLabeledStatement);
-        return ((PsiLabeledStatement) statement.getParent()).getLabelIdentifier();
       }
+      else if (type == JavaTokenType.BREAK_KEYWORD) {
+        if (elementAt.getParent() instanceof PsiBreakStatement) {
+          PsiStatement statement = ((PsiBreakStatement)elementAt.getParent()).findExitedStatement();
+          if (statement == null) return null;
+          if (statement.getParent() instanceof PsiLabeledStatement) {
+            statement = (PsiStatement)statement.getParent();
+          }
+          PsiElement nextSibling = statement.getNextSibling();
+          return nextSibling instanceof PsiWhiteSpace ? nextSibling.getNextSibling() : nextSibling;
+        }
+      }
+    }
+    else if (elementAt instanceof PsiIdentifier) {
+      PsiElement parent = elementAt.getParent();
+      PsiStatement statement = null;
+      if (parent instanceof PsiContinueStatement) {
+        statement = ((PsiContinueStatement)parent).findContinuedStatement();
+      }
+      else if (parent instanceof PsiBreakStatement) {
+        statement = ((PsiBreakStatement)parent).findExitedStatement();
+      }
+      if (statement == null) return null;
+
+      LOG.assertTrue(statement.getParent() instanceof PsiLabeledStatement);
+      return ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier();
     }
 
     return null;

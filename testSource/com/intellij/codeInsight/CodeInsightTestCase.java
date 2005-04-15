@@ -124,21 +124,22 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
       String newFileText = document.getText();
 
-      final VirtualFile newVFile;
-      if (projectRoot == null) {
-        newVFile = vDir.createChildData(this, vFile.getName());
-        Writer writer = newVFile.getWriter(this);
-        writer.write(newFileText);
-        writer.close();
-      }
-      else {
+      VirtualFile newVFile;
+      if (projectRoot != null) {
         if (!projectCopied) {
           FileUtil.copyDir(projectRoot, dir);
           projectCopied = true;
         }
-        //vFile.getPath().substring(PathManagerEx.getTestDataPath().length())
-        newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length()));
+        String path = vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length());
+        newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        newVFile.delete(this);
       }
+      //else {
+        newVFile = vDir.createChildData(this, vFile.getName());
+        Writer writer = newVFile.getWriter(this);
+        writer.write(newFileText);
+        writer.close();
+      //}
 
       newVFiles[i]=newVFile;
       newFileTexts[i]=newFileText;

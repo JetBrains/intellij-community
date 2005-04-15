@@ -14,6 +14,6 @@ import com.intellij.psi.tree.TokenSet;
 public class PropertiesWordsScanner extends DefaultWordsScanner {
   public PropertiesWordsScanner() {
     super(new PropertiesLexer(), TokenSet.create(new IElementType[] {PropertiesTokenTypes.KEY_CHARACTERS}),
-          PropertiesTokenTypes.COMMENTS, TokenSet.create(new IElementType[] {PropertiesTokenTypes.VALUE_CHARACTERS}));
+          PropertiesTokenTypes.COMMENTS, TokenSet.create(new IElementType[] {PropertiesTokenTypes.VALUE_CHARACTERS,}));
   }
 }

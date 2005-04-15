@@ -178,43 +178,44 @@ public class TargetElementUtil {
 
   private static PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
+    if (ref == null) {
+      return null;
+    }
     PsiManager manager = file.getManager();
 
-    if (ref != null) {
-      final PsiElement referenceElement = ref.getElement();
-      PsiElement refElement;
-      if(ref instanceof PsiJavaReference){
-        refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
-      }
-      else{
-        refElement = ref.resolve();
-      }
+    final PsiElement referenceElement = ref.getElement();
+    PsiElement refElement;
+    if(ref instanceof PsiJavaReference){
+      refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
+    }
+    else{
+      refElement = ref.resolve();
+    }
 
-      if (refElement == null) {
-        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
-      }
-      else {
-        if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
-          PsiElement parent = referenceElement.getParent();
-          if (parent instanceof PsiAnonymousClass) {
-            parent = parent.getParent();
-          }
-          if (parent instanceof PsiNewExpression) {
-            PsiMethod constructor = ((PsiNewExpression) parent).resolveConstructor();
-            if (constructor != null) {
-              refElement = constructor;
-            }
+    if (refElement == null) {
+      DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+    }
+    else {
+      if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
+        PsiElement parent = referenceElement.getParent();
+        if (parent instanceof PsiAnonymousClass) {
+          parent = parent.getParent();
+        }
+        if (parent instanceof PsiNewExpression) {
+          PsiMethod constructor = ((PsiNewExpression) parent).resolveConstructor();
+          if (constructor != null) {
+            refElement = constructor;
           }
         }
-        if ((refElement instanceof PsiClass) && refElement.getContainingFile().getVirtualFile() == null) { // in mirror file of compiled class
-          return manager.findClass(((PsiClass) refElement).getQualifiedName(), refElement.getResolveScope());
-        } else if (refElement instanceof PsiAnnotationMethod) {
-          PsiClass aClass = manager.findClass(((PsiAnnotationMethod)refElement).getContainingClass().getQualifiedName(), refElement.getResolveScope());
-          PsiMethod method = aClass.findMethodBySignature((PsiMethod)refElement, false);
-          return method != null ? method : refElement;
-        }
-        return refElement;
       }
+      if (refElement instanceof PsiClass && refElement.getContainingFile().getVirtualFile() == null) { // in mirror file of compiled class
+        return manager.findClass(((PsiClass) refElement).getQualifiedName(), refElement.getResolveScope());
+      } else if (refElement instanceof PsiAnnotationMethod) {
+        PsiClass aClass = manager.findClass(((PsiAnnotationMethod)refElement).getContainingClass().getQualifiedName(), refElement.getResolveScope());
+        PsiMethod method = aClass.findMethodBySignature((PsiMethod)refElement, false);
+        return method != null ? method : refElement;
+      }
+      return refElement;
     }
 
     return null;
