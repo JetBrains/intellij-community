@@ -188,7 +188,11 @@ public class HtmlUtil {
 
       text = text.substring(offset,text.length() - offset);
       int ind = text.lastIndexOf('#');
-      if (ind != -1) text = text.substring(0,ind);
+      String anchor = null;
+      if (ind != -1) {
+        anchor = text.substring(ind+1);
+        text = text.substring(0,ind);
+      }
 
       ind = text.lastIndexOf('?');
       if (ind!=-1) text = text.substring(0,ind);
@@ -201,6 +205,14 @@ public class HtmlUtil {
         refs = PsiReference.EMPTY_ARRAY;
       }
 
+      if (anchor != null &&
+          (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
+          ) {
+        PsiReference[] newrefs = new PsiReference[refs.length+1];
+        System.arraycopy(refs,0,newrefs,0,refs.length);
+        newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
+        refs = newrefs;
+      }
       element.putUserData(cachedReferencesKey,refs);
       element.putUserData(cachedRefsTextKey,originalText);
 
@@ -223,4 +235,5 @@ public class HtmlUtil {
   public static String[] getHtmlTagNames() {
     return HtmlDescriptorsTable.getHtmlTagNames();
   }
+
 }
