@@ -15,6 +15,8 @@ public class StringLiteralLexer extends LexerBase {
   private static final short AFTER_LAST_QUOTE = 2;
   private static final short LAST_STATE = AFTER_LAST_QUOTE;
 
+  public static final char NO_QUOTE_CHAR = (char)-1;
+
   private char[] myBuffer;
   private int myStart;
   private int myEnd;
@@ -23,10 +25,15 @@ public class StringLiteralLexer extends LexerBase {
   private int myBufferEnd;
   private char myQuoteChar;
   private IElementType myOriginalLiteralToken;
+  private final boolean myCanEscapeEol;
 
   public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken) {
+    this(quoteChar, originalLiteralToken, false);
+  }
+  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEol) {
     myQuoteChar = quoteChar;
     myOriginalLiteralToken = originalLiteralToken;
+    myCanEscapeEol = canEscapeEol;
   }
 
   public void start(char[] buffer) {
@@ -36,7 +43,12 @@ public class StringLiteralLexer extends LexerBase {
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStart = startOffset;
-    myState = initialState;
+    if (myQuoteChar == NO_QUOTE_CHAR) {
+      myState = AFTER_FIRST_QUOTE;
+    }
+    else {
+      myState = initialState;
+    }
     myLastState = initialState;
     myBufferEnd = endOffset;
     myEnd = locateToken(myStart);
@@ -60,14 +72,18 @@ public class StringLiteralLexer extends LexerBase {
     if (myBuffer[myStart] != '\\') return myOriginalLiteralToken;
 
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
-    if (myBuffer[myStart + 1] == 'u') {
+    final char nextChar = myBuffer[myStart + 1];
+    if (myCanEscapeEol && nextChar == '\n') {
+      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+    }
+    if (nextChar == 'u') {
       for(int i = myStart + 2; i < myStart + 6; i++) {
         if (i >= myEnd || !isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
-    switch (myBuffer[myStart + 1]) {
+    switch (nextChar) {
       case 'n':
       case 'r':
       case 'b':
@@ -107,7 +123,7 @@ public class StringLiteralLexer extends LexerBase {
     if (myBuffer[i] == '\\') {
       LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
       i++;
-      if (i == myBufferEnd || myBuffer[i] == '\n') {
+      if (i == myBufferEnd || myBuffer[i] == '\n' && !myCanEscapeEol) {
         myState = AFTER_LAST_QUOTE;
         return i;
       }
@@ -134,10 +150,12 @@ public class StringLiteralLexer extends LexerBase {
           }
         }
         return i;
-      } else {
+      }
+      else {
         return i + 1;
       }
-    } else {
+    }
+    else {
       LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer[i] == myQuoteChar);
       while (i < myBufferEnd) {
         if (myBuffer[i] == '\\') {
