@@ -42,6 +42,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static final int MAX_LABEL_SIZE = 255;
   public static Runnable DO_NOTHING = EmptyRunnable.getInstance();
+  private static final String SOCKET_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
+                                                       ? "com.sun.tools.jdi.SocketTransport"
+                                                       : "com.sun.tools.jdi.SocketTransportService";
+
+  private static final String SHMEM_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
+                                                      ? "com.sun.tools.jdi.SharedMemoryTransport"
+                                                      : "com.sun.tools.jdi.SharedMemoryTransportService";
 
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
@@ -253,8 +260,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       Attribute attr1 = i1.next();
       Attribute attr2 = i2.next();
 
-      if(!Comparing.equal(attr1.getName() , attr2.getName()) ||
-         !Comparing.equal(attr1.getValue(), attr2.getValue())) return false;
+      if (!Comparing.equal(attr1.getName(), attr2.getName()) ||
+          !Comparing.equal(attr1.getValue(), attr2.getValue())) {
+        return false;
+      }
     }
     return true;
   }
@@ -355,14 +364,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     try {
       try {
         if (forceSocketTransport) {
-          transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
+          transport = createTransport(Class.forName(SOCKET_TRANSPORT_CLASS));
         }
         else {
-          transport = createTransport(Class.forName("com.sun.tools.jdi.SharedMemoryTransport"));
+          transport = createTransport(Class.forName(SHMEM_TRANSPORT_CLASS));
         }
       }
       catch (UnsatisfiedLinkError e) {
-        transport = createTransport(Class.forName("com.sun.tools.jdi.SocketTransport"));
+        transport = createTransport(Class.forName(SOCKET_TRANSPORT_CLASS));
       }
     }
     catch (Exception e) {
