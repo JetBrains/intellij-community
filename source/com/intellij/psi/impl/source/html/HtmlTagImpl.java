@@ -51,14 +51,12 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
-    final String prefix = getPrefixByNamespace(namespace);
-    String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
     final XmlAttribute[] attributes = getAttributes();
 
     for (int i = 0; i < attributes.length; i++) {
       final XmlAttribute attribute = attributes[i];
 
-      if(name.equals(qname)) {
+      if(attribute.getName().toLowerCase().equals(name)) {
         return attribute;
       }
     }
