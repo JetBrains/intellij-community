@@ -27,8 +27,6 @@ import com.intellij.psi.search.UsageSearchContext;
 public class XMLLanguage extends Language {
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
-  private static final FindUsagesManager.HtmlFindUsagesHandler FIND_USAGES_HANDLER = new FindUsagesManager.HtmlFindUsagesHandler();
-
 
   public XMLLanguage() {
     super("XML");
@@ -55,7 +53,7 @@ public class XMLLanguage extends Language {
   }
 
   public FindUsagesProvider getFindUsagesProvider() {
-    return FIND_USAGES_HANDLER;
+    return new XmlFindUsagesProvider();
   }
 
   public Commenter getCommenter() {

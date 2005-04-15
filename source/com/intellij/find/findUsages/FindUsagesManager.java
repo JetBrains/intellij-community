@@ -32,9 +32,6 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.FindUsagesCommand;
@@ -75,61 +72,6 @@ public class FindUsagesManager {
   private class LastSearchData {
     public SmartPsiElementPointer[] myLastSearchElements = null;
     public FindUsagesOptions myLastOptions = null;
-  }
-
-  static public class HtmlFindUsagesHandler implements FindUsagesProvider {
-    private FindUsagesProvider styleHandler;
-
-    public void setStyleHandler(FindUsagesProvider provider) {
-      styleHandler = provider;
-    }
-
-    public boolean canFindUsagesFor(PsiElement element) {
-      boolean result = element instanceof XmlElementDecl ||
-                       element instanceof XmlAttributeDecl ||
-                       element instanceof XmlTag;
-
-      if (!result && styleHandler != null) {
-        result = styleHandler.canFindUsagesFor(element);
-      }
-      return result;
-    }
-
-    public String getType(PsiElement element) {
-      if (styleHandler != null && styleHandler.canFindUsagesFor(element)) {
-        return styleHandler.getType(element);
-      }
-
-      if (element instanceof XmlElementDecl || element instanceof XmlTag) {
-        return "tag";
-      } else if (element instanceof XmlAttributeDecl) {
-        return "attribute";
-      }
-
-      return null;
-    }
-
-    public String getHelpId(PsiElement element) {
-      if (styleHandler != null && styleHandler.canFindUsagesFor(element)) {
-        return styleHandler.getHelpId(element);
-      }
-      return null;
-    }
-
-    public String getDescriptiveName(PsiElement element) {
-      if (styleHandler != null && styleHandler.canFindUsagesFor(element)) {
-        return styleHandler.getDescriptiveName(element);
-      }
-      return ((PsiNamedElement)element).getName();
-    }
-
-    public String getNodeText(PsiElement element, boolean useFullName) {
-      if (styleHandler != null && styleHandler.canFindUsagesFor(element)) {
-        return styleHandler.getNodeText(element, useFullName);
-      }
-
-      return ((PsiNamedElement)element).getName();
-    }
   }
 
   private LastSearchData myLastSearchData = new LastSearchData();

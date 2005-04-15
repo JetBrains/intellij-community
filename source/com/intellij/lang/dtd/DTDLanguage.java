@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.xml.XmlCommenter;
+import com.intellij.lang.xml.XmlFindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
@@ -35,7 +36,7 @@ public class DTDLanguage extends Language {
   }
 
   public FindUsagesProvider getFindUsagesProvider() {
-    return new FindUsagesManager.HtmlFindUsagesHandler();
+    return new XmlFindUsagesProvider();
   }
 
   public Commenter getCommenter() {
