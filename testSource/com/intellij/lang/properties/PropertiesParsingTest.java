@@ -1,6 +1,6 @@
 package com.intellij.lang.properties;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.ParsingTestCase;
 
 /**
@@ -16,7 +16,7 @@ public class PropertiesParsingTest extends ParsingTestCase {
   }
 
   protected String testDataPath() {
-    return PathManager.getHomePath() + "/plugins/Properties/testData";
+    return PathManagerEx.getTestDataPath() + "/propertiesFile";
   }
 
   public void testProp1() throws Exception {

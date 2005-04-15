@@ -23,4 +23,5 @@
   <include name="componentSets/Util"/>
   <include name="componentSets/StructuralSearch"/>
   <include name="componentSets/Css"/>
+  <include name="componentSets/PropertiesFile"/>
 </components>

@@ -74,4 +74,18 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
                "Properties:VALUE_CHARACTERS", "s\\nsssd"
              });
   }
+  public void testCRLFEscaping() throws Exception {
+    doTest("sdlfkjsdsssd:a\\\nb", new String[] {
+               "Properties:KEY_CHARACTERS", "sdlfkjsdsssd",
+               "Properties:KEY_VALUE_SEPARATOR", ":",
+               "Properties:VALUE_CHARACTERS", "a\\\nb"
+             });
+  }
+  public void testCRLFEscapingKey() throws Exception {
+    doTest("x\\\ny:z", new String[] {
+               "Properties:KEY_CHARACTERS", "x\\\ny",
+               "Properties:KEY_VALUE_SEPARATOR", ":",
+               "Properties:VALUE_CHARACTERS", "z"
+             });
+  }
 }
