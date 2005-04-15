@@ -170,7 +170,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
             statement = (PsiStatement)statement.getParent();
           }
           PsiElement nextSibling = statement.getNextSibling();
-          return nextSibling instanceof PsiWhiteSpace ? nextSibling.getNextSibling() : nextSibling;
+          while (!(nextSibling instanceof PsiStatement) && nextSibling != null) nextSibling = nextSibling.getNextSibling();
+          return nextSibling != null ? nextSibling : statement.getNextSibling();
         }
       }
     }
