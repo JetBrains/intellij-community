@@ -1,15 +1,11 @@
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author cdr
@@ -20,18 +16,9 @@ class PropertiesReferenceProvider implements PsiReferenceProvider {
     final Object value = literalExpression.getValue();
     if (value instanceof String) {
       String text = (String)value;
-      //PsiClass aClass = element.getManager().findClass(text, GlobalSearchScope.allScope(element.getProject()));
-      //return new PsiReference[]{new LightClassReference(element.getManager(), element.getText(), aClass)};
-      List<Property> properties = PropertiesUtil.findPropertiesByKey(element.getProject(), text);
-      List<PsiReference> references = new ArrayList<PsiReference>(properties.size());
-      for (int i = 0; i < properties.size(); i++) {
-        Property property = properties.get(i);
-        PsiReference reference = new PropertyReference(property, literalExpression);
-        references.add(reference);
-      }
-      return references.toArray(new PsiReference[references.size()]);
+      PsiReference reference = new PropertyReference(text, literalExpression);
+      return new PsiReference[]{reference};
     }
-
     return PsiReference.EMPTY_ARRAY;
   }
 
