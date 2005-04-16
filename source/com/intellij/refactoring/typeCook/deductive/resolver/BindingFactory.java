@@ -597,6 +597,7 @@ public class BindingFactory {
 
         final PsiManager manager = PsiManager.getInstance(myProject);
         final PsiType subst = substitute(bound);
+        if (subst == null) return null;
         return subst instanceof PsiWildcardType ? subst : wcType.isExtends()
                                                           ? PsiWildcardType.createExtends(manager, subst)
                                                           : PsiWildcardType.createSuper(manager, subst);
@@ -622,24 +623,20 @@ public class BindingFactory {
         final PsiClass aClass = result.getElement();
         final PsiSubstitutor aSubst = result.getSubstitutor();
 
-        if (aClass == null) {
-          return t;
+        if (aClass != null) {
+          PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+
+          for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
+            final PsiTypeParameter parm = p.next();
+            final PsiType type = aSubst.substitute(parm);
+
+            theSubst = theSubst.put(parm, substitute(type));
+          }
+
+          return aClass.getManager().getElementFactory().createType(aClass, theSubst);
         }
-
-        PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
-
-        for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-          final PsiTypeParameter parm = p.next();
-          final PsiType type = aSubst.substitute(parm);
-
-          theSubst = theSubst.put(parm, substitute(type));
-        }
-
-        return aClass.getManager().getElementFactory().createType(aClass, theSubst);
       }
-      else {
-        return t;
-      }
+      return t;
     }
   }
 
