@@ -3,9 +3,7 @@ package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,14 +80,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         dialog.show();
         if(!dialog.isOK()) return false;
       }
-      // make sure that dialog is closed in swing thread
-      ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
-        public void run() {
-          myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-        }
-      });
     }
 
+    prepareSuccessful();
     return true;
   }
 
