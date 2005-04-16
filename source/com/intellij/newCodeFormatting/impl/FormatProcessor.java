@@ -442,7 +442,13 @@ class FormatProcessor {
   }
 
   public WhiteSpace getWhiteSpaceBefore(final int startOffset) {
-    return myTextRangeToWrapper.get(startOffset).getWhiteSpace();
+    int current = startOffset;
+    while (current < myModel.getTextLength()) {
+      final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
+      if (currentValue != null) return currentValue.getWhiteSpace();
+      current++;
+    }
+    return null;
   }
 
   public void setAllWhiteSpacesAreReadOnly() {

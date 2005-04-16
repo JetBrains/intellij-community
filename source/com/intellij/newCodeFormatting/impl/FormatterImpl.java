@@ -6,9 +6,13 @@ import com.intellij.psi.impl.source.codeStyle.IndentInfo;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent{
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.impl.FormatterImpl");
+
   public Alignment createAlignment() {
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
   }
@@ -71,6 +75,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds) {
     final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
     WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(affectedRange.getStartOffset());
+    LOG.assertTrue(whiteSpace != null);
     if (!mayChangeLineFeeds) {
       whiteSpace.setLineFeedsAreReadOnly();
     }

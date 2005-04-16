@@ -12,4 +12,6 @@ public interface FormattingModel {
   CharSequence getText(final TextRange textRange);
 
   void runModificationTransaction(Runnable action) throws IncorrectOperationException;
+
+  int getTextLength();
 }

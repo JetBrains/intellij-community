@@ -81,6 +81,10 @@ public class PsiBasedFormattingModel implements FormattingModel{
     }
   }
 
+  public int getTextLength() {
+    return myDocument.getTextLength();
+  }
+
   public void replaceWhiteSpace(final TextRange textRange, final String whiteSpace) throws IncorrectOperationException {
     final PomModel model = myProject.getModel();
     final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
