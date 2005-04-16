@@ -1401,11 +1401,11 @@ public class RefactoringUtil {
     }
   }
 
-  public static <T extends Collection<String>> T analyzeModuleConflicts(Project project,
-                                                                        Collection<PsiElement> scope,
-                                                                        PsiElement target,
-                                                                        final T conflicts) {
-    if (scope == null) return conflicts;
+  public static void analyzeModuleConflicts(Project project,
+                                            Collection<PsiElement> scope,
+                                            PsiElement target,
+                                            final Collection<String> conflicts) {
+    if (scope == null) return;
     final VirtualFile vFile;
     if (!(target instanceof PsiDirectory)) {
       vFile = target.getContainingFile().getVirtualFile();
@@ -1413,23 +1413,23 @@ public class RefactoringUtil {
     else {
       vFile = ((PsiDirectory)target).getVirtualFile();
     }
-    if (vFile == null) return conflicts;
-    return analyzeModuleConflicts(project, scope, vFile, conflicts);
+    if (vFile == null) return;
+    analyzeModuleConflicts(project, scope, vFile, conflicts);
   }
 
-  public static <T extends Collection<String>> T analyzeModuleConflicts(Project project,
+  public static  void analyzeModuleConflicts(Project project,
                                                                         final Collection<PsiElement> scopes,
                                                                         final VirtualFile vFile,
-                                                                        final T conflicts) {
-    if (scopes == null) return conflicts;
+                                                                        final Collection<String> conflicts) {
+    if (scopes == null) return;
 
     for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
       final PsiElement scope = iterator.next();
-      if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return conflicts;
+      if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return;
     }
 
     final Module targetModule = ModuleUtil.getModuleForFile(project, vFile);
-    if (targetModule == null) return conflicts;
+    if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
     for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
@@ -1454,7 +1454,6 @@ public class RefactoringUtil {
       });
 
     }
-    return conflicts;
   }
 
   private static boolean isAncestor(final PsiElement resolved, final Collection<PsiElement> scopes) {
