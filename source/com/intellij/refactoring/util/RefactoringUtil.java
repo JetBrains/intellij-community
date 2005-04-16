@@ -1417,10 +1417,10 @@ public class RefactoringUtil {
     analyzeModuleConflicts(project, scope, vFile, conflicts);
   }
 
-  public static  void analyzeModuleConflicts(Project project,
-                                                                        final Collection<PsiElement> scopes,
-                                                                        final VirtualFile vFile,
-                                                                        final Collection<String> conflicts) {
+  public static void analyzeModuleConflicts(Project project,
+                                            final Collection<PsiElement> scopes,
+                                            final VirtualFile vFile,
+                                            final Collection<String> conflicts) {
     if (scopes == null) return;
 
     for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
@@ -1441,7 +1441,8 @@ public class RefactoringUtil {
           if (resolved != null && !reported.contains(resolved)
               && !isAncestor(resolved, scopes)
               && !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
-            final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(ConflictsUtil.getContainer(reference), true));
+            final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(ConflictsUtil.getContainer(reference),
+                                                                                                     true));
             final String message =
               ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(resolved, true))) +
               ", referenced in " + scopeDescription +
