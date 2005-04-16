@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,9 @@ public class LowLevelSearchUtil {
                                                                 final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
-    if (scopePsi.getLanguage().mayHaveReferences(scope.getElementType(), searchContext)) {
+    final Language lang = scopePsi.getLanguage();
+    //TODO[ven]: lang is null for PsiPlainText for example. Should be reviewed.
+    if (lang == null || lang.mayHaveReferences(scope.getElementType(), searchContext)) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {
