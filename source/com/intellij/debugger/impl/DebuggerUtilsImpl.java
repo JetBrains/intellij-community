@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.ui.*;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.apiAdapters.TransportService;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,15 +18,11 @@ import com.intellij.psi.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.execution.ExecutionException;
-import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Value;
-import com.sun.tools.jdi.TransportService;
 import org.jdom.Element;
 
 import java.net.ServerSocket;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Constructor;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -138,7 +135,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
-    final TransportService transportService = getTransportService(useSockets);
+    final TransportService transportService = TransportService.getTransportService(useSockets);
 
     if(useSockets) {
       final int freePort = findAvailableSocketPort();

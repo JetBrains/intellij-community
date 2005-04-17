@@ -5,6 +5,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.apiAdapters.TransportService;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -25,30 +26,20 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.execution.ExecutionException;
-import com.intellij.util.ArrayUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
-import com.sun.tools.jdi.TransportService;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Constructor;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
 
   public static final int MAX_LABEL_SIZE = 255;
   public static Runnable DO_NOTHING = EmptyRunnable.getInstance();
-  private static final String SOCKET_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
-                                                       ? "com.sun.tools.jdi.SocketTransport"
-                                                       : "com.sun.tools.jdi.SocketTransportService";
-
-  private static final String SHMEM_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
-                                                      ? "com.sun.tools.jdi.SharedMemoryTransport"
-                                                      : "com.sun.tools.jdi.SharedMemoryTransportService";
 
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
@@ -358,36 +349,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
   public abstract CompletionEditor createEditor(Project project, PsiElement context, String recentsId);
-
-  public static TransportService getTransportService(boolean forceSocketTransport) throws ExecutionException {
-    TransportService transport = null;
-    try {
-      try {
-        if (forceSocketTransport) {
-          transport = createTransport(Class.forName(SOCKET_TRANSPORT_CLASS));
-        }
-        else {
-          transport = createTransport(Class.forName(SHMEM_TRANSPORT_CLASS));
-        }
-      }
-      catch (UnsatisfiedLinkError e) {
-        transport = createTransport(Class.forName(SOCKET_TRANSPORT_CLASS));
-      }
-    }
-    catch (Exception e) {
-      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
-    }
-    return transport;
-  }
-
-  private static TransportService createTransport(final Class aClass) throws NoSuchMethodException,
-                                                                             InstantiationException,
-                                                                             IllegalAccessException,
-                                                                             InvocationTargetException {
-    final Constructor constructor = aClass.getDeclaredConstructor(new Class[0]);
-    constructor.setAccessible(true);
-    return (TransportService)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-  }
 
   private static class SigReader {
     final String buffer;

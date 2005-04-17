@@ -5,6 +5,8 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.apiAdapters.ConnectionService;
+import com.intellij.debugger.apiAdapters.TransportService;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -57,8 +59,6 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
-import com.sun.tools.jdi.ConnectionService;
-import com.sun.tools.jdi.TransportService;
 import com.sun.tools.jdi.VirtualMachineManagerService;
 
 import javax.swing.*;
@@ -468,7 +468,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             hostString = hostString + ":";
 
             myConnectionService = ((TransportService) connector.transport()).attach(hostString + portString);
-            return ((VirtualMachineManagerService) Bootstrap.virtualMachineManager()).createVirtualMachine(myConnectionService);
+            return myConnectionService.createVirtualMachine();
           }
           else {
             return connector.attach(myArguments);

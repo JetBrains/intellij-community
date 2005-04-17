@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.apiAdapters.TransportService;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PathUtil;
-import com.sun.tools.jdi.TransportService;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -332,8 +332,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     });
 
-    final TransportService transportService = DebuggerUtilsEx.getTransportService(useSockets);
-    String xrun = "transport=" + transportService.name() + ",address=" + listenTo;
+    final TransportService transportService = TransportService.getTransportService(useSockets);
+    String xrun = "transport=" + transportService.transportId() + ",address=" + listenTo;
     if(serverMode) {
       xrun += ",suspend=y,server=n";
     }
