@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl");
+  private static final String QUOT = "&quot;";
 
 
   public PsiLiteralExpressionImpl() {
@@ -139,8 +140,12 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         text = text.substring(1, textLength - 1);
       }
       else {
-//          text = text.substring(1, textLength);
-        return null;
+        if (text.startsWith(QUOT) && text.endsWith(QUOT) && textLength > QUOT.length()) {
+          text = text.substring(QUOT.length(), textLength - QUOT.length());
+        }
+        else {
+          return null;
+        }
       }
       return parseStringCharacters(text);
     }
