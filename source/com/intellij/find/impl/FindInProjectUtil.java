@@ -219,8 +219,9 @@ public class FindInProjectUtil {
                                 (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
 
+    final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
-      if (canBeOptimizedForWordSearching(findModel)) {
+      if (canOptimizeForFastWordSearch(findModel)) {
         // optimization
         final CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
@@ -246,6 +247,7 @@ public class FindInProjectUtil {
           else {
             resultFiles.retainAll(psiFiles);
           }
+          filterMaskedFiles(resultFiles, fileMaskRegExp);
           if (resultFiles.size() == 0) break;
         }
 
@@ -253,14 +255,10 @@ public class FindInProjectUtil {
       }
       class EnumContentIterator implements ContentIterator {
         List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
-        Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
 
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory() &&
-              (fileMaskRegExp == null ||
-               fileMaskRegExp.matcher(fileOrDir.getName()).matches()
-              )
-          ) {
+              (fileMaskRegExp == null || fileMaskRegExp.matcher(fileOrDir.getName()).matches()) ) {
             myVirtualFiles.add(fileOrDir);
           }
           return true;
@@ -298,9 +296,18 @@ public class FindInProjectUtil {
                                     createFileMaskRegExp(findModel));
       return fileList;
     }
-  }  
+  }
 
-  private static boolean canBeOptimizedForWordSearching(final FindModel findModel) {
+  private static void filterMaskedFiles(final Set<PsiFile> resultFiles, final Pattern fileMaskRegExp) {
+    for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
+      PsiFile file = iterator.next();
+      if (fileMaskRegExp != null && !fileMaskRegExp.matcher(file.getName()).matches()) {
+        iterator.remove();
+      }
+    }
+  }
+
+  private static boolean canOptimizeForFastWordSearch(final FindModel findModel) {
     return findModel.isWholeWordsOnly() && !findModel.isRegularExpressions();
   }
 
