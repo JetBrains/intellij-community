@@ -5,6 +5,10 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiElement;
 
 public class ErrorUtil{
+    private ErrorUtil(){
+        super();
+    }
+
     public static boolean containsError(PsiElement element){
         final ErrorElementVisitor visitor = new ErrorElementVisitor();
         element.accept(visitor);
