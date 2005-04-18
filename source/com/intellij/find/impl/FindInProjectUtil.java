@@ -299,10 +299,12 @@ public class FindInProjectUtil {
   }
 
   private static void filterMaskedFiles(final Set<PsiFile> resultFiles, final Pattern fileMaskRegExp) {
-    for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
-      PsiFile file = iterator.next();
-      if (fileMaskRegExp != null && !fileMaskRegExp.matcher(file.getName()).matches()) {
-        iterator.remove();
+    if (fileMaskRegExp != null) {
+      for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
+        PsiFile file = iterator.next();
+        if (!fileMaskRegExp.matcher(file.getName()).matches()) {
+          iterator.remove();
+        }
       }
     }
   }
