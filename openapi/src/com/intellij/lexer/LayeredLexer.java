@@ -107,7 +107,7 @@ public class LayeredLexer extends LexerBase {
           activateLayerIfNecessary();
         } else {
           myCurrentLayerLexer = null;
-          myBaseLexer.start(myBuffer, tokenEnd, getBufferEnd());
+          //myBaseLexer.start(myBuffer, tokenEnd, getBufferEnd());
         }
       }
     } else {
