@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -398,7 +399,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private void checkDuplicateAttribute(XmlTag tag, XmlAttribute attribute) {
+  private void checkDuplicateAttribute(XmlTag tag, final XmlAttribute attribute) {
     XmlAttribute[] attributes = tag.getAttributes();
 
     for(int i = 0; i < attributes.length; i++){
@@ -406,10 +407,35 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(),tagAttribute.getName())) {
         final String localName = attribute.getLocalName();
-        myResult.add(HighlightInfo.createHighlightInfo(
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.WRONG_REF,
           XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
-          "Duplicate attribute " + localName));
+          "Duplicate attribute " + localName);
+        myResult.add(highlightInfo);
+
+        IntentionAction intentionAction = new IntentionAction() {
+          public String getText() {
+            return "Remove Duplicated Attribute";
+          }
+
+          public String getFamilyName() {
+            return "Remove Duplicated Attribute";
+          }
+
+          public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+            return true;
+          }
+
+          public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+            attribute.delete();
+          }
+
+          public boolean startInWriteAction() {
+            return true;
+          }
+        };
+        
+        QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
       }
     }
   }
