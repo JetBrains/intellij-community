@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -499,6 +501,8 @@ public class RenameDialog extends RefactoringDialog {
       }
       if (myPsiElement instanceof WebDirectoryElement) {
         return newName.indexOf('/') < 0;
+      } else if (myPsiElement instanceof XmlTag || myPsiElement instanceof XmlAttribute) {
+        return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
       }
       else {
         return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName.trim());
