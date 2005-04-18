@@ -7,6 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -545,7 +548,22 @@ public class RenameUtil {
       UsageInfo usage = usages[i];
       rename(usage, newName);
     }
-    namedElement.setName(newName);
+
+    boolean hasWritableMetaData = false;
+
+    if (namedElement instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
+
+      if (metaData instanceof PsiWritableMetaData) {
+        hasWritableMetaData = true;
+        ((PsiWritableMetaData)metaData).setName(newName);
+      }
+    }
+
+    if (!hasWritableMetaData) {
+      namedElement.setName(newName);
+    }
+
     listener.elementRenamed(namedElement);
   }
 

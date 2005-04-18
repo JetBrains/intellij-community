@@ -1,37 +1,22 @@
 package com.intellij.jsp.impl;
 
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspImplicitVariable;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
-import com.intellij.psi.jsp.tagLibrary.JspTagAttributeInfo;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TeiClassLoader;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
-import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
 import com.intellij.j2ee.jsp.UseBeanTEI;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.vfs.VirtualFile;
+
 import javax.servlet.jsp.tagext.*;
 import java.net.URL;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,7 +41,10 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
       myAttributeDescriptors = new XmlAttributeDescriptor[subTags.length];
 
       for (int i = 0; i < subTags.length; i++) {
-        myAttributeDescriptors[i] = new TldAttributeDescriptor(subTags[i],CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
+        myAttributeDescriptors[i] = new TldAttributeDescriptor(
+          subTags[i],
+          CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
+        );
       }
     }
     return myAttributeDescriptors;
@@ -103,10 +91,18 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
 
     final XmlTag[] vars = myTag.findSubTags("variable");
 
-    CustomTagSupportUtil.configureVariables(myTLDVars, vars, CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
+    CustomTagSupportUtil.configureVariables(
+      myTLDVars,
+      vars,
+      CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
+    );
 
     final XmlTag[] attributes = myTag.findSubTags("attribute");
-    CustomTagSupportUtil.configureAttributes(myTLDAttributes, attributes, CustomTagSupportUtil.ValueGetter.SUB_TAG_GETTER);
+    CustomTagSupportUtil.configureAttributes(
+      myTLDAttributes,
+      attributes,
+      CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
+    );
   }
 
   public Object[] getDependences() {
