@@ -132,12 +132,11 @@ public class CollectionUtils {
     }
 
     public static boolean isCollectionWithInitialCapacity(PsiType type) {
-
         if(!(type instanceof PsiClassType)){
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.getClassName();
+        final String className = classType.resolve().getQualifiedName();
         return s_collectionClassesRequiringCapacity.contains(className);
     }
 
@@ -146,7 +145,7 @@ public class CollectionUtils {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.getClassName();
+        final String className = classType.resolve().getQualifiedName();
         return s_allCollectionClasses.contains(className);
     }
 
@@ -155,7 +154,7 @@ public class CollectionUtils {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.getClassName();
+        final String className = classType.resolve().getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
 

@@ -13,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.StringUtils;
 
 public class ForCanBeForeachInspection extends StatementInspection{
     private final ForCanBeForeachFix fix = new ForCanBeForeachFix();
@@ -129,8 +130,18 @@ public class ForCanBeForeachInspection extends StatementInspection{
                     finalString = "";
                 }
             } else{
-                contentVariableName = createNewVarName(project, forStatement,
-                                                       contentType);
+                if(collection instanceof PsiReferenceExpression){
+                    final String collectionName =
+                            ((PsiReferenceExpression) collection).getReferenceName();
+                    contentVariableName = createNewVarName(project,
+                                                           forStatement,
+                                                           contentType,
+                                                           collectionName);
+                } else{
+                    contentVariableName = createNewVarName(project,
+                                                           forStatement,
+                                                           contentType, null);
+                }
                 finalString = "";
                 statementToSkip = null;
             }
@@ -181,8 +192,12 @@ public class ForCanBeForeachInspection extends StatementInspection{
                     finalString = "";
                 }
             } else{
-                contentVariableName = createNewVarName(project, forStatement,
-                                                       componentType);
+                final String collectionName =
+                        arrayReference.getReferenceName();
+                contentVariableName = createNewVarName(project,
+                                                       forStatement,
+                                                       componentType,
+                                                       collectionName);
                 finalString = "";
                 statementToSkip = null;
             }
@@ -359,18 +374,23 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         private String createNewVarName(Project project, PsiForStatement scope,
-                                        PsiType type){
+                                        PsiType type, String containerName){
+            final String baseName;
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
-            final SuggestedNameInfo suggestions =
-                    codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                                         null, null, type);
-            final String[] names = suggestions.names;
-            final String baseName;
-            if(names != null && names.length > 0){
-                baseName = names[0];
+            if(containerName == null){
+                baseName = StringUtils.createSingularFromName(containerName);
             } else{
-                baseName = "value";
+
+                final SuggestedNameInfo suggestions =
+                        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
+                                                             null, null, type);
+                final String[] names = suggestions.names;
+                if(names != null && names.length > 0){
+                    baseName = names[0];
+                } else{
+                    baseName = "value";
+                }
             }
             return codeStyleManager.suggestUniqueVariableName(baseName, scope,
                                                               true);
@@ -520,7 +540,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         final PsiClass qualifierClass =
                 ((PsiClassType) qualifierType).resolve();
-        if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable")){
+        if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
+                   !ClassUtils.isSubclass(qualifierClass,
+                                          "java.util.Collection")){
+
             return false;
         }
         final String iteratorName = declaredVar.getName();
@@ -542,7 +565,14 @@ public class ForCanBeForeachInspection extends StatementInspection{
         if(isIteratorRemoveCalled(iteratorName, body)){
             return false;
         }
-        return !isIteratorAssigned(iteratorName, body);
+        if(isIteratorHasNextCalled(iteratorName, body)){
+            return false;
+        }
+        if(isIteratorAssigned(iteratorName, body)){
+            return false;
+        } else{
+            return true;
+        }
     }
 
     private static int calculateCallsToIteratorNext(String iteratorName,
@@ -567,6 +597,14 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 new IteratorRemoveVisitor(iteratorName);
         body.accept(visitor);
         return visitor.isRemoveCalled();
+    }
+
+    private static boolean isIteratorHasNextCalled(String iteratorName,
+                                                   PsiStatement body){
+        final IteratorHasNextVisitor visitor =
+                new IteratorHasNextVisitor(iteratorName);
+        body.accept(visitor);
+        return visitor.isHasNextCalled();
     }
 
     private static boolean isHasNext(PsiExpression condition, String iterator){
@@ -856,6 +894,48 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         public boolean isRemoveCalled(){
             return removeCalled;
+        }
+    }
+
+    private static class IteratorHasNextVisitor
+            extends PsiRecursiveElementVisitor{
+        private boolean hasNextCalled = false;
+        private final String iteratorName;
+
+        IteratorHasNextVisitor(String iteratorName){
+            super();
+            this.iteratorName = iteratorName;
+        }
+
+        public void visitElement(PsiElement element){
+            if(!hasNextCalled){
+                super.visitElement(element);
+            }
+        }
+
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+            if(hasNextCalled){
+                return;
+            }
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String name = methodExpression.getReferenceName();
+            if(!"hasNext".equals(name)){
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(qualifier != null){
+                final String qualifierText = qualifier.getText();
+                if(iteratorName.equals(qualifierText)){
+                    hasNextCalled = true;
+                }
+            }
+        }
+
+        public boolean isHasNextCalled(){
+            return hasNextCalled;
         }
     }
 

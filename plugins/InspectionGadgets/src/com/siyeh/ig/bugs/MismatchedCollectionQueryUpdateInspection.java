@@ -7,10 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.ig.psiutils.CollectionUtils;
-import com.siyeh.ig.psiutils.VariableAssignedFromVisitor;
-import com.siyeh.ig.psiutils.VariablePassedAsArgumentVisitor;
-import com.siyeh.ig.psiutils.VariableReturnedVisitor;
+import com.siyeh.ig.psiutils.*;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends VariableInspection{
@@ -79,17 +76,20 @@ public class MismatchedCollectionQueryUpdateInspection
             }
             final boolean written =
                     collectionContentsAreUpdated(field, containingClass);
-            final boolean read =
-                    collectionContentsAreQueried(field, containingClass);
-            if(written && read){
+            if(!written)
+            {
+                registerFieldError(field);
                 return;
             }
-            registerFieldError(field);
+            final boolean read =
+                    collectionContentsAreQueried(field, containingClass);
+            if( !read){
+                registerFieldError(field);
+            }
         }
 
         public void visitLocalVariable(PsiLocalVariable variable){
             super.visitLocalVariable(variable);
-
             final PsiCodeBlock codeBlock =
                     (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable,
                                                                PsiCodeBlock.class);
@@ -104,6 +104,7 @@ public class MismatchedCollectionQueryUpdateInspection
                     collectionContentsAreUpdated(variable, codeBlock);
             if(!written){
                 registerVariableError(variable);
+                return;
             }
             final boolean read =
                     collectionContentsAreQueried(variable, codeBlock);
@@ -170,10 +171,10 @@ public class MismatchedCollectionQueryUpdateInspection
 
     private static boolean variableIsAssigned(PsiVariable variable,
                                               PsiElement context){
-        final VariableAssignedFromVisitor visitor =
-                new VariableAssignedFromVisitor(variable);
+        final VariableAssignedVisitor visitor =
+                new VariableAssignedVisitor(variable);
         context.accept(visitor);
-        return visitor.isAssignedFrom();
+        return visitor.isAssigned();
     }
 
     private static boolean variableIsReturned(PsiVariable variable,
