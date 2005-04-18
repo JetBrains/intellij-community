@@ -2,17 +2,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorComposite;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.FileStatus;
 
 import java.util.ArrayList;
 
@@ -20,9 +17,16 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
 
   private ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
-    final Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    final DataContext dataContext = event.getDataContext();
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow[] windows = editorManager.getWindows ();
+    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow[] windows;
+    if (editorWindow != null){
+      windows = new EditorWindow[]{ editorWindow };
+    } else {
+      windows = editorManager.getWindows ();
+    }
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
     if (fileStatusManager != null) {
       for (int i = 0; i != windows.length; ++ i) {

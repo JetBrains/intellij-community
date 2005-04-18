@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -183,7 +184,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     });
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    PopupHandler.installPopupHandler(myTree, (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
+    PopupHandler.installPopupHandler(myTree, (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
                                      ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
     /* mySplitter = new Splitter(true);
      mySplitter.setHonorComponentsMinimumSize(true);

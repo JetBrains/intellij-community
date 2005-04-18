@@ -6,7 +6,11 @@ import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.java.KindSorter;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -24,8 +28,8 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -176,7 +180,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private void addTreeMouseListeners() {
     EditSourceOnDoubleClickHandler.install(getTree());
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP);
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP);
     PopupHandler.installPopupHandler(getTree(), group, ActionPlaces.STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
 

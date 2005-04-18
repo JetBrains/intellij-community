@@ -12,6 +12,7 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -65,7 +66,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
     myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
 
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
     PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
 
     EditSourceOnDoubleClickHandler.install(myTree);

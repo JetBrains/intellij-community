@@ -9,6 +9,7 @@ import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -125,7 +126,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   private JComponent createToolbar() {
-    ActionGroup group = CustomizableActionsSchemas.getInstance().getActiveSchema().getMainToolbarActionsGroup();
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getActiveSchema().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     final ActionToolbarEx toolBar=(ActionToolbarEx)myActionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,

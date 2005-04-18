@@ -95,4 +95,9 @@ public interface DataConstantsEx extends DataConstants {
    * returns array of NamedLibraryElements
    */
   String NAMED_LIBRARY_ARRAY = "namedLibrary.array";
+  
+  /**
+   * returns com.intellij.openapi.fileEditor.impl.EditorWindow
+   */
+  String EDITOR_WINDOW = "editorWindow";
 }

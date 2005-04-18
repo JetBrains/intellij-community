@@ -5,6 +5,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.EditorHelper;
@@ -368,7 +369,7 @@ public class CommanderPanel extends JPanel {
     }
 
     final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup group = (ActionGroup)actionManager.getAction(IdeActions.GROUP_COMMANDER_POPUP);
+    final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
     popupMenu.getComponent().show(c, x, y);
   }

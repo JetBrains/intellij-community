@@ -2,24 +2,36 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseAllEditorsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final DataContext dataContext = e.getDataContext();
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
         public void run() {
-          FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-          VirtualFile selectedFile = editorManager.getSelectedFiles()[0];
-          VirtualFile[] openFiles = editorManager.getSiblings(selectedFile);
+          final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+          if (window != null){
+            final VirtualFile[] files = window.getFiles();
+            for (int i = 0; i < files.length; i++) {
+              VirtualFile file = files[i];
+              window.closeFile(file);
+            }
+            return;
+          }
+          FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+          VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
+          VirtualFile[] openFiles = fileEditorManager.getSiblings(selectedFile);
           for (int i = 0; i < openFiles.length; i++) {
-            editorManager.closeFile(openFiles[i]);
+            fileEditorManager.closeFile(openFiles[i]);
           }
         }
       }, "Close All Editors", null

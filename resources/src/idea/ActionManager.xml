@@ -587,11 +587,11 @@
         <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction" text="_Close Active Editor" description="Close active editor"/>
         <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
-        <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
+        <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All _Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
-        <action id="SplitVertically"        class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
-        <action id="SplitHorizontally"      class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
-        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter Orientation" description="Changes orientation of splitter"/>
+        <action id="SplitVertically"        class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split _Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
+        <action id="SplitHorizontally"      class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split _Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
+        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter _Orientation" description="Changes orientation of splitter"/>
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
         <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>
         <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
@@ -749,9 +749,24 @@
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction" text="Switch Keymap" description="Change current keymap"/>
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel" text="Switch Look&amp;Feel" description="Change current Look&amp;Feel"/>
       <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction" text="Switch Editor Highlighting" description="Change current editor inspection profile"/>
+      <action id="ChangeCustomizationSchema" class="com.intellij.ide.ui.customization.QuickChangeCustomizationSchemaAction" text="Switch Customization Schema" description="Change Current Customization Schema"/>
     </group>
 
     <group id="EditorTabPopupMenu">
+      <reference ref="CloseEditor" />
+      <reference ref="CloseAllEditorsButActive"/>
+      <reference ref="CloseAllEditors"/>
+      <reference ref="CloseAllUnmodifiedEditors" />
+      <separator />
+      <reference ref="SplitVertically"/>
+      <reference ref="SplitHorizontally"/>
+      <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction" text="_Move Editor To Opposite Tab Group" description="Move Editor To Opposite Tab Group"/>
+      <reference ref="ChangeSplitOrientation"/>
+      <reference ref="PinActiveTab"/>
+      <separator />
+      <reference ref="NextTab"/>
+      <reference ref="PreviousTab"/>
+      <separator />
       <reference ref="AddToFavorites"/>
       <separator />
       <reference ref="AddAllToFavorites"/>

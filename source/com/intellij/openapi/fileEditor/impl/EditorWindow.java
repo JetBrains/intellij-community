@@ -1,6 +1,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -11,7 +14,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
@@ -245,13 +247,20 @@ public class EditorWindow {
     myOwner.setCurrentWindow(this, requestFocus);
   }
 
-  protected static class TComp extends JPanel {
+  protected static class TComp extends JPanel implements DataProvider{
     final EditorWithProviderComposite myEditor;
 
     TComp(final EditorWithProviderComposite editor) {
       super(new BorderLayout());
       myEditor = editor;
       add(editor.getComponent(), BorderLayout.CENTER);
+    }
+
+    public Object getData(String dataId) {
+      if (dataId.equals(DataConstants.VIRTUAL_FILE)){
+        return myEditor.getFile();
+      }
+      return null;
     }
   }
 

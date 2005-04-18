@@ -1,13 +1,15 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ui.content.ContentManagerUtil;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.ContentManagerUtil;
 
 public class PinActiveTabAction extends ToggleAction {
   /**
@@ -24,14 +26,7 @@ public class PinActiveTabAction extends ToggleAction {
       return null;
     }
 
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
-    if(selectedFiles.length != 0){
-      return selectedFiles[0];
-    }
-    else{
-      return null;
-    }
+    return (VirtualFile)context.getData(DataConstants.VIRTUAL_FILE);
   }
 
   /**
@@ -52,7 +47,11 @@ public class PinActiveTabAction extends ToggleAction {
       // 1. Check editor
       final Project project = (Project)context.getData(DataConstants.PROJECT);
       final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      return fileEditorManager.getCurrentWindow().isFilePinned(file);
+      EditorWindow editorWindow = (EditorWindow)context.getData(DataConstantsEx.EDITOR_WINDOW);
+      if (editorWindow == null){
+        editorWindow = fileEditorManager.getCurrentWindow();
+      }
+      return editorWindow.isFilePinned(file);
     }
     else{
       // 2. Check content
@@ -72,7 +71,12 @@ public class PinActiveTabAction extends ToggleAction {
     if(file != null){
       // 1. Check editor
       Project project = (Project)context.getData(DataConstants.PROJECT);
-      FileEditorManagerEx.getInstanceEx(project).getCurrentWindow ().setFilePinned(file, state);
+      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+      EditorWindow editorWindow = (EditorWindow)context.getData(DataConstantsEx.EDITOR_WINDOW);
+      if (editorWindow == null){
+        editorWindow = fileEditorManager.getCurrentWindow();
+      }
+      editorWindow.setFilePinned(file, state);
     }
     else{
       Content content = getContent(context); // at this point content cannot be null
@@ -85,5 +89,10 @@ public class PinActiveTabAction extends ToggleAction {
     Presentation presentation = e.getPresentation();
     DataContext context = e.getDataContext();
     presentation.setEnabled(getFile(context) != null || getContent(context) != null);
+    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace())) {
+      presentation.setText(isSelected(e) ? "_Unpin Tab" : "_Pin Tab");
+    } else {
+      presentation.setText(isSelected(e) ? "Unpin _Active Tab" : "_Pin Active Tab");
+    }
   }
 }

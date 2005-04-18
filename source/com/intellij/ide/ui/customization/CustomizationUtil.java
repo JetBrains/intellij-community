@@ -119,9 +119,7 @@ public class CustomizationUtil {
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
-    root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createMainMenuGroup(true)));
-    root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createMainToolbarGroup()));
-    root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createEditorPopupGroup()));
+    schema.fillActionGroups(root);
     final JTree defaultTree = new JTree(new DefaultTreeModel(root));
 
     final ArrayList<ActionUrl> addActions = new ArrayList<ActionUrl>();

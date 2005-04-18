@@ -1,10 +1,10 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.ide.actions.NextTabAction;
-import com.intellij.ide.actions.PreviousTabAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -173,49 +173,6 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
     }
 
 
-    private final class MyCloseAction extends AnAction {
-      private final VirtualFile myFile;
-
-      public MyCloseAction(final VirtualFile file) {
-        super("Close");
-        registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_EDITOR).getShortcutSet(), null);
-        myFile = file;
-      }
-
-      public void actionPerformed(final AnActionEvent e) {
-        myWindow.closeFile(myFile);
-      }
-
-      public void update(final AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        presentation.setEnabled(myFile != null);
-      }
-    }
-
-    private final class MyCloseAllButThisAction extends AnAction {
-      private final VirtualFile myFile;
-
-      public MyCloseAllButThisAction(VirtualFile file) {
-        super("Close All But This");
-        registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS).getShortcutSet(), null);
-        myFile = file;
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        final VirtualFile[] siblings = myWindow.getFiles();
-        for (int i = 0; i < siblings.length; i++) {
-          VirtualFile file = siblings[i];
-          if (file != myFile) {
-            myWindow.closeFile(siblings[i]);
-          }
-        }
-      }
-
-      public void update(AnActionEvent e) {
-        Presentation presentation = e.getPresentation();
-        presentation.setEnabled(myFile != null && getTabCount() > 1);
-      }
-    }
 
     /**
      * Closes all editor in the tabbed container
@@ -239,210 +196,11 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       }
     }
 
-    /**
-     * Closes all editor in the tabbed container
-     */
-    private final class MyCloseAllUnmodifiedAction extends AnAction {
-      public MyCloseAllUnmodifiedAction() {
-        super("Close All Unmodified", "Close all editors in the tab group", null);
-        registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_UNMODIFIED_EDITORS).getShortcutSet(), null);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        // Collect files to be closed
-        final EditorWithProviderComposite[] editors = myWindow.getEditors();
-        for (int i = 0; i < editors.length; i++) {
-          final EditorWithProviderComposite editor = editors[i];
-          if (!myEditorManager.isChanged(editor)) {
-            myWindow.closeFile(editor.getFile ());
-          }
-        }
-      }
-
-      public void update(AnActionEvent e) {
-        final EditorWithProviderComposite[] editors = myWindow.getEditors();
-        for (int i = 0; i < editors.length; i++) {
-          if (!myEditorManager.isChanged(editors[i])) {
-            e.getPresentation().setEnabled(true);
-            return;
-          }
-        }
-        e.getPresentation().setEnabled(false);
-      }
-    }
-
-    /**
-     * Toggles "pin" state of the file
-     */
-    private final class MyPinEditorAction extends AnAction {
-      private final VirtualFile myFile;
-
-      public MyPinEditorAction(VirtualFile file) {
-        getTemplatePresentation().setDescription("Pin/unpin editor tab");
-        myFile = file;
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        myWindow.setFilePinned(myFile, !myWindow.isFilePinned(myFile));
-      }
-
-      public void update(AnActionEvent e) {
-        Presentation presentation = e.getPresentation();
-        presentation.setText("Pin Tab");
-        if (myFile == null) {
-          presentation.setEnabled(false);
-        }
-        else {
-          presentation.setEnabled(true);
-          if (myWindow.isFilePinned(myFile)) {
-            presentation.setText("Unpin Tab");
-          }
-        }
-      }
-    }
-
-    /**
-     * Selects next tab
-     */
-    private final class MyNextTabAction extends AnAction {
-      public MyNextTabAction() {
-        copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB));
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        final EditorComposite selectedComposite = myWindow.getSelectedEditor();
-        NextTabAction.navigateImpl(myProject, selectedComposite.getFile(), +1);
-      }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myTabbedPane.getTabCount() > 1);
-      }
-    }
-
-    private final class MyPreviousTabAction extends AnAction {
-      public MyPreviousTabAction() {
-        copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB));
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        final EditorComposite selectedComposite = myWindow.getSelectedEditor();
-        PreviousTabAction.navigateImpl(myProject, selectedComposite.getFile(), -1);
-      }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myTabbedPane.getTabCount() > 1);
-      }
-    }
-
-    private abstract class MyNewTabGroupAction extends AnAction {
-      private final int myOrientation;
-      private final VirtualFile myFile;
-
-      protected MyNewTabGroupAction(int orientation, VirtualFile file) {
-        myOrientation = orientation;
-        myFile = file;
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        myEditorManager.createSplitter(myOrientation);
-      }
-
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        presentation.setEnabled(myEditorManager.hasOpenedFile());
-      }
-    }
-
-    private final class MyNewHorizontalTabGroupAction extends MyNewTabGroupAction {
-      public MyNewHorizontalTabGroupAction(VirtualFile file) {
-        super(SwingConstants.HORIZONTAL, file);
-        final AnAction action = ActionManager.getInstance().getAction("SplitHorizontally");
-        copyFrom(action);
-      }
-    }
-
-    private final class MyNewVerticalTabGroupAction extends MyNewTabGroupAction {
-      public MyNewVerticalTabGroupAction(VirtualFile file) {
-        super(SwingConstants.VERTICAL, file);
-        final AnAction action = ActionManager.getInstance().getAction("SplitVertically");
-        copyFrom(action);
-      }
-    }
-
-    private final class MyMoveEditorToOppositeTabGroupAction extends AnAction{
-      private final VirtualFile myFile;
-
-      public MyMoveEditorToOppositeTabGroupAction(final VirtualFile file) {
-        super ("Move To Opposite Tab Group");
-        myFile = file;
-      }
-
-      public void actionPerformed(final AnActionEvent event) {
-        if(myFile != null && myWindow != null){
-          final EditorWindow[] siblings = myWindow.findSiblings ();
-          if (siblings != null && siblings.length == 1) {
-            FileEditorManagerImpl.openFileImpl3 (siblings [0], myFile, true, null);
-            myWindow.closeFile(myFile);
-          }
-        }
-      }
-
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        if(myFile != null && myWindow != null){
-          final EditorWindow[] siblings = myWindow.findSiblings ();
-          if (siblings != null && siblings.length == 1)
-            presentation.setEnabled(true);
-          else
-            presentation.setEnabled(false);
-          return;
-        }
-        presentation.setEnabled(false);
-      }
-    }
-
-    private final class MyChangeTabGroupsOrientation extends AnAction {
-      public MyChangeTabGroupsOrientation() {
-        AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CHANGE_SPLIT_ORIENTATION);
-        copyFrom(action);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        myEditorManager.changeSplitterOrientation();
-      }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myEditorManager.isInSplitter());
-      }
-    }
 
     private final class MyTabbedPanePopupHandler extends PopupHandler {
       public void invokePopup(final Component comp, final int x, final int y) {
-        final DefaultActionGroup _group = new DefaultActionGroup();
-        final ActionManager actionManager = ActionManager.getInstance();
-        final VirtualFile fileAt = getFileAt(x, y);
-        _group.add(new MyCloseAction(fileAt));
-        _group.add(new MyCloseAllButThisAction(fileAt));
-        _group.add(new MyCloseAllAction());
-        _group.add(new MyCloseAllUnmodifiedAction());
-        _group.addSeparator();
-        _group.add(new MyNewVerticalTabGroupAction(fileAt));
-        _group.add(new MyNewHorizontalTabGroupAction(fileAt));
-        _group.add(new MyMoveEditorToOppositeTabGroupAction(fileAt));
-        _group.add(new MyChangeTabGroupsOrientation());
-        //_group.addSeparator();
-        _group.add(new MyPinEditorAction(fileAt));
-        _group.addSeparator();
-        _group.add(new MyNextTabAction());
-        _group.add(new MyPreviousTabAction());
-        _group.addSeparator();
-        final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
-        final AnAction[] children = group.getChildren(null);
-        for (int i = 0; i < children.length; i++) {
-          final AnAction child = children[i];
-          _group.add(child);
-        }
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_TAB_POPUP, _group);
+        final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
+        final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_TAB_POPUP, group);
         menu.getComponent().show(comp, x, y);
       }
     }
@@ -453,9 +211,11 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
         return myWindow.getSelectedFile();
       }
-      else {
-        return null;
+      if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
+        return myWindow;
       }
+      return null;
     }
   }
+
 }

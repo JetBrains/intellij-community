@@ -319,7 +319,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     public void invokePopup(final EditorMouseEvent event) {
       if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
         final CustomActionsSchema customizationSchema = CustomizableActionsSchemas.getInstance().getActiveSchema();
-        ActionGroup group = customizationSchema.getEditorPopupGroup();
+        ActionGroup group = (ActionGroup)customizationSchema.getCorrectedAction(IdeActions.GROUP_EDITOR_POPUP);
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
         MouseEvent e = event.getMouseEvent();
         popupMenu.getComponent().show(e.getComponent(), e.getX(), e.getY());

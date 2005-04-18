@@ -104,7 +104,7 @@ public class IdeMenuBar extends JMenuBar{
   private void expandActionGroup(final DataContext context,
                                  final ArrayList newVisibleActions,
                                  ActionManager actionManager) {
-    final ActionGroup mainActionGroup = CustomizableActionsSchemas.getInstance().getMainMenuActionGroup();
+    final ActionGroup mainActionGroup = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
     for (int i = 0; i < children.length; i++) {

@@ -1,7 +1,6 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
@@ -13,9 +12,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ReorderableListController;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -63,19 +60,18 @@ public class CustomizableActionsPanel {
     myList.setPrototypeCellValue(new CustomActionsSchema("xxxxxxxxxxxxx", ""));
     fillSchemaList();
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(
+    myList.setCellRenderer(new ColoredListCellRenderer(){
+      protected void customizeCellRenderer(
         JList list,
         Object value,
         int index,
-        boolean isSelected,
-        boolean cellHasFocus) {
-        final Component listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
-                                                                                       cellHasFocus);
+        boolean selected,
+        boolean hasFocus
+        ) {
         if (value instanceof CustomActionsSchema){
-          setText(((CustomActionsSchema)value).getName());
+          final CustomActionsSchema schema = ((CustomActionsSchema)value);
+          append(schema.getName(), schema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME) ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-        return listCellRendererComponent;
       }
     });
     Group rootGroup = new Group("root", null, null);
@@ -99,9 +95,10 @@ public class CustomizableActionsPanel {
         if (selectionPaths != null) {
           for (int i = 0; i < selectionPaths.length; i++) {
             TreePath selectionPath = selectionPaths[i];
-            if (selectionPath.getPath() != null && selectionPath.getPath().length <= 2){
+            if ((selectionPath.getPath() != null && selectionPath.getPath().length <= 2) ||
+                (mySelectedSchema == null || mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME))){
               setButtonsDisabled();
-              break;
+              return;
             }
           }
         }
@@ -244,11 +241,8 @@ public class CustomizableActionsPanel {
       public void valueChanged(ListSelectionEvent e) {
         final CustomActionsSchema selectedValue = (CustomActionsSchema)myList.getSelectedValue();
         if (selectedValue != null){
-          if (mySelectedSchema != null){
-            //CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
-          }
           mySelectedSchema = selectedValue;
-          setNameAndDescription(true, mySelectedSchema.getName(), mySelectedSchema.getDescription());
+          setNameAndDescription(mySelectedSchema != null && !mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME), mySelectedSchema.getName(), mySelectedSchema.getDescription());
           patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
         } else {
           mySelectedSchema = null;
@@ -289,6 +283,7 @@ public class CustomizableActionsPanel {
         }
       }
     });
+
 
     patchActionsTreeCorrespondingToSchema(root);
   }
@@ -477,9 +472,7 @@ public class CustomizableActionsPanel {
   private void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root){
     root.removeAllChildren();
     if (mySelectedSchema != null){
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createMainMenuGroup(true)));
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createMainToolbarGroup()));
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createEditorPopupGroup()));
+      mySelectedSchema.fillActionGroups(root);
       for (Iterator<ActionUrl> iterator = mySelectedSchema.getActions().iterator(); iterator.hasNext();) {
         ActionUrl.changePathInActionsTree(myActionsTree, iterator.next());
       }

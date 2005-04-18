@@ -37,6 +37,12 @@ public class ActionsTreeUtil {
   private static final Icon TOOLS_ICON = IconLoader.getIcon("/nodes/keymapTools.png");
   private static final Icon TOOLS_OPEN_ICON = IconLoader.getIcon("/nodes/keymapToolsOpen.png");
   private static final Icon OTHER_ICON = IconLoader.getIcon("/nodes/keymapOther.png");
+  public static final String EDITOR_TAB_POPUP = "Editor Tab Popup Menu";
+  public static final String FAVORITES_POPUP = "Favorites View Popup Menu";
+  public static final String PROJECT_VIEW_POPUP = "Project View Popup Menu";
+  public static final String COMMANDER_POPUP = "Commander View Popup Menu";
+  public static final String STRUCTURE_VIEW_POPUP = "Structure View Popup Menu";
+  public static final String J2EE_POPUP = "J2EE View Popup Menu";
 
   private ActionsTreeUtil() {}
 
@@ -112,18 +118,6 @@ public class ActionsTreeUtil {
     return group;
   }
 
-
-
-  public static Group createMainToolbarGroup() {
-    final ActionGroup mainToolbarGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    return createGroup(mainToolbarGroup, MAIN_TOOLBAR, null, null, true);
-  }
-
-  public static Group createEditorPopupGroup() {
-    ActionGroup editorPopupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_POPUP);
-    return createGroup(editorPopupGroup, EDITOR_POPUP, EDITOR_ICON, EDITOR_OPEN_ICON, true);
-  }
-
   public static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, boolean ignore) {
     AnAction[] mainMenuTopGroups = actionGroup.getChildren(null);
     for (int i = 0; i < mainMenuTopGroups.length; i++) {
@@ -142,7 +136,7 @@ public class ActionsTreeUtil {
     return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore);
   }
 
-  private static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore) {
+  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
     AnAction[] children = actionGroup.getChildren(null);

@@ -2,6 +2,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -11,7 +12,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -26,9 +29,19 @@ public class CustomActionsSchema implements JDOMExternalizable {
   private boolean myModified = false;
 
 
-  private ActionGroup myMainMenuActionGroup;
-  private ActionGroup myMainToolabarActionGroup;
-  private ActionGroup myEditorPopupActionGroup;
+  private HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
+  private HashMap<String , String > myIdToName = new HashMap<String, String>();
+  {
+    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
+    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
+    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP);
+    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP);
+    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
+    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP);
+    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
+    myIdToName.put(IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionsTreeUtil.STRUCTURE_VIEW_POPUP);
+    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
+  }
 
   private static final String GROUP = "group";
 
@@ -83,15 +96,6 @@ public class CustomActionsSchema implements JDOMExternalizable {
     return myDescription;
   }
 
-  public ActionGroup getMainMenuActionGroup() {
-    if (myMainMenuActionGroup == null) {
-      myMainMenuActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                     .getAction(IdeActions.GROUP_MAIN_MENU), this,
-                                                                               ActionsTreeUtil.MAIN_MENU_TITLE);
-    }
-    return myMainMenuActionGroup;
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     for (Iterator<Element> iterator = element.getChildren(GROUP).iterator(); iterator.hasNext();) {
@@ -116,34 +120,33 @@ public class CustomActionsSchema implements JDOMExternalizable {
     }
   }
 
-  public ActionGroup getMainToolbarActionsGroup() {
-    if (myMainToolabarActionGroup == null) {
-      myMainToolabarActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                         .getAction(IdeActions.GROUP_MAIN_TOOLBAR), this,
-                                                                                   ActionsTreeUtil.MAIN_TOOLBAR);
+  public AnAction getCorrectedAction(String id) {
+    if (! myIdToName.containsKey(id)){
+      return ActionManager.getInstance().getAction(id);
     }
-    return myMainToolabarActionGroup;
-  }
-
-  public ActionGroup getEditorPopupGroup() {
-    if (myEditorPopupActionGroup == null) {
-      myEditorPopupActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                        .getAction(IdeActions.GROUP_EDITOR_POPUP), this,
-                                                                                  ActionsTreeUtil.EDITOR_POPUP);
+    if (myIdToActionGroup.get(id) == null) {
+      myIdToActionGroup.put(id, CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(id), this, myIdToName.get(id)));
     }
-    return myEditorPopupActionGroup;
+    return myIdToActionGroup.get(id);
   }
 
   public void resetMainActionGroups() {
-    myMainMenuActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                   .getAction(IdeActions.GROUP_MAIN_MENU), this,
-                                                                             ActionsTreeUtil.MAIN_MENU_TITLE);
-    myMainToolabarActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                       .getAction(IdeActions.GROUP_MAIN_TOOLBAR), this,
-                                                                                 ActionsTreeUtil.MAIN_TOOLBAR);
-    myEditorPopupActionGroup = CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance()
-                                                                      .getAction(IdeActions.GROUP_EDITOR_POPUP), this,
-                                                                                ActionsTreeUtil.EDITOR_POPUP);
+    for (Iterator<String> iterator = myIdToName.keySet().iterator(); iterator.hasNext();) {
+      String id = iterator.next();
+      myIdToActionGroup.put(id, CustomizationUtil.correctActionGroup((ActionGroup)ActionManager.getInstance().getAction(id), this, myIdToName.get(id)));
+    }
+  }
+
+  public void fillActionGroups(DefaultMutableTreeNode root){
+    final ActionManager actionManager = ActionManager.getInstance();
+    for (Iterator<String > iterator = myIdToName.keySet().iterator(); iterator.hasNext();) {
+      String name = iterator.next();
+      if (name.equals(IdeActions.GROUP_MAIN_MENU)){
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createMainMenuGroup(false)));
+      } else {
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup((ActionGroup)actionManager.getAction(name), myIdToName.get(name), null, null, true)));
+      }
+    }
   }
 
   public boolean isModified() {

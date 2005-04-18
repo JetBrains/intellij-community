@@ -33,7 +33,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public FavoritesViewImpl(Project project, ProjectManager projectManager) {
-    super(new TabbedPaneContentUI(), true, project, projectManager);
+    super(new TabbedPaneContentUI(), false, project, projectManager);
     myCurrentProject = project;
     addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(ContentManagerEvent event) {
