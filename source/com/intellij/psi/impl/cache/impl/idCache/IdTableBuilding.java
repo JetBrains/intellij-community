@@ -196,6 +196,7 @@ public class IdTableBuilding {
 
   public static IdCacheBuilder getCacheBuilder(PsiFile psiFile) {
     final FileType fileType = psiFile.getFileType();
+
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;

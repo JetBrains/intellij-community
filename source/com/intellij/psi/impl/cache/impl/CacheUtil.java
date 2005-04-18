@@ -2,14 +2,11 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -47,7 +44,7 @@ public class CacheUtil {
         CharSequence text;
         if (content == null) {
           Document document = FileDocumentManager.getInstance().getDocument(vFile);
-          text = ((DocumentEx)document).getCharsSequence();
+          text = document.getCharsSequence();
         }
         else {
           try {
@@ -59,9 +56,11 @@ public class CacheUtil {
         }
 
         FileType fileType = psiFile.getFileType();
+        /* No longer necessary?
         if (psiFile instanceof PsiPlainTextFile && (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.ASPECT)) { // fixes problem with java&aspect files outside sourcepath
           fileType = StdFileTypes.PLAIN_TEXT;
         }
+        */
         PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
         char[] chars = CharArrayUtil.fromSequence(text);
         fileCopy = factory.createDummyFileFromText(fileType, chars, 0, text.length());
