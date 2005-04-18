@@ -51,11 +51,12 @@ import java.util.*;
 
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
-    private static final int NUM_INSPECTIONS = 360;
+    private static final int NUM_INSPECTIONS = 420;
     private final List m_inspectionClasses = new ArrayList(NUM_INSPECTIONS);
     private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
+    private static final boolean TELEMETRY_ENABLED = true;
 
     public static void main(String[] args){
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
@@ -526,6 +527,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(UnnecessaryThisInspection.class);
         inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
         inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
+        inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
         inspectionClasses.add(UnnecessaryReturnInspection.class);
         inspectionClasses.add(UnnecessaryContinueInspection.class);
         inspectionClasses.add(UnnecessarySemicolonInspection.class);
@@ -775,6 +777,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public void disposeComponent(){
+    }
+
+    public boolean isTelemetryEnabled()
+    {
+        return TELEMETRY_ENABLED;
     }
 
     public InspectionGadgetsTelemetry getTelemetry(){

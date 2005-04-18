@@ -176,8 +176,8 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             if(rhsType == null){
                 return;
             }
-            if(!rhsType.equals(PsiType.BOOLEAN) &&
-                       !"java.lang.Boolean".equals(rhsType.getCanonicalText())){
+            if(!rhsType.equals(PsiType.BOOLEAN)&&
+                       !rhsType.equalsToText("java.lang.Boolean")){
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
@@ -186,7 +186,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                 return;
             }
             if(!lhsType.equals(PsiType.BOOLEAN) &&
-                       !"java.lang.Boolean".equals(lhsType.getCanonicalText())){
+                       !lhsType.equalsToText("java.lang.Boolean")){
                 return;
             }
             final boolean isPointless;

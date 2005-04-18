@@ -65,9 +65,8 @@ public class MultipleDeclarationInspection extends VariableInspection {
             if (containingClass != null && containingClass.isEnum()) {
                 final PsiType type = field.getType();
                 if (type != null) {
-                    final String text = type.getCanonicalText();
                     final String className = containingClass.getQualifiedName();
-                    if (text.equals(className)) {
+                    if (type.equalsToText(className)) {
                         return;
                     }
                 }

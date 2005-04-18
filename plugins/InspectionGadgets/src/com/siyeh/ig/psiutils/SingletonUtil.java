@@ -40,28 +40,19 @@ public class SingletonUtil {
     }
 
     private static boolean hasConstructor(PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (method.isConstructor()) {
-                return true;
-            }
-        }
-        return false;
+        return aClass.getConstructors().length>0;
     }
 
     private static boolean hasVisibleConstructor(PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
+        final PsiMethod[] methods = aClass.getConstructors();
         for (int i = 0; i < methods.length; i++) {
             final PsiMethod method = methods[i];
-            if (method.isConstructor()) {
-                if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                    return true;
-                }
-                if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
-                        !method.hasModifierProperty(PsiModifier.PROTECTED)) {
-                    return true;
-                }
+            if(method.hasModifierProperty(PsiModifier.PUBLIC)){
+                return true;
+            }
+            if(!method.hasModifierProperty(PsiModifier.PRIVATE) &&
+                       !method.hasModifierProperty(PsiModifier.PROTECTED)){
+                return true;
             }
         }
         return false;

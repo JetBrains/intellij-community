@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 
 public class UnconstructableTestCaseInspection extends ClassInspection{
     public String getID(){
@@ -71,10 +72,8 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
                 }
                 if(parameters.length == 1){
                     final PsiType type = parameters[0].getType();
-                    if(type != null){
-                        if("java.lang.String".equals(type.getCanonicalText())){
-                            hasStringConstructor = true;
-                        }
+                    if(TypeUtils.typeEquals("java.lang.String", type)){
+                        hasStringConstructor = true;
                     }
                 }
             }

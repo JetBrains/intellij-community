@@ -38,12 +38,12 @@ public class ExceptionUtils {
     }
 
     public static boolean isGenericExceptionClass(PsiType exceptionType) {
-        if (exceptionType == null) {
+        if(!(exceptionType instanceof PsiClassType)){
             return false;
         }
-        final String className = exceptionType.getCanonicalText();
+        final PsiClassType classType = (PsiClassType) exceptionType;
+        final String className = classType.getClassName();
         return s_genericExceptionTypes.contains(className);
-
     }
 
     private static class ExceptionsThrownVisitor extends PsiRecursiveElementVisitor {

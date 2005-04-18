@@ -402,11 +402,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
                        languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return;
             }
-            if(!isArrayLoopStatement(forStatement) &&
-                       !isCollectionLoopStatement(forStatement)){
-                return;
+            if(isArrayLoopStatement(forStatement) ||
+                       isCollectionLoopStatement(forStatement)){
+                registerStatementError(forStatement);
             }
-            registerStatementError(forStatement);
         }
     }
 

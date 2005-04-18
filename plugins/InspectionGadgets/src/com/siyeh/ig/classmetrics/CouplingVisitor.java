@@ -128,14 +128,19 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiType baseType = type.getDeepComponentType();
-        if (ClassUtils.isPrimitive(baseType)) {
+
+        if(ClassUtils.isPrimitive(type)){
+            return;
+        }
+        final String qualifiedName = m_class.getQualifiedName();
+        if(qualifiedName == null)
+        {
+            return;
+        }
+        if(baseType.equalsToText(qualifiedName)){
             return;
         }
         final String baseTypeName = baseType.getCanonicalText();
-        final String qualifiedName = m_class.getQualifiedName();
-        if (baseTypeName.equals(qualifiedName)) {
-            return;
-        }
         if (!m_includeJavaClasses &&
                 (baseTypeName.startsWith("java.") ||
                 baseTypeName.startsWith("javax."))) {

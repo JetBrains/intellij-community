@@ -132,35 +132,30 @@ public class CollectionUtils {
     }
 
     public static boolean isCollectionWithInitialCapacity(PsiType type) {
-        String className = type.getCanonicalText();
-        final int genericParamPosition = className.indexOf((int) '<');
-        if (genericParamPosition >= 0) {
-            className = className.substring(0, genericParamPosition);
+
+        if(!(type instanceof PsiClassType)){
+            return false;
         }
+        final PsiClassType classType = (PsiClassType) type;
+        final String className = classType.getClassName();
         return s_collectionClassesRequiringCapacity.contains(className);
     }
 
     public static boolean isCollectionClass(PsiType type) {
-        String className = type.getCanonicalText();
-        if (s_allCollectionClasses.contains(className)) {
-            return true;
+        if(!(type instanceof PsiClassType)){
+            return false;
         }
-        final int genericParamPosition = className.indexOf((int) '<');
-        if (genericParamPosition >= 0) {
-            className = className.substring(0, genericParamPosition);
-        }
+        final PsiClassType classType = (PsiClassType) type;
+        final String className = classType.getClassName();
         return s_allCollectionClasses.contains(className);
     }
 
     public static boolean isCollectionClassOrInterface(PsiType type) {
-        String className = type.getCanonicalText();
-        if (s_allCollectionClassesAndInterfaces.contains(className)) {
-            return true;
+        if(!(type instanceof PsiClassType)){
+            return false;
         }
-        final int genericParamPosition = className.indexOf((int) '<');
-        if (genericParamPosition >= 0) {
-            className = className.substring(0, genericParamPosition);
-        }
+        final PsiClassType classType = (PsiClassType) type;
+        final String className = classType.getClassName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
 
@@ -205,13 +200,7 @@ public class CollectionUtils {
         if (type.getArrayDimensions() > 0) {
             return !isConstantArrayOfZeroSize((PsiField) element);
         }
-        String className = type.getCanonicalText();
-        final int parameterStartPos = className.indexOf((int) '<');
-        if (parameterStartPos >= 0) {
-            className = className.substring(0, parameterStartPos);
-        }
-        return s_allCollectionClassesAndInterfaces.contains(className);
-
+        return isCollectionClassOrInterface(type);
     }
 
     public static String getInterfaceForClass(String name) {

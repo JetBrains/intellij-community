@@ -147,7 +147,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (m_ignoreEnums && (isEnumType(rhs) || isEnumType(lhs))) {
                 return;
             }
-            if (m_ignoreClassObjects && (isJavaLangClass(rhs) || isJavaLangClass(lhs))) {
+            if (m_ignoreClassObjects &&
+                        (TypeUtils.expressionHasType("java.lang.Class", rhs) || TypeUtils.expressionHasType("java.lang.Class", lhs))) {
                 return;
             }
             final PsiMethod method =
@@ -161,19 +162,6 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             }
             final PsiJavaToken sign = expression.getOperationSign();
             registerError(sign);
-        }
-
-        private boolean isJavaLangClass(PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            final String text = type.getCanonicalText();
-            return "java.lang.Class".equals(text);
         }
 
         private boolean isEnumType(PsiExpression exp) {

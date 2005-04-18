@@ -1,10 +1,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -40,8 +37,12 @@ public class JavaLangReflectInspection extends VariableInspection {
                 return;
             }
             final PsiType componentType = type.getDeepComponentType();
-            final String typeName = componentType.getCanonicalText();
-            if (!typeName.startsWith("java.lang.reflect.")) {
+            if(!(componentType instanceof PsiClassType))
+            {
+                return;
+            }
+            final String className = ((PsiClassType) componentType).getClassName();
+            if (!className.startsWith("java.lang.reflect.")) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();

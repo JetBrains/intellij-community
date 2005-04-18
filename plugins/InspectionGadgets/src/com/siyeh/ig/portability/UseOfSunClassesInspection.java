@@ -55,8 +55,13 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            final String typeName = type.getCanonicalText();
-            if (!typeName.startsWith("sun.")) {
+            if(!(type instanceof PsiClassType))
+            {
+                return;
+            }
+            final PsiClassType classType = (PsiClassType) type;
+            final String className = classType.getClassName();
+            if (className==null || !className.startsWith("sun.")) {
                 return;
             }
             final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();

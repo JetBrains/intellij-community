@@ -82,8 +82,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                 exceptionsThrown.hasNext();){
                 final PsiClassType type =
                         (PsiClassType) exceptionsThrown.next();
-                final String typeName = type.getCanonicalText();
-                if("java.util.NoSuchElementException".equals(typeName)){
+                if(type.equalsToText("java.util.NoSuchElementException")){
                     return;
                 }
             }

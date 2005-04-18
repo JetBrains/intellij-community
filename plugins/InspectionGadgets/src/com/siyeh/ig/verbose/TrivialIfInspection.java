@@ -10,6 +10,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.ErrorUtil;
 
 public class TrivialIfInspection extends StatementInspection{
     private final TrivialIfFix fix = new TrivialIfFix();
@@ -260,7 +261,7 @@ public class TrivialIfInspection extends StatementInspection{
         public void visitIfStatement(PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
             final PsiExpression condition = ifStatement.getCondition();
-            if(condition == null || !condition.isValid()){
+            if(ErrorUtil.containsError(ifStatement)){
                 return;
             }
             if(isSimplifiableAssignment(ifStatement)){

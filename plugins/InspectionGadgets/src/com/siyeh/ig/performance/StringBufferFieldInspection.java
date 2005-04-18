@@ -42,9 +42,8 @@ public class StringBufferFieldInspection extends FieldInspection {
             {
                 return;
             }
-            final String text = type.getCanonicalText();
-            if (!"java.lang.StringBuffer".equals(text) &&
-                    !"java.lang.StringBuilder".equals(text)) {
+            if (!type.equalsToText("java.lang.StringBuffer") &&
+                        !type.equalsToText("java.lang.StringBuilder")) {
                 return;
             }
             registerFieldError(field);

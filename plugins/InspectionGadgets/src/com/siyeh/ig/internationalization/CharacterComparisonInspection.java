@@ -4,12 +4,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
 public class CharacterComparisonInspection extends ExpressionInspection {
@@ -48,18 +48,13 @@ public class CharacterComparisonInspection extends ExpressionInspection {
             if(ComparisonUtils.isEqualityComparison(expression)){
                 return;
             }
-
             final PsiExpression lhs = expression.getLOperand();
             if (!isCharacter(lhs)) {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
 
-            final PsiType rhsType = rhs.getType();
-            if (rhsType == null) {
-                return;
-            }
-            if (!rhsType.equals(PsiType.CHAR)) {
+            if (!isCharacter(rhs)) {
                 return;
             }
             registerError(expression);
@@ -68,17 +63,8 @@ public class CharacterComparisonInspection extends ExpressionInspection {
     }
 
     private static boolean isCharacter(PsiExpression lhs) {
-
-        if (lhs == null) {
-            return false;
-        }
-        final PsiType lhsType = lhs.getType();
-        if (lhsType == null) {
-            return false;
-        }
-        final String text = lhsType.getCanonicalText();
-        return "char".equals(text) ||
-                "java.lang.Character".equals(text);
+       return  TypeUtils.expressionHasType("char", lhs) ||
+                       TypeUtils.expressionHasType("java.lang.Character", lhs);
     }
 
 }

@@ -9,6 +9,7 @@ import com.siyeh.ig.VariableInspection;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 public class ObsoleteCollectionInspection extends VariableInspection{
 
@@ -72,9 +73,15 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             if(type == null){
                 return false;
             }
-
-            final String typeName = type.getCanonicalText();
-            return s_obsoleteCollectionTypes.contains(typeName);
+            for(Iterator iterator = s_obsoleteCollectionTypes.iterator();
+                iterator.hasNext();){
+                final String typeName = (String) iterator.next();
+                if(type.equalsToText(typeName))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }

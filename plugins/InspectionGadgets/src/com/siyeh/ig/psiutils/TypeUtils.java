@@ -17,7 +17,7 @@ public class TypeUtils {
     }
 
     public static boolean typeEquals(String typeName, PsiType targetType) {
-        if (targetType == null) {
+        if (targetType == null || typeName == null) {
             return false;
         }
         return targetType.equalsToText(typeName);
@@ -43,8 +43,7 @@ public class TypeUtils {
     }
 
     private static boolean typeInherits(PsiType type, String typeName) {
-        final String text = type.getCanonicalText();
-        if(typeName.equals(text))
+        if(type.equalsToText(typeName))
         {
             return true;
         }

@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.TypeUtils;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -67,21 +68,14 @@ public class MalformedRegexInspection extends ExpressionInspection{
             }
 
             final PsiExpression regexArg = args[0];
-            if(regexArg == null){
-                return;
-            }
-            final PsiType regexType = regexArg.getType();
-            if(regexType == null)
+            if(!TypeUtils.expressionHasType("java.lang.String", regexArg))
             {
-                return;
-            }
-            final String regexTypeText = regexType.getCanonicalText();
-            if(!"java.lang.String".equals(regexTypeText)){
                 return;
             }
             if(!PsiUtil.isConstantExpression(regexArg)){
                 return;
             }
+            final PsiType regexType = regexArg.getType();
             final String value =
                     (String) ConstantExpressionUtil.computeCastTo(regexArg, regexType);
             if(value == null)
@@ -91,13 +85,13 @@ public class MalformedRegexInspection extends ExpressionInspection{
             if(!callTakesRegex(expression)){
                 return;
             }
-            //noinspection UnusedCatchParameter
+            //noinspection UnusedCatchParameter,ProhibitedExceptionCaught
             try{
                 Pattern.compile(value);
             } catch(PatternSyntaxException e){
                 registerError(regexArg);
             } catch(NullPointerException e){
-                registerError(regexArg);
+                registerError(regexArg);     // due to a bug in the sun regex code
             }
         }
 

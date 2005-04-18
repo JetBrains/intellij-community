@@ -22,7 +22,8 @@ public class VolatileLongOrDoubleFieldInspection extends FieldInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiField field = (PsiField) location.getParent();
-        final String typeString = field.getType().getPresentableText();
+        final PsiType type = field.getType();
+        final String typeString = type.getPresentableText();
         return "Volatile field #ref of type " + typeString + " #loc";
     }
 
@@ -42,12 +43,7 @@ public class VolatileLongOrDoubleFieldInspection extends FieldInspection {
                  return;
             }
             final PsiType type = field.getType();
-            if(type == null)
-            {
-                return;
-            }
-            final String text = type.getCanonicalText();
-            if("double".equals(text)|| "long".equals(text))
+            if(PsiType.LONG.equals(type) || PsiType.DOUBLE.equals(type))
             {
                 registerFieldError(field);
             }

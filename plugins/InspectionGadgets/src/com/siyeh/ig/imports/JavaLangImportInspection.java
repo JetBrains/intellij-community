@@ -39,32 +39,36 @@ public class JavaLangImportInspection extends ClassInspection {
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }
-            final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
+            final PsiJavaFile file = (PsiJavaFile) aClass.getContainingFile();
             if (!file.getClasses()[0].equals(aClass)) {
                 return;
             }
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
             for (int i = 0; i < importStatements.length; i++) {
-                final PsiImportStatement importStatement = importStatements[i];
-                final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
-                if (reference != null) {
-                    final String text = importStatement.getQualifiedName();
-                    if (text != null) {
-                        if (importStatement.isOnDemand()) {
-                            if ("java.lang".equals(text)) {
+                checkImportStatment(importStatements[i], file);
+            }
+        }
+
+        private void checkImportStatment( PsiImportStatement importStatement,
+                                         PsiJavaFile file){
+            final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
+            if (reference != null) {
+                final String text = importStatement.getQualifiedName();
+                if (text != null) {
+                    if (importStatement.isOnDemand()) {
+                        if ("java.lang".equals(text)) {
+                            registerError(importStatement);
+                        }
+                    } else {
+                        final int classNameIndex = text.lastIndexOf((int) '.');
+                        if (classNameIndex < 0) {
+                            return;
+                        }
+                        final String parentName = text.substring(0, classNameIndex);
+                        if ("java.lang".equals(parentName)) {
+                            if (!ImportUtils.hasOnDemandImportConflict(text, file)) {
                                 registerError(importStatement);
-                            }
-                        } else {
-                            final int classNameIndex = text.lastIndexOf((int) '.');
-                            if (classNameIndex < 0) {
-                                return;
-                            }
-                            final String parentName = text.substring(0, classNameIndex);
-                            if ("java.lang".equals(parentName)) {
-                                if (!ImportUtils.hasOnDemandImportConflict(text, file)) {
-                                    registerError(importStatement);
-                                }
                             }
                         }
                     }

@@ -39,14 +39,6 @@ public class ClassUtils {
         primitiveNumericTypes.add(PsiType.FLOAT);
         primitiveNumericTypes.add(PsiType.DOUBLE);
 
-        immutableTypes.add("boolean");
-        immutableTypes.add("char");
-        immutableTypes.add("short");
-        immutableTypes.add("int");
-        immutableTypes.add("long");
-        immutableTypes.add("float");
-        immutableTypes.add("double");
-        immutableTypes.add("byte");
         immutableTypes.add("java.lang.Boolean");
         immutableTypes.add("java.lang.Char");
         immutableTypes.add("java.lang.Short");
@@ -70,6 +62,7 @@ public class ClassUtils {
     private ClassUtils(){
         super();
     }
+    
     public static boolean isSubclass(PsiClass aClass, String ancestorName) {
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
@@ -79,7 +72,7 @@ public class ClassUtils {
     }
 
     public static boolean isPrimitive(PsiType type) {
-        return  TypeConversionUtil.isPrimitiveAndNotNull(type);
+        return TypeConversionUtil.isPrimitiveAndNotNull(type);
     }
 
     public static boolean isIntegral(PsiType type) {
@@ -87,8 +80,16 @@ public class ClassUtils {
     }
 
     public static boolean isImmutable(PsiType type) {
-        final String typeName = type.getCanonicalText();
-        return immutableTypes.contains(typeName);
+        if(TypeConversionUtil.isPrimitiveAndNotNull(type))
+        {
+            return true;
+        }
+        if(!(type instanceof PsiClassType)){
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final String className = classType.getClassName();
+        return immutableTypes.contains(className);
     }
 
     private static boolean inSamePackage(PsiClass class1, PsiClass class2) {
@@ -134,9 +135,13 @@ public class ClassUtils {
         return inSamePackage(fieldClass, fromClass);
     }
 
-    public static boolean isBuiltInNumericType(PsiType type) {
-        final String typeName = type.getCanonicalText();
-        return numericTypes.contains(typeName);
+    public static boolean isWrappedNumericType(PsiType type) {
+        if(!(type instanceof PsiClassType)){
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final String className = classType.getClassName();
+        return numericTypes.contains(className);
     }
 
     public static boolean isPrimitiveNumericType(PsiType type) {

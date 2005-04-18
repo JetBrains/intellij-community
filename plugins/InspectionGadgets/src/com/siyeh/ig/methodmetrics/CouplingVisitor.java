@@ -3,6 +3,7 @@ package com.siyeh.ig.methodmetrics;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 
 import java.util.HashSet;
@@ -124,21 +125,25 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiType baseType = type.getDeepComponentType();
-        final String baseTypeName = baseType.getCanonicalText();
-        if (isPrimitiveType(baseTypeName)) {
+        if (ClassUtils.isPrimitive(type)) {
             return;
         }
         final PsiClass containingClass = m_method.getContainingClass();
         final String qualifiedName = containingClass.getQualifiedName();
-        if (baseTypeName.equals(qualifiedName)) {
+        if(qualifiedName == null)
+        {
+            return;
+        }
+        if (baseType.equalsToText(qualifiedName)) {
+            return;
+        }
+        final String baseTypeName = baseType.getCanonicalText();
+        if (!m_includeJavaClasses &&
+                    (baseTypeName.startsWith("java.") ||
+                    baseTypeName.startsWith("javax."))) {
             return;
         }
         if (baseTypeName.startsWith(qualifiedName + '.')) {
-            return;
-        }
-        if (!m_includeJavaClasses &&
-                (baseTypeName.startsWith("java.") ||
-                baseTypeName.startsWith("javax."))) {
             return;
         }
         if (!m_includeLibraryClasses) {
