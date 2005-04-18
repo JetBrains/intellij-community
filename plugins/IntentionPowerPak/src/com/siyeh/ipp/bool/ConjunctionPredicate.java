@@ -6,10 +6,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ConjunctionPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiBinaryExpression)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;

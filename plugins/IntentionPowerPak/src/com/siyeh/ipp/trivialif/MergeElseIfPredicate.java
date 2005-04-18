@@ -2,6 +2,7 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeElseIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -19,6 +20,9 @@ class MergeElseIfPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(thenBranch == null){

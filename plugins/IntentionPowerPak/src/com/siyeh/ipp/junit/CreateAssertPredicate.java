@@ -16,6 +16,7 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiExpressionStatement)){
             return false;
         }
+
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();

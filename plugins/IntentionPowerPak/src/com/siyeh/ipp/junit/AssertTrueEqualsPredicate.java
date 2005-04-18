@@ -3,10 +3,14 @@ package com.siyeh.ipp.junit;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AssertTrueEqualsPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiMethodCallExpression expression =

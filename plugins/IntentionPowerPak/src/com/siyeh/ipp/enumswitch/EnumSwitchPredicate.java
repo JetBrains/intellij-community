@@ -2,6 +2,7 @@ package com.siyeh.ipp.enumswitch;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,6 +10,9 @@ import java.util.Set;
 class EnumSwitchPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiSwitchStatement)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) element;

@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class IfToSwitchPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -18,6 +19,9 @@ class IfToSwitchPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement statement = (PsiIfStatement) element.getParent();
+        if(ErrorUtil.containsError(statement)){
+            return false;
+        }
         return CaseUtil.getCaseExpression(statement) != null;
     }
 }

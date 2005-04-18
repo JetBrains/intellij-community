@@ -5,11 +5,15 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AssignmentExpressionReplaceableWithOperatorAssigment
         implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiAssignmentExpression)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiAssignmentExpression assignment =
@@ -28,6 +32,12 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
             return false;
         }
         final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
+        final PsiExpression rhsRhs = binaryRhs.getROperand();
+        final PsiExpression rhsLhs = binaryRhs.getLOperand();
+
+        if(rhsRhs == null || rhsLhs == null|| !rhsLhs.isValid() || !rhsRhs.isValid()){
+            return false;
+        }
         final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
         final IElementType rhsTokenType = operatorSign.getTokenType();
         if(JavaTokenType.OROR.equals(rhsTokenType) ||
@@ -37,7 +47,6 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         if(SideEffectChecker.mayHaveSideEffects(lhs)){
             return false;
         }
-        final PsiExpression rhsLhs = binaryRhs.getLOperand();
         return EquivalenceChecker.expressionsAreEquivalent(lhs, rhsLhs);
     }
 }

@@ -5,10 +5,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class RemoveConditionalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiConditionalExpression)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiConditionalExpression condition =

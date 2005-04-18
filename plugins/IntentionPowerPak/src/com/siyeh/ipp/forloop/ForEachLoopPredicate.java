@@ -2,10 +2,11 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ForEachLoopPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -18,6 +19,10 @@ class ForEachLoopPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiElement parent = element.getParent();
-        return parent instanceof PsiForeachStatement;
+
+        if(!(parent instanceof PsiForeachStatement)){
+            return false;
+        }
+        return !ErrorUtil.containsError(parent);
     }
 }

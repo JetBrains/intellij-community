@@ -124,15 +124,14 @@ public class ParenthesesUtils{
     public static String removeParentheses(PsiExpression exp){
         if(exp instanceof PsiThisExpression ||
                                 exp instanceof PsiLiteralExpression ||
+                                exp instanceof PsiNewExpression ||
                                 exp instanceof PsiClassObjectAccessExpression ||
                                 exp instanceof PsiReferenceExpression ||
                                 exp instanceof PsiSuperExpression){
             return exp.getText();
         } else if(exp instanceof PsiMethodCallExpression){
             return removeParenthesesForMethodCall((PsiMethodCallExpression) exp);
-        } else if(exp instanceof PsiNewExpression){
-            return removeParenthesesForNewExpression((PsiNewExpression) exp);
-        } else if(exp instanceof PsiAssignmentExpression){
+        }  else if(exp instanceof PsiAssignmentExpression){
             return removeParenthesesForAssignment((PsiAssignmentExpression) exp);
         } else if(exp instanceof PsiArrayInitializerExpression){
             return removeParenthesesForArrayInitializer((PsiArrayInitializerExpression) exp);
@@ -272,73 +271,6 @@ public class ParenthesesUtils{
         final PsiExpression rhs = assignment.getRExpression();
         final PsiJavaToken sign = assignment.getOperationSign();
         return removeParentheses(lhs) + sign.getText() + removeParentheses(rhs);
-    }
-
-    private static String removeParenthesesForNewExpression(PsiNewExpression newExp){
-        final PsiExpression[] dimensions = newExp.getArrayDimensions();
-        String[] strippedDimensions = null;
-        if(dimensions != null){
-            strippedDimensions = new String[dimensions.length];
-            for(int i = 0; i < dimensions.length; i++){
-                strippedDimensions[i] = removeParentheses(dimensions[i]);
-            }
-        }
-
-        final PsiExpression qualifier = newExp.getQualifier();
-        final PsiExpression arrayInitializer = newExp.getArrayInitializer();
-        String strippedArrayInitializer = null;
-        if(arrayInitializer != null){
-            strippedArrayInitializer = removeParentheses(arrayInitializer);
-        }
-
-        final PsiExpressionList argumentList = newExp.getArgumentList();
-        final PsiExpression[] args = argumentList == null?null:
-                argumentList.getExpressions();
-        String[] strippedArgs = null;
-        if(args != null){
-            strippedArgs = new String[args.length];
-            for(int i = 0; i < args.length; i++){
-                strippedArgs[i] = removeParentheses(args[i]);
-            }
-        }
-        if(qualifier != null){
-            return newExp.getText();
-        }
-        final PsiElement[] children = newExp.getChildren();
-        for(int i = 0; i < children.length; i++){
-            final PsiElement child = children[i];
-            if(child instanceof PsiAnonymousClass){
-                return newExp.getText();
-            }
-        }
-        final StringBuffer out = new StringBuffer(128);
-        out.append("new ");
-        final PsiJavaCodeReferenceElement classReference =
-                newExp.getClassReference();
-        final String classReferenceText = classReference.getText();
-        out.append(classReferenceText);
-        if(strippedArgs != null){
-            out.append('(');
-            for(int i = 0; i < strippedArgs.length; i++){
-                if(i != 0){
-                    out.append(',');
-                }
-                out.append(strippedArgs[i]);
-            }
-            out.append(')');
-        }
-
-        if(strippedDimensions != null){
-            for(int i = 0; i < strippedDimensions.length; i++){
-                out.append('[');
-                out.append(strippedDimensions[i]);
-                out.append(']');
-            }
-        }
-        if(strippedArrayInitializer != null){
-            out.append(strippedArrayInitializer);
-        }
-        return out.toString();
     }
 
     private static String removeParenthesesForMethodCall(PsiMethodCallExpression methCall){

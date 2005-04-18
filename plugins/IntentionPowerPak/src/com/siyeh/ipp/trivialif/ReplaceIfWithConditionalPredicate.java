@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -18,6 +19,14 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
+        final PsiExpression condition = ifStatement.getCondition();
+        if(condition == null || !condition.isValid()){
+            return false;
+        }
         if(isReplaceableAssignment(ifStatement)){
             return true;
         }

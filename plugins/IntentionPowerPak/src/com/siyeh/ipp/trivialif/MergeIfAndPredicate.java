@@ -6,6 +6,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeIfAndPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -19,6 +20,9 @@ class MergeIfAndPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         PsiStatement thenBranch = ifStatement.getThenBranch();
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();

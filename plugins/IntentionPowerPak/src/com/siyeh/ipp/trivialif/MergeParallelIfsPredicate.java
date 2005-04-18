@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -23,7 +24,9 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
 
-
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
                                                 new Class[]{PsiWhiteSpace.class});
@@ -31,6 +34,10 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement nextIfStatement = (PsiIfStatement) nextStatement;
+
+        if(ErrorUtil.containsError(nextIfStatement)){
+            return false;
+        }
         return ifStatementsCanBeMerged(ifStatement, nextIfStatement);
     }
 

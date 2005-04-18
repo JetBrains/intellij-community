@@ -5,6 +5,7 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AssertLiteralPredicate implements PsiElementPredicate{
     AssertLiteralPredicate(){
@@ -13,6 +14,9 @@ class AssertLiteralPredicate implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiMethodCallExpression expression =

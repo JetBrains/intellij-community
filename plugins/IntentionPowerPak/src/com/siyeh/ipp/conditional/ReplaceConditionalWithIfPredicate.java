@@ -2,16 +2,26 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(element instanceof PsiReturnStatement){
+            if(ErrorUtil.containsError(element)){
+                return false;
+            }
             return isReturnOfConditional((PsiReturnStatement) element);
         }
         if(element instanceof PsiExpressionStatement){
+            if(ErrorUtil.containsError(element)){
+                return false;
+            }
             return isAssignmentToConditional((PsiExpressionStatement) element);
         }
         if(element instanceof PsiDeclarationStatement){
+            if(ErrorUtil.containsError(element)){
+                return false;
+            }
             return isDeclarationOfConditional((PsiDeclarationStatement) element);
         } else{
             return false;

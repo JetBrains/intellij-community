@@ -5,6 +5,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class SplitElseIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -22,6 +23,10 @@ class SplitElseIfPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(thenBranch == null){
@@ -30,10 +35,7 @@ class SplitElseIfPredicate implements PsiElementPredicate{
         if(elseBranch == null){
             return false;
         }
-        if(!(elseBranch instanceof PsiIfStatement)){
-            return false;
-        }
+        return elseBranch instanceof PsiIfStatement;
 
-        return true;
     }
 }

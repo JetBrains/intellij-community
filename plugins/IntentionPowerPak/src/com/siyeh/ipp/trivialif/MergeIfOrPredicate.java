@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeIfOrPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -22,6 +23,9 @@ class MergeIfOrPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(thenBranch == null){
