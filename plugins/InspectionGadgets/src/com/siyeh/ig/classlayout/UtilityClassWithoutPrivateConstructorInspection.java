@@ -72,6 +72,10 @@ public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspec
                 return;
             }
 
+            if(aClass.hasModifierProperty(PsiModifier.ABSTRACT))
+            {
+                return;
+            }
             if (hasPrivateConstructor(aClass)) {
                 return;
             }

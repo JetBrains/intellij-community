@@ -16,6 +16,11 @@ public class UtilityClassUtil {
                 && extendsList.getReferenceElements().length > 0) {
             return false;
         }
+        final PsiReferenceList implementsList = aClass.getImplementsList();
+        if (implementsList != null
+                && implementsList.getReferenceElements().length > 0) {
+            return false;
+        }
         if (!allMethodsStatic(aClass)) {
             return false;
         }
