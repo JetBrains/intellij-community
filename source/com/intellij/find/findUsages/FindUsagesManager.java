@@ -107,7 +107,9 @@ public class FindUsagesManager {
   public boolean canFindUsages(final PsiElement element) {
     if (element == null) return false;
 
-    final FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
+    final Language language = element.getLanguage();
+    if (language == null) return false;
+    final FindUsagesProvider provider = language.getFindUsagesProvider();
     return provider != null && provider.canFindUsagesFor(element);
   }
 

@@ -2,8 +2,13 @@ package com.intellij.lang.java;
 
 import com.intellij.find.impl.HelpID;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.*;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -255,5 +260,32 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
 
     return "";
+  }
+
+  private static class Inner {
+    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
+      ElementType.DOC_COMMENT_DATA,
+      ElementType.DOC_TAG_VALUE_TOKEN,
+      ElementType.C_STYLE_COMMENT,
+      ElementType.END_OF_LINE_COMMENT});
+  }
+
+  public boolean mayHaveReferences(IElementType token, final short searchContext) {
+    return mayHaveReferencesImpl(token, searchContext);
+  }
+
+  public WordsScanner getWordsScanner() {
+    return null;
+  }
+
+  public static boolean mayHaveReferencesImpl(final IElementType token, final short searchContext) {
+    if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
+    if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.isInSet(token)) return true;
+    if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) {
+      return true;
+    }
+    // Java string literal to property file
+    if ((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
+    return false;
   }
 }

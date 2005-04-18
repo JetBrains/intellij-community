@@ -35,7 +35,7 @@ public class LowLevelSearchUtil {
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
     final Language lang = scopePsi.getLanguage();
     //TODO[ven]: lang is null for PsiPlainText for example. Should be reviewed.
-    if (lang == null || lang.mayHaveReferences(scope.getElementType(), searchContext)) {
+    if (lang == null || lang.getFindUsagesProvider().mayHaveReferences(scope.getElementType(), searchContext)) {
       int startOffset;
       int endOffset;
       if (scope instanceof LeafElement) {

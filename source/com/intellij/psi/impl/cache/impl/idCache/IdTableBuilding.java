@@ -222,7 +222,7 @@ public class IdTableBuilding {
 
     final Language lang = psiFile.getLanguage();
     if (lang != null) {
-      final WordsScanner scanner = lang.getWordsScanner();
+      final WordsScanner scanner = lang.getFindUsagesProvider().getWordsScanner();
       if (scanner != null) {
         return new WordsScannerIdCacheBuilderAdapter(scanner);
       }

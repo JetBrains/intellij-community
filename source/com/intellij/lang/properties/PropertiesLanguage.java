@@ -40,18 +40,6 @@ public class PropertiesLanguage extends Language {
     return new PropertiesHighlighter();
   }
 
-
-  public WordsScanner getWordsScanner() {
-    return new PropertiesWordsScanner();
-  }
-
-  //public boolean mayHaveReferences(IElementType token, final short searchContext) {
-  //  if ((searchContext & UsageSearchContext.IN_CODE) != 0 && token == JSElementTypes.REFERENCE_EXPRESSION) return true;
-  //  if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && getParserDefinition().getCommentTokens().isInSet(token)) return true;
-  //  if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == JSTokenTypes.STRING_LITERAL) return true;
-  //  return false;
-  //}
-
   //public FoldingBuilder getFoldingBuilder() {
   //  return new JavaScriptFoldingBuilder();
   //}

@@ -2,8 +2,11 @@ package com.intellij.lang.properties.findUsages;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.PropertiesWordsScanner;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,5 +35,13 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
 
   public String getNodeText(PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
+  }
+
+  public boolean mayHaveReferences(IElementType token, final short searchContext) {
+    return false;
+  }
+
+  public WordsScanner getWordsScanner() {
+    return new PropertiesWordsScanner();
   }
 }

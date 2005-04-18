@@ -1,12 +1,12 @@
 package com.intellij.lang.xml;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.*;
 
 /**
  * @author ven
@@ -41,5 +41,16 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
   public String getNodeText(PsiElement element, boolean useFullName) {
     return ((PsiNamedElement)element).getName();
+  }
+
+  public boolean mayHaveReferences(IElementType token, short searchContext) {
+    if((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 &&
+       (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME)) return true;
+    if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
+    return false;
+  }
+
+  public WordsScanner getWordsScanner() {
+    return null;
   }
 }

@@ -58,11 +58,4 @@ public class XMLLanguage extends Language {
   public Commenter getCommenter() {
     return new XmlCommenter();
   }
-
-  public boolean mayHaveReferences(IElementType token, short searchContext) {
-    if((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 &&
-       (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME)) return true;
-    if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
-    return false;
-  }
 }

@@ -1,6 +1,8 @@
 package com.intellij.lang.findUsages;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,10 +12,29 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface FindUsagesProvider {
+  /**
+   * @param token to check for references
+   * @param searchContext represents find usages request,
+   * a combination of constants in {@link com.intellij.psi.search.UsageSearchContext}
+   */
+  public boolean mayHaveReferences(IElementType token, final short searchContext);
+
+  /**
+   * @return word scanner for building caches in this language's files
+   */
+  public WordsScanner getWordsScanner();
+
+  /**
+   * @param psiElement
+   * @return true if it is sensible to searh for usages of psiElement
+   */
   boolean canFindUsagesFor(PsiElement psiElement);
+
   String getHelpId(PsiElement psiElement);
 
   String getType(PsiElement element);
+
   String getDescriptiveName(PsiElement element);
+
   String getNodeText(PsiElement element, boolean useFullName);
 }

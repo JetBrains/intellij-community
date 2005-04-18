@@ -72,19 +72,6 @@ public abstract class Language {
     return null;
   }
 
-  public WordsScanner getWordsScanner() {
-    return null;
-  }
-
-  /**
-   * @param token to check for references
-   * @param searchContext represents find usages request,
-   * a combination of constants in {@link com.intellij.psi.search.UsageSearchContext} 
-   */
-  public boolean mayHaveReferences(IElementType token, final short searchContext) {
-    return false;
-  }
-
   public FoldingBuilder getFoldingBuilder() {
     return null;
   }

@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.xml.XmlCommenter;
 import com.intellij.lang.xml.XmlFindUsagesProvider;
@@ -36,15 +37,15 @@ public class DTDLanguage extends Language {
   }
 
   public FindUsagesProvider getFindUsagesProvider() {
-    return new XmlFindUsagesProvider();
+    return new XmlFindUsagesProvider() {
+      public boolean mayHaveReferences(IElementType token, final short searchContext) {
+        if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
+        return false;
+      }
+    };
   }
 
   public Commenter getCommenter() {
     return new XmlCommenter();
-  }
-
-  public boolean mayHaveReferences(IElementType token, short searchContext) {
-    if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
-    return false;
   }
 }
