@@ -16,6 +16,8 @@ import com.intellij.util.graph.Graph;
 
 import java.util.*;
 
+import gnu.trove.TObjectIntHashMap;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -31,7 +33,7 @@ public class ResolverTree {
   private Binding myCurrentBinding;
   private SolutionHolder mySolutions;
   private Project myProject;
-  private HashMap<PsiTypeVariable, Integer> myBindingDegree; //How many times this type variable is bound in the system
+  private TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
   private Settings mySettings;
 
   private HashSet<Constraint> myConstraints;
@@ -74,9 +76,7 @@ public class ResolverTree {
   }
 
   private boolean isBoundElseWhere(final PsiTypeVariable var) {
-    final Integer deg = myBindingDegree.get(var);
-
-    return deg == null || deg.intValue() > 1;
+    return myBindingDegree.get(var) > 1 ;
   }
 
   private boolean canBePruned(final Binding b) {
@@ -93,8 +93,8 @@ public class ResolverTree {
     return true;
   }
 
-  private HashMap<PsiTypeVariable, Integer> calculateDegree() {
-    final HashMap<PsiTypeVariable, Integer> result = new HashMap<PsiTypeVariable, Integer>();
+  private TObjectIntHashMap<PsiTypeVariable> calculateDegree() {
+    final TObjectIntHashMap<PsiTypeVariable> result = new TObjectIntHashMap<PsiTypeVariable>();
 
     for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
       final Constraint constr = c.next();
@@ -107,17 +107,10 @@ public class ResolverTree {
     return result;
   }
 
-  private void setDegree(final HashSet<PsiTypeVariable> set, Map<PsiTypeVariable, Integer> result) {
+  private void setDegree(final HashSet<PsiTypeVariable> set, TObjectIntHashMap<PsiTypeVariable> result) {
     for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
       final PsiTypeVariable var = v.next();
-      final Integer deg = result.get(var);
-
-      if (deg == null) {
-        result.put(var, new Integer(1));
-      }
-      else {
-        result.put(var, new Integer(deg.intValue() + 1));
-      }
+      result.increment(var);
     }
   }
 
