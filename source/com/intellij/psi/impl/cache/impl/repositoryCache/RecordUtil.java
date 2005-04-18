@@ -5,18 +5,18 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.Internalize;
 import com.intellij.util.io.NameStore;
 import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -262,79 +262,79 @@ public class RecordUtil {
   }
 
 
-  private static final HashMap<String, Integer> ourModifierNameToFlagMap;
-  private static final HashMap<String, Integer> ourFrequentTypeIndex;
+  private static final TObjectIntHashMap<String> ourModifierNameToFlagMap;
+  private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
   private static final TIntObjectHashMap<String> ourIndexFrequentType;
 
   static {
-    ourModifierNameToFlagMap = new HashMap<String, Integer>();
-    ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, new Integer(ModifierFlags.PUBLIC_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, new Integer(ModifierFlags.PROTECTED_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, new Integer(ModifierFlags.PRIVATE_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.PACKAGE_LOCAL, new Integer(ModifierFlags.PACKAGE_LOCAL_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.STATIC, new Integer(ModifierFlags.STATIC_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.ABSTRACT, new Integer(ModifierFlags.ABSTRACT_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.FINAL, new Integer(ModifierFlags.FINAL_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.NATIVE, new Integer(ModifierFlags.NATIVE_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.SYNCHRONIZED, new Integer(ModifierFlags.SYNCHRONIZED_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.TRANSIENT, new Integer(ModifierFlags.TRANSIENT_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.VOLATILE, new Integer(ModifierFlags.VOLATILE_MASK));
-    ourModifierNameToFlagMap.put(PsiModifier.STRICTFP, new Integer(ModifierFlags.STRICTFP_MASK));
-    ourModifierNameToFlagMap.put("interface", new Integer(ModifierFlags.INTERFACE_MASK));
-    ourModifierNameToFlagMap.put("deprecated", new Integer(ModifierFlags.DEPRECATED_MASK));
-    ourModifierNameToFlagMap.put("@Deprecated", new Integer(ModifierFlags.ANNOTATION_DEPRECATED_MASK));
-    ourModifierNameToFlagMap.put("enum", new Integer(ModifierFlags.ENUM_MASK));
-    ourModifierNameToFlagMap.put("@", new Integer(ModifierFlags.ANNOTATION_TYPE_MASK));
+    ourModifierNameToFlagMap = new TObjectIntHashMap<String>();
+    ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, ModifierFlags.PROTECTED_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, ModifierFlags.PRIVATE_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.PACKAGE_LOCAL, ModifierFlags.PACKAGE_LOCAL_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.STATIC, ModifierFlags.STATIC_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.ABSTRACT, ModifierFlags.ABSTRACT_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.FINAL, ModifierFlags.FINAL_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.NATIVE, ModifierFlags.NATIVE_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.SYNCHRONIZED, ModifierFlags.SYNCHRONIZED_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.TRANSIENT, ModifierFlags.TRANSIENT_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.VOLATILE, ModifierFlags.VOLATILE_MASK);
+    ourModifierNameToFlagMap.put(PsiModifier.STRICTFP, ModifierFlags.STRICTFP_MASK);
+    ourModifierNameToFlagMap.put("interface", ModifierFlags.INTERFACE_MASK);
+    ourModifierNameToFlagMap.put("deprecated", ModifierFlags.DEPRECATED_MASK);
+    ourModifierNameToFlagMap.put("@Deprecated", ModifierFlags.ANNOTATION_DEPRECATED_MASK);
+    ourModifierNameToFlagMap.put("enum", ModifierFlags.ENUM_MASK);
+    ourModifierNameToFlagMap.put("@", ModifierFlags.ANNOTATION_TYPE_MASK);
 
-    ourFrequentTypeIndex = new HashMap<String, Integer>();
+    ourFrequentTypeIndex = new TObjectIntHashMap<String>();
     ourIndexFrequentType = new TIntObjectHashMap<String>();
 
-    ourFrequentTypeIndex.put("boolean", new Integer(1));
+    ourFrequentTypeIndex.put("boolean", 1);
     ourIndexFrequentType.put(1, "boolean");
 
-    ourFrequentTypeIndex.put("byte", new Integer(2));
+    ourFrequentTypeIndex.put("byte", 2);
     ourIndexFrequentType.put(2, "byte");
 
-    ourFrequentTypeIndex.put("char", new Integer(3));
+    ourFrequentTypeIndex.put("char", 3);
     ourIndexFrequentType.put(3, "char");
 
-    ourFrequentTypeIndex.put("double", new Integer(4));
+    ourFrequentTypeIndex.put("double", 4);
     ourIndexFrequentType.put(4, "double");
 
-    ourFrequentTypeIndex.put("float", new Integer(5));
+    ourFrequentTypeIndex.put("float", 5);
     ourIndexFrequentType.put(5, "float");
 
-    ourFrequentTypeIndex.put("int", new Integer(6));
+    ourFrequentTypeIndex.put("int", 6);
     ourIndexFrequentType.put(6, "int");
 
-    ourFrequentTypeIndex.put("long", new Integer(7));
+    ourFrequentTypeIndex.put("long", 7);
     ourIndexFrequentType.put(7, "long");
 
-    ourFrequentTypeIndex.put("null", new Integer(8));
+    ourFrequentTypeIndex.put("null", 8);
     ourIndexFrequentType.put(8, "null");
 
-    ourFrequentTypeIndex.put("short", new Integer(9));
+    ourFrequentTypeIndex.put("short", 9);
     ourIndexFrequentType.put(9, "short");
 
-    ourFrequentTypeIndex.put("void", new Integer(10));
+    ourFrequentTypeIndex.put("void", 10);
     ourIndexFrequentType.put(10, "void");
 
-    ourFrequentTypeIndex.put("Object", new Integer(11));
+    ourFrequentTypeIndex.put("Object", 11);
     ourIndexFrequentType.put(11, "Object");
 
-    ourFrequentTypeIndex.put("java.lang.Object", new Integer(12));
+    ourFrequentTypeIndex.put("java.lang.Object", 12);
     ourIndexFrequentType.put(12, "java.lang.Object");
 
-    ourFrequentTypeIndex.put("String", new Integer(13));
+    ourFrequentTypeIndex.put("String", 13);
     ourIndexFrequentType.put(13, "String");
 
-    ourFrequentTypeIndex.put("java.lang.String", new Integer(14));
+    ourFrequentTypeIndex.put("java.lang.String", 14);
     ourIndexFrequentType.put(14, "java.lang.String");
   }
 
 
   public static boolean hasModifierProperty(String psiModifier, int packed) {
-    return (ourModifierNameToFlagMap.get(psiModifier).intValue() & packed) != 0;
+    return (ourModifierNameToFlagMap.get(psiModifier) & packed) != 0;
   }
 
   public static void readType(DataInput record, TypeInfo view) throws IOException {
@@ -404,7 +404,7 @@ public class RecordUtil {
     writeINT(record, (nameId >> 8));
   }
 
-  public static void skipNAME(DataInput record, NameStore nameStore) throws IOException {
+  public static void skipNAME(DataInput record) throws IOException {
     record.readUnsignedByte();
     readINT(record);
   }
@@ -454,12 +454,12 @@ public class RecordUtil {
     String text = typeElement instanceof PsiCompiledElement
                   ? ((ClsTypeElementImpl)typeElement).getCanonicalText()
                   : typeElement.getText();
-    Integer frequentIndex = ourFrequentTypeIndex.get(text);
-    LOG.assertTrue(frequentIndex == null || frequentIndex.intValue() < 16);
+    int frequentIndex = ourFrequentTypeIndex.get(text);
+    LOG.assertTrue(frequentIndex == 0 || frequentIndex < 16);
     int flags = (arrayCount == 0 ? 0 : 1);
     if (isEllipsis) flags |= 2;
-    if (frequentIndex != null) {
-      record.writeByte((flags << 6) | 0x01 | (frequentIndex.byteValue() << 2));
+    if (frequentIndex != 0) {
+      record.writeByte((flags << 6) | 0x01 | (frequentIndex << 2));
       if (arrayCount != 0) {
         record.writeByte(arrayCount);
       }
@@ -474,7 +474,7 @@ public class RecordUtil {
     }
   }
 
-  public static void skipTYPE(DataInput record, NameStore nameStore) throws IOException {
+  public static void skipTYPE(DataInput record) throws IOException {
     final byte b = record.readByte();
     final int tag = b & 0x3;
     final int flags = 0x3 & (b >> 6);
@@ -483,7 +483,7 @@ public class RecordUtil {
       record.readByte();
     }
     if (tag == 0x00) {
-      skipNAME(record, nameStore);
+      skipNAME(record);
       //skipSTR(record);
     }
   }

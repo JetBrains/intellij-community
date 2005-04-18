@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,7 +120,7 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack = new Stack<Boolean>();
     
     final HashMap<LwComponent,String> component2variable = new HashMap<LwComponent,String>();
-    final HashMap<String,Integer> class2variableIndex = new HashMap<String, Integer>();
+    final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<String>();
 
     if (rootContainer.getComponentCount() != 1) {
       throw new CodeGenerationException("There should be only one component at the top level");
@@ -232,7 +233,7 @@ public final class FormSourceCodeGenerator {
   private void generateSetupCodeForComponent(
     final LwComponent component,
     final HashMap<LwComponent, String> component2TempVariable,
-    final HashMap<String, Integer> class2variableIndex,
+    final TObjectIntHashMap<String> class2variableIndex,
     final GlobalSearchScope globalSearchScope
   ) throws CodeGenerationException{
     final LwContainer parent = component.getParent();
@@ -522,7 +523,7 @@ public final class FormSourceCodeGenerator {
   private static String getVariable(
     final LwComponent component,
     final HashMap<LwComponent,String> component2variable,
-    final HashMap<String, Integer> class2variableIndex
+    final TObjectIntHashMap<String> class2variableIndex
   ){
     if (component2variable.containsKey(component)){
       return component2variable.get(component);
@@ -550,12 +551,10 @@ public final class FormSourceCodeGenerator {
 
     // todo[anton] check that no generated name is equal to class' field
 
-    final Integer indexObj = class2variableIndex.get(className);
-    final int index = indexObj != null ? indexObj.intValue() : 0;
-    final Integer newIndexObj = new Integer(index + 1);
-    class2variableIndex.put(className, newIndexObj);
+    class2variableIndex.increment(className);
+    int newIndex = class2variableIndex.get(className);
 
-    final String result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndexObj;
+    final String result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndex;
     component2variable.put(component, result);
 
     return result;

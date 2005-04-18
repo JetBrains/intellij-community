@@ -42,7 +42,7 @@ public abstract class ActionManagerEx extends ActionManager{
    * @return a negative integer if action that corresponds to the first id was registered earler than the action that corresponds
    *  to the second id; zero if both ids are equal; a positive number otherwise.
    */
-  public abstract Comparator getRegistrationOrderComparator();
+  public abstract Comparator<String> getRegistrationOrderComparator();
 
  
   /**

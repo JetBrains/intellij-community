@@ -9,23 +9,24 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.TObjectIntHashMap;
 
 public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
 
-  private static final HashMap<String, Integer> ourModifierNameToFlagMap = new HashMap<String, Integer>();
+  private static final TObjectIntHashMap<String> ourModifierNameToFlagMap = new TObjectIntHashMap<String>();
 
   static {
-    ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, new Integer(ClsUtil.ACC_PUBLIC));
-    ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, new Integer(ClsUtil.ACC_PROTECTED));
-    ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, new Integer(ClsUtil.ACC_PRIVATE));
-    ourModifierNameToFlagMap.put(PsiModifier.STATIC, new Integer(ClsUtil.ACC_STATIC));
-    ourModifierNameToFlagMap.put(PsiModifier.ABSTRACT, new Integer(ClsUtil.ACC_ABSTRACT));
-    ourModifierNameToFlagMap.put(PsiModifier.FINAL, new Integer(ClsUtil.ACC_FINAL));
-    ourModifierNameToFlagMap.put(PsiModifier.NATIVE, new Integer(ClsUtil.ACC_NATIVE));
-    ourModifierNameToFlagMap.put(PsiModifier.SYNCHRONIZED, new Integer(ClsUtil.ACC_SYNCHRONIZED));
-    ourModifierNameToFlagMap.put(PsiModifier.TRANSIENT, new Integer(ClsUtil.ACC_TRANSIENT));
-    ourModifierNameToFlagMap.put(PsiModifier.VOLATILE, new Integer(ClsUtil.ACC_VOLATILE));
+    ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, ClsUtil.ACC_PUBLIC);
+    ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, ClsUtil.ACC_PROTECTED);
+    ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, ClsUtil.ACC_PRIVATE);
+    ourModifierNameToFlagMap.put(PsiModifier.STATIC, ClsUtil.ACC_STATIC);
+    ourModifierNameToFlagMap.put(PsiModifier.ABSTRACT, ClsUtil.ACC_ABSTRACT);
+    ourModifierNameToFlagMap.put(PsiModifier.FINAL, ClsUtil.ACC_FINAL);
+    ourModifierNameToFlagMap.put(PsiModifier.NATIVE, ClsUtil.ACC_NATIVE);
+    ourModifierNameToFlagMap.put(PsiModifier.SYNCHRONIZED, ClsUtil.ACC_SYNCHRONIZED);
+    ourModifierNameToFlagMap.put(PsiModifier.TRANSIENT, ClsUtil.ACC_TRANSIENT);
+    ourModifierNameToFlagMap.put(PsiModifier.VOLATILE, ClsUtil.ACC_VOLATILE);
   }
 
   private final ClsModifierListOwner myParent;
@@ -46,14 +47,14 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
   }
 
   public boolean hasModifierProperty(String name) {
-    Integer flag = ourModifierNameToFlagMap.get(name);
-    if (flag == null) {
+    int flag = ourModifierNameToFlagMap.get(name);
+    if (flag == 0) {
       if (PsiModifier.PACKAGE_LOCAL.equals(name)) {
         return (myFlags & (ClsUtil.ACC_PUBLIC | ClsUtil.ACC_PROTECTED | ClsUtil.ACC_PRIVATE)) == 0;
       }
       return false;
     }
-    return (myFlags & flag.intValue()) != 0;
+    return (myFlags & flag) != 0;
   }
 
   public void setModifierProperty(String name, boolean value) throws IncorrectOperationException {

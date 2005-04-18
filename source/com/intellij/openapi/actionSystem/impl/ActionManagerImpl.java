@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
@@ -34,7 +35,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private final Object myLock = new Object();
   private THashMap<String,Object> myId2Action;
   private THashMap<String, THashSet<String>> myPlugin2Id;
-  private THashMap<String,Integer> myId2Index;
+  private TObjectIntHashMap<String> myId2Index;
   private THashMap<Object,String> myAction2Id;
   private ArrayList<String> myNotRegisteredInternalActionIds;
   private final Map<TimerListener, Timer> myRunnable2Timer = new HashMap<TimerListener, Timer>();
@@ -48,7 +49,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
-    myId2Index = new THashMap<String, Integer>();
+    myId2Index = new TObjectIntHashMap<String>();
     myAction2Id = new THashMap<Object, String>();
     myPlugin2Id = new THashMap<String, THashSet<String>>();
     myNotRegisteredInternalActionIds = new ArrayList<String>();
@@ -634,7 +635,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         return;
       }
       myId2Action.put(actionId, action);
-      myId2Index.put(actionId, new Integer(myRegisteredActionsCount++));
+      myId2Index.put(actionId, myRegisteredActionsCount++);
       myAction2Id.put(action, actionId);
       if (pluginName != null && !(action instanceof ActionGroup)){
         THashSet<String> pluginActionIds = myPlugin2Id.get(pluginName);
@@ -684,19 +685,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return "ActionManager";
   }
 
-  public Comparator getRegistrationOrderComparator() {
-    return new Comparator() {
-      public int compare(Object o1, Object o2) {
-        String id1 = (String)o1;
-        String id2 = (String)o2;
-
-        Integer index1Obj = myId2Index.get(id1);
-        int index1 = index1Obj != null ? index1Obj.intValue() : -1;
-
-        Integer index2Obj = myId2Index.get(id2);
-        int index2 = index2Obj != null ? index2Obj.intValue() : -1;
-
-        return index1 - index2;
+  public Comparator<String> getRegistrationOrderComparator() {
+    return new Comparator<String>() {
+      public int compare(String id1, String id2) {
+        return myId2Index.get(id1) - myId2Index.get(id2);
       }
     };
   }
