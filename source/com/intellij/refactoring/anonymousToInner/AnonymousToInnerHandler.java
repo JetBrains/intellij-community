@@ -186,18 +186,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
           PsiElement refElement = expression.resolve();
           if (refElement instanceof PsiVariable) {
             PsiVariable var = (PsiVariable)refElement;
-            if (var instanceof PsiField) {
-              final PsiClass containingClass = ((PsiField)var).getContainingClass();
-              if (!myAnonClass.equals(containingClass)) {
-                if (PsiTreeUtil.isAncestor(myTargetClass, containingClass, true)) {
-                  saveVariable(variableInfoMap, var, expression);
-                }
-              }
-            } else {
-              final PsiClass containingClass = PsiTreeUtil.getParentOfType(var, PsiClass.class);
-              if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
-                saveVariable(variableInfoMap, var, expression);
-              }
+            final PsiClass containingClass = var instanceof  PsiField ? ((PsiField)var).getContainingClass() :
+                                             PsiTreeUtil.getParentOfType(var, PsiClass.class);
+            if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
+              saveVariable(variableInfoMap, var, expression);
             }
           }
         }
