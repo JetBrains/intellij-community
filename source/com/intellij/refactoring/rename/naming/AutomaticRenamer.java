@@ -43,7 +43,7 @@ public abstract class AutomaticRenamer {
                                        List<UsageInfo> result,
                                        final boolean searchInStringsAndComments,
                                        final boolean searchInNonJavaFiles) {
-    final UsageInfo[] usages = RenameUtil.findUsages(element, myRenames.get(element.getName()), searchInStringsAndComments, searchInNonJavaFiles, myRenames);
+    final UsageInfo[] usages = RenameUtil.findUsages(element, getNewName(element), searchInStringsAndComments, searchInNonJavaFiles, myRenames);
     for (int i = 0; i < usages.length; i++) {
       final UsageInfo usage = usages[i];
       if (usage instanceof UnresolvableCollisionUsageInfo) return false;
