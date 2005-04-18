@@ -85,6 +85,14 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
             if(!"setUp".equals(methodName)){
                 return;
             }
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT))
+            {
+                return;
+            }
+            if(method.getBody()==null)
+            {
+                return;
+            }
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList == null){
                 return;

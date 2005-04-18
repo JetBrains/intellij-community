@@ -78,6 +78,12 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
             if (!"tearDown".equals(methodName)) {
                 return;
             }
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
+                return;
+            }
+            if(method.getBody() == null){
+                return;
+            }
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {
                 return;
