@@ -53,7 +53,6 @@ public class CloseAllEditorsButActiveAction extends AnAction {
     VirtualFile selectedFile;
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (window != null){
-      selectedFile = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
       presentation.setEnabled(window.getFiles().length > 1);
       return;
     } else {
