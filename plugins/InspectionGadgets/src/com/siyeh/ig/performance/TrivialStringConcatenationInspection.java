@@ -16,6 +16,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
     private static final Map s_typeToWrapperMap = new HashMap(6);
 
     static{
+        s_typeToWrapperMap.put("char", "Character");
         s_typeToWrapperMap.put("short", "Short");
         s_typeToWrapperMap.put("int", "Integer");
         s_typeToWrapperMap.put("long", "Long");
