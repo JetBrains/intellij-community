@@ -5,6 +5,7 @@ import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -232,9 +233,10 @@ public class FileReferenceSet {
       if (properties != null) {
         return JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
       } else {
-        return PsiManager.getInstance(file.getProject()).findDirectory(
-          ProjectRootManager.getInstance(file.getProject()).getFileIndex().getContentRootForFile(file.getVirtualFile())
-        );
+        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(file.getVirtualFile());
+        if (contentRootForFile!=null) {
+          return PsiManager.getInstance(project).findDirectory(contentRootForFile);
+        }
       }
     }
     else {
