@@ -499,7 +499,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
         final PsiLocalVariable declaredVar =
                 (PsiLocalVariable) declaration.getDeclaredElements()[0];
-
+        if(declaredVar == null)
+        {
+            return false;
+        }
         final PsiType declaredVarType = declaredVar.getType();
         if(!(declaredVarType instanceof PsiClassType)){
             return false;

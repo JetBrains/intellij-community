@@ -12,6 +12,14 @@ public class UnnecessaryReturnInspection
     {
         return;
     }
+    public void foo2()
+    {
+        {
+            {
+                return;
+            }
+        }
+    }
 
     public void bar()
     {

@@ -283,12 +283,10 @@ public class ControlFlowUtils{
             }
             final PsiElement container =
                     getContainingStatementOrBlock(statementToCheck);
-            if(container == null)
-            {
+            if(container == null){
                 return false;
             }
-            if(container instanceof PsiCodeBlock)
-            {
+            if(container instanceof PsiCodeBlock){
                 if(!statementIsLastInBlock((PsiCodeBlock) container,
                                            (PsiStatement) statementToCheck)){
                     return false;
@@ -310,6 +308,9 @@ public class ControlFlowUtils{
             if(container == null){
                 return false;
             }
+            if(isLoop(container)){
+                return false;
+            }
             if(container instanceof PsiCodeBlock){
                 if(!statementIsLastInBlock((PsiCodeBlock) container,
                                            (PsiStatement) statementToCheck)){
@@ -318,11 +319,12 @@ public class ControlFlowUtils{
                 if(container.equals(body)){
                     return true;
                 }
+                statementToCheck =
+                        PsiTreeUtil.getParentOfType(container,
+                                                    PsiStatement.class);
+            } else{
+                statementToCheck = container;
             }
-            if(isLoop(container)){
-                return false;
-            }
-            statementToCheck = container;
         }
     }
 
