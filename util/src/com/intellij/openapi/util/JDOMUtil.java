@@ -10,6 +10,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
+import org.jdom.output.Format;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -135,14 +136,14 @@ public class JDOMUtil {
 
   public static XMLOutputter createOutputter(String lineSeparator) {
     XMLOutputter xmlOutputter = new MyXMLOutputter();
-    xmlOutputter.setIndent("  ");
-    xmlOutputter.setNewlines(true);
-//    xmlOutputter.setTextTrim(true);
-    xmlOutputter.setTextNormalize(true);
-    xmlOutputter.setEncoding(ENCODING);
-    xmlOutputter.setOmitEncoding(false);
-    xmlOutputter.setOmitDeclaration(false);
-    xmlOutputter.setLineSeparator(lineSeparator);
+    Format format = Format.getCompactFormat().
+      setIndent("  ").
+      setTextMode(Format.TextMode.NORMALIZE).
+      setEncoding(ENCODING).
+      setOmitEncoding(false).
+      setOmitDeclaration(false).
+      setLineSeparator(lineSeparator);
+    xmlOutputter.setFormat(format);
     return xmlOutputter;
   }
 

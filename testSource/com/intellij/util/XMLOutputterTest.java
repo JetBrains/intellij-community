@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jdom.output.Format;
 
 import java.io.CharArrayWriter;
 import java.io.IOException;
@@ -25,10 +26,8 @@ public class XMLOutputterTest extends TestCase {
 
   private String printElement(Element root) throws IOException {
     XMLOutputter xmlOutputter = JDOMUtil.createOutputter("\n");
-    xmlOutputter.setOmitDeclaration(true);
-    xmlOutputter.setOmitEncoding(true);
-    xmlOutputter.setNewlines(false);
-    xmlOutputter.setExpandEmptyElements(true);
+    final Format format = xmlOutputter.getFormat().setOmitDeclaration(true).setOmitEncoding(true).setExpandEmptyElements(true);
+    xmlOutputter.setFormat(format);
 
     CharArrayWriter writer = new CharArrayWriter();
 

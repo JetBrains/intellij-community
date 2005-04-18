@@ -483,7 +483,7 @@ public class Convertor34 {
       final Element classPath = projectRootManager.getChild("classPath");
       processRootTypeElement(classPath, new ClassPathRootProcessor());
 
-      final Element projectElement = myProjectRootManager.getParent();
+      final Element projectElement = (Element)myProjectRootManager.getParent();
       final Element compilerConfigurationElement = findNamedChild(projectElement, "component", "CompilerConfiguration");
       if (compilerConfigurationElement != null) {
         final Element option = findNamedChild(compilerConfigurationElement, "option", "DEFAULT_OUTPUT_PATH");

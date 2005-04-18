@@ -10,6 +10,7 @@ import org.apache.commons.collections.MultiMap;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.output.XMLOutputter;
+import org.jdom.output.Format;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -174,9 +175,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     String epName = extractEPName(extensionElement);
     if (!myExtensionElement2extension.containsKey(extensionElement)) {
       XMLOutputter xmlOutputter = new XMLOutputter();
-      xmlOutputter.setIndent("  ");
-      xmlOutputter.setTextNormalize(true);
-      xmlOutputter.setNewlines(true);
+      Format format = Format.getCompactFormat().setIndent("  ").setTextMode(Format.TextMode.NORMALIZE);
+      xmlOutputter.setFormat(format);
       StringWriter stringWriter = new StringWriter();
       try {
         xmlOutputter.output(extensionElement, stringWriter);

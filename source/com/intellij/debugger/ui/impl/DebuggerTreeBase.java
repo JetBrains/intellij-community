@@ -17,6 +17,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jdom.output.Format;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -108,12 +109,8 @@ public class DebuggerTreeBase extends Tree {
       p.setText(text);
 
       XMLOutputter outputter = JDOMUtil.createOutputter("\n");
-      outputter.setExpandEmptyElements(true);
-      outputter.setNewlines(true);
-      outputter.setTextTrim(false);
-      outputter.setTrimAllWhite(false);
-      outputter.setLineSeparator("\n");
-      outputter.setTextNormalize(false);
+      Format format = outputter.getFormat().setTextMode(Format.TextMode.PRESERVE);
+      outputter.setFormat(format);
       tooltip.setTipText(outputter.outputString(html));
     }
 
