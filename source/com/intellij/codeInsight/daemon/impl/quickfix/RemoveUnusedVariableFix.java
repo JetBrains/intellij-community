@@ -142,7 +142,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {
-    final String text = sideEffects.get(0).getText();
+    final String text = sideEffects.size() > 0 ? sideEffects.get(0).getText() : "";
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
