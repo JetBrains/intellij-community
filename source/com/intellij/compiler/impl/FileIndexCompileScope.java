@@ -19,15 +19,11 @@ public abstract class FileIndexCompileScope implements CompileScope {
 
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final FileIndex[] fileIndices = getFileIndices();
-        for (int idx = 0; idx < fileIndices.length; idx++) {
-          final FileIndex fileIndex = fileIndices[idx];
-          fileIndex.iterateContent(new CompilerContentIterator(fileType, fileIndex, inSourceOnly, files));
-        }
-      }
-    });
+    final FileIndex[] fileIndices = getFileIndices();
+    for (int idx = 0; idx < fileIndices.length; idx++) {
+      final FileIndex fileIndex = fileIndices[idx];
+      fileIndex.iterateContent(new CompilerContentIterator(fileType, fileIndex, inSourceOnly, files));
+    }
     return files.toArray(new VirtualFile[files.size()]);
   }
 }

@@ -497,12 +497,16 @@ public class CompileDriver {
     return didSomething;
   }
 
-  private boolean translate(CompileContextImpl context, final CompilerManager compilerManager, final boolean forceCompile, boolean isRebuild) {
+  private boolean translate(final CompileContextImpl context, final CompilerManager compilerManager, final boolean forceCompile, boolean isRebuild) {
 
     boolean didSomething = false;
 
     final Compiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
-    final VfsSnapshot snapshot = new VfsSnapshot(context.getCompileScope().getFiles(null, true));
+    final VfsSnapshot snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
+      public VfsSnapshot compute() {
+        return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
+      }
+    });
 
     for (int idx = 0; idx < translators.length; idx++) {
       if (context.getProgressIndicator().isCanceled()) {
@@ -1575,18 +1579,14 @@ public class CompileDriver {
     private THashMap<VirtualFile, String> myFileToUrl;
 
     public VfsSnapshot(final VirtualFile[] files) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          myUrlToFile = new THashMap<String, VirtualFile>(files.length);
-          myFileToUrl = new THashMap<VirtualFile, String>(files.length);
-          for (int i = 0; i < files.length; i++) {
-            final VirtualFile file = files[i];
-            final String url = file.getUrl();
-            myUrlToFile.put(url, file);
-            myFileToUrl.put(file, url);
-          }
-        }
-      });
+      myUrlToFile = new THashMap<String, VirtualFile>(files.length);
+      myFileToUrl = new THashMap<VirtualFile, String>(files.length);
+      for (int i = 0; i < files.length; i++) {
+        final VirtualFile file = files[i];
+        final String url = file.getUrl();
+        myUrlToFile.put(url, file);
+        myFileToUrl.put(file, url);
+      }
     }
 
     public VirtualFile getFileByUrl(final String url) {

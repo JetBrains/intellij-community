@@ -42,26 +42,22 @@ public class FileSetCompileScope implements CompileScope {
 
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final FileTypeManager typeManager = FileTypeManager.getInstance();
-        for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
-          VirtualFile file = it.next();
-          if (!file.isValid()) {
-            it.remove();
-            continue;
-          }
-          if (file.isDirectory()) {
-            addRecursively(files, file, fileType);
-          }
-          else {
-            if (fileType == null || fileType.equals(typeManager.getFileTypeByFile(file))) {
-              files.add(file);
-            }
-          }
+    final FileTypeManager typeManager = FileTypeManager.getInstance();
+    for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
+      VirtualFile file = it.next();
+      if (!file.isValid()) {
+        it.remove();
+        continue;
+      }
+      if (file.isDirectory()) {
+        addRecursively(files, file, fileType);
+      }
+      else {
+        if (fileType == null || fileType.equals(typeManager.getFileTypeByFile(file))) {
+          files.add(file);
         }
       }
-    });
+    }
     return files.toArray(new VirtualFile[files.size()]);
   }
 

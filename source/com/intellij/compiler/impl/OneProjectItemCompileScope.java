@@ -31,18 +31,14 @@ public class OneProjectItemCompileScope implements CompileScope{
 
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
-        if (myFile.isDirectory()){
-          projectFileIndex.iterateContentUnderDirectory(myFile, iterator);
-        }
-        else{
-          iterator.processFile(myFile);
-        }
-      }
-    });
+    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
+    if (myFile.isDirectory()){
+      projectFileIndex.iterateContentUnderDirectory(myFile, iterator);
+    }
+    else{
+      iterator.processFile(myFile);
+    }
     return files.toArray(new VirtualFile[files.size()]);
   }
 
