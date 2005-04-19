@@ -15,6 +15,8 @@ import com.intellij.ui.FieldPanel;
 import org.jdom.Element;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -120,6 +122,8 @@ public class Descriptor {
   public JComponent getAdditionalConfigPanel(InspectionProfile.ModifiableModel inspectionProfile) {
     if (myKey.equals(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG)){
       myAdditionalConfigPanel = createAdditionalJavadocTagsPanel(inspectionProfile);
+    } else if (myKey.equals(HighlightDisplayKey.UNUSED_SYMBOL)){
+      myAdditionalConfigPanel = createUnusedSymbolSettingsPanel(inspectionProfile);
     } else if (myAdditionalConfigPanel == null){
       if (myKey.equals(HighlightDisplayKey.ILLEGAL_DEPENDENCY) ){
         myAdditionalConfigPanel = createDependencyConigurationPanel();
@@ -192,5 +196,46 @@ public class Descriptor {
       additionalTagsPanel.setText(inspectionProfile.getAdditionalJavadocTags());
     }
     return additionalTagsPanel;
+  }
+
+  public static JPanel createUnusedSymbolSettingsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
+    JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
+    final JCheckBox local = new JCheckBox("Check Local Variables");
+    final JCheckBox field = new JCheckBox("Check Fields");
+    final JCheckBox method = new JCheckBox("Check Methods");
+    final JCheckBox classes = new JCheckBox("Check Classes");
+    final JCheckBox parameters = new JCheckBox("Check Parameters");
+    ChangeListener listener = new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        InspectionProfile.UnusedSymbolSettings settings = new InspectionProfile.UnusedSymbolSettings();
+        settings.LOCAL_VARIABLE = local.isSelected();
+        settings.CLASS = classes.isSelected();
+        settings.FIELD = field.isSelected();
+        settings.PARAMETER = parameters.isSelected();
+        settings.METHOD = method.isSelected();
+        inspectionProfile.setUnusedSymbolSettings(settings);
+      }
+    };
+    local.addChangeListener(listener);
+    field.addChangeListener(listener);
+    method.addChangeListener(listener);
+    classes.addChangeListener(listener);
+    parameters.addChangeListener(listener);
+    panel.add(local);
+    panel.add(field);
+    panel.add(method);
+    panel.add(classes);
+    panel.add(parameters);
+    if (inspectionProfile != null){
+      final InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = inspectionProfile.getUnusedSymbolSettings();
+      local.setSelected(unusedSymbolSettings.LOCAL_VARIABLE);
+      field.setSelected(unusedSymbolSettings.FIELD);
+      method.setSelected(unusedSymbolSettings.METHOD);
+      classes.setSelected(unusedSymbolSettings.CLASS);
+      parameters.setSelected(unusedSymbolSettings.PARAMETER);
+    }
+    JPanel doNotExpand = new JPanel(new BorderLayout());
+    doNotExpand.add(panel, BorderLayout.NORTH);
+    return doNotExpand;
   }
 }

@@ -39,6 +39,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   private InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
+  private UnusedSymbolSettings myUnusedSymbolSettings = new UnusedSymbolSettings();
   //private String myBaseProfileName;
 
   public void setModified(final boolean modified) {
@@ -86,6 +87,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myTools = new HashMap<String, InspectionTool>(inspectionProfile.myTools);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
+    myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
     mySource = inspectionProfile;
   }
@@ -110,7 +112,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myBaseProfile = profile;
   }
 
-  public void removeInheritance(boolean inheritFromBaseBase) {
+  public void removeInheritance(boolean inheritFromBaseBase) {    //todo additional javadoc tags
     if (myBaseProfile != null) {
       LinkedHashMap<HighlightDisplayKey, ToolState> map = new LinkedHashMap<HighlightDisplayKey, ToolState>();
       if (inheritFromBaseBase) {
@@ -169,6 +171,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   public boolean isProperSetting(HighlightDisplayKey key) {
     if (myBaseProfile == null) {
       return false;
+    }
+    if (key == HighlightDisplayKey.UNUSED_SYMBOL && !myBaseProfile.getUnusedSymbolSettings().equals(getUnusedSymbolSettings())){
+      return true;
     }
     final boolean toolsSettings = toolSettingsAreEqual(key.toString(), this, myBaseProfile);
     if (myDisplayLevelMap.keySet().contains(key)) {
@@ -320,6 +325,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     if (additionalJavadocs != null) {
       myAdditionalJavadocTags = additionalJavadocs.getAttributeValue("value");
     }
+    final Element unusedSymbolSettings = element.getChild("UNUSED_SYMBOL_SETTINGS");
+    myUnusedSymbolSettings.readExternal(unusedSymbolSettings);
+
     final String baseProfileName = element.getAttributeValue("base_profile");
     if (baseProfileName != null && myBaseProfile == null) {
       myBaseProfile = InspectionProfileManager.getInstance().getProfile(baseProfileName);
@@ -355,6 +363,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       additionalTags.setAttribute("value", myAdditionalJavadocTags);
       element.addContent(additionalTags);
     }
+
+    final Element unusedSymbolSettings = new Element("UNUSED_SYMBOL_SETTINGS");
+    myUnusedSymbolSettings.writeExternal(unusedSymbolSettings);
+    element.addContent(unusedSymbolSettings);
+
     if (myBaseProfile != null) {
       element.setAttribute("base_profile", myBaseProfile.getName());
     }
@@ -461,6 +474,14 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
   }
 
+  public UnusedSymbolSettings getUnusedSymbolSettings() {
+    return myUnusedSymbolSettings;
+  }
+
+  public void setUnusedSymbolSettings(UnusedSymbolSettings settings) {
+    myUnusedSymbolSettings = settings;
+  }
+
   public File getFile() {
     return myFile;
   }
@@ -518,7 +539,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   public void copyFrom(InspectionProfileImpl profile) {
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(profile.myDisplayLevelMap);
     myBaseProfile = profile.myBaseProfile;
-    myAdditionalJavadocTags = profile.myAdditionalJavadocTags;
     copyToolsConfigurations(profile);
   }
 
@@ -528,6 +548,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
+    myAdditionalJavadocTags = profile.myAdditionalJavadocTags;
+    myUnusedSymbolSettings = profile.myUnusedSymbolSettings.copySettings();
     try {
       if (!profile.myTools.isEmpty()) {
         final InspectionTool[] inspectionTools = getInspectionTools();
@@ -629,6 +651,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
+    myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     save(new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
   }
 

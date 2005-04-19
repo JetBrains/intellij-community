@@ -11,6 +11,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,11 +33,11 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 
 import java.text.MessageFormat;
@@ -201,26 +203,27 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
+    final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+    if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     if (manager.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
     HighlightInfo info;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
-
-    if (parent instanceof PsiLocalVariable) {
+    final InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
+    if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {
       info = processLocalVariable((PsiLocalVariable)parent);
     }
-    else if (parent instanceof PsiField) {
+    else if (parent instanceof PsiField && unusedSymbolSettings.FIELD) {
       info = processField((PsiField)parent);
     }
-    else if (parent instanceof PsiParameter) {
+    else if (parent instanceof PsiParameter && unusedSymbolSettings.PARAMETER) {
       info = processParameter((PsiParameter)parent);
     }
-    else if (parent instanceof PsiMethod) {
+    else if (parent instanceof PsiMethod && unusedSymbolSettings.METHOD) {
       info = processMethod((PsiMethod)parent);
     }
-    else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier())) {
+    else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolSettings.CLASS) {
       info = processClass((PsiClass)parent);
     }
     else {

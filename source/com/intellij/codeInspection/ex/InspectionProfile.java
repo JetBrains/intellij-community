@@ -3,6 +3,11 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
 
 import java.io.File;
 
@@ -81,5 +86,51 @@ public interface InspectionProfile {
     void inheritFrom(InspectionProfileImpl profile);
 
     void loadAdditionalSettingsFromBaseProfile();
+
+    UnusedSymbolSettings getUnusedSymbolSettings();
+
+    void setUnusedSymbolSettings(UnusedSymbolSettings settings);
+  }
+
+  static class UnusedSymbolSettings implements JDOMExternalizable{
+    public boolean LOCAL_VARIABLE = true;
+    public boolean FIELD = true;
+    public boolean METHOD = true;
+    public boolean CLASS = true;
+    public boolean PARAMETER = true;
+
+    public UnusedSymbolSettings copySettings(){
+      UnusedSymbolSettings settings = new UnusedSymbolSettings();
+      settings.LOCAL_VARIABLE = LOCAL_VARIABLE;
+      settings.FIELD = FIELD;
+      settings.METHOD = METHOD;
+      settings.CLASS = CLASS;
+      settings.PARAMETER = PARAMETER;
+      return settings;
+    }
+
+    public void readExternal(final Element element) throws InvalidDataException {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+
+    public boolean equals(Object object) {
+      if (!(object instanceof UnusedSymbolSettings)){
+        return false;
+      }
+      UnusedSymbolSettings that = (UnusedSymbolSettings)object;
+      return that.LOCAL_VARIABLE == LOCAL_VARIABLE &&
+             that.FIELD == FIELD &&
+             that.METHOD == METHOD &&
+             that.CLASS == CLASS &&
+             that.PARAMETER == PARAMETER;
+    }
+
+    public int hashCode() {
+      return super.hashCode();
+    }
   }
 }
