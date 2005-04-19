@@ -506,7 +506,7 @@ public class RefactoringUtil {
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)ref.replace(initializer);
     PsiType exprType = expr.getType();
-    if (exprType != null && !variable.getType().isAssignableFrom(exprType)) { //can happen if initalizer's type was inferred using variable type
+    if (exprType != null && !variable.getType().equals(exprType)) {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)manager.getElementFactory().createExpressionFromText("(t)a", null);
       cast.getCastType().replace(variable.getTypeElement());
       cast.getOperand().replace(expr);
