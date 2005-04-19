@@ -61,11 +61,11 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public String getCharset(VirtualFile file) {
-    if (System.getProperty("NATIVE2ASCII") == null) {
-      return null;
+    if (System.getProperty("NO_NATIVE2ASCII") == null) {
+      return AsciiToNativeCharset.INSTANCE.name();
     }
     else {
-      return AsciiToNativeCharset.INSTANCE.name();
+      return null;
     }
   }
 }
