@@ -236,6 +236,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public boolean isEnabledByDefault() {
-    return true;
+    return false;
   }
 }
