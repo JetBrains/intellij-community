@@ -67,11 +67,20 @@ public class IElementType {
   }
 
   public IElementType(String debugName, Language language) {
+    this(debugName, language, true);
+  }
+
+  protected IElementType(String debugName, Language language, final boolean register) {
     myDebugName = debugName;
     myLanguage = language;
-    myIndex = (short) ourCounter++;
-    LOG.assertTrue(ourCounter < Short.MAX_VALUE, "Too many element types registered. Out of (short) range.");
-    ourRegistry.put(myIndex, this);
+    if (register) {
+      myIndex = (short) ourCounter++;
+      LOG.assertTrue(ourCounter < Short.MAX_VALUE, "Too many element types registered. Out of (short) range.");
+      ourRegistry.put(myIndex, this);
+    }
+    else {
+      myIndex = -1;
+    }
   }
 
   public Language getLanguage() {
