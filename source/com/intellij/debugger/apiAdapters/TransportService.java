@@ -4,6 +4,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.execution.ExecutionException;
+import com.sun.jdi.connect.Connector;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -35,9 +36,15 @@ public class TransportService {
     myDelegateObject = constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  public ConnectionService attach(final String s) {
+  private TransportService(Object delegateObject) {
+    myDelegateClass = delegateObject.getClass();
+    myDelegateObject = delegateObject;
+  }
+
+  public ConnectionService attach(final String s) throws IOException {
     try {
       final Method method = myDelegateClass.getMethod("attach", new Class[]{String.class});
+      method.setAccessible(true);
       return new ConnectionService(method.invoke(myDelegateObject, new Object[]{s}));
     }
     catch (NoSuchMethodException e) {
@@ -47,6 +54,10 @@ public class TransportService {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
       LOG.error(e);
     }
     return null;
@@ -64,6 +75,10 @@ public class TransportService {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
       LOG.error(e);
     }
     return null;
@@ -81,6 +96,10 @@ public class TransportService {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
       LOG.error(e);
     }
   }
@@ -116,5 +135,14 @@ public class TransportService {
       throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
     }
     return transport;
+  }
+
+  public static TransportService getTransportService(Connector connector) throws ExecutionException {
+    try {
+      return new TransportService(connector.transport());
+    }
+    catch (Exception e) {
+      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
+    }
   }
 }

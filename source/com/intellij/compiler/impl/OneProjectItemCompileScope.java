@@ -1,6 +1,5 @@
 package com.intellij.compiler.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -9,12 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OneProjectItemCompileScope implements CompileScope{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.OneProjectItemCompileScope");
@@ -25,12 +23,12 @@ public class OneProjectItemCompileScope implements CompileScope{
   public OneProjectItemCompileScope(Project project, VirtualFile file) {
     myProject = project;
     myFile = file;
-    final String url = SystemInfo.isFileSystemCaseSensitive? file.getUrl() : file.getUrl().toLowerCase();
+    final String url = file.getUrl();
     myUrl = file.isDirectory()? url + "/" : url;
   }
 
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<VirtualFile>(1);
     final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
     if (myFile.isDirectory()){
@@ -43,15 +41,10 @@ public class OneProjectItemCompileScope implements CompileScope{
   }
 
   public boolean belongs(String url) {
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      url = url.toLowerCase();
-    }
     if (myFile.isDirectory()){
-      return url.startsWith(myUrl);
+      return CompilerUtil.startsWith(url, myUrl);
     }
-    else{
-      return url.equals(myUrl);
-    }
+    return CompilerUtil.pathsEqual(url, myUrl);
   }
 
   public Module[] getAffectedModules() {

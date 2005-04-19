@@ -82,7 +82,7 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
   }
 
   public CompileTask[] getAfterTasks() {
-    return (CompileTask[])myAfterTasks.toArray(new CompileTask[myAfterTasks.size()]);
+    return myAfterTasks.toArray(new CompileTask[myAfterTasks.size()]);
   }
 
   public void compile(VirtualFile[] files, CompileStatusNotification callback, boolean trackDependencies) {
@@ -90,8 +90,7 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     for(int i = 0; i < files.length; i++){
       scopes[i] = new OneProjectItemCompileScope(myProject, files[i]);
     }
-    CompileScope compositeScope = new CompositeScope(scopes);
-    new CompileDriver(myProject).compile(compositeScope, new ListenerNotificator(callback), trackDependencies);
+    new CompileDriver(myProject).compile(new CompositeScope(scopes), new ListenerNotificator(callback), trackDependencies);
   }
 
   public void compile(Module module, CompileStatusNotification callback) {

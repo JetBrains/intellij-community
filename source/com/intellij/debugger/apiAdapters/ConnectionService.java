@@ -22,7 +22,7 @@ public class ConnectionService {
   static {
     try {
       myDelegateClass = SystemInfo.JAVA_VERSION.startsWith("1.4")
-                        ? Class.forName("com.sun.jdi.ConnectionService")
+                        ? Class.forName("com.sun.tools.jdi.ConnectionService")
                         : Class.forName("com.sun.jdi.connect.spi.Connection");
     }
     catch (ClassNotFoundException e) {
@@ -46,6 +46,10 @@ public class ConnectionService {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
       LOG.error(e);
     }
   }
@@ -53,7 +57,7 @@ public class ConnectionService {
   public VirtualMachine createVirtualMachine() throws IOException {
     try {
       final VirtualMachineManager virtualMachineManager = Bootstrap.virtualMachineManager();
-      final Method method = VirtualMachineManager.class.getMethod("createVirtualMachine", new Class[]{myDelegateClass});
+      final Method method = virtualMachineManager.getClass().getMethod("createVirtualMachine", new Class[]{myDelegateClass});
       return (VirtualMachine)method.invoke(virtualMachineManager, new Object[]{myConnection});
     }
     catch (NoSuchMethodException e) {
@@ -63,6 +67,10 @@ public class ConnectionService {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
       LOG.error(e);
     }
     return null;

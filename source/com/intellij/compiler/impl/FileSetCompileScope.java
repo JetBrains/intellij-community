@@ -12,10 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class FileSetCompileScope implements CompileScope {
   private Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
@@ -41,7 +38,7 @@ public class FileSetCompileScope implements CompileScope {
   }
 
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
     final FileTypeManager typeManager = FileTypeManager.getInstance();
     for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
       VirtualFile file = it.next();

@@ -1,13 +1,12 @@
 package com.intellij.compiler.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,7 +17,7 @@ public abstract class FileIndexCompileScope implements CompileScope {
   protected abstract FileIndex[] getFileIndices();
 
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
     final FileIndex[] fileIndices = getFileIndices();
     for (int idx = 0; idx < fileIndices.length; idx++) {
       final FileIndex fileIndex = fileIndices[idx];

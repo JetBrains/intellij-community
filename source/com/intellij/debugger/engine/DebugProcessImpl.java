@@ -33,6 +33,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessAdapter;
@@ -59,7 +60,6 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
-import com.sun.tools.jdi.VirtualMachineManagerService;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -69,10 +69,10 @@ import java.util.*;
 public abstract class DebugProcessImpl implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
 
-  private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
-  private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
-  private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
-  private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
+  static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
+  static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
+  static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
 
   public static final String ALWAYS_FORCE_CLASSIC_VM = "always";
   public static final String NEVER_FORCE_CLASSIC_VM = "never";
@@ -87,7 +87,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class, false);
   protected EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class, false);
 
-  private List<ProcessListener> myProcessListeners = new ArrayList<ProcessListener>();
+  private final List<ProcessListener> myProcessListeners = new ArrayList<ProcessListener>();
 
   private static final int STATE_INITIAL   = 0;
   private static final int STATE_ATTACHED  = 1;
@@ -98,7 +98,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myCanRedefineClasses;
   private boolean myCanWatchFieldModification;
 
-  private ExecutionResult  myExecution;
+  private ExecutionResult  myExecutionResult;
   private RemoteConnection myConnection;
 
   private ConnectionService myConnectionService;
@@ -131,6 +131,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private final Semaphore myWaitFor = new Semaphore();
   private boolean myBreakpointsMuted = false;
+  private boolean myIsFailed = false;
+
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -202,7 +204,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
 
   protected void commitVM(VirtualMachine vm) {
-    LOG.assertTrue(myState == STATE_INITIAL, "State is invalid " + myState);
+    LOG.assertTrue(isInInitialState(), "State is invalid " + myState);
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();
     if (LOG.isDebugEnabled()) {
@@ -292,7 +294,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public void printToConsole(final String text) {
-    myExecution.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
+    myExecutionResult.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
   }
 
   /**
@@ -380,9 +382,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return null;
   }
 
-  private VirtualMachine createVirtualMachineInt()
-    throws ExecutionException {
-
+  private VirtualMachine createVirtualMachineInt() throws ExecutionException {
     try {
       if (myArguments != null) {
         throw new IOException("DebugProcessImpl is already listening");
@@ -423,14 +423,16 @@ public abstract class DebugProcessImpl implements DebugProcess {
           }
         }
       }
-      else {
+      else { // is client mode, should attach to already running process
         AttachingConnector connector = (AttachingConnector)findConnector(
-          myConnection.isUseSockets() ? SOCKET_ATTACHING_CONNECTOR_NAME : SHMEM_ATTACHING_CONNECTOR_NAME);
+          myConnection.isUseSockets() ? SOCKET_ATTACHING_CONNECTOR_NAME : SHMEM_ATTACHING_CONNECTOR_NAME
+        );
 
         if (connector == null) {
-          throw new CantRunException("Cannot connect using " +
-                                     (myConnection.isUseSockets() ? "socket" : "shared memory") +
-                                     " transport: required connector not found. Check your JDK installation.");
+          throw new CantRunException(
+            "Cannot connect using " + (myConnection.isUseSockets() ? "socket" : "shared memory") +
+            " transport: required connector not found. Check your JDK installation."
+          );
         }
         myArguments = connector.defaultArguments();
         Connector.Argument argument;
@@ -467,7 +469,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
             }
             hostString = hostString + ":";
 
-            myConnectionService = ((TransportService) connector.transport()).attach(hostString + portString);
+            final TransportService transportService = TransportService.getTransportService(connector);
+            myConnectionService = transportService.attach(hostString + portString);
             return myConnectionService.createVirtualMachine();
           }
           else {
@@ -518,7 +521,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     });
   }
 
-  private static Connector findConnector(String connectorName) throws ExecutionException {
+  static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager = null;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -605,7 +608,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public ExecutionResult getExecutionResult() {
-    return myExecution;
+    return myExecutionResult;
   }
 
   public <T> T getUserData(Key<T> key) {
@@ -626,6 +629,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public boolean canWatchFieldModification() {
     return myCanWatchFieldModification;
+  }
+
+  public boolean isInInitialState() {
+    return myState == STATE_INITIAL;
   }
 
   public boolean isAttached() {
@@ -1451,35 +1458,34 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myWaitFor.down();
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    LOG.assertTrue(myState == STATE_INITIAL);
+    LOG.assertTrue(isInInitialState());
 
     myConnection = remoteConnection;
 
-    createVirtualMachine(pollConnection);
+    createVirtualMachine(state, pollConnection);
 
     try {
       synchronized (myProcessListeners) {
-        myExecution = state.execute();
-
+        myExecutionResult = state.execute();
         for (Iterator<ProcessListener> iterator = myProcessListeners.iterator(); iterator.hasNext();) {
           ProcessListener processListener = iterator.next();
-          myExecution.getProcessHandler().addProcessListener(processListener);
+          myExecutionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
       }
     }
     catch (ExecutionException e) {
-      stop(false);
+      fail();
       throw e;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myExecution;
+      return myExecutionResult;
     }
     
     final Alarm debugPortTimeout = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-    myExecution.getProcessHandler().addProcessListener(new ProcessAdapter() {
+    myExecutionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
         debugPortTimeout.cancelAllRequests();
       }
@@ -1487,7 +1493,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       public void startNotified(ProcessEvent event) {
         debugPortTimeout.addRequest(new Runnable() {
           public void run() {
-            if(myState == STATE_INITIAL) {
+            if(isInInitialState()) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
                   String message = createConnectionStatusMessage(
@@ -1503,12 +1509,23 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     });
 
-    return myExecution;
+    return myExecutionResult;
   }
 
-  private void createVirtualMachine(final boolean pollConnection) throws ExecutionException {
+  private void fail() {
+    synchronized (this) {
+      if (myIsFailed) {
+        // need this in order to prevent calling stop() twice
+        return;
+      }
+      myIsFailed = true;
+    }
+    stop(false);
+  }
+
+  private void createVirtualMachine(final RunProfileState state, final boolean pollConnection) {
     final Semaphore semaphore = new Semaphore();
-    final ExecutionException[] exception = new ExecutionException[1];
+    semaphore.down();
 
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
       public void connectorIsReady() {
@@ -1529,7 +1546,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
               vm = createVirtualMachineInt();
               break;
             }
-            catch (ExecutionException e) {
+            catch (final ExecutionException e) {
               if (pollConnection && !myConnection.isServerMode() && e.getCause() instanceof IOException) {
                 synchronized (this) {
                   try {
@@ -1541,7 +1558,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 }
               }
               else {
-                exception[0] = e;
+                fail();
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    RunStrategy.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
+                  }
+                });
                 break;
               }
             }
@@ -1564,12 +1586,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
           });
         }
       }
+      protected void commandCancelled() {
+        try {
+          super.commandCancelled();
+        }
+        finally {
+          semaphore.up();
+        }
+      }
     });
 
-    semaphore.down();
     semaphore.waitFor();
-
-    if (exception[0] != null) throw exception[0];
   }
 
   private void afterProcessStarted(final Runnable run) {
@@ -1590,8 +1617,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
     MyProcessAdapter processListener = new MyProcessAdapter();
     addProcessListener(processListener);
-    if(myExecution != null) {
-      if(myExecution.getProcessHandler().isStartNotified()) {
+    if(myExecutionResult != null) {
+      if(myExecutionResult.getProcessHandler().isStartNotified()) {
         processListener.run();
       }
     }
