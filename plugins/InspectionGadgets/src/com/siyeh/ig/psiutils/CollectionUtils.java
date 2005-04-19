@@ -154,7 +154,9 @@ public class CollectionUtils {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.resolve().getQualifiedName();
+        final PsiClass resolved = classType.resolve();
+        if (resolved == null) return false;
+        final String className = resolved.getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
 
