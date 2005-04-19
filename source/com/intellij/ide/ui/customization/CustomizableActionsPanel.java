@@ -391,6 +391,7 @@ public class CustomizableActionsPanel {
   }
 
   public void apply(){
+    final ArrayList<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
     if (mySelectedSchema != null){
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
@@ -405,7 +406,14 @@ public class CustomizableActionsPanel {
     }
     allSchemasComponent.setActiveSchema(mySelectedSchema);
     setCustomizationSchemaForCurrentProjects();
-    reset();
+    fillSchemaList();
+    restorePathsAfterTreeOptimization(treePaths);
+  }
+
+  private void restorePathsAfterTreeOptimization(final ArrayList<TreePath> treePaths) {
+    for (Iterator<TreePath> iterator = treePaths.iterator(); iterator.hasNext();) {
+      myActionsTree.expandPath(CustomizationUtil.getPathByUserObjects(myActionsTree, iterator.next()));
+    }
   }
 
   public void reset(){

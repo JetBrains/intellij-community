@@ -166,6 +166,17 @@ public class CustomizationUtil {
     schema.setActions(deleteActions);
   }
 
+  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
+    List<String>  path = new ArrayList<String>();
+    for (int i = 0; i < treePath.getPath().length; i++) {
+      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
+      if (o instanceof Group) {
+        path.add(((Group)o).getName());
+      }
+    }
+    return getTreePath(0, path, tree.getModel().getRoot(), tree);
+  }
+
   public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
