@@ -7,17 +7,27 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CollectionUtils {
-    /** @noinspection StaticCollection*/
-    private static final Set s_collectionClassesRequiringCapacity = new HashSet(10);
-    /** @noinspection StaticCollection*/
+public class CollectionUtils{
+    /**
+         * @noinspection StaticCollection
+         */
+    private static final Set s_collectionClassesRequiringCapacity =
+            new HashSet(10);
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Set s_allCollectionClasses = new HashSet(10);
-    /** @noinspection StaticCollection*/
-    private static final Set s_allCollectionClassesAndInterfaces = new HashSet(10);
-    /** @noinspection StaticCollection*/
+    /**
+         * @noinspection StaticCollection
+         */
+    private static final Set s_allCollectionClassesAndInterfaces =
+            new HashSet(10);
+    /**
+         * @noinspection StaticCollection
+         */
     private static final Map s_interfaceForCollection = new HashMap(10);
 
-    static {
+    static{
         s_collectionClassesRequiringCapacity.add("java.util.BitSet");
         s_collectionClassesRequiringCapacity.add("java.util.Vector");
         s_collectionClassesRequiringCapacity.add("java.util.ArrayList");
@@ -105,114 +115,136 @@ public class CollectionUtils {
         s_interfaceForCollection.put("EnumSet", "Set");
         s_interfaceForCollection.put("EnumMap", "Map");
         s_interfaceForCollection.put("java.util.HashSet", "java.util.Set");
-        s_interfaceForCollection.put("java.util.LinkedHashSet", "java.util.Set");
+        s_interfaceForCollection.put("java.util.LinkedHashSet",
+                                     "java.util.Set");
         s_interfaceForCollection.put("java.util.TreeSet", "java.util.Set");
         s_interfaceForCollection.put("java.util.Vector", "java.util.List");
         s_interfaceForCollection.put("java.util.ArrayList", "java.util.List");
         s_interfaceForCollection.put("java.util.TreeMap", "java.util.Map");
         s_interfaceForCollection.put("java.util.HashMap", "java.util.Map");
-        s_interfaceForCollection.put("java.util.IdentityHashMap", "java.util.Map");
-        s_interfaceForCollection.put("java.util.LinkedHashMap", "java.util.Map");
+        s_interfaceForCollection.put("java.util.IdentityHashMap",
+                                     "java.util.Map");
+        s_interfaceForCollection.put("java.util.LinkedHashMap",
+                                     "java.util.Map");
         s_interfaceForCollection.put("java.util.WeakHashMap", "java.util.Map");
         s_interfaceForCollection.put("java.util.Hashtable", "java.util.Map");
         s_interfaceForCollection.put("java.util.EnumSet", "java.util.Set");
         s_interfaceForCollection.put("java.util.EnumMap", "java.util.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.HashSet", "com.sun.java.util.collections.Set");
-        s_interfaceForCollection.put("com.sun.java.util.collections.TreeSet", "com.sun.java.util.collections.Set");
-        s_interfaceForCollection.put("com.sun.java.util.collections.Vector", "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.ArrayList", "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.LinkedList", "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.TreeMap", "com.sun.java.util.collections.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.HashMap", "com.sun.java.util.collections.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.Hashtable", "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("com.sun.java.util.collections.HashSet",
+                                     "com.sun.java.util.collections.Set");
+        s_interfaceForCollection.put("com.sun.java.util.collections.TreeSet",
+                                     "com.sun.java.util.collections.Set");
+        s_interfaceForCollection.put("com.sun.java.util.collections.Vector",
+                                     "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.ArrayList",
+                                     "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.LinkedList",
+                                     "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.TreeMap",
+                                     "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("com.sun.java.util.collections.HashMap",
+                                     "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("com.sun.java.util.collections.Hashtable",
+                                     "com.sun.java.util.collections.Map");
     }
 
-    private CollectionUtils() {
+    private CollectionUtils(){
         super();
     }
 
-    public static boolean isCollectionWithInitialCapacity(PsiType type) {
-        if(!(type instanceof PsiClassType)){
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.resolve().getQualifiedName();
-        return s_collectionClassesRequiringCapacity.contains(className);
-    }
-
-    public static boolean isCollectionClass(PsiType type) {
-        if(!(type instanceof PsiClassType)){
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.resolve().getQualifiedName();
-        return s_allCollectionClasses.contains(className);
-    }
-
-    public static boolean isCollectionClassOrInterface(PsiType type) {
+    public static boolean isCollectionWithInitialCapacity(PsiType type){
         if(!(type instanceof PsiClassType)){
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if (resolved == null) return false;
+        if(resolved == null){
+            return false;
+        }
+        final String className = resolved.getQualifiedName();
+        return s_collectionClassesRequiringCapacity.contains(className);
+    }
+
+    public static boolean isCollectionClass(PsiType type){
+        if(!(type instanceof PsiClassType)){
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass resolved = classType.resolve();
+        if(resolved == null){
+            return false;
+        }
+        final String className = resolved.getQualifiedName();
+        return s_allCollectionClasses.contains(className);
+    }
+
+    public static boolean isCollectionClassOrInterface(PsiType type){
+        if(!(type instanceof PsiClassType)){
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass resolved = classType.resolve();
+        if(resolved == null){
+            return false;
+        }
         final String className = resolved.getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
 
-    public static boolean isConstantArrayOfZeroSize(PsiField field) {
-        if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-                !field.hasModifierProperty(PsiModifier.FINAL)) {
+    public static boolean isConstantArrayOfZeroSize(PsiField field){
+        if(!field.hasModifierProperty(PsiModifier.STATIC) ||
+                   !field.hasModifierProperty(PsiModifier.FINAL)){
             return false;
         }
         final PsiExpression initializer = field.getInitializer();
-        if (!(initializer instanceof PsiNewExpression)) {
+        if(!(initializer instanceof PsiNewExpression)){
             return false;
         }
         final PsiNewExpression expression = (PsiNewExpression) initializer;
         final PsiExpression[] dimensions = expression.getArrayDimensions();
-        if (dimensions != null) {
-            if (dimensions.length != 1) {
+        if(dimensions != null){
+            if(dimensions.length != 1){
                 return false;
             }
             final PsiExpression dimension = dimensions[0];
             final String dimensionText = dimension.getText();
-            if ("0".equals(dimensionText)) {
+            if("0".equals(dimensionText)){
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean isArrayOrCollectionField(PsiExpression value) {
-        if (!(value instanceof PsiReferenceExpression)) {
+    public static boolean isArrayOrCollectionField(PsiExpression value){
+        if(!(value instanceof PsiReferenceExpression)){
             return false;
         }
-        final PsiReferenceExpression fieldReference = (PsiReferenceExpression) value;
+        final PsiReferenceExpression fieldReference =
+                (PsiReferenceExpression) value;
 
         final PsiElement element = fieldReference.resolve();
-        if (!(element instanceof PsiField)) {
+        if(!(element instanceof PsiField)){
             return false;
         }
         final PsiType type = fieldReference.getType();
-        if (type == null) {
+        if(type == null){
             return false;
         }
-        if (type.getArrayDimensions() > 0) {
+        if(type.getArrayDimensions() > 0){
             return !isConstantArrayOfZeroSize((PsiField) element);
         }
         return isCollectionClassOrInterface(type);
     }
 
-    public static String getInterfaceForClass(String name) {
+    public static String getInterfaceForClass(String name){
         String baseName;
         final String arg;
         final int paramStart = name.indexOf((int) '<');
-        if (paramStart >= 0) {
+        if(paramStart >= 0){
             baseName = name.substring(0, paramStart);
             baseName = baseName.trim();
             arg = name.substring(paramStart);
-        } else {
+        } else{
             baseName = name;
             arg = "";
         }
