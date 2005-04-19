@@ -114,10 +114,12 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     });
   }
 
-  private static int showSideEffectsWarning(List<PsiElement> sideEffects,
+  public static int showSideEffectsWarning(List<PsiElement> sideEffects,
                                             PsiVariable variable,
                                             Editor editor,
-                                            boolean canCopeWithSideEffects) {
+                                            boolean canCopeWithSideEffects,
+                                            String beforeText,
+                                            String afterText) {
     if (sideEffects.size() == 0) return SideEffectWarningDialog.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
@@ -131,10 +133,17 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, null);
 
-    final SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, sideEffects.get(0).getText(),
-                                                                       canCopeWithSideEffects);
+    final SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, beforeText, afterText, canCopeWithSideEffects);
     dialog.show();
     return dialog.getExitCode();
+  }
+
+  private static int showSideEffectsWarning(List<PsiElement> sideEffects,
+                                            PsiVariable variable,
+                                            Editor editor,
+                                            boolean canCopeWithSideEffects) {
+    final String text = sideEffects.get(0).getText();
+    return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
   /**
@@ -269,7 +278,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return elementToReplace.replace(expressionToReplaceWith);
   }
 
-    private static boolean checkSideEffects(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects) {
+    public static boolean checkSideEffects(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     if (element instanceof PsiMethodCallExpression) {
       sideEffects.add(element);

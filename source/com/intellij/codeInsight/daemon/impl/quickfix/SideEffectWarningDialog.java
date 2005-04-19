@@ -1,22 +1,23 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiVariable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexey Kudravtsev
  */
 public class SideEffectWarningDialog extends DialogWrapper {
   private final PsiVariable myVariable;
-  private final String mySampleExpressionText;
+  private final String myBeforeText;
+  private final String myAfterText;
   private final boolean myCanCopeWithSideEffects;
   private AbstractAction myMakeStmtAction;
   private AbstractAction myRemoveAllAction;
@@ -25,10 +26,11 @@ public class SideEffectWarningDialog extends DialogWrapper {
   public static final int DELETE_ALL = 2;
   public static final int CANCEL = 0;
 
-  public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, String sampleExpressionText, boolean canCopeWithSideEffects) {
+  public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, String beforeText, String afterText, boolean canCopeWithSideEffects) {
     super(project, canBeParent);
     myVariable = variable;
-    mySampleExpressionText = sampleExpressionText;
+    myBeforeText = beforeText;
+    myAfterText = afterText;
     myCanCopeWithSideEffects = canCopeWithSideEffects;
     setTitle("Side Effects Found");
     init();
@@ -104,9 +106,9 @@ public class SideEffectWarningDialog extends DialogWrapper {
     if (myCanCopeWithSideEffects) {
       text+= "<li><b>Transform</b> expressions assigned to variable into the statements on their own."
              +"<br>That is,<br>"
-             +"<table border=1><tr><td><code>"+myVariable.getType().getPresentableText()+" "+myVariable.getName()+" = "+mySampleExpressionText+";</code></td></tr></table>"
+             +"<table border=1><tr><td><code>"+myVariable.getType().getPresentableText()+" "+myVariable.getName()+" = "+myBeforeText+";</code></td></tr></table>"
              +"<br> becomes: <br>"
-             +"<table border=1><tr><td><code>"+mySampleExpressionText+";</code></td></tr></table>"
+             +"<table border=1><tr><td><code>" + myAfterText + ";</code></td></tr></table>"
              +"</li>";
     }
 

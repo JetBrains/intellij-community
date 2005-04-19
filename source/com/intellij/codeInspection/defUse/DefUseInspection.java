@@ -8,6 +8,8 @@
  */
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.SideEffectWarningDialog;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -15,8 +17,10 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
@@ -30,6 +34,7 @@ import java.util.List;
 public class DefUseInspection extends BaseLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS = false;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
+  public boolean REPORT_REDUNDANT_INITIALIZER = true;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseInspection");
 
@@ -90,10 +95,13 @@ public class DefUseInspection extends BaseLocalInspectionTool {
             }
           }
           else {
-            descriptions.add(manager.createProblemDescriptor(psiVariable.getInitializer(),
-                                                             "Variable <code>" + psiVariable.getName() +
-                                                             "</code> initializer <code>#ref</code> #loc is redundant.", new RemoveInitializerFix(),
-                                                             ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            if (REPORT_REDUNDANT_INITIALIZER) {
+              descriptions.add(manager.createProblemDescriptor(psiVariable.getInitializer(),
+                                                               "Variable <code>" + psiVariable.getName() +
+                                                               "</code> initializer <code>#ref</code> #loc is redundant.",
+                                                               new RemoveInitializerFix(),
+                                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            }
           }
         }
         else if (context instanceof PsiAssignmentExpression &&
@@ -161,6 +169,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   private class OptionsPanel extends JPanel {
     private final JCheckBox myReportPrefix;
     private final JCheckBox myReportPostfix;
+    private final JCheckBox myReportInitializer;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -171,6 +180,16 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
+      myReportInitializer = new JCheckBox("Report redundant initializers");
+      myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
+      myReportInitializer.getModel().addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected();
+        }
+      });
+      gc.insets = new Insets(0, 0, 15, 0);
+      gc.gridy = 0;
+      add(myReportInitializer, gc);
 
       myReportPrefix = new JCheckBox("Report ++i when may be replaced with (i + 1)");
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
@@ -179,7 +198,8 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected();
         }
       });
-      gc.gridy = 0;
+      gc.insets = new Insets(0, 0, 0, 0);
+      gc.gridy++;
       add(myReportPrefix, gc);
 
       myReportPostfix = new JCheckBox("Report i++ when changed value is not used afterwards");
@@ -207,8 +227,25 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       if (!(psiInitializer instanceof PsiExpression)) return;
       if (!(psiInitializer.getParent() instanceof PsiVariable)) return;
 
+      final PsiVariable variable = (PsiVariable)psiInitializer.getParent();
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+      boolean hasSideEffects = RemoveUnusedVariableFix.checkSideEffects(psiInitializer, variable, sideEffects);
+      int res = SideEffectWarningDialog.DELETE_ALL;
+      if (hasSideEffects) {
+        hasSideEffects = PsiUtil.isStatement(psiInitializer);
+        res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable, FileEditorManager.getInstance(project).getSelectedTextEditor(), hasSideEffects, sideEffects.get(0).getText(), variable.getTypeElement().getText() + " " + variable.getName() + ";<br>" + psiInitializer.getText());
+      }
       try {
-        psiInitializer.delete();
+        if (res == SideEffectWarningDialog.DELETE_ALL) {
+          psiInitializer.delete();
+        }
+        else if (res == SideEffectWarningDialog.MAKE_STATEMENT) {
+          final PsiElementFactory factory = variable.getManager().getElementFactory();
+          final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
+          declaration.getParent().addAfter(statementFromText, declaration);
+          psiInitializer.delete();
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
