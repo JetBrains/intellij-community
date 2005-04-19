@@ -13,6 +13,20 @@
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
     Type argument which hides visible type
+    Anonymous inner class could be static
+    Unsigned right shift cast to short or byte
+    Servlet class with instance variables
+    Struts Action class with instance variables
+    this.wait(), .notify(), or .notifyAll()
+    write to static field from instance method
+    Math call on constant value
+    .equals() on array
+    call to runFinalizersOnExit()
+    integer shift by constant outside the range of 0..31
+    Collection is added to itself
+    Instantiation of utility class
+    readLine not checked for null
+    Constant month outside range of 0..11
 
     Static import quickfix
     Vararg quickfix

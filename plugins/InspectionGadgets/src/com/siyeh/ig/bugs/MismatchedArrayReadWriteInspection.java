@@ -33,13 +33,10 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
             context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         }
         final boolean written = arrayContentsAreWritten(variable, context);
-        final boolean read = arrayContentsAreRead(variable, context);
         if (written) {
             return "Contents of array #ref are written to, but never read #loc";
-        } else if (read) {
+        }else {
             return "Contents of array #ref are read, but never written to #loc";
-        } else {
-            return "Contents of array #ref are neither read nor written to #loc";
         }
     }
 
@@ -67,10 +64,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
             }
             final boolean written = arrayContentsAreWritten(field, containingClass);
             final boolean read = arrayContentsAreRead(field, containingClass);
-            if (written && read) {
-                return;
+            if (written != read) {
+                registerFieldError(field);
             }
-            registerFieldError(field);
         }
 
 

@@ -36,13 +36,10 @@ public class MismatchedCollectionQueryUpdateInspection
             context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         }
         final boolean updated = collectionContentsAreUpdated(variable, context);
-        final boolean queried = collectionContentsAreQueried(variable, context);
         if(updated){
             return "Contents of collection #ref are updated, but never queried #loc";
-        } else if(queried){
-            return "Contents of collection #ref are queried, but never updated #loc";
         } else{
-            return "Contents of collection #ref are neither queried nor updated #loc";
+            return "Contents of collection #ref are queried, but never updated #loc";
         }
     }
 
@@ -102,13 +99,10 @@ public class MismatchedCollectionQueryUpdateInspection
             }
             final boolean written =
                     collectionContentsAreUpdated(variable, codeBlock);
-            if(!written){
-                registerVariableError(variable);
-                return;
-            }
+
             final boolean read =
                     collectionContentsAreQueried(variable, codeBlock);
-            if(!read){
+            if(read!=written){
                 registerVariableError(variable);
             }
         }
