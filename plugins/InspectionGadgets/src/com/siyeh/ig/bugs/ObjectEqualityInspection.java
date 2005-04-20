@@ -194,6 +194,9 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (type == null) {
                 return false;
             }
+	        if (type instanceof PsiArrayType) {
+	            return false;
+            }
             return !(type instanceof PsiPrimitiveType)
                     && !TypeUtils.isJavaLangString(type);
         }
