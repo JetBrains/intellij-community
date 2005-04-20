@@ -43,6 +43,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 import gnu.trove.THashMap;
 
 import java.util.*;
@@ -510,7 +511,13 @@ public class RefactoringUtil {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)manager.getElementFactory().createExpressionFromText("(t)a", null);
       cast.getCastType().replace(variable.getTypeElement());
       cast.getOperand().replace(expr);
-      expr = (PsiExpression)expr.replace(cast);
+      PsiExpression exprCopy = (PsiExpression)expr.copy();
+      cast = (PsiTypeCastExpression)expr.replace(cast);
+      if (!RedundantCastUtil.isCastRedundant(cast)) {
+        expr = cast;
+      } else {
+        expr = (PsiExpression)cast.replace(exprCopy);
+      }
     }
 
     ChangeContextUtil.clearContextInfo(initializer);

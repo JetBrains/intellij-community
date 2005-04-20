@@ -30,23 +30,70 @@ public class RedundantCastUtil {
         return true;
       }
     };
-    where.accept(new MyVisitor(processor));
+    where.accept(new MyCollectingVisitor(processor));
     return result;
   }
 
-  private static class MyVisitor extends PsiRecursiveElementVisitor {
+  public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
+    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
+    PsiElement parent = typeCast.getParent();
+    if (parent instanceof PsiExpressionList) parent = parent.getParent();
+    parent.accept(visitor);
+    return visitor.isRedundant();
+  }
+
+  private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final PsiElementProcessor<PsiTypeCastExpression> myProcessor;
     private Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
-
-    public MyVisitor(PsiElementProcessor<PsiTypeCastExpression> processor) {
+    public MyCollectingVisitor(PsiElementProcessor<PsiTypeCastExpression> processor) {
       myProcessor = processor;
     }
 
-    private void addToResults(PsiTypeCastExpression typeCast){
+    public void visitElement(PsiElement element) {
+      element.acceptChildren(this);
+    }
+
+    protected void addToResults(PsiTypeCastExpression typeCast){
+      if (!isTypeCastSemantical(typeCast) && myFoundCasts.add(typeCast)) {
+        myProcessor.execute(typeCast);
+      }
+    }
+
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      expression.acceptChildren(this);
+    }
+
+    public void visitVariable(PsiVariable variable) {
+      super.visitVariable(variable);
+      variable.acceptChildren(this);
+    }
+
+    public void visitBinaryExpression(PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      expression.acceptChildren(this);
+    }
+
+    public void visitNewExpression(PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      expression.acceptChildren(this);
+    }
+
+    public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
+      super.visitTypeCastExpression(typeCast);
+      typeCast.acceptChildren(this);
+    }
+  }
+
+  private static class MyIsRedundantVisitor extends PsiElementVisitor {
+    public boolean isRedundant() {
+      return myIsRedundant;
+    }
+
+    boolean myIsRedundant = false;
+    protected void addToResults(PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
-        if (myFoundCasts.add(typeCast)) {
-          myProcessor.execute(typeCast);
-        }
+        myIsRedundant = true;
       }
     }
 
@@ -56,12 +103,10 @@ public class RedundantCastUtil {
 
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       processPossibleTypeCast(expression.getRExpression(), expression.getLExpression().getType());
-      super.visitAssignmentExpression(expression);
     }
 
     public void visitVariable(PsiVariable variable) {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
-      super.visitVariable(variable);
     }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
@@ -73,7 +118,6 @@ public class RedundantCastUtil {
         processBinaryExpressionOperand(lExpr, rExpr, binaryToken);
         processBinaryExpressionOperand(rExpr, lExpr, binaryToken);
       }
-      super.visitBinaryExpression(expression);
     }
 
     private void processBinaryExpressionOperand(final PsiExpression operand,
@@ -167,8 +211,9 @@ public class RedundantCastUtil {
 
     public void visitNewExpression(PsiNewExpression expression) {
       processCall(expression);
-      super.visitNewExpression(expression);
     }
+
+    public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
     private void processCall(PsiCallExpression expression){
       PsiMethod oldMethod = null;
@@ -262,23 +307,20 @@ public class RedundantCastUtil {
     }
 
     public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
-      if (!myFoundCasts.contains(typeCast)){
-        PsiExpression operand = typeCast.getOperand();
-        if (operand == null) return;
+      PsiExpression operand = typeCast.getOperand();
+      if (operand == null) return;
 
-        PsiElement expr = deParenthesize(operand);
+      PsiElement expr = deParenthesize(operand);
 
-        if (expr instanceof PsiTypeCastExpression){
-          PsiType castType = ((PsiTypeCastExpression)expr).getCastType().getType();
-          if (!(castType instanceof PsiPrimitiveType)){
-            addToResults((PsiTypeCastExpression)expr);
-          }
-        } else {
-          processAlreadyHasTypeCast(typeCast);
+      if (expr instanceof PsiTypeCastExpression) {
+        PsiType castType = ((PsiTypeCastExpression)expr).getCastType().getType();
+        if (!(castType instanceof PsiPrimitiveType)) {
+          addToResults((PsiTypeCastExpression)expr);
         }
       }
-
-      super.visitTypeCastExpression(typeCast);
+      else {
+        processAlreadyHasTypeCast(typeCast);
+      }
     }
 
     private void processAlreadyHasTypeCast(PsiTypeCastExpression typeCast){
