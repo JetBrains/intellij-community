@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 
 public class JavaSpacePropertyProcessor extends PsiElementVisitor{
@@ -356,11 +357,16 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   private SpaceProperty createNonLFSpace(int spaces, final boolean keepLineBreaks) {
-    if (myChild1.getElementType() == ElementType.END_OF_LINE_COMMENT) {
+    final ASTNode prev = getPrevElementType(myChild2);
+    if (prev != null && prev.getElementType() == ElementType.END_OF_LINE_COMMENT) {
       return Formatter.getInstance().createSpaceProperty(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else {
       return Formatter.getInstance().createSpaceProperty(spaces, spaces, 0, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
+  }
+
+  private ASTNode getPrevElementType(final ASTNode child) {
+    return FormatterUtil.getLeafNonSpaceBefore(child);
   }
 
   private SpaceProperty getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle) {

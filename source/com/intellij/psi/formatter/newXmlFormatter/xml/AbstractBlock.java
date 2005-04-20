@@ -13,8 +13,8 @@ import java.util.List;
 public abstract class AbstractBlock implements Block {
   protected final ASTNode myNode;
   private List<Block> mySubBlocks;
-  protected final Wrap myWrap;
-  protected final Alignment myAlignment;
+  protected Wrap myWrap;
+  protected Alignment myAlignment;
 
   protected AbstractBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
     myNode = node;

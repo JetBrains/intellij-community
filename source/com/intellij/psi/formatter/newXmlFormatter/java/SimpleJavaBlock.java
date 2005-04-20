@@ -5,6 +5,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,35 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
   protected List<Block> buildChildren() {
     ChameleonTransforming.transformChildren(myNode);
-    return createBlocksFromChild(myNode.getFirstChildNode());
+    ASTNode firstChild = myNode.getFirstChildNode();
+    final ArrayList<Block> comments = new ArrayList<Block>();
+    firstChild = readCommentsFrom(firstChild, comments);
+    final ArrayList<Block> blocks = createBlocksFromChild(firstChild);
+    if (comments.isEmpty()) {
+      return blocks;
+    } else {
+      final SynteticCodeBlock resultWrapper = new SynteticCodeBlock(blocks, myAlignment, mySettings, myIndent, myWrap);
+      final ArrayList<Block> result = new ArrayList<Block>();
+      result.addAll(comments);
+      result.add(resultWrapper);
+      myAlignment = null;
+      myWrap = null;
+      myIndent = Formatter.getInstance().getNoneIndent();
+      return result;
+    }
+  }
+
+  private ASTNode readCommentsFrom(ASTNode child, final ArrayList<Block> comments) {
+    while (child != null) {
+      if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
+        comments.add(createJavaBlock(child, mySettings));
+      }
+      else if (!containsWhiteSpacesOnly(child)) {
+        return child;
+      }
+      child = child.getTreeNext();
+    }
+    return child;
   }
 
   private ArrayList<Block> createBlocksFromChild(ASTNode child) {

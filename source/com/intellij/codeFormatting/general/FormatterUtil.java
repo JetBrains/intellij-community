@@ -142,7 +142,7 @@ public class FormatterUtil {
     return new Helper(fileType, project).shiftIndentInside(leafElement, currentTokenPosShift);
   }
 
-  public static ASTNode getNonLeafSpaceBefore(final ASTNode element) {
+  public static ASTNode getLeafNonSpaceBefore(final ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
@@ -151,7 +151,7 @@ public class FormatterUtil {
         return candidate;
       }
       else {
-        return getNonLeafSpaceBefore(candidate);
+        return getLeafNonSpaceBefore(candidate);
       }
     }
     final ASTNode treeParent = element.getTreeParent();
@@ -159,7 +159,7 @@ public class FormatterUtil {
     if (treeParent == null || treeParent.getTreeParent() == null) {
       return null;
     } else {
-      return getNonLeafSpaceBefore(treeParent);
+      return getLeafNonSpaceBefore(treeParent);
     }
 
   }

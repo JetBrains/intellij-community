@@ -13,8 +13,8 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -86,66 +86,47 @@ public class PsiBasedFormattingModel implements FormattingModel{
   }
 
   public void replaceWhiteSpace(final TextRange textRange, final String whiteSpace) throws IncorrectOperationException {
-    final PomModel model = myProject.getModel();
-    final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
-    try {
-      model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(myASTNode)) {
-        public PomModelEvent runInner(){
-          final FileElement fileElement = getFileElement(myASTNode);
-          final ASTNode leafElement = myASTNode.findLeafElementAt(textRange.getEndOffset());
-          if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
-            new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length());
-          } else {
-            FormatterUtil.replaceWhiteSpace(whiteSpace,
-                                                           leafElement,
-                                                           ElementType.WHITE_SPACE);
-            if (leafElement.textContains('\n') && whiteSpace.indexOf('\n') >= 0) {
-              try {
-                int lastLineIndent = getLastLineIndent(leafElement.getText());
-                new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length() - lastLineIndent);
-              }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-          }
-          TreeUtil.clearCaches(fileElement);
-          return null;
+    final ASTNode leafElement = myASTNode.findLeafElementAt(textRange.getEndOffset());
+    if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
+      new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length());
+    } else {
+      FormatterUtil.replaceWhiteSpace(whiteSpace,
+                                                     leafElement,
+                                                     ElementType.WHITE_SPACE);
+      if (leafElement.textContains('\n') && whiteSpace.indexOf('\n') >= 0) {
+        try {
+          int lastLineIndent = getLastLineIndent(leafElement.getText());
+          new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length() - lastLineIndent);
         }
-
-        private int getLastLineIndent(final String text) throws IOException {
-          final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
-          String lastLine = getLastLine(text);
-          if (lastLine == null) return 0;
-          int result = 0;
-          for (int i = 0; i < lastLine.length(); i++) {
-            if (lastLine.charAt(i) == ' ') result += 1;
-            if (lastLine.charAt(i) == '\t') result += options.TAB_SIZE;
-            return result;
-          }
-          return result;
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
-
-        private String getLastLine(final String text) throws IOException {
-          final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
-          String line;
-          String result = null;
-          while ((line = lineNumberReader.readLine()) != null) {
-            result = line;
-          }
-          return result;
-        }
-
-        private FileElement getFileElement(final ASTNode element) {
-          return (FileElement)SourceTreeToPsiMap.psiElementToTree(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile());
-        }
-      }, aspect);
-    }
-    catch (IncorrectOperationException e) {
-      throw e;
+      }
     }
 
+  }
 
+  private int getLastLineIndent(final String text) throws IOException {
+    final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
+    String lastLine = getLastLine(text);
+    if (lastLine == null) return 0;
+    int result = 0;
+    for (int i = 0; i < lastLine.length(); i++) {
+      if (lastLine.charAt(i) == ' ') result += 1;
+      if (lastLine.charAt(i) == '\t') result += options.TAB_SIZE;
+      return result;
+    }
+    return result;
+  }
+
+  private String getLastLine(final String text) throws IOException {
+    final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
+    String line;
+    String result = null;
+    while ((line = lineNumberReader.readLine()) != null) {
+      result = line;
+    }
+    return result;
   }
 
   public CharSequence getText(final TextRange textRange) {

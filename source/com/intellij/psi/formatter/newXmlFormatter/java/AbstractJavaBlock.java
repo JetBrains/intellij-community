@@ -16,7 +16,7 @@ import java.util.List;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock{
   protected final CodeStyleSettings mySettings;
-  private final Indent myIndent;
+  protected Indent myIndent;
   private Indent myChildIndent;
   private Alignment myChildAlignment;
   private boolean myUseChildAttributes = false;
