@@ -171,4 +171,14 @@ public class CharArrayUtil {
     writer.close();
     return out.toByteArray();
   }
+
+  public static boolean containsOnlyWhiteSpaces(final CharSequence chars) {
+    if (chars == null) return true;
+    for (int i = 0; i < chars.length(); i++) {
+      final char c = chars.charAt(i);
+      if (c == ' ' || c == '\t' || c == '\n' || c == '\r') continue;
+      return false;
+    }
+    return true;
+  }
 }
