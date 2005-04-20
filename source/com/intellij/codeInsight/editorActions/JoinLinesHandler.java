@@ -173,7 +173,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
           PsiDocumentManager.getInstance(project).commitDocument(doc);
           try {
-            CodeStyleManager.getInstance(project).reformatRange(psiFile, start, end, true);
+            CodeStyleManager.getInstance(project).reformatRange(psiFile, start+1, end, true);
           } catch (IncorrectOperationException e) {
             LOG.error(e);
           }
@@ -206,7 +206,6 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
   private static int tryUnwrapBlockStatement(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
     if (!(elementAtStartLineEnd instanceof PsiJavaToken) || ((PsiJavaToken)elementAtStartLineEnd).getTokenType() != JavaTokenType.LBRACE) {
       return -1;
     }
@@ -215,6 +214,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     if (!(codeBlock.getParent() instanceof PsiBlockStatement)) return -1;
     final PsiElement parentStatement = codeBlock.getParent().getParent();
 
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
     if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
              parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
            (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
