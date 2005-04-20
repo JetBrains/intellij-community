@@ -57,8 +57,12 @@ public class BringVariableIntoScopeAction implements IntentionAction {
 
       public void visitLocalVariable(PsiLocalVariable variable) {
         if (referenceName.equals(variable.getName())) {
-          if (myOutOfScopeVariable == null) myOutOfScopeVariable = variable;
-          else                              myOutOfScopeVariable = null; //2 conflict variables
+          if (myOutOfScopeVariable == null) {
+            myOutOfScopeVariable = variable;
+          }
+          else {
+            myOutOfScopeVariable = null; //2 conflict variables
+          }
         }
       }
     });
@@ -69,18 +73,17 @@ public class BringVariableIntoScopeAction implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
-    if (PsiUtil.isAccessedForWriting(myUnresolvedReference)) {
-      //Leave initializer assignment
-      PsiExpression initializer = myOutOfScopeVariable.getInitializer();
-      if (initializer != null) {
-        PsiExpressionStatement assignment = (PsiExpressionStatement)manager.getElementFactory().createStatementFromText(myOutOfScopeVariable.getName() + "= e;", null);
-        ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
-        assignment = (PsiExpressionStatement)manager.getCodeStyleManager().reformat(assignment);
-        PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(myOutOfScopeVariable, PsiDeclarationStatement.class);
-        LOG.assertTrue(declStatement != null);
-        declStatement.getParent().addAfter(assignment, declStatement);
-        myOutOfScopeVariable.getInitializer().delete();
-      }
+    //Leave initializer assignment
+    PsiExpression initializer = myOutOfScopeVariable.getInitializer();
+    if (initializer != null) {
+      PsiExpressionStatement assignment = (PsiExpressionStatement)manager.getElementFactory().createStatementFromText(myOutOfScopeVariable
+        .getName() + "= e;", null);
+      ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
+      assignment = (PsiExpressionStatement)manager.getCodeStyleManager().reformat(assignment);
+      PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(myOutOfScopeVariable, PsiDeclarationStatement.class);
+      LOG.assertTrue(declStatement != null);
+      declStatement.getParent().addAfter(assignment, declStatement);
+      myOutOfScopeVariable.getInitializer().delete();
     }
 
     myOutOfScopeVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
