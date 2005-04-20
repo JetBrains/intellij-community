@@ -19,13 +19,11 @@
     this.wait(), .notify(), or .notifyAll()
     write to static field from instance method
     Math call on constant value
-    .equals() on array
     call to runFinalizersOnExit()
     Collection is added to itself
     Instantiation of utility class
     readLine not checked for null
     Constant month outside range of 0..11
-    Anonymous inner class could be static
     integer shift by constant outside the range of 0..31
 
     Static import quickfix
