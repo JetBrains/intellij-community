@@ -52,7 +52,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     for (int i = 0; i < props.length; i++) {
       final ASTNode prop = props[i];
       final Property property = (Property)prop.getPsi();
-      myProperties.put(property.getKey(), property);
+      if (!myProperties.containsKey(property.getKey())) {
+        myProperties.put(property.getKey(), property);
+      }
     }
   }
 

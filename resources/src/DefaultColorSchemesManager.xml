@@ -181,6 +181,15 @@
           <option name="FONT_TYPE" value="2"/>
         </value>
       </option>
+      <option name="INFORMATION_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="000000"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE"/>
+          <option name="FONT_TYPE"/>
+        </value>
+      </option>
       <option name="WARNING_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>

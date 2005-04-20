@@ -135,10 +135,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  public HighlightInfo[] getResults() {
-    return myHolder.toArray(new HighlightInfo[myHolder.size()]);
-  }
-
   public void init() {
     myUninitializedVarProblems.clear();
     myFinalVarProblems.clear();
@@ -189,7 +185,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
+    return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
+           annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
+           HighlightInfoType.INFORMATION;
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
