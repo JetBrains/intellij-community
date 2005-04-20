@@ -43,7 +43,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
       }
     }
 
-    int offsetToGo = Integer.MAX_VALUE;
+    int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
     HighlightInfo infoToGo = null;
     for(int i = 0; i < highlights.length; i++){
       HighlightInfo info = highlights[i];
