@@ -31,6 +31,7 @@ public abstract class Language {
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   public static final Language ANY = new Language("") {};
+  private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
   protected Language(final String ID) {
     myID = ID;
@@ -89,7 +90,7 @@ public abstract class Language {
   }
 
   public FindUsagesProvider getFindUsagesProvider() {
-    return null;
+    return EMPTY_FIND_USAGES_PROVIDER;
   }
 
   public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
@@ -98,5 +99,35 @@ public abstract class Language {
 
   public String toString() {
     return "Language: " + myID;
+  }
+
+  private static class EmptyFindUsagesProvider implements FindUsagesProvider {
+    public boolean mayHaveReferences(IElementType token, final short searchContext) {
+      return false;
+    }
+
+    public WordsScanner getWordsScanner() {
+      return null;
+    }
+
+    public boolean canFindUsagesFor(PsiElement psiElement) {
+      return false;
+    }
+
+    public String getHelpId(PsiElement psiElement) {
+      return null;
+    }
+
+    public String getType(PsiElement element) {
+      return null;
+    }
+
+    public String getDescriptiveName(PsiElement element) {
+      return null;
+    }
+
+    public String getNodeText(PsiElement element, boolean useFullName) {
+      return null;
+    }
   }
 }
