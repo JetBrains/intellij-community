@@ -238,6 +238,13 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
+  public void scrollRectToVisible(Rectangle aRect) {
+    // see IDEADEV-432
+    aRect.width += aRect.x;
+    aRect.x = 0;
+    super.scrollRectToVisible(aRect);
+  }
+
   private void restoreStateImpl(DebuggerTreeNodeImpl node) {
     restoreNodeState(node);
     if (node.getDescriptor().myIsExpanded) {
