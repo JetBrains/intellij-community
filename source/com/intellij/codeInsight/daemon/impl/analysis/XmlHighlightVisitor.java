@@ -127,11 +127,44 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
+  static class RenameTagBeginOrEndIntentionAction implements IntentionAction {
+    private boolean myStart;
+    private XmlTag myTagToChange;
+    private String myName;
+
+    RenameTagBeginOrEndIntentionAction(final XmlTag tagToChange, final String name, final boolean start) {
+      myStart = start;
+      myTagToChange = tagToChange;
+      myName = name;
+    }
+
+    public String getText() {
+      return "Rename " + ((myStart)?"Start":"End") + " Tag Name";
+    }
+
+    public String getFamilyName() {
+      return getText();
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myTagToChange.setName(myName);
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+
   private boolean checkTagIsClosed(XmlTag tag) {
     final PsiElement[] children = tag.getChildren();
     String name = tag.getName();
 
     boolean insideEndTag = false;
+    XmlToken startTagNameToken = null;
 
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
@@ -143,21 +176,31 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           insideEndTag = true;
         }
 
-        if (insideEndTag && xmlToken.getTokenType() == XmlTokenType.XML_NAME) {
-          String text = xmlToken.getText();
-          if (tag instanceof HtmlTag) {
-            text = text.toLowerCase();
-            name = name.toLowerCase();
+        if (xmlToken.getTokenType() == XmlTokenType.XML_NAME) {
+          if (insideEndTag) {
+            String text = xmlToken.getText();
+            if (tag instanceof HtmlTag) {
+              text = text.toLowerCase();
+              name = name.toLowerCase();
+            }
+
+            if (text.equals(name)) return true;
+
+            final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+              HighlightInfoType.ERROR,
+              xmlToken,
+              "Wrong closing tag name");
+            myResult.add(highlightInfo);
+            IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name,false);
+            IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag,text,true);
+
+            QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
+            QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2);
+
+            return false;
+          } else {
+            startTagNameToken = xmlToken;
           }
-
-          if (text.equals(name)) return true;
-
-          myResult.add(HighlightInfo.createHighlightInfo(
-            HighlightInfoType.ERROR,
-            xmlToken,
-            "Wrong closing tag name"));
-
-          return false;
         }
       }
     }
