@@ -728,7 +728,7 @@ public class FindUsagesManager {
       FindUsagesProvider handler = getFindHandler(element);
       if (handler != null) {
         return new CommonFindUsagesDialog(element, myProject, createFindUsagesOptions(SearchScopeCache.getInstance(myProject)),
-                                          isSingleFile, isOpenInNewTab, isOpenInNewTabEnabled);
+                                          isOpenInNewTab, isOpenInNewTabEnabled, isSingleFile);
       }
       return null;
     }
