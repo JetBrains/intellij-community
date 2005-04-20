@@ -116,7 +116,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
 
   public void visitClass(PsiClass aClass) {
     if (myRole2 == ChildRole.LBRACE) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_CLASS_LBRACE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE);
     } else if (myRole2 == ChildRole.METHOD  || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Formatter.getInstance().createSpaceProperty(0,0, 1, mySettings.KEEP_LINE_BREAKS, 0);
