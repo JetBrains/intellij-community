@@ -146,10 +146,10 @@ public class CompileDriver {
   }
 
   public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies) {
+    if (trackDependencies) {
+      scope = new TrackDependenciesScope(scope);
+    }
     if (validateCompilerConfiguration(scope, false)) {
-      if (trackDependencies) {
-        scope = new TrackDependenciesScope(scope);
-      }
       startup(scope, false, true, callback, null, true);
     }
   }

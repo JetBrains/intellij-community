@@ -27,13 +27,14 @@ public class CompileAction extends CompileActionBase {
   
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
     if (module != null) {
-      CompilerManager.getInstance(project).compile(module, null);
+      CompilerManager.getInstance(project).compile(module, null, trackDependencies);
     }
     else {
       VirtualFile[] files = getCompilableFiles(project, (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
-        CompilerManager.getInstance(project).compile(files, null, CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES);
+        CompilerManager.getInstance(project).compile(files, null, trackDependencies);
       }
     }
 

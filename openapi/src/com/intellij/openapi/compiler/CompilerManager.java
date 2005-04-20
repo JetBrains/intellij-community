@@ -67,16 +67,18 @@ public abstract class CompilerManager {
    * Compiler excludes are not honored
    * @param module a module which sources are to be compiled
    * @param callback a notification callback, or null if no notifications needed
+   * @param trackDependencies
    */
-  public abstract void compile(Module module, CompileStatusNotification callback);
+  public abstract void compile(Module module, CompileStatusNotification callback, final boolean trackDependencies);
 
   /**
    * Compile all files from the scope given. No files from dependent modules are compiled.
    * Compiler excludes are not honored
    * @param scope a scope to be compiled
    * @param callback a notification callback, or null if no notifications needed
+   * @param trackDependencies
    */
-  public abstract void compile(CompileScope scope, CompileStatusNotification callback);
+  public abstract void compile(CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies);
 
   /**
    * Compile all modified files and all files that depend on them all over the project.

@@ -85,20 +85,20 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     return myAfterTasks.toArray(new CompileTask[myAfterTasks.size()]);
   }
 
-  public void compile(VirtualFile[] files, CompileStatusNotification callback, boolean trackDependencies) {
+  public void compile(VirtualFile[] files, CompileStatusNotification callback, final boolean trackDependencies) {
     CompileScope[] scopes = new CompileScope[files.length];
     for(int i = 0; i < files.length; i++){
       scopes[i] = new OneProjectItemCompileScope(myProject, files[i]);
     }
-    new CompileDriver(myProject).compile(new CompositeScope(scopes), new ListenerNotificator(callback), trackDependencies);
+    compile(new CompositeScope(scopes), new ListenerNotificator(callback), trackDependencies);
   }
 
-  public void compile(Module module, CompileStatusNotification callback) {
-    compile(new ModuleCompileScope(module, false), callback);
+  public void compile(Module module, CompileStatusNotification callback, final boolean trackDependencies) {
+    compile(new ModuleCompileScope(module, false), callback, trackDependencies);
   }
 
-  public void compile(CompileScope scope, CompileStatusNotification callback) {
-    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), false);
+  public void compile(CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies) {
+    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), trackDependencies);
   }
 
   public void make(CompileStatusNotification callback) {
