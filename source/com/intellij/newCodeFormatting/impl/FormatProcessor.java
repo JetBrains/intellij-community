@@ -178,6 +178,10 @@ class FormatProcessor {
 
     whiteSpace.arrangeLineFeeds(spaceProperty, this);
 
+    if (!whiteSpace.containsLineFeeds()) {
+      whiteSpace.arrangeSpaces(spaceProperty);
+    }
+
     try {
       if (processWrap(spaceProperty)){
         return;

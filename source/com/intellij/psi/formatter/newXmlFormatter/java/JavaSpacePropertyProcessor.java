@@ -621,4 +621,22 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitReferenceElement(expression);
   }
+
+  public void visitConditionalExpression(PsiConditionalExpression expression) {
+    if (myRole2 == ChildRole.QUEST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_QUEST);
+    } else if (myRole1 == ChildRole.QUEST) {
+      createSpaceInCode(mySettings.SPACE_AFTER_QUEST);
+    } else if (myRole2 == ChildRole.COLON) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COLON);
+    } else if (myRole1 == ChildRole.COLON) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COLON);
+    }
+  }
+
+  public void visitStatement(PsiStatement statement) {
+    if (myRole2 == ChildRole.CLOSING_SEMICOLON) {
+      createSpaceInCode(false);
+    }
+  }
 }
