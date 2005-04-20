@@ -333,6 +333,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(FallthruInSwitchStatementInspection.class);
         inspectionClasses.add(SwitchStatementsWithoutDefaultInspection.class);
         inspectionClasses.add(DefaultNotLastCaseInSwitchInspection.class);
+        inspectionClasses.add(ArrayEqualsInspection.class);
         inspectionClasses.add(ObjectEqualityInspection.class);
         inspectionClasses.add(ObjectEqualsNullInspection.class);
         inspectionClasses.add(StringEqualityInspection.class);
