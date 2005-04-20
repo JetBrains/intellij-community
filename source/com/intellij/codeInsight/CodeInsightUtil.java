@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
@@ -387,5 +388,43 @@ public class CodeInsightUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
+   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
+                                              List<Pair<PsiElement, PsiElement>> result,
+                                              PsiElement scope) {
+    LOG.assertTrue(first.getParent() == last.getParent());
+    LOG.assertTrue(!(first instanceof PsiWhiteSpace) && !(last instanceof PsiWhiteSpace));
+    addRangeDuplicates(scope, first, last, result);
+  }
+
+  private static void addRangeDuplicates(final PsiElement scope,
+                                         final PsiElement first,
+                                         final PsiElement last,
+                                         final List<Pair<PsiElement, PsiElement>> result) {
+    final PsiElement[] children = getFilteredChildren(scope);
+    for (int i = 0; i < children.length;) {
+      PsiElement child = children[i];
+      int j = i;
+      PsiElement next = first;
+      do {
+        if (!areElementsEquivalent(children[j], next)) break;
+        j++;
+        if (next == last) break;
+        next = PsiTreeUtil.skipSiblingsForward(next, new Class[]{PsiWhiteSpace.class});
+      } while(true);
+
+      if (next == last && j > i) {
+        if (child != first) {
+          result.add(new Pair<PsiElement, PsiElement>(child, children[j]));
+        }
+        i = j + 1;
+        continue;
+      }
+      else if (i == j) {
+        addRangeDuplicates(child, first, last, result);
+      }
+
+      i++;
+    }
+  }
 }
 

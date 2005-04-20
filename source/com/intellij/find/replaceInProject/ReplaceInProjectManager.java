@@ -27,6 +27,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Processor;
+import com.intellij.ui.ReplacePromptDialog;
 
 import javax.swing.*;
 import java.util.Set;
@@ -198,15 +199,15 @@ public class ReplaceInProjectManager implements ProjectComponent {
       String title = "Replace Usage " + (i+1) + " of " + usages.length + " Found";
       int result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
 
-      if (result == PromptResult.CANCEL){
+      if (result == ReplacePromptDialog.PromptResult.CANCEL){
         return;
       }
-      if (result == PromptResult.SKIP){
+      if (result == ReplacePromptDialog.PromptResult.SKIP){
         continue;
       }
 
       final int currentNumber = i;
-      if (result == PromptResult.OK){
+      if (result == ReplacePromptDialog.PromptResult.OK){
         Runnable runnable = new Runnable() {
           public void run() {
             doReplace(replaceContext, usage);
@@ -220,7 +221,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
         }
       }
 
-      if (result == PromptResult.ALL_IN_THIS_FILE){
+      if (result == ReplacePromptDialog.PromptResult.ALL_IN_THIS_FILE){
         final int[] nextNumber = new int[1];
 
         Runnable runnable = new Runnable() {
@@ -249,7 +250,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
         i = nextNumber[0] - 1;
       }
 
-      if (result == PromptResult.ALL_FILES) {
+      if (result == ReplacePromptDialog.PromptResult.ALL_FILES) {
         CommandProcessor.getInstance().executeCommand(
             myProject, new Runnable() {
             public void run() {

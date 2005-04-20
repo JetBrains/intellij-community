@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.text.StringSearcher;
 
 import javax.swing.*;
@@ -78,7 +79,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent {
   }
 
   public int showPromptDialog(final FindModel model, String title) {
-    PromptDialog promptDialog = new PromptDialog(model, title, myProject) {
+    ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject) {
       public Point getInitialLocation() {
         if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0){
           return myReplaceInProjectPromptPos;
@@ -90,15 +91,15 @@ public class FindManagerImpl extends FindManager implements ProjectComponent {
       }
     };
 
-    promptDialog.show();
+    replacePromptDialog.show();
 
     if (model.isMultipleFiles()){
-      myReplaceInProjectPromptPos = promptDialog.getLocation();
+      myReplaceInProjectPromptPos = replacePromptDialog.getLocation();
     }
     else{
-      myReplaceInFilePromptPos = promptDialog.getLocation();
+      myReplaceInFilePromptPos = replacePromptDialog.getLocation();
     }
-    return promptDialog.getExitCode();
+    return replacePromptDialog.getExitCode();
   }
 
   public boolean showFindDialog(FindModel model) {
