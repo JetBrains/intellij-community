@@ -211,8 +211,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (element == null) return offset;
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (CodeFormatterFacade.useBlockFormatter(file)
-        && CodeFormatterFacade.useBlockFormatter(element.getLanguage())
-        && (application.isUnitTestMode() || application.isInternal())) {
+        && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
 
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
