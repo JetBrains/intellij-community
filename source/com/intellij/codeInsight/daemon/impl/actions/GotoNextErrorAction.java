@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.Editor;
 
 public class GotoNextErrorAction extends BaseCodeInsightAction{
   protected CodeInsightActionHandler getHandler() {
-    return new GotoNextErrorHandler();
+    return new GotoNextErrorHandler(true);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {

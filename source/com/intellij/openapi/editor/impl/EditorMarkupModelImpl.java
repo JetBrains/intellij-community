@@ -11,6 +11,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
+import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOnAction;
+import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOffAction;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +30,9 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.SmartList;
 import com.intellij.openapi.editor.impl.collections50.PriorityQueue;
 import com.intellij.openapi.editor.impl.collections50.Queue;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.ui.PopupHandler;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -452,6 +457,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private MyErrorPanel() {
       addMouseListener(this);
       addMouseMotionListener(this);
+
+      final DefaultActionGroup group = new DefaultActionGroup();
+      group.add(new ToggleGotoNextErrorOnAction("Go to errors first"));
+      group.add(new ToggleGotoNextErrorOffAction("Go to next error/warning"));
+      PopupHandler.installUnknownPopupHandler(this, group, ActionManager.getInstance());
     }
 
     public Dimension getPreferredSize() {
@@ -471,8 +481,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           super.paintComponent(g);
         }
 
-        EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
         if (myErrorStripeRenderer != null) {
+          EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
           int top = scrollBar.getDecScrollButtonHeight();
           myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, top, getWidth()));
         }
@@ -612,6 +622,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private static int getMinHeight() {
-    return DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight();
+    return DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT;
   }
 }

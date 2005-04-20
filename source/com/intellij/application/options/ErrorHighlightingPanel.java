@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -15,12 +14,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ErrorHighlightingPanel extends InspectionToolsPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.ErrorHighlightingPanel");
-
   private JTextField myAutoreparseDelayField;
   private JCheckBox myCbShowImportPopup;
   private JTextField myMarkMinHeight;
   private JPanel myPanel;
+  private JCheckBox myNextErrorGoesToErrorsFirst;
 
   public ErrorHighlightingPanel() {
     super(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName(), null);
@@ -60,7 +58,8 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
 
     myCbShowImportPopup.setSelected(settings.isImportHintEnabled());
 
-    myMarkMinHeight.setText(""+settings.getErrorStripeMarkMinHeight());
+    myMarkMinHeight.setText(Integer.toString(settings.ERROR_STRIPE_MARK_MIN_HEIGHT));
+    myNextErrorGoesToErrorsFirst.setSelected(settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
   }
 
   public void apply() throws ConfigurationException {
@@ -70,7 +69,9 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
 
     settings.AUTOREPARSE_DELAY = getAutoReparseDelay();
     settings.setImportHintEnabled(myCbShowImportPopup.isSelected());
-    settings.setErrorStripeMarkMinHeight(getErrorStripeMarkMinHeight());
+    settings.ERROR_STRIPE_MARK_MIN_HEIGHT = getErrorStripeMarkMinHeight();
+
+    settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < projects.length; i++) {
@@ -87,7 +88,8 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     boolean isModified = settings.AUTOREPARSE_DELAY != getAutoReparseDelay();
     isModified |= myCbShowImportPopup.isSelected() != settings.isImportHintEnabled();
-    isModified |= getErrorStripeMarkMinHeight() != settings.getErrorStripeMarkMinHeight();
+    isModified |= getErrorStripeMarkMinHeight() != settings.ERROR_STRIPE_MARK_MIN_HEIGHT;
+    isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
     if (isModified) return true;
     return super.isModified();
   }

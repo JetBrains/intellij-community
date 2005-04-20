@@ -29,6 +29,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return "Error highlighting settings";
   }
 
+  public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
   public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
@@ -138,11 +139,4 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     SHOW_ADD_IMPORT_HINTS = isImportHintEnabled;
   }
 
-  public void setErrorStripeMarkMinHeight(final int errorStripeMarkMinHeight) {
-    ERROR_STRIPE_MARK_MIN_HEIGHT = errorStripeMarkMinHeight;
-  }
-
-  public int getErrorStripeMarkMinHeight() {
-    return ERROR_STRIPE_MARK_MIN_HEIGHT;
-  }
 }

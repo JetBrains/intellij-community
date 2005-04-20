@@ -3,25 +3,22 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.IncorrectOperationException;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler");
+  private final boolean myGoForward;
+
+  public GotoNextErrorHandler(boolean goForward) {
+    myGoForward = goForward;
+  }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
@@ -34,52 +31,37 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private void gotoNextError(final Project project, final Editor editor, final PsiFile file, int caretOffset) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), HighlightSeverity.WARNING, project);
-    if (highlights == null || highlights.length == 0){
+    if (highlights.length == 0){
       showMessageWhenNoHighlights(project, file, editor);
       return;
     }
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    if (settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST) {
+      HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), HighlightSeverity.ERROR, project);
+      if (errors.length != 0) {
+        highlights = errors;
+      }
+    }
 
-    int minOffset = Integer.MAX_VALUE;
-    HighlightInfo minInfo = null;
+    int offsetToGo = Integer.MAX_VALUE;
+    HighlightInfo infoToGo = null;
     for(int i = 0; i < highlights.length; i++){
       HighlightInfo info = highlights[i];
       int startOffset = info.highlighter.getStartOffset();
-      if (startOffset > caretOffset){
-        if (startOffset < minOffset){
-          minOffset = startOffset;
-          minInfo = info;
-        }
+      int endOffset = info.highlighter.getStartOffset();
+      final boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
+                                 : endOffset < caretOffset && startOffset > offsetToGo;
+      if (isItBetter) {
+        offsetToGo = startOffset;
+        infoToGo = info;
       }
     }
 
-    if (minInfo != null){
-      if (!navigateToError(project, editor, minInfo)){
-        new Alarm().addRequest(
-          new Runnable() {
-            public void run() {
-              CommandProcessor.getInstance().executeCommand(
-                  project, new Runnable() {
-                  public void run() {
-                    ApplicationManager.getApplication().runWriteAction(
-                      new Runnable() {
-                        public void run() {
-                          invoke(project, editor, file);
-                        }
-                      }
-                    );
-                  }
-                },
-                "",
-                null
-              );
-            }
-          },
-          500
-        );
-      }
+    if (infoToGo == null) {
+      gotoNextError(project, editor, file, myGoForward ? -1 : editor.getDocument().getTextLength());
     }
-    else{
-      gotoNextError(project, editor, file, -1);
+    else {
+      navigateToError(project, editor, infoToGo);
     }
   }
 
@@ -96,24 +78,6 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   static boolean navigateToError(final Project project, final Editor editor, HighlightInfo info) {
-    if (IS_OPTIMIZE_IMPORTS && info.type == HighlightInfoType.UNUSED_IMPORT && editor.getDocument().isWritable()){ // secret feature! :=)
-      ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-            try{
-              CodeStyleManager.getInstance(project).optimizeImports(file);
-            }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
-          }
-        }
-      );
-      return false;
-    }
-
     int oldOffset = editor.getCaretModel().getOffset();
 
     final int offset = getNavigationPositionFor(info);
@@ -140,9 +104,6 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     return true;
   }
-
-  private static final boolean IS_OPTIMIZE_IMPORTS = ApplicationManagerEx.getApplicationEx().isInternal()
-                                                     && "Valentin".equalsIgnoreCase(System.getProperty("user.name"));
 
   private static int getNavigationPositionFor(HighlightInfo info) {
     int shift = info.isAfterEndOfLine ? +1 : info.navigationShift;
