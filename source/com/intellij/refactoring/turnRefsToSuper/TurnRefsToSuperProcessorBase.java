@@ -232,6 +232,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         addLink(pparent, type);
         addLink(type, pparent);
       }
+      else if (pparent instanceof PsiReferenceParameterList) {
+        markNode(ref); //Otherwise some really powerful and costy analysis needed
+      }
     }
     else if (parent instanceof PsiNewExpression) {
       PsiNewExpression newExpression = (PsiNewExpression)parent;
@@ -329,7 +332,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final int index = method.getParameterList().getParameterIndex((PsiParameter)variable);
 
         {
-          // todo[dsl]: do we really really want to to all this???
           PsiReference[] calls = mySearchHelper.findReferences(method, GlobalSearchScope.projectScope(myProject), false);
           for (int i = 0; i < calls.length; i++) {
             PsiElement ref = calls[i].getElement();
