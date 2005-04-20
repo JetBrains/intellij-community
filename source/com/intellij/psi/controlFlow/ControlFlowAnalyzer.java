@@ -28,7 +28,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   private List<PsiElement> myUnhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
   private List<PsiClassType> myCheckedExceptions = new ArrayList<PsiClassType>();
 
-  private class StatementStack {
+  private static class StatementStack {
     private List<PsiElement> myStatements = new ArrayList<PsiElement>();
     private TIntArrayList myAtStart = new TIntArrayList();
 
@@ -938,14 +938,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
 
-    final Instruction instruction;
-
     // should not try to compute constant expression within assert
     // since assertions can be disabled/enabled at any moment via JVM flags
-
-    instruction = new ConditionalThrowToInstruction(0);
-    myCurrentFlow.addInstruction(instruction);
-    addElementOffsetLater(myCodeFragment, false);
 
     final PsiExpression condition = statement.getAssertCondition();
     if (condition != null) {
@@ -967,6 +961,11 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     if (description != null) {
       description.accept(this);
     }
+
+    Instruction instruction = new ConditionalThrowToInstruction(0);
+    myCurrentFlow.addInstruction(instruction);
+    addElementOffsetLater(myCodeFragment, false);
+
     finishElement(statement);
   }
 
