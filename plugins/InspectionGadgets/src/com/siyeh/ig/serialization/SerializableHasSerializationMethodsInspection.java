@@ -54,7 +54,8 @@ public class SerializableHasSerializationMethodsInspection extends ClassInspecti
 
         public void visitClass(PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                        aClass.isEnum()) {
                 return;
             }
             if (m_ignoreSerializableDueToInheritance) {

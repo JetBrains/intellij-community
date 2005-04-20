@@ -53,7 +53,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
         public void visitClass(PsiClass aClass) {
             // no call to super, so it doesn't drill down
 
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
