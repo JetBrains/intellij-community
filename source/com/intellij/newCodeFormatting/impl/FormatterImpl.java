@@ -85,6 +85,60 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
   }
 
+  public int adjustLineIndent(final PsiBasedFormattingModel model,
+                                     final Block block,
+                                     final CodeStyleSettings settings,
+                                     final CodeStyleSettings.IndentOptions indentOptions,
+                                     final int offset,
+                                     final TextRange affectedRange) throws IncorrectOperationException {
+    final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
+    WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
+    processor.setAllWhiteSpacesAreReadOnly();
+    whiteSpace.setReadOnly(false);
+    whiteSpace.setLineFeedsAreReadOnly(true);
+    final IndentInfo indent;
+    if (model.getLineNumber(offset) == model.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+      processor.formatWithoutRealModifications();
+      final String newWS = whiteSpace.generateWhiteSpace(indentOptions);
+      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+      indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+      int delta = offset - whiteSpace.getTextRange().getEndOffset();
+
+      if (delta >= 0) {
+        return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta;
+      }
+
+    } else {
+      indent = processor.getIndentAt(offset);
+      String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
+      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+
+      int delta = offset - whiteSpace.getTextRange().getEndOffset();
+
+      if (delta >= 0) {
+        return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta + 1;
+      }
+
+    }
+
+    int result = whiteSpace.getTextRange().getStartOffset();
+    final int lineFeeds = whiteSpace.getLineFeedsToModified(model, offset);
+    result += lineFeeds * (1 + indent.getTotalSpaces());
+    /*
+    else {
+      result += 1;
+    }
+    */
+    return result;
+
+    /*
+    final IndentInfo indent = processor.getIndentAt(offset);
+    String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
+    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+    return offset + indent.getTotalSpaces();
+    */
+  }
+
   public Indent createSpaceIndent(final int spaces) {
     return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);
   }

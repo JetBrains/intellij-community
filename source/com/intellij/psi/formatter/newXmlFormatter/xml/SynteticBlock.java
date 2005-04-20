@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.newXmlFormatter.xml;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Indent;
 import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
@@ -72,4 +73,12 @@ public class SynteticBlock extends AbstractSynteticBlock implements Block{
     return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
   }
 
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getIndent(), null);
+  }
+
+  public boolean isIncopleted() {
+    return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
+  }
+  
 }

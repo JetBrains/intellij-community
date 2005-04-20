@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.newXmlFormatter.xml;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Indent;
 import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.openapi.util.TextRange;
 
 import java.util.List;
@@ -30,5 +31,9 @@ public class ReadOnlySynteticBlock extends AbstractSynteticBlock{
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     return null;
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getIndent(), null);
   }
 }

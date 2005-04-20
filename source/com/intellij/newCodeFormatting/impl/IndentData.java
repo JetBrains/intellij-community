@@ -1,5 +1,7 @@
 package com.intellij.newCodeFormatting.impl;
 
+import com.intellij.psi.impl.source.codeStyle.IndentInfo;
+
 public class IndentData {
   private int myIndentSpaces = 0;
   private int mySpaces = 0;
@@ -39,5 +41,9 @@ public class IndentData {
 
   public boolean isEmpty() {
     return myIndentSpaces == 0 && mySpaces == 0;
+  }
+
+  public IndentInfo createIndentInfo() {
+    return new IndentInfo(0, myIndentSpaces, mySpaces);
   }
 }

@@ -1,6 +1,9 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -10,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -204,8 +208,28 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
-    if (CodeFormatterFacade.useBlockFormatter(file) && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
-      return adjustLineIndent(file, offset, true);
+    if (element == null) return offset;
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    if (CodeFormatterFacade.useBlockFormatter(file)
+        && CodeFormatterFacade.useBlockFormatter(element.getLanguage())
+        && (application.isUnitTestMode() || application.isInternal())) {
+
+      final CodeStyleSettings settings = getSettings();
+      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+      int result = Formatter.getInstance().adjustLineIndent(new PsiBasedFormattingModel(file, settings),
+                                                                  CodeFormatterFacade.createBlock(file, settings),
+                                                                  settings,
+                                                                  indentOptions,
+                                                                  offset,
+                                                                  file.findElementAt(offset).getTextRange());
+      /*
+      final CompositeElement fileNode = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(file);
+      while (result < file.getTextLength() && fileNode.findLeafElementAt(result).getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        result++;
+      }
+      */
+      return result;
+
     } else {
       return adjustLineIndent(file, offset, true);
     }

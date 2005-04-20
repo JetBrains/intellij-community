@@ -1,14 +1,12 @@
 package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Alignment;
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.Indent;
-import com.intellij.newCodeFormatting.Wrap;
+import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.List;
 
@@ -51,7 +49,10 @@ public abstract class AbstractBlock implements Block {
 
   protected boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node.getElementType() == ElementType.WHITE_SPACE) return true;
-    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.getText().trim().length() == 0) return true;
+    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
+      return true;
+      //EnterActionTest && JavaDocParamTest
+    }
     if (node instanceof LeafElement) return false;
     ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();
@@ -64,5 +65,13 @@ public abstract class AbstractBlock implements Block {
 
   public ASTNode getTreeNode() {
     return myNode;
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getIndent(), null);
+  }
+
+  public boolean isIncopleted() {
+    return FormatterUtil.isIncompleted(getTreeNode());
   }
 }

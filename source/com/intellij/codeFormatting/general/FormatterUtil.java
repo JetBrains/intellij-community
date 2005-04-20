@@ -188,4 +188,28 @@ public class FormatterUtil {
       }
     }
   }
+
+  public static boolean isIncompleted(final ASTNode treeNode) {
+    ASTNode lastChild = treeNode.getLastChildNode();
+    while (lastChild != null && lastChild.getElementType() == ElementType.WHITE_SPACE) {
+      lastChild = lastChild.getTreePrev();
+    }
+    if (lastChild == null) return false;
+    if (lastChild.getElementType() == ElementType.ERROR_ELEMENT) return true;
+    return isIncompleted(lastChild);
+  }
+
+  public static boolean isAfterIncompleted(final ASTNode child) {
+    ASTNode current = child.getTreePrev();
+    while (current != null) {
+      if (current.getElementType() == ElementType.ERROR_ELEMENT) return true;
+      if (current.getElementType() == ElementType.EMPTY_EXPRESSION) return true;
+      if (current.getElementType() == ElementType.WHITE_SPACE || current.getTextLength() == 0){
+        current = current.getTreePrev();
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
 }

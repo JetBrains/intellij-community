@@ -16,4 +16,8 @@ public interface Block {
   Alignment getAlignment();
 
   SpaceProperty getSpaceProperty(Block child1, Block child2);
+
+  ChildAttributes getChildAttributes(final int newChildIndex);
+
+  boolean isIncopleted();
 }

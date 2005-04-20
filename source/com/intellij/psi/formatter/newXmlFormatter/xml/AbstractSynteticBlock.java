@@ -125,4 +125,8 @@ public abstract class AbstractSynteticBlock implements Block{
       return new SynteticBlock(subBlocks, parent, indent, policy);
     }
   }
+
+  public boolean isIncopleted() {
+    return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
+  }
 }

@@ -14,6 +14,8 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   private final Indent myIndentContent;
   private final CodeStyleSettings mySettings;
   private final Wrap myWrap;
+  private Indent myChildIndent;
+  private Alignment myChildAlignment;
 
   public SynteticCodeBlock(final List<Block> subBlocks,
                            final Alignment alignment,
@@ -64,5 +66,21 @@ public class SynteticCodeBlock implements Block, JavaBlock{
 
   public ASTNode getFirstTreeNode() {
     return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(myChildIndent == null ? getIndent() : myChildIndent, myChildAlignment);
+  }
+
+  public void setChildIndent(final Indent internalIndent) {
+    myChildIndent = internalIndent;
+  }
+
+  public void setChildAlignment(final Alignment childAlignment) {
+    myChildAlignment = childAlignment;
+  }
+
+  public boolean isIncopleted() {
+    return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
   }
 }

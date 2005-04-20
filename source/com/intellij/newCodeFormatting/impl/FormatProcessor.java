@@ -4,6 +4,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.IndentInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -42,13 +43,6 @@ class FormatProcessor {
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
     myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-    //final Element element = saveToXml(rootBlock);
-    //try {
-      //JDOMUtil.writeDocument(new Document(element), new File("c:/temp/format.xml"), "\n");
-    //}
-    //catch (IOException e) {
-      //ignore
-    //}
   }
 
   private TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
@@ -456,6 +450,111 @@ class FormatProcessor {
     while (current != null) {
       current.getWhiteSpace().setReadOnly(true);
       current = current.getNextBlock();
+    }
+  }
+
+  public IndentInfo getIndentAt(final int offset) {
+    processBlocksBefore(offset);
+    AbstractBlockWrapper parent = getParentFor(offset, myCurrentBlock);
+    if (parent == null) return new IndentInfo(0, 0, 0);
+    final int index = getNewChildPosition(parent, offset);
+    ChildAttributes childAttributes = parent.getBlock().getChildAttributes(index);
+    final IndentInfo result = adjustLineIndent(parent, childAttributes, index);
+    processToken();
+    return result;
+  }
+
+  private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
+    int alignOffset = getAlignOffset(childAttributes.getAlignment());
+    if (alignOffset == -1) {
+      return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
+    } else {
+      AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
+      if (previousIndentedBlock == null) {
+        return new IndentInfo(0, 0, alignOffset);
+      } else {
+        int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
+        if (indentOffset > alignOffset) {
+          return new IndentInfo(0, 0, alignOffset);
+        } else {
+          return new IndentInfo(0, indentOffset, alignOffset - indentOffset);
+        }
+      }
+    }
+  }
+
+  private int getAlignOffset(final Alignment alignment) {
+    if (alignment == null) return -1;
+    return ((AlignmentImpl)alignment).getCurrentOffset();
+  }
+
+  private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
+    final List<Block> subBlocks = parent.getBlock().getSubBlocks();
+    for (int i = 0; i < subBlocks.size(); i++) {
+      Block block = subBlocks.get(i);
+      if (block.getTextRange().getStartOffset() >= offset) return i;
+    }
+    return subBlocks.size();
+  }
+
+  private AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
+    AbstractBlockWrapper current = block;
+    while (current != null) {
+      final TextRange textRange = current.getTextRange();
+      if (textRange.getStartOffset() < offset && textRange.getEndOffset() > offset) {
+        return current;
+      }
+      current = current.getParent();
+    }
+    return null;
+  }
+
+  private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
+    Block previous = getPreviousIncompletedBlock(block, offset);
+    if (previous != null) {
+      return myInfos.get(previous);
+    } else {
+      return getParentFor(offset, ((AbstractBlockWrapper)block));
+    }
+  }
+
+  private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
+    AbstractBlockWrapper current = block;
+    while (current.getParent() != null && current.getParent().getStartOffset() > offset) {
+      current =  current.getParent();
+    }
+    if (current.getParent() == null) return null;
+
+    final List<Block> subBlocks = current.getParent().getBlock().getSubBlocks();
+    final int index = subBlocks.indexOf(current.getBlock());
+    if (index == 0) return null;
+
+    Block currentResult = subBlocks.get(index - 1);
+    if (!currentResult.isIncopleted()) return null;
+
+    Block lastChild = getLastChildOf(currentResult);
+    while (lastChild != null && lastChild.isIncopleted()) {
+      currentResult = lastChild;
+      lastChild = getLastChildOf(currentResult);
+    }
+    return currentResult;
+  }
+
+  private Block getLastChildOf(final Block currentResult) {
+    final List<Block> subBlocks = currentResult.getSubBlocks();
+    if(subBlocks.isEmpty()) return null;
+    return subBlocks.get(subBlocks.size() - 1);
+  }
+
+  private void processBlocksBefore(final int offset) {
+    while (true) {
+      myAlignAgain = false;
+      myCurrentBlock = myFirstTokenBlock;
+      while (myCurrentBlock != null && myCurrentBlock.getStartOffset() < offset) {
+        processToken();
+      }
+      if (!myAlignAgain) return;
+      reset();
     }
   }
 }

@@ -120,4 +120,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
   public boolean isTextElement() {
     return myXmlFormattingPolicy.isTextElement(getTag());
   }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+  }
 }

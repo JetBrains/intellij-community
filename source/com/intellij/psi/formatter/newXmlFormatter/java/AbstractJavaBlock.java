@@ -2,20 +2,24 @@ package com.intellij.psi.formatter.newXmlFormatter.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractBlock;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock{
   protected final CodeStyleSettings mySettings;
   private final Indent myIndent;
+  private Indent myChildIndent;
+  private Alignment myChildAlignment;
+  private boolean myUseChildAttributes = false;
 
   public AbstractJavaBlock(final ASTNode node,
                            final Wrap wrap,
@@ -396,6 +400,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                       Indent internalIndent,
                                       WrappingStrategy wrappingStrategy,
                                       AlignmentStrategy alignmentStrategy) {
+    myUseChildAttributes = true;
+    setChildIndent(internalIndent);
+    setChildAlignment(alignmentStrategy.getAlignment(null));
+
     ASTNode prev = child;
     List<Block> resultList = new ArrayList<Block>();
     List<Block> codeBlock = new ArrayList<Block>();
@@ -410,8 +418,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
             resultList.add(new SynteticCodeBlock(codeBlock, null, mySettings, internalIndent, null));
 
           }
-          resultList.add(createJavaBlock(child, mySettings));
-          result.add(new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null));
+          resultList.add(createJavaBlock(child, mySettings, null, null, FormatterUtil.isAfterIncompleted(child) ? alignmentStrategy.getAlignment(null) : null));
+          final SynteticCodeBlock externalBlock = new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null);
+          result.add(externalBlock);
+          externalBlock.setChildIndent(internalIndent);
+          externalBlock.setChildAlignment(alignmentStrategy.getAlignment(null));
           return child;
         } else {
           final IElementType elementType = child.getElementType();
@@ -441,6 +452,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     return prev;
 
+  }
+
+  private void setChildAlignment(final Alignment alignment) {
+    myChildAlignment = alignment;
+  }
+
+  private void setChildIndent(final Indent internalIndent) {
+    myChildIndent = internalIndent;
   }
 
   private ASTNode createBlockFrom(List<Block> result, ASTNode child, final IElementType from, final IElementType to) {
@@ -561,6 +580,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return ((SynteticCodeBlock)child2).getFirstTreeNode();
     } else {
       return null;
+    }
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    if (myUseChildAttributes) {
+      return new ChildAttributes(myChildIndent, myChildAlignment);
+    } else {
+      return super.getChildAttributes(newChildIndex);
     }
   }
 }

@@ -15,7 +15,7 @@ public abstract  class AlignmentStrategy {
   public static final AlignmentStrategy createDoNotAlingCommaStrategy(Alignment alignment) {
     return new AlignmentStrategy(alignment) {
       protected boolean shouldAlign(final IElementType type) {
-        return type != ElementType.COMMA;
+        return type != ElementType.COMMA || type == null;
       }
     };
   }

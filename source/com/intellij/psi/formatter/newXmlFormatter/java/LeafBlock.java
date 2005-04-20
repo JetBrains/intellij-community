@@ -48,4 +48,12 @@ public class LeafBlock implements Block{
   public ASTNode getTreeNode() {
     return myNode;
   }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getIndent(), null);
+  }
+
+  public boolean isIncopleted() {
+    return false;
+  }
 }
