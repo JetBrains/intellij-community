@@ -8,8 +8,8 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.RenameParameterFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.ig.fixes.RenameFix;
 
 import javax.swing.*;
 
@@ -53,7 +53,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
                             parameters[index].getName();
                     if(superParameterName != null &&
                                !superParameterName.equals(parameterName)){
-                        return new RenameFix(superParameterName);
+                        return new RenameParameterFix(superParameterName);
                     }
                 }
             }
@@ -87,7 +87,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
                     if(superParameterName != null &&
                                !superParameterName.equals(parameterName)){
                         return "Parameter name '#ref' is different from parameter '" +
-                                       superParameterName + "'overridden #loc";
+                                       superParameterName + "' overridden #loc";
                     }
                 }
             }
