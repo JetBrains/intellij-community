@@ -719,6 +719,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(FieldMayBeStaticInspection.class);
         inspectionClasses.add(MethodMayBeStaticInspection.class);
         inspectionClasses.add(InnerClassMayBeStaticInspection.class);
+        inspectionClasses.add(AnonymousInnerClassMayBeStaticInspection.class);
         inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);
         inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
         inspectionClasses.add(StringBufferReplaceableByStringInspection.class);

@@ -2,6 +2,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
     private PsiClass innerClass;
@@ -99,6 +100,17 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
             final PsiClass containingClass = member.getContainingClass();
             referencesStaticallyAccessible &=
                     isClassStaticallyAccessible(containingClass);
+        }
+        if(element instanceof PsiLocalVariable || element instanceof PsiParameter)
+        {
+            final PsiElement containingMethod =
+                    PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class);
+            final PsiElement referencedMethod =
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+            if(!containingMethod.equals(referencedMethod))
+            {
+                referencesStaticallyAccessible = false;
+            }
         }
     }
 }
