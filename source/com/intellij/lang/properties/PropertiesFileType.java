@@ -16,6 +16,8 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesFileType extends LanguageFileType {
+  private static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/uiForm.png");
+
   public PropertiesFileType() {
     super(new PropertiesLanguage());
   }
@@ -33,7 +35,7 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/fileTypes/uiForm.png");
+    return FILE_ICON;
   }
 
   public FileTypeSupportCapabilities getSupportCapabilities() {
