@@ -32,6 +32,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
+  public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
 
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
@@ -99,6 +100,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
+    settings.NO_AUTO_IMPORT_PATTERN = NO_AUTO_IMPORT_PATTERN;
     return settings;
   }
 
