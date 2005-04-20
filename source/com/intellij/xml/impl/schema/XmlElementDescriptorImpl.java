@@ -2,6 +2,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.*;
@@ -9,11 +10,12 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
   protected XmlTag myDescriptorTag;
   protected XmlNSDescriptor NSDescriptor;
 
@@ -251,4 +253,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     return "true".equals(myDescriptorTag.getAttributeValue("abstract"));
   }
 
+  public void setName(String name) throws IncorrectOperationException {
+    myDescriptorTag.setAttribute("name",name);
+  }
 }

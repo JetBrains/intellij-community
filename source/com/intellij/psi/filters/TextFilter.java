@@ -5,6 +5,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
@@ -110,7 +111,11 @@ public class TextFilter
   protected String getTextByElement(Object element){
     String elementValue = null;
     if(element instanceof PsiNamedElement){
-      elementValue = ((PsiNamedElement)element).getName();
+      if (element instanceof XmlTag) {
+        elementValue = ((XmlTag)element).getLocalName();
+      } else {
+        elementValue = ((PsiNamedElement)element).getName();
+      }
     }
     else if (element instanceof PsiType) {
       elementValue = ((PsiType) element).getPresentableText();

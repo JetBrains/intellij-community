@@ -102,7 +102,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           new ParentElementFilter(
             new AndFilter(
               new ClassFilter(XmlTag.class),
-              new TextFilter("jsp:directive.include")
+              new TextFilter("directive.include")
 
             ), 2
           )
