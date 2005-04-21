@@ -140,7 +140,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     else if (i == CODE_FRAGMENT) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
-      return fragment.isClassesAccepted() ? CLASS_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
+      return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
     else {
       LOG.error("Unknown parent for java code reference:" + getTreeParent());
