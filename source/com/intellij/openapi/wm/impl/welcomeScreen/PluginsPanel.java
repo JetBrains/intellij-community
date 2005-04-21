@@ -13,6 +13,7 @@ import java.awt.*;
 public class PluginsPanel extends JPanel implements Scrollable{
 
   private static final int VERTICAL_SCROLL_INCREMENT = 5;
+  private static final int HORIZONTAL_SCROLL_INCREMENT = 5;
 
   public PluginsPanel(LayoutManager layout) {
     super(layout);
@@ -31,12 +32,12 @@ public class PluginsPanel extends JPanel implements Scrollable{
   }
 
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-    if (orientation == SwingConstants.VERTICAL) return VERTICAL_SCROLL_INCREMENT;
+    if (orientation == SwingConstants.VERTICAL) return visibleRect.height - VERTICAL_SCROLL_INCREMENT;
     else return visibleRect.width;
   }
 
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) return VERTICAL_SCROLL_INCREMENT;
-    else return visibleRect.width;
+    else return HORIZONTAL_SCROLL_INCREMENT;
   }
 }
