@@ -40,7 +40,7 @@ public class ShowRecentFilesAction extends AnAction {
     presentation.setEnabled(project != null);
   }
 
-  private void show(final Project project){
+  private static void show(final Project project){
     final DefaultListModel model = new DefaultListModel();
 
     VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
@@ -86,12 +86,11 @@ public class ShowRecentFilesAction extends AnAction {
     );
     Runnable runnable = new Runnable() {
       public void run() {
-        int index = list.getSelectedIndex();
-        if (index == -1 || index >= list.getModel().getSize()){
-          return;
+        Object[] values = list.getSelectedValues();
+        for (int i = 0; i < values.length; i++) {
+          VirtualFile file = (VirtualFile)values[i];
+          FileEditorManager.getInstance(project).openFile(file, true);
         }
-        VirtualFile file = (VirtualFile)list.getSelectedValue();
-        FileEditorManager.getInstance(project).openFile(file, true);
       }
     };
 
