@@ -247,7 +247,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       if (!mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
         myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       } else {
-        myResult = Formatter.getInstance().createSpaceProperty(0, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Formatter.getInstance().createDependentLFProperty(0, 1, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     } else {
       myResult = myResult = Formatter.getInstance().createSpaceProperty(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
