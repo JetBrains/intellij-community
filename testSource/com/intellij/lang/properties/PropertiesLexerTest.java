@@ -141,4 +141,5 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "Properties:VALUE_CHARACTERS", "p",
     });
   }
+
 }
