@@ -319,6 +319,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (child.getElementType() == ElementType.EXTENDS_LIST || child.getElementType() == ElementType.IMPLEMENTS_LIST) {
       return Formatter.getInstance().createWrap(getWrapType(mySettings.EXTENDS_KEYWORD_WRAP), true);
     }
+    else if (child.getElementType() == ElementType.THROWS_LIST) {
+      return Formatter.getInstance().createWrap(getWrapType(mySettings.THROWS_KEYWORD_WRAP), true);
+    }
     else if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST) {
         return defaultWrap;
