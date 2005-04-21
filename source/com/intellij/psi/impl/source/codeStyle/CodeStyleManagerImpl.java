@@ -209,7 +209,6 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
-    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (CodeFormatterFacade.useBlockFormatter(file)
         && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
 
@@ -220,7 +219,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                                   settings,
                                                                   indentOptions,
                                                                   offset,
-                                                                  file.findElementAt(offset).getTextRange());
+                                                                  getSignificantRange(file, offset));
       /*
       final CompositeElement fileNode = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(file);
       while (result < file.getTextLength() && fileNode.findLeafElementAt(result).getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
@@ -232,6 +231,31 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     } else {
       return adjustLineIndent(file, offset, true);
     }
+  }
+
+  private TextRange getSignificantRange(final PsiFile file, final int offset) {
+    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
+    if (file instanceof PsiJavaFile) {
+      ASTNode current = elementAtOffset;
+      while (current != null && !isSignificantJavaElement(current)) {
+        current = current.getTreeParent();
+      }
+      if (current == null) {
+        return file.getTextRange();
+      }
+      else {
+        return current.getTextRange();
+      }
+    } else {
+      return elementAtOffset.getTextRange();
+    }
+  }
+
+  private boolean isSignificantJavaElement(final ASTNode current) {
+    if (current.getElementType() == ElementType.METHOD) return true;
+    if (current.getElementType() == ElementType.CLASS) return true;
+    if (ElementType.STATEMENT_BIT_SET.isInSet(current.getElementType())) return true;
+    return false;
   }
 
   private int adjustLineIndent(PsiFile file, int offset, boolean canTryXXX) throws IncorrectOperationException {
