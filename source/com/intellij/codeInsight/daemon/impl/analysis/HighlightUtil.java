@@ -1943,8 +1943,8 @@ public class HighlightUtil {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageAction(refExpr));
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageAction(refExpr));
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageAction(refExpr));
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageAction(refExpr));
           QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeAction(refExpr));
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageAction(refExpr));
           QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction(refExpr));
