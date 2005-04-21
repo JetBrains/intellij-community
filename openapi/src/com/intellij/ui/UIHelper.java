@@ -76,9 +76,10 @@ public interface UIHelper {
   TreeTable createDirectoryDiffTree(Project project, AbstractRevisions[] roots);
 
   /**
+   * @param text
    * @param type expected type that the expression to be input in this field should have, subtypes accepted
    * @param context where the expression is to be virtually inserted (for smart completing variables from the context)
    * @param project
    */
-  JComponent createTypedTextField(PsiType type, PsiElement context, final Project project);
+  TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project);
 }

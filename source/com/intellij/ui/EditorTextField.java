@@ -6,7 +6,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -25,7 +24,7 @@ import java.util.ArrayList;
 /**
  * @author max
  */
-public class EditorTextField extends JPanel implements DocumentListener {
+public class EditorTextField extends JPanel implements DocumentListener, TextComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
 
   private Document myDocument;
@@ -78,6 +77,10 @@ public class EditorTextField extends JPanel implements DocumentListener {
 
   public String getText() {
     return myDocument.getText();
+  }
+
+  public JComponent getComponent() {
+    return this;
   }
 
   public void addDocumentListener(DocumentListener listener) {

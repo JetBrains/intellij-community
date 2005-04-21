@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.TextComponent;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentFactoryImpl;
 import com.intellij.ui.errorView.ErrorViewFactory;
@@ -196,8 +197,8 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
       return result;
     }
 
-    public JComponent createTypedTextField(PsiType type, PsiElement context, final Project project) {
-      final PsiExpressionCodeFragment fragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment("", context, type, true);
+    public TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project) {
+      final PsiExpressionCodeFragment fragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
       return new EditorTextField(document, project, StdFileTypes.JAVA);
     }
