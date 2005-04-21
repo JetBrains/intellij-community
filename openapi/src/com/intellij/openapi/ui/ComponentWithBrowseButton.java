@@ -4,10 +4,7 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -19,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
@@ -94,9 +92,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     }
 
     public void registerShortcut(JComponent textField) {
-      ShortcutSet altEnter = CommonShortcuts.ALT_ENTER;
-      registerCustomShortcutSet(altEnter, textField);
-      myBrowseButton.setToolTipText(KeymapUtil.getShortcutsText(altEnter.getShortcuts()));
+      ShortcutSet shiftEnter = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK));
+      registerCustomShortcutSet(shiftEnter, textField);
+      myBrowseButton.setToolTipText(KeymapUtil.getShortcutsText(shiftEnter.getShortcuts()));
     }
 
     public static void addTo(FixedSizeButton browseButton, JComponent aComponent) {
