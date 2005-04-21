@@ -212,7 +212,8 @@ public final class FloatingDecorator extends JDialog{
         }
         // It's much better to resize frame this way then via Component.setBounds() method.
         // Component.setBounds() method cause annoying repainting and blinking.
-        FloatingDecorator.this.getPeer().setBounds(newBounds.x,newBounds.y,newBounds.width,newBounds.height);
+        //FloatingDecorator.this.getPeer().setBounds(newBounds.x,newBounds.y,newBounds.width,newBounds.height, 0);
+        FloatingDecorator.this.setBounds(newBounds.x,newBounds.y,newBounds.width,newBounds.height);
 
         myLastPoint=newPoint;
       } else if(e.getID()==MouseEvent.MOUSE_MOVED){

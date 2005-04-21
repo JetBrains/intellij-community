@@ -243,7 +243,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           myFavorites.add(FormNode.constructFormNode(psiManager, (PsiClass)path[0], myProject, myFavoritesConfiguration));
         } else {
-          myFavorites.add(ProjectViewNode.createTreeNode(Class.forName(myAbstractUrls.get(abstractUrl)), myProject, path[path.length - 1],
+          myFavorites.add(ProjectViewNode.createTreeNode((Class<? extends AbstractTreeNode>)Class.forName(myAbstractUrls.get(abstractUrl)), myProject, path[path.length - 1],
                                                          myFavoritesConfiguration));
         }
       }

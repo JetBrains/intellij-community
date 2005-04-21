@@ -32,25 +32,6 @@ class RepositoryContentHandler extends DefaultHandler {
   private PluginNode currentPlugin;
   private String currentValue;
 
-  public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-    /*
-    if (systemId != null && systemId.equals(RepositoryHelper.REPOSITORY_LIST_SYSTEM_ID)) {
-      String location = ExternalResourceManager.getInstance().getResourceLocation(systemId);
-      try {
-        return new InputSource (new java.net.URL (location).openStream());
-      }
-      catch (IOException e) {
-        return super.resolveEntity(publicId, systemId);
-      }
-    } else
-    */
-    //try {
-      return super.resolveEntity(publicId, systemId);
-    //}
-    //catch (IOException e) {
-    //  throw new SAXException(e);
-    //}
-  }
 
   public void startDocument()
     throws SAXException {
