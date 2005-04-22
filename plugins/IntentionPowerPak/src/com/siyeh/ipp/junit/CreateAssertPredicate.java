@@ -44,6 +44,10 @@ class CreateAssertPredicate implements PsiElementPredicate{
     }
 
     private boolean isTestMethod(PsiMethod method){
+        if(method == null)
+        {
+            return false;
+        }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
                    !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
@@ -72,6 +76,10 @@ class CreateAssertPredicate implements PsiElementPredicate{
     }
 
     public static boolean isTest(PsiClass aClass){
+        if(aClass == null)
+        {
+            return false;
+        }
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
