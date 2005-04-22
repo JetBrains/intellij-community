@@ -292,12 +292,13 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(statement);
 
     PsiStatement body = statement.getBody();
-    if (body == null) return;
-    body.accept(this);
-    PsiExpression condition = statement.getCondition();
-    if (condition != null) {
-      condition.accept(this);
-      addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
+    if (body != null) {
+      body.accept(this);
+      PsiExpression condition = statement.getCondition();
+      if (condition != null) {
+        condition.accept(this);
+        addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
+      }
     }
 
     finishElement(statement);
@@ -310,8 +311,11 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
   public void visitExpressionStatement(PsiExpressionStatement statement) {
     startElement(statement);
-    statement.getExpression().accept(this);
-    addInstruction(new PopInstruction());
+    final PsiExpression expr = statement.getExpression();
+    if (expr != null) {
+      expr.accept(this);
+      addInstruction(new PopInstruction());
+    }
     finishElement(statement);
   }
 
