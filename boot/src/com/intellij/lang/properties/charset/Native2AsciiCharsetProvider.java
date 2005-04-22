@@ -9,18 +9,18 @@ import java.util.Collections;
  * @author Alexey
  */
 
-public class MyCharsetProvider extends CharsetProvider {
-    public MyCharsetProvider() {
+public class Native2AsciiCharsetProvider extends CharsetProvider {
+    public Native2AsciiCharsetProvider() {
     }
 
     public Charset charsetForName(String charsetName) {
-        if (AsciiToNativeCharset.INSTANCE.name().equals(charsetName)) {
-            return AsciiToNativeCharset.INSTANCE;
+        if (Native2AsciiCharset.INSTANCE.name().equals(charsetName)) {
+            return Native2AsciiCharset.INSTANCE;
         }
         return null;
     }
 
     public Iterator charsets() {
-        return Collections.singleton(AsciiToNativeCharset.INSTANCE).iterator();
+        return Collections.singleton(Native2AsciiCharset.INSTANCE).iterator();
     }
 }

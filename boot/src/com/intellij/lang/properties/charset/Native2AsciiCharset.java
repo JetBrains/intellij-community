@@ -8,10 +8,10 @@ import java.nio.charset.CharsetEncoder;
  * @author Alexey
  */
 
-public class AsciiToNativeCharset extends Charset {
-    public static final Charset INSTANCE = new AsciiToNativeCharset("ASCII_TO_NATIVE", null);
+public class Native2AsciiCharset extends Charset {
+    public static final Charset INSTANCE = new Native2AsciiCharset("ASCII_TO_NATIVE", null);
 
-    public AsciiToNativeCharset(String canonicalName, String[] aliases) {
+    public Native2AsciiCharset(String canonicalName, String[] aliases) {
         super(canonicalName, aliases);
     }
 
@@ -20,10 +20,10 @@ public class AsciiToNativeCharset extends Charset {
     }
 
     public CharsetDecoder newDecoder() {
-        return new MyCharsetDecoder();
+        return new Native2AsciiCharsetDecoder();
     }
 
     public CharsetEncoder newEncoder() {
-        return new MyCharsetEncoder();
+        return new Native2AsciiCharsetEncoder();
     }
 }

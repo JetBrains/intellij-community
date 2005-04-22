@@ -26,14 +26,16 @@ public class StringLiteralLexer extends LexerBase {
   private char myQuoteChar;
   private IElementType myOriginalLiteralToken;
   private final boolean myCanEscapeEol;
+  private final String myAdditionalValidEscapes;
 
   public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken) {
-    this(quoteChar, originalLiteralToken, false);
+    this(quoteChar, originalLiteralToken, false, null);
   }
-  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEol) {
+  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEol, String additionalValidEscapes) {
     myQuoteChar = quoteChar;
     myOriginalLiteralToken = originalLiteralToken;
     myCanEscapeEol = canEscapeEol;
+    myAdditionalValidEscapes = additionalValidEscapes;
   }
 
   public void start(char[] buffer) {
@@ -101,6 +103,9 @@ public class StringLiteralLexer extends LexerBase {
       case '6':
       case '7':
         return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+    }
+    if (myAdditionalValidEscapes != null && myAdditionalValidEscapes.indexOf(nextChar) != -1) {
+      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;

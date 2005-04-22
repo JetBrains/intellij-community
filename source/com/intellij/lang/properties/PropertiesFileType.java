@@ -4,7 +4,7 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.lang.properties.charset.AsciiToNativeCharset;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 
 import javax.swing.*;
 
@@ -64,7 +64,7 @@ public class PropertiesFileType extends LanguageFileType {
 
   public String getCharset(VirtualFile file) {
     if (System.getProperty("NO_NATIVE2ASCII") == null) {
-      return AsciiToNativeCharset.INSTANCE.name();
+      return Native2AsciiCharset.INSTANCE.name();
     }
     else {
       return null;

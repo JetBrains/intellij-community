@@ -57,7 +57,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
 
     keys1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, HighlighterColors.JAVA_VALID_STRING_ESCAPE);
     // in fact all back-slashed escapes are allowed
-    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, HighlighterColors.JAVA_VALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, HighlighterColors.JAVA_INVALID_STRING_ESCAPE);
     keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, HighlighterColors.JAVA_INVALID_STRING_ESCAPE);
   }
 

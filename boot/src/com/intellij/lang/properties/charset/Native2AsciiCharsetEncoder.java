@@ -11,9 +11,9 @@ import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
 import java.nio.BufferOverflowException;
 
-class MyCharsetEncoder extends CharsetEncoder {
-  public MyCharsetEncoder() {
-    super(AsciiToNativeCharset.INSTANCE, 1, 6);
+class Native2AsciiCharsetEncoder extends CharsetEncoder {
+  public Native2AsciiCharsetEncoder() {
+    super(Native2AsciiCharset.INSTANCE, 1, 6);
   }
 
   protected CoderResult encodeLoop(CharBuffer in, ByteBuffer out) {
