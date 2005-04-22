@@ -10,7 +10,7 @@ import com.intellij.openapi.util.IconLoader;
  */
 class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
  public AddAllOpenFilesToNewFavoritesListAction() {
-   super("Add All Opent Tabs To New Favorites List", "Add To New Favorites List", IconLoader.getIcon("/general/addFavoritesList.png"));
+   super("Add All Open Tabs To New Favorites List", "Add To New Favorites List", IconLoader.getIcon("/general/addFavoritesList.png"));
  }
 
  public void actionPerformed(AnActionEvent e) {
