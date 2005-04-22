@@ -11,9 +11,9 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.impl.watch.InplaceEditor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -73,17 +73,21 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(context), "evaluation");
     comboBox.setText(((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
 
-    DebuggerTree.InplaceEditor editor = new DebuggerTree.InplaceEditor(node) {
-      public JComponent createEditorComponent() {
+    InplaceEditor editor = new InplaceEditor(node) {
+      public JComponent createInplaceEditorComponent() {
         return comboBox;
       }
 
-      public JComponent getContentComponent() {
+      public JComponent getPreferredFocusedComponent() {
         return comboBox.getPreferredFocusedComponent();
       }
 
       public Editor getEditor() {
         return comboBox.getEditor();
+      }
+
+      public JComponent getEditorComponent() {
+        return comboBox.getEditorComponent();
       }
 
       public void doOKAction() {

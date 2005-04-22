@@ -15,6 +15,7 @@ import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.HexRenderer;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -271,7 +272,7 @@ public class SetValueAction extends DebuggerAction {
           }
           else if (currentValue instanceof PrimitiveValue) {
             ValueLabelRenderer renderer = ((ValueDescriptorImpl) descriptor).getRenderer(debuggerContext.getDebugProcess());
-            initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && "HexRenderer".equals(renderer.getUniqueId()));
+            initialString = getDisplayableString((PrimitiveValue) currentValue, renderer instanceof NodeRenderer && HexRenderer.UNIQUE_ID.equals(renderer.getUniqueId()));
           }
 
           final String initialString1 = initialString;
@@ -301,18 +302,19 @@ public class SetValueAction extends DebuggerAction {
     editorPanel.add(label);
 
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
-              debuggerContext.getProject(),
-              PositionUtil.getContextElement(debuggerContext),
-              "setValue");
+      debuggerContext.getProject(),
+      PositionUtil.getContextElement(debuggerContext),
+      "setValue"
+    );
     comboBox.setText(initialString);
     editorPanel.add(comboBox);
 
-    final DebuggerTree.InplaceEditor editor = new DebuggerTree.InplaceEditor(node) {
-      public JComponent createEditorComponent() {
+    final InplaceEditor editor = new InplaceEditor(node) {
+      public JComponent createInplaceEditorComponent() {
         return editorPanel;
       }
 
-      public JComponent getContentComponent() {
+      public JComponent getPreferredFocusedComponent() {
         return comboBox;
       }
 
@@ -320,9 +322,15 @@ public class SetValueAction extends DebuggerAction {
         return comboBox.getEditor();
       }
 
-      private void setValue() {
-        Editor editor = comboBox.getEditor();
-        if(editor == null) return;
+      public JComponent getEditorComponent() {
+        return comboBox.getEditorComponent();
+      }
+
+      private void flushValue() {
+        Editor editor = getEditor();
+        if(editor == null) {
+          return;
+        }
 
         final TextWithImports text = comboBox.getText();
 
@@ -344,7 +352,7 @@ public class SetValueAction extends DebuggerAction {
                 DebuggerInvocationUtil.invokeLater(debuggerContext.getProject(), new Runnable() {
                   public void run() {
                     comboBox.addRecent(text);
-                    superDoCancelAction();
+                    superCancelEditing();
                   }
                 });
               }
@@ -388,7 +396,7 @@ public class SetValueAction extends DebuggerAction {
             if(!progressWindow.isCanceled()) {
               IJSwingUtilities.invoke(new Runnable() {
                 public void run() {
-                  superDoCancelAction();
+                  superCancelEditing();
                 }
               });
             }
@@ -401,29 +409,24 @@ public class SetValueAction extends DebuggerAction {
         debuggerContext.getDebugProcess().getManagerThread().startProgress(evaluationCommand, progressWindow);
       }
 
-      private void superDoCancelAction() {
-        super.doCancelAction();
+      private void superCancelEditing() {
+        super.cancelEditing();
       }
 
       public void doOKAction() {
-        setValue();
+        flushValue();
       }
 
-      public void doFocusLostAction() {
-        setValue();
-      }
     };
 
     final DebuggerStateManager stateManager = DebuggerManagerEx.getInstanceEx(debuggerContext.getProject()).getContextManager();
 
-    DebuggerContextListener listener = new DebuggerContextListener() {
-          public void changeEvent(DebuggerContextImpl newContext, int event) {
-            stateManager.removeListener(this);
-            editor.doFocusLostAction();
-          }
-        };
-
-    stateManager.addListener(listener);
+    stateManager.addListener(new DebuggerContextListener() {
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        stateManager.removeListener(this);
+        editor.cancelEditing();
+      }
+    });
 
     editor.show();
   }

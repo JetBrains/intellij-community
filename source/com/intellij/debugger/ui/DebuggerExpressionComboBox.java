@@ -16,6 +16,8 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -156,6 +158,9 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   public DebuggerExpressionComboBox(Project project, PsiElement context, String recentsId) {
     super(project, context, recentsId);
     myComboBox = new ComboBox(-1);
+    // Have to turn this off because when used in InplaceEditor, the combobox pupup is hidden on every change of selection
+    // See comment to SynthComboBoxUI.FocusHandler.focusLost()
+    myComboBox.setLightWeightPopupEnabled(false);
     setLayout(new BorderLayout());
     add(myComboBox);
 
@@ -174,6 +179,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
   public Editor getEditor() {
     return myEditor.getEditor();
+  }
+
+  public JComponent getEditorComponent() {
+    return (JComponent)myEditor.getEditorComponent();
   }
 
   public void addRecent(TextWithImports text) {

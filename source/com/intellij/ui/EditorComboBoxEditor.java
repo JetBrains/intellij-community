@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class EditorComboBoxEditor implements ComboBoxEditor{
-  private EditorTextField myTextField;
+  private final EditorTextField myTextField;
 
   public EditorComboBoxEditor(Project project, FileType fileType) {
     myTextField = new EditorTextField((Document)null, project, fileType);

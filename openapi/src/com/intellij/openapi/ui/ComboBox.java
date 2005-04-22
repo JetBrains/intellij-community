@@ -25,7 +25,7 @@ import java.awt.event.KeyEvent;
  *
  * @author Vladimir Kondratyev
  */
-public final class ComboBox extends JComboBox {
+public class ComboBox extends JComboBox {
   private final int myMinimumAndPreferredWidth;
 
   public ComboBox() {

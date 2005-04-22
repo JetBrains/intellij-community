@@ -2592,8 +2592,6 @@ public final class EditorImpl implements EditorEx {
     myEmbeddedIntoDialogWrapper = b;
     myScrollPane.setFocusable(!b);
     myEditorComponent.setFocusCycleRoot(!b);
-    myHorizontalScrollBar.setFocusable(!b);
-    myVerticalScrollBar.setFocusable(!b);
     myEditorComponent.setFocusable(b);
   }
 
@@ -2815,6 +2813,7 @@ public final class EditorImpl implements EditorEx {
 
     public MyScrollBar(int orientation) {
       super(orientation);
+      setFocusable(false);
     }
 
     /**
