@@ -10,7 +10,7 @@
     <property name="optimize" value="off"/>
     <property name="deprecation" value="off"/>
     <property name="project.fullname" value="IntentionPowerPack"/>
-    <property name="project.version" value="0.9"/>
+    <property name="project.version" value="1.0"/>
     <property name="jar.file" value="ipp.jar"/>
     <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
 

@@ -1335,9 +1335,18 @@ public class ManualTestClass
         {
             // Do something
         }
-
     }
 
+    public void testMergeForLoops()
+    {
+        int a = 3;
+        for (int i = 0; i < a; i++) {
+            System.out.println(i);
+        }
+        for (int i = 0; i < a; i++)
+            System.out.println(i * 2);
+    }
+    
     private void assertNull(Object value)
     {
     }
