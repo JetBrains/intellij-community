@@ -185,8 +185,7 @@ public class RefactoringUtil {
   }
 
   public static boolean isSearchInNonJavaEnabled(PsiElement element) {
-    return element instanceof PsiPackage || element instanceof PsiDirectory
-           || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null);
+    return element instanceof PsiPackage || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null);
   }
 
   public static PsiElement getVariableScope(PsiLocalVariable localVar) {

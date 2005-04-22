@@ -96,8 +96,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private String getFullName() {
-    final String name = myPsiElement instanceof PsiFileSystemItem ? UsageViewUtil.getShortName(myPsiElement) :
-      UsageViewUtil.getDescriptiveName(myPsiElement);
+    final String name = UsageViewUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 
