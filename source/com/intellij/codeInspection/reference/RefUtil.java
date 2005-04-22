@@ -220,9 +220,13 @@ public class RefUtil {
 
   public static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
     if (!refMethod.isStatic()) return false;
+    if (!PsiType.VOID.equals(psiMethod.getReturnType())) return false;
 
     PsiMethod appMainPattern = refMethod.getRefManager().getAppMainPattern();
-    return MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern);
+    if(MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
+
+    PsiMethod appPremainPattern = refMethod.getRefManager().getAppPremainPattern();
+    return MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern);
   }
 
   public static RefPackage getPackage(RefEntity refEntity) {

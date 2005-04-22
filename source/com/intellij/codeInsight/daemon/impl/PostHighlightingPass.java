@@ -32,13 +32,16 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -61,6 +64,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String LOCAL_CLASS_IS_NOT_USED = "Local class ''{0}'' is never used";
   private static final String FIELD_IS_OVERWRITTEN = "Field ''{0}'' is overwritten by generated code";
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
   private final RefCountHolder myRefCountHolder;
   private final PsiFile myFile;
@@ -577,12 +581,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isMainMethod(PsiMethod method) {
-    if (!"main".equals(method.getName())) return false;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    if (parms.length != 1) return false;
-    return parms[0].getType().equalsToText("java.lang.String[]");
+    if (!PsiType.VOID.equals(method.getReturnType())) return false;
+    final PsiElementFactory factory = method.getManager().getElementFactory();
+    try {
+      final PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
+      if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;
+      final PsiMethod appPremain = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
+      if (MethodSignatureUtil.areSignaturesEqual(method, appPremain)) return true;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return false;
   }
 
   private static boolean isIntentionalPrivateConstructor(PsiMethod method) {

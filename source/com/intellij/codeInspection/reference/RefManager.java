@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
@@ -33,6 +34,7 @@ public class RefManager {
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private PsiMethod myAppMainPattern;
+  private PsiMethod myAppPremainPattern;
   private PsiClass myApplet;
   private PsiClass myServlet;
   private boolean myIsInProcess = false;
@@ -54,13 +56,14 @@ public class RefManager {
     PsiElementFactory factory = myPsiManager.getElementFactory();
     try {
       myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
+      myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
 
-    myApplet = myPsiManager.findClass("java.applet.Applet");
-    myServlet = myPsiManager.findClass("javax.servlet.Servlet");
+    myApplet = myPsiManager.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = myPsiManager.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   public void iterate(RefIterator iterator) {
@@ -249,6 +252,10 @@ public class RefManager {
 
   public PsiMethod getAppMainPattern() {
     return myAppMainPattern;
+  }
+
+  public PsiMethod getAppPremainPattern() {
+    return myAppPremainPattern;
   }
 
   public PsiClass getApplet() {
