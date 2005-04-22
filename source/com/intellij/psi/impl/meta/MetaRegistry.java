@@ -113,6 +113,19 @@ public class MetaRegistry {
     {
       addMetadataBinding(
           new AndFilter(
+              new ElementFilter[] {
+                new ClassFilter(XmlDocument.class),
+                new TargetNamespaceFilter(XmlUtil.XHTML_URI),
+                new NamespaceFilter(SCHEMA_URIS),
+              }
+          ),
+          RelaxedNsXmlNSDescriptor.class
+      );
+    }
+
+    {
+      addMetadataBinding(
+          new AndFilter(
               new NamespaceFilter(SCHEMA_URIS),
               new ClassFilter(XmlDocument.class)
           ),

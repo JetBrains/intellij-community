@@ -569,7 +569,6 @@
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:group ref="inline"/>
       <xs:group ref="misc.inline"/>
-      <xs:any namespace="##other" processContents = "lax"/>
     </xs:choice>
   </xs:complexType>
 
@@ -621,7 +620,6 @@
       <xs:element ref="isindex"/>
       <xs:element ref="fieldset"/>
       <xs:element ref="table"/>
-      <xs:any namespace="##other" processContents = "lax"/>
     </xs:choice>
   </xs:group>
 
@@ -2540,8 +2538,6 @@
           <xs:element maxOccurs="unbounded" ref="tbody"/>
           <xs:element maxOccurs="unbounded" ref="tr"/>
         </xs:choice>
-
-        <xs:any namespace="##other" processContents = "lax"/>
       </xs:sequence>
       <xs:attributeGroup ref="attrs"/>
       <xs:attribute name="summary" type="Text"/>
@@ -2595,7 +2591,6 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element maxOccurs="unbounded" ref="tr"/>
-        <xs:any namespace="##other" processContents = "lax"/>
       </xs:sequence>
       <xs:attributeGroup ref="attrs"/>
       <xs:attributeGroup ref="cellhalign"/>
@@ -2607,7 +2602,6 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element maxOccurs="unbounded" ref="tr"/>
-        <xs:any namespace="##other" processContents = "lax"/>
       </xs:sequence>
       <xs:attributeGroup ref="attrs"/>
       <xs:attributeGroup ref="cellhalign"/>
@@ -2674,7 +2668,6 @@
       <xs:choice maxOccurs="unbounded">
         <xs:element ref="th"/>
         <xs:element ref="td"/>
-        <xs:any namespace="##other" processContents = "lax"/>
       </xs:choice>
       <xs:attributeGroup ref="attrs"/>
       <xs:attributeGroup ref="cellhalign"/>

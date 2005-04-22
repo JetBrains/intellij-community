@@ -71,7 +71,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if(checkElementNameEquivalence(localName, namespace, name, tag)) {
             final CachedValue<XmlElementDescriptor> cachedValue = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
               public Result<XmlElementDescriptor> compute() {
-                final XmlElementDescriptorImpl xmlElementDescriptor = new XmlElementDescriptorImpl(tag);
+                final XmlElementDescriptorImpl xmlElementDescriptor = createElementDescriptor(tag);
                 return new Result<XmlElementDescriptor>(xmlElementDescriptor, xmlElementDescriptor.getDependences());
               }
             },false);
@@ -106,6 +106,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
 
     return null;
+  }
+
+  protected XmlElementDescriptorImpl createElementDescriptor(final XmlTag tag) {
+    return new XmlElementDescriptorImpl(tag);
   }
 
   private boolean checkElementNameEquivalence(String localName, String namespace, String fqn, XmlTag context){
@@ -400,7 +404,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
       final String substAttr = tag.getAttributeValue("substitutionGroup");
       if (substAttr != null && checkElementNameEquivalence(localName, namespace, substAttr, tag)) {
-        result.add(new XmlElementDescriptorImpl(tag));
+        result.add(createElementDescriptor(tag));
       }
     }
 
