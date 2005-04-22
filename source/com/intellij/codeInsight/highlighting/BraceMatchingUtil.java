@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -22,6 +23,7 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.ide.highlighter.XmlFileType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -549,7 +551,8 @@ public class BraceMatchingUtil {
   private static boolean isStrictTagMatching(FileType fileType, int tokenGroup) {
     switch(tokenGroup){
       case XML_TAG_TOKEN_GROUP:
-        return fileType == StdFileTypes.XML;
+        return fileType instanceof LanguageFileType &&
+               ((LanguageFileType)fileType).getLanguage() instanceof XMLLanguage;
 
       case JSP_TOKEN_GROUP:
         return true;
