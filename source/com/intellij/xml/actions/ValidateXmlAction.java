@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -59,6 +60,20 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
     boolean flag = psiElement instanceof XmlFile;
     presentation.setVisible(flag);
     boolean value = psiElement instanceof XmlFile;
+
+    if (value) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+
+      if (containingFile!=null &&
+          (containingFile.getFileType() == StdFileTypes.XML ||
+           containingFile.getFileType() == StdFileTypes.XHTML
+          )) {
+        value = true;
+      } else {
+        value = false;
+      }
+    }
+
     presentation.setEnabled(value);
   }
 }
