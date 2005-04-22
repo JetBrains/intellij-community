@@ -31,19 +31,27 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
                                                 HighlighterColors.JAVA_KEYWORD.getDefaultAttributes()
                                               );
 
-  static final TextAttributesKey PROPERTY_VALUE = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PROPERTY_VALUE = TextAttributesKey.createTextAttributesKey(
                                                "PROPERTIES.VALUE",
                                                HighlighterColors.JAVA_STRING.getDefaultAttributes()
                                              );
 
-  static final TextAttributesKey PROPERTY_COMMENT = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PROPERTY_COMMENT = TextAttributesKey.createTextAttributesKey(
                                                      "PROPERTIES.LINE_COMMENT",
                                                      HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes()
                                                    );
 
-  static final TextAttributesKey PROPERTY_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PROPERTY_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
                                                        "PROPERTIES.KEY_VALUE_SEPARATOR",
                                                        HighlighterColors.JAVA_OPERATION_SIGN.getDefaultAttributes()
+                                                     );
+  public static final TextAttributesKey PROPERTIES_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
+                                                       "PROPERTIES.VALID_STRING_ESCAPE",
+                                                       HighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+                                                     );
+  public static final TextAttributesKey PROPERTIES_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
+                                                       "PROPERTIES.INVALID_STRING_ESCAPE",
+                                                       HighlighterColors.JAVA_INVALID_STRING_ESCAPE.getDefaultAttributes()
                                                      );
 
   static {
@@ -55,10 +63,10 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     keys1.put(PropertiesTokenTypes.KEY_CHARACTERS, PROPERTY_KEY);
     keys1.put(PropertiesTokenTypes.KEY_VALUE_SEPARATOR, PROPERTY_KEY_VALUE_SEPARATOR);
 
-    keys1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, HighlighterColors.JAVA_VALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PROPERTIES_VALID_STRING_ESCAPE);
     // in fact all back-slashed escapes are allowed
-    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, HighlighterColors.JAVA_INVALID_STRING_ESCAPE);
-    keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, HighlighterColors.JAVA_INVALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PROPERTIES_INVALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PROPERTIES_INVALID_STRING_ESCAPE);
   }
 
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
