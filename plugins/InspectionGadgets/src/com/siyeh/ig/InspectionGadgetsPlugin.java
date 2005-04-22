@@ -321,6 +321,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(EmptyInitializerInspection.class);
         inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
         inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
+        inspectionClasses.add(CollectionAddedToSelfInspection.class);
         inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
         inspectionClasses.add(BigDecimalEqualsInspection.class);
         inspectionClasses.add(CovariantCompareToInspection.class);
@@ -349,6 +350,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(DuplicateConditionInspection.class);
         inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
         inspectionClasses.add(ReturnNullInspection.class);
+        inspectionClasses.add(ShiftOutOfRangeInspection.class);
+        inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
         inspectionClasses.add(StaticCallOnSubclassInspection.class);
         inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
         inspectionClasses.add(IncompatibleMaskInspection.class);

@@ -1,0 +1,30 @@
+
+Invert Method Sense
+Invert Field Sense
+Invert Variable Sense
+Invert Parameter Sense
+Extract Adapter
+Extract Command
+Replace Conditional Logic with Strategy
+Invert Dependency
+Extract Type Parameter
+Inline Type Parameter
+Introduce Parameter Object
+Preserve Whole Object
+Replace Data Values with Object
+Hide Delegate
+Remove Middleman
+Replace Type Code with enumerated class
+Replace Type Code with subclasses
+Replace Type Code with state/strategy
+Encapsulate Collection
+Replace Nested conditional with gaurd clauses
+Split Loop
+Merge Loops
+Inline Parameter
+Replace Conditional with polymorphism
+Replace assignment with initialization
+Pull up constructor body
+Reduce scope of variable
+Split temporary variable
+

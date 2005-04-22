@@ -16,15 +16,11 @@
     Unsigned right shift cast to short or byte
     Servlet class with instance variables
     Struts Action class with instance variables
-    this.wait(), .notify(), or .notifyAll()
-    write to static field from instance method
     Math call on constant value
     call to runFinalizersOnExit()
-    Collection is added to itself
     Instantiation of utility class
     readLine not checked for null
     Constant month outside range of 0..11
-    integer shift by constant outside the range of 0..31
 
     Static import quickfix
     Vararg quickfix
