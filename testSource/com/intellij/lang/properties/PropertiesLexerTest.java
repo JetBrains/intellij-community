@@ -123,7 +123,7 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
     doTestHL("x\\n\\kz y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
       "VALID_STRING_ESCAPE_TOKEN", "\\n",
-      "INVALID_STRING_ESCAPE_TOKEN", "\\k",
+      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\k",
       "Properties:KEY_CHARACTERS", "z",
       "Properties:KEY_VALUE_SEPARATOR", " ",
       "Properties:VALUE_CHARACTERS", "y"
@@ -134,8 +134,8 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
     doTestHL("x  \\uxyzt\\pz\\tp", new String[]{
       "Properties:KEY_CHARACTERS", "x",
       "Properties:KEY_VALUE_SEPARATOR", "  ",
-      "INVALID_STRING_ESCAPE_TOKEN", "\\uxyzt",
-      "INVALID_STRING_ESCAPE_TOKEN", "\\p",
+      "INVALID_UNICODE_ESCAPE_TOKEN", "\\uxyzt",
+      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\p",
       "Properties:VALUE_CHARACTERS", "z",
       "VALID_STRING_ESCAPE_TOKEN", "\\t",
       "Properties:VALUE_CHARACTERS", "p",

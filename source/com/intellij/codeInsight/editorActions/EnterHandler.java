@@ -105,8 +105,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         lexer.start(chars, range.getStartOffset(), range.getEndOffset());
         while (lexer.getTokenType() != null) {
           if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
-            if (lexer.getTokenType() == StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN ||
-                lexer.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN) {
+            if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet(lexer.getTokenType())) {
               caretOffset = lexer.getTokenEnd();
             }
             break;

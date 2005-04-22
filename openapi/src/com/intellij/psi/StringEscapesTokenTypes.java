@@ -5,6 +5,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 
 /**
@@ -12,5 +13,8 @@ import com.intellij.psi.tree.IElementType;
  */
 public interface StringEscapesTokenTypes {
   IElementType VALID_STRING_ESCAPE_TOKEN = new IElementType("VALID_STRING_ESCAPE_TOKEN", null);
-  IElementType INVALID_STRING_ESCAPE_TOKEN = new IElementType("INVALID_STRING_ESCAPE_TOKEN", null);
+  IElementType INVALID_CHARACTER_ESCAPE_TOKEN = new IElementType("INVALID_CHARACTER_ESCAPE_TOKEN", null);   // e.g. \x
+  IElementType INVALID_UNICODE_ESCAPE_TOKEN = new IElementType("INVALID_UNICODE_ESCAPE_TOKEN", null);       // e.g. \\u123z
+
+  TokenSet STRING_LITERAL_ESCAPES = TokenSet.create(new IElementType[] {VALID_STRING_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE_TOKEN, INVALID_UNICODE_ESCAPE_TOKEN});
 }

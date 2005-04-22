@@ -71,14 +71,14 @@ public class StringLiteralLexer extends LexerBase {
 
     if (myBuffer[myStart] != '\\') return myOriginalLiteralToken;
 
-    if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
+    if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
     final char nextChar = myBuffer[myStart + 1];
     if (myCanEscapeEol && nextChar == '\n') {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
     if (nextChar == 'u') {
       for(int i = myStart + 2; i < myStart + 6; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
+        if (i >= myEnd || !isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
@@ -103,7 +103,7 @@ public class StringLiteralLexer extends LexerBase {
         return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
-    return StringEscapesTokenTypes.INVALID_STRING_ESCAPE_TOKEN;
+    return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
   }
 
   public int getTokenStart() {
