@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.XmlNSDescriptor;
@@ -64,7 +65,10 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       nameElement = ((XmlAttributeDecl)element).getNameElement();
       isTag = false;
     } else if (element instanceof XmlTag) {
-      // TODO: set schema
+      final XmlTag xmlTag = ((XmlTag)element);
+      final PsiMetaData metaData = xmlTag.getMetaData();
+      key = (metaData!=null)?metaData.getName():null;
+      isTag = xmlTag.getLocalName().equals("element");
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();

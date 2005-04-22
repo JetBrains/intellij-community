@@ -48,12 +48,30 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     return myTag.getAttributeValue("fixed") != null;
   }
 
-  public boolean hasIdType() {
+  private boolean hasSimpleSchemaType(String type) {
+    final String attributeValue = myTag.getAttributeValue("type");
+
+    if (attributeValue!=null) {
+      if (type.endsWith(type)) {
+        final String namespacePrefix = myTag.getNamespacePrefix();
+
+        if (namespacePrefix.length() > 0) {
+          return attributeValue.equals(namespacePrefix+":"+type);
+        } else {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
+  public boolean hasIdType() {
+    return hasSimpleSchemaType("ID");
+  }
+
   public boolean hasIdRefType() {
-    return false;
+    return hasSimpleSchemaType("IDREF");
   }
 
   public String getDefaultValue() {

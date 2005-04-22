@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
 import com.intellij.j2ee.ExternalResourceManager;
-import com.intellij.jsp.impl.JspXHTMLDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -273,15 +272,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     XmlFile file = XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
 
     if (file != null){
-      descriptor = getMetaDataDescriptor(file,namespace);
+      descriptor = (XmlNSDescriptor)file.getDocument().getMetaData();
 
       if(descriptor != null){
         final XmlFile file1 = file;
 
         myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
           public CachedValueProvider.Result<XmlNSDescriptor> compute() {
+            XmlNSDescriptor descriptor = (XmlNSDescriptor)file1.getDocument().getMetaData();
+
             return new Result<XmlNSDescriptor>(
-              getMetaDataDescriptor(file1,namespace),
+              descriptor,
               new Object[]{file1}
             );
           }
@@ -290,22 +291,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
     }
     return true;
-  }
-
-  private XmlNSDescriptor getMetaDataDescriptor(final XmlFile file, String namespace) {
-    XmlNSDescriptor descriptor;
-    descriptor = (XmlNSDescriptor)file.getDocument().getMetaData();
-
-    if (descriptor!=null) {
-      PsiFile myContainingFile = getContainingFile();
-      
-      if (myContainingFile!=null) {
-        if(myContainingFile.getFileType() == StdFileTypes.JSPX && namespace.equals(XmlUtil.XHTML_URI)) {
-          descriptor = new JspXHTMLDescriptor(descriptor);
-        }
-      }
-    }
-    return descriptor;
   }
 
   public PsiReference getReference() {

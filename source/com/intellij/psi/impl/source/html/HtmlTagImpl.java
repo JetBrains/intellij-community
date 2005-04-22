@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 
@@ -81,14 +82,6 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   public String getNamespace() {
     return XmlUtil.XHTML_URI;
-  }
-
-  public XmlNSDescriptor getNSDescriptor(String namespace, boolean strict) {
-    if (documentDescriptor==null) {
-      HtmlDocumentImpl document = PsiTreeUtil.getParentOfType(this,HtmlDocumentImpl.class);
-      documentDescriptor = document.getDocumentDescriptor();
-    }
-    return documentDescriptor;
   }
 
   public String toString() {
