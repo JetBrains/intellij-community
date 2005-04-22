@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 
 import java.lang.reflect.Field;
@@ -119,15 +120,17 @@ public abstract class Language {
     }
 
     public String getType(PsiElement element) {
-      return null;
+      return "";
     }
 
     public String getDescriptiveName(PsiElement element) {
-      return null;
+      //do not return null
+      return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
     }
 
     public String getNodeText(PsiElement element, boolean useFullName) {
-      return null;
+      //do not return null
+      return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
     }
   }
 }

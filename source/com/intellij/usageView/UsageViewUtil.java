@@ -34,7 +34,7 @@ public class UsageViewUtil {
   public static String createNodeText(PsiElement element, boolean useFullName) {
     if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
-      String name = xmlTag.getName();
+      String name;
       final PsiMetaData metaData = xmlTag.getMetaData();
 
       if (metaData != null) {
