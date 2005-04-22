@@ -101,8 +101,9 @@ public class PsiElementRenameHandler implements RenameHandler {
           (element instanceof PsiClass) ||
           (element instanceof PsiVariable) ||
           (element instanceof PsiMethod) ||
-          (element instanceof PsiNamedElement)
-         )) {
+          (element instanceof PsiNamedElement) ||
+          (element instanceof XmlAttributeValue)
+        )) {
       String message =
         "Cannot perform the refactoring.\n" +
         "The caret should be positioned at the symbol to be renamed.";

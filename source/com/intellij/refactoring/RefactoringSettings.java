@@ -186,7 +186,8 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     else if (element instanceof PsiPointcutDef){
       RENAME_SEARCH_IN_COMMENTS_FOR_POINTCUT_DEF = value;
     }
-    else if (element instanceof PsiNamedElement) {
+    else if (element instanceof PsiNamedElement ||
+             element instanceof XmlAttributeValue) {
 
     }
     else{
