@@ -108,6 +108,11 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
         return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta;
       }
 
+      int result = whiteSpace.getTextRange().getStartOffset();
+      final int lineFeeds = whiteSpace.getLineFeedsToModified(model, offset);
+      result += (lineFeeds - 1) + (1 + indent.getTotalSpaces());
+      return result;
+
     } else {
       indent = processor.getIndentAt(offset);
       String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
