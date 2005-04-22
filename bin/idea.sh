@@ -5,6 +5,18 @@
 # ------------------------------------------------------
 #
 
+# ---------------------------------------------------------------------
+# Before you run IntelliJ IDEA specify the location of the
+# JDK 1.5 or higher installation directory which will be used for running IDEA
+# ---------------------------------------------------------------------
+if [ -z "$IDEA_JDK" ]; then
+  IDEA_JDK=$JDK_HOME
+  if [ -z "$IDEA_JDK" ]; then
+    echo ERROR: cannot start IntelliJ IDEA.
+    echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
+  fi
+fi
+
 #--------------------------------------------------------------------------
 #   Ensure the IDEA_HOME var for this script points to the
 #   home directory where IntelliJ IDEA is installed on your system.
@@ -46,13 +58,12 @@ CLASSPATH=$CLASSPATH:../lib/openapi.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
 CLASSPATH=$CLASSPATH:../lib/log4j.jar
 CLASSPATH=$CLASSPATH:../lib/extensions.jar
+CLASSPATH=$CLASSPATH:$IDEA_JDK/lib/tools.jar
 
 # Append old classpath to current classpath
 if [ ! -z "$oldcp" ]; then
     CLASSPATH=${CLASSPATH}:$oldcp
 fi
-
-IDEA_JRE=./../jre/bin
 
 export CLASSPATH
 
@@ -60,4 +71,4 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
 cd $IDEA_BIN_HOME
-exec $IDEA_JRE/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $args
+exec $IDEA_JDK/bin/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $args

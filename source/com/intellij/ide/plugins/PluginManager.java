@@ -563,11 +563,10 @@ public class PluginManager {
 
   private void addIDEALibraries(List classpathElements) {
     final String ideaHomePath = PathManager.getHomePath();
-    addJreLibraries(ideaHomePath, classpathElements);
     addAllFromLibFolder(ideaHomePath, classpathElements);
   }
 
-  public static void addJreLibraries(final String aIdeaHomePath, List classPath) {
+  private static void addJreLibraries(final String aIdeaHomePath, List classPath) {
     try {
       final String libPath = aIdeaHomePath + File.separator + "jre" + File.separator + "lib" + File.separator;
       File toolsFile = new File(libPath + TOOLS_JAR);

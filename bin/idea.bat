@@ -6,6 +6,13 @@
 
 :: ---------------------------------------------------------------------
 :: Before you run IntelliJ IDEA specify the location of the
+:: JDK 1.5 or higher installation directory which will be used for running IDEA
+:: ---------------------------------------------------------------------
+IF "%IDEA_JDK%" == "" SET IDEA_JDK=%JDK_HOME%
+IF "%IDEA_JDK%" == "" goto error
+
+:: ---------------------------------------------------------------------
+:: Before you run IntelliJ IDEA specify the location of the
 :: directory where IntelliJ IDEA is installed
 :: In most cases you do not need to change the settings below.
 :: ---------------------------------------------------------------------
@@ -14,7 +21,7 @@ SET IDEA_HOME=..
 :: ---------------------------------------------------------------------
 :: In most cases you do not need to change the settings below.
 :: ---------------------------------------------------------------------
-SET JAVA_EXE=%IDEA_HOME%\jre\bin\java.exe
+SET JAVA_EXE=%IDEA_JDK%\jre\bin\java.exe
 
 IF NOT EXIST "%JAVA_EXE%" goto error
 
@@ -45,6 +52,7 @@ SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\openapi.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\jdom.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\log4j.jar
 SET CLASS_PATH=%CLASS_PATH%;%IDEA_HOME%\lib\extensions.jar
+SET CLASS_PATH=%CLASS_PATH%;%IDEA_JDK%\lib\tools.jar
 
 :: ---------------------------------------------------------------------
 :: You may specify additional class paths in IDEA_CLASS_PATH variable.
@@ -59,7 +67,7 @@ goto end
 :error
 echo ---------------------------------------------------------------------
 echo ERROR: cannot start IntelliJ IDEA.
-echo No JRE found in IDEA installation directory
+echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
 echo ---------------------------------------------------------------------
 pause
 :end
