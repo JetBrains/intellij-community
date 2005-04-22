@@ -38,24 +38,14 @@ public class CodeInsightUtil {
     PsiElement element2 = file.findElementAt(endOffset - 1);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
-      element1 = file.findElementAt(startOffset);
     }
     if (element2 instanceof PsiWhiteSpace) {
       endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.findElementAt(endOffset - 1);
     }
-    if (element1 == null || element2 == null) return null;
-    PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
-    while (true) {
-      if (parent instanceof PsiFile) return null;
-      if (parent instanceof PsiExpression) {
-        TextRange range = parent.getTextRange();
-        if (startOffset != range.getStartOffset() || endOffset != range.getEndOffset()) return null;
-        if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression) return null;
-        return (PsiExpression) parent;
-      }
-      parent = parent.getParent();
-    }
+    PsiExpression expression = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, PsiExpression.class);
+    if (expression == null || expression.getTextRange().getEndOffset() != endOffset) return null;
+    if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
+    return expression;
   }
 
   public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {

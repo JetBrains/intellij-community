@@ -5,6 +5,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -231,5 +232,57 @@ public class PsiTreeUtil {
       }
       return null;
     }
+  }
+
+  public static <T extends PsiElement> T findElementOfClassAtOffset (PsiFile file, int offset, Class<T> clazz, boolean strictStart) {
+    final PsiFile[] psiRoots = file.getPsiRoots();
+    T result = null;
+    for (int i = 0; i < psiRoots.length; i++) {
+      PsiFile root = psiRoots[i];
+      final PsiElement elementAt = root.findElementAt(offset);
+      if (elementAt != null) {
+        final T parent = getParentOfType(elementAt, clazz);
+        if (parent != null) {
+          final TextRange range = parent.getTextRange();
+          if (!strictStart || range.getStartOffset() == offset) {
+            if (result == null || result.getTextRange().getEndOffset() > range.getEndOffset()) {
+              result = parent;
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * @return maximal element of specified Class starting at startOffset exactly and ending not farther than endOffset
+   */
+  public static <T extends PsiElement> T findElementOfClassAtRange (PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
+    final PsiFile[] psiRoots = file.getPsiRoots();
+    T result = null;
+    for (int i = 0; i < psiRoots.length; i++) {
+      PsiFile root = psiRoots[i];
+      PsiElement elementAt = root.findElementAt(startOffset);
+      T run = getParentOfType(elementAt, clazz, false);
+      T prev = run;
+      while (run != null && run.getTextRange().getStartOffset() == startOffset &&
+             run.getTextRange().getEndOffset() <= endOffset) {
+        prev = run;
+        run = getParentOfType(run, clazz);
+      }
+
+      if (prev == null) continue;
+      final int elementStartOffset = prev.getTextRange().getStartOffset();
+      final int elementEndOffset = prev.getTextRange().getEndOffset();
+      if (elementStartOffset != startOffset || elementEndOffset > endOffset) continue;
+
+      if (result == null || result.getTextRange().getEndOffset() < elementEndOffset) {
+        result = prev;
+      }
+    }
+
+    return result;
   }
 }
