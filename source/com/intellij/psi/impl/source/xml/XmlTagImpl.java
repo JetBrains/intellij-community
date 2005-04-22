@@ -21,11 +21,9 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -273,9 +271,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     final XmlFile containingFile = XmlUtil.getContainingFile(XmlTagImpl.this);
     XmlFile file = XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
-    if (file == null && containingFile instanceof JspFile) {
-      file = TldUtil.getTldFileByUri(namespace,(JspFile)containingFile);
-    }
 
     if (file != null){
       descriptor = getMetaDataDescriptor(file,namespace);

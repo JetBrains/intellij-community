@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -155,6 +157,10 @@ public class XmlUtil {
     }
     if (result == null) {
       result = PsiUtil.findRelativeFile(uri, base);
+    }
+
+    if (result == null && base instanceof JspFile) {
+      result = TldUtil.getTldFileByUri(uri,(JspFile)base);
     }
 
     if (result instanceof XmlFile) {
