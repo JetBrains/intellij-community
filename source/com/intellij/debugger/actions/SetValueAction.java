@@ -307,6 +307,7 @@ public class SetValueAction extends DebuggerAction {
       "setValue"
     );
     comboBox.setText(initialString);
+    comboBox.selectAll();
     editorPanel.add(comboBox);
 
     final InplaceEditor editor = new InplaceEditor(node) {

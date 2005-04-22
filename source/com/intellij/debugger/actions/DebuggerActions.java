@@ -26,6 +26,7 @@ public interface DebuggerActions {
   String REMOVE_WATCH = "Debugger.RemoveWatch";
   String NEW_WATCH = "Debugger.NewWatch";
   String EDIT_WATCH = "Debugger.EditWatch";
+  String SET_VALUE = "Debugger.SetValue";
   String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";
   String MUTE_BREAKPOINTS = "Debugger.MuteBreakpoints";

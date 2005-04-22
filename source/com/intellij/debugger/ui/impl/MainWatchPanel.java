@@ -72,6 +72,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final DebuggerContextImpl context = getContext();
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(context), "evaluation");
     comboBox.setText(((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
+    comboBox.selectAll();
 
     InplaceEditor editor = new InplaceEditor(node) {
       public JComponent createInplaceEditorComponent() {

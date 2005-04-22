@@ -14,32 +14,22 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.ui.ListenerUtil;
+import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 
 public class FramePanel extends DebuggerPanel implements DataProvider{
   private JComboBox myThreadsCombo;
@@ -68,6 +58,20 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     add(new JScrollPane(getFrameTree()), BorderLayout.CENTER);
 
     DebuggerAction.installEditAction(getFrameTree(), DebuggerActions.EDIT_NODE_SOURCE);
+
+    final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
+    ListenerUtil.addMouseListener(getFrameTree(), new MouseAdapter(){
+      public void mouseClicked(MouseEvent e) {
+        if(e.getButton() == MouseEvent.BUTTON1 &&  e.getClickCount() == 2) {
+          Presentation presentation = (Presentation)setValueAction.getTemplatePresentation().clone();
+          final DataContext context = DataManager.getInstance().getDataContext(getFrameTree());
+          final AnActionEvent actionEvent = new AnActionEvent(null, context, "FRAME_TREE", presentation, ActionManager.getInstance(), 0);
+          setValueAction.update(actionEvent);
+          setValueAction.actionPerformed(actionEvent);
+        }
+      }
+    });
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), getFrameTree());
   }
 
   protected void rebuild(int event) {
