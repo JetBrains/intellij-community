@@ -8,6 +8,7 @@ import com.intellij.compiler.Chunk;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -148,7 +149,7 @@ public class ModuleChunk extends Chunk<Module> {
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
     for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
       final Module module = it.next();
-      final OrderEntry[] orderEntries = getSortedOrderEntries(module);
+      final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
       for (int i = 0; i < orderEntries.length; i++) {
         cpFiles.addAll(Arrays.asList(orderEntries[i].getFiles(OrderRootType.COMPILATION_CLASSES)));
       }
@@ -178,35 +179,6 @@ public class ModuleChunk extends Chunk<Module> {
     final Set<Module> nodes = getNodes();
     return nodes.toArray(new Module[nodes.size()]);
   }
-
-  private static OrderEntry[] getSortedOrderEntries(Module module) {
-    return ModuleRootManager.getInstance(module).getOrderEntries();
-    // TODO: this is a patch for SCR 36800, After J2EE Compiler copying mechanizm is fixed,
-    // TODO: remove all the code below and uncomment the line above
-    /*
-    final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    final List<OrderEntry> result = new ArrayList<OrderEntry>();
-    final List<OrderEntry> moduleOrderEntries = new ArrayList<OrderEntry>();
-    int insertIndex = 0;
-    for (int idx = 0; idx < orderEntries.length; idx++) {
-      OrderEntry orderEntry = orderEntries[idx];
-      if (orderEntry instanceof ModuleOrderEntry) {
-        moduleOrderEntries.add(orderEntry);
-      }
-      else {
-        result.add(orderEntry);
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          insertIndex = result.size() - 1;
-        }
-      }
-    }
-    if (moduleOrderEntries.size() > 0) {
-      result.addAll(insertIndex, moduleOrderEntries);
-    }
-    return result.toArray(new OrderEntry[result.size()]);
-    */
-  }
-
 
   public String getSourcePath() {
     if (getModuleCount() == 0) {

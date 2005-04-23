@@ -17,8 +17,6 @@ import gnu.trove.TObjectHashingStrategy;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
 
 public class CompilerPathsEx extends CompilerPaths {
 
@@ -82,7 +80,7 @@ public class CompilerPathsEx extends CompilerPaths {
 
   public static String getCompilationClasspath(Module module) {
     final StringBuffer classpathBuffer = new StringBuffer();
-    final OrderEntry[] orderEntries = getSortedOrderEntries(module);
+    final OrderEntry[] orderEntries = getOrderEntries(module);
     for (int i = 0; i < orderEntries.length; i++) {
       final OrderEntry orderEntry = orderEntries[i];
       final VirtualFile[] files = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
@@ -100,10 +98,11 @@ public class CompilerPathsEx extends CompilerPaths {
     return classpathBuffer.toString();
   }
 
-  private static OrderEntry[] getSortedOrderEntries(Module module) {
-    //return ModuleRootManager.getInstance(module).getOrderEntries();
+  public static OrderEntry[] getOrderEntries(Module module) {
+    return ModuleRootManager.getInstance(module).getOrderEntries();
     // TODO: this is a patch for SCR 36800, After J2EE Compiler copying mechanizm is fixed,
     // TODO: remove all the code below and uncomment the line above
+    /*
     final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
     final List<OrderEntry> result = new ArrayList<OrderEntry>();
     final List<OrderEntry> moduleOrderEntries = new ArrayList<OrderEntry>();
@@ -124,6 +123,7 @@ public class CompilerPathsEx extends CompilerPaths {
       result.addAll(insertIndex, moduleOrderEntries);
     }
     return result.toArray(new OrderEntry[result.size()]);
+    */
   }
 
   public static String[] getOutputPaths(Module[] modules) {
