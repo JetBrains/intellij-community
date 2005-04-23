@@ -75,7 +75,8 @@ public abstract class SourcePosition {
       }
 
       protected int calcOffset() {
-        return StringUtil.lineColToOffset(file.getText(), line, 0);
+        final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        return document.getLineStartOffset(line);
       }
     };
   }

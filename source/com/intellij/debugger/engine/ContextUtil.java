@@ -4,12 +4,10 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.jsp.JspImplicitVariable;
@@ -150,25 +148,33 @@ public class ContextUtil {
   }
 
   private static PsiElement getContextElementInText(PsiFile psiFile, int lineNumber) {
-    if(lineNumber < 0) return psiFile;
+    if(lineNumber < 0) {
+      return psiFile;
+    }
 
-    String text = psiFile.getText();
-    int startOffset = StringUtil.lineColToOffset(text, lineNumber, 0);
-
-    if(startOffset == -1) return null;
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    int startOffset = document.getLineStartOffset(lineNumber);
+    if(startOffset == -1) {
+      return null;
+    }
 
     PsiElement element;
-    for(;;) {
-      for (; startOffset < text.length(); startOffset++) {
-        char c = text.charAt(startOffset);
-        if (c != ' ' && c != '\t') break;
+    while(true) {
+      final CharSequence charsSequence = document.getCharsSequence();
+      for (; startOffset < charsSequence.length(); startOffset++) {
+        char c = charsSequence.charAt(startOffset);
+        if (c != ' ' && c != '\t') {
+          break;
+        }
       }
       element = psiFile.findElementAt(startOffset);
 
-      if(element instanceof PsiComment)
+      if(element instanceof PsiComment) {
         startOffset = element.getTextRange().getEndOffset() + 1;
-      else
+      }
+      else{
         break;
+      }
     }
 
     if (element != null && element.getParent() instanceof PsiForStatement) {
