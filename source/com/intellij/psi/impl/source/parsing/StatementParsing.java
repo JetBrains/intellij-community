@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -16,7 +15,7 @@ import com.intellij.util.CharTable;
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
 
-  public StatementParsing(ParsingContext context) {
+  public StatementParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -33,7 +32,7 @@ public class StatementParsing extends Parsing {
     if (lexer == null){
       lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     }
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
@@ -57,7 +56,7 @@ public class StatementParsing extends Parsing {
     if (lexer == null){
       lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     }
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
@@ -196,7 +195,7 @@ public class StatementParsing extends Parsing {
 
   public static TreeElement parseStatementText(PsiManager manager, char[] buffer, CharTable table) {
     Lexer lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, 0, buffer.length);
 
@@ -205,7 +204,7 @@ public class StatementParsing extends Parsing {
     if (filterLexer.getTokenType() != null) return null;
 
     if(statement instanceof CompositeElement)
-      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return statement;
   }
 
@@ -906,7 +905,7 @@ public class StatementParsing extends Parsing {
 
   public static TreeElement parseCatchSectionText(PsiManagerImpl manager, char[] buffer, CharTable table) {
     Lexer lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, 0, buffer.length);
 
@@ -914,7 +913,7 @@ public class StatementParsing extends Parsing {
     if (catchSection == null) return null;
     if (filterLexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return catchSection;
   }
 }

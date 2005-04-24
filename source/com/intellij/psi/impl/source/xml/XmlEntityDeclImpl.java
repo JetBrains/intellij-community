@@ -2,15 +2,15 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer._OldXmlLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsing;
+import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
@@ -58,7 +58,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     final FileElement holderElement = new DummyHolder(originalElement.getManager(), originalElement).getTreeElement();
     char[] buffer = value.toCharArray();
     Lexer lexer = getLexer(context, buffer);
-    final ParsingContext parsingContext = new ParsingContext(holderElement.getCharTable());
+    final XmlParsingContext parsingContext = new XmlParsingContext(holderElement.getCharTable());
     final CompositeElement element = Factory.createCompositeElement(XML_ELEMENT_DECL);
     TreeUtil.addChildren(holderElement, element);
 

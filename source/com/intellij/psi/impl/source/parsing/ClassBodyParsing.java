@@ -8,7 +8,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 
 /**
@@ -20,7 +19,7 @@ public class ClassBodyParsing extends Parsing {
   public static final int ANNOTATION = 1;
   public static final int ENUM = 2;
 
-  public ClassBodyParsing(ParsingContext context) {
+  public ClassBodyParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -37,7 +36,7 @@ public class ClassBodyParsing extends Parsing {
     else filterLexer.start(buffer, startOffset, endOffset, lexerState);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    ParsingContext parsingContext = new ParsingContext(table);
+    JavaParsingContext parsingContext = new JavaParsingContext(table);
     parsingContext.getClassBodyParsing().parseClassBody(dummyRoot, filterLexer, context);
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, parsingContext);
     return (TreeElement)dummyRoot.getFirstChildNode();

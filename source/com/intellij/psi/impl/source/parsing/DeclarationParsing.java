@@ -4,7 +4,6 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -24,7 +23,7 @@ public class DeclarationParsing extends Parsing {
   public static final int CODE_BLOCK_CONTEXT = 3;
   public static final int ANNOTATION_INTERFACE_CONTEXT = 4;
 
-  public DeclarationParsing(ParsingContext context) {
+  public DeclarationParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -36,7 +35,7 @@ public class DeclarationParsing extends Parsing {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
-    ParsingContext parsingContext = new ParsingContext(charTable);
+    JavaParsingContext parsingContext = new JavaParsingContext(charTable);
     TreeElement first = parsingContext.getDeclarationParsing().parseDeclaration(lexer, context);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -44,7 +43,7 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = new DummyHolder(manager, null, charTable).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, parsingContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, parsingContext);
     return first;
   }
 
@@ -52,7 +51,7 @@ public class DeclarationParsing extends Parsing {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     TreeElement first = context.getDeclarationParsing().parseAnnotationMemberValue(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -61,7 +60,7 @@ public class DeclarationParsing extends Parsing {
 
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return first;
   }
 
@@ -396,7 +395,7 @@ public class DeclarationParsing extends Parsing {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     char[] buffer = text.toCharArray();
     lexer.start(buffer, 0, buffer.length);
-    ParsingContext context = new ParsingContext(charTable);
+    JavaParsingContext context = new JavaParsingContext(charTable);
     CompositeElement first = context.getDeclarationParsing().parseAnnotation(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -404,7 +403,7 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = new DummyHolder(manager, null, charTable).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return first;
   }
 
@@ -669,12 +668,12 @@ public class DeclarationParsing extends Parsing {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
-    ParsingContext context = new ParsingContext(charTable);
+    JavaParsingContext context = new JavaParsingContext(charTable);
     CompositeElement typeParameter = context.getDeclarationParsing().parseTypeParameter(lexer);
     if (typeParameter == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return typeParameter;
   }
 
@@ -935,12 +934,12 @@ public class DeclarationParsing extends Parsing {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
-    ParsingContext context = new ParsingContext(charTable);
+    JavaParsingContext context = new JavaParsingContext(charTable);
     ASTNode first = context.getDeclarationParsing().parseParameter(lexer, true);
     if (first == null || first.getElementType() != PARAMETER) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return (CompositeElement)first;
   }
 

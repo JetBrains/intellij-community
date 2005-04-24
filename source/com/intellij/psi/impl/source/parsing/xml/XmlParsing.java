@@ -2,9 +2,9 @@ package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer._OldXmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
+import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -54,12 +54,12 @@ public class XmlParsing implements ElementType {
                                   originalLexer,
                                   startOffset,
                                   endOffset,
-                                  WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+                                  -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return root;
   }
 
   public static ASTNode parseTag(Lexer lexer, char[] buffer, int startOffset, int endOffset, CharTable table, ASTNode parent) {
-    ParsingContext context = new ParsingContext(table);
+    XmlParsingContext context = new XmlParsingContext(table);
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
     final FileElement holderElement = new DummyHolder(SharedImplUtil.getManagerByTree(parent), null, table).getTreeElement();
@@ -73,7 +73,7 @@ public class XmlParsing implements ElementType {
     while (filterLexer.getTokenType() != null) {
       context.getXmlParsing().addToken(holderElement, filterLexer);
     }
-    ParseUtil.insertMissingTokens(holderElement, lexer, startOffset, endOffset, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(holderElement, lexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     ASTNode result = holderElement.getFirstChildNode();
     return result;
   }
@@ -218,7 +218,7 @@ public class XmlParsing implements ElementType {
       addToken(tag, lexer);
       parseAttributeList(tag, lexer);
     }
-    TreeElement tagEnd = null;
+    TreeElement tagEnd;
     if (lexer.getTokenType() == XML_TAG_END) {
       tagEnd = addToken(tag, lexer);
       boolean setFlag = false;
@@ -720,7 +720,7 @@ public class XmlParsing implements ElementType {
       TreeElement first = null;
       TreeElement last = null;
       while (isTokenValid(lexer.getTokenType())) {
-        TreeElement tokenElement = null;
+        TreeElement tokenElement;
 
         IElementType type = lexer.getTokenType();
         if (!XML_WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(type)) {

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.parsing.Parsing;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
@@ -84,7 +85,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
         }
         else{
           final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
-          final ParsingContext context = new ParsingContext(holderElement.getCharTable());
+          final JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable());
           final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;
           CompositeElement parsedRef = Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(), context.getCharTable());

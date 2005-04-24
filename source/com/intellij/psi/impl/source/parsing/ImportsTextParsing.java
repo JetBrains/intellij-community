@@ -6,7 +6,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 
@@ -16,7 +15,7 @@ import com.intellij.lang.ASTNode;
 public class ImportsTextParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ImportsTextParsing");
 
-  public ImportsTextParsing(ParsingContext context) {
+  public ImportsTextParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -50,7 +49,7 @@ public class ImportsTextParsing extends Parsing {
       filterLexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

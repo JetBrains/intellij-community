@@ -34,7 +34,7 @@ public class JavadocParsing extends Parsing {
 
   private int myBraceScope = 0;
 
-  public JavadocParsing(ParsingContext context) {
+  public JavadocParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -46,7 +46,7 @@ public class JavadocParsing extends Parsing {
                                                   PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(myBuffer, 0, myBuffer.length, state);
-    ParsingContext context = new ParsingContext(charTable);
+    JavaParsingContext context = new JavaParsingContext(charTable);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement element;
@@ -90,7 +90,7 @@ public class JavadocParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, new TokenProcessor(this), myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new TokenProcessor(this), myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

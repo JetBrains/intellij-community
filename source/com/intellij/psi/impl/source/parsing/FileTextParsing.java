@@ -6,7 +6,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -17,7 +16,7 @@ import com.intellij.lang.ASTNode;
  *
  */
 public class FileTextParsing extends Parsing {
-  public FileTextParsing(ParsingContext context) {
+  public FileTextParsing(JavaParsingContext context) {
     super(context);
   }
 
@@ -34,7 +33,7 @@ public class FileTextParsing extends Parsing {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    ParsingContext context = new ParsingContext(dummyRoot.getCharTable());
+    JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable());
 
     if (!skipHeader){
       TreeElement packageStatement = (TreeElement)context.getFileTextParsing().parsePackageStatement(filterLexer);
@@ -72,7 +71,7 @@ public class FileTextParsing extends Parsing {
       filterLexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

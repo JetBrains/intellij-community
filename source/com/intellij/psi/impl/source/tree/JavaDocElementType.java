@@ -6,7 +6,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.ParsingContext;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.JavadocParsing;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -44,7 +44,7 @@ public interface JavaDocElementType {
   IElementType DOC_COMMENT = new IChameleonElementType("DOC_COMMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      final ParsingContext context = new ParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
+      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
       return context.getJavadocParsing().parseDocCommentText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {

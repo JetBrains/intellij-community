@@ -1,21 +1,23 @@
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lexer.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.JavaWithJspTemplateDataLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -130,13 +132,13 @@ public class ParseUtil implements Constants {
     boolean isStrongElementOnRisingSlope = true;
   }
 
-  public static void insertMissingTokens(CompositeElement root,
+  /*public static void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
                                          int startOffset,
                                          int endOffset,
-                                         TokenProcessor processor, ParsingContext context) {
+                                         final int state, TokenProcessor processor, ParsingContext context) {
     insertMissingTokens(root, lexer, startOffset, endOffset, -1, processor, context);
-  }
+  }*/
 
   public static void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
@@ -378,7 +380,7 @@ public class ParseUtil implements Constants {
     TreeElement element = docComment.getTreeNext();
     if (element == null) return false;
     TreeElement startSpaces = null;
-    ASTNode endSpaces = null;
+    ASTNode endSpaces;
 
     // Bypass meaningless tokens and hold'em in hands
     while (element.getElementType() == WHITE_SPACE ||

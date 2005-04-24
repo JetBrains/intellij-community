@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -16,9 +15,9 @@ import com.intellij.util.CharTable;
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
   public static /*final*/ boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
-  protected final ParsingContext myContext;
+  protected final JavaParsingContext myContext;
 
-  public Parsing(ParsingContext context) {
+  public Parsing(JavaParsingContext context) {
     myContext = context;
   }
 
@@ -38,7 +37,7 @@ public class Parsing implements Constants{
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
 
-    ParsingContext context = new ParsingContext(table);
+    JavaParsingContext context = new JavaParsingContext(table);
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     if (ref == null) {
@@ -58,7 +57,7 @@ public class Parsing implements Constants{
       TreeUtil.addChildren(dummyRoot, errorElement);
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
@@ -142,12 +141,12 @@ public class Parsing implements Constants{
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(type, originalLexer, startOffset, endOffset, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(type, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return type;
   }
 
@@ -244,7 +243,7 @@ public class Parsing implements Constants{
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
-    final ParsingContext context = new ParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table);
     final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
     if (root != null) {
