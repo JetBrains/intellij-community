@@ -7,7 +7,7 @@ import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.DeclarationParsing;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -79,7 +79,8 @@ public class ClsAnnotationsUtil {
   public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
     PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)manager.getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
-    TreeElement element = DeclarationParsing.parseMemberValueText(manager, text.toCharArray(), holderElement.getCharTable());
+    JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), manager.getEffectiveLanguageLevel());
+    TreeElement element = context.getDeclarationParsing().parseMemberValueText(manager, text.toCharArray());
     if (element == null) {
       LOG.error("Could not parse initializer:'" + text + "'");
       return null;

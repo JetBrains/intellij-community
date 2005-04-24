@@ -24,21 +24,21 @@ public class ClassBodyParsing extends Parsing {
   }
 
 
-  public static TreeElement parseClassBodyText(Lexer lexer,
-                                               char[] buffer,
-                                               int startOffset,
-                                               int endOffset,
-                                               int lexerState,
-                                               int context,
-                                               CharTable table, PsiManager manager){
+  public TreeElement parseClassBodyText(Lexer lexer,
+                                        char[] buffer,
+                                        int startOffset,
+                                        int endOffset,
+                                        int lexerState,
+                                        int context,
+                                        PsiManager manager){
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (lexerState < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, lexerState);
 
+    CharTable table = myContext.getCharTable();
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    JavaParsingContext parsingContext = new JavaParsingContext(table);
-    parsingContext.getClassBodyParsing().parseClassBody(dummyRoot, filterLexer, context);
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, parsingContext);
+    parseClassBody(dummyRoot, filterLexer, context);
+    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

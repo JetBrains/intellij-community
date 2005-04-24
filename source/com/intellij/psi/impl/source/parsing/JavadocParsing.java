@@ -38,7 +38,7 @@ public class JavadocParsing extends Parsing {
     super(context);
   }
 
-  public static TreeElement parseJavaDocReference(char[] myBuffer,
+  public TreeElement parseJavaDocReference(char[] myBuffer,
                                                   CharTable charTable,
                                                   Lexer originalLexer,
                                                   int state,
@@ -46,27 +46,26 @@ public class JavadocParsing extends Parsing {
                                                   PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(myBuffer, 0, myBuffer.length, state);
-    JavaParsingContext context = new JavaParsingContext(charTable);
 
-    final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     final CompositeElement element;
 
     if (isType){
-      element = context.getJavadocParsing().parseTypeWithEllipsis(lexer, true, false);
+      element = parseTypeWithEllipsis(lexer, true, false);
     }
     else{
-      element = context.getStatementParsing().parseJavaCodeReference(lexer, true);
+      element = myContext.getStatementParsing().parseJavaCodeReference(lexer, true);
     }
 
     if (element != null){
       TreeUtil.addChildren(dummyRoot, element);
     }
     while(lexer.getTokenType() != null){
-      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, context.getCharTable()));
+      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

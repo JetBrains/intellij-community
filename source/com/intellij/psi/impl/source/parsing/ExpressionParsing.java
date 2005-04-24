@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.pom.java.LanguageLevel;
 
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ExpressionParsing");
@@ -20,10 +21,11 @@ public class ExpressionParsing extends Parsing {
   }
 
   public static CompositeElement parseExpressionText(PsiManager manager, char[] buffer, int startOffset, int endOffset, CharTable table) {
-    Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
+    final LanguageLevel level = manager.getEffectiveLanguageLevel();
+    Lexer originalLexer = new JavaLexer(level);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
-    JavaParsingContext context = new JavaParsingContext(table);
+    JavaParsingContext context = new JavaParsingContext(table, level);
     CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
     if (expression == null) return null;
     expression.putUserData(CharTable.CHAR_TABLE_KEY, table);
@@ -35,17 +37,16 @@ public class ExpressionParsing extends Parsing {
     return expression;
   }
 
-  public static TreeElement parseExpressionText(final Lexer originalLexer,
-                                                final char[] buffer,
-                                                final int startOffset,
-                                                final int endOffset,
-                                                final CharTable table,
-                                                PsiManager manager) {
+  public TreeElement parseExpressionText(final Lexer originalLexer,
+                                         final char[] buffer,
+                                         final int startOffset,
+                                         final int endOffset,
+                                         PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
+    CharTable table = myContext.getCharTable();
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    JavaParsingContext context = new JavaParsingContext(table);
-    CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
+    CompositeElement expression = parseExpression(lexer);
     if (expression != null)
       TreeUtil.addChildren(dummyRoot, expression);
 
@@ -54,7 +55,7 @@ public class ExpressionParsing extends Parsing {
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 

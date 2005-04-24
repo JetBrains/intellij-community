@@ -33,7 +33,7 @@ public class FileTextParsing extends Parsing {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable());
+    JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(), manager.getEffectiveLanguageLevel());
 
     if (!skipHeader){
       TreeElement packageStatement = (TreeElement)context.getFileTextParsing().parsePackageStatement(filterLexer);

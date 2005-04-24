@@ -19,10 +19,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.parsing.DeclarationParsing;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.parsing.StatementParsing;
+import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -207,7 +204,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     final FileElement treeHolder = new DummyHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
-    DeclarationParsing.parseParameterText(myManager, ("int " + name).toCharArray(), treeHolder.getCharTable());
+    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(("int " + name).toCharArray());
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
@@ -366,7 +363,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =
-    DeclarationParsing.parseAnnotationFromText(myManager, annotationText, holderElement.getCharTable());
+    getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText);
     if (annotationElement == null || annotationElement.getElementType() != ElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
@@ -424,8 +421,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     buffer.append(" " + exceptionName + "){}");
     String catchSectionText = buffer.toString();
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement catchSection = StatementParsing.parseCatchSectionText(myManager, catchSectionText.toCharArray(),
-                                                                      holderElement.getCharTable());
+    TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText.toCharArray());
     LOG.assertTrue(catchSection != null && catchSection.getElementType() == ElementType.CATCH_SECTION);
     TreeUtil.addChildren(holderElement, catchSection);
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
@@ -640,13 +636,21 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement decl = DeclarationParsing.parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
-                                                               DeclarationParsing.CLASS_CONTEXT, holderElement.getCharTable());
+    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
+                                                               DeclarationParsing.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, decl);
     return (PsiField)SourceTreeToPsiMap.treeElementToPsi(decl);
+  }
+
+  private JavaParsingContext getJavaParsingContext (FileElement holderElement) {
+    return new JavaParsingContext(holderElement.getCharTable(), myManager.getEffectiveLanguageLevel());
+  }
+
+  private JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
+    return new JavaParsingContext(holderElement.getCharTable(), languageLevel);
   }
 
   public PsiMethod createMethodFromText(String text, PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException {
@@ -659,8 +663,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   private PsiMethod createMethodFromTextInner(String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement decl = DeclarationParsing.parseDeclarationText(myManager, level, text.toCharArray(),
-                                                               DeclarationParsing.CLASS_CONTEXT, holderElement.getCharTable());
+    TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text.toCharArray(),
+                                                               DeclarationParsing.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.METHOD) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
@@ -670,7 +674,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiParameter createParameterFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    CompositeElement param = DeclarationParsing.parseParameterText(myManager, text.toCharArray(), holderElement.getCharTable());
+    CompositeElement param = getJavaParsingContext(holderElement).getDeclarationParsing().parseParameterText(text.toCharArray());
     if (param == null) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
     }
@@ -693,7 +697,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiCodeBlock createCodeBlockFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    CompositeElement treeElement = StatementParsing.parseCodeBlockText(myManager, text.toCharArray(), holderElement.getCharTable());
+    CompositeElement treeElement = getJavaParsingContext(holderElement).getStatementParsing().parseCodeBlockText(myManager, text.toCharArray());
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
     }
@@ -703,7 +707,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiStatement createStatementFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement treeElement = StatementParsing.parseStatementText(myManager, text.toCharArray(), treeHolder.getCharTable());
+    TreeElement treeElement = getJavaParsingContext(treeHolder).getStatementParsing().parseStatementText(text.toCharArray());
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
     }
@@ -818,7 +822,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiTypeParameter createTypeParameterFromText(String text, PsiElement context)
     throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement treeElement = DeclarationParsing.parseTypeParameterText(myManager, text.toCharArray(), holderElement.getCharTable());
+    TreeElement treeElement = getJavaParsingContext(holderElement).getDeclarationParsing().parseTypeParameterText(text.toCharArray());
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\"");
     }

@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.JavadocParsing;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
+import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 
 public interface JavaDocElementType {
@@ -25,7 +25,9 @@ public interface JavaDocElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
+      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
+      JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
+      return context.getJavadocParsing().parseJavaDocReference(chars, table, getLanguage().getParserDefinition().createLexer(manager.getProject()),
                                                   ((LeafElement)chameleon).getState(), false, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -35,7 +37,9 @@ public interface JavaDocElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      return JavadocParsing.parseJavaDocReference(chars, SharedImplUtil.findCharTableByTree(chameleon), getLanguage().getParserDefinition().createLexer(manager.getProject()),
+      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
+      JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
+      return context.getJavadocParsing().parseJavaDocReference(chars, table, getLanguage().getParserDefinition().createLexer(manager.getProject()),
                                                   ((LeafElement)chameleon).getState(), true, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -44,8 +48,9 @@ public interface JavaDocElementType {
   IElementType DOC_COMMENT = new IChameleonElementType("DOC_COMMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon));
-      return context.getJavadocParsing().parseDocCommentText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length);
+      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), manager.getEffectiveLanguageLevel());
+      return context.getJavadocParsing().parseDocCommentText(manager, chars, 0, chars.length);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);

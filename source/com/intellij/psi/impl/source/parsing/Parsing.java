@@ -37,7 +37,7 @@ public class Parsing implements Constants{
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
 
-    JavaParsingContext context = new JavaParsingContext(table);
+    JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     if (ref == null) {
@@ -141,7 +141,7 @@ public class Parsing implements Constants{
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
-    final JavaParsingContext context = new JavaParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -243,7 +243,7 @@ public class Parsing implements Constants{
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
-    final JavaParsingContext context = new JavaParsingContext(table);
+    final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
     if (root != null) {
