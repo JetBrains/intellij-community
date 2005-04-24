@@ -394,12 +394,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       PsiElement element = entry.getKey();
       String newName = entry.getValue();
 
-      final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
-      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
-      if (element instanceof PsiPackage) {
-        final PsiPackage psiPackage = (PsiPackage) element;
-        final String newQualifiedName = RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
-        listenersForPackages.add(Pair.create(newQualifiedName, elementListener));
+      if (newName != null) {
+        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
+        RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
+        if (element instanceof PsiPackage) {
+          final PsiPackage psiPackage = (PsiPackage) element;
+          final String newQualifiedName = RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
+          listenersForPackages.add(Pair.create(newQualifiedName, elementListener));
+        }
       }
     }
 
