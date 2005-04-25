@@ -21,6 +21,15 @@
     Instantiation of utility class
     readLine not checked for null
     Constant month outside range of 0..11
+    JDBC close order
+    Explicit reference to JDBC Driver class
+    JDBC connection createStatement()
+    JUnit test case naming convention
+    Configure Log4J in a file
+    Prohibitted Log4J levels
+    Require load factor on maps
+    Use of AWT peer classes
+    Look for ArrayIndexOutOfBounds errors statically
 
     Static import quickfix
     Vararg quickfix

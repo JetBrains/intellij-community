@@ -158,6 +158,6 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClass iterator =
                 psiManager.findClass("java.util.Iterator", scope);
-        return aClass.isInheritor(iterator, false);
+        return aClass.isInheritor(iterator, true);
     }
 }

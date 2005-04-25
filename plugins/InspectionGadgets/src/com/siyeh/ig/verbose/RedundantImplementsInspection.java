@@ -120,7 +120,7 @@ public class RedundantImplementsInspection extends ClassInspection{
                 if(extendsReferent != null &&
                                    extendsReferent instanceof PsiClass){
                     final PsiClass extendedClass = (PsiClass) extendsReferent;
-                    if(extendedClass.isInheritor(implementedClass, false)){
+                    if(extendedClass.isInheritor(implementedClass, true)){
                         registerError(implementsElement);
                         return;
                     }
@@ -137,7 +137,7 @@ public class RedundantImplementsInspection extends ClassInspection{
                         final PsiClass testImplementedClass =
                                 (PsiClass) implementsReferent;
                         if(testImplementedClass.isInheritor(implementedClass,
-                                                            false)){
+                                                            true)){
                             registerError(implementsElement);
                             return;
                         }
@@ -161,7 +161,7 @@ public class RedundantImplementsInspection extends ClassInspection{
                         final PsiClass testImplementedClass =
                                 (PsiClass) implementsReferent;
                         if(testImplementedClass.isInheritor(implementedClass,
-                                                            false)){
+                                                            true)){
                             registerError(implementsElement);
                             return;
                         }
