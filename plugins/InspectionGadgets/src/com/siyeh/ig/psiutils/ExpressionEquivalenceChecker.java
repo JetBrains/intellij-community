@@ -97,6 +97,10 @@ public class ExpressionEquivalenceChecker {
     private static boolean referenceExpressionsAreEquivalent(PsiReferenceExpression expToCompare1, PsiReferenceExpression expToCompare2) {
         final String referenceName1 = expToCompare1.getReferenceName();
         final String referenceName2 = expToCompare2.getReferenceName();
+        if(referenceName1 == null || referenceName2 == null)
+        {
+            return false;
+        }
         if (!referenceName1.equals(referenceName2)) {
             return false;
         }

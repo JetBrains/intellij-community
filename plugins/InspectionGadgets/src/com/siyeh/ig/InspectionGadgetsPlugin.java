@@ -449,6 +449,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MethodOverridesPrivateMethodInspection.class);
         inspectionClasses.add(MethodOverridesStaticMethodInspection.class);
         inspectionClasses.add(MethodOverloadsParentMethodInspection.class);
+        inspectionClasses.add(TypeParameterHidesVisibleTypeInspection.class);
     }
 
     private void registerEncapsulationInspections(){
