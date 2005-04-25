@@ -138,13 +138,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
         if (name != null) {
           if (checkElementNameEquivalence(localName, namespace, name, tag)) {
-            return new XmlAttributeDescriptorImpl(tag);
+            return createAttributeDescriptor(tag);
           }
         }
       }
     }
 
     return null;
+  }
+
+  protected XmlAttributeDescriptorImpl createAttributeDescriptor(final XmlTag tag) {
+    return new XmlAttributeDescriptorImpl(tag);
   }
 
   protected TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {

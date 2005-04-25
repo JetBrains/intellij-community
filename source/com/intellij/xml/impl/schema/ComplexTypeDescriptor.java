@@ -17,7 +17,7 @@ import gnu.trove.THashSet;
 public class ComplexTypeDescriptor extends TypeDescriptor {
   private XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
-  private XmlElementDescriptorImpl[] myElementDescriptors = null;
+  private XmlElementDescriptor[] myElementDescriptors = null;
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     myDocumentDescriptor = documentDescriptor;
@@ -28,14 +28,14 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return myTag;
   }
 
-  public XmlElementDescriptorImpl[] getElements() {
+  public XmlElementDescriptor[] getElements() {
     if(myElementDescriptors != null) return myElementDescriptors;
     Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
     collectElements(map, myTag, new HashSet<XmlTag>());
     addSubstitutionGroups(map);
     filterAbstractElements(map);
     return myElementDescriptors = map.values().toArray(
-      new XmlElementDescriptorImpl[map.values().size()]
+      new XmlElementDescriptor[map.values().size()]
     );
   }
 
@@ -89,7 +89,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String nameAttr = tag.getAttributeValue("name");
 
       if (nameAttr != null) {
-        addElementDescriptor(result, new XmlElementDescriptorImpl(tag));
+        addElementDescriptor(result, myDocumentDescriptor.createElementDescriptor(tag));
       }
       else {
         String ref = tag.getAttributeValue("ref");
@@ -259,8 +259,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   private void addAttributeDescriptor(List<XmlAttributeDescriptor> result, XmlTag tag) {
-    XmlAttributeDescriptorImpl descriptor = new XmlAttributeDescriptorImpl(tag);
-    addAttributeDescriptor(result, descriptor);
+    addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
   }
 
   private void addAttributeDescriptor(List<XmlAttributeDescriptor> result, XmlAttributeDescriptor descriptor) {

@@ -184,10 +184,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType();
 
     if (type instanceof ComplexTypeDescriptor) {
-      final XmlElementDescriptorImpl[] elements = ((ComplexTypeDescriptor)type).getElements();
+      final XmlElementDescriptor[] elements = ((ComplexTypeDescriptor)type).getElements();
 
       if (elements.length > 0) return CONTENT_TYPE_CHILDREN;
-
       return CONTENT_TYPE_EMPTY;
     }
 
